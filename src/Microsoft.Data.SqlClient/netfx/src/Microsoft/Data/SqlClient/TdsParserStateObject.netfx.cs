@@ -18,17 +18,13 @@ using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
-    using PacketHandle = IntPtr;
-
     internal partial class TdsParserStateObject
     {
         protected SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
 
         // SNI variables                                                     // multiple resultsets in one batch.
-        private SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
+        protected SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
         internal SNIPacket _sniAsyncAttnPacket = null;                // Packet to use to send Attn
-        private readonly WritePacketCache _writePacketCache = new WritePacketCache(); // Store write packets that are ready to be re-used
-        private readonly Dictionary<IntPtr, SNIPacket> _pendingWritePackets = new Dictionary<IntPtr, SNIPacket>(); // Stores write packets that have been sent to SNI, but have not yet finished writing (i.e. we are waiting for SNI's callback)
 
         // Async variables
         private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
@@ -66,7 +62,7 @@ namespace Microsoft.Data.SqlClient
             SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCache, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, physicalConnection, _parser.Connection.ConnectionOptions.IPAddressPreference, cachedDNSInfo);
-            if (_sessionHandle.Status != TdsEnums.SNI_SUCCESS)
+            if (IsFailedHandle())
             {
                 AddError(parser.ProcessSNIError(this));
                 ThrowExceptionAndWarning();
@@ -138,27 +134,8 @@ namespace Microsoft.Data.SqlClient
                 ipPreference, cachedDNSInfo, hostNameInCertificate);
         }
 
-        internal bool IsPacketEmpty(PacketHandle readPacket) => readPacket == default;
-
-        internal PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error)
-        {
-            SNIHandle handle = Handle ?? throw ADP.ClosedConnectionError();
-            PacketHandle readPacket = default;
-            error = SniNativeWrapper.SniReadSyncOverAsync(handle, ref readPacket, timeoutRemaining);
-            return readPacket;
-        }
-
-        internal PacketHandle ReadAsync(SessionHandle handle, out uint error)
-        {
-            PacketHandle readPacket = default;
-            error = SniNativeWrapper.SniReadAsync(handle.NativeHandle, ref readPacket);
-            return readPacket;
-        }
-
         internal uint CheckConnection() => SniNativeWrapper.SniCheckConnection(Handle);
 
-        internal void ReleasePacket(PacketHandle syncReadPacket) => SniNativeWrapper.SniPacketRelease(syncReadPacket);
-        
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         internal int DecrementPendingCallbacks(bool release)
         {
@@ -218,20 +195,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (_writePacketCache != null)
-            {
-                lock (_writePacketLockObject)
-                {
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
-                    { }
-                    finally
-                    {
-                        _writePacketCache.Dispose();
-                        // Do not set _writePacketCache to null, just in case a WriteAsyncCallback completes after this point
-                    }
-                }
-            }
+            DisposePacketCache();
         }
 
         /// <summary>
@@ -377,7 +341,7 @@ namespace Microsoft.Data.SqlClient
 
         private uint GetSniPacket(PacketHandle packet, ref uint dataSize)
         {
-            return SniNativeWrapper.SniPacketGetData(packet, _inBuff, ref dataSize);
+            return SniPacketGetData(packet, _inBuff, ref dataSize);
         }
 
         public void ReadAsyncCallback(IntPtr key, PacketHandle packet, uint error)
@@ -411,7 +375,7 @@ namespace Microsoft.Data.SqlClient
             bool processFinallyBlock = true;
             try
             {
-                Debug.Assert(IntPtr.Zero == packet || IntPtr.Zero != packet && source != null, "AsyncResult null on callback");
+                Debug.Assert(CheckPacket(packet, source), "AsyncResult null on callback");
 
                 if (_parser.MARSOn)
                 {
@@ -654,7 +618,7 @@ namespace Microsoft.Data.SqlClient
 
 #pragma warning disable 420 // a reference to a volatile field will not be treated as volatile
 
-        private Task SNIWritePacket(SNIPacket packet, out uint sniError, bool canAccumulate, bool callerHasConnectionLock, bool asyncClose = false)
+        private Task SNIWritePacket(PacketHandle packet, out uint sniError, bool canAccumulate, bool callerHasConnectionLock, bool asyncClose = false)
         {
             // Check for a stored exception
             Exception delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
@@ -696,7 +660,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                sniError = SniNativeWrapper.SniWritePacket(Handle, packet, sync);
+                sniError = WritePacket(packet, sync);
             }
 
             if (sniError == TdsEnums.SNI_SUCCESS_IO_PENDING)
@@ -790,8 +754,6 @@ namespace Microsoft.Data.SqlClient
 
 #pragma warning restore 420
 
-        internal bool IsValidPacket(PacketHandle packetPointer) => packetPointer != default;
-
         // Sends an attention signal - executing thread will consume attn.
         internal void SendAttention(bool mustTakeWriteLock = false, bool asyncClose = false)
         {
@@ -805,10 +767,7 @@ namespace Microsoft.Data.SqlClient
                     return;
                 }
 
-                SNIPacket attnPacket = new SNIPacket(Handle);
-                _sniAsyncAttnPacket = attnPacket;
-
-                SniNativeWrapper.SniPacketSetData(attnPacket, SQL.AttentionHeader, TdsEnums.HEADER_LEN, null, null);
+                PacketHandle attnPacket = CreateAndSetAttentionPacket();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
@@ -868,11 +827,20 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal PacketHandle CreateAndSetAttentionPacket()
+        {
+            SNIPacket attnPacket = new SNIPacket(Handle);
+            _sniAsyncAttnPacket = attnPacket;
+            SniNativeWrapper.SniPacketSetData(attnPacket, SQL.AttentionHeader, TdsEnums.HEADER_LEN, null, null);
+            return PacketHandle.FromNativePacket(attnPacket);
+        }
+
         private Task WriteSni(bool canAccumulate)
         {
             // Prepare packet, and write to packet.
-            SNIPacket packet = GetResetWritePacket();
-            SniNativeWrapper.SniPacketSetData(packet, _outBuff, _outBytesUsed, _securePasswords, _securePasswordOffsetsInBuffer);
+            PacketHandle packet = GetResetWritePacket(_outBytesUsed);
+            SNIPacket nativePacket = packet.NativePacket;
+            SniNativeWrapper.SniPacketSetData(nativePacket, _outBuff, _outBytesUsed, _securePasswords, _securePasswordOffsetsInBuffer);
 
             Debug.Assert(Parser.Connection._parserLock.ThreadMayHaveLock(), "Thread is writing without taking the connection lock");
             Task task = SNIWritePacket(packet, out _, canAccumulate, callerHasConnectionLock: true);
@@ -923,70 +891,6 @@ namespace Microsoft.Data.SqlClient
             return task;
         }
 
-        internal SNIPacket GetResetWritePacket()
-        {
-            if (_sniPacket != null)
-            {
-                SniNativeWrapper.SniPacketReset(Handle, IoType.WRITE, _sniPacket, ConsumerNumber.SNI_Consumer_SNI);
-            }
-            else
-            {
-                lock (_writePacketLockObject)
-                {
-                    _sniPacket = _writePacketCache.Take(Handle);
-                }
-            }
-            return _sniPacket;
-        }
-
-        internal void ClearAllWritePackets()
-        {
-            if (_sniPacket != null)
-            {
-                _sniPacket.Dispose();
-                _sniPacket = null;
-            }
-            lock (_writePacketLockObject)
-            {
-                Debug.Assert(_pendingWritePackets.Count == 0 && _asyncWriteCount == 0, "Should not clear all write packets if there are packets pending");
-                _writePacketCache.Clear();
-            }
-        }
-
-        private IntPtr AddPacketToPendingList(SNIPacket packet)
-        {
-            Debug.Assert(packet == _sniPacket, "Adding a packet other than the current packet to the pending list");
-            _sniPacket = null;
-            IntPtr pointer = packet.DangerousGetHandle();
-
-            lock (_writePacketLockObject)
-            {
-                _pendingWritePackets.Add(pointer, packet);
-            }
-
-            return pointer;
-        }
-
-        private void RemovePacketFromPendingList(IntPtr pointer)
-        {
-            SNIPacket recoveredPacket;
-
-            lock (_writePacketLockObject)
-            {
-                if (_pendingWritePackets.TryGetValue(pointer, out recoveredPacket))
-                {
-                    _pendingWritePackets.Remove(pointer);
-                    _writePacketCache.Add(recoveredPacket);
-                }
-#if DEBUG
-                else
-                {
-                    Debug.Assert(false, "Removing a packet from the pending list that was never added to it");
-                }
-#endif
-            }
-        }
-
         //////////////////////////////////////////////
         // Statistics, Tracing, and related methods //
         //////////////////////////////////////////////
@@ -1032,7 +936,5 @@ namespace Microsoft.Data.SqlClient
             }
             SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParser.WritePacket | INFO | ADV | State Object Id {0}, Packet sent. Out buffer: {1}, Out Bytes Used: {2}", ObjectID, _outBuff, _outBytesUsed);
         }
-
-        protected PacketHandle EmptyReadPacket => default;
     }
 }

@@ -180,14 +180,14 @@
       <remarks>
         The supported authentication modes with <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> are:
         <list type="bullet">
-          <item>Active Directory Password</item>
-          <item>Active Directory Integrated</item>
-          <item>Active Directory Interactive</item>
-          <item>Active Directory Service Principal</item>
-          <item>Active Directory Device Code Flow</item>
-          <item>Active Directory Managed Identity</item>
-          <item>Active Directory MSI</item>
-          <item>Active Directory Default</item>
+          <item><description>Active Directory Password</description></item>
+          <item><description>Active Directory Integrated</description></item>
+          <item><description>Active Directory Interactive</description></item>
+          <item><description>Active Directory Service Principal</description></item>
+          <item><description>Active Directory Device Code Flow</description></item>
+          <item><description>Active Directory Managed Identity</description></item>
+          <item><description>Active Directory MSI</description></item>
+          <item><description>Active Directory Default</description></item>
         </list>
       </remarks>
     </IsSupported>

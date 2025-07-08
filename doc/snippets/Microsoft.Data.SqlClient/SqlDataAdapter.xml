@@ -832,13 +832,13 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
           When using <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, there are two events that occur per data row updated. The order of execution is as follows:
         </para>
         <list type="number">
-          <item>The values in the <see cref="T:System.Data.DataRow" /> are moved to the parameter values.</item>
-          <item>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdating(System.Data.Common.RowUpdatingEventArgs)" /> event is raised.</item>
-          <item>The command executes.</item>
-          <item>If the command is set to <c>FirstReturnedRecord</c>, the first returned result is placed in the <see cref="T:System.Data.DataRow" />.</item>
-          <item>If there are output parameters, they are placed in the <see cref="T:System.Data.DataRow" />.</item>
-          <item>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdated(System.Data.Common.RowUpdatedEventArgs)" /> event is raised.</item>
-          <item><see cref="M:System.Data.DataRow.AcceptChanges" /> is called.</item>
+          <item><description>The values in the <see cref="T:System.Data.DataRow" /> are moved to the parameter values.</description></item>
+          <item><description>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdating(System.Data.Common.RowUpdatingEventArgs)" /> event is raised.</description></item>
+          <item><description>The command executes.</description></item>
+          <item><description>If the command is set to <c>FirstReturnedRecord</c>, the first returned result is placed in the <see cref="T:System.Data.DataRow" />.</description></item>
+          <item><description>If there are output parameters, they are placed in the <see cref="T:System.Data.DataRow" />.</description></item>
+          <item><description>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdated(System.Data.Common.RowUpdatedEventArgs)" /> event is raised.</description></item>
+          <item><description><see cref="M:System.Data.DataRow.AcceptChanges" /> is called.</description></item>
         </list>
       </remarks>
       <example>
@@ -945,13 +945,13 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
           When using <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, there are two events that occur per data row updated. The order of execution is as follows:
         </para>
         <list type="number">
-          <item>The values in the <see cref="T:System.Data.DataRow" /> are moved to the parameter values.</item>
-          <item>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdating(System.Data.Common.RowUpdatingEventArgs)" /> event is raised.</item>
-          <item>The command executes.</item>
-          <item>If the command is set to <c>FirstReturnedRecord</c>, the first returned result is placed in the <see cref="T:System.Data.DataRow" />.</item>
-          <item>If there are output parameters, they are placed in the <see cref="T:System.Data.DataRow" />.</item>
-          <item>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdated(System.Data.Common.RowUpdatedEventArgs)" /> event is raised.</item>
-          <item><see cref="M:System.Data.DataRow.AcceptChanges" /> is called.</item>
+          <item><description>The values in the <see cref="T:System.Data.DataRow" /> are moved to the parameter values.</description></item>
+          <item><description>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdating(System.Data.Common.RowUpdatingEventArgs)" /> event is raised.</description></item>
+          <item><description>The command executes.</description></item>
+          <item><description>If the command is set to <c>FirstReturnedRecord</c>, the first returned result is placed in the <see cref="T:System.Data.DataRow" />.</description></item>
+          <item><description>If there are output parameters, they are placed in the <see cref="T:System.Data.DataRow" />.</description></item>
+          <item><description>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdated(System.Data.Common.RowUpdatedEventArgs)" /> event is raised.</description></item>
+          <item><description><see cref="M:System.Data.DataRow.AcceptChanges" /> is called.</description></item>
         </list>
       </remarks>
       <example>

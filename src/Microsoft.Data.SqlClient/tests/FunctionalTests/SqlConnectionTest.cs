@@ -1100,6 +1100,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("myserver.database.windows.net")]
         [InlineData("myserver.database.cloudapi.de")]
         [InlineData("myserver.database.usgovcloudapi.net")]
+        [InlineData("myserver.DATABASE.usgovcloudapi.net")]
         [InlineData("myserver.database.chinacloudapi.cn")]
         [InlineData("myserver.database.fabric.microsoft.com")]
         public void ConnectionRetryForAzureDbEndpoints(string serverName)
@@ -1112,8 +1113,10 @@ namespace Microsoft.Data.SqlClient.Tests
 
         [Theory]
         [InlineData("myserver-ondemand.sql.azuresynapse.net")]
+        [InlineData("myserver-ondemand.SQL.azuresynapse.net")]
         [InlineData("someserver-ondemand.database.windows.net")]
         [InlineData("datawarehouse.fabric.microsoft.com")]
+        [InlineData("datawarehouse.FABRIC.microsoft.com")]
         [InlineData("datawarehouse.pbidedicated.microsoft.com")]
         [InlineData("someserver.pbidedicated.microsoft.com")]
         [InlineData("someserver.pbidedicated.windows.net")]

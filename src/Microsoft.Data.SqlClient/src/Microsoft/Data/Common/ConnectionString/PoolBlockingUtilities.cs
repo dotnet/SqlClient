@@ -128,7 +128,7 @@ namespace Microsoft.Data.Common.ConnectionString
                 }
                 else
                 {
-                    throw ADP.InvalidEnumerationValue(typeof(ApplicationIntent), (int)eValue);
+                    throw ADP.InvalidEnumerationValue(typeof(PoolBlockingPeriod), (int)eValue);
                 }
             }
         }

@@ -287,12 +287,6 @@ namespace Microsoft.Data.SqlClient
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency|DEP> {0}, options: '{1}', timeout: '{2}'", ObjectID, options, timeout);
             try
             {
-#if NETFRAMEWORK
-                if (InOutOfProcHelper.InProc)
-                {
-                    throw SQL.SqlDepCannotBeCreatedInProc();
-                }
-#endif
                 if (timeout < 0)
                 {
                     throw SQL.InvalidSqlDependencyTimeout(nameof(timeout));
@@ -563,14 +557,6 @@ namespace Microsoft.Data.SqlClient
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency.Start|DEP> AppDomainKey: '{0}', queue: '{1}'", AppDomainKey, queue);
             try
             {
-#if NETFRAMEWORK
-                // The following code exists in Stop as well.  It exists here to demand permissions as high in the stack
-                // as possible.
-                if (InOutOfProcHelper.InProc)
-                {
-                    throw SQL.SqlDepCannotBeCreatedInProc();
-                }
-#endif
                 if (string.IsNullOrEmpty(connectionString))
                 {
                     if (connectionString == null)
@@ -716,14 +702,6 @@ namespace Microsoft.Data.SqlClient
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency.Stop|DEP> AppDomainKey: '{0}', queue: '{1}'", AppDomainKey, queue);
             try
             {
-#if NETFRAMEWORK
-                // The following code exists in Stop as well.  It exists here to demand permissions as high in the stack
-                // as possible.
-                if (InOutOfProcHelper.InProc)
-                {
-                    throw SQL.SqlDepCannotBeCreatedInProc();
-                }
-#endif
                 if (string.IsNullOrEmpty(connectionString))
                 {
                     if (connectionString == null)

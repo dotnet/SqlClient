@@ -9,7 +9,7 @@ namespace Microsoft.Data.SqlClient.Server
     /// <summary>
     /// Formal encoding of SMI's metadata-to-ITypedSetter/-from-ITypedGetter validity rules
     /// </summary>
-    internal partial class SmiXetterAccessMap
+    internal static class SmiXetterAccessMap
     {
         // A couple of private constants to make the getter/setter access tables more readable
         private const bool X = true;
@@ -102,16 +102,6 @@ namespace Microsoft.Data.SqlClient.Server
             /*DTime2*/   { _,    _,    _,     _,     _,     _,     _,     _,     _,     _,     _,      X,     _,    _,     _,    _,    _, },
             /*DTOffset*/ { _,    _,    _,     _,     _,     _,     _,     _,     _,     _,     _,      _,     _,    _,     _,    _,    X, },
         };
-        
-        #if NETFRAMEWORK
-        internal static bool IsGetterAccessValid(SmiMetaData metaData, SmiXetterTypeCode xetterType)
-        {
-            // Make sure no-one adds a new xetter type without updating this file!
-            Debug.Assert(SmiXetterTypeCode.XetBoolean <= xetterType && SmiXetterTypeCode.XetDateTimeOffset >= xetterType);
-
-            return s_isGetterAccessValid[(int)metaData.SqlDbType, (int)xetterType];
-        }
-        #endif
         
         internal static bool IsSetterAccessValid(SmiMetaData metaData, SmiXetterTypeCode xetterType)
         {

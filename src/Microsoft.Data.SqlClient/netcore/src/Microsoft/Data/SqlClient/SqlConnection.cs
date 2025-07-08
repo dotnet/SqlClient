@@ -18,6 +18,7 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
@@ -663,7 +664,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                return constr != null ? constr.ConnectTimeout : SqlConnectionString.DEFAULT.Connect_Timeout;
+                return constr != null ? constr.ConnectTimeout : DbConnectionStringDefaults.ConnectTimeout;
             }
         }
 
@@ -675,7 +676,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                return constr != null ? constr.CommandTimeout : SqlConnectionString.DEFAULT.Command_Timeout;
+                return constr != null ? constr.CommandTimeout : DbConnectionStringDefaults.CommandTimeout;
             }
         }
 
@@ -768,7 +769,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = constr != null ? constr.InitialCatalog : SqlConnectionString.DEFAULT.Initial_Catalog;
+                    result = constr != null ? constr.InitialCatalog : DbConnectionStringDefaults.InitialCatalog;
                 }
                 return result;
             }
@@ -841,7 +842,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = constr != null ? constr.DataSource : SqlConnectionString.DEFAULT.Data_Source;
+                    result = constr != null ? constr.DataSource : DbConnectionStringDefaults.DataSource;
                 }
                 return result;
             }
@@ -868,7 +869,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = constr != null ? constr.PacketSize : SqlConnectionString.DEFAULT.Packet_Size;
+                    result = constr != null ? constr.PacketSize : DbConnectionStringDefaults.PacketSize;
                 }
                 return result;
             }
@@ -2283,7 +2284,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDbFilename);
                 }
 
                 ChangePassword(connectionString, connectionOptions, null, newPassword, null);
@@ -2340,7 +2341,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDbFilename);
                 }
 
                 ChangePassword(connectionString, connectionOptions, credential, null, newSecurePassword);

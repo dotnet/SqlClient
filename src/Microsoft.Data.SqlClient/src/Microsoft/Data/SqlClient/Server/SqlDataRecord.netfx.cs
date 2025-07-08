@@ -12,8 +12,6 @@ namespace Microsoft.Data.SqlClient.Server
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SqlDataRecord/*' />
     public partial class SqlDataRecord : IDataRecord
     {
-        private readonly SmiContext _recordContext;
-     
         private Type GetFieldTypeFrameworkSpecific(int ordinal)
         {
             SqlMetaData md = GetSqlMetaData(ordinal);
@@ -30,31 +28,23 @@ namespace Microsoft.Data.SqlClient.Server
         private object GetValueFrameworkSpecific(int ordinal)
         {
             SmiMetaData metaData = GetSmiMetaData(ordinal);
-            if (SmiVersion >= SmiContextFactory.Sql2008Version)
-            {
-                return ValueUtilsSmi.GetValue200(_eventSink, _recordBuffer, ordinal, metaData, _recordContext);
-            }
-            else
-            {
-                return ValueUtilsSmi.GetValue(_eventSink, _recordBuffer, ordinal, metaData, _recordContext);
-            }
+            return ValueUtilsSmi.GetValue200(_recordBuffer, ordinal, metaData);
         }
     
         private object GetSqlValueFrameworkSpecific(int ordinal)
         {
             SmiMetaData metaData = GetSmiMetaData(ordinal);
-            if (SmiVersion >= SmiContextFactory.Sql2008Version)
-            {
-                return ValueUtilsSmi.GetSqlValue200(_eventSink, _recordBuffer, ordinal, metaData, _recordContext);
-            }
-            return ValueUtilsSmi.GetSqlValue(_eventSink, _recordBuffer, ordinal, metaData, _recordContext);
+            return ValueUtilsSmi.GetSqlValue200(_recordBuffer, ordinal, metaData);
         }
 
-        private SqlBytes GetSqlBytesFrameworkSpecific(int ordinal) => ValueUtilsSmi.GetSqlBytes(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), _recordContext);
+        private SqlBytes GetSqlBytesFrameworkSpecific(int ordinal) =>
+            ValueUtilsSmi.GetSqlBytes(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
  
-        private SqlXml GetSqlXmlFrameworkSpecific(int ordinal) => ValueUtilsSmi.GetSqlXml(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), _recordContext);
+        private SqlXml GetSqlXmlFrameworkSpecific(int ordinal) =>
+            ValueUtilsSmi.GetSqlXml(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
         
-        private SqlChars GetSqlCharsFrameworkSpecific(int ordinal) => ValueUtilsSmi.GetSqlChars(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), _recordContext);
+        private SqlChars GetSqlCharsFrameworkSpecific(int ordinal) =>
+            ValueUtilsSmi.GetSqlChars(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
  
         private int SetValuesFrameworkSpecific(params object[] values)
         {
@@ -76,9 +66,7 @@ namespace Microsoft.Data.SqlClient.Server
                     metaData.SqlDbType,
                     isMultiValued: false,
                     values[i],
-                    metaData.Type,
-                    SmiVersion
-                );
+                    metaData.Type);
                 if (typeCodes[i] == ExtendedClrTypeCode.Invalid)
                 {
                     throw ADP.InvalidCast();
@@ -89,14 +77,14 @@ namespace Microsoft.Data.SqlClient.Server
             //      the validation loop and here, or if an invalid UDT was sent).
             for (int i = 0; i < copyLength; i++)
             {
-                if (SmiVersion >= SmiContextFactory.Sql2008Version)
-                {
-                    ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, i, GetSmiMetaData(i), values[i], typeCodes[i], offset: 0, peekAhead: null);
-                }
-                else
-                {
-                    ValueUtilsSmi.SetCompatibleValue(_eventSink, _recordBuffer, i, GetSmiMetaData(i), values[i], typeCodes[i], offset: 0);
-                }
+                ValueUtilsSmi.SetCompatibleValueV200(
+                    _recordBuffer,
+                    ordinal: i,
+                    GetSmiMetaData(i),
+                    values[i],
+                    typeCodes[i],
+                    offset: 0,
+                    peekAhead: null);
             }
 
             return copyLength;
@@ -109,27 +97,36 @@ namespace Microsoft.Data.SqlClient.Server
                 metaData.SqlDbType,
                 isMultiValued: false,
                 value,
-                metaData.Type,
-                SmiVersion
-            );
+                metaData.Type);
             if (typeCode == ExtendedClrTypeCode.Invalid)
             {
                 throw ADP.InvalidCast();
             }
-
-            if (SmiVersion >= SmiContextFactory.Sql2008Version)
-            {
-                ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, typeCode, offset: 0, peekAhead: null);
-            }
-            else
-            {
-                ValueUtilsSmi.SetCompatibleValue(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, typeCode, offset: 0);
-            }
+            
+            ValueUtilsSmi.SetCompatibleValueV200(
+                _recordBuffer,
+                ordinal,
+                GetSmiMetaData(ordinal),
+                value,
+                typeCode,
+                offset: 0,
+                peekAhead: null);
         }
   
-        private void SetTimeSpanFrameworkSpecific(int ordinal, TimeSpan value) => ValueUtilsSmi.SetTimeSpan(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, SmiVersion >= SmiContextFactory.Sql2008Version);
-        private void SetDateTimeOffsetFrameworkSpecific(int ordinal, DateTimeOffset value) => ValueUtilsSmi.SetDateTimeOffset(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, SmiVersion >= SmiContextFactory.Sql2008Version);
-
-        private ulong SmiVersion => InOutOfProcHelper.InProc ? SmiContextFactory.Instance.NegotiatedSmiVersion : SmiContextFactory.LatestVersion;
+        private void SetTimeSpanFrameworkSpecific(int ordinal, TimeSpan value) => 
+            ValueUtilsSmi.SetTimeSpan(
+                _recordBuffer,
+                ordinal,
+                GetSmiMetaData(ordinal),
+                value,
+                settersSupport2008DateTime: true);
+        
+        private void SetDateTimeOffsetFrameworkSpecific(int ordinal, DateTimeOffset value) =>
+            ValueUtilsSmi.SetDateTimeOffset(
+                _recordBuffer,
+                ordinal,
+                GetSmiMetaData(ordinal),
+                value,
+                settersSupport2008DateTime: true);
     }
 }

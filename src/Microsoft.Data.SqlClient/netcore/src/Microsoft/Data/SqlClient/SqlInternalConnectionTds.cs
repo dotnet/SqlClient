@@ -9,13 +9,13 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net.Http.Headers;
-using System.Runtime.CompilerServices;
 using System.Security;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Identity.Client;
@@ -208,11 +208,17 @@ namespace Microsoft.Data.SqlClient
         // Json Support Flag
         internal bool IsJsonSupportEnabled = false;
 
+        // User Agent Flag
+        internal bool IsUserAgentEnabled = true;
+
+        // Vector Support Flag
+        internal bool IsVectorSupportEnabled = false;
+
         // TCE flags
         internal byte _tceVersionSupported;
 
         // The pool that this connection is associated with, if at all it is.
-        private DbConnectionPool _dbConnectionPool;
+        private IDbConnectionPool _dbConnectionPool;
 
         // This is used to preserve the authentication context object if we decide to cache it for subsequent connections in the same pool.
         // This will finally end up in _dbConnectionPool.AuthenticationContexts, but only after 1 successful login to SQL Server using this context.
@@ -454,10 +460,9 @@ namespace Microsoft.Data.SqlClient
             SessionData reconnectSessionData = null,
             bool applyTransientFaultHandling = false,
             string accessToken = null,
-            DbConnectionPool pool = null,
+            IDbConnectionPool pool = null,
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null,
             SspiContextProvider sspiContextProvider = null) : base(connectionOptions)
-
         {
 #if DEBUG
             if (reconnectSessionData != null)
@@ -1425,9 +1430,14 @@ namespace Microsoft.Data.SqlClient
                 requestedFeatures |= TdsEnums.FeatureExtension.AzureSQLSupport;
             }
 
-            // The SQLDNSCaching and JSON features are implicitly set
+            // The following features are implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
+            requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
+
+        #if DEBUG
+            requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
+        #endif
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
@@ -3011,6 +3021,24 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError();
                         }
                         IsJsonSupportEnabled = true;
+                        break;
+                    }
+
+                case TdsEnums.FEATUREEXT_VECTORSUPPORT:
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for VECTORSUPPORT", ObjectID);
+                        if (data.Length != 1)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for VECTORSUPPORT", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+                        byte vectorSupportVersion = data[0];
+                        if (vectorSupportVersion == 0 || vectorSupportVersion > TdsEnums.MAX_SUPPORTED_VECTOR_VERSION)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number {1} for VECTORSUPPORT, Max supported version is {2}", ObjectID, vectorSupportVersion, TdsEnums.MAX_SUPPORTED_VECTOR_VERSION);
+                            throw SQL.ParsingError();
+                        }
+                        IsVectorSupportEnabled = true;
                         break;
                     }
 

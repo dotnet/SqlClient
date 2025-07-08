@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient
     {
         private static int _objectTypeCount; // EventSource Counter
         private const int MaxRPCNameLength = 1046;
-        internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount); private string _commandText;
+        internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount);
 
         internal sealed class ExecuteReaderAsyncCallContext : AAsyncCallContext<SqlCommand, SqlDataReader, CancellationTokenRegistration>
         {
@@ -113,6 +113,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private string _commandText;
         private CommandType _commandType;
         private int? _commandTimeout;
         private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
@@ -1491,8 +1492,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteNonQueryAsync[@name="IAsyncResult"]/*'/>
-        public int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
+        private int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteNonQueryAsync | Info | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
@@ -2794,7 +2794,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 source.SetException(e);
-                context.Dispose();
+                context?.Dispose();
             }
 
             return returnedTask;
@@ -3050,7 +3050,6 @@ namespace Microsoft.Data.SqlClient
                 context = new ExecuteXmlReaderAsyncCallContext();
             }
             context.Set(this, source, registration, operationId);
-
 
             Task<XmlReader> returnedTask = source.Task;
             try
@@ -6433,6 +6432,16 @@ namespace Microsoft.Data.SqlClient
 
                     paramList.Append('(');
                     paramList.Append(scale);
+                    paramList.Append(')');
+                }
+                else if (mt.SqlDbType == SqlDbTypeExtensions.Vector)
+                {
+                    // The validate function for SqlParameters would
+                    // have already thrown InvalidCastException if an incompatible
+                    // value is specified for SqlDbType Vector.
+                    var sqlVectorProps = (ISqlVector)sqlParam.Value;
+                    paramList.Append('(');
+                    paramList.Append(sqlVectorProps.Length);
                     paramList.Append(')');
                 }
                 else if (!mt.IsFixed && !mt.IsLong && mt.SqlDbType != SqlDbType.Timestamp && mt.SqlDbType != SqlDbType.Udt && SqlDbType.Structured != mt.SqlDbType)

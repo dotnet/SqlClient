@@ -55,7 +55,7 @@ steps:
   inputs:
     solution: build.proj
     msbuildArchitecture: x64
-    msbuildArguments: '-p:Configuration=${{parameters.configuration }} -t:BuildAKVNetCore  -p:ReferenceType=${{parameters.referenceType }}  '
+    msbuildArguments: '-p:Configuration=${{parameters.configuration }} -t:BuildAKVNetCore -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }}'
 
 - task: MSBuild@1
   displayName: 'MSBuild Build Tests for ${{parameters.TargetNetCoreVersion }}'
@@ -64,11 +64,13 @@ steps:
     msbuildArchitecture: x64
     msbuildArguments: '-t:BuildTestsNetCore -p:ReferenceType=${{parameters.referenceType }} -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} -p:Configuration=${{parameters.configuration }}'
 
+# Don't run unit tests using package reference. Unit tests are only run using project reference.
+
 - task: DotNetCoreCLI@2
   displayName: 'Run Functional Tests for ${{parameters.TargetNetCoreVersion }}'
   inputs:
     command: test
-    projects: 'src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj'
+    projects: 'src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.FunctionalTests.csproj'
     arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }}  -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.configuration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"'
 
 - task: DotNetCoreCLI@2

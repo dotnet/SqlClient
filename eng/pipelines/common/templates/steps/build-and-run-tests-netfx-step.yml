@@ -55,19 +55,21 @@ steps:
   inputs:
     solution: build.proj
     msbuildArchitecture: x64
-    msbuildArguments: '-p:Configuration=${{parameters.configuration }} -t:BuildAKVNetFx  -p:ReferenceType=${{parameters.referenceType }}  '
+    msbuildArguments: '-p:Configuration=${{parameters.configuration }} -t:BuildAKVNetFx -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }}'
 
 - task: MSBuild@1
   displayName: 'MSBuild Build Tests for ${{parameters.TargetNetFxVersion }}'
   inputs:
     solution: build.proj
     msbuildArguments: ' -t:BuildTestsNetFx -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} -p:TargetNetFxVersion=${{parameters.TargetNetFxVersion }} -p:Configuration=${{parameters.configuration }} -p:Platform=${{parameters.platform }}'
+    
+# Don't run unit tests using package reference. Unit tests are only run using project reference.
 
 - task: DotNetCoreCLI@2
   displayName: 'Run Functional Tests for ${{parameters.TargetNetFxVersion }}'
   inputs:
     command: test
-    projects: 'src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj'
+    projects: 'src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.FunctionalTests.csproj'
     arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetFxVersion=${{parameters.TargetNetFxVersion }} -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.configuration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" --collect "Code Coverage"'
 
 - task: DotNetCoreCLI@2

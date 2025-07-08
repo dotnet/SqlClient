@@ -1,5 +1,5 @@
-using System;
 // <Snippet1>
+using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,10 +17,10 @@ class Program
 
     const string defaultScopeSuffix = "/.default";
 
-    // Reuse credential objects to take advantage of underlying token caches
+    // Reuse credential objects to take advantage of underlying token caches.
     private static ConcurrentDictionary<string, DefaultAzureCredential> credentials = new ConcurrentDictionary<string, DefaultAzureCredential>();
 
-    // Use a shared callback function for connections that should be in the same connection pool
+    // Use a shared callback function for connections that should be in the same connection pool.
     private static Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> myAccessTokenCallback =
         async (authParams, cancellationToken) =>
         {
@@ -31,7 +31,7 @@ class Program
             DefaultAzureCredentialOptions options = new DefaultAzureCredentialOptions();
             options.ManagedIdentityClientId = authParams.UserId;
 
-            // Reuse the same credential object if we are using the same MI Client Id
+            // Reuse the same credential object if we are using the same MI Client Id.
             AccessToken token = await credentials.GetOrAdd(authParams.UserId, new DefaultAzureCredential(options)).GetTokenAsync(
                 new TokenRequestContext(new string[] { scope }),
                 cancellationToken);

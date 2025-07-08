@@ -46,21 +46,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         // TdsRecordBufferSetter supports Setting only
-        internal override bool CanGet
-        {
-            get
-            {
-                return false;
-            }
-        }
+        protected override bool CanGet => false;
 
-        internal override bool CanSet
-        {
-            get
-            {
-                return true;
-            }
-        }
+        protected override bool CanSet => true;
 
         #endregion
 
@@ -68,21 +56,21 @@ namespace Microsoft.Data.SqlClient
 
         // Set value to null
         //  valid for all types
-        public override void SetDBNull(SmiEventSink sink, int ordinal)
+        public override void SetDBNull(int ordinal)
         {
             CheckSettingColumn(ordinal);
             _fieldSetters[ordinal].SetDBNull();
         }
 
         //  valid for SqlDbType.Bit
-        public override void SetBoolean(SmiEventSink sink, int ordinal, bool value)
+        public override void SetBoolean(int ordinal, bool value)
         {
             CheckSettingColumn(ordinal);
             _fieldSetters[ordinal].SetBoolean(value);
         }
 
         //  valid for SqlDbType.TinyInt
-        public override void SetByte(SmiEventSink sink, int ordinal, byte value)
+        public override void SetByte(int ordinal, byte value)
         {
             CheckSettingColumn(ordinal);
             _fieldSetters[ordinal].SetByte(value);
@@ -92,12 +80,12 @@ namespace Microsoft.Data.SqlClient
         //  Use in combination with SetLength to ensure overwriting when necessary
         // valid for SqlDbTypes: Binary, VarBinary, Image, Udt, Xml
         //      (VarBinary assumed for variants)
-        public override int SetBytes(SmiEventSink sink, int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length)
+        public override int SetBytes(int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length)
         {
             CheckWritingToColumn(ordinal);
             return _fieldSetters[ordinal].SetBytes(fieldOffset, buffer, bufferOffset, length);
         }
-        public override void SetBytesLength(SmiEventSink sink, int ordinal, long length)
+        public override void SetBytesLength(int ordinal, long length)
         {
             CheckSettingColumn(ordinal);
             _fieldSetters[ordinal].SetBytesLength(length);
@@ -107,130 +95,133 @@ namespace Microsoft.Data.SqlClient
         //  Use in combination with SetLength to ensure overwriting when necessary
         // valid for character types: Char, VarChar, Text, NChar, NVarChar, NText
         //      (NVarChar and global clr collation assumed for variants)
-        public override int SetChars(SmiEventSink sink, int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length)
+        public override int SetChars(int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length)
         {
             CheckWritingToColumn(ordinal);
             return _fieldSetters[ordinal].SetChars(fieldOffset, buffer, bufferOffset, length);
         }
 
-        public override void SetCharsLength(SmiEventSink sink, int ordinal, long length)
+        public override void SetCharsLength(int ordinal, long length)
         {
             CheckSettingColumn(ordinal);
             _fieldSetters[ordinal].SetCharsLength(length);
         }
 
         // valid for character types: Char, VarChar, Text, NChar, NVarChar, NText
-        public override void SetString(SmiEventSink sink, int ordinal, string value, int offset, int length)
+        public override void SetString(int ordinal, string value, int offset, int length)
         {
             CheckSettingColumn(ordinal);
             _fieldSetters[ordinal].SetString(value, offset, length);
         }
 
         // valid for SqlDbType.SmallInt
-        public override void SetInt16(SmiEventSink sink, int ordinal, short value)
+        public override void SetInt16(int ordinal, short value)
         {
             CheckSettingColumn(ordinal);
             _fieldSetters[ordinal].SetInt16(value);
         }
 
         // valid for SqlDbType.Int
-        public override void SetInt32(SmiEventSink sink, int ordinal, int value)
+        public override void SetInt32(int ordinal, int value)
         {
             CheckSettingColumn(ordinal);
             _fieldSetters[ordinal].SetInt32(value);
         }
 
         // valid for SqlDbType.BigInt, SqlDbType.Money, SqlDbType.SmallMoney
-        public override void SetInt64(SmiEventSink sink, int ordinal, long value)
+        public override void SetInt64(int ordinal, long value)
         {
             CheckSettingColumn(ordinal);
             _fieldSetters[ordinal].SetInt64(value);
         }
 
         // valid for SqlDbType.Real
-        public override void SetSingle(SmiEventSink sink, int ordinal, float value)
+        public override void SetSingle(int ordinal, float value)
         {
             CheckSettingColumn(ordinal);
             _fieldSetters[ordinal].SetSingle(value);
         }
 
         // valid for SqlDbType.Float
-        public override void SetDouble(SmiEventSink sink, int ordinal, double value)
+        public override void SetDouble(int ordinal, double value)
         {
             CheckSettingColumn(ordinal);
             _fieldSetters[ordinal].SetDouble(value);
         }
 
         // valid for SqlDbType.Numeric (uses SqlDecimal since Decimal cannot hold full range)
-        public override void SetSqlDecimal(SmiEventSink sink, int ordinal, SqlDecimal value)
+        public override void SetSqlDecimal(int ordinal, SqlDecimal value)
         {
             CheckSettingColumn(ordinal);
             _fieldSetters[ordinal].SetSqlDecimal(value);
         }
 
         // valid for DateTime, SmallDateTime, Date, DateTime2
-        public override void SetDateTime(SmiEventSink sink, int ordinal, DateTime value)
+        public override void SetDateTime(int ordinal, DateTime value)
         {
             CheckSettingColumn(ordinal);
             _fieldSetters[ordinal].SetDateTime(value);
         }
 
         // valid for UniqueIdentifier
-        public override void SetGuid(SmiEventSink sink, int ordinal, Guid value)
+        public override void SetGuid(int ordinal, Guid value)
         {
             CheckSettingColumn(ordinal);
             _fieldSetters[ordinal].SetGuid(value);
         }
 
         // valid for SqlDbType.Time
-        public override void SetTimeSpan(SmiEventSink sink, int ordinal, TimeSpan value)
+        public override void SetTimeSpan(int ordinal, TimeSpan value)
         {
             CheckSettingColumn(ordinal);
             _fieldSetters[ordinal].SetTimeSpan(value);
         }
 
         // valid for DateTimeOffset
-        public override void SetDateTimeOffset(SmiEventSink sink, int ordinal, DateTimeOffset value)
+        public override void SetDateTimeOffset(int ordinal, DateTimeOffset value)
         {
             CheckSettingColumn(ordinal);
             _fieldSetters[ordinal].SetDateTimeOffset(value);
         }
 
         // valid for SqlDbType.Variant
-        public override void SetVariantMetaData(SmiEventSink sink, int ordinal, SmiMetaData metaData)
+        public override void SetVariantMetaData(int ordinal, SmiMetaData metaData)
         {
             CheckWritingToColumn(ordinal);
             _fieldSetters[ordinal].SetVariantType(metaData);
         }
 
         // valid for multi-valued types
-        internal override void NewElement(SmiEventSink sink)
+        internal override void NewElement()
         {
-#if DEBUG
+            #if DEBUG
             SkipPossibleDefaultedColumns(ReadyForToken);
             Debug.Assert(ReadyForToken == _currentField, "Not on first or last column!");
-#endif
+            #endif
 
             // For TVP types, write new-row token
             Debug.Assert(_metaData.IsMultiValued, "Unsupported call for single-valued types");
             _stateObj.WriteByte(TdsEnums.TVP_ROW_TOKEN);
-#if DEBUG
+
+            #if DEBUG
             _currentField = 0;
-#endif
+            #endif
         }
 
-        internal override void EndElements(SmiEventSink sink)
+        internal override void EndElements()
         {
-#if DEBUG
+            #if DEBUG
             SkipPossibleDefaultedColumns(ReadyForToken);
             Debug.Assert(ReadyForToken == _currentField, "Not on first or last column!");
             Debug.Assert(_metaData.IsMultiValued, "Unsupported call for single-valued types");
-#endif
+            #endif
+            
             // For TVP types, write no-more-rows token
             _stateObj.WriteByte(TdsEnums.TVP_END_TOKEN);
-#if DEBUG
+
+            #if DEBUG
             _currentField = EndElementsCalled;
-#endif
+            #endif
         }
 
 

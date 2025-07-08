@@ -1,0 +1,51 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>UnitTests</AssemblyName>
+    <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
+    <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
+    <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx'">win</RuntimeIdentifier>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <!-- Common references -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Condition="$(TargetGroup) == 'netfx'">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="xunit.runner.console">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
+  </ItemGroup>
+  <!-- .NET Framework references -->
+  <ItemGroup Condition="$(TargetGroup) == 'netfx'">
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
+    <ProjectReference Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+	  <Reference Include="System.Transactions" />
+  </ItemGroup>
+  <!-- .NET references -->
+  <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp'">
+    <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ContentWithTargetPath Condition="'$(TargetGroup)'=='netfx'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\$(TargetFramework)\*SNI*.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>%(Filename)%(Extension)</TargetPath>
+    </ContentWithTargetPath>
+  </ItemGroup>
+  <ItemGroup>
+    <ContentWithTargetPath Include="..\tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>xunit.runner.json</TargetPath>
+    </ContentWithTargetPath>
+  </ItemGroup>
+</Project>

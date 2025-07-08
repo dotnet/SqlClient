@@ -620,61 +620,6 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Contains("dbType", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
-        [Fact]
-        public void GetPartialLengthWithXmlSqlMetaDataType_Throws()
-        {
-            Type sqlMetaDataType = typeof(SqlMetaData);
-            SqlMetaData exampleMetaData = new SqlMetaData("col2", SqlDbType.Xml);
-            MethodInfo method = sqlMetaDataType.GetMethod("GetPartialLengthMetaData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            Exception ex = Assert.ThrowsAny<Exception>(() =>
-            {
-                SqlMetaData metaData = (SqlMetaData)method.Invoke(exampleMetaData, new object[] { exampleMetaData });
-            });
-            Assert.NotNull(ex.InnerException);
-            Assert.IsType<ArgumentException>(ex.InnerException);
-            Assert.NotEmpty(ex.InnerException.Message);
-            Assert.Contains("metadata", ex.InnerException.Message, StringComparison.OrdinalIgnoreCase);
-        }
-
-        public static IEnumerable<object[]> GetPartialLengthData()
-        {
-            return new object[][]
-            {
-                new object[] { SqlDbType.NVarChar },
-                new object[] { SqlDbType.VarChar },
-                new object[] { SqlDbType.VarBinary }
-            };
-        }
-
-        [Theory]
-        [MemberData(
-            nameof(GetPartialLengthData)
-#if NETFRAMEWORK
-            , DisableDiscoveryEnumeration = true
-#endif
-            )]
-        public void GetPartialLengthWithVarSqlMetaDataType(SqlDbType sqlDbType)
-        {
-            Type sqlMetaDataType = typeof(SqlMetaData);
-            SqlMetaData exampleMetaData = new SqlMetaData("col2", sqlDbType, 16);
-            MethodInfo method = sqlMetaDataType.GetMethod("GetPartialLengthMetaData", BindingFlags.NonPublic | BindingFlags.Static);
-            SqlMetaData metaData = metaData = (SqlMetaData)method.Invoke(exampleMetaData, new object[] { exampleMetaData });
-            Assert.Equal(exampleMetaData.Name, metaData.Name);
-            Assert.Equal(exampleMetaData.SqlDbType, metaData.SqlDbType);
-            Assert.Equal(SqlMetaData.Max, metaData.MaxLength);
-            Assert.Equal(0, metaData.Precision);
-            Assert.Equal(0, metaData.Scale);
-            Assert.Equal(exampleMetaData.LocaleId, metaData.LocaleId);
-            Assert.Equal(exampleMetaData.CompareOptions, metaData.CompareOptions);
-            Assert.Null(metaData.XmlSchemaCollectionDatabase);
-            Assert.Null(metaData.XmlSchemaCollectionName);
-            Assert.Null(metaData.XmlSchemaCollectionOwningSchema);
-            // PartialLength is an interal property which is why reflection is required.
-            PropertyInfo isPartialLengthProp = sqlMetaDataType.GetProperty("IsPartialLength", BindingFlags.NonPublic | BindingFlags.Instance);
-            Assert.True((bool)isPartialLengthProp.GetValue(metaData));
-            Assert.Equal(exampleMetaData.Type, metaData.Type);
-        }
-
         [Theory]
         [MemberData(
             nameof(SqlMetaDataInferredValues),
@@ -723,18 +668,6 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
-        public void IsPartialLengthTrueGetPartialLengthMetaData()
-        {
-            Type sqlMetaDataType = typeof(SqlMetaData);
-            SqlMetaData exampleMetaData = new SqlMetaData("col2", SqlDbType.Int);
-            FieldInfo isPartialLengthField = sqlMetaDataType.GetField("_partialLength", BindingFlags.NonPublic | BindingFlags.Instance);
-            isPartialLengthField.SetValue(exampleMetaData, true);
-            MethodInfo method = sqlMetaDataType.GetMethod("GetPartialLengthMetaData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            SqlMetaData metaData =  (SqlMetaData)method.Invoke(exampleMetaData, new object[] { exampleMetaData });
-            Assert.Equal(exampleMetaData, metaData);
-        }
-
-        [Fact]
         public void NameDbTypeDatabaseOwningSchemaObjectNameConstructor()
         {
             SqlMetaData metaData = new SqlMetaData("col2", SqlDbType.Xml, "NorthWindDb", "schema", "name");
@@ -744,16 +677,6 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal("schema", metaData.XmlSchemaCollectionOwningSchema);
             Assert.Equal("name", metaData.XmlSchemaCollectionName);
             Assert.Equal("xml", metaData.TypeName);
-        }
-
-        [Fact]
-        public void NonVarTypeGetPartialLengthMetaData()
-        {
-            Type sqlMetaDataType = typeof(SqlMetaData);
-            SqlMetaData exampleMetaData = new SqlMetaData("col2", SqlDbType.Int);
-            MethodInfo method = sqlMetaDataType.GetMethod("GetPartialLengthMetaData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            SqlMetaData metaData = (SqlMetaData)method.Invoke(exampleMetaData, new object[] { exampleMetaData });
-            Assert.Equal(exampleMetaData, metaData);
         }
 
         [Fact]

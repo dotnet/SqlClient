@@ -16,6 +16,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Identity.Client;
@@ -208,11 +209,17 @@ namespace Microsoft.Data.SqlClient
         // Json Support Flag
         internal bool IsJsonSupportEnabled = false;
 
+        // Vector Support Flag
+        internal bool IsVectorSupportEnabled = false;
+
+        // User Agent Flag
+        internal bool IsUserAgentEnabled = true;
+
         // TCE flags
         internal byte _tceVersionSupported;
 
         // The pool that this connection is associated with, if at all it is.
-        private DbConnectionPool _dbConnectionPool;
+        private IDbConnectionPool _dbConnectionPool;
 
         // This is used to preserve the authentication context object if we decide to cache it for subsequent connections in the same pool.
         // This will finally end up in _dbConnectionPool.AuthenticationContexts, but only after 1 successful login to SQL Server using this context.
@@ -457,7 +464,7 @@ namespace Microsoft.Data.SqlClient
                 DbConnectionPoolIdentity identity,
                 SqlConnectionString connectionOptions,
                 SqlCredential credential,
-                object providerInfo,
+                DbConnectionPoolGroupProviderInfo providerInfo,
                 string newPassword,
                 SecureString newSecurePassword,
                 bool redirectedUserInstance,
@@ -465,10 +472,10 @@ namespace Microsoft.Data.SqlClient
                 SessionData reconnectSessionData = null,
                 bool applyTransientFaultHandling = false,
                 string accessToken = null,
-                DbConnectionPool pool = null,
-                Func<SqlAuthenticationParameters, CancellationToken,
-                Task<SqlAuthenticationToken>> accessTokenCallback = null,
-                SspiContextProvider sspiContextProvider = null) : base(connectionOptions)
+                IDbConnectionPool pool = null,
+                Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null,
+                SspiContextProvider sspiContextProvider = null) 
+            : base(connectionOptions)
         {
 #if DEBUG
             if (reconnectSessionData != null)
@@ -513,11 +520,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (connectionOptions.UserInstance && InOutOfProcHelper.InProc)
-            {
-                throw SQL.UserInstanceNotAvailableInProc();
-            }
-
             if (accessToken != null)
             {
                 _accessTokenInBytes = System.Text.Encoding.Unicode.GetBytes(accessToken);
@@ -531,9 +533,7 @@ namespace Microsoft.Data.SqlClient
             _identity = identity;
             Debug.Assert(newSecurePassword != null || newPassword != null, "cannot have both new secure change password and string based change password to be null");
             Debug.Assert(credential == null || (string.IsNullOrEmpty(connectionOptions.UserID) && string.IsNullOrEmpty(connectionOptions.Password)), "cannot mix the new secure password system and the connection string based password");
-
             Debug.Assert(credential == null || !connectionOptions.IntegratedSecurity, "Cannot use SqlCredential and Integrated Security");
-            Debug.Assert(credential == null || !connectionOptions.ContextConnection, "Cannot use SqlCredential with context connection");
 
             _poolGroupProviderInfo = (SqlConnectionPoolGroupProviderInfo)providerInfo;
             _fResetConnection = connectionOptions.ConnectionReset;
@@ -697,7 +697,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal protected override bool IsNonPoolableTransactionRoot
+        protected internal override bool IsNonPoolableTransactionRoot
         {
             get
             {
@@ -1439,6 +1439,11 @@ namespace Microsoft.Data.SqlClient
             // The SQLDNSCaching and JSON features are implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
+            requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
+
+        #if DEBUG    
+            requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
+        #endif
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
@@ -1803,7 +1808,7 @@ namespace Microsoft.Data.SqlClient
 
             // Check if the user had explicitly specified the TNIR option in the connection string or the connection string builder.
             // If the user has specified the option in the connection string explicitly, then we shouldn't disable TNIR.
-            bool isTnirExplicitlySpecifiedInConnectionOptions = connectionOptions.Parsetable.ContainsKey(SqlConnectionString.KEY.TransparentNetworkIPResolution);
+            bool isTnirExplicitlySpecifiedInConnectionOptions = connectionOptions.Parsetable.ContainsKey(DbConnectionStringKeywords.TransparentNetworkIpResolution);
 
             return isTnirExplicitlySpecifiedInConnectionOptions ? false : (isAzureEndPoint || isFedAuthEnabled);
         }
@@ -3048,6 +3053,24 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
                         IsJsonSupportEnabled = true;
+                        break;
+                    }
+
+                case TdsEnums.FEATUREEXT_VECTORSUPPORT:
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for VECTORSUPPORT", ObjectID);
+                        if (data.Length != 1)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for VECTORSUPPORT", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+                        byte vectorSupportVersion = data[0];
+                        if (vectorSupportVersion == 0 || vectorSupportVersion > TdsEnums.MAX_SUPPORTED_VECTOR_VERSION)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number {1} for VECTORSUPPORT, Max supported version is {2}", ObjectID, vectorSupportVersion, TdsEnums.MAX_SUPPORTED_VECTOR_VERSION);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+                        IsVectorSupportEnabled = true;
                         break;
                     }
 

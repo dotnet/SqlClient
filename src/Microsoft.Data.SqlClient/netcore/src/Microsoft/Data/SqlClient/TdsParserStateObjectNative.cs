@@ -43,22 +43,33 @@ namespace Microsoft.Data.SqlClient
         internal SNIPacket _sniAsyncAttnPacket = null;                // Packet to use to send Attn
         private readonly WritePacketCache _writePacketCache = new WritePacketCache(); // Store write packets that are ready to be re-used
 
-        public TdsParserStateObjectNative(TdsParser parser) : base(parser) { }
-
         private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
 
-        private Dictionary<IntPtr, SNIPacket> _pendingWritePackets = new Dictionary<IntPtr, SNIPacket>(); // Stores write packets that have been sent to SNI, but have not yet finished writing (i.e. we are waiting for SNI's callback)
+        private readonly Dictionary<IntPtr, SNIPacket> _pendingWritePackets = new Dictionary<IntPtr, SNIPacket>(); // Stores write packets that have been sent to SNI, but have not yet finished writing (i.e. we are waiting for SNI's callback)
 
-        internal TdsParserStateObjectNative(TdsParser parser, TdsParserStateObject physicalConnection, bool async) :
-            base(parser, physicalConnection, async)
+        internal TdsParserStateObjectNative(TdsParser parser, TdsParserStateObject physicalConnection, bool async)
+            : base(parser, physicalConnection, async)
         {
         }
+
+        public TdsParserStateObjectNative(TdsParser parser)
+            : base(parser)
+        {
+        }
+
+        ////////////////
+        // Properties //
+        ////////////////
 
         internal SNIHandle Handle => _sessionHandle;
 
         internal override uint Status => _sessionHandle != null ? _sessionHandle.Status : TdsEnums.SNI_UNINITIALIZED;
 
         internal override SessionHandle SessionHandle => SessionHandle.FromNativeHandle(_sessionHandle);
+
+        protected override PacketHandle EmptyReadPacket => PacketHandle.FromNativePointer(default);
+
+        internal override Guid? SessionId => default;
 
         protected override void CreateSessionHandle(TdsParserStateObject physicalConnection, bool async)
         {
@@ -256,22 +267,6 @@ namespace Microsoft.Data.SqlClient
 
         internal override bool IsFailedHandle() => _sessionHandle.Status != TdsEnums.SNI_SUCCESS;
 
-        internal override PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error)
-        {
-            SNIHandle handle = Handle;
-            if (handle == null)
-            {
-                throw ADP.ClosedConnectionError();
-            }
-            IntPtr readPacketPtr = IntPtr.Zero;
-            error = SniNativeWrapper.SniReadSyncOverAsync(handle, ref readPacketPtr, GetTimeoutRemaining());
-            return PacketHandle.FromNativePointer(readPacketPtr);
-        }
-
-        protected override PacketHandle EmptyReadPacket => PacketHandle.FromNativePointer(default);
-
-        internal override Guid? SessionId => default;
-
         internal override bool IsPacketEmpty(PacketHandle readPacket)
         {
             Debug.Assert(readPacket.Type == PacketHandle.NativePointerType || readPacket.Type == 0, "unexpected packet type when requiring NativePointer");
@@ -295,6 +290,14 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(handle.Type == SessionHandle.NativeHandleType, "unexpected handle type when requiring NativePointer");
             IntPtr readPacketPtr = IntPtr.Zero;
             error = SniNativeWrapper.SniReadAsync(handle.NativeHandle, ref readPacketPtr);
+            return PacketHandle.FromNativePointer(readPacketPtr);
+        }
+
+        internal override PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error)
+        {
+            SNIHandle handle = Handle ?? throw ADP.ClosedConnectionError();
+            IntPtr readPacketPtr = IntPtr.Zero;
+            error = SniNativeWrapper.SniReadSyncOverAsync(handle, ref readPacketPtr, GetTimeoutRemaining());
             return PacketHandle.FromNativePointer(readPacketPtr);
         }
 
@@ -332,11 +335,9 @@ namespace Microsoft.Data.SqlClient
         internal override bool IsValidPacket(PacketHandle packetPointer)
         {
             Debug.Assert(packetPointer.Type == PacketHandle.NativePointerType || packetPointer.Type == PacketHandle.NativePacketType, "unexpected packet type when requiring NativePointer");
-            return (
-                (packetPointer.Type == PacketHandle.NativePointerType && packetPointer.NativePointer != IntPtr.Zero)
-                ||
-                (packetPointer.Type == PacketHandle.NativePacketType && packetPointer.NativePacket != null)
-            );
+
+            return (packetPointer.Type == PacketHandle.NativePointerType && packetPointer.NativePointer != IntPtr.Zero)
+                || (packetPointer.Type == PacketHandle.NativePacketType && packetPointer.NativePacket != null);
         }
 
         internal override PacketHandle GetResetWritePacket(int dataSize)
@@ -444,8 +445,16 @@ namespace Microsoft.Data.SqlClient
         {
             lock (_writePacketLockObject)
             {
-                _writePacketCache.Dispose();
-                // Do not set _writePacketCache to null, just in case a WriteAsyncCallback completes after this point
+#if NETFRAMEWORK
+                RuntimeHelpers.PrepareConstrainedRegions();
+#endif
+                try
+                { }
+                finally
+                {
+                    _writePacketCache.Dispose();
+                    // Do not set _writePacketCache to null, just in case a WriteAsyncCallback completes after this point
+                }
             }
         }
 

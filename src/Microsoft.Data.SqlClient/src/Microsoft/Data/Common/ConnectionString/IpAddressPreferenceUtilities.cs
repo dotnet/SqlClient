@@ -34,7 +34,7 @@ namespace Microsoft.Data.Common.ConnectionString
         {
             if (!s_preferenceNames.TryGetValue(value, out result))
             {
-                result = DbConnectionStringDefaults.IPAddressPreference;
+                result = DbConnectionStringDefaults.IpAddressPreference;
                 return false;
             }
             return true;
@@ -55,7 +55,7 @@ namespace Microsoft.Data.Common.ConnectionString
         {
             if (value is null)
             {
-                return DbConnectionStringDefaults.IPAddressPreference;  // IPv4First
+                return DbConnectionStringDefaults.IpAddressPreference;  // IPv4First
             }
 
             if (value is string sValue)

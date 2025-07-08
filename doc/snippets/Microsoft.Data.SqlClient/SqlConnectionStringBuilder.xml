@@ -548,8 +548,8 @@ This property corresponds to the "Connect Retry Count" key within the <xref:Micr
           You can also connect to a LocalDB database as follows: <c>server=(localdb)\\myInstance</c> . For more information about LocalDB, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/sqlclient-support-localdb">SqlClient Support for LocalDB</see> . <b>Data Source</b> must use the TCP format or the Named Pipes format. TCP format is as follows:
         </para>
         <list type="bullet">
-          <item><c>tcp:\&lt;host name&gt;\\&lt;instance name&gt;</c></item>
-          <item><c>tcp:\&lt;host name&gt;,\&lt;TCP/IP port number&gt;</c></item>
+          <item><description><c>tcp:\&lt;host name&gt;\\&lt;instance name&gt;</c></description></item>
+          <item><description><c>tcp:\&lt;host name&gt;,\&lt;TCP/IP port number&gt;</c></description></item>
         </list>
         <para>
           The TCP format must start with the prefix "tcp:" and is followed by the database instance, as specified by a host name and an instance name. This format is not applicable when connecting to Azure SQL Database. TCP is automatically selected for connections to Azure SQL Database when no protocol is specified.
@@ -558,9 +558,9 @@ This property corresponds to the "Connect Retry Count" key within the <xref:Micr
           The host name MUST be specified in one of the following ways:   
         </para>
         <list type="bullet">
-          <item>NetBIOSName</item>
-          <item>IPv4Address</item>
-          <item>IPv6Address</item>
+          <item><description>NetBIOSName</description></item>
+          <item><description>IPv4Address</description></item>
+          <item><description>IPv6Address</description></item>
         </list>
         <para>
           The instance name is used to resolve to a particular TCP/IP port number on which a database instance is hosted. Alternatively, specifying a TCP/IP port number directly is also allowed. If both instance name and port number are not present, the default database instance is used.
@@ -569,7 +569,7 @@ This property corresponds to the "Connect Retry Count" key within the <xref:Micr
           The Named Pipes format is as follows: -   
         </para>
         <list type="bullet">
-          <item><c>np:\\\\&lt;host name&gt;\pipe\\&lt;pipe name&gt;</c></item>
+          <item><description><c>np:\\\\&lt;host name&gt;\pipe\\&lt;pipe name&gt;</c></description></item>
         </list>
         <para>
           The Named Pipes format MUST start with the prefix "np:" and is followed by a named pipe name.
@@ -578,9 +578,9 @@ This property corresponds to the "Connect Retry Count" key within the <xref:Micr
           The host name MUST be specified in one of the following ways:
         </para>
         <list type="bullet">
-          <item>NetBIOSName</item>
-          <item>IPv4Address</item>
-          <item>IPv6Address</item>
+          <item><description>NetBIOSName</description></item>
+          <item><description>IPv4Address</description></item>
+          <item><description>IPv6Address</description></item>
         </list>
         <para>
           The pipe name is used to identify the database instance to which the .NET application will connect.
@@ -1070,13 +1070,13 @@ The following example converts an existing connection string from using SQL Serv
           This property corresponds to the "Network Library", "network", and "net" keys within the connection string. Supported values for this property include:
         </para>
         <list type="bullet">
-          <item>dbnmpntw (Named Pipes)</item>
-          <item>dbmsrpcn (Multiprotocol)</item>
-          <item>dbmsadsn (AppleTalk)</item>
-          <item>dbmsgnet (VIA)</item>
-          <item>dbmslpcn (Shared Memory)</item>
-          <item>dbmsspxn (IPX/SPX)</item>
-          <item>dbmssocn (TCP/IP)</item>
+          <item><description>dbnmpntw (Named Pipes)</description></item>
+          <item><description>dbmsrpcn (Multiprotocol)</description></item>
+          <item><description>dbmsadsn (AppleTalk)</description></item>
+          <item><description>dbmsgnet (VIA)</description></item>
+          <item><description>dbmslpcn (Shared Memory)</description></item>
+          <item><description>dbmsspxn (IPX/SPX)</description></item>
+          <item><description>dbmssocn (TCP/IP)</description></item>
         </list>
         <para>
           The corresponding network DLL must be installed on the system to which you connect. If you do not specify a network and you use a local server (for example, "." or "(local)"), Shared Memory is used.
@@ -1404,19 +1404,21 @@ This property corresponds to the "ServerSPN" and "Server SPN" keys within the co
         </para>
         <list type="bullet">
           <item>
-            Connecting to Azure SQL Database where the data source ends with:
-            <list type="bullet">
-              <item>.database.chinacloudapi.cn</item>
-              <item>.database.usgovcloudapi.net</item>
-              <item>.database.cloudapi.de</item>
-              <item>.database.windows.net</item>
-              <item>.database.fabric.microsoft.com</item>
-            </list>
+            <description>
+              Connecting to Azure SQL Database where the data source ends with:
+              <list type="bullet">
+                <item><description>.database.chinacloudapi.cn</description></item>
+                <item><description>.database.usgovcloudapi.net</description></item>
+                <item><description>.database.cloudapi.de</description></item>
+                <item><description>.database.windows.net</description></item>
+                <item><description>.database.fabric.microsoft.com</description></item>
+              </list>
+            </description>
           </item>
-          <item>
+          <item><description>
             <c>Authentication</c> is 'Active Directory Password' or 'Active Directory Integrated'
-          </item>
-          <item>Otherwise it defaults to <c>true</c>.</item>
+          </description></item>
+          <item><description>Otherwise it defaults to <c>true</c>.</description></item>
         </list>
       </remarks>
     </TransparentNetworkIPResolution>

@@ -13,6 +13,7 @@ using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Principal;
@@ -38,8 +39,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string AADPasswordConnectionString = null;
         public static readonly string AADServicePrincipalId = null;
         public static readonly string AADServicePrincipalSecret = null;
-        public static readonly string AKVBaseUrl = null;
-        public static readonly string AKVUrl = null;
         public static readonly string AKVOriginalUrl = null;
         public static readonly string AKVTenantId = null;
         public static readonly string LocalDbAppName = null;
@@ -72,7 +71,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static string AADUserIdentityAccessToken = null;
         public const string ApplicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
         public const string UdtTestDbName = "UdtTestDb";
-        public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
         public const string EventSourcePrefix = "Microsoft.Data.SqlClient";
         public const string MDSEventSourceName = "Microsoft.Data.SqlClient.EventSource";
         public const string AKVEventSourceName = "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.EventSource";
@@ -94,8 +92,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //SQL Server EngineEdition
         private static string s_sqlServerEngineEdition;
 
-        // JSON Coloumn type
+        // JSON Column type
         public static readonly bool IsJsonSupported = false;
+
+        // VECTOR column type
+        public static readonly bool IsVectorSupported = false;
 
         // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
@@ -199,8 +200,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (!string.IsNullOrEmpty(AKVOriginalUrl) && Uri.TryCreate(AKVOriginalUrl, UriKind.Absolute, out AKVBaseUri))
             {
                 AKVBaseUri = new Uri(AKVBaseUri, "/");
-                AKVBaseUrl = AKVBaseUri.AbsoluteUri;
-                AKVUrl = (new Uri(AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
             }
 
             AKVTenantId = c.AzureKeyVaultTenantId;
@@ -472,7 +471,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/17858869-support-always-encrypted-in-sql-data-warehouse
         public static bool IsAKVSetupAvailable()
         {
-            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(UserManagedIdentityClientId) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
+            return AKVBaseUri != null && !string.IsNullOrEmpty(UserManagedIdentityClientId) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
         }
 
         private static readonly DefaultAzureCredential s_defaultCredential = new(new DefaultAzureCredentialOptions { ManagedIdentityClientId = UserManagedIdentityClientId });
@@ -1027,7 +1026,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public class MDSEventListener : BaseEventListener
         {
+            private static Type s_activityCorrelatorType = Type.GetType("Microsoft.Data.Common.ActivityCorrelator, Microsoft.Data.SqlClient");
+            private static PropertyInfo s_currentActivityProperty = s_activityCorrelatorType.GetProperty("Current", BindingFlags.NonPublic | BindingFlags.Static);
+
+            public readonly HashSet<string> ActivityIDs = new();
+
             public override string Name => MDSEventSourceName;
+
+            protected override void OnMatchingEventWritten(EventWrittenEventArgs eventData)
+            {
+                object currentActivity = s_currentActivityProperty.GetValue(null);
+                string activityId = GetActivityId(currentActivity);
+
+                ActivityIDs.Add(activityId);
+            }
+
+            private static string GetActivityId(object currentActivity)
+            {
+                Type activityIdType = currentActivity.GetType();
+                FieldInfo idField = activityIdType.GetField("Id", BindingFlags.NonPublic | BindingFlags.Instance);
+                FieldInfo sequenceField = activityIdType.GetField("Sequence", BindingFlags.NonPublic | BindingFlags.Instance);
+
+                Guid id = (Guid)idField.GetValue(currentActivity);
+                uint sequence = (uint)sequenceField.GetValue(currentActivity);
+
+                // This activity ID format matches the one used in the XEvents trace
+                return string.Format("{0}-{1}", id, sequence).ToUpper();
+            }
         }
 
         public class BaseEventListener : EventListener
@@ -1056,6 +1081,107 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     IDs.Add(eventData.EventId);
                     EventData.Add(eventData);
+                    OnMatchingEventWritten(eventData);
+                }
+            }
+
+            protected virtual void OnMatchingEventWritten(EventWrittenEventArgs eventData)
+            {
+            }
+        }
+
+        public readonly ref struct XEventScope // : IDisposable
+        {
+            private const int MaxXEventsLatencyS = 5;
+
+            private readonly SqlConnection _connection;
+            private readonly bool _useDatabaseSession;
+
+            public string SessionName { get; }
+
+            public XEventScope(SqlConnection connection, string eventSpecification, string targetSpecification)
+            {
+                SessionName = GenerateRandomCharacters("Session");
+                _connection = connection;
+                // SQL Azure only supports database-scoped XEvent sessions
+                _useDatabaseSession = GetSqlServerProperty(connection.ConnectionString, "EngineEdition") == "5";
+
+                SetupXEvent(eventSpecification, targetSpecification);
+            }
+
+            public void Dispose()
+                => DropXEvent();
+
+            public System.Xml.XmlDocument GetEvents()
+            {
+                string xEventQuery = _useDatabaseSession
+                    ? $@"SELECT xet.target_data
+                        FROM sys.dm_xe_database_session_targets AS xet
+                        INNER JOIN sys.dm_xe_database_sessions AS xe
+                           ON (xe.address = xet.event_session_address)
+                        WHERE xe.name = '{SessionName}'"
+                    : $@"SELECT xet.target_data
+                        FROM sys.dm_xe_session_targets AS xet
+                        INNER JOIN sys.dm_xe_sessions AS xe
+                           ON (xe.address = xet.event_session_address)
+                        WHERE xe.name = '{SessionName}'";
+
+                using (SqlCommand command = new SqlCommand(xEventQuery, _connection))
+                {
+                    Thread.Sleep(MaxXEventsLatencyS * 1000);
+
+                    if (_connection.State == ConnectionState.Closed)
+                    {
+                        _connection.Open();
+                    }
+
+                    string targetData = command.ExecuteScalar() as string;
+                    System.Xml.XmlDocument xmlDocument = new System.Xml.XmlDocument();
+
+                    xmlDocument.LoadXml(targetData);
+                    return xmlDocument;
+                }
+            }
+
+            private void SetupXEvent(string eventSpecification, string targetSpecification)
+            {
+                string sessionLocation = _useDatabaseSession ? "DATABASE" : "SERVER";
+                string xEventCreateAndStartCommandText = $@"CREATE EVENT SESSION [{SessionName}] ON {sessionLocation}
+                        {eventSpecification}
+                        {targetSpecification}
+                        WITH (
+                            MAX_MEMORY=16 MB,
+                            EVENT_RETENTION_MODE=ALLOW_SINGLE_EVENT_LOSS,
+                            MAX_DISPATCH_LATENCY={MaxXEventsLatencyS} SECONDS,
+                            MAX_EVENT_SIZE=0 KB,
+                            MEMORY_PARTITION_MODE=NONE,
+                            TRACK_CAUSALITY=ON,
+                            STARTUP_STATE=OFF)
+                            
+                        ALTER EVENT SESSION [{SessionName}] ON {sessionLocation} STATE = START ";
+
+                using (SqlCommand createXEventSession = new SqlCommand(xEventCreateAndStartCommandText, _connection))
+                {
+                    if (_connection.State == ConnectionState.Closed)
+                    {
+                        _connection.Open();
+                    }
+
+                    createXEventSession.ExecuteNonQuery();
+                }
+            }
+
+            private void DropXEvent()
+            {
+                string dropXEventSessionCommand = _useDatabaseSession
+                    ? $"IF EXISTS (select * from sys.dm_xe_database_sessions where name ='{SessionName}')" +
+                        $" DROP EVENT SESSION [{SessionName}] ON DATABASE"
+                    : $"IF EXISTS (select * from sys.dm_xe_sessions where name ='{SessionName}')" +
+                        $" DROP EVENT SESSION [{SessionName}] ON SERVER";
+
+                using (SqlCommand command = new SqlCommand(dropXEventSessionCommand, _connection))
+                {
+                    command.ExecuteNonQuery();
                 }
             }
         }
