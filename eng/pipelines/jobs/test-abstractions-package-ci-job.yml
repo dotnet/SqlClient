@@ -1,0 +1,174 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This job builds the Abstractions package and runs its tests for a set of .NET
+# runtimes.
+#
+# This template defines a job named 'test_abstractions_package_job_<suffix>'
+# that can be depended on by downstream jobs.
+
+parameters:
+
+  # The type of build to test (Release or Debug)
+  - name: buildConfiguration
+    type: string
+    values:
+    - Release
+    - Debug
+
+  # The prefix to prepend to the job's display name:
+  #
+  #   [<prefix>] Run Stress Tests
+  #
+  - name: displayNamePrefix
+    type: string
+
+  # The suffix to append to the job name.
+  - name: jobNameSuffix
+    type: string
+
+  # The list of .NET Framework runtimes to test against.
+  - name: netFrameworkRuntimes
+    type: object
+    default: []
+
+  # The list of .NET runtimes to test against.
+  - name: netRuntimes
+    type: object
+    default: []
+
+  # The name of the Azure Pipelines pool to use.
+  - name: poolName
+    type: string
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: verbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+  # The pool VM image to use.
+  - name: vmImage
+    type: string
+
+jobs:
+
+  - job: test_abstractions_package_job_${{ parameters.jobNameSuffix }}
+    displayName: '[${{ parameters.displayNamePrefix }}] Test Abstractions Package'
+    pool:
+      name: ${{ parameters.poolName }}
+
+      # Images provided by Azure Pipelines must be selected using 'vmImage'.
+      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
+        vmImage: ${{ parameters.vmImage }}
+      # Images provided by 1ES must be selected using a demand.
+      ${{ else }}:
+        demands:
+          - imageOverride -equals ${{ parameters.vmImage }}
+
+    variables:
+
+      # The Abstractions solution file to use for all dotnet CLI commands.
+      - name: solution
+        value: src/Microsoft.Data.SqlClient.Extensions/Abstractions/Abstractions.slnx
+
+      # dotnet CLI arguments common to all commands.
+      - name: commonArguments
+        value: >-
+          --verbosity ${{ parameters.verbosity }}
+
+      # dotnet CLI arguments for build/test/pack commands
+      - name: buildArguments
+        value: >-
+          $(commonArguments)
+          --configuration ${{ parameters.buildConfiguration }}
+
+      # Explicitly unset the $PLATFORM environment variable that is set by the
+      # 'ADO Build properties' Library in the ADO SqlClientDrivers public project.
+      # This is defined with a non-standard Platform of 'AnyCPU', and will fail
+      # the builds if left defined.  The stress tests solution does not require
+      # any specific Platform, and so its solution file doesn't support any
+      # non-standard platforms.
+      #
+      # Note that Azure Pipelines will inject this variable as PLATFORM into the
+      # environment of all tasks in this job.
+      #
+      # See:
+      #   https://learn.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&tabs=yaml%2Cbatch
+      #
+      - name: Platform
+        value: ''
+
+      # Do the same for $CONFIGURATION since we explicitly set it using our
+      # 'buildConfiguration' parameter, and we don't want the environment to
+      # override us.
+      - name: Configuration
+        value: ''
+
+    steps:
+
+      # Install the .NET 9.0 SDK.
+      - task: UseDotNet@2
+        displayName: Install .NET 9.0 SDK
+        inputs:
+          packageType: sdk
+          version: 9.x
+
+      # Install the .NET 8.0 runtime.
+      - task: UseDotNet@2
+        displayName: Install .NET 8.0 Runtime
+        inputs:
+          packageType: runtime
+          version: 8.x
+
+      # The Windows agent images include a suitable .NET Framework runtime, so
+      # we don't have to install one explicitly.
+
+      # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't
+      # support all of our argument combinations for the different build steps.
+
+      # Restore the solution.
+      - task: DotNetCoreCLI@2
+        displayName: Restore Solution
+        inputs:
+          command: custom
+          custom: restore
+          projects: $(solution)
+          arguments: $(commonArguments)
+
+      # Build the solution.
+      - task: DotNetCoreCLI@2
+        displayName: Build Solution
+        inputs:
+          command: custom
+          custom: build
+          projects: $(solution)
+          arguments: $(buildArguments) --no-restore
+
+      # Run the tests for each .NET runtime.
+      - ${{ each runtime in parameters.netRuntimes }}:
+        - task: DotNetCoreCLI@2
+          displayName: Test [${{ runtime }}]
+          inputs:
+            command: custom
+            custom: test
+            projects: $(solution)
+            arguments: $(buildArguments) --no-build -f ${{ runtime }}
+
+      # Run the tests for each .NET Framework runtime.
+      - ${{ each runtime in parameters.netFrameworkRuntimes }}:
+        - task: DotNetCoreCLI@2
+          displayName: Test [${{ runtime }}]
+          inputs:
+            command: custom
+            custom: test
+            projects: $(solution)
+            arguments: $(buildArguments) --no-build -f ${{ runtime }}

@@ -1,0 +1,124 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This stage builds the Abstractions package, runs tests, and publishes the
+# resulting NuGet packages as pipeline artifacts.
+#
+# The NuGet packages have the following properties:
+#
+#   Name:     Microsoft.Data.SqlClient.Extensions.Abstractions Version:
+#   <packageVersion>.<buildNumber>
+#
+#   Where <packageVersion> and <buildNumber> are the values of the
+#   'packageVersion' and 'buildNumber' parameters, respectively.
+#
+# The following NuGet packages are published:
+#
+#   Microsoft.Data.SqlClient.Extensions.Abstractions.<version>.nupkg
+#   Microsoft.Data.SqlClient.Extensions.Abstractions.<version>.snupkg (symbols)
+#
+# The packages are published to pipeline artifacts with the name specified by
+# the 'artifactName' parameter.
+#
+# This template defines a stage named 'build_abstractions_package_stage' that
+# can be depended on by downstream stages.
+
+parameters:
+
+  # The name of the pipeline artifact to publish.
+  - name: artifactName
+    type: string
+    default: Abstractions.Artifact
+
+  # The type of build to produce (Release or Debug)
+  - name: buildConfiguration
+    type: string
+    default: Release
+    values:
+    - Release
+    - Debug
+
+  # The build number of the pipeline.
+  - name: buildNumber
+    type: string
+    default: $(Build.BuildNumber)
+
+  # The version (Major.Minor.Patch) to apply to the package.
+  - name: packageVersion
+    type: string
+    default: ''
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: verbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+stages:
+
+  - stage: build_abstractions_package_stage
+    displayName: Build Abstractions Package
+
+    jobs:
+
+      # ------------------------------------------------------------------------
+      # Build and test on Linux.
+
+      - template: ../jobs/test-abstractions-package-ci-job.yml@self
+        parameters:
+          jobNameSuffix: linux
+          displayNamePrefix: Linux
+          poolName: Azure Pipelines
+          vmImage: ubuntu-latest
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          netRuntimes: [net8.0, net9.0]
+          netFrameworkRuntimes: []
+
+      # ------------------------------------------------------------------------
+      # Build and test on Windows
+
+      - template: ../jobs/test-abstractions-package-ci-job.yml@self
+        parameters:
+          jobNameSuffix: windows
+          displayNamePrefix: Win
+          poolName: Azure Pipelines
+          vmImage: windows-latest
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          netRuntimes: [net8.0, net9.0]
+          netFrameworkRuntimes: [net462, net47, net471, net472, net48, net481]
+
+      # ------------------------------------------------------------------------
+      # Build and test on macOS.
+
+      - template: ../jobs/test-abstractions-package-ci-job.yml
+        parameters:
+          jobNameSuffix: macos
+          displayNamePrefix: macOS
+          poolName: Azure Pipelines
+          vmImage: macos-latest
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          netRuntimes: [net8.0, net9.0]
+          netFrameworkRuntimes: []
+
+      # ------------------------------------------------------------------------
+      # Create and publish the NuGet package.
+
+      - template: ../jobs/pack-abstractions-package-ci-job.yml@self
+        parameters:
+          artifactName: ${{ parameters.artifactName }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          verbosity: ${{ parameters.verbosity }}
+          dependsOn:
+            # We depend on all of the test jobs to ensure the tests pass before
+            # producing the NuGet package.
+            - test_abstractions_package_job_linux
+            - test_abstractions_package_job_windows
+            - test_abstractions_package_job_macos

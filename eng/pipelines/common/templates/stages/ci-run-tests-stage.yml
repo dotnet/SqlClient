@@ -4,31 +4,43 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: debug
-    type: boolean
-    default: false
-
-  - name: testConfigurations
-    type: object
-
-  - name: dependsOn
+  - name: abstractionsArtifactName
     type: string
-    default: ''
 
-  - name: buildType
-    displayName: 'Build Type'
+  - name: abstractionsPackageVersion
+    type: string
+
+  - name: referenceType
     default: Project
     values:
       - Project
       - Package
 
-  - name: prebuildSteps
-    type: stepList
+  - name: debug
+    type: boolean
+    default: false
+
+  - name: dependsOn
+    type: object
     default: []
+
+  - name: mdsArtifactName
+    type: string
+    default: MDS.Artifact
+
+  - name: mdsPackageVersion
+    type: string
   
   - name: postTestJobs
     type: jobList
     default: []
+
+  - name: prebuildSteps
+    type: stepList
+    default: []
+
+  - name: testConfigurations
+    type: object
 
   # The timeout, in minutes, for each test job.
   - name: testsTimeout
@@ -39,10 +51,7 @@ stages:
 - ${{ each config in parameters.testConfigurations }}:
   - ${{ each image in config.value.images }}:
     - stage: ${{ image.key }}
-      ${{ if ne(parameters.dependsOn, '') }}:
-        dependsOn: ${{ parameters.dependsOn }}
-      ${{ else }}:
-        dependsOn: []
+      dependsOn: ${{ parameters.dependsOn }}
       jobs:
       - ${{ each targetFramework in config.value.TargetFrameworks }}:
         - ${{ each platform in config.value.buildPlatforms }}:
@@ -51,13 +60,17 @@ stages:
               - template: ../jobs/ci-run-tests-job.yml@self
                 parameters:
                   debug: ${{ parameters.debug }}
-                  buildType: ${{ parameters.buildType }}
+                  referenceType: ${{ parameters.referenceType }}
                   timeout: ${{ parameters.testsTimeout }}
                   poolName: ${{ config.value.pool }}
                   hostedPool: ${{ eq(config.value.hostedPool, true) }}
                   image: ${{ image.value }}
                   jobDisplayName: ${{ format('{0}_{1}_{2}', replace(targetFramework, '.', '_'), platform, testSet) }}
                   configProperties: ${{ config.value.configProperties }}
+                  abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
+                  abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
+                  mdsArtifactName: ${{ parameters.mdsArtifactName }}
+                  mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
                   prebuildSteps: ${{ parameters.prebuildSteps }}
                   targetFramework: ${{ targetFramework }}
                   netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
@@ -77,7 +90,7 @@ stages:
                 - template: ../jobs/ci-run-tests-job.yml@self
                   parameters:
                     debug: ${{ parameters.debug }}
-                    buildType: ${{ parameters.buildType }}
+                    referenceType: ${{ parameters.referenceType }}
                     timeout: ${{ parameters.testsTimeout }}
                     poolName: ${{ config.value.pool }}
                     hostedPool: ${{ eq(config.value.hostedPool, true) }}
@@ -88,6 +101,10 @@ stages:
                       jobDisplayName: ${{ format('{0}_{1}_{2}_{3}', replace(targetFramework, '.', '_'), platform, 'NativeSNI', testSet) }}
                     configProperties: ${{ config.value.configProperties }}
                     useManagedSNI: ${{ useManagedSNI }}
+                    abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
+                    abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
+                    mdsArtifactName: ${{ parameters.mdsArtifactName }}
+                    mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
                     prebuildSteps: ${{ parameters.prebuildSteps }}                  
                     targetFramework: ${{ targetFramework }}
                     netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}

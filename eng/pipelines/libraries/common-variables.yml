@@ -40,9 +40,9 @@ variables:
   - name: Revision
     value: '1'
 
-  - name: NugetPackageVersion
+  - name: mdsPackageVersion
     value: $(Major).$(Minor).$(Patch)
-  - name: PreviewNugetPackageVersion
+  - name: previewMdsPackageVersion
     value: $(Major).$(Minor).$(Patch)$(Preview)$(Revision).$(Build.BuildNumber)
   - name: AssemblyFileVersion
     value: '$(Major).$(Minor)$(Patch).$(Build.BuildNumber)'

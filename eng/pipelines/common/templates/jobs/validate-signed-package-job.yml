@@ -54,18 +54,18 @@ jobs:
     value: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
   
   - name: ProductVersion    #MDS product version (MDS validation)
-    value: $(NugetPackageVersion)
+    value: $(mdsPackageVersion)
 
   - name: BuildType
     value: $[ stageDependencies.buildMDS.build_signed_package.outputs['GetBuildType.CDP_BUILD_TYPE_COPY'] ]
 
   - ${{ if parameters.isPreview }}:
     - name: extractedNugetPath
-      value: $(extractedNugetRootPath).$(PreviewNugetPackageVersion)
-    - name: NugetPackageVersion
-      value: $(PreviewNugetPackageVersion)
+      value: $(extractedNugetRootPath).$(previewMdsPackageVersion)
+    - name: mdsPackageVersion
+      value: $(previewMdsPackageVersion)
     - name: ProductVersion
-      value: $(PreviewNugetPackageVersion)
+      value: $(previewMdsPackageVersion)
 
   steps:
   - script: SET
@@ -75,7 +75,7 @@ jobs:
     displayName: 'Use NuGet'
 
   - powershell: |
-      #Sets Variables for AssemblyFileVersion, AssemblyVersion and NugetPackageVersion
+      # Sets the pipeline ASSEMBLY_VERSION variable.
       
       [Xml] $versionprops = Get-Content -Path ".\tools\props\Versions.props" 
       Write-Host $versionprops.Project.PropertyGroup[0].AssemblyFileVersion
@@ -336,7 +336,7 @@ jobs:
 
       [Xml] $versionprops = Get-Content -Path "tools/props/Versions.props" 
       $versionpropspath = "tools\props\Versions.props"
-      $versionprops.Project.PropertyGroup[$versionprops.Project.PropertyGroup.Count-1].TestMicrosoftDataSqlClientVersion ="$(NugetPackageVersion)"
+      $versionprops.Project.PropertyGroup[$versionprops.Project.PropertyGroup.Count-1].TestMicrosoftDataSqlClientVersion ="$(mdsPackageVersion)"
       Write-Host "Saving Test nuget version at $rootfolder\props ...." -ForegroundColor Green
       $versionprops.Save($versionpropspath)
 
