@@ -953,6 +953,7 @@
   <ItemGroup>
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI">
       <PrivateAssets>All</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

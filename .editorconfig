@@ -14,6 +14,9 @@ indent_size = 4
 [*.{json,jsonc}]
 indent_size = 2
 
+[*.{yml,yaml}]
+indent_size = 2
+
 # C# files
 [*.cs]
 # New line preferences
@@ -160,7 +163,7 @@ indent_size = 2
 indent_size = 2
 
 # Xml files
-[*.{xml,stylecop,resx,ruleset}]
+[*.{xml,stylecop,resx,ruleset,slnx}]
 indent_size = 2
 
 # Xml config files

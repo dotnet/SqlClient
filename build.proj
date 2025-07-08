@@ -51,6 +51,7 @@
 
   <!-- Populate all managed projects -->
   <ItemGroup>
+    <ExtensionsPackage Include="src/Microsoft.Data.SqlClient.Extensions/Extensions/Extensions.slnx" />
     <SqlServerLib Include="**/Microsoft.SqlServer.Server.csproj" />
     <NetFxDriver Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledWindows)' == 'true'" />
     <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
@@ -90,6 +91,32 @@
   <Target Name="BuildSqlServerPackage" DependsOnTargets="BuildSqlServerLibAnyOS;GenerateSqlServerPackage"/>
   <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildUnitTestsNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore"/>
   <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildUnitTestsNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx" Condition="$(IsEnabledWindows) == 'true'"/>
+
+  <!--
+    The Extensions package must be built and packed into the packages/
+    directory before the MDS projects can be restored.
+
+    We cannot make the driver targets depend on this one because of the way
+    MSBuild restores projects in "solution mode".  It will attempt to restore
+    all targets in the graph before building any of them, which fails because
+    MDS depends on the Extensions package being built and packed into packages/
+    first.
+  -->
+  <Target Name="BuildExtensionsPackage">
+    <PropertyGroup>
+      <!--
+        Omit the ExtensionsPackageVersion property entirely if it is empty.
+        Otherwise, the command-line property will override the default value,
+        even if empty.
+      -->
+      <BuildProperties Condition="'$(ExtensionsPackageVersion)' != ''">ExtensionsPackageVersion=$(ExtensionsPackageVersion)</BuildProperties>
+    </PropertyGroup>
+
+    <MSBuild
+      Projects="@(ExtensionsPackage)"
+      Targets="Restore;Build;Pack"
+      Properties="$(BuildProperties)" />
+  </Target>
 
   <Target Name="RestoreSqlServerLib">
     <MSBuild Projects="@(SqlServerLib)" Targets="restore" />
@@ -346,13 +373,17 @@
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
   </Target>
 
-  <!-- Clean -->
+  <!-- Clean all intermediate outputs. -->
   <Target Name="Clean">
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","artifacts", SearchOption.AllDirectories))' />
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","bin", SearchOption.AllDirectories))' />
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","obj", SearchOption.AllDirectories))' />
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","packages", SearchOption.AllDirectories))' />
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".",".nuget", SearchOption.AllDirectories))' />
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "artifacts", SearchOption.AllDirectories))' />
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "bin", SearchOption.AllDirectories))' />
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "obj", SearchOption.AllDirectories))' />
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", ".nuget", SearchOption.AllDirectories))' />
+  </Target>
+
+  <!-- Clean all outputs, including NuGet packages. -->
+  <Target Name="CleanAll" DependsOnTargets="Clean">
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "packages", SearchOption.AllDirectories))' />
   </Target>
 
   <!-- AKV Targets ========================================================= -->

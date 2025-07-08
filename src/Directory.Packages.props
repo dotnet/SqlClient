@@ -15,6 +15,7 @@
     <!-- NetFx and NetCore project dependencies -->
     <ItemGroup>
         <PackageVersion Include="Azure.Identity" Version="1.13.2" />
+        <PackageVersion Include="Microsoft.Data.SqlClient.Extensions" Version="$(ExtensionsPackageVersion)" />
         <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="7.7.1" />
         <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="7.7.1" />
         <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />

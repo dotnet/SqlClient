@@ -19,6 +19,11 @@ parameters:
       - Project
       - Package
 
+  - name: extensionsPackageVersion
+    displayName: Extensions Package Version Override
+    type: string
+    default: ''
+
 steps:
 - template: ensure-dotnet-version.yml
   parameters:
@@ -50,8 +55,10 @@ steps:
     parameters:
       downloadedNugetPath: $(Pipeline.Workspace)\${{parameters.artifactName }}
       debug: ${{ parameters.debug }}
+      extensionsPackageVersion: ${{ parameters.extensionsPackageVersion }}
 
 - ${{ else }}: # project
   - template: ci-project-build-step.yml@self
     parameters:
       build: allNoDocs
+      extensionsPackageVersion: ${{parameters.extensionsPackageVersion}}
