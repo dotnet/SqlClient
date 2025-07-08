@@ -12,9 +12,13 @@ parameters:
     type: string
     default: ADO-MMS22-SQL19
 
-  - name: artifactName
+  - name: abstractionsArtifactName
     type: string
-    default: Artifacts
+    default: Abstractions.Artifact
+
+  - name: mdsArtifactName
+    type: string
+    default: MDS.Artifact
   
   - name: platform
     type: string
@@ -27,6 +31,11 @@ parameters:
   - name: prebuildSteps
     type: stepList
     default: []
+
+  - name: abstractionsPackageVersion
+    displayName: Abstractions Package Version Override
+    type: string
+    default: ''
 
 jobs:
 - job: build_nugets
@@ -44,12 +53,22 @@ jobs:
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
+  # Download the Abstractions package artifacts and put them in the packages/
+  # directory in the repo root.  This is where the MDS NuGet.config file will
+  # look for local packages.
+  - task: DownloadPipelineArtifact@2
+    displayName: Download Abstractions Package Artifact
+    inputs:
+      artifactName: ${{ parameters.abstractionsArtifactName }}
+      targetPath: $(Build.SourcesDirectory)/packages
+
   - template: ../steps/ci-project-build-step.yml@self
     parameters:
       platform: ${{ parameters.platform }}
       configuration: ${{ parameters.configuration }}
       operatingSystem: Windows
       build: all
+      abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
 
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:
@@ -70,8 +89,8 @@ jobs:
       installNuget: false
       displayName: 'Generate NuGet package AKV Provider'
 
-  - task: PublishBuildArtifacts@1
-    displayName: 'Publish Artifact: Artifacts'
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish Pipeline Artifact'
     inputs:
-      PathtoPublish: $(packagePath)
-      ArtifactName: ${{ parameters.artifactName }}
+      targetPath: $(packagePath)
+      artifactName: ${{ parameters.mdsArtifactName }}

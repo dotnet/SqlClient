@@ -1,29 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="Current" DefaultTargets="Build"
-  xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- Common Package Properties -->
   <PropertyGroup>
-    <MdsVersionDefault>7.0.0</MdsVersionDefault>
     <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
+  </PropertyGroup>
+
+
+  <!-- Abstractions Package Properties -->
+  <PropertyGroup>
+    <!-- The current Major version number for the Abstractions package. -->
+    <AbstractionsPackageMajorVersion>1</AbstractionsPackageMajorVersion>
 
     <!--
-      GOTCHA: These two properties must appear in the first <PropertyGroup> in
-      this file due to hardcoded XML processing in:
+      The default Abstractions package version.
+
+      This may be overridden by specifying a value on the command-line:
+
+        msbuild -p:AbstractionsPackageVersion=1.0.0
+        dotnet build -p:AbstractionsPackageVersion=1.0.0
+    -->
+    <AbstractionsPackageVersion>$(AbstractionsPackageMajorVersion).0.0</AbstractionsPackageVersion>
+
+    <!--
+      We pin the AssemblyVersion of our package to its current Major version
+      number, with all remaining parts set to 0.
+    -->
+    <AbstractionsPackageAssemblyVersion>$(AbstractionsPackageMajorVersion).0.0.0</AbstractionsPackageAssemblyVersion>
+  </PropertyGroup>
+
+  <!-- MDS Package Properties -->
+  <PropertyGroup>
+    <MdsVersionDefault>7.0.0</MdsVersionDefault>
+
+    <!--
+      TODO: The remaining properties in this group should be renamed to be
+      specific to MDS, and then used in the MDS project.  As-is, these names are
+      used by the build tooling and may be unintentionally included in other
+      (non-MDS) projects.
+    -->
+    <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">$(MdsVersionDefault).$(BuildNumber)-dev</NugetPackageVersion>
+
+    <!--
+      GOTCHA: These two Assembly properties must appear in the first
+      <PropertyGroup> in this file due to hardcoded XML processing in:
 
       eng/pipelines/common/templates/jobs/validate-signed-package-job.yml
     -->
     <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">$(MdsVersionDefault).$(BuildNumber)</AssemblyFileVersion>
-    <!--
-      This sets the version of the Microsoft.Data.SqlClient assembly.  It
-      should only be updated when the major version of the MDS package changes
-      and introduces breaking changes.  Only ever update the major version
-      number.  All other version parts must be set to 0.
-    -->
+    
+    <!-- Only update the major version number here. -->
     <AssemblyVersion>7.0.0.0</AssemblyVersion>
 
     <FileVersion>$(AssemblyFileVersion)</FileVersion>
-    <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">$(MdsVersionDefault)-dev</NugetPackageVersion>
     <Version>$(NugetPackageVersion)</Version>
   </PropertyGroup>
+
+  <!-- SqlServer Package Properties -->
   <PropertyGroup>
     <!-- This version section corresponds to version info of Microsoft.SqlServer.Server Assembly. -->
     <!-- Should only be changed in future when a non-backwards compatible driver is released. -->
@@ -33,6 +66,8 @@
     <SqlServerPackageVersion Condition="'$(SqlServerPackageVersion)' == ''">1.0.0-dev</SqlServerPackageVersion>
     <SqlServerLibVersion>$(SqlServerPackageVersion)</SqlServerLibVersion>
   </PropertyGroup>
+
+  <!-- AKV Package Properties -->
   <PropertyGroup>
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>
 

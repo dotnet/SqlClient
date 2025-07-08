@@ -29,13 +29,18 @@ parameters:
     type: object
     default: {} # - key: 'value'
 
+  - name: abstractionsPackageVersion
+    displayName: Abstractions Package Version Override
+    type: string
+    default: ''
+
   - name: prebuildSteps
     type: stepList
     default: []
 
-  - name: artifactName
+  - name: abstractionsArtifactName
     type: string
-    default: Artifacts
+    default: Abstractions.Artifact
 
   - name: targetFramework
     type: string
@@ -98,6 +103,16 @@ jobs:
       value: '$(dotnetx86Path)'
 
   steps:
+
+  # Download the Abstractions package artifacts and put them in the packages/
+  # directory in the repo root.  This is where the MDS NuGet.config file will
+  # look for local packages.
+  - task: DownloadPipelineArtifact@2
+    displayName: Download Abstractions Package Artifact
+    inputs:
+      artifactName: ${{ parameters.abstractionsArtifactName }}
+      targetPath: $(Build.SourcesDirectory)/packages
+
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
@@ -229,6 +244,7 @@ jobs:
         targetFramework: ${{ parameters.targetFramework }}
         referenceType: ${{ parameters.buildType }}
         testSet: ${{ parameters.testSet }}
+        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
         ${{ if ne(parameters.operatingSystem, 'Windows') }}:
           OSGroup: Unix
 

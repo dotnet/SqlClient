@@ -32,6 +32,11 @@ parameters:
   - name: testSet
     type: string
 
+  - name: abstractionsPackageVersion
+    displayName: Abstractions Package Version Override
+    type: string
+    default: ''
+
 steps:
 - ${{ if contains(parameters.targetFramework, 'net4') }}: # .NET Framework
   - task: MSBuild@1
@@ -40,7 +45,7 @@ steps:
       solution: build.proj
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.configuration }}'
-      msbuildArguments: '-t:BuildTestsNetFx -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
+      msbuildArguments: '-t:BuildTestsNetFx -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}.$(Build.BuildNumber)'
 
 # - ${{else if contains(parameters.targetFramework, 'netstandard')}}: # .NET Standard
 #   - task: MSBuild@1
@@ -59,7 +64,7 @@ steps:
       solution: build.proj
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.configuration }}'
-      msbuildArguments: '-t:BuildTestsNetCore -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
+      msbuildArguments: '-t:BuildTestsNetCore -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}.$(Build.BuildNumber)'
     condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
 
 - ${{ else }}: # .NET on Unix
@@ -69,7 +74,7 @@ steps:
       command: custom
       projects: build.proj
       custom: msbuild
-      arguments: '-t:BuildTestsNetCore -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:OSGroup=${{parameters.OSGroup }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.configuration }}'
+      arguments: '-t:BuildTestsNetCore -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:OSGroup=${{parameters.OSGroup }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.configuration }} -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}.$(Build.BuildNumber)'
       verbosityRestore: Detailed
       verbosityPack: Detailed
     condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))

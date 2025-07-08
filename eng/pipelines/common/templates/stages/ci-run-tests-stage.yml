@@ -12,8 +12,8 @@ parameters:
     type: object
 
   - name: dependsOn
-    type: string
-    default: ''
+    type: object
+    default: []
 
   - name: buildType
     displayName: 'Build Type'
@@ -21,6 +21,11 @@ parameters:
     values:
       - Project
       - Package
+
+  - name: abstractionsPackageVersion
+    displayName: Abstractions Package Version Override
+    type: string
+    default: ''
 
   - name: prebuildSteps
     type: stepList
@@ -39,10 +44,7 @@ stages:
 - ${{ each config in parameters.testConfigurations }}:
   - ${{ each image in config.value.images }}:
     - stage: ${{ image.key }}
-      ${{ if ne(parameters.dependsOn, '') }}:
-        dependsOn: ${{ parameters.dependsOn }}
-      ${{ else }}:
-        dependsOn: []
+      dependsOn: ${{ parameters.dependsOn }}
       jobs:
       - ${{ each targetFramework in config.value.TargetFrameworks }}:
         - ${{ each platform in config.value.buildPlatforms }}:
@@ -58,6 +60,7 @@ stages:
                   image: ${{ image.value }}
                   jobDisplayName: ${{ format('{0}_{1}_{2}', replace(targetFramework, '.', '_'), platform, testSet) }}
                   configProperties: ${{ config.value.configProperties }}
+                  abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
                   prebuildSteps: ${{ parameters.prebuildSteps }}
                   targetFramework: ${{ targetFramework }}
                   netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
@@ -88,6 +91,7 @@ stages:
                       jobDisplayName: ${{ format('{0}_{1}_{2}_{3}', replace(targetFramework, '.', '_'), platform, 'NativeSNI', testSet) }}
                     configProperties: ${{ config.value.configProperties }}
                     useManagedSNI: ${{ useManagedSNI }}
+                    abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
                     prebuildSteps: ${{ parameters.prebuildSteps }}                  
                     targetFramework: ${{ targetFramework }}
                     netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
