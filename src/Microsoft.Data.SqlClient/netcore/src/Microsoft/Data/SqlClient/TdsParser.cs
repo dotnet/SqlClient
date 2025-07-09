@@ -11,9 +11,8 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-#if NET
 using System.Security.Authentication;
-#else
+#if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 #endif
 using System.Text;
@@ -908,13 +907,15 @@ namespace Microsoft.Data.SqlClient
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
 
-            int protocolVersion = 0;
+            uint protocolVersion = 0;
 
             // in the case where an async connection is made, encryption is used and Windows Authentication is used, 
             // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its 
             // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete 
             // before calling SNISecGenClientContext).
+#if NET
             if (OperatingSystem.IsWindows())
+#endif
             {
                 error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocolVersion);
                 if (error != TdsEnums.SNI_SUCCESS)

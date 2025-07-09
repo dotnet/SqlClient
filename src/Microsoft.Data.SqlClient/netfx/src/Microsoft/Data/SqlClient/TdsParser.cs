@@ -11,9 +11,8 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-#if NET
 using System.Security.Authentication;
-#else
+#if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 #endif
 using System.Text;
@@ -975,19 +974,26 @@ namespace Microsoft.Data.SqlClient
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
 
+            uint protocolVersion = 0;
+
             // in the case where an async connection is made, encryption is used and Windows Authentication is used,
             // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its
             // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete
             // before calling SNISecGenClientContext).
-            error = SniNativeWrapper.SniWaitForSslHandshakeToComplete(_physicalStateObj.Handle, _physicalStateObj.GetTimeoutRemaining(), out uint protocolVersion);
-
-            if (error != TdsEnums.SNI_SUCCESS)
+#if NET
+            if (OperatingSystem.IsWindows())
+#endif
             {
-                _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                ThrowExceptionAndWarning(_physicalStateObj);
+                error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocolVersion);
+                if (error != TdsEnums.SNI_SUCCESS)
+                {
+                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
             }
 
-            string warningMessage = ((System.Security.Authentication.SslProtocols)protocolVersion).GetProtocolWarning();
+            SslProtocols protocol = (SslProtocols)protocolVersion;
+            string warningMessage = protocol.GetProtocolWarning();
             if (!string.IsNullOrEmpty(warningMessage))
             {
                 if (!encrypt && LocalAppContextSwitches.SuppressInsecureTlsWarning)

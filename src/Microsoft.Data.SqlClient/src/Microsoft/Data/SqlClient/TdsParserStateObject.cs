@@ -533,6 +533,8 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract uint SniGetConnectionId(ref Guid clientConnectionId);
 
+        internal abstract uint WaitForSSLHandShakeToComplete(out uint protocolVersion);
+
         internal abstract uint DisableSsl();
 
         internal abstract SspiContextProvider CreateSspiContextProvider();

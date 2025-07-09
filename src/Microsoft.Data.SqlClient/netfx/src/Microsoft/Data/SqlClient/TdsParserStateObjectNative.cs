@@ -212,6 +212,11 @@ namespace Microsoft.Data.SqlClient
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
             => SniNativeWrapper.SniSetInfo(Handle, QueryType.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
 
+        internal override uint WaitForSSLHandShakeToComplete(out uint protocolVersion)
+        {
+            return SniNativeWrapper.SniWaitForSslHandshakeToComplete(Handle, GetTimeoutRemaining(), out protocolVersion);
+        }
+
         internal override SniErrorDetails GetErrorDetails()
         {
             SniNativeWrapper.SniGetLastError(out SniError sniError);
