@@ -72,6 +72,10 @@ namespace Microsoft.Data.SqlClient
                 byte[] plaintextKey;
                 try
                 {
+                    // AKV provider registration supports multi-user scenarios, so it is not safe to cache the CEK in the global provider.
+                    // The CEK cache is a global cache, and is shared across all connections.
+                    // To prevent conflicts between CEK caches, global providers should not use their own CEK caches
+                    provider.ColumnEncryptionKeyCacheTtl = new TimeSpan(0);
                     plaintextKey = provider.DecryptColumnEncryptionKey(keyInfo.keyPath, keyInfo.algorithmName, keyInfo.encryptedKey);
                 }
                 catch (Exception e)

@@ -325,6 +325,14 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.CanOnlyCallOnce();
                 }
 
+                // AKV provider registration supports multi-user scenarios, so it is not safe to cache the CEK in the global provider.
+                // The CEK cache is a global cache, and is shared across all connections.
+                // To prevent conflicts between CEK caches, global providers should not use their own CEK caches
+                foreach (SqlColumnEncryptionKeyStoreProvider provider in customProviders.Values)
+                {
+                    provider.ColumnEncryptionKeyCacheTtl = new TimeSpan(0);
+                }
+
                 // Create a temporary dictionary and then add items from the provided dictionary.
                 // Dictionary constructor does shallow copying by simply copying the provider name and provider reference pairs
                 // in the provided customerProviders dictionary.

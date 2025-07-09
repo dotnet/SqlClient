@@ -234,7 +234,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(new SqlClientCustomTokenCredential());
             akvProvider.ColumnEncryptionKeyCacheTtl = TimeSpan.FromSeconds(5);
-            byte[] plaintextKey = [1, 2, 3];
+            byte[] plaintextKey = { 1, 2, 3 };
             byte[] encryptedKey = akvProvider.EncryptColumnEncryptionKey(_fixture.GeneratedKeyUri, "RSA_OAEP", plaintextKey);
 
             akvProvider.DecryptColumnEncryptionKey(_fixture.GeneratedKeyUri, "RSA_OAEP", encryptedKey);
@@ -246,6 +246,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Equal(0, GetCacheCount(cekCacheName, akvProvider));
 
             ValidateAKVTraces(AKVListener.EventData, activityId);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public void CekCacheShouldBeDisabledWhenCustomProviderIsRegisteredGlobally()
+        {
+            if (SQLSetupStrategyAzureKeyVault.IsAKVProviderRegistered)
+            {
+                SqlConnection conn = new();
+                FieldInfo globalCacheField = conn.GetType().GetField(
+                    "s_globalCustomColumnEncryptionKeyStoreProviders", BindingFlags.Static | BindingFlags.NonPublic);
+                IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> globalProviders =
+                    globalCacheField.GetValue(conn) as IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider>;
+
+                SqlColumnEncryptionAzureKeyVaultProvider akvProviderInGlobalCache =
+                    globalProviders["AZURE_KEY_VAULT"] as SqlColumnEncryptionAzureKeyVaultProvider;
+                byte[] plaintextKey = { 1, 2, 3 };
+                byte[] encryptedKey = akvProviderInGlobalCache.EncryptColumnEncryptionKey(_fixture.GeneratedKeyUri, "RSA_OAEP", plaintextKey);
+
+                akvProviderInGlobalCache.DecryptColumnEncryptionKey(_fixture.GeneratedKeyUri, "RSA_OAEP", encryptedKey);
+                Assert.Equal(0, GetCacheCount(cekCacheName, akvProviderInGlobalCache));
+            }
         }
 
         private static int GetCacheCount(string cacheName, SqlColumnEncryptionAzureKeyVaultProvider akvProvider)
@@ -262,7 +283,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             var cacheInstance = GetCacheInstance("_columnEncryptionKeyCache", akvProvider);
             Type cacheType = cacheInstance.GetType();
             MethodInfo containsMethod = cacheType.GetMethod("Contains", BindingFlags.Instance | BindingFlags.NonPublic);
-            bool containsResult = (bool)containsMethod.Invoke(cacheInstance, [ToHexString(encryptedCek)]);
+            bool containsResult = (bool)containsMethod.Invoke(cacheInstance, new object[] { ToHexString(encryptedCek) });
             return containsResult;
         }
 
