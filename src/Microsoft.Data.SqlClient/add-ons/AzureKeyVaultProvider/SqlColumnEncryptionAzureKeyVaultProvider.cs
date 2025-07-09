@@ -400,14 +400,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// Produces a string of hexadecimal character pairs preceded with "0x", where each pair represents the corresponding element in value; for example, "0x7F2C4A00".
         /// </remarks>
         private string ToHexString(byte[] source)
-        {
-            if (source is null)
-            {
-                return null;
-            }
-
-            return "0x" + BitConverter.ToString(source).Replace("-", "");
-        }
+            => source is null ? null : "0x" + BitConverter.ToString(source).Replace("-", "");
 
         /// <summary>
         /// Returns the cached decrypted column encryption key, or unwraps the encrypted column encryption key if not present.
@@ -422,12 +415,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             try
             {
-                // Aow only one thread to access the cache at a time.
+                // Allow only one thread to access the cache at a time.
                 _cacheSemaphore.Wait();
                 return _columnEncryptionKeyCache.GetOrCreate(encryptedColumnEncryptionKey, createItem);
             }
             finally
             {
+                // Release the semaphore to allow other threads to access the cache.
                 _cacheSemaphore.Release();
             }
         }
