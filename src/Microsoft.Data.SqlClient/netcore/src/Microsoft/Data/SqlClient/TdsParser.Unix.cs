@@ -8,9 +8,5 @@ namespace Microsoft.Data.SqlClient
 {
     sealed internal partial class TdsParser
     {
-        private void WaitForSSLHandShakeToComplete(ref uint error, ref int protocolVersion)
-        {
-            // No - Op
-        }
     }
 }

@@ -391,7 +391,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         internal override uint WaitForSSLHandShakeToComplete(out int protocolVersion)
         {
             protocolVersion = GetSessionSNIHandleHandleOrThrow().ProtocolVersion;
-            return 0;
+            return TdsEnums.SNI_SUCCESS;
         }
 
         internal override SniErrorDetails GetErrorDetails()
