@@ -89,5 +89,16 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
             return cacheEntry;
         }
+
+        /// <summary>
+        /// Determines whether the <see cref="LocalCache{TKey, TValue}">LocalCache</see> contains the specified key.
+        /// Used in unit tests to verify that the cache contains the expected entries.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        internal bool Contains(TKey key)
+        {
+            return _cache.TryGetValue(key, out _);
+        }
     }
 }
