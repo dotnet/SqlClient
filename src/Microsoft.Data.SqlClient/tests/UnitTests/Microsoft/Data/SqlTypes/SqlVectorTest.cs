@@ -4,12 +4,12 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using Microsoft.Data.SqlTypes;
+using Microsoft.Data.SqlClient;
 using Xunit;
 
 #nullable enable
 
-namespace Microsoft.Data.SqlClient.Tests;
+namespace Microsoft.Data.SqlTypes.UnitTests;
 
 public class SqlVectorTest
 {

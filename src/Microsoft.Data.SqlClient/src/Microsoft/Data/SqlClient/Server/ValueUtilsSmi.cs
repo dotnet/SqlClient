@@ -2965,11 +2965,12 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(getters, ordinal));
 
             long temp = getters.GetInt64(ordinal);
-#if NET
+
+            #if NET
             return SqlMoney.FromTdsValue(temp);
-#else
-            return SqlTypeWorkarounds.SqlMoneyCtor(temp, 1 /* ignored */ );
-#endif
+            #else
+            return SqlTypeWorkarounds.LongToSqlMoney(temp);
+            #endif
         }
 
         private static SqlXml GetSqlXml_Unchecked(ITypedGettersV3 getters, int ordinal)
@@ -3395,11 +3396,13 @@ namespace Microsoft.Data.SqlClient.Server
                     setters.SetVariantMetaData(ordinal, SmiMetaData.DefaultMoney);
                 }
 
-#if NET
-                setters.SetInt64(ordinal, value.GetTdsValue());
-#else
-                setters.SetInt64(ordinal, SqlTypeWorkarounds.SqlMoneyToSqlInternalRepresentation(value));
-#endif
+                #if NET
+                long longValue = value.GetTdsValue();
+                #else
+                long longValue = SqlTypeWorkarounds.SqlMoneyToLong(value);
+                #endif
+                
+                setters.SetInt64(ordinal, longValue);
             }
         }
 
