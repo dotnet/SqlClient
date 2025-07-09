@@ -10,6 +10,7 @@
         <PackageVersion Include="System.Memory" Version="4.5.5" />
         <PackageVersion Include="System.Data.Common" Version="4.3.0" />
         <PackageVersion Include="System.Text.Encodings.Web" Version="8.0.0" />
+        <PackageVersion Include="System.ValueTuple" Version="4.6.1" />
     </ItemGroup>
     <!-- NetFx and NetCore project dependencies -->
     <ItemGroup>
