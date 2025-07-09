@@ -23,7 +23,7 @@ using System.Runtime.Loader;
 namespace Microsoft.Data.SqlClient
 {
     // @TODO: Facade pattern (interface, use interface, add constructor overloads for providing non-default interface, reseal)
-    internal sealed class SqlConnectionFactory
+    internal class SqlConnectionFactory
     {
         #region Member Variables
         
