@@ -4,7 +4,7 @@
 
 #nullable enable
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
     /// <summary>
     /// This is used to hold the ServerSpn for a given connection. Most connection types have a single format, although TCP connections may allow

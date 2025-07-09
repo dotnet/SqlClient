@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient
 
 #if NET
         /// <remarks>
-        /// <see cref="SNI.ResolvedServerSpn"/> for details as to what <paramref name="primaryServerSpn"/> and <paramref name="secondaryServerSpn"/> means and why there are two.
+        /// <see cref="ManagedSni.ResolvedServerSpn"/> for details as to what <paramref name="primaryServerSpn"/> and <paramref name="secondaryServerSpn"/> means and why there are two.
         /// </remarks>
 #endif
         internal void Initialize(
