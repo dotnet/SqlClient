@@ -385,6 +385,35 @@ namespace Microsoft.Data.SqlClient
         internal override uint EnableMars(ref uint info)
             => SniNativeWrapper.SniAddProvider(Handle, Provider.SMUX_PROV, ref info);
 
+        internal override uint PostReadAsyncForMars(TdsParserStateObject physicalStateObject)
+        {
+            // HACK HACK HACK - for Async only
+            // Have to post read to initialize MARS - will get callback on this when connection goes
+            // down or is closed.
+
+            PacketHandle temp = default;
+            uint error = TdsEnums.SNI_SUCCESS;
+
+            IncrementPendingCallbacks();
+            SessionHandle handle = SessionHandle;
+            // we do not need to consider partial packets when making this read because we
+            // expect this read to pend. a partial packet should not exist at setup of the
+            // parser
+            Debug.Assert(physicalStateObject.PartialPacket == null);
+            temp = ReadAsync(handle, out error);
+
+            Debug.Assert(temp.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
+
+            if (temp.NativePointer != IntPtr.Zero)
+            {
+                // Be sure to release packet, otherwise it will be leaked by native.
+                ReleasePacket(temp);
+            }
+
+            Debug.Assert(IntPtr.Zero == temp.NativePointer, "unexpected syncReadPacket without corresponding SNIPacketRelease");
+            return error;
+        }
+
         internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename)
         {
             AuthProviderInfo authInfo = new AuthProviderInfo();

@@ -8,11 +8,6 @@ namespace Microsoft.Data.SqlClient
 {
     sealed internal partial class TdsParser
     {
-        internal void PostReadAsyncForMars()
-        {
-            // No-Op
-        }
-
         private void WaitForSSLHandShakeToComplete(ref uint error, ref int protocolVersion)
         {
             // No - Op

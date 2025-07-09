@@ -365,6 +365,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return TdsEnums.SNI_ERROR;
         }
 
+        internal override uint PostReadAsyncForMars(TdsParserStateObject physicalStateObject) => TdsEnums.SNI_SUCCESS_IO_PENDING;
+
         internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename)
         {
             SniHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();

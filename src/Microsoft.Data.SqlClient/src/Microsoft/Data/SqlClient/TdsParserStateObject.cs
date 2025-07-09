@@ -539,6 +539,8 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract uint EnableMars(ref uint info);
 
+        internal abstract uint PostReadAsyncForMars(TdsParserStateObject physicalStateObject);
+
         internal abstract uint SetConnectionBufferSize(ref uint unsignedPacketSize);
 
         internal abstract void DisposePacketCache();
