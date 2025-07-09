@@ -993,7 +993,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (IsNull)
                 {
-                    return new SqlVector<T>(_value._vectorInfo._elementCount);
+                    return SqlVector<T>.CreateNull(_value._vectorInfo._elementCount);
                 }
                 return new SqlVector<T>(SqlBinary.Value);
             }

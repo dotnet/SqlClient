@@ -773,7 +773,7 @@ namespace Microsoft.Data.SqlClient
                 switch (elementType)
                 {
                     case MetaType.SqlVectorElementType.Float32:
-                        return new SqlVector<float>(elementCount);
+                        return SqlVector<float>.CreateNull(elementCount);
                     default:
                         throw SQL.VectorTypeNotSupported(elementType.ToString());
                 }
@@ -857,8 +857,13 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw ADP.InvalidSizeValue(value);
                     }
-                    PropertyChanging();
-                    _size = value;
+
+                    // We ignore the Size property for Vector types, as it is not applicable.
+                    if (_metaType == null || _metaType.SqlDbType != SqlDbTypeExtensions.Vector)
+                    {
+                        PropertyChanging();
+                        _size = value;
+                    }
                 }
             }
         }
@@ -1970,7 +1975,8 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.PrepareParameterType(cmd);
             }
-            else if (!ShouldSerializeSize() && !_metaType.IsFixed)
+            // For vector datatype we do not require size to be specified. It is inferred from the SqlParameter.Value.
+            else if (!ShouldSerializeSize() && !_metaType.IsFixed && _metaType.SqlDbType != SqlDbTypeExtensions.Vector)
             {
                 throw ADP.PrepareParameterSize(cmd);
             }
