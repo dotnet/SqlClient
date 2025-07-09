@@ -13,11 +13,6 @@ namespace Microsoft.Data.SqlClient
             // No-Op
         }
 
-        private void LoadSSPILibrary()
-        {
-            // No - Op
-        }
-
         private void WaitForSSLHandShakeToComplete(ref uint error, ref int protocolVersion)
         {
             // No - Op
