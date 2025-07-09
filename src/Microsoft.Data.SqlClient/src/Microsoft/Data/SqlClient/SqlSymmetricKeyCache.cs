@@ -5,6 +5,7 @@
 using System;
 using System.Diagnostics;
 using System.Text;
+using System.Threading;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.Data.SqlClient
@@ -15,8 +16,8 @@ namespace Microsoft.Data.SqlClient
     sealed internal class SqlSymmetricKeyCache
     {
         private readonly MemoryCache _cache;
-        private static readonly SqlSymmetricKeyCache _singletonInstance = new SqlSymmetricKeyCache();
-
+        private static readonly SqlSymmetricKeyCache _singletonInstance = new();
+        private static SemaphoreSlim _cacheLock = new(1, 1);
 
         private SqlSymmetricKeyCache()
         {
@@ -53,6 +54,8 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
 
             // Lookup the key in cache
+
+            _cacheLock.Wait();
             if (!(_cache.TryGetValue(cacheLookupKey, out SqlClientSymmetricKey encryptionKey)))
             {
                 Debug.Assert(SqlConnection.ColumnEncryptionTrustedMasterKeyPaths is not null, @"SqlConnection.ColumnEncryptionTrustedMasterKeyPaths should not be null");
@@ -100,6 +103,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
+            _cacheLock.Release();
             return encryptionKey;
         }
     }
