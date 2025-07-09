@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient
         {
             string serverName = connection.DataSource;
             Debug.Assert(serverName is not null, @"serverName should not be null.");
-            StringBuilder cacheLookupKeyBuilder = new StringBuilder(serverName, capacity: serverName.Length + SqlSecurityUtility.GetBase64LengthFromByteLength(keyInfo.encryptedKey.Length) + keyInfo.keyStoreName.Length + 2/*separators*/);
+            StringBuilder cacheLookupKeyBuilder = new(serverName, capacity: serverName.Length + SqlSecurityUtility.GetBase64LengthFromByteLength(keyInfo.encryptedKey.Length) + keyInfo.keyStoreName.Length + 2/*separators*/);
 
 #if DEBUG
             int capacity = cacheLookupKeyBuilder.Capacity;
@@ -53,8 +53,7 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
 
             // Lookup the key in cache
-            SqlClientSymmetricKey encryptionKey;
-            if (!(_cache.TryGetValue(cacheLookupKey, out encryptionKey)))
+            if (!(_cache.TryGetValue(cacheLookupKey, out SqlClientSymmetricKey encryptionKey)))
             {
                 Debug.Assert(SqlConnection.ColumnEncryptionTrustedMasterKeyPaths is not null, @"SqlConnection.ColumnEncryptionTrustedMasterKeyPaths should not be null");
 
@@ -73,8 +72,6 @@ namespace Microsoft.Data.SqlClient
                 byte[] plaintextKey;
                 try
                 {
-                    // to prevent conflicts between CEK caches, global providers should not use their own CEK caches
-                    provider.ColumnEncryptionKeyCacheTtl = new TimeSpan(0);
                     plaintextKey = provider.DecryptColumnEncryptionKey(keyInfo.keyPath, keyInfo.algorithmName, keyInfo.encryptedKey);
                 }
                 catch (Exception e)
@@ -91,11 +88,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     // In case multiple threads reach here at the same time, the first one wins.
                     // The allocated memory will be reclaimed by Garbage Collector.
-                    MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
+                    MemoryCacheEntryOptions options = new()
                     {
                         AbsoluteExpirationRelativeToNow = SqlConnection.ColumnEncryptionKeyCacheTtl
                     };
-                    _cache.Set<SqlClientSymmetricKey>(cacheLookupKey, encryptionKey, options);
+                    _cache.Set(cacheLookupKey, encryptionKey, options);
                 }
             }
 

@@ -4,6 +4,7 @@
 
 using System;
 using System.Text;
+using System.Threading;
 using Azure.Core;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using static Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.Validator;
@@ -55,6 +56,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
         private readonly static KeyWrapAlgorithm s_keyWrapAlgorithm = KeyWrapAlgorithm.RsaOaep;
 
+        private SemaphoreSlim _cacheSemaphore = new(1, 1);
+
         /// <summary>
         /// List of Trusted Endpoints
         /// 
@@ -69,7 +72,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <summary>
         /// A cache for storing the results of signature verification of column master key metadata.
         /// </summary>
-        private readonly LocalCache<Tuple<string, bool, string>, bool> _columnMasterKeyMetadataSignatureVerificationCache = 
+        private readonly LocalCache<Tuple<string, bool, string>, bool> _columnMasterKeyMetadataSignatureVerificationCache =
             new(maxSizeLimit: 2000) { TimeToLive = TimeSpan.FromDays(10) };
 
         /// <summary>
@@ -230,7 +233,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 // Get ciphertext
                 byte[] cipherText = new byte[cipherTextLength];
                 Array.Copy(encryptedColumnEncryptionKey, currentIndex, cipherText, 0, cipherTextLength);
-                
+
                 currentIndex += cipherTextLength;
 
                 // Get signature
@@ -415,8 +418,19 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <remarks>
         ///
         /// </remarks>
-        private byte[] GetOrCreateColumnEncryptionKey(string encryptedColumnEncryptionKey, Func<byte[]> createItem) 
-            => _columnEncryptionKeyCache.GetOrCreate(encryptedColumnEncryptionKey, createItem);
+        private byte[] GetOrCreateColumnEncryptionKey(string encryptedColumnEncryptionKey, Func<byte[]> createItem)
+        {
+            try
+            {
+                // Aow only one thread to access the cache at a time.
+                _cacheSemaphore.Wait();
+                return _columnEncryptionKeyCache.GetOrCreate(encryptedColumnEncryptionKey, createItem);
+            }
+            finally
+            {
+                _cacheSemaphore.Release();
+            }
+        }
 
         /// <summary>
         /// Returns the cached signature verification result, or proceeds to verify if not present.

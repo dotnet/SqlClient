@@ -2,8 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Extensions.Caching.Memory;
 using System;
+using Microsoft.Extensions.Caching.Memory;
 using static System.Math;
 
 namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
@@ -88,16 +88,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             }
 
             return cacheEntry;
-        }
-
-        /// <summary>
-        /// Determines whether the <see cref="LocalCache{TKey, TValue}">LocalCache</see> contains the specified key.
-        /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
-        internal bool Contains(TKey key)
-        {
-            return _cache.TryGetValue(key, out _);
         }
     }
 }

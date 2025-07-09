@@ -236,7 +236,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static bool TryGetSystemColumnEncryptionKeyStoreProvider(string keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider)
         {
-            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider);
+            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider); 
         }
 
         /// <summary>
@@ -276,9 +276,9 @@ namespace Microsoft.Data.SqlClient
         {
             if (s_systemColumnEncryptionKeyStoreProviders.Count > 0)
             {
-                return new List<string>(s_systemColumnEncryptionKeyStoreProviders.Keys);
+                return [.. s_systemColumnEncryptionKeyStoreProviders.Keys];
             }
-            return new List<string>(0);
+            return [];
         }
 
         /// <summary>
@@ -291,13 +291,13 @@ namespace Microsoft.Data.SqlClient
             if (_customColumnEncryptionKeyStoreProviders is not null &&
                 _customColumnEncryptionKeyStoreProviders.Count > 0)
             {
-                return new List<string>(_customColumnEncryptionKeyStoreProviders.Keys);
+                return [.. _customColumnEncryptionKeyStoreProviders.Keys];
             }
             if (s_globalCustomColumnEncryptionKeyStoreProviders is not null)
             {
-                return new List<string>(s_globalCustomColumnEncryptionKeyStoreProviders.Keys);
+                return [.. s_globalCustomColumnEncryptionKeyStoreProviders.Keys];
             }
-            return new List<string>(0);
+            return [];
         }
 
         /// <summary>
@@ -323,12 +323,6 @@ namespace Microsoft.Data.SqlClient
                 if (s_globalCustomColumnEncryptionKeyStoreProviders is not null)
                 {
                     throw SQL.CanOnlyCallOnce();
-                }
-
-                // to prevent conflicts between CEK caches, global providers should not use their own CEK caches
-                foreach (SqlColumnEncryptionKeyStoreProvider provider in customProviders.Values)
-                {
-                    provider.ColumnEncryptionKeyCacheTtl = new TimeSpan(0);
                 }
 
                 // Create a temporary dictionary and then add items from the provided dictionary.
