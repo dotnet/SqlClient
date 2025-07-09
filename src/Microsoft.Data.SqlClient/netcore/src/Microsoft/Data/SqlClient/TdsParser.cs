@@ -648,7 +648,7 @@ namespace Microsoft.Data.SqlClient
                 error = _pMarsPhysicalConObj.PostReadAsyncForMars(_physicalStateObj);
                 if (error != TdsEnums.SNI_SUCCESS_IO_PENDING)
                 {
-                    Debug.Assert(TdsEnums.SNI_SUCCESS != error, "Unexpected successful read async on physical connection before enabling MARS!");
+                    Debug.Assert(error != TdsEnums.SNI_SUCCESS, "Unexpected successful read async on physical connection before enabling MARS!");
                     _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
