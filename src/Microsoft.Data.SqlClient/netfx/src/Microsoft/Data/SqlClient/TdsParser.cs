@@ -697,28 +697,7 @@ namespace Microsoft.Data.SqlClient
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
 
-                // HACK HACK HACK - for Async only
-                // Have to post read to intialize MARS - will get callback on this when connection goes
-                // down or is closed.
-
-                IntPtr temp = IntPtr.Zero;
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                { }
-                finally
-                {
-                    _pMarsPhysicalConObj.IncrementPendingCallbacks();
-
-                    error = SniNativeWrapper.SniReadAsync(_pMarsPhysicalConObj.Handle, ref temp);
-
-                    if (temp != IntPtr.Zero)
-                    {
-                        // Be sure to release packet, otherwise it will be leaked by native.
-                        SniNativeWrapper.SniPacketRelease(temp);
-                    }
-                }
-                Debug.Assert(IntPtr.Zero == temp, "unexpected syncReadPacket without corresponding SNIPacketRelease");
+                error = _pMarsPhysicalConObj.PostReadAsyncForMars(_physicalStateObj);
                 if (TdsEnums.SNI_SUCCESS_IO_PENDING != error)
                 {
                     Debug.Assert(TdsEnums.SNI_SUCCESS != error, "Unexpected successful read async on physical connection before enabling MARS!");

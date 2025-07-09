@@ -394,20 +394,28 @@ namespace Microsoft.Data.SqlClient
             PacketHandle temp = default;
             uint error = TdsEnums.SNI_SUCCESS;
 
-            IncrementPendingCallbacks();
-            SessionHandle handle = SessionHandle;
-            // we do not need to consider partial packets when making this read because we
-            // expect this read to pend. a partial packet should not exist at setup of the
-            // parser
-            Debug.Assert(physicalStateObject.PartialPacket == null);
-            temp = ReadAsync(handle, out error);
-
-            Debug.Assert(temp.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
-
-            if (temp.NativePointer != IntPtr.Zero)
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
+            try
+            { }
+            finally
             {
-                // Be sure to release packet, otherwise it will be leaked by native.
-                ReleasePacket(temp);
+                IncrementPendingCallbacks();
+                SessionHandle handle = SessionHandle;
+                // we do not need to consider partial packets when making this read because we
+                // expect this read to pend. a partial packet should not exist at setup of the
+                // parser
+                Debug.Assert(physicalStateObject.PartialPacket == null);
+                temp = ReadAsync(handle, out error);
+
+                Debug.Assert(temp.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
+
+                if (temp.NativePointer != IntPtr.Zero)
+                {
+                    // Be sure to release packet, otherwise it will be leaked by native.
+                    ReleasePacket(temp);
+                }
             }
 
             Debug.Assert(IntPtr.Zero == temp.NativePointer, "unexpected syncReadPacket without corresponding SNIPacketRelease");
