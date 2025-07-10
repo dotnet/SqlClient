@@ -123,12 +123,10 @@ namespace Microsoft.Data.SqlTypes
     }
 
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/SqlVector/*' />
-    public sealed class SqlVector<T> : System.Data.SqlTypes.INullable
+    public readonly struct SqlVector<T> : System.Data.SqlTypes.INullable
     where T : unmanaged
     {
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor1/*' />
-        public SqlVector(int length) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor2/*' />
         public SqlVector(System.ReadOnlyMemory<T> memory) { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/IsNull/*' />
         public bool IsNull => throw null;
@@ -136,10 +134,10 @@ namespace Microsoft.Data.SqlTypes
         public static SqlVector<T> Null => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Length/*' />
         public int Length { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Size/*' />
-        public int Size { get { throw null; } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Memory/*' />
         public System.ReadOnlyMemory<T> Memory { get { throw null; } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/CreateNull/*' />
+        public static SqlVector<T> CreateNull(int length) { throw null; }
     }
 }
 namespace Microsoft.Data.SqlClient

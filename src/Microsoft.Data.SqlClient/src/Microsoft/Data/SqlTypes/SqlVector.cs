@@ -16,7 +16,7 @@ using Microsoft.Data.SqlClient;
 namespace Microsoft.Data.SqlTypes;
 
 /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/SqlVector/*' />
-public sealed class SqlVector<T> : INullable, ISqlVector
+public readonly struct SqlVector<T> : INullable, ISqlVector
 where T : unmanaged
 {
     #region Constants
@@ -31,13 +31,13 @@ where T : unmanaged
     private readonly byte _elementType;
     private readonly byte _elementSize;
     private readonly byte[] _tdsBytes;
-    
+    private readonly int _size;
+
     #endregion
 
     #region Constructors
 
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor1/*' />
-    public SqlVector(int length)
+    private SqlVector(int length)
     {
         if (length < 0)
         {
@@ -49,11 +49,14 @@ where T : unmanaged
         IsNull = true;
 
         Length = length;
-        Size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * Length);
+        _size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * Length);
 
         _tdsBytes = Array.Empty<byte>();
         Memory = new();
     }
+
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/CreateNull/*' />
+    public static SqlVector<T> CreateNull(int length) => new(length);
 
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor2/*' />
     public SqlVector(ReadOnlyMemory<T> memory)
@@ -63,7 +66,7 @@ where T : unmanaged
         IsNull = false;
 
         Length = memory.Length;
-        Size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * Length);
+        _size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * Length);
 
         _tdsBytes = MakeTdsBytes(memory);
         Memory = memory;
@@ -73,7 +76,7 @@ where T : unmanaged
     {
         (_elementType, _elementSize) = GetTypeFieldsOrThrow();
 
-        (Length, Size) = GetCountsOrThrow(tdsBytes);
+        (Length, _size) = GetCountsOrThrow(tdsBytes);
 
         IsNull = false;
 
@@ -99,18 +102,16 @@ where T : unmanaged
     #region Properties
 
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/IsNull/*' />
-    public bool IsNull { get; init; }
+    public bool IsNull { get; }
 
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Null/*' />
     public static SqlVector<T>? Null => null;
 
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Length/*' />
-    public int Length { get; init; }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Size/*' />
-    public int Size { get; init; }
-
+    public int Length { get; }
+    
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Memory/*' />
-    public ReadOnlyMemory<T> Memory { get; init; }
+    public ReadOnlyMemory<T> Memory { get; }
 
     #endregion
 
@@ -118,6 +119,8 @@ where T : unmanaged
     byte ISqlVector.ElementType => _elementType;
     byte ISqlVector.ElementSize => _elementSize;
     byte[] ISqlVector.VectorPayload => _tdsBytes;
+    int ISqlVector.Size => _size;
+
     #endregion
 
     #region Helpers
@@ -154,7 +157,7 @@ where T : unmanaged
         // | Stream of Values       | NN * sizeof(T)  | [element bytes...]    | Raw bytes for vector elements                               |
         // +------------------------+-----------------+----------------------+--------------------------------------------------------------+
 
-        byte[] result = new byte[Size];
+        byte[] result = new byte[_size];
 
         // Header Bytes
         result[0] = VecHeaderMagicNo;
