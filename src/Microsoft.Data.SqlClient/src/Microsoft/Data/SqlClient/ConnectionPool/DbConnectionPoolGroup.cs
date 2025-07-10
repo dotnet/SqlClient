@@ -132,7 +132,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     IDbConnectionPool pool = entry.Value;
                     if (pool != null)
                     {
-                        DbConnectionFactory connectionFactory = pool.ConnectionFactory;
+                        SqlConnectionFactory connectionFactory = pool.ConnectionFactory;
 
                         connectionFactory.QueuePoolForRelease(pool, true);
                     }
@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             return _poolCollection.Count;
         }
 
-        internal IDbConnectionPool GetConnectionPool(DbConnectionFactory connectionFactory)
+        internal IDbConnectionPool GetConnectionPool(SqlConnectionFactory connectionFactory)
         {
             // When this method returns null it indicates that the connection
             // factory should not use pooling.
@@ -282,7 +282,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 // to use it while we're processing and finally we put the
                                 // pool into a list of pools to be released when they
                                 // are completely empty.
-                                DbConnectionFactory connectionFactory = pool.ConnectionFactory;
+                                SqlConnectionFactory connectionFactory = pool.ConnectionFactory;
 
                                 connectionFactory.QueuePoolForRelease(pool, false);
                             }
