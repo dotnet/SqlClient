@@ -19,6 +19,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         public const int VectorHeaderSize = 8;
         public static float[] testData = new float[] { 1.1f, 2.2f, 3.3f };
         public static int vectorColumnLength = testData.Length;
+        // Incorrect size for SqlParameter.Size
+        public static int IncorrectParamSize = 3234; 
         public static IEnumerable<object[]> GetVectorFloat32TestData()
         {
             // Pattern 1-4 with SqlVector<float>(values: testData)
@@ -168,7 +170,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 },
                 2 => new SqlParameter(s_vectorParamName, value),
                 3 => new SqlParameter(s_vectorParamName, SqlDbTypeExtensions.Vector) { Value = value },
-                4 => new SqlParameter(s_vectorParamName, SqlDbTypeExtensions.Vector, 3) { Value = value },
+                // Even if size is specified, the actual size is determined by the value passed and specified size is ignored.
+                4 => new SqlParameter(s_vectorParamName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectParamSize) { Value = value },
                 _ => throw new ArgumentOutOfRangeException(nameof(pattern), $"Unsupported pattern: {pattern}")
             };
 
@@ -233,7 +236,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 },
                 2 => new SqlParameter(s_vectorParamName, value),
                 3 => new SqlParameter(s_vectorParamName, SqlDbTypeExtensions.Vector) { Value = value },
-                4 => new SqlParameter(s_vectorParamName, SqlDbTypeExtensions.Vector, 3) { Value = value },
+                4 => new SqlParameter(s_vectorParamName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectParamSize) { Value = value },
                 _ => throw new ArgumentOutOfRangeException(nameof(pattern), $"Unsupported pattern: {pattern}")
             };
 
@@ -272,7 +275,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 },
                 2 => new SqlParameter(s_vectorParamName, value),
                 3 => new SqlParameter(s_vectorParamName, SqlDbTypeExtensions.Vector) { Value = value },
-                4 => new SqlParameter(s_vectorParamName, SqlDbTypeExtensions.Vector, 3) { Value = value },
+                4 => new SqlParameter(s_vectorParamName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectParamSize) { Value = value },
                 _ => throw new ArgumentOutOfRangeException(nameof(pattern), $"Unsupported pattern: {pattern}")
             };
             command.Parameters.Add(inputParam);
@@ -296,7 +299,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             // Validate error for conventional way of setting output parameters
             command.Parameters.Clear();
             command.Parameters.Add(inputParam);
-            var outputParamWithoutVal = new SqlParameter(s_outputVectorParamName, SqlDbTypeExtensions.Vector, 3) { Direction = ParameterDirection.Output };
+            var outputParamWithoutVal = new SqlParameter(s_outputVectorParamName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectParamSize) { Direction = ParameterDirection.Output };
             command.Parameters.Add(outputParamWithoutVal);
             Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
         }
@@ -329,7 +332,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 },
                 2 => new SqlParameter(s_vectorParamName, value),
                 3 => new SqlParameter(s_vectorParamName, SqlDbTypeExtensions.Vector) { Value = value },
-                4 => new SqlParameter(s_vectorParamName, SqlDbTypeExtensions.Vector, 3) { Value = value },
+                4 => new SqlParameter(s_vectorParamName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectParamSize) { Value = value },
                 _ => throw new ArgumentOutOfRangeException(nameof(pattern), $"Unsupported pattern: {pattern}")
             };
             command.Parameters.Add(inputParam);
@@ -353,7 +356,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             // Validate error for conventional way of setting output parameters
             command.Parameters.Clear();
             command.Parameters.Add(inputParam);
-            var outputParamWithoutVal = new SqlParameter(s_outputVectorParamName, SqlDbTypeExtensions.Vector, 3) { Direction = ParameterDirection.Output };
+            var outputParamWithoutVal = new SqlParameter(s_outputVectorParamName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectParamSize) { Direction = ParameterDirection.Output };
             command.Parameters.Add(outputParamWithoutVal);
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await command.ExecuteNonQueryAsync());
         }
