@@ -15,7 +15,7 @@ namespace Microsoft.Data.Common.ConnectionString
             #else
             "Core Microsoft SqlClient Data Provider";
             #endif
-        internal const string AttachDBFilename = "";
+        internal const string AttachDbFilename = "";
         internal const SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
         internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
         internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
@@ -30,11 +30,11 @@ namespace Microsoft.Data.Common.ConnectionString
         internal static readonly SqlConnectionEncryptOption Encrypt = SqlConnectionEncryptOption.Mandatory;
         internal const bool Enlist = true;
         internal const string FailoverPartner = "";
-        internal const string FailoverPartnerSPN = "";
+        internal const string FailoverPartnerSpn = "";
         internal const string HostNameInCertificate = "";
         internal const string InitialCatalog = "";
         internal const bool IntegratedSecurity = false;
-        internal const SqlConnectionIPAddressPreference IPAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
+        internal const SqlConnectionIPAddressPreference IpAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
         internal const int LoadBalanceTimeout = 0; // default of 0 means don't use
         internal const int MaxPoolSize = 100;
         internal const int MinPoolSize = 0;
@@ -47,17 +47,17 @@ namespace Microsoft.Data.Common.ConnectionString
         internal const bool Pooling = true;
         internal const bool Replication = false;
         internal const string ServerCertificate = "";
-        internal const string ServerSPN = "";
+        internal const string ServerSpn = "";
         internal const string TransactionBinding = "Implicit Unbind";
         internal const bool TrustServerCertificate = false;
         internal const string TypeSystemVersion = "Latest";
-        internal const string UserID = "";
+        internal const string UserId = "";
         internal const bool UserInstance = false;
-        internal const string WorkstationID = "";
+        internal const string WorkstationId = "";
         
         #if NETFRAMEWORK
         internal const bool ConnectionReset = true;
-        internal static readonly bool TransparentNetworkIPResolution = !LocalAppContextSwitches.DisableTnirByDefault;
+        internal static readonly bool TransparentNetworkIpResolution = !LocalAppContextSwitches.DisableTnirByDefault;
         internal const string NetworkLibrary = "";
         #endif
     }
