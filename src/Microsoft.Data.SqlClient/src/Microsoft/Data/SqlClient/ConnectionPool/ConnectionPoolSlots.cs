@@ -5,6 +5,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
 
 #nullable enable
@@ -43,6 +44,41 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     /// </example>
     internal sealed class ConnectionPoolSlots
     {
+
+        private sealed class Reservation : IDisposable
+        {
+            private readonly ConnectionPoolSlots _slots;
+            private bool _retain = false;
+            private bool _disposed = false;
+
+            internal Reservation(ConnectionPoolSlots slots)
+            {
+                _slots = slots;
+            }
+
+            public void Dispose()
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                if (!_retain)
+                {
+                    _slots.ReleaseReservation();
+                    _disposed = true;
+                }
+            }
+
+            internal void Keep()
+            {
+                _retain = true;
+            }
+
+        }
+
+        internal delegate void CleanupCallback(DbConnectionInternal? connection);
+
         private readonly DbConnectionInternal?[] _connections;
         private readonly uint _capacity;
         private volatile int _reservations;
@@ -66,30 +102,53 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>
         /// Adds a connection to the collection. Can only be called after a reservation has been made.
         /// </summary>
-        /// <param name="connection">The connection to add to the collection.</param>
+        /// <param name="createCallback">The connection to add to the collection.</param>
+        /// <param name="cleanupCallback">Callback to clean up resources if an exception occurs.</param>
         /// <exception cref="InvalidOperationException">
         /// Thrown when unable to find an empty slot. 
         /// This can occur if a reservation is not taken before adding a connection.
         /// </exception>
-        internal void Add(DbConnectionInternal connection)
+        internal DbConnectionInternal? Add(Func<DbConnectionInternal?> createCallback, CleanupCallback cleanupCallback)
         {
-            int i;
-            for (i = 0; i < _capacity; i++)
+            DbConnectionInternal? connection = null;
+            try
             {
-                if (Interlocked.CompareExchange(ref _connections[i], connection, null) == null)
+                using var reservation = TryReserve();
+                if (reservation is null)
                 {
-                    return;
+                    return null;
                 }
-            }
 
-            throw new InvalidOperationException("Couldn't find an empty slot.");
+                connection = createCallback();
+
+                if (connection is null)
+                {
+                    return null;
+                }
+
+                for (int i = 0; i < _capacity; i++)
+                {
+                    if (Interlocked.CompareExchange(ref _connections[i], connection, null) == null)
+                    {
+                        reservation.Keep();
+                        return connection;
+                    }
+                }
+
+                throw new InvalidOperationException("Couldn't find an empty slot.");
+            }
+            catch (Exception e)
+            {
+                cleanupCallback(connection);
+                throw new Exception("Failed to create or add connection", e);
+            }
         }
 
         /// <summary>
         /// Releases a reservation that was previously obtained.
         /// Must be called after removing a connection from the collection or if an exception occurs.
         /// </summary>
-        internal void ReleaseReservation()
+        private void ReleaseReservation()
         {
             Interlocked.Decrement(ref _reservations);
             Debug.Assert(_reservations >= 0, "Released a reservation that wasn't held");
@@ -106,6 +165,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 if (Interlocked.CompareExchange(ref _connections[i], null, connection) == connection)
                 {
+                    ReleaseReservation();
                     return true;
                 }
             }
@@ -117,7 +177,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Attempts to reserve a spot in the collection.
         /// </summary>
         /// <returns>True if a reservation was successfully obtained.</returns>
-        internal bool TryReserve()
+        private Reservation? TryReserve()
         {
             for (var expected = _reservations; expected < _capacity; expected = _reservations)
             {
@@ -131,9 +191,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     continue;
                 }
 
-                return true;
+                return new Reservation(this);
             }
-            return false;
+            return null;
         }
     }
 }

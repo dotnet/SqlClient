@@ -300,22 +300,21 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
         /// <returns>A task representing the asynchronous operation, with a result of the new internal connection.</returns>
         /// <throws>InvalidOperationException - when the newly created connection is invalid or already in the pool.</throws>
-        private Task<DbConnectionInternal?> OpenNewInternalConnection(
+        private DbConnectionInternal? OpenNewInternalConnection(
             DbConnection? owningConnection, 
             DbConnectionOptions userOptions, 
-            bool async, 
+            bool async,
             CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             // Opening a connection can be a slow operation and we don't want to hold a lock for the duration.
             // Instead, we reserve a connection slot prior to attempting to open a new connection and release the slot
-            // in case of an exception. 
-            if (_connectionSlots.TryReserve())
-            {
-                DbConnectionInternal? newConnection = null;
-                try
-                {
-                    var startTime = Stopwatch.GetTimestamp();
+            // in case of an exception.
 
+            return _connectionSlots.Add(
+                createCallback: () =>
+                {
                     // https://github.com/dotnet/SqlClient/issues/3459
                     // TODO: This blocks the thread for several network calls!
                     // When running async, the blocked thread is one allocated from the managed thread pool (due to 
@@ -324,44 +323,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // DbConnectionInternal doesn't support an async open. It's better to block this thread and keep
                     // throughput high than to queue all of our opens onto a single worker thread. Add an async path 
                     // when this support is added to DbConnectionInternal.
-                    newConnection = ConnectionFactory.CreatePooledConnection(
+                    return ConnectionFactory.CreatePooledConnection(
                         this,
                         owningConnection,
                         PoolGroup.ConnectionOptions,
                         PoolGroup.PoolKey,
                         userOptions);
-
-                    // We don't expect these conditions to happen, but we need to check them to be thorough.
-                    if (newConnection == null)
-                    {
-                        throw ADP.InternalError(ADP.InternalErrorCode.CreateObjectReturnedNull);
-                    }
-                    if (!newConnection.CanBePooled)
-                    {
-                        throw ADP.InternalError(ADP.InternalErrorCode.NewObjectCannotBePooled);
-                    }
-
-                    ValidateOwnershipAndSetPoolingState(newConnection, null);
-
-                    _connectionSlots.Add(newConnection);
-
-                    return Task.FromResult<DbConnectionInternal?>(newConnection);
-                }
-                catch
+                },
+                cleanupCallback: (newConnection) =>
                 {
-                    // If we failed to open a new connection, we need to reset any state we modified.
-                    // Clear the reservation we made, dispose of the connection if it was created, and wake up any waiting
-                    // attempts on the idle connection channel.
                     if (newConnection is not null)
                     {
                         RemoveConnection(newConnection);
                     }
-
-                    throw;
-                }
-            }
-
-            return Task.FromResult<DbConnectionInternal?>(null);
+                });
         }
 
         /// <summary>
@@ -392,7 +367,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             _connectionSlots.TryRemove(connection);
             
-            _connectionSlots.ReleaseReservation();
             // Closing a connection opens a free spot in the pool.
             // Write a null to the idle connection channel to wake up a waiter, who can now open a new
             // connection. Statement order is important since we have synchronous completions on the channel.
@@ -456,7 +430,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
 
                     // If we didn't find an idle connection, try to open a new one.  
-                    connection ??= await OpenNewInternalConnection(
+                    connection ??= OpenNewInternalConnection(
                         owningConnection,
                         userOptions,
                         async,
