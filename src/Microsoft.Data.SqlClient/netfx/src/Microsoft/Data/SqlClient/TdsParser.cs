@@ -121,7 +121,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool _is2022 = false;
 
-        private string _serverSpn = null;
+        private string[] _serverSpn = null;
 
         // SqlStatistics
         private SqlStatistics _statistics = null;
@@ -395,6 +395,11 @@ namespace Microsoft.Data.SqlClient
                 ThrowExceptionAndWarning(_physicalStateObj);
                 Debug.Fail("SNI returned status != success, but no error thrown?");
             }
+            else
+            {
+                SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | Connection Object Id {0}, Authentication Mode: {1}", _connHandler.ObjectID,
+                    authType == SqlAuthenticationMethod.NotSpecified ? SqlAuthenticationMethod.SqlPassword.ToString() : authType.ToString());
+            }
 
             //Create LocalDB instance if necessary
             if (connHandler.ConnectionOptions.LocalDBInstance != null)
@@ -408,28 +413,17 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
+            _serverSpn = null;
+
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
                 _authenticationProvider = _physicalStateObj.CreateSspiContextProvider();
-
-                if (!string.IsNullOrEmpty(serverInfo.ServerSPN))
-                {
-                    _serverSpn = serverInfo.ServerSPN;
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Server SPN `{0}` from the connection string is used.", serverInfo.ServerSPN);
-                }
-                else
-                {
-                    // Empty signifies to interop layer that SPN needs to be generated
-                    _serverSpn = string.Empty;
-                }
-
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SSPI or Active Directory Authentication Library for SQL Server based integrated authentication");
             }
             else
             {
                 _authenticationProvider = null;
-                _serverSpn = null;
 
                 switch (authType)
                 {
@@ -516,7 +510,12 @@ namespace Microsoft.Data.SqlClient
                 totalTimeout,
                 _connHandler.ConnectionOptions.IPAddressPreference,
                 FQDNforDNSCache,
-                hostNameInCertificate);
+                ref _connHandler.pendingSQLDNSObject,
+                serverInfo.ServerSPN,
+                integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+                isTlsFirst,
+                hostNameInCertificate,
+                serverCertificateFilename);
 
             _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
 
@@ -559,7 +558,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionId");
 
             // for DNS Caching phase 1
-            AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache);
+            _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject);
 
             if (!ClientOSEncryptionSupport)
             {
@@ -609,8 +608,13 @@ namespace Microsoft.Data.SqlClient
                     transparentNetworkResolutionState,
                     totalTimeout,
                     _connHandler.ConnectionOptions.IPAddressPreference,
-                    serverInfo.ResolvedServerName,
-                    hostNameInCertificate);
+                    FQDNforDNSCache,
+                    ref _connHandler.pendingSQLDNSObject,
+                    serverInfo.ServerSPN,
+                    integratedSecurity,
+                    isTlsFirst,
+                    hostNameInCertificate,
+                    serverCertificateFilename);
 
                 _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
 
@@ -626,7 +630,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
 
                 // for DNS Caching phase 1
-                AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache);
+                _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject);
 
                 SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCertificateFilename);
                 status = ConsumePreLoginHandshake(
