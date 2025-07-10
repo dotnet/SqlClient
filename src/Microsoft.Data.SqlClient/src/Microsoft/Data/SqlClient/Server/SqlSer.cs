@@ -29,9 +29,6 @@ namespace Microsoft.Data.SqlClient.Server
         // Get the m_size of the serialized stream for this type, in bytes.
         internal static int SizeInBytes(object instance)
         {
-            Type t = instance.GetType();
-
-            _ = GetFormat(t);
             DummyStream stream = new DummyStream();
             Serializer ser = GetSerializer(instance.GetType());
             ser.Serialize(stream, instance);
@@ -49,14 +46,10 @@ namespace Microsoft.Data.SqlClient.Server
 #endif
             Type resultType) => GetSerializer(resultType).Deserialize(s);
 
-        private static Format GetFormat(Type t) => GetUdtAttribute(t).Format;
 
         // Cache the relationship between a type and its serializer.
         // This is expensive to compute since it involves traversing the
         // custom attributes of the type using reflection.
-        //
-        // Use a per-thread cache, so that there are no synchronization
-        // issues when accessing cache entries from multiple threads.
         private static ConcurrentDictionary<Type, Serializer> s_types2Serializers;
 
         private static Serializer GetSerializer(
@@ -169,8 +162,7 @@ namespace Microsoft.Data.SqlClient.Server
 #endif
             Type t) : base(t)
         {
-            _ = SerializationHelperSql9.GetUdtAttribute(t);
-            _normalizer = new BinaryOrderedUdtNormalizer(t, true);
+            _normalizer = new BinaryOrderedUdtNormalizer(t);
         }
 
         public override void Serialize(Stream s, object o) => _normalizer.NormalizeTopObject(o, s);

@@ -39,11 +39,6 @@ namespace Microsoft.Data.SqlClient.Server
     {
         private readonly FieldInfoEx[] _fieldsToNormalize;
         private int _size;
-        private readonly byte[] _padBuffer;
-        private readonly object _nullInstance;
-        //a boolean that tells us if a udt is a "top-level" udt,
-        //i.e. one that does not require a null byte header.
-        private readonly bool _isTopLevelUdt;
 
 #if NETFRAMEWORK
         [System.Security.Permissions.ReflectionPermission(System.Security.Permissions.SecurityAction.Assert, MemberAccess = true)]
@@ -61,22 +56,8 @@ namespace Microsoft.Data.SqlClient.Server
 #if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
 #endif
-            Type t, bool isTopLevelUdt)
+            Type t)
         {
-            _skipNormalize = false;
-            if (_skipNormalize)
-            {
-                // if skipping normalization, dont write the null
-                // byte header for IsNull
-                _isTopLevelUdt = true;
-            }
-
-            // top level udt logic is disabled until we decide
-            // what to do about nested udts
-            _isTopLevelUdt = true;
-            //      else
-            //        this._isTopLevelUdt = isTopLevelUdt;
-
             FieldInfo[] fields = GetFields(t);
 
             _fieldsToNormalize = new FieldInfoEx[fields.Length];
@@ -91,40 +72,7 @@ namespace Microsoft.Data.SqlClient.Server
 
             //sort by offset
             Array.Sort(_fieldsToNormalize);
-            //if this is not a top-level udt, do setup for null values.
-            //null values need to compare less than all other values,
-            //so prefix a null byte indicator.
-            if (!_isTopLevelUdt)
-            {
-                //get the null value for this type, special case for sql types, which
-                //have a null field
-                if (typeof(INullable).IsAssignableFrom(t))
-                {
-                    PropertyInfo pi = t.GetProperty("Null",
-                    BindingFlags.Public | BindingFlags.Static);
-                    if (pi == null || pi.PropertyType != t)
-                    {
-                        FieldInfo fi = t.GetField("Null", BindingFlags.Public | BindingFlags.Static);
-                        if (fi == null || fi.FieldType != t)
-                        {
-                            throw new Exception("could not find Null field/property in nullable type " + t);
-                        }
-                        else
-                        {
-                            _nullInstance = fi.GetValue(null);
-                        }
-                    }
-                    else
-                    {
-                        _nullInstance = pi.GetValue(null, null);
-                    }
-
-                    _padBuffer = new byte[Size - 1];
-                }
-            }
         }
-
-        internal bool IsNullable => _nullInstance != null;
 
         // Normalize the top-level udt
         internal void NormalizeTopObject(object udt, Stream s) => Normalize(null, udt, s);
@@ -144,23 +92,8 @@ namespace Microsoft.Data.SqlClient.Server
 #endif
             Type t, Stream s)
         {
-            object result = null;
-            //if nullable and not the top object, read the null marker
-            if (!_isTopLevelUdt && typeof(INullable).IsAssignableFrom(t))
-            {
-                byte nullByte = (byte)s.ReadByte();
-                if (nullByte == 0)
-                {
-                    result = _nullInstance;
-                    s.ReadExactly(_padBuffer, 0, _padBuffer.Length);
+            object result = Activator.CreateInstance(t);
 
-                    return result;
-                }
-            }
-            if (result == null)
-            {
-                result = Activator.CreateInstance(t);
-            }
             foreach (FieldInfoEx field in _fieldsToNormalize)
             {
                 field.Normalizer.DeNormalize(field.FieldInfo, result, s);
@@ -180,21 +113,6 @@ namespace Microsoft.Data.SqlClient.Server
                 inner = GetValue(fi, obj);
             }
 
-            // If nullable and not the top object, write a null indicator
-            if (inner is INullable nullable && !_isTopLevelUdt)
-            {
-                if (nullable.IsNull)
-                {
-                    s.WriteByte(0);
-                    s.Write(_padBuffer, 0, _padBuffer.Length);
-                    return;
-                }
-                else
-                {
-                    s.WriteByte(1);
-                }
-            }
-
             foreach (FieldInfoEx field in _fieldsToNormalize)
             {
                 field.Normalizer.Normalize(field.FieldInfo, inner, s);
@@ -211,10 +129,6 @@ namespace Microsoft.Data.SqlClient.Server
                 {
                     return _size;
                 }
-                if (IsNullable && !_isTopLevelUdt)
-                {
-                    _size = 1;
-                }
                 foreach (FieldInfoEx field in _fieldsToNormalize)
                 {
                     _size += field.Normalizer.Size;
@@ -226,8 +140,6 @@ namespace Microsoft.Data.SqlClient.Server
 
     internal abstract class Normalizer
     {
-        protected bool _skipNormalize;
-
         internal static Normalizer GetNormalizer(
 #if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
@@ -262,13 +174,12 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else if (t.IsValueType)
             {
-                n = new BinaryOrderedUdtNormalizer(t, false);
+                n = new BinaryOrderedUdtNormalizer(t);
             }
             if (n == null)
             {
                 throw new Exception(StringsHelper.GetString(Strings.SQL_CannotCreateNormalizer, t.FullName));
             }
-            n._skipNormalize = false;
             return n;
         }
 
@@ -322,20 +233,15 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 b = (byte)sb;
             }
-            if (!_skipNormalize)
-            {
-                b ^= 0x80; //flip the sign bit
-            }
+            b ^= 0x80; //flip the sign bit
             s.WriteByte(b);
         }
 
         internal override void DeNormalize(FieldInfo fi, object recvr, Stream s)
         {
             byte b = (byte)s.ReadByte();
-            if (!_skipNormalize)
-            {
-                b ^= 0x80; //flip the sign bit
-            }
+
+            b ^= 0x80; //flip the sign bit
             sbyte sb;
             unchecked
             {
@@ -369,11 +275,8 @@ namespace Microsoft.Data.SqlClient.Server
         internal override void Normalize(FieldInfo fi, object obj, Stream s)
         {
             byte[] b = BitConverter.GetBytes((short)GetValue(fi, obj));
-            if (!_skipNormalize)
-            {
-                Array.Reverse(b);
-                b[0] ^= 0x80;
-            }
+            Array.Reverse(b);
+            b[0] ^= 0x80;
             s.Write(b, 0, b.Length);
         }
 
@@ -381,11 +284,8 @@ namespace Microsoft.Data.SqlClient.Server
         {
             byte[] b = new byte[2];
             s.ReadExactly(b, 0, b.Length);
-            if (!_skipNormalize)
-            {
-                b[0] ^= 0x80;
-                Array.Reverse(b);
-            }
+            b[0] ^= 0x80;
+            Array.Reverse(b);
             SetValue(fi, recvr, BitConverter.ToInt16(b, 0));
         }
 
@@ -397,10 +297,7 @@ namespace Microsoft.Data.SqlClient.Server
         internal override void Normalize(FieldInfo fi, object obj, Stream s)
         {
             byte[] b = BitConverter.GetBytes((ushort)GetValue(fi, obj));
-            if (!_skipNormalize)
-            {
-                Array.Reverse(b);
-            }
+            Array.Reverse(b);
             s.Write(b, 0, b.Length);
         }
 
@@ -408,10 +305,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             byte[] b = new byte[2];
             s.ReadExactly(b, 0, b.Length);
-            if (!_skipNormalize)
-            {
-                Array.Reverse(b);
-            }
+            Array.Reverse(b);
             SetValue(fi, recvr, BitConverter.ToUInt16(b, 0));
         }
 
@@ -423,11 +317,8 @@ namespace Microsoft.Data.SqlClient.Server
         internal override void Normalize(FieldInfo fi, object obj, Stream s)
         {
             byte[] b = BitConverter.GetBytes((int)GetValue(fi, obj));
-            if (!_skipNormalize)
-            {
-                Array.Reverse(b);
-                b[0] ^= 0x80;
-            }
+            Array.Reverse(b);
+            b[0] ^= 0x80;
             s.Write(b, 0, b.Length);
         }
 
@@ -435,11 +326,8 @@ namespace Microsoft.Data.SqlClient.Server
         {
             byte[] b = new byte[4];
             s.ReadExactly(b, 0, b.Length);
-            if (!_skipNormalize)
-            {
-                b[0] ^= 0x80;
-                Array.Reverse(b);
-            }
+            b[0] ^= 0x80;
+            Array.Reverse(b);
             SetValue(fi, recvr, BitConverter.ToInt32(b, 0));
         }
 
@@ -451,10 +339,7 @@ namespace Microsoft.Data.SqlClient.Server
         internal override void Normalize(FieldInfo fi, object obj, Stream s)
         {
             byte[] b = BitConverter.GetBytes((uint)GetValue(fi, obj));
-            if (!_skipNormalize)
-            {
-                Array.Reverse(b);
-            }
+            Array.Reverse(b);
             s.Write(b, 0, b.Length);
         }
 
@@ -462,10 +347,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             byte[] b = new byte[4];
             s.ReadExactly(b, 0, b.Length);
-            if (!_skipNormalize)
-            {
-                Array.Reverse(b);
-            }
+            Array.Reverse(b);
             SetValue(fi, recvr, BitConverter.ToUInt32(b, 0));
         }
 
@@ -477,11 +359,8 @@ namespace Microsoft.Data.SqlClient.Server
         internal override void Normalize(FieldInfo fi, object obj, Stream s)
         {
             byte[] b = BitConverter.GetBytes((long)GetValue(fi, obj));
-            if (!_skipNormalize)
-            {
-                Array.Reverse(b);
-                b[0] ^= 0x80;
-            }
+            Array.Reverse(b);
+            b[0] ^= 0x80;
             s.Write(b, 0, b.Length);
         }
 
@@ -489,11 +368,8 @@ namespace Microsoft.Data.SqlClient.Server
         {
             byte[] b = new byte[8];
             s.ReadExactly(b, 0, b.Length);
-            if (!_skipNormalize)
-            {
-                b[0] ^= 0x80;
-                Array.Reverse(b);
-            }
+            b[0] ^= 0x80;
+            Array.Reverse(b);
             SetValue(fi, recvr, BitConverter.ToInt64(b, 0));
         }
 
@@ -505,10 +381,7 @@ namespace Microsoft.Data.SqlClient.Server
         internal override void Normalize(FieldInfo fi, object obj, Stream s)
         {
             byte[] b = BitConverter.GetBytes((ulong)GetValue(fi, obj));
-            if (!_skipNormalize)
-            {
-                Array.Reverse(b);
-            }
+            Array.Reverse(b);
             s.Write(b, 0, b.Length);
         }
 
@@ -516,10 +389,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             byte[] b = new byte[8];
             s.ReadExactly(b, 0, b.Length);
-            if (!_skipNormalize)
-            {
-                Array.Reverse(b);
-            }
+            Array.Reverse(b);
             SetValue(fi, recvr, BitConverter.ToUInt64(b, 0));
         }
 
@@ -532,26 +402,23 @@ namespace Microsoft.Data.SqlClient.Server
         {
             float f = (float)GetValue(fi, obj);
             byte[] b = BitConverter.GetBytes(f);
-            if (!_skipNormalize)
+            Array.Reverse(b);
+            if ((b[0] & 0x80) == 0)
             {
-                Array.Reverse(b);
-                if ((b[0] & 0x80) == 0)
-                {
-                    // This is a positive number.
-                    // Flip the highest bit
-                    b[0] ^= 0x80;
-                }
-                else
-                {
-                    // This is a negative number.
+                // This is a positive number.
+                // Flip the highest bit
+                b[0] ^= 0x80;
+            }
+            else
+            {
+                // This is a negative number.
 
-                    // If all zeroes, means it was a negative zero.
-                    // Treat it same as positive zero, so that
-                    // the normalized key will compare equal.
-                    if (f < 0)
-                    {
-                        FlipAllBits(b);
-                    }
+                // If all zeroes, means it was a negative zero.
+                // Treat it same as positive zero, so that
+                // the normalized key will compare equal.
+                if (f < 0)
+                {
+                    FlipAllBits(b);
                 }
             }
             s.Write(b, 0, b.Length);
@@ -561,21 +428,18 @@ namespace Microsoft.Data.SqlClient.Server
         {
             byte[] b = new byte[4];
             s.ReadExactly(b, 0, b.Length);
-            if (!_skipNormalize)
+            if ((b[0] & 0x80) > 0)
             {
-                if ((b[0] & 0x80) > 0)
-                {
-                    // This is a positive number.
-                    // Flip the highest bit
-                    b[0] ^= 0x80;
-                }
-                else
-                {
-                    // This is a negative number.
-                    FlipAllBits(b);
-                }
-                Array.Reverse(b);
+                // This is a positive number.
+                // Flip the highest bit
+                b[0] ^= 0x80;
             }
+            else
+            {
+                // This is a negative number.
+                FlipAllBits(b);
+            }
+            Array.Reverse(b);
             SetValue(fi, recvr, BitConverter.ToSingle(b, 0));
         }
 
@@ -588,25 +452,22 @@ namespace Microsoft.Data.SqlClient.Server
         {
             double d = (double)GetValue(fi, obj);
             byte[] b = BitConverter.GetBytes(d);
-            if (!_skipNormalize)
+            Array.Reverse(b);
+            if ((b[0] & 0x80) == 0)
             {
-                Array.Reverse(b);
-                if ((b[0] & 0x80) == 0)
+                // This is a positive number.
+                // Flip the highest bit
+                b[0] ^= 0x80;
+            }
+            else
+            {
+                // This is a negative number.
+                if (d < 0)
                 {
-                    // This is a positive number.
-                    // Flip the highest bit
-                    b[0] ^= 0x80;
-                }
-                else
-                {
-                    // This is a negative number.
-                    if (d < 0)
-                    {
-                        // If all zeroes, means it was a negative zero.
-                        // Treat it same as positive zero, so that
-                        // the normalized key will compare equal.
-                        FlipAllBits(b);
-                    }
+                    // If all zeroes, means it was a negative zero.
+                    // Treat it same as positive zero, so that
+                    // the normalized key will compare equal.
+                    FlipAllBits(b);
                 }
             }
             s.Write(b, 0, b.Length);
@@ -616,21 +477,18 @@ namespace Microsoft.Data.SqlClient.Server
         {
             byte[] b = new byte[8];
             s.ReadExactly(b, 0, b.Length);
-            if (!_skipNormalize)
+            if ((b[0] & 0x80) > 0)
             {
-                if ((b[0] & 0x80) > 0)
-                {
-                    // This is a positive number.
-                    // Flip the highest bit
-                    b[0] ^= 0x80;
-                }
-                else
-                {
-                    // This is a negative number.
-                    FlipAllBits(b);
-                }
-                Array.Reverse(b);
+                // This is a positive number.
+                // Flip the highest bit
+                b[0] ^= 0x80;
             }
+            else
+            {
+                // This is a negative number.
+                FlipAllBits(b);
+            }
+            Array.Reverse(b);
             SetValue(fi, recvr, BitConverter.ToDouble(b, 0));
         }
 
