@@ -3539,9 +3539,6 @@ namespace Microsoft.Data.SqlClient
             {
                 StateSnapshot snapshot = _snapshot;
                 _snapshot = null;
-                // TODO(GH-3385): Not sure what this is trying to assert, but it
-                // currently fails the DataReader tests.
-                // Debug.Assert(snapshot._storage == null);
                 snapshot.Clear();
                 Interlocked.CompareExchange(ref _cachedSnapshot, snapshot, null);
             }
@@ -3599,9 +3596,6 @@ namespace Microsoft.Data.SqlClient
         internal void SetSnapshotStorage(object buffer)
         {
             Debug.Assert(_snapshot != null, "should not access snapshot accessor functions without first checking that the snapshot is available");
-            // TODO(GH-3385): Not sure what this is trying to assert, but it
-            // currently fails the DataReader tests.
-            // Debug.Assert(_snapshot._storage == null, "should not overwrite snapshot stored buffer");
             if (_snapshot != null)
             {
                 _snapshot._storage = buffer;
@@ -4380,9 +4374,6 @@ namespace Microsoft.Data.SqlClient
 
             private void ClearState()
             {
-                // TODO(GH-3385): Not sure what this is trying to assert, but it
-                // currently fails the DataReader tests.
-                // Debug.Assert(_storage == null);
                 _storage = null;
                 _replayStateData.Clear(_stateObj);
                 _continueStateData?.Clear(_stateObj, trackStack: false);
