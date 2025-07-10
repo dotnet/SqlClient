@@ -8,6 +8,8 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
+using System.Globalization;
+
 namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 {
     /// <summary>
@@ -85,6 +87,17 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             get
             {
                 return ResourceManager.GetString("EmptyArgumentInternal", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Fetching the key failed: &apos;{0}&apos;.
+        /// </summary>
+        internal static string GetKeyFailed
+        {
+            get
+            {
+                return ResourceManager.GetString("GetKeyFailed", resourceCulture);
             }
         }
 
@@ -199,7 +212,18 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Invalid trusted endpoint specified: &apos;{0}&apos;; a trusted endpoint must have a value..
+        ///   Looks up a localized string similar to The key with identifier &apos;{0}&apos; was not found..
+        /// </summary>
+        internal static string MasterKeyNotFound
+        {
+            get
+            {
+                return ResourceManager.GetString("MasterKeyNotFound", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to One or more of the elements in &apos;{0}&apos; are null or empty or consist of only whitespace..
         /// </summary>
         internal static string NullOrWhitespaceForEach
         {
