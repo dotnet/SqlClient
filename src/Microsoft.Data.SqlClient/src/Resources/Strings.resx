@@ -4740,4 +4740,22 @@
   <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
     <value>Missing the DataColumn '{0}' for the SourceColumn '{2}'.</value>
   </data>
+  <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
+    <value>SqlBatchCommand list has not been initialized.</value>
+  </data>
+  <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
+    <value>Invalid attempt to get vector data from column '{0}'. Vectors are only supported for columns of type vector.</value>
+  </data>
+  <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
+    <value>Unsupported Vector type '{0}'.</value>
+  </data>
+  <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
+    <value>'null' value not supported for output parameter '{0}' of SqlDbtype Vector.</value>
+  </data>
+  <data name="ADP_InvalidVectorHeader" xml:space="preserve">
+    <value>Invalid vector header received.</value>
+  </data>
+  <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
+    <value>{0} Invalid JSON string for vector.</value>
+  </data>
 </root>

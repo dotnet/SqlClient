@@ -1,0 +1,146 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>FunctionalTests</AssemblyName>
+    <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
+    <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
+    <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx'">win</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType.Contains('Package')) AND !$(Platform.Contains('AnyCPU'))">win-$(Platform)</RuntimeIdentifier>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="AlwaysEncryptedTests\ExceptionsAlgorithmErrors.cs" />
+    <Compile Include="AlwaysEncryptedTests\ConnectionStringBuilderShould.cs" />
+    <Compile Include="AlwaysEncryptedTests\DummyKeyStoreProvider.cs" />
+    <Compile Include="AlwaysEncryptedTests\ExceptionRegisterKeyStoreProvider.cs" />
+    <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCertificateStoreProviderShould.cs" />
+    <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCngProviderShould.cs" />
+    <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCspProviderShould.cs" />
+    <Compile Include="AlwaysEncryptedTests\SqlCommandShould.cs" />
+    <Compile Include="AlwaysEncryptedTests\SqlConnectionShould.cs" />
+    <Compile Include="AlwaysEncryptedTests\TestFixtures.cs" />
+    <Compile Include="AlwaysEncryptedTests\Utility.cs" />
+    <Compile Include="AssertExtensions.cs" />
+    <Compile Include="DataCommon\AssemblyResourceManager.cs" />
+    <Compile Include="DataCommon\SystemDataResourceManager.cs" />
+    <Compile Include="DataCommon\TestUtility.cs" />
+    <Compile Include="LocalizationTest.cs" />
+    <Compile Include="MultipartIdentifierTests.cs" />
+    <Compile Include="MultiplexerTests.cs" />
+    <Compile Include="SqlAuthenticationProviderTest.cs" />
+    <Compile Include="SqlClientLoggerTest.cs" />
+    <Compile Include="SqlConfigurableRetryLogicTest.cs" />
+    <Compile Include="SqlCommandBuilderTest.cs" />
+    <Compile Include="SqlBulkCopyTest.cs" />
+    <Compile Include="SqlClientMetaDataCollectionNamesTest.cs" />
+    <Compile Include="SqlDataAdapterTest.cs" />
+    <Compile Include="SqlConnectionBasicTests.cs" />
+    <Compile Include="SqlConnectionReadOnlyRoutingTests.cs" />
+    <Compile Include="SqlCommandTest.cs" />
+    <Compile Include="SqlConnectionTest.cs" />
+    <Compile Include="AADAuthenticationTests.cs" />
+    <Compile Include="CloneTests.cs" />
+    <Compile Include="BaseProviderAsyncTest\BaseProviderAsyncTest.cs" />
+    <Compile Include="BaseProviderAsyncTest\MockCommand.cs" />
+    <Compile Include="BaseProviderAsyncTest\MockConnection.cs" />
+    <Compile Include="BaseProviderAsyncTest\MockDataReader.cs" />
+    <Compile Include="SqlCredentialTest.cs" />
+    <Compile Include="SqlDataRecordTest.cs" />
+    <Compile Include="SqlErrorTest.cs" />
+    <Compile Include="SqlExceptionTest.cs" />
+    <Compile Include="SqlFacetAttributeTest.cs" />
+    <Compile Include="SqlNotificationRequestTest.cs" />
+    <Compile Include="SqlParameterCollectionTest.cs" />
+    <Compile Include="SqlParameterTest.cs" />
+    <Compile Include="SqlClientFactoryTest.cs" />
+    <Compile Include="SqlErrorCollectionTest.cs" />
+    <Compile Include="SqlBulkCopyColumnMappingCollectionTest.cs" />
+    <Compile Include="SqlBulkCopyColumnOrderHintCollectionTest.cs" />
+    <Compile Include="AmbientTransactionFailureTest.cs" />
+    <Compile Include="SqlConnectionTest.RetrieveStatistics.cs" />
+    <Compile Include="SqlMetaDataTest.cs" />
+    <Compile Include="SqlConnectionStringBuilderTest.cs" />
+    <Compile Include="SerializeSqlTypesTest.cs" />
+    <Compile Include="TdsParserStateObject.TestHarness.cs" />
+    <Compile Include="TestTdsServer.cs" />
+    <Compile Include="TestRoutingTdsServer.cs" />
+    <Compile Include="SqlHelperTest.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\Common\MultipartIdentifier.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserStateObject.Multiplexer.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Packet.cs" />
+  </ItemGroup>
+  <!-- XUnit and XUnit extensions -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="xunit.runner.console">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Microsoft.Bcl.Cryptography" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.SqlServer.Types" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
+    <PackageReference Include="System.Data.Odbc" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
+    <Reference Include="System.Transactions" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="System.Buffers" />
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('netcoreapp'))">
+    <Compile Include="SslOverTdsStreamTest.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(TestsPath)Common\Common.csproj">
+      <Name>Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(TestsPath)ManualTests\SQL\UdtTest\UDTs\Address\Address.csproj">
+      <Name>Address</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj">
+      <Name>TDS.Servers</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj">
+      <Name>TDS.EndPoint</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj">
+      <Name>TDS</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(TestsPath)tools\Microsoft.Data.SqlClient.TestUtilities\Microsoft.Data.SqlClient.TestUtilities.csproj" />
+    <ProjectReference Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
+    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Condition="!$(ReferenceType.Contains('Package'))" Include="$(SqlServerSource)Microsoft.SqlServer.Server.csproj" />
+    <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Data.SqlClient" />
+  </ItemGroup>
+  <ItemGroup>
+    <ContentWithTargetPath Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\$(TargetFramework)\*SNI*.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>%(Filename)%(Extension)</TargetPath>
+    </ContentWithTargetPath>
+  </ItemGroup>
+  <ItemGroup>
+    <ContentWithTargetPath Include="..\tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>xunit.runner.json</TargetPath>
+    </ContentWithTargetPath>
+  </ItemGroup>
+</Project>

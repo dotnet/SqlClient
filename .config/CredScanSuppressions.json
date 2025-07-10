@@ -2,20 +2,12 @@
   "tool": "Credential Scanner",
   "suppressions": [
     {
-      "file": "src/Microsoft.Data.SqlClient/tests/Docker/DockerLinuxTest/Program.cs",
-      "justification": "Test projects should be skipped"
-    },
-    {
       "file": "src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.Servers/TDSServerArguments.cs",
       "justification": "Test projects should be skipped"
     },
     {
       "file": "src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.Servers/TdsServerCertificate.pfx",
       "justification": "Test projects should be skipped"
-    },
-    {
-      "file": "src/docker-compose.yml",
-      "justification": "Docker test project should be excluded"
     },
     {
       "file": "doc/samples/SqlConnectionStringBuilder.cs",

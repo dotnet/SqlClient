@@ -2835,6 +2835,18 @@ namespace Microsoft.Data.SqlClient
             return json;
         }
 
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlVector/*' />
+        virtual public SqlVector<T> GetSqlVector<T>(int i) where T : unmanaged
+        {
+            if (typeof(T) != typeof(float))
+            {
+                throw SQL.VectorTypeNotSupported(typeof(T).FullName);
+            }
+
+            ReadColumn(i);
+            return _data[i].GetSqlVector<T>();
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlValue/*' />
         virtual public object GetSqlValue(int i)
         {
@@ -2954,7 +2966,6 @@ namespace Microsoft.Data.SqlClient
         override public string GetString(int i)
         {
             ReadColumn(i);
-
             // Convert 2008 value to string if type system knob is 2005 or earlier
             if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
@@ -3084,6 +3095,24 @@ namespace Microsoft.Data.SqlClient
             {
                 // TypeSystem.SQLServer2005 and above
 
+                if (metaData.type == SqlDbTypeExtensions.Vector)
+                {
+                    if (data.IsNull)
+                    {
+                        return DBNull.Value;
+                    }
+                    else
+                    {
+                        switch (metaData.scale)
+                        {
+                            case (byte)MetaType.SqlVectorElementType.Float32:
+                                return data.GetSqlVector<float>();
+                            default:
+                                throw SQL.VectorTypeNotSupported(metaData.scale.ToString());
+                        }
+                    }
+                }
+
                 if (metaData.type != SqlDbType.Udt)
                 {
                     return data.Value;
@@ -3187,6 +3216,15 @@ namespace Microsoft.Data.SqlClient
                 return (T)(object)data.TimeOnly;
             }
 #endif
+            else if (typeof(T) == typeof(SqlVector<float>))
+            {
+                MetaType metaType = metaData.metaType;
+                if (metaType.SqlDbType != SqlDbTypeExtensions.Vector)
+                {
+                    throw SQL.VectorNotSupportedOnColumnType(metaData.column);
+                }
+                return (T)(object)data.GetSqlVector<float>();
+            }
             else if (typeof(T) == typeof(XmlReader))
             {
                 // XmlReader only allowed on XML types
@@ -3325,6 +3363,13 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
+                    if (typeof(T) == typeof(string) && metaData.metaType.SqlDbType == SqlDbTypeExtensions.Vector)
+                    {
+                        if (data.IsNull)
+                            return (T)(object)data.String;
+                        else
+                            return (T)(object)data.GetSqlVector<float>().GetString();
+                    }
                     // the requested type is likely to be one that isn't supported so try the cast and
                     // unless there is a null value conversion then feedback the cast exception with 
                     // type named to the user so they know what went wrong. Supported types are listed
@@ -4712,7 +4757,7 @@ namespace Microsoft.Data.SqlClient
                     _metaDataConsumed = true;
 
                     if (_parser != null)
-                    { 
+                    {
                         // There is a valid case where parser is null
                         // Peek, and if row token present, set _hasRows true since there is a
                         // row in the result

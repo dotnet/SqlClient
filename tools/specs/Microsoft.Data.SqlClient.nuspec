@@ -10,58 +10,72 @@
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
     <icon>dotnet.png</icon>
     <readme>README.md</readme>
-    <repository type="git" url="https://github.com/dotnet/sqlclient" commit="$COMMITID$"/>
+    <repository type="git" url="https://github.com/dotnet/sqlclient" commit="$COMMITID$" />
     <description>The current data provider for SQL Server and Azure SQL databases. This has replaced System.Data.SqlClient. These classes provide access to SQL and encapsulate database-specific protocols, including tabular data stream (TDS).
-    
-Commonly Used Types:
-Microsoft.Data.SqlClient.SqlConnection
-Microsoft.Data.SqlClient.SqlException
-Microsoft.Data.SqlClient.SqlParameter
-Microsoft.Data.SqlClient.SqlDataReader
-Microsoft.Data.SqlClient.SqlCommand
-Microsoft.Data.SqlClient.SqlTransaction
-Microsoft.Data.SqlClient.SqlParameterCollection
-Microsoft.Data.SqlClient.SqlClientFactory
 
-When using NuGet 3.x this package requires at least version 3.4.</description>
+      Commonly Used Types:
+      Microsoft.Data.SqlClient.SqlConnection
+      Microsoft.Data.SqlClient.SqlException
+      Microsoft.Data.SqlClient.SqlParameter
+      Microsoft.Data.SqlClient.SqlDataReader
+      Microsoft.Data.SqlClient.SqlCommand
+      Microsoft.Data.SqlClient.SqlTransaction
+      Microsoft.Data.SqlClient.SqlParameterCollection
+      Microsoft.Data.SqlClient.SqlClientFactory
+
+      When using NuGet 3.x this package requires at least version 3.4.</description>
     <releaseNotes>https://go.microsoft.com/fwlink/?linkid=2090501</releaseNotes>
     <copyright>© Microsoft Corporation. All rights reserved.</copyright>
     <tags>sqlclient microsoft.data.sqlclient</tags>
     <dependencies>
       <group targetFramework="net462">
+        <dependency id="Azure.Identity" version="1.13.2" />
+        <dependency id="Microsoft.Bcl.Cryptography" version="8.0.0" />
         <dependency id="Microsoft.Data.SqlClient.SNI" version="6.0.2" />
-        <dependency id="Azure.Identity" version="1.11.4" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" exclude="Compile" />
-        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="7.5.0" />
-        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.5.0" />
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="7.7.1" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.7.1" />
         <dependency id="System.Buffers" version="4.5.1" />
-        <dependency id="System.Text.Encodings.Web" version="6.0.0" />
-        <dependency id="System.Text.Json" version="6.0.10" />
         <dependency id="System.Data.Common" version="4.3.0" />
-        <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1"/>
-        <dependency id="Microsoft.Bcl.Cryptography" version="8.0.0"/>
+        <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
+        <dependency id="System.Text.Encodings.Web" version="8.0.0" />
+        <dependency id="System.Text.Json" version="8.0.5" />
       </group>
       <group targetFramework="net8.0">
+        <dependency id="Azure.Identity" version="1.13.2" />
+        <dependency id="Microsoft.Bcl.Cryptography" version="8.0.0" />
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="6.0.2" exclude="Compile" />
-        <dependency id="Azure.Identity" version="1.11.4" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" exclude="Compile" />
-        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="7.5.0" />
-        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.5.0" />
-        <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="7.7.1" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.7.1" />
+        <dependency id="Microsoft.SqlServer.Server" version="1.0.0" />
         <dependency id="System.Configuration.ConfigurationManager" version="8.0.1" exclude="Compile" />
-        <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1"/>
-        <dependency id="Microsoft.Bcl.Cryptography" version="8.0.0"/>
+        <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
+        <dependency id="System.Text.Json" version="8.0.5" />
       </group>
       <group targetFramework="net9.0">
+        <dependency id="Azure.Identity" version="1.13.2" />
+        <dependency id="Microsoft.Bcl.Cryptography" version="9.0.4" />
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="6.0.2" exclude="Compile" />
-        <dependency id="Azure.Identity" version="1.11.4" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="9.0.4" exclude="Compile" />
-        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="7.5.0" />
-        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.5.0" />
-        <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="7.7.1" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.7.1" />
+        <dependency id="Microsoft.SqlServer.Server" version="1.0.0" />
         <dependency id="System.Configuration.ConfigurationManager" version="9.0.4" exclude="Compile" />
-        <dependency id="System.Security.Cryptography.Pkcs" version="9.0.4"/>
-        <dependency id="Microsoft.Bcl.Cryptography" version="9.0.4"/>
+        <dependency id="System.Security.Cryptography.Pkcs" version="9.0.4" />
+        <dependency id="System.Text.Json" version="9.0.5" />
+      </group>
+      <group targetFramework="netstandard2.0">
+        <dependency id="Azure.Identity" version="1.13.2" />
+        <dependency id="Microsoft.Bcl.Cryptography" version="9.0.4" />
+        <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="6.0.2" exclude="Compile" />
+        <dependency id="Microsoft.Extensions.Caching.Memory" version="9.0.4" exclude="Compile" />
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="7.7.1" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.7.1" />
+        <dependency id="Microsoft.SqlServer.Server" version="1.0.0" />
+        <dependency id="System.Configuration.ConfigurationManager" version="9.0.4" exclude="Compile" />
+        <dependency id="System.Security.Cryptography.Pkcs" version="9.0.4" />
+        <dependency id="System.Text.Json" version="9.0.5" />
       </group>
     </dependencies>
     <frameworkAssemblies>
@@ -70,16 +84,20 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     </frameworkAssemblies>
     <references>
       <group targetFramework="net462">
-          <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.xml" />
+        <reference file="Microsoft.Data.SqlClient.dll" />
+        <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
       <group targetFramework="net8.0">
-          <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.xml" />
+        <reference file="Microsoft.Data.SqlClient.dll" />
+        <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
       <group targetFramework="net9.0">
-          <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.xml" />
+        <reference file="Microsoft.Data.SqlClient.dll" />
+        <reference file="Microsoft.Data.SqlClient.xml" />
+      </group>
+      <group targetFramework="netstandard2.0">
+        <reference file="Microsoft.Data.SqlClient.dll" />
+        <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
     </references>
   </metadata>
@@ -98,6 +116,10 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <!-- ref NetCore for Net 9 -->
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net9.0\Microsoft.Data.SqlClient.dll" target="ref\net9.0\" exclude="" />
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net9.0\Microsoft.Data.SqlClient.xml" target="ref\net9.0\" exclude="" />
+
+    <!-- ref NetCore for NetStandard2.0 -->
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netstandard2.0\Microsoft.Data.SqlClient.dll" target="ref\netstandard2.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netstandard2.0\Microsoft.Data.SqlClient.xml" target="ref\netstandard2.0\" exclude="" />
 
     <!-- Localized Resource Files for NetFx -->
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\cs\" exclude="" />
@@ -123,13 +145,18 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.dll" target="lib\net8.0\" exclude="" />
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.pdb" target="lib\net8.0\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.xml" target="lib\net8.0\" exclude="" />
-    
+
     <!-- lib NetCore for Net 9 -->
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\Microsoft.Data.SqlClient.dll" target="lib\net9.0\" exclude="" />
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\Microsoft.Data.SqlClient.pdb" target="lib\net9.0\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\Microsoft.Data.SqlClient.xml" target="lib\net9.0\" exclude="" />
-    
-	  <!-- Localization files for Net 8 -->
+
+    <!-- lib NetCore for NetStandard2.0 -->
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netstandard\netstandard2.0\Microsoft.Data.SqlClient.dll" target="lib\netstandard2.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netstandard\netstandard2.0\Microsoft.Data.SqlClient.pdb" target="lib\netstandard2.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netstandard\netstandard2.0\Microsoft.Data.SqlClient.xml" target="lib\netstandard2.0\" exclude="" />
+
+    <!-- Localization files for Net 8 -->
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\cs\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\de\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\es\" exclude="" />
@@ -143,7 +170,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\tr\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\tr\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\zh-Hans\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\zh-Hant\" exclude="" />
-    <!-- End of Localization files for Net 8 -->	
+    <!-- End of Localization files for Net 8 -->
 
     <!-- Localization files for Net 9 -->
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\cs\" exclude="" />
@@ -159,7 +186,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\tr\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\tr\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\zh-Hans\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\zh-Hant\" exclude="" />
-    <!-- End of Localization files for Net 9 -->	
+    <!-- End of Localization files for Net 9 -->
 
     <!-- runtimes NetFx -->
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net462\" exclude="" />

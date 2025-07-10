@@ -1301,7 +1301,18 @@ namespace System {
                 return ResourceManager.GetString("ADP_NoQuoteChange", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to SqlBatchCommand list has not been initialized..
+        /// </summary>
+        internal static string ADP_NoSqlBatchCommandList
+        {
+            get
+            {
+                return ResourceManager.GetString("ADP_NoSqlBatchCommandList", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to The stored procedure &apos;{0}&apos; doesn&apos;t exist..
         /// </summary>
@@ -10810,10 +10821,65 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Invalid attempt to get vector data from column '{0}'. Vectors are only supported for columns of type vector..
+        /// </summary>
+        internal static string SQL_VectorNotSupportedOnColumnType {
+            get {
+                return ResourceManager.GetString("SQL_VectorNotSupportedOnColumnType", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Unsupported Vector type '{0}'..
+        /// </summary>
+        internal static string SQL_VectorTypeNotSupported
+        {
+            get
+            {
+                return ResourceManager.GetString("SQL_VectorTypeNotSupported", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 'null' value not supported for output paramter {0} of SqlDbtype Vector..
+        /// </summary>
+        internal static string ADP_NullOutputParameterValueForVector
+        {
+            get
+            {
+                return ResourceManager.GetString("ADP_NullOutputParameterValueForVector", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid vector header received..
+        /// </summary>
+        internal static string ADP_InvalidVectorHeader
+        {
+            get
+            {
+                return ResourceManager.GetString("ADP_InvalidVectorHeader", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} Invalid JSON string for vector...
+        /// </summary>
+        internal static string ADP_InvalidJsonStringForVector
+        {
+            get
+            {
+                return ResourceManager.GetString("ADP_InvalidJsonStringForVector", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Expecting argument of type {1}, but received type {0}..
         /// </summary>
-        internal static string SQL_WrongType {
-            get {
+        internal static string SQL_WrongType
+        {
+            get
+            {
                 return ResourceManager.GetString("SQL_WrongType", resourceCulture);
             }
         }

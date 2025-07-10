@@ -7,9 +7,6 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient
 {
-#if NETFRAMEWORK
-    using PacketHandle = IntPtr;
-#endif
     partial class TdsParserStateObject
     {
         private Packet _partialPacket;
@@ -513,12 +510,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 uint dataSize = 0;
-                
-                #if NETFRAMEWORK
-                uint getDataError = SniNativeWrapper.SniPacketGetData(packet, _inBuff, ref dataSize);
-                #else
                 uint getDataError = SniPacketGetData(packet, _inBuff, ref dataSize);
-                #endif
 
                 if (getDataError == TdsEnums.SNI_SUCCESS)
                 {

@@ -35,17 +35,15 @@ parameters:
       - allNoDocs
 
 steps:
-- task: UseDotNet@2
-  displayName: 'Use .NET 9.x sdk'
-  inputs:
-    packageType: sdk
-    version: '9.x'
+- template: ./ensure-dotnet-version.yml@self
+  parameters:
+      packageType: 'sdk'
+      version: '9.0'
 
-- task: UseDotNet@2
-  displayName: 'Install .NET 8.x runtime'
-  inputs:
-    packageType: runtime
-    version: '8.x'
+- template: ./ensure-dotnet-version.yml@self
+  parameters:
+      packageType: 'runtime'
+      version: '8.0'
 
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:

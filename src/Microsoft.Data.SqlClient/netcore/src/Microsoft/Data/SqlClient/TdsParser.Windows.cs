@@ -4,8 +4,6 @@
 
 using System;
 using System.Diagnostics;
-using Interop.Windows.Sni;
-using Microsoft.Data.SqlClient.SNI;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -61,34 +59,5 @@ namespace Microsoft.Data.SqlClient
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
         }
-
-        private SNIErrorDetails GetSniErrorDetails()
-        {
-            SNIErrorDetails details = new SNIErrorDetails();
-
-            if (TdsParserStateObjectFactory.UseManagedSNI)
-            {
-                SNIError sniError = SNIProxy.Instance.GetLastError();
-                details.sniErrorNumber = sniError.sniError;
-                details.errorMessage = sniError.errorMessage;
-                details.nativeError = sniError.nativeError;
-                details.provider = (int)sniError.provider;
-                details.lineNumber = sniError.lineNumber;
-                details.function = sniError.function;
-                details.exception = sniError.exception;
-            }
-            else
-            {
-                SniNativeWrapper.SniGetLastError(out SniError sniError);
-                details.sniErrorNumber = sniError.sniError;
-                details.errorMessage = sniError.errorMessage;
-                details.nativeError = sniError.nativeError;
-                details.provider = (int)sniError.provider;
-                details.lineNumber = sniError.lineNumber;
-                details.function = sniError.function;
-            }
-            return details;
-        }
-
     }    // tdsparser
 }//namespace

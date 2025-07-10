@@ -219,7 +219,7 @@ namespace Microsoft.Data.SqlClient.Tests
             var attentionPacket = CreatePacket(13, 6);
             var input = new List<PacketData> { normalPacket, attentionPacket };
 
-            var stateObject = new TdsParserStateObject(input, TdsEnums.HEADER_LEN + dataSize, isAsync: true);
+            using var stateObject = new TdsParserStateObject(input, TdsEnums.HEADER_LEN + dataSize, isAsync: true);
 
             for (int index = 0; index < input.Count; index++)
             {
@@ -248,7 +248,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             List<PacketData> input = SplitPacket(CombinePackets(expected), 700);
 
-            var stateObject = new TdsParserStateObject(input, dataSize, isAsync: false);
+            using var stateObject = new TdsParserStateObject(input, dataSize, isAsync: false);
 
             var output = MultiplexPacketList(false, dataSize, input);
 
@@ -258,7 +258,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [ExcludeFromCodeCoverage]
         private static List<PacketData> MultiplexPacketList(bool isAsync, int dataSize, List<PacketData> input)
         {
-            var stateObject = new TdsParserStateObject(input, TdsEnums.HEADER_LEN + dataSize, isAsync);
+            using var stateObject = new TdsParserStateObject(input, TdsEnums.HEADER_LEN + dataSize, isAsync);
             var output = new List<PacketData>();
 
             for (int index = 0; index < input.Count; index++)
