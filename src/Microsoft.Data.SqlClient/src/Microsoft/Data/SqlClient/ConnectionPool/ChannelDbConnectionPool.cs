@@ -434,7 +434,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         owningConnection,
                         userOptions,
                         async,
-                        cancellationToken).ConfigureAwait(false);
+                        cancellationToken);
 
                     // If we're at max capacity and couldn't open a connection. Block on the idle channel with a
                     // timeout. Note that Channels guarantee fair FIFO behavior to callers of ReadAsync

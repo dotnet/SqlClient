@@ -473,7 +473,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             DbConnectionInternal internalConnection = null;
 
             // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(() =>
+            var ex = Assert.Throws<Exception>(() =>
             {
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
@@ -483,7 +483,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 );
             });
 
-            Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.Message);
+            Assert.IsType<InvalidOperationException>(ex.InnerException);
+
+            Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.InnerException.Message);
         }
 
         [Fact]
@@ -495,7 +497,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new TaskCompletionSource<DbConnectionInternal>();
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            var ex = await Assert.ThrowsAsync<Exception>(async () =>
             {
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
@@ -507,7 +509,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 await taskCompletionSource.Task;
             });
 
-            Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.Message);
+            Assert.IsType<InvalidOperationException>(ex.InnerException);
+
+            Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.InnerException.Message);
         }
 
         [Fact]
