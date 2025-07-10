@@ -7,6 +7,7 @@ using Azure.Security.KeyVault.Keys;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using System;
 using System.Collections.Concurrent;
+using System.Threading;
 using static Azure.Security.KeyVault.Keys.Cryptography.SignatureAlgorithm;
 
 namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
@@ -24,16 +25,14 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         private readonly ConcurrentDictionary<Uri, KeyClient> _keyClientDictionary = new();
 
         /// <summary>
-        /// Holds references to the fetch key tasks and maps them to their corresponding Azure Key Vault Key Identifier (URI).
-        /// These tasks will be used for returning the key in the event that the fetch task has not finished depositing the 
-        /// key into the key dictionary.
-        /// </summary>
-        private readonly ConcurrentDictionary<string, KeyVaultKey> _keyFetchTaskDictionary = new();
-
-        /// <summary>
         /// Holds references to the Azure Key Vault keys and maps them to their corresponding Azure Key Vault Key Identifier (URI).
         /// </summary>
         private readonly ConcurrentDictionary<string, KeyVaultKey> _keyDictionary = new();
+
+        /// <summary>
+        /// SemaphoreSlim to ensure thread safety when accessing the key dictionary or making network calls to Azure Key Vault to fetch keys.
+        /// </summary>
+        private SemaphoreSlim _keyDictionarySemaphore = new(1, 1);
 
         /// <summary>
         /// Holds references to the Azure Key Vault CryptographyClient objects and maps them to their corresponding Azure Key Vault Key Identifier (URI).
@@ -55,14 +54,22 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="keyIdentifierUri"></param>
         internal void AddKey(string keyIdentifierUri)
         {
-            if (TheKeyHasNotBeenCached(keyIdentifierUri))
+            try
             {
-                ParseAKVPath(keyIdentifierUri, out Uri vaultUri, out string keyName, out string keyVersion);
-                CreateKeyClient(vaultUri);
-                FetchKey(vaultUri, keyName, keyVersion, keyIdentifierUri);
-            }
+                _keyDictionarySemaphore.Wait();
+                if (!_keyDictionary.ContainsKey(keyIdentifierUri))
+                {
+                    ParseAKVPath(keyIdentifierUri, out Uri vaultUri, out string keyName, out string keyVersion);
+                    CreateKeyClient(vaultUri);
 
-            bool TheKeyHasNotBeenCached(string k) => !_keyDictionary.ContainsKey(k) && !_keyFetchTaskDictionary.ContainsKey(k);
+                    KeyVaultKey key = FetchKeyFromKeyVault(vaultUri, keyName, keyVersion, keyIdentifierUri);
+                    _keyDictionary.AddOrUpdate(keyIdentifierUri, key, (k, v) => key);
+                }
+            }
+            finally
+            {
+                _keyDictionarySemaphore.Release();
+            }
         }
 
         /// <summary>
@@ -76,12 +83,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             {
                 AKVEventSource.Log.TryTraceEvent("Fetched master key from cache");
                 return key;
-            }
-
-            if (_keyFetchTaskDictionary.TryGetValue(keyIdentifierUri, out KeyVaultKey keyVaultKey))
-            {
-                AKVEventSource.Log.TryTraceEvent("New Master key fetched.");
-                return keyVaultKey;
             }
 
             // Not a public exception - not likely to occur.
@@ -141,38 +142,43 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
             CryptographyClient cryptographyClient = new(GetKey(keyIdentifierUri).Id, TokenCredential);
             _cryptoClientDictionary.TryAdd(keyIdentifierUri, cryptographyClient);
-
             return cryptographyClient;
         }
 
         /// <summary>
-        /// 
+        /// Fetches the column encryption key from the Azure Key Vault.
         /// </summary>
         /// <param name="vaultUri">The Azure Key Vault URI</param>
         /// <param name="keyName">The name of the Azure Key Vault key</param>
         /// <param name="keyVersion">The version of the Azure Key Vault key</param>
         /// <param name="keyResourceUri">The Azure Key Vault key identifier</param>
-        private void FetchKey(Uri vaultUri, string keyName, string keyVersion, string keyResourceUri)
-        {
-            KeyVaultKey key = FetchKeyFromKeyVault(vaultUri, keyName, keyVersion);
-            _keyFetchTaskDictionary.AddOrUpdate(keyResourceUri, key, (k, v) => key);
-
-            ValidateRsaKey(key);
-            _keyDictionary.AddOrUpdate(keyResourceUri, key, (k, v) => key);
-        }
-
-        /// <summary>
-        /// Looks up the KeyClient object by it's URI and then fetches the key by name.
-        /// </summary>
-        /// <param name="vaultUri">The Azure Key Vault URI</param>
-        /// <param name="keyName">Then name of the key</param>
-        /// <param name="keyVersion">Then version of the key</param>
-        /// <returns></returns>
-        private KeyVaultKey FetchKeyFromKeyVault(Uri vaultUri, string keyName, string keyVersion)
+        private KeyVaultKey FetchKeyFromKeyVault(Uri vaultUri, string keyName, string keyVersion, string keyResourceUri)
         {
             _keyClientDictionary.TryGetValue(vaultUri, out KeyClient keyClient);
             AKVEventSource.Log.TryTraceEvent("Fetching requested master key: {0}", keyName);
-            return keyClient?.GetKey(keyName, keyVersion);
+
+            Azure.Response<KeyVaultKey> keyResponse = keyClient?.GetKey(keyName, keyVersion);
+
+            // Handle the case where the key response is null or contains an error
+            // This can happen if the key does not exist or if there is an issue with the KeyClient.
+            // In such cases, we log the error and throw an exception.
+            if (keyResponse == null || keyResponse.Value == null || keyResponse.GetRawResponse().IsError)
+            {
+                AKVEventSource.Log.TryTraceEvent("Get Key failed to fetch Key from Azure Key Vault, with error: {0}", keyResourceUri);
+                if (keyResponse?.GetRawResponse() is Azure.Response response)
+                {
+                    AKVEventSource.Log.TryTraceEvent("Response status {0} : {1}", response.Status, response.ReasonPhrase);
+                }
+                throw ADP.GetKeyFailed(keyResourceUri);
+            }
+            else
+            {
+                KeyVaultKey key = keyResponse.Value;
+
+                // Validate that the key is of type RSA
+                key = ValidateRsaKey(key);
+                return key;
+            }
         }
 
         /// <summary>
