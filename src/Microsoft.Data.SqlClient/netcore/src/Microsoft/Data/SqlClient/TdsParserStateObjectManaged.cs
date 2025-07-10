@@ -365,6 +365,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return TdsEnums.SNI_ERROR;
         }
 
+        internal override uint PostReadAsyncForMars(TdsParserStateObject physicalStateObject) => TdsEnums.SNI_SUCCESS_IO_PENDING;
+
         internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename)
         {
             SniHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
@@ -386,10 +388,10 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return TdsEnums.SNI_SUCCESS;
         }
 
-        internal override uint WaitForSSLHandShakeToComplete(out int protocolVersion)
+        internal override uint WaitForSSLHandShakeToComplete(out uint protocolVersion)
         {
-            protocolVersion = GetSessionSNIHandleHandleOrThrow().ProtocolVersion;
-            return 0;
+            protocolVersion = (uint)GetSessionSNIHandleHandleOrThrow().ProtocolVersion;
+            return TdsEnums.SNI_SUCCESS;
         }
 
         internal override SniErrorDetails GetErrorDetails()

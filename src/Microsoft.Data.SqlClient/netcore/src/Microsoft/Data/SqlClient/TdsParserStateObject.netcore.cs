@@ -92,8 +92,6 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename);
 
-        internal abstract uint WaitForSSLHandShakeToComplete(out int protocolVersion);
-
         internal abstract void Dispose();
 
         internal abstract uint CheckConnection();

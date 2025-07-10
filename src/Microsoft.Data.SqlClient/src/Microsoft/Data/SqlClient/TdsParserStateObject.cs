@@ -533,11 +533,15 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract uint SniGetConnectionId(ref Guid clientConnectionId);
 
+        internal abstract uint WaitForSSLHandShakeToComplete(out uint protocolVersion);
+
         internal abstract uint DisableSsl();
 
         internal abstract SspiContextProvider CreateSspiContextProvider();
 
         internal abstract uint EnableMars(ref uint info);
+
+        internal abstract uint PostReadAsyncForMars(TdsParserStateObject physicalStateObject);
 
         internal abstract uint SetConnectionBufferSize(ref uint unsignedPacketSize);
 
