@@ -2280,11 +2280,7 @@ namespace Microsoft.Data.SqlClient
                         else if (canContinue && result == TdsOperationStatus.NeedMoreData)
                         {
                             SetSnapshotStorage(buff);
-                            if (writeDataSizeToSnapshot)
-                            {
-                                // data bytes read from the current packet must be 0 here so do not save the snapshot data size
-                                //SetSnapshotDataSize(bytesRead);
-                            }
+                            // data bytes read from the current packet must be 0 here so do not save the snapshot data size
                         }
                         return result;
                     }
