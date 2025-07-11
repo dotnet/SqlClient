@@ -1507,7 +1507,7 @@ namespace Microsoft.Data.SqlClient
                 string providerRid = string.Format("SNI_PN{0}", details.Provider);
                 string providerName = StringsHelper.GetResourceString(providerRid);
                 Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
-                int win32ErrorCode = details.nativeError;
+                int win32ErrorCode = details.NativeError;
 
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Native Error Code = {0}", win32ErrorCode);
                 if (details.SniErrorNumber == 0)
@@ -1557,7 +1557,7 @@ namespace Microsoft.Data.SqlClient
                         // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
                         if (details.SniErrorNumber == SniErrors.LocalDBErrorCode)
                         {
-                            errorMessage += LocalDbApi.GetLocalDbMessage(details.nativeError);
+                            errorMessage += LocalDbApi.GetLocalDbMessage(details.NativeError);
                             win32ErrorCode = 0;
                         }
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Extracting the latest exception from native SNI. errorMessage: {0}", errorMessage);
@@ -1567,10 +1567,10 @@ namespace Microsoft.Data.SqlClient
                     sqlContextInfo, providerName, (int)details.SniErrorNumber, errorMessage);
 
                 SqlClientEventSource.Log.TryAdvancedTraceErrorEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Error Message. Native Error = {0}, Line Number ={1}, Function ={2}, Exception ={3}, Server = {4}",
-                    details.nativeError, (int)details.lineNumber, details.function, details.exception, _server);
+                    details.NativeError, (int)details.LineNumber, details.Function, details.Exception, _server);
 
-                return new SqlError(infoNumber: details.nativeError, errorState: 0x00, TdsEnums.FATAL_ERROR_CLASS, _server,
-                    errorMessage, details.function, (int)details.lineNumber, win32ErrorCode: details.nativeError, details.exception);
+                return new SqlError(infoNumber: details.NativeError, errorState: 0x00, TdsEnums.FATAL_ERROR_CLASS, _server,
+                    errorMessage, details.Function, (int)details.LineNumber, win32ErrorCode: details.NativeError, details.Exception);
             }
         }
 
