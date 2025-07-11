@@ -1361,14 +1361,8 @@ namespace Microsoft.Data.SqlClient
                         asyncWrite,
                         globalCompletion,
                         localCompletion,
-                        endFunc: static (SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod) =>
-                        {
-                            return command.InternalEndExecuteNonQuery(asyncResult, isInternal, endMethod);
-                        },
-                        retryFunc: static (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool inRetry, bool asyncWrite) =>
-                        {
-                            return command.BeginExecuteNonQueryInternal(behavior, callback, stateObject, timeout, inRetry, asyncWrite);
-                        },
+                        InternalEndExecuteNonQuery,
+                        BeginExecuteNonQueryInternal,
                         nameof(EndExecuteNonQuery)
                     )
                 )
@@ -1918,14 +1912,8 @@ namespace Microsoft.Data.SqlClient
                         asyncWrite,
                         globalCompletion,
                         localCompletion,
-                        endFunc: static (SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod) =>
-                        {
-                            return command.InternalEndExecuteReader(asyncResult, isInternal, endMethod);
-                        },
-                        retryFunc: static (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool inRetry, bool asyncWrite) =>
-                        {
-                            return command.BeginExecuteXmlReaderInternal(behavior, callback, stateObject, timeout, inRetry, asyncWrite);
-                        },
+                        InternalEndExecuteReader,
+                        BeginExecuteXmlReaderInternal,
                         endMethod: nameof(EndExecuteXmlReader)
                     )
                 )
@@ -2374,14 +2362,8 @@ namespace Microsoft.Data.SqlClient
                         asyncWrite,
                         globalCompletion,
                         localCompletion,
-                        endFunc: static (SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod) =>
-                        {
-                            return command.InternalEndExecuteReader(asyncResult, isInternal, endMethod);
-                        },
-                        retryFunc: static (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool inRetry, bool asyncWrite) =>
-                        {
-                            return command.BeginExecuteReaderInternal(behavior, callback, stateObject, timeout, inRetry, asyncWrite);
-                        },
+                        InternalEndExecuteReader,
+                        BeginExecuteReaderInternal,
                         nameof(EndExecuteReader)
                     )
                 )
@@ -2415,8 +2397,8 @@ namespace Microsoft.Data.SqlClient
             bool asyncWrite,
             TaskCompletionSource<object> globalCompletion,
             TaskCompletionSource<object> localCompletion,
-            Func<SqlCommand, IAsyncResult, bool, string, object> endFunc,
-            Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc,
+            Func<IAsyncResult, bool, string, object> endFunc,
+            Func<CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc,
             string endMethod)
         {
             // We shouldn't be using the cache if we are in retry.
@@ -2432,7 +2414,18 @@ namespace Microsoft.Data.SqlClient
             {
                 long firstAttemptStart = ADP.TimerCurrent();
 
-                CreateLocalCompletionTask(behavior, stateObject, timeout, usedCache, asyncWrite, globalCompletion, localCompletion, endFunc, retryFunc, endMethod, firstAttemptStart);
+                CreateLocalCompletionTask(
+                    behavior,
+                    stateObject,
+                    timeout,
+                    usedCache,
+                    asyncWrite,
+                    globalCompletion,
+                    localCompletion,
+                    endFunc,
+                    retryFunc,
+                    endMethod,
+                    firstAttemptStart);
 
                 return true;
             }
@@ -2450,8 +2443,8 @@ namespace Microsoft.Data.SqlClient
             bool asyncWrite,
             TaskCompletionSource<object> globalCompletion,
             TaskCompletionSource<object> localCompletion,
-            Func<SqlCommand, IAsyncResult, bool, string, object> endFunc,
-            Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc,
+            Func<IAsyncResult, bool, string, object> endFunc,
+            Func<CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc,
             string endMethod,
             long firstAttemptStart
         )
@@ -2477,7 +2470,7 @@ namespace Microsoft.Data.SqlClient
                         // lock on _stateObj prevents races with close/cancel.
                         lock (_stateObj)
                         {
-                            endFunc(this, tsk, /*isInternal:*/ true, endMethod);
+                            endFunc(tsk, /*isInternal:*/ true, endMethod);
                         }
 
                         globalCompletion.TrySetResult(tsk.Result);
@@ -2540,8 +2533,12 @@ namespace Microsoft.Data.SqlClient
                             {
                                 // Kick off the retry.
                                 _internalEndExecuteInitiated = false;
-                                Task<object> retryTask = (Task<object>)retryFunc(this, behavior, null, stateObject,
-                                    TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), true /*inRetry*/,
+                                Task<object> retryTask = (Task<object>)retryFunc(
+                                    behavior,
+                                    null,
+                                    stateObject,
+                                    TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart),
+                                    true /*inRetry*/,
                                     asyncWrite);
 
                                 retryTask.ContinueWith(
