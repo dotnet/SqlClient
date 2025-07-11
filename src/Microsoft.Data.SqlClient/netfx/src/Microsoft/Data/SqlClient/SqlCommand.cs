@@ -2299,12 +2299,28 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="default"]/*'/>
-        [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
-        public IAsyncResult BeginExecuteReader() => BeginExecuteReader(null, null, CommandBehavior.Default);
+        [HostProtection(ExternalThreading = true)]
+        public IAsyncResult BeginExecuteReader() =>
+            BeginExecuteReader(callback: null, stateObject: null, CommandBehavior.Default);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="AsyncCallbackAndstateObject"]/*'/>
-        [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
-        public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject) => BeginExecuteReader(callback, stateObject, CommandBehavior.Default);
+        [HostProtection(ExternalThreading = true)]
+        public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject) =>
+            BeginExecuteReader(callback, stateObject, CommandBehavior.Default);
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="CommandBehavior"]/*'/>
+        [HostProtection(ExternalThreading = true)]
+        public IAsyncResult BeginExecuteReader(CommandBehavior behavior) =>
+            BeginExecuteReader(callback: null, stateObject: null, behavior);
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndstateObjectAndCommandBehavior"]/*'/>
+        [HostProtection(ExternalThreading = true)]
+        public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject, CommandBehavior behavior)
+        {
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.BeginExecuteReader|API|Correlation> ObjectID{0}, behavior={1}, ActivityID {2}", ObjectID, (int)behavior, ActivityCorrelator.Current);
+            SqlConnection.ExecutePermission.Demand();
+            return BeginExecuteReaderInternal(behavior, callback, stateObject, 0, inRetry: false);
+        }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReader[@name="CommandBehavior"]/*'/>
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
@@ -2313,106 +2329,76 @@ namespace Microsoft.Data.SqlClient
             return ExecuteReader(behavior);
         }
 
-        private SqlDataReader ExecuteReaderWithRetry(CommandBehavior behavior)
-            => RetryLogicProvider.Execute(this, () => ExecuteReader(behavior));
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="default"]/*'/>
         new public SqlDataReader ExecuteReader()
         {
             SqlStatistics statistics = null;
-            using (TryEventScope.Create("<sc.SqlCommand.ExecuteReader|API> {0}", ObjectID))
-            {
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    return IsProviderRetriable ?
-                            ExecuteReaderWithRetry(CommandBehavior.Default) :
-                            ExecuteReader(CommandBehavior.Default);
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                }
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="CommandBehavior"]/*'/>
-        new public SqlDataReader ExecuteReader(CommandBehavior behavior)
-        {
-            using (TryEventScope.Create("<sc.SqlCommand.ExecuteReader|API> {0}, behavior={1}", ObjectID, (int)behavior))
-            {
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID {0}, behavior={1}, ActivityID {2}", ObjectID, (int)behavior, ActivityCorrelator.Current);
-
-                return IsProviderRetriable ?
-                       ExecuteReaderWithRetry(behavior) :
-                       ExecuteReader(behavior);
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="CommandBehavior"]/*'/>
-        [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
-        public IAsyncResult BeginExecuteReader(CommandBehavior behavior)
-        {
-            return BeginExecuteReader(null, null, behavior);
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndstateObjectAndCommandBehavior"]/*'/>
-        [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
-        public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject, CommandBehavior behavior)
-        {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.BeginExecuteReader|API|Correlation> ObjectID{0}, behavior={1}, ActivityID {2}", ObjectID, (int)behavior, ActivityCorrelator.Current);
-            SqlConnection.ExecutePermission.Demand();
-            return BeginExecuteReaderInternal(behavior, callback, stateObject, 0, inRetry: false);
-        }
-
-        internal SqlDataReader ExecuteReader(CommandBehavior behavior, string method)
-        {
-            SqlConnection.ExecutePermission.Demand(); // TODO: Need to move this to public methods...
-
-            // Reset _pendingCancel upon entry into any Execute - used to synchronize state
-            // between entry into Execute* API and the thread obtaining the stateObject.
-            _pendingCancel = false;
-            SqlStatistics statistics = null;
-
-            TdsParser bestEffortCleanupTarget = null;
-            RuntimeHelpers.PrepareConstrainedRegions();
-            bool success = false;
-            int? sqlExceptionNumber = null;
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             try
             {
-                WriteBeginExecuteEvent();
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
                 statistics = SqlStatistics.StartTimer(Statistics);
-                SqlDataReader result = RunExecuteReader(behavior, RunBehavior.ReturnImmediately, true);
-                success = true;
-                return result;
-            }
-            catch (SqlException e)
-            {
-                sqlExceptionNumber = e.Number;
-                throw;
-            }
-            catch (System.OutOfMemoryException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _activeConnection.Abort(e);
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                throw;
+                return ExecuteReader(CommandBehavior.Default);
             }
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+            }
+        }
+        
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="CommandBehavior"]/*'/>
+        new public SqlDataReader ExecuteReader(CommandBehavior behavior)
+        {
+            SqlConnection.ExecutePermission.Demand();
+
+            // Reset _pendingCancel upon entry into any Execute - used to synchronize state
+            // between entry into Execute* API and the thread obtaining the stateObject.
+            _pendingCancel = false;
+
+            SqlStatistics statistics = null;
+            TdsParser bestEffortCleanupTarget = null;
+            RuntimeHelpers.PrepareConstrainedRegions();
+            bool success = false;
+            int? sqlExceptionNumber = null;
+
+            using (TryEventScope.Create("SqlCommand.ExecuteReader | API | Object Id {0}", ObjectID))
+            {
+                try
+                {
+                    WriteBeginExecuteEvent();
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    SqlDataReader result = IsProviderRetriable ?
+                        RunExecuteReaderWithRetry(behavior, RunBehavior.ReturnImmediately, returnStream: true) :
+                        RunExecuteReader(behavior, RunBehavior.ReturnImmediately, true);
+                    success = true;
+                    return result;
+                }
+                catch (SqlException e)
+                {
+                    sqlExceptionNumber = e.Number;
+                    throw;
+                }
+                catch (System.OutOfMemoryException e)
+                {
+                    _activeConnection.Abort(e);
+                    throw;
+                }
+                catch (System.StackOverflowException e)
+                {
+                    _activeConnection.Abort(e);
+                    throw;
+                }
+                catch (System.Threading.ThreadAbortException e)
+                {
+                    _activeConnection.Abort(e);
+                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                    throw;
+                }
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                    WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+                }
             }
         }
 
