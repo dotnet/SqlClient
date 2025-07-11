@@ -37,11 +37,6 @@ parameters:
     type: string
     default: ''
 
-  # The name of the pipeline artifacts that will contain the package.
-  - name: pipelineArtifactsName
-    type: string
-    default: ExtensionsPackageArtifacts
-
   # The verbosity level for the dotnet CLI commands.
   - name: verbosity
     displayName: Dotnet CLI verbosity
@@ -173,5 +168,5 @@ stages:
         displayName: Publish Pipeline Artifacts
         inputs:
           targetPath: $(dotnetPackagesDir)
-          artifactName: $(pipelineArtifactsName)
+          artifactName: ExtensionsPackageArtifacts
           publishLocation: pipeline
