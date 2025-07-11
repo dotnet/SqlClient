@@ -51,7 +51,7 @@
 
   <!-- Populate all managed projects -->
   <ItemGroup>
-    <ExtensionsPackage Include="**/Extensions/Microsoft.Data.SqlClient.Extensions.slnx" />
+    <ExtensionsPackage Include="src/Microsoft.Data.SqlClient.Extensions/Extensions/Extensions.slnx" />
     <SqlServerLib Include="**/Microsoft.SqlServer.Server.csproj" />
     <NetFxDriver Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledWindows)' == 'true'" />
     <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
@@ -87,12 +87,16 @@
   <!-- Top Level Build targets -->
   <Target Name="Restore" DependsOnTargets="RestoreSqlServerLib;RestoreNetCore;RestoreNetFx" />
   <Target Name="BuildAll" DependsOnTargets="BuildExtensionsPackage;BuildSqlServerLib;BuildNetFx;BuildNetCore;BuildNetStandard" />
-  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildExtensionsPackage;BuildSqlServerLib;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;GenerateNugetPackage" />
+  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServerLib;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;GenerateNugetPackage" />
   <Target Name="BuildSqlServerPackage" DependsOnTargets="BuildSqlServerLibAnyOS;GenerateSqlServerPackage"/>
   <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildUnitTestsNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore"/>
   <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildUnitTestsNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx" Condition="$(IsEnabledWindows) == 'true'"/>
   <Target Name="BuildTests" DependsOnTargets="BuildTestsNetCore;BuildTestsNetFx"/>
 
+  <!--
+    The Extensions package must be built and packed into the packages/
+    directory before the MDS projects can be restored.
+  -->
   <Target Name="BuildExtensionsPackage">
     <PropertyGroup>
       <!--
