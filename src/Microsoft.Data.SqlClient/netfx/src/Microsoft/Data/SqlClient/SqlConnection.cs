@@ -89,6 +89,8 @@ namespace Microsoft.Data.SqlClient
 
         private Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
 
+        private SspiContextProvider _sspiContextProvider;
+
         internal bool HasColumnEncryptionKeyStoreProvidersRegistered =>
             _customColumnEncryptionKeyStoreProviders is not null && _customColumnEncryptionKeyStoreProviders.Count > 0;
 
@@ -575,6 +577,17 @@ namespace Microsoft.Data.SqlClient
             get => ((SqlConnectionString)ConnectionOptions).ConnectRetryInterval;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SspiContextProvider/*' />
+        public SspiContextProvider SspiContextProvider
+        {
+            get { return _sspiContextProvider; }
+            set
+            {
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, accessToken: null,  accessTokenCallback: null, sspiContextProvider: value));
+                _sspiContextProvider = value;
+            }
+        }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionString/*' />
         [DefaultValue("")]
 #pragma warning disable 618 // ignore obsolete warning about RecommendedAsConfigurable to use SettingsBindableAttribute
@@ -643,7 +656,7 @@ namespace Microsoft.Data.SqlClient
                         CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(connectionOptions);
                     }
                 }
-                ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken, _accessTokenCallback));
+                ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken, _accessTokenCallback, _sspiContextProvider));
                 _connectionString = value;  // Change _connectionString value only after value is validated
                 CacheConnectionStringProperties();
             }
@@ -703,7 +716,7 @@ namespace Microsoft.Data.SqlClient
 
                 _accessToken = value;
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, null));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, null, sspiContextProvider: null));
             }
         }
 
@@ -725,7 +738,7 @@ namespace Microsoft.Data.SqlClient
                     CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback((SqlConnectionString)ConnectionOptions);
                 }
 
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, null, value));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, null, value, sspiContextProvider: null));
                 _accessTokenCallback = value;
             }
         }
@@ -1027,7 +1040,7 @@ namespace Microsoft.Data.SqlClient
                 _credential = value;
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, accessToken: _accessToken, accessTokenCallback: _accessTokenCallback));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _accessTokenCallback, sspiContextProvider: null));
             }
         }
 
@@ -2182,7 +2195,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength(nameof(newPassword), TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, accessTokenCallback: null);
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null);
 
                 SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
                 if (connectionOptions.IntegratedSecurity || connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
@@ -2234,7 +2247,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength(nameof(newSecurePassword), TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: null);
 
                 SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
 
@@ -2275,7 +2288,7 @@ namespace Microsoft.Data.SqlClient
             {
                 con?.Dispose();
             }
-            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
+            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: null);
 
             SqlConnectionFactory.SingletonInstance.ClearPool(key);
         }

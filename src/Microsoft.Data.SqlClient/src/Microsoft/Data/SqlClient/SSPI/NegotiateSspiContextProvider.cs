@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient
     {
         private NegotiateAuthentication? _negotiateAuth = null;
 
-        protected override bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams)
+        protected override bool GenerateContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams)
         {
             NegotiateAuthenticationStatusCode statusCode = NegotiateAuthenticationStatusCode.UnknownCredentials;
 
@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient
 
             // Log session id, status code and the actual SPN used in the negotiation
             SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | Session Id {2}, StatusCode={3}, SPN={4}", nameof(NegotiateSspiContextProvider),
-                nameof(GenerateSspiClientContext), _physicalStateObj.SessionId, statusCode, _negotiateAuth.TargetName);
+                nameof(GenerateContext), _physicalStateObj.SessionId, statusCode, _negotiateAuth.TargetName);
 
             if (statusCode == NegotiateAuthenticationStatusCode.Completed || statusCode == NegotiateAuthenticationStatusCode.ContinueNeeded)
             {
