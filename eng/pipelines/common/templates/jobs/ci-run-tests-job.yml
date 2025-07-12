@@ -235,6 +235,7 @@ jobs:
         targetFramework: ${{ parameters.targetFramework }}
         referenceType: ${{ parameters.buildType }}
         testSet: ${{ parameters.testSet }}
+        extensionsPackageVersion: ${{ parameters.extensionsPackageVersion }}
         ${{ if ne(parameters.operatingSystem, 'Windows') }}:
           OSGroup: Unix
 
