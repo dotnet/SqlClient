@@ -55,14 +55,14 @@ namespace Microsoft.Data.SqlClient
         internal readonly struct SniErrorDetails
         {
             public readonly string ErrorMessage;
-            public readonly uint NativeError;
+            public readonly int NativeError;
             public readonly uint SniErrorNumber;
             public readonly int Provider;
             public readonly uint LineNumber;
             public readonly string Function;
             public readonly Exception Exception;
 
-            internal SniErrorDetails(string errorMessage, uint nativeError, uint sniErrorNumber, int provider, uint lineNumber, string function, Exception exception = null)
+            internal SniErrorDetails(string errorMessage, int nativeError, uint sniErrorNumber, int provider, uint lineNumber, string function, Exception exception = null)
             {
                 ErrorMessage = errorMessage;
                 NativeError = nativeError;

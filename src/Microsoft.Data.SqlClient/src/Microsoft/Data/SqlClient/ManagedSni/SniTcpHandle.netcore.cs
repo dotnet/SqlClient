@@ -375,6 +375,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                 IEnumerable<IPAddress> ipAddresses = GetHostAddressesSortedByPreference(serverName, ipPreference);
 
+                SocketException lastSocketException = null;
+
                 foreach (IPAddress ipAddress in ipAddresses)
                 {
                     bool isSocketSelected = false;
@@ -426,7 +428,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                             {
                                 if (timeout.IsExpired)
                                 {
-                                    return null;
+                                    throw new Win32Exception(
+                                        TdsEnums.SNI_WAIT_TIMEOUT,
+                                        StringsHelper.GetString(Strings.SQL_ConnectTimeout));
                                 }
 
                                 int socketSelectTimeout =
@@ -442,10 +446,24 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                                 Socket.Select(checkReadLst, checkWriteLst, checkErrorLst, socketSelectTimeout);
                                 // nothing selected means timeout
+                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO,
+                                    "Socket.Select results: checkReadLst.Count: {0}, checkWriteLst.Count: {1}, checkErrorLst.Count: {2}",
+                                    checkReadLst.Count, checkWriteLst.Count, checkErrorLst.Count);
                             } while (checkReadLst.Count == 0 && checkWriteLst.Count == 0 && checkErrorLst.Count == 0);
 
                             // workaround: false positive socket.Connected on linux: https://github.com/dotnet/runtime/issues/55538
                             isConnected = socket.Connected && checkErrorLst.Count == 0;
+                            if (!isConnected)
+                            {
+                                // Retrieve the socket error code
+                                int socketErrorCode = (int)socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Error);
+                                SocketError socketError = (SocketError)socketErrorCode;
+
+                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.ERR,
+                                "Socket connection failed. SocketError: {0} ({1})", socketError, socketErrorCode);
+
+                                lastSocketException = new SocketException(socketErrorCode);
+                            }
                         }
 
                         if (isConnected)
@@ -463,6 +481,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                             }
                             pendingDNSInfo = new SQLDNSInfo(cachedFQDN, iPv4String, iPv6String, port.ToString());
                             isSocketSelected = true;
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO,
+                                "Connected to socket: {0}", socket.RemoteEndPoint);
                             return socket;
                         }
                     }
@@ -471,12 +491,21 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         SqlClientEventSource.Log.TryAdvancedTraceEvent(
                             "{0}.{1}{2}THIS EXCEPTION IS BEING SWALLOWED: {3}",
                             nameof(SniTcpHandle), nameof(Connect), EventType.ERR, e);
+                        lastSocketException = e;
                     }
                     finally
                     {
                         if (!isSocketSelected)
                             socket?.Dispose();
                     }
+                }
+
+                if (lastSocketException != null)
+                {
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        "{0}.{1}{2}Last Socket Exception: {3}",
+                        nameof(SniTcpHandle), nameof(Connect), EventType.ERR, lastSocketException);
+                    throw lastSocketException;
                 }
 
                 return null;
@@ -574,6 +603,20 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                             Socket.Select(checkReadLst, checkWriteLst, checkErrorLst, socketSelectTimeout);
                             // nothing selected means select timed out
                         } while (checkReadLst.Count == 0 && checkWriteLst.Count == 0 && checkErrorLst.Count == 0 && !timeout.IsExpired);
+                        foreach (Socket socket in checkErrorLst)
+                        {
+                            // Retrieve the socket error code
+                            int socketErrorCode = (int)socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Error);
+                            SocketError socketError = (SocketError)socketErrorCode;
+
+                            // Log any failed sockets
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO,
+                            "Socket connection failed for {0}. SocketError: {1} ({2})",
+                            sockets[socket], socketError, socketErrorCode);
+
+                            lastError = new SocketException(socketErrorCode);
+                        }
+
                     }
                     catch (SocketException e)
                     {
@@ -588,6 +631,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     {
                         SqlClientEventSource.Log.TryAdvancedTraceEvent(
                             "{0}.{1}{2}ParallelConnect timeout expired.", nameof(SniTcpHandle), nameof(ParallelConnect), EventType.INFO);
+                        // We will throw below after cleanup
                         break;
                     }
 
@@ -654,9 +698,21 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                 if (connectedSocket == null)
                 {
+                    if (timeout.IsExpired)
+                    {
+                        throw new Win32Exception(
+                            TdsEnums.SNI_WAIT_TIMEOUT,
+                            StringsHelper.GetString(Strings.SQL_ConnectTimeout));
+                    }
+
                     SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        "{0}.{1}{2}No socket connections succeeded. Last error: {3}",
+                        "{0}.{1}{2} No socket connections succeeded. Last error: {3}",
                         nameof(SniTcpHandle), nameof(ParallelConnect), EventType.ERR, lastError);
+
+                    if (lastError != null)
+                    {
+                        throw lastError;
+                    }
                 }
 
                 return connectedSocket;
@@ -861,7 +917,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         packet = null;
                         var e = new Win32Exception();
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.ERR, "Connection Id {0}, Win32 exception occurred: {1}", args0: _connectionId, args1: e?.Message);
-                        return ReportErrorAndReleasePacket(errorPacket, (uint)e.NativeErrorCode, 0, e.Message);
+                        return ReportErrorAndReleasePacket(errorPacket, e.NativeErrorCode, 0, e.Message);
                     }
 
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Data read from stream synchronously", args0: _connectionId);
@@ -992,13 +1048,13 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return TdsEnums.SNI_SUCCESS;
         }
 
-        private uint ReportTcpSNIError(Exception sniException, uint nativeErrorCode = 0)
+        private uint ReportTcpSNIError(Exception sniException, int nativeErrorCode = 0)
         {
             _status = TdsEnums.SNI_ERROR;
             return SniCommon.ReportSNIError(SniProviders.TCP_PROV, SniCommon.InternalExceptionError, sniException, nativeErrorCode);
         }
 
-        private uint ReportTcpSNIError(uint nativeError, uint sniError, string errorMessage)
+        private uint ReportTcpSNIError(int nativeError, uint sniError, string errorMessage)
         {
             _status = TdsEnums.SNI_ERROR;
             return SniCommon.ReportSNIError(SniProviders.TCP_PROV, nativeError, sniError, errorMessage);
@@ -1013,7 +1069,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return ReportTcpSNIError(sniException);
         }
 
-        private uint ReportErrorAndReleasePacket(SniPacket packet, uint nativeError, uint sniError, string errorMessage)
+        private uint ReportErrorAndReleasePacket(SniPacket packet, int nativeError, uint sniError, string errorMessage)
         {
             if (packet != null)
             {

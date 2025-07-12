@@ -424,7 +424,7 @@ namespace Microsoft.Data.SqlClient
             {
                 StringBuilder sb = new StringBuilder(className);
                 sb.Append(".").Append(memberName).Append(" | INFO | SCOPE | Entering Scope {0}");
-                return SNIScopeEnter(sb.ToString());
+                return ScopeEnter(sb.ToString());
             }
             return 0;
         }

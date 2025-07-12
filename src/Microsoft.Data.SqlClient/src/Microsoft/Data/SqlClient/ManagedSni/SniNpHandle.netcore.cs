@@ -203,7 +203,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                             packet = null;
                             var e = new Win32Exception();
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.ERR, "Connection Id {0}, Packet length found 0, Win32 exception raised: {1}", args0: _connectionId, args1: e?.Message);
-                            return ReportErrorAndReleasePacket(errorPacket, (uint)e.NativeErrorCode, 0, e.Message);
+                            return ReportErrorAndReleasePacket(errorPacket, e.NativeErrorCode, 0, e.Message);
                         }
                     }
                     catch (ObjectDisposedException ode)
@@ -413,7 +413,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return SniCommon.ReportSNIError(SniProviders.NP_PROV, SniCommon.InternalExceptionError, sniException);
         }
 
-        private uint ReportErrorAndReleasePacket(SniPacket packet, uint nativeError, uint sniError, string errorMessage)
+        private uint ReportErrorAndReleasePacket(SniPacket packet, int nativeError, uint sniError, string errorMessage)
         {
             if (packet != null)
             {

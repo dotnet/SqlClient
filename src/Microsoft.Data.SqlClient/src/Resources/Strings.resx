@@ -2520,6 +2520,9 @@
   <data name="SQL_AsyncConnectionRequired" xml:space="preserve">
     <value>This command requires an asynchronous connection. Set "Asynchronous Processing=true" in the connection string.</value>
   </data>
+  <data name="SQL_ConnectTimeout" xml:space="preserve">
+    <value>The connection attempt timed out.</value>
+  </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>Timeout expired.  The connection has been broken as a result.</value>
   </data>

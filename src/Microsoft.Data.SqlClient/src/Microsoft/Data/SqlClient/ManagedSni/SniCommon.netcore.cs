@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <param name="sniError">SNI error code</param>
         /// <param name="errorMessage">Error message</param>
         /// <returns></returns>
-        internal static uint ReportSNIError(SniProviders provider, uint nativeError, uint sniError, string errorMessage)
+        internal static uint ReportSNIError(SniProviders provider, int nativeError, uint sniError, string errorMessage)
         {
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.ERR, "Provider = {0}, native Error = {1}, SNI Error = {2}, Error Message = {3}", args0: provider, args1: nativeError, args2: sniError, args3: errorMessage);
             return ReportSNIError(new SniError(provider, nativeError, sniError, errorMessage));
@@ -203,7 +203,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <param name="sniException">SNI Exception</param>
         /// <param name="nativeErrorCode">Native SNI error code</param>
         /// <returns></returns>
-        internal static uint ReportSNIError(SniProviders provider, uint sniError, Exception sniException, uint nativeErrorCode = 0)
+        internal static uint ReportSNIError(SniProviders provider, uint sniError, Exception sniException, int nativeErrorCode = 0)
         {
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.ERR, "Provider = {0}, SNI Error = {1}, Exception = {2}", args0: provider, args1: sniError, args2: sniException?.Message);
             return ReportSNIError(new SniError(provider, sniError, sniException, nativeErrorCode));
