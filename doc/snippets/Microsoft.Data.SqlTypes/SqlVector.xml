@@ -5,20 +5,11 @@
       <summary>Represents a vector value in SQL Server.</summary>
     </SqlVector>
     <ctor1>
-      <param name="length"></param>
-      <summary>
-        Constructs a null vector of the given length. SQL Server requires vector arguments to specify their length even when null.
-      </summary>
-      <exception cref="T:System.ArgumentOutOfRangeException">
-        Vector length must be non-negative.
-      </exception>
-    </ctor1>
-    <ctor2>
       <param name="memory"></param>
       <summary>
         Constructs a vector with the given values.
       </summary>
-    </ctor2>
+    </ctor1>
     <IsNull>
       <inheritdoc/>
     </IsNull>
@@ -37,13 +28,17 @@
         Returns the number of elements in the vector.
       </summary>
     </Length>
-    <Size>
-      <summary>
-        Returns the number of bytes required to represent this vector when communicating with SQL Server.
-      </summary>
-    </Size>
     <Memory>
       <summary>Returns the vector values as a memory region. No copies are made.</summary>
     </Memory>
+    <CreateNull>
+      <param name="length"></param>
+      <summary>
+        Constructs a null vector of the given length. SQL Server requires vector arguments to specify their length even when null.
+      </summary>
+      <exception cref="T:System.ArgumentOutOfRangeException">
+        Vector length must be non-negative.
+      </exception>
+    </CreateNull>
   </members>
 </docs>
