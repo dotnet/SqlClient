@@ -368,13 +368,17 @@
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
   </Target>
 
-  <!-- Clean -->
+  <!-- Clean all intermediate outputs. -->
   <Target Name="Clean">
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "artifacts", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "bin", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "obj", SearchOption.AllDirectories))' />
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "packages", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", ".nuget", SearchOption.AllDirectories))' />
+  </Target>
+
+  <!-- Clean all outputs, including NuGet packages. -->
+  <Target Name="CleanAll" DependsOnTargets="Clean">
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "packages", SearchOption.AllDirectories))' />
   </Target>
 
   <!-- AKV Targets ========================================================= -->
