@@ -428,7 +428,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                             {
                                 if (timeout.IsExpired)
                                 {
-                                    throw new Win32Exception(258, "The operation has timed out.");
+                                    throw new Win32Exception(
+                                        TdsEnums.SNI_WAIT_TIMEOUT,
+                                        StringsHelper.GetString(Strings.SQL_ConnectTimeout));
                                 }
 
                                 int socketSelectTimeout =
@@ -698,7 +700,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 {
                     if (timeout.IsExpired)
                     {
-                        throw new Win32Exception(258, "The operation has timed out.");
+                        throw new Win32Exception(
+                            TdsEnums.SNI_WAIT_TIMEOUT,
+                            StringsHelper.GetString(Strings.SQL_ConnectTimeout));
                     }
 
                     SqlClientEventSource.Log.TryAdvancedTraceEvent(
