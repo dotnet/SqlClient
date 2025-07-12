@@ -22,6 +22,11 @@ parameters:
       - Project
       - Package
 
+  - name: extensionsPackageVersion
+    displayName: Extensions Package Version Override
+    type: string
+    default: ''
+
   - name: prebuildSteps
     type: stepList
     default: []
@@ -35,9 +40,12 @@ stages:
   - ${{ each image in config.value.images }}:
     - stage: ${{ image.key }}
       ${{ if ne(parameters.dependsOn, '') }}:
-        dependsOn: ${{ parameters.dependsOn }}
+        dependsOn:
+          - build_extensions_package_stage
+          - ${{ parameters.dependsOn }}
       ${{ else }}:
-        dependsOn: []
+        dependsOn:
+          - build_extensions_package_stage
       jobs:
       - ${{ each targetFramework in config.value.TargetFrameworks }}:
         - ${{ each platform in config.value.buildPlatforms }}:
@@ -52,6 +60,7 @@ stages:
                   image: ${{ image.value }}
                   jobDisplayName: ${{ format('{0}_{1}_{2}', replace(targetFramework, '.', '_'), platform, testSet) }}
                   configProperties: ${{ config.value.configProperties }}
+                  extensionsPackageVersion: ${{ parameters.extensionsPackageVersion }}
                   prebuildSteps: ${{ parameters.prebuildSteps }}
                   targetFramework: ${{ targetFramework }}
                   netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
@@ -81,6 +90,7 @@ stages:
                       jobDisplayName: ${{ format('{0}_{1}_{2}_{3}', replace(targetFramework, '.', '_'), platform, 'NativeSNI', testSet) }}
                     configProperties: ${{ config.value.configProperties }}
                     useManagedSNI: ${{ useManagedSNI }}
+                    extensionsPackageVersion: ${{ parameters.extensionsPackageVersion }}
                     prebuildSteps: ${{ parameters.prebuildSteps }}                  
                     targetFramework: ${{ targetFramework }}
                     netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
