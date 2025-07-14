@@ -694,11 +694,13 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.InvalidCommandTimeout(value);
                 }
+
                 if (value != _commandTimeout)
                 {
                     PropertyChanging();
                     _commandTimeout = value;
                 }
+
                 SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_CommandTimeout | API | ObjectId {0}, Command Timeout value {1}, Client Connection Id {2}", ObjectID, value, Connection?.ClientConnectionId);
             }
         }
@@ -749,6 +751,7 @@ namespace Microsoft.Data.SqlClient
                         default:
                             throw ADP.InvalidCommandType(value);
                     }
+
                     SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_CommandType | API | ObjectId {0}, Command type value {1}, Client Connection Id {2}", ObjectID, (int)value, Connection?.ClientConnectionId);
                 }
             }
@@ -828,6 +831,7 @@ namespace Microsoft.Data.SqlClient
                     default:
                         throw ADP.InvalidUpdateRowSource(value);
                 }
+
                 SqlClientEventSource.Log.TryTraceEvent("SqlCommand.UpdatedRowSource | API | ObjectId {0}, Updated row source value {1}, Client Connection Id {2}", ObjectID, (int)value, Connection?.ClientConnectionId);
             }
         }
@@ -1793,6 +1797,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
                     WriteBeginExecuteEvent();
+
                     // use the reader to consume metadata
                     SqlDataReader ds = IsProviderRetriable ?
                         RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true) :
@@ -1920,9 +1925,7 @@ namespace Microsoft.Data.SqlClient
                         localCompletion,
                         InternalEndExecuteReader,
                         BeginExecuteXmlReaderInternal,
-                        endMethod: nameof(EndExecuteXmlReader)
-                    )
-                )
+                        endMethod: nameof(EndExecuteXmlReader)))
                 {
                     globalCompletion = localCompletion;
                 }
@@ -2306,6 +2309,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
                     WriteBeginExecuteEvent();
+
                     ValidateAsyncCommand(); // Special case - done outside of try/catches to prevent putting a stateObj
                                             // back into pool when we should not.
                 }
@@ -2373,9 +2377,7 @@ namespace Microsoft.Data.SqlClient
                         localCompletion,
                         InternalEndExecuteReader,
                         BeginExecuteReaderInternal,
-                        nameof(EndExecuteReader)
-                    )
-                )
+                        nameof(EndExecuteReader)))
                 {
                     globalCompletion = localCompletion;
                 }
