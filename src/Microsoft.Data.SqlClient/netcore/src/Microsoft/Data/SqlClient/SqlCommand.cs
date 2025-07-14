@@ -168,7 +168,7 @@ namespace Microsoft.Data.SqlClient
         // Prepare
         // Against 7.0 Serve a prepare/unprepare requires an extra roundtrip to the server.
         //
-        // From 8.0 and above  the preparation can be done as part of the command execution.
+        // From 8.0 and above, the preparation can be done as part of the command execution.
 
         private enum EXECTYPE
         {
@@ -254,7 +254,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool ShouldUseEnclaveBasedWorkflow =>
             (!string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) || Connection.AttestationProtocol == SqlConnectionAttestationProtocol.None) &&
-                    IsColumnEncryptionEnabled;
+                  IsColumnEncryptionEnabled;
 
         /// <summary>
         /// Per-command custom providers. It can be provided by the user and can be set more than once. 
@@ -501,7 +501,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     _transaction = null;
                 }
-
 
                 // Command is no longer prepared on new connection, cleanup prepare status
                 if (IsPrepared)
@@ -1270,7 +1269,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="default"]/*'/>
-        public IAsyncResult BeginExecuteNonQuery() => BeginExecuteNonQuery(null, null); // BeginExecuteNonQuery will track ExecutionTime for us
+        public IAsyncResult BeginExecuteNonQuery() =>
+            BeginExecuteNonQuery(null, null);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="AsyncCallbackAndStateObject"]/*'/>
         public IAsyncResult BeginExecuteNonQuery(AsyncCallback callback, object stateObject)
@@ -1364,9 +1364,7 @@ namespace Microsoft.Data.SqlClient
                         localCompletion,
                         InternalEndExecuteNonQuery,
                         BeginExecuteNonQueryInternal,
-                        nameof(EndExecuteNonQuery)
-                    )
-                )
+                        nameof(EndExecuteNonQuery)))
                 {
                     globalCompletion = localCompletion;
                 }
@@ -1425,6 +1423,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryTraceEvent("SqlCommand.VerifyEndExecuteState | API | ObjectId {0}, Client Connection Id {1}, MARS={2}, AsyncCommandInProgress={3}",
                                                     _activeConnection?.ObjectID, _activeConnection?.ClientConnectionId,
                                                     _activeConnection?.Parser?.MARSOn, _activeConnection?.AsyncCommandInProgress);
+
             if (completionTask.IsCanceled)
             {
                 if (_stateObj != null)
@@ -1689,7 +1688,7 @@ namespace Microsoft.Data.SqlClient
             [CallerMemberName] string methodName = "")
         {
             SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteNonQuery | INFO | ObjectId {0}, Client Connection Id {1}, AsyncCommandInProgress={2}",
-                                                        _activeConnection?.ObjectID, _activeConnection?.ClientConnectionId, _activeConnection?.AsyncCommandInProgress);
+                                                    _activeConnection?.ObjectID, _activeConnection?.ClientConnectionId, _activeConnection?.AsyncCommandInProgress);
             bool isAsync = completion != null;
             usedCache = false;
 
@@ -2185,7 +2184,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SqlDataReader EndExecuteReaderAsync(IAsyncResult asyncResult)
+        private SqlDataReader EndExecuteReaderAsync(IAsyncResult asyncResult)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
@@ -2769,11 +2768,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="default"]/*'/>
-        public new Task<SqlDataReader> ExecuteReaderAsync() => 
+        public new Task<SqlDataReader> ExecuteReaderAsync() =>
             ExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CommandBehavior"]/*'/>
-        public new Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior) => 
+        public new Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior) =>
             ExecuteReaderAsync(behavior, CancellationToken.None);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
@@ -4225,7 +4224,7 @@ namespace Microsoft.Data.SqlClient
             bool isAsync,
             bool asyncWrite,
             out bool inputParameterEncryptionNeeded,
-            out Task task, 
+            out Task task,
             out ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
             bool isRetry)
         {
@@ -4387,7 +4386,7 @@ namespace Microsoft.Data.SqlClient
             if (_batchRPCMode)
             {
                 Debug.Assert(originalRpcRequest.systemParamCount > 0,
-                    "originalRpcRequest didn't have at-least 1 parameter in _batchRPCMode, in PrepareDescribeParameterEncryptionRequest.");
+                    "originalRpcRequest didn't have at-least 1 parameter in BatchRPCMode, in PrepareDescribeParameterEncryptionRequest.");
                 text = (string)originalRpcRequest.systemParams[0].Value;
                 //@tsql
                 SqlParameter tsqlParam = describeParameterEncryptionRequest.systemParams[0];
@@ -4723,8 +4722,8 @@ namespace Microsoft.Data.SqlClient
                                     Debug.Assert(_activeConnection != null, @"_activeConnection should not be null");
                                     SqlSecurityUtility.DecryptSymmetricKey(sqlParameter.CipherMetadata, _activeConnection, this);
 
-                                    // This is effective only for _batchRPCMode even though we set it for non-_batchRPCMode also,
-                                    // since for non-_batchRPCMode mode, paramoptions gets thrown away and reconstructed in BuildExecuteSql.
+                                    // This is effective only for BatchRPCMode even though we set it for non-BatchRPCMode also,
+                                    // since for non-BatchRPCMode mode, paramoptions gets thrown away and reconstructed in BuildExecuteSql.
                                     int options = (int)(rpc.userParamMap[index] >> 32);
                                     options |= TdsEnums.RPC_PARAM_ENCRYPTED;
                                     rpc.userParamMap[index] = ((((long)options) << 32) | (long)index);
@@ -5503,6 +5502,7 @@ namespace Microsoft.Data.SqlClient
                 ds.Bind(_stateObj);
                 _stateObj = null;   // the reader now owns this...
                 ds.ResetOptionsString = resetOptionsString;
+
                 // bind this reader to this connection now
                 _activeConnection.AddWeakReference(ds, SqlReferenceCollection.DataReaderTag);
 
@@ -5556,7 +5556,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
-
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Clone/*'/>
         public SqlCommand Clone()
@@ -6096,8 +6095,8 @@ namespace Microsoft.Data.SqlClient
             rpc.needsFetchParameterEncryptionMetadata = false;
 
             int currentCount = rpc.systemParams?.Length ?? 0;
-            // Make sure there is enough space in the parameters and paramoptions arrays
 
+            // Make sure there is enough space in the parameters and paramoptions arrays
             if (currentCount < systemParamCount)
             {
                 Array.Resize(ref rpc.systemParams, systemParamCount);
@@ -6185,6 +6184,7 @@ namespace Microsoft.Data.SqlClient
 
                     rpc.userParamMap[userParamCount] = ((((long)options) << 32) | (long)index);
                     userParamCount += 1;
+
                     // Must set parameter option bit for LOB_COOKIE if unfilled LazyMat blob
                 }
             }
@@ -7009,7 +7009,7 @@ namespace Microsoft.Data.SqlClient
             // Cancellation is a suggestion, and exceptions should be ignored
             // rather than allowed to be unhandled, as there is no way to route
             // them to the caller.  It would be expected that the error will be
-            // observed anyway from the regular method.  An example is canceling
+            // observed anyway from the regular method.  An example is cancelling
             // an operation on a closed connection.
             try
             {
@@ -7033,6 +7033,12 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryBeginExecuteEvent(ObjectID, Connection?.DataSource, Connection?.Database, CommandText, Connection?.ClientConnectionId);
         }
 
+        /// <summary>
+        /// Writes and end execute event in Event Source.
+        /// </summary>
+        /// <param name="success">True if SQL command finished successfully, otherwise false.</param>
+        /// <param name="sqlExceptionNumber">Gets a number that identifies the type of error.</param>
+        /// <param name="synchronous">True if SQL command was executed synchronously, otherwise false.</param>
         private void WriteEndExecuteEvent(bool success, int? sqlExceptionNumber, bool synchronous)
         {
             if (SqlClientEventSource.Log.IsExecutionTraceEnabled())
