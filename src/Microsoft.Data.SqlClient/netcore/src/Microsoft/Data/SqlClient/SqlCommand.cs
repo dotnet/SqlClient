@@ -487,9 +487,11 @@ namespace Microsoft.Data.SqlClient
             {
                 // Don't allow the connection to be changed while in an async operation.
                 if (_activeConnection != value && _activeConnection != null)
-                { // If new value...
+                {
+                    // If new value...
                     if (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation)
-                    { // If in pending async state, throw.
+                    {
+                        // If in pending async state, throw.
                         throw SQL.CannotModifyPropertyAsyncOperationInProgress();
                     }
                 }
@@ -624,9 +626,11 @@ namespace Microsoft.Data.SqlClient
             {
                 // Don't allow the transaction to be changed while in an async operation.
                 if (_transaction != value && _activeConnection != null)
-                { // If new value...
+                {
+                    // If new value...
                     if (CachedAsyncState.PendingAsyncOperation)
-                    { // If in pending async state, throw
+                    {
+                        // If in pending async state, throw
                         throw SQL.CannotModifyPropertyAsyncOperationInProgress();
                     }
                 }
@@ -867,7 +871,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         private void PropertyChanging()
-        { // also called from SqlParameterCollection
+        {
+            // also called from SqlParameterCollection
             this.IsDirty = true;
         }
 
@@ -1044,7 +1049,8 @@ namespace Microsoft.Data.SqlClient
                     lock (connection)
                     {
                         if (connection != (_activeConnection.InnerConnection as SqlInternalConnectionTds))
-                        { // make sure the connection held on the active connection is what we have stored in our temp connection variable, if not between getting "connection" and taking the lock, the connection has been closed
+                        {
+                            // make sure the connection held on the active connection is what we have stored in our temp connection variable, if not between getting "connection" and taking the lock, the connection has been closed
                             return;
                         }
 
@@ -1055,7 +1061,8 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         if (!_pendingCancel)
-                        { // Do nothing if already pending.
+                        {
+                            // Do nothing if already pending.
                           // Before attempting actual cancel, set the _pendingCancel flag to false.
                           // This denotes to other thread before obtaining stateObject from the
                           // session pool that there is another thread wishing to cancel.
@@ -3284,14 +3291,17 @@ namespace Microsoft.Data.SqlClient
             if (sproc != null)
             {
                 if (char.IsDigit(sproc[sproc.Length - 1]))
-                { // If last char is a digit, parse.
+                {
+                    // If last char is a digit, parse.
                     int semicolon = sproc.LastIndexOf(';');
                     if (semicolon != -1)
-                    { // If we found a semicolon, obtain the integer.
+                    {
+                        // If we found a semicolon, obtain the integer.
                         string part = sproc.Substring(semicolon + 1);
                         int number = 0;
                         if (int.TryParse(part, out number))
-                        { // No checking, just fail if this doesn't work.
+                        {
+                            // No checking, just fail if this doesn't work.
                             groupNumber = number;
                             sproc = sproc.Substring(0, semicolon);
                         }
@@ -3452,7 +3462,8 @@ namespace Microsoft.Data.SqlClient
             }
 
             if (!string.IsNullOrEmpty(parsedSProc[2]))
-            { // SchemaName is 3rd element in parsed array
+            {
+                // SchemaName is 3rd element in parsed array
                 SqlParameter param = paramsCmd.Parameters.Add(new SqlParameter("@procedure_schema", SqlDbType.NVarChar, 255));
                 param.Value = UnquoteProcedurePart(parsedSProc[2]);
             }
@@ -5339,7 +5350,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlInternalConnectionTds innerConnectionTds = (_activeConnection.InnerConnection as SqlInternalConnectionTds);
                     if (innerConnectionTds != null)
-                    { // it may be closed
+                    {
+                        // it may be closed
                         innerConnectionTds.DecrementAsyncCount();
                     }
                 }
@@ -5658,7 +5670,8 @@ namespace Microsoft.Data.SqlClient
         private void ValidateAsyncCommand()
         {
             if (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation)
-            { // Enforce only one pending async execute at a time.
+            {
+                // Enforce only one pending async execute at a time.
                 if (CachedAsyncState.IsActiveConnectionValid(_activeConnection))
                 {
                     throw SQL.PendingBeginXXXExists();
