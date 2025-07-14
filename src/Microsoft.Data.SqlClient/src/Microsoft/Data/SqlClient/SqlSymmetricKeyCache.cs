@@ -53,11 +53,11 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(cacheLookupKey.Length <= capacity, "We needed to allocate a larger array");
 #endif //DEBUG
 
+            // Acquire the lock to ensure thread safety when accessing the cache
+            _cacheLock.Wait();
+
             try
             {
-                // Acquire the lock to ensure thread safety when accessing the cache
-                _cacheLock.Wait();
-
                 // Lookup the key in cache
                 if (!(_cache.TryGetValue(cacheLookupKey, out SqlClientSymmetricKey encryptionKey)))
                 {

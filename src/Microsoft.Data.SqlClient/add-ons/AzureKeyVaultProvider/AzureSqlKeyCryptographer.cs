@@ -12,7 +12,7 @@ using static Azure.Security.KeyVault.Keys.Cryptography.SignatureAlgorithm;
 
 namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 {
-    internal class AzureSqlKeyCryptographer
+    internal sealed class AzureSqlKeyCryptographer : IDisposable
     {
         /// <summary>
         /// TokenCredential to be used with the KeyClient
@@ -49,18 +49,26 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         }
 
         /// <summary>
+        /// Disposes the SemaphoreSlim used for thread safety.
+        /// </summary>
+        public void Dispose()
+        {
+            _keyDictionarySemaphore.Dispose();
+        }
+
+        /// <summary>
         /// Adds the key, specified by the Key Identifier URI, to the cache.
         /// Validates the key type and fetches the key from Azure Key Vault if it is not already cached.
         /// </summary>
         /// <param name="keyIdentifierUri"></param>
         internal void AddKey(string keyIdentifierUri)
         {
+            // Allow only one thread to proceed to ensure thread safety
+            // as we will need to fetch key information from Azure Key Vault if the key is not found in cache.
+            _keyDictionarySemaphore.Wait();
+
             try
             {
-                // Allow only one thread to proceed to ensure thread safety
-                // as we will need to fetch key information from Azure Key Vault if the key is not found in cache.
-                _keyDictionarySemaphore.Wait();
-
                 if (!_keyDictionary.ContainsKey(keyIdentifierUri))
                 {
                     ParseAKVPath(keyIdentifierUri, out Uri vaultUri, out string keyName, out string keyVersion);
@@ -89,12 +97,12 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (_keyDictionary.TryGetValue(keyIdentifierUri, out KeyVaultKey key))
             {
-                AKVEventSource.Log.TryTraceEvent("Fetched master key from cache");
+                AKVEventSource.Log.TryTraceEvent("Fetched key name={0} from cache", key.Name);
                 return key;
             }
 
             // Not a public exception - not likely to occur.
-            AKVEventSource.Log.TryTraceEvent("Master key not found.");
+            AKVEventSource.Log.TryTraceEvent("Key not found; URI={0}", keyIdentifierUri);
             throw ADP.MasterKeyNotFound(keyIdentifierUri);
         }
 
@@ -158,7 +166,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="keyVersion">The version of the Azure Key Vault key</param>
         private KeyVaultKey FetchKeyFromKeyVault(KeyClient keyClient, string keyName, string keyVersion)
         {
-            AKVEventSource.Log.TryTraceEvent("Fetching requested master key: {0}", keyName);
+            AKVEventSource.Log.TryTraceEvent("Fetching key name={0}", keyName);
 
             Azure.Response<KeyVaultKey> keyResponse = keyClient?.GetKey(keyName, keyVersion);
 
@@ -174,14 +182,12 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 }
                 throw ADP.GetKeyFailed(keyName);
             }
-            else
-            {
-                KeyVaultKey key = keyResponse.Value;
 
-                // Validate that the key is of type RSA
-                key = ValidateRsaKey(key);
-                return key;
-            }
+            KeyVaultKey key = keyResponse.Value;
+
+            // Validate that the key is of type RSA
+            key = ValidateRsaKey(key);
+            return key;
         }
 
         /// <summary>
@@ -191,15 +197,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <returns></returns>
         private KeyClient GetOrCreateKeyClient(Uri vaultUri)
         {
-            // Fetch the KeyClient for the specified vault URI.
-            if (!_keyClientDictionary.TryGetValue(vaultUri, out KeyClient keyClient))
-            {
-                // If the KeyClient does not exist, create a new one and add it to the dictionary.
-                keyClient = new KeyClient(vaultUri, TokenCredential);
-                _keyClientDictionary.TryAdd(vaultUri, keyClient);
-            }
-
-            return keyClient;
+            return _keyClientDictionary.GetOrAdd(
+                vaultUri, (_) => new KeyClient(vaultUri, TokenCredential));
         }
 
         /// <summary>

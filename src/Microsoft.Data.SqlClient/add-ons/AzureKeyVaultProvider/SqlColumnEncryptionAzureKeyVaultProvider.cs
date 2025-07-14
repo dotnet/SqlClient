@@ -397,7 +397,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="source">An array of bytes to convert.</param>
         /// <returns>A string of hexadecimal characters</returns>
         /// <remarks>
-        /// Produces a string of hexadecimal character pairs preceded with "0x", where each pair represents the corresponding element in value; for example, "0x7F2C4A00".
+        /// Produces a string of hexadecimal character pairs preceded with "0x", where each pair represents the corresponding element in source; for example, "0x7F2C4A00".
         /// </remarks>
         private string ToHexString(byte[] source)
             => source is null ? null : "0x" + BitConverter.ToString(source).Replace("-", "");
@@ -413,10 +413,11 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// </remarks>
         private byte[] GetOrCreateColumnEncryptionKey(string encryptedColumnEncryptionKey, Func<byte[]> createItem)
         {
+            // Allow only one thread to access the cache at a time.
+            _cacheSemaphore.Wait();
+
             try
             {
-                // Allow only one thread to access the cache at a time.
-                _cacheSemaphore.Wait();
                 return _columnEncryptionKeyCache.GetOrCreate(encryptedColumnEncryptionKey, createItem);
             }
             finally
