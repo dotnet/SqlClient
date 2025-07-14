@@ -187,8 +187,9 @@ namespace Microsoft.Data.SqlClient
         //
         // _prepareHandle - the handle of a prepared command. Apparently there can be multiple prepared commands at a time - a feature that we do not support yet.
 
+        private static readonly object s_cachedInvalidPrepareHandle = (object)-1;
         private bool _inPrepare = false;
-        private int _prepareHandle = -1;
+        private object _prepareHandle = s_cachedInvalidPrepareHandle; // this is an int which is used in the object typed SqlParameter.Value field, avoid repeated boxing by storing in a box
         private bool _hiddenPrepare = false;
         private int _preparedConnectionCloseCount = -1;
         private int _preparedConnectionReconnectCount = -1;
@@ -5317,7 +5318,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (_execType == EXECTYPE.PREPARED)
                     {
-                        Debug.Assert(this.IsPrepared && (_prepareHandle != -1), "invalid attempt to call sp_execute without a handle!");
+                        Debug.Assert(IsPrepared && _prepareHandle != s_cachedInvalidPrepareHandle, "invalid attempt to call sp_execute without a handle!");
                         rpc = BuildExecute(inSchema);
                     }
                     else if (_execType == EXECTYPE.PREPAREPENDING)
@@ -6384,7 +6385,7 @@ namespace Microsoft.Data.SqlClient
         //
         private _SqlRPC BuildExecute(bool inSchema)
         {
-            Debug.Assert(_prepareHandle != -1, "Invalid call to sp_execute without a valid handle!");
+            Debug.Assert(_prepareHandle != s_cachedInvalidPrepareHandle, "Invalid call to sp_execute without a valid handle!");
 
             const int systemParameterCount = 1;
             int userParameterCount = CountSendableParameters(_parameters);
@@ -6414,7 +6415,7 @@ namespace Microsoft.Data.SqlClient
         private void BuildExecuteSql(CommandBehavior behavior, string commandText, SqlParameterCollection parameters, ref _SqlRPC rpc)
         {
 
-            Debug.Assert(_prepareHandle == -1, "This command has an existing handle, use sp_execute!");
+            Debug.Assert(_prepareHandle == s_cachedInvalidPrepareHandle, "This command has an existing handle, use sp_execute!");
             Debug.Assert(CommandType.Text == this.CommandType, "invalid use of sp_executesql for stored proc invocation!");
             int systemParamCount;
             SqlParameter sqlParam;
