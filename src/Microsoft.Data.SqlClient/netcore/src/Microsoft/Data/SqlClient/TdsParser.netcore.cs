@@ -10,17 +10,6 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed partial class TdsParser
     {
-        internal struct SNIErrorDetails
-        {
-            public string errorMessage;
-            public uint nativeError;
-            public uint sniErrorNumber;
-            public int provider;
-            public uint lineNumber;
-            public string function;
-            public Exception exception;
-        }
-
         internal static void FillGuidBytes(Guid guid, Span<byte> buffer) => guid.TryWriteBytes(buffer);
 
         internal static void FillDoubleBytes(double value, Span<byte> buffer) => BinaryPrimitives.TryWriteInt64LittleEndian(buffer, BitConverter.DoubleToInt64Bits(value));
