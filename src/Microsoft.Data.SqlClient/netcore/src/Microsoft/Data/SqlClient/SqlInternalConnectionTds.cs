@@ -207,6 +207,9 @@ namespace Microsoft.Data.SqlClient
         // Json Support Flag
         internal bool IsJsonSupportEnabled = false;
 
+        // User Agent Flag
+        internal bool IsUserAgentEnabled = true;
+
         // Vector Support Flag
         internal bool IsVectorSupportEnabled = false;
 
@@ -1429,6 +1432,10 @@ namespace Microsoft.Data.SqlClient
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
             requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
+
+        #if DEBUG
+            requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
+        #endif
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }

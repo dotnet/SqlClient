@@ -5,6 +5,8 @@
 #if NET
 
 using System;
+using System.ComponentModel;
+using System.Net.Sockets;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
@@ -14,17 +16,18 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     internal class SniError
     {
         // Error numbers from native SNI implementation
-        internal const uint CertificateValidationErrorCode = 2148074277;
+        // This is signed int representation of the error code 0x80090325 
+        internal const int CertificateValidationErrorCode = -2146893019;
 
         public readonly SniProviders provider;
         public readonly string errorMessage;
-        public readonly uint nativeError;
+        public readonly int nativeError;
         public readonly uint sniError;
         public readonly string function;
         public readonly uint lineNumber;
         public readonly Exception exception;
 
-        public SniError(SniProviders provider, uint nativeError, uint sniErrorCode, string errorMessage)
+        public SniError(SniProviders provider, int nativeError, uint sniErrorCode, string errorMessage)
         {
             lineNumber = 0;
             function = string.Empty;
@@ -35,12 +38,25 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             exception = null;
         }
 
-        public SniError(SniProviders provider, uint sniErrorCode, Exception sniException, uint nativeErrorCode = 0)
+        public SniError(SniProviders provider, uint sniErrorCode, Exception sniException, int nativeErrorCode = 0)
         {
             lineNumber = 0;
             function = string.Empty;
             this.provider = provider;
             nativeError = nativeErrorCode;
+            if (nativeErrorCode == 0)
+            {
+                if (sniException is SocketException socketException)
+                {
+                    // SocketErrorCode values are cross-plat consistent in .NET (matching native Windows error codes)
+                    // underlying type of SocketErrorCode is int
+                    nativeError = (int)socketException.SocketErrorCode;
+                }
+                else if (sniException is Win32Exception win32Exception)
+                {
+                    nativeError = win32Exception.NativeErrorCode; // Replicates native SNI behavior
+                }
+            }
             sniError = sniErrorCode;
             errorMessage = string.Empty;
             exception = sniException;

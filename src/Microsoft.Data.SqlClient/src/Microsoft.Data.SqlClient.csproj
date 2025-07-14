@@ -20,6 +20,7 @@
     <Reference Include="System.Configuration.ConfigurationManager" />
     <Reference Include="System.Transactions" />
     <PackageReference Include="System.Data.Common" />
+    <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="System.Threading.Channels" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">

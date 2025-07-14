@@ -657,7 +657,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                return constr != null ? constr.ConnectTimeout : SqlConnectionString.DEFAULT.Connect_Timeout;
+                return constr != null ? constr.ConnectTimeout : DbConnectionStringDefaults.ConnectTimeout;
             }
         }
 
@@ -669,7 +669,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                return constr != null ? constr.CommandTimeout : SqlConnectionString.DEFAULT.Command_Timeout;
+                return constr != null ? constr.CommandTimeout : DbConnectionStringDefaults.CommandTimeout;
             }
         }
 
@@ -750,7 +750,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = constr != null ? constr.InitialCatalog : SqlConnectionString.DEFAULT.Initial_Catalog;
+                    result = constr != null ? constr.InitialCatalog : DbConnectionStringDefaults.InitialCatalog;
                 }
                 return result;
             }
@@ -822,7 +822,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = constr != null ? constr.DataSource : SqlConnectionString.DEFAULT.Data_Source;
+                    result = constr != null ? constr.DataSource : DbConnectionStringDefaults.DataSource;
                 }
                 return result;
             }
@@ -847,7 +847,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = constr != null ? constr.PacketSize : SqlConnectionString.DEFAULT.Packet_Size;
+                    result = constr != null ? constr.PacketSize : DbConnectionStringDefaults.PacketSize;
                 }
                 
                 return result;
@@ -1988,11 +1988,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                SqlInternalConnectionTds tdsConnection = (GetOpenConnection() as SqlInternalConnectionTds);
-                if (tdsConnection == null)
-                {
-                    throw SQL.NotAvailableOnContextConnection();
-                }
+                SqlInternalConnectionTds tdsConnection = GetOpenTdsConnection();
                 return tdsConnection.Parser;
             }
         }
@@ -2195,7 +2191,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDbFilename);
                 }
 
                 PermissionSet permissionSet = connectionOptions.CreatePermissionSet();
@@ -2255,7 +2251,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDbFilename);
                 }
 
                 PermissionSet permissionSet = connectionOptions.CreatePermissionSet();
