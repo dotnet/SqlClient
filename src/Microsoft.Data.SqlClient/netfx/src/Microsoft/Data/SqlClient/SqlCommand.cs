@@ -266,8 +266,9 @@ namespace Microsoft.Data.SqlClient
             _customColumnEncryptionKeyStoreProviders is not null && _customColumnEncryptionKeyStoreProviders.Count > 0;
 
         // Cached info for async executions
-        private sealed class CachedAsyncState
+        private sealed class AsyncState
         {
+            // @TODO: Autoproperties
             private int _cachedAsyncCloseCount = -1;    // value of the connection's CloseCount property when the asyncResult was set; tracks when connections are closed after an async operation
             private TaskCompletionSource<object> _cachedAsyncResult = null;
             private SqlConnection _cachedAsyncConnection = null;  // Used to validate that the connection hasn't changed when end the connection;
@@ -276,7 +277,7 @@ namespace Microsoft.Data.SqlClient
             private string _cachedSetOptions = null;
             private string _cachedEndMethod = null;
 
-            internal CachedAsyncState()
+            internal AsyncState()
             {
             }
 
@@ -356,16 +357,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private CachedAsyncState _cachedAsyncState = null;
+        private AsyncState _cachedAsyncState = null;
 
-        private CachedAsyncState cachedAsyncState
+        // @TODO: This is never null, so we can remove the null checks from usages of it.
+        private AsyncState CachedAsyncState
         {
             get
             {
-                if (_cachedAsyncState == null)
-                {
-                    _cachedAsyncState = new CachedAsyncState();
-                }
+                _cachedAsyncState ??= new AsyncState();
                 return _cachedAsyncState;
             }
         }
@@ -492,7 +491,7 @@ namespace Microsoft.Data.SqlClient
                 // Don't allow the connection to be changed while in an async operation.
                 if (_activeConnection != value && _activeConnection != null)
                 { // If new value...
-                    if (_cachedAsyncState != null && _cachedAsyncState.PendingAsyncOperation)
+                    if (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation)
                     { // If in pending async state, throw.
                         throw SQL.CannotModifyPropertyAsyncOperationInProgress();
                     }
@@ -660,7 +659,7 @@ namespace Microsoft.Data.SqlClient
                 // Don't allow the transaction to be changed while in an async operation.
                 if (_transaction != value && _activeConnection != null)
                 { // If new value...
-                    if (cachedAsyncState.PendingAsyncOperation)
+                    if (CachedAsyncState.PendingAsyncOperation)
                     { // If in pending async state, throw
                         throw SQL.CannotModifyPropertyAsyncOperationInProgress();
                     }
@@ -1199,7 +1198,7 @@ namespace Microsoft.Data.SqlClient
                 _cachedMetaData = null;
 
                 // reset async cache information to allow a second async execute
-                _cachedAsyncState?.ResetAsyncState();
+                CachedAsyncState?.ResetAsyncState();
             }
             // release unmanaged objects
             base.Dispose(disposing);
@@ -1476,7 +1475,7 @@ namespace Microsoft.Data.SqlClient
             {
                 bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
                 // must finish caching information before ReadSni which can activate the callback before returning
-                cachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteNonQuery), _activeConnection);
+                CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteNonQuery), _activeConnection);
                 _stateObj.ReadSni(completion);
             }
             catch (System.OutOfMemoryException e)
@@ -1499,9 +1498,9 @@ namespace Microsoft.Data.SqlClient
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
                 // and reset async cache information to allow a second async execute
-                if (_cachedAsyncState != null)
+                if (CachedAsyncState != null)
                 {
-                    _cachedAsyncState.ResetAsyncState();
+                    CachedAsyncState.ResetAsyncState();
                 }
                 ReliablePutStateObject();
                 throw;
@@ -1547,15 +1546,15 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
-            if (cachedAsyncState.EndMethodName == null)
+            if (CachedAsyncState.EndMethodName == null)
             {
                 throw ADP.MethodCalledTwice(endMethod);
             }
-            if (endMethod != cachedAsyncState.EndMethodName)
+            if (endMethod != CachedAsyncState.EndMethodName)
             {
-                throw ADP.MismatchedAsyncResult(cachedAsyncState.EndMethodName, endMethod);
+                throw ADP.MismatchedAsyncResult(CachedAsyncState.EndMethodName, endMethod);
             }
-            if ((_activeConnection.State != ConnectionState.Open) || (!cachedAsyncState.IsActiveConnectionValid(_activeConnection)))
+            if ((_activeConnection.State != ConnectionState.Open) || (!CachedAsyncState.IsActiveConnectionValid(_activeConnection)))
             {
                 // If the connection is not 'valid' then it was closed while we were executing
                 throw ADP.ClosedConnectionError();
@@ -1620,7 +1619,7 @@ namespace Microsoft.Data.SqlClient
             if (asyncException != null)
             {
                 // Leftover exception from the Begin...InternalReadStage
-                cachedAsyncState?.ResetAsyncState();
+                CachedAsyncState?.ResetAsyncState();
                 ReliablePutStateObject();
                 throw asyncException.InnerException;
             }
@@ -1658,7 +1657,7 @@ namespace Microsoft.Data.SqlClient
             catch (SqlException e)
             {
                 sqlExceptionNumber = e.Number;
-                _cachedAsyncState?.ResetAsyncState();
+                CachedAsyncState?.ResetAsyncState();
 
                 //  SqlException is always catchable
                 ReliablePutStateObject();
@@ -1666,7 +1665,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                _cachedAsyncState?.ResetAsyncState();
+                CachedAsyncState?.ResetAsyncState();
                 if (ADP.IsCatchableExceptionType(e))
                 {
                     ReliablePutStateObject();
@@ -1718,7 +1717,7 @@ namespace Microsoft.Data.SqlClient
                             Debug.Assert(_stateObj == null);
 
                             // Reset the state since we exit early.
-                            cachedAsyncState.ResetAsyncState();
+                            CachedAsyncState.ResetAsyncState();
 
                             return _rowsAffected;
                         }
@@ -1743,7 +1742,7 @@ namespace Microsoft.Data.SqlClient
                             // Don't reset the state for internal End. The user End will do that eventually.
                             if (!isInternal)
                             {
-                                cachedAsyncState.ResetAsyncState();
+                                CachedAsyncState.ResetAsyncState();
                             }
                         }
                     }
@@ -2064,7 +2063,7 @@ namespace Microsoft.Data.SqlClient
             {
                 bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
                 // must finish caching information before ReadSni which can activate the callback before returning
-                cachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteXmlReader), _activeConnection);
+                CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteXmlReader), _activeConnection);
                 _stateObj.ReadSni(completion);
             }
             catch (System.OutOfMemoryException e)
@@ -2090,7 +2089,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
                 // and reset async cache information to allow a second async execute
-                _cachedAsyncState?.ResetAsyncState();
+                CachedAsyncState?.ResetAsyncState();
                 ReliablePutStateObject();
                 completion.TrySetException(e);
             }
@@ -2117,7 +2116,7 @@ namespace Microsoft.Data.SqlClient
             Exception asyncException = ((Task)asyncResult).Exception;
             if (asyncException != null)
             {
-                cachedAsyncState?.ResetAsyncState();
+                CachedAsyncState?.ResetAsyncState();
                 ReliablePutStateObject();
                 throw asyncException.InnerException;
             }
@@ -2155,9 +2154,9 @@ namespace Microsoft.Data.SqlClient
             catch (SqlException e)
             {
                 sqlExceptionNumber = e.Number;
-                if (cachedAsyncState != null)
+                if (CachedAsyncState != null)
                 {
-                    cachedAsyncState.ResetAsyncState();
+                    CachedAsyncState.ResetAsyncState();
                 };
 
                 //  SqlException is always catchable 
@@ -2166,9 +2165,9 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                if (cachedAsyncState != null)
+                if (CachedAsyncState != null)
                 {
-                    cachedAsyncState.ResetAsyncState();
+                    CachedAsyncState.ResetAsyncState();
                 };
                 if (ADP.IsCatchableExceptionType(e))
                 {
@@ -2340,7 +2339,7 @@ namespace Microsoft.Data.SqlClient
             Exception asyncException = ((Task)asyncResult).Exception;
             if (asyncException != null)
             {
-                cachedAsyncState?.ResetAsyncState();
+                CachedAsyncState?.ResetAsyncState();
                 ReliablePutStateObject();
                 throw asyncException.InnerException;
             }
@@ -2383,9 +2382,9 @@ namespace Microsoft.Data.SqlClient
             catch (SqlException e)
             {
                 sqlExceptionNumber = e.Number;
-                if (cachedAsyncState != null)
+                if (CachedAsyncState != null)
                 {
-                    cachedAsyncState.ResetAsyncState();
+                    CachedAsyncState.ResetAsyncState();
                 };
 
                 //  SqlException is always catchable 
@@ -2394,9 +2393,9 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                if (cachedAsyncState != null)
+                if (CachedAsyncState != null)
                 {
-                    cachedAsyncState.ResetAsyncState();
+                    CachedAsyncState.ResetAsyncState();
                 };
                 if (ADP.IsCatchableExceptionType(e))
                 {
@@ -2613,9 +2612,9 @@ namespace Microsoft.Data.SqlClient
                             if (!shouldRetry)
                             {
                                 // If we cannot retry, Reset the async state to make sure we leave a clean state.
-                                if (_cachedAsyncState != null)
+                                if (CachedAsyncState != null)
                                 {
-                                    _cachedAsyncState.ResetAsyncState();
+                                    CachedAsyncState.ResetAsyncState();
                                 }
                                 try
                                 {
@@ -2710,7 +2709,7 @@ namespace Microsoft.Data.SqlClient
             {
                 bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
                 // must finish caching information before ReadSni which can activate the callback before returning
-                cachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteReader), _activeConnection);
+                CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteReader), _activeConnection);
                 _stateObj.ReadSni(completion);
             }
             catch (System.OutOfMemoryException e)
@@ -2736,7 +2735,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
                 // and reset async cache information to allow a second async execute
-                _cachedAsyncState?.ResetAsyncState();
+                CachedAsyncState?.ResetAsyncState();
                 ReliablePutStateObject();
                 completion.TrySetException(e);
             }
@@ -4094,9 +4093,9 @@ namespace Microsoft.Data.SqlClient
                         },
                         onFailure: ((exception) =>
                         {
-                            if (_cachedAsyncState != null)
+                            if (CachedAsyncState != null)
                             {
-                                _cachedAsyncState.ResetAsyncState();
+                                CachedAsyncState.ResetAsyncState();
                             }
                             if (exception != null)
                             {
@@ -4217,9 +4216,9 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                if (cachedAsyncState != null)
+                if (CachedAsyncState != null)
                 {
-                    cachedAsyncState.ResetAsyncState();
+                    CachedAsyncState.ResetAsyncState();
                 }
 
                 if (ADP.IsCatchableExceptionType(e))
@@ -5091,13 +5090,13 @@ namespace Microsoft.Data.SqlClient
                     },
                     onFailure: static (Exception exception, object state) =>
                     {
-                        ((SqlCommand)state)._cachedAsyncState?.ResetAsyncState();
+                        ((SqlCommand)state).CachedAsyncState?.ResetAsyncState();
                         if (exception != null)
                         {
                             throw exception;
                         }
                     },
-                    onCancellation: static (object state) => ((SqlCommand)state)._cachedAsyncState?.ResetAsyncState(),
+                    onCancellation: static (object state) => ((SqlCommand)state).CachedAsyncState?.ResetAsyncState(),
                     connectionToDoom: null,
                     connectionToAbort: _activeConnection);
                 task = completion.Task;
@@ -5393,7 +5392,7 @@ namespace Microsoft.Data.SqlClient
                         task = AsyncHelper.CreateContinuationTask(writeTask, () =>
                         {
                             _activeConnection.GetOpenTdsConnection(); // it will throw if connection is closed
-                            cachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
+                            CachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
                         },
                                  onFailure: (exc) =>
                                  {
@@ -5402,7 +5401,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        cachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
+                        CachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
                     }
                 }
                 else
@@ -5439,11 +5438,11 @@ namespace Microsoft.Data.SqlClient
 
         private SqlDataReader CompleteAsyncExecuteReader(bool isInternal = false, bool forDescribeParameterEncryption = false)
         {
-            SqlDataReader ds = cachedAsyncState.CachedAsyncReader; // should not be null
+            SqlDataReader ds = CachedAsyncState.CachedAsyncReader; // should not be null
             bool processFinallyBlock = true;
             try
             {
-                FinishExecuteReader(ds, cachedAsyncState.CachedRunBehavior, cachedAsyncState.CachedSetOptions, isInternal, forDescribeParameterEncryption, shouldCacheForAlwaysEncrypted: !forDescribeParameterEncryption);
+                FinishExecuteReader(ds, CachedAsyncState.CachedRunBehavior, CachedAsyncState.CachedSetOptions, isInternal, forDescribeParameterEncryption, shouldCacheForAlwaysEncrypted: !forDescribeParameterEncryption);
             }
             catch (Exception e)
             {
@@ -5457,7 +5456,7 @@ namespace Microsoft.Data.SqlClient
                     // Don't reset the state for internal End. The user End will do that eventually.
                     if (!isInternal)
                     {
-                        cachedAsyncState.ResetAsyncState();
+                        CachedAsyncState.ResetAsyncState();
                     }
                     PutStateObject();
                 }
@@ -5693,16 +5692,16 @@ namespace Microsoft.Data.SqlClient
 
         private void ValidateAsyncCommand()
         {
-            if (cachedAsyncState.PendingAsyncOperation)
+            if (CachedAsyncState.PendingAsyncOperation)
             { // Enforce only one pending async execute at a time.
-                if (cachedAsyncState.IsActiveConnectionValid(_activeConnection))
+                if (CachedAsyncState.IsActiveConnectionValid(_activeConnection))
                 {
                     throw SQL.PendingBeginXXXExists();
                 }
                 else
                 {
                     _stateObj = null; // Session was re-claimed by session pool upon connection close.
-                    cachedAsyncState.ResetAsyncState();
+                    CachedAsyncState.ResetAsyncState();
                 }
             }
         }
