@@ -13,7 +13,6 @@ using System.Threading.Tasks;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
-using Microsoft.Data.SqlClient.ManagedSni;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -156,7 +155,7 @@ namespace Microsoft.Data.SqlClient
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            out ResolvedServerSpn resolvedSpn,
+            out Microsoft.Data.SqlClient.ManagedSni.ResolvedServerSpn resolvedSpn,
             bool flushCache,
             bool async,
             bool fParallel,
