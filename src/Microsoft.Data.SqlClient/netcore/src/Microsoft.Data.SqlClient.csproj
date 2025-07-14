@@ -432,9 +432,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiSettersStream.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiSettersStream.cs</Link>
     </Compile>
@@ -449,9 +446,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlDataRecord.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlDataRecord.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlMetaData.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlMetaData.cs</Link>
@@ -816,6 +810,7 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
   </ItemGroup>
+
   <!-- Windows only -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Handles\SafeLibraryHandle.netcore.cs">
@@ -962,9 +957,11 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
+    
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
   </ItemGroup>
+
   <!-- Unix only -->
   <ItemGroup Condition="'$(TargetsUnix)' == 'true'">
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Unix.cs">
@@ -1003,8 +1000,10 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs</Link>
     </Compile>
+
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
   </ItemGroup>
+
   <!-- Resources -->
   <ItemGroup>
     <Compile Include="$(CommonSourceRoot)Resources\StringsHelper.cs">
@@ -1032,6 +1031,7 @@
       <Link>Resources\Microsoft.Data.SqlClient.SqlMetaData.xml</Link>
     </EmbeddedResource>
   </ItemGroup>
+
   <!-- Package References Etc -->
   <ItemGroup>
     <PackageReference Include="Azure.Identity" />

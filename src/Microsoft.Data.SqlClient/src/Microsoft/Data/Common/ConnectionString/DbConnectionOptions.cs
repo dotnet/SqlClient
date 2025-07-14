@@ -45,7 +45,7 @@ namespace Microsoft.Data.Common.ConnectionString
         internal Dictionary<string, string> Parsetable => _parsetable;
         public bool IsEmpty => _keyChain == null;
 
-        public DbConnectionOptions(string connectionString, Dictionary<string, string> synonyms)
+        public DbConnectionOptions(string connectionString, IReadOnlyDictionary<string, string> synonyms)
         {
             _parsetable = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
             _usersConnectionString = connectionString ?? "";
@@ -56,8 +56,8 @@ namespace Microsoft.Data.Common.ConnectionString
                 _keyChain = ParseInternal(_parsetable, _usersConnectionString, true, synonyms, false);
                 _hasPasswordKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.Password) || 
                                       _parsetable.ContainsKey(DbConnectionStringSynonyms.Pwd);
-                _hasUserIdKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.UserID) ||
-                                    _parsetable.ContainsKey(DbConnectionStringSynonyms.UID);
+                _hasUserIdKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.UserId) ||
+                                    _parsetable.ContainsKey(DbConnectionStringSynonyms.Uid);
             }
         }
 
@@ -462,7 +462,12 @@ namespace Microsoft.Data.Common.ConnectionString
             return false;
         }
 
-        private static NameValuePair ParseInternal(Dictionary<string, string> parsetable, string connectionString, bool buildChain, Dictionary<string, string> synonyms, bool firstKey)
+        private static NameValuePair ParseInternal(
+            Dictionary<string, string> parsetable,
+            string connectionString,
+            bool buildChain,
+            IReadOnlyDictionary<string, string> synonyms,
+            bool firstKey)
         {
             Debug.Assert(connectionString != null, "null connectionstring");
             StringBuilder buffer = new StringBuilder();
@@ -573,7 +578,7 @@ namespace Microsoft.Data.Common.ConnectionString
             constr = builder.ToString();
             return head;
         }
-
+        
         // SxS notes:
         // * this method queries "DataDirectory" value from the current AppDomain.
         //   This string is used for to replace "!DataDirectory!" values in the connection string, it is not considered as an "exposed resource".
@@ -628,7 +633,7 @@ namespace Microsoft.Data.Common.ConnectionString
             StringBuilder builder = new(_usersConnectionString.Length);
             for (NameValuePair current = _keyChain; current != null; current = current.Next)
             {
-                if (string.Equals(current.Name, DbConnectionStringKeywords.AttachDBFilename, StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals(current.Name, DbConnectionStringKeywords.AttachDbFilename, StringComparison.InvariantCultureIgnoreCase))
                 {
                     builder.Append($"{current.Name}={replacementValue};");
                 }
@@ -644,7 +649,7 @@ namespace Microsoft.Data.Common.ConnectionString
         
         #endif
         #endregion
-
+        
         #region NetFx Methods
         #if NETFRAMEWORK
         
@@ -679,8 +684,8 @@ namespace Microsoft.Data.Common.ConnectionString
                         return string.IsNullOrEmpty(value); // MDAC 83097
                     }
 
-                    return (_parsetable.TryGetValue(DbConnectionStringKeywords.UserID, out value) && !string.IsNullOrEmpty(value)) || 
-                           (_parsetable.TryGetValue(DbConnectionStringSynonyms.UID, out value) && !string.IsNullOrEmpty(value));
+                    return (_parsetable.TryGetValue(DbConnectionStringKeywords.UserId, out value) && !string.IsNullOrEmpty(value)) || 
+                           (_parsetable.TryGetValue(DbConnectionStringSynonyms.Uid, out value) && !string.IsNullOrEmpty(value));
                 }
                 return false;
             }
@@ -770,6 +775,5 @@ namespace Microsoft.Data.Common.ConnectionString
         }
         #endif
         #endregion
-        
     }
 }
