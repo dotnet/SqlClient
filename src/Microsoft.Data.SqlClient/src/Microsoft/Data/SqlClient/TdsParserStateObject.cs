@@ -1488,7 +1488,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (writeDataSizeToSnapshot)
                 {
-                    SetSnapshotDataSize(bytesToRead);
+                    AddSnapshotDataSize(bytesToRead);
                 }
 
                 AssertValidState();
@@ -2034,7 +2034,7 @@ namespace Microsoft.Data.SqlClient
             // bool firstchunk = false;
             bool isNull = false;
 
-            Debug.Assert(_longlenleft == 0, "Out of synch length read request");
+            Debug.Assert(_longlenleft == 0, "Out of sync length read request");
             if (_longlen == 0)
             {
                 // First chunk is being read. Find out what type of chunk it is
@@ -2115,6 +2115,7 @@ namespace Microsoft.Data.SqlClient
             }
             return TryReadPlpBytes(ref buff, offset, len, out totalBytesRead, canContinue, canContinue, compatibilityMode);
         }
+
         // Reads the requested number of bytes from a plp data stream, or the entire data if
         // requested length is -1 or larger than the actual length of data. First call to this method
         //  should be preceeded by a call to ReadPlpLength or ReadDataLength.
@@ -2230,14 +2231,14 @@ namespace Microsoft.Data.SqlClient
                         SetSnapshotStorage(buff);
                         if (writeDataSizeToSnapshot)
                         {
-                            SetSnapshotDataSize(bytesRead);
+                            AddSnapshotDataSize(bytesRead);
                         }
                     }
                     return result;
                 }
                 if (writeDataSizeToSnapshot && canContinue)
                 {
-                    SetSnapshotDataSize(bytesRead);
+                    AddSnapshotDataSize(bytesRead);
                 }
 
                 if (_longlenleft == 0)
@@ -2255,10 +2256,7 @@ namespace Microsoft.Data.SqlClient
                         else if (canContinue && result == TdsOperationStatus.NeedMoreData)
                         {
                             SetSnapshotStorage(buff);
-                            if (writeDataSizeToSnapshot)
-                            {
-                                SetSnapshotDataSize(bytesRead);
-                            }
+                            // data bytes read from the current packet must be 0 here so do not save the snapshot data size
                         }
                         return result;
                     }
@@ -2271,6 +2269,12 @@ namespace Microsoft.Data.SqlClient
                 {
                     break;
                 }
+            }
+
+            if (canContinue)
+            {
+                SetSnapshotStorage(null);
+                ClearSnapshotDataSize();
             }
             return TdsOperationStatus.Done;
         }
@@ -3507,9 +3511,6 @@ namespace Microsoft.Data.SqlClient
             {
                 StateSnapshot snapshot = _snapshot;
                 _snapshot = null;
-                // TODO(GH-3385): Not sure what this is trying to assert, but it
-                // currently fails the DataReader tests.
-                // Debug.Assert(snapshot._storage == null);
                 snapshot.Clear();
                 Interlocked.CompareExchange(ref _cachedSnapshot, snapshot, null);
             }
@@ -3567,9 +3568,6 @@ namespace Microsoft.Data.SqlClient
         internal void SetSnapshotStorage(object buffer)
         {
             Debug.Assert(_snapshot != null, "should not access snapshot accessor functions without first checking that the snapshot is available");
-            // TODO(GH-3385): Not sure what this is trying to assert, but it
-            // currently fails the DataReader tests.
-            // Debug.Assert(_snapshot._storage == null, "should not overwrite snapshot stored buffer");
             if (_snapshot != null)
             {
                 _snapshot._storage = buffer;
@@ -3581,10 +3579,16 @@ namespace Microsoft.Data.SqlClient
         /// countOfBytesCopiedFromCurrentPacket to be calculated
         /// </summary>
         /// <param name="countOfBytesCopiedFromCurrentPacket"></param>
-        internal void SetSnapshotDataSize(int countOfBytesCopiedFromCurrentPacket)
+        internal void AddSnapshotDataSize(int countOfBytesCopiedFromCurrentPacket)
         {
             Debug.Assert(_snapshot != null && _snapshot.ContinueEnabled, "_snapshot must exist to store packet data size");
             _snapshot.SetPacketDataSize(countOfBytesCopiedFromCurrentPacket);
+        }
+
+        internal void ClearSnapshotDataSize()
+        {
+            Debug.Assert(_snapshot != null, "_snapshot must exist to store packet data size");
+            _snapshot?.ClearPacketDataSize();
         }
 
         internal int GetSnapshotTotalSize()
@@ -4283,6 +4287,16 @@ namespace Microsoft.Data.SqlClient
                 target.RunningDataSize = total + size;
             }
 
+            internal void ClearPacketDataSize()
+            {
+                PacketData current = _firstPacket;
+                while (current != null)
+                {
+                    current.RunningDataSize = 0;
+                    current = current.NextPacket;
+                }
+            }
+
             internal int GetPacketDataOffset()
             {
                 int offset = 0;
@@ -4332,9 +4346,6 @@ namespace Microsoft.Data.SqlClient
 
             private void ClearState()
             {
-                // TODO(GH-3385): Not sure what this is trying to assert, but it
-                // currently fails the DataReader tests.
-                // Debug.Assert(_storage == null);
                 _storage = null;
                 _replayStateData.Clear(_stateObj);
                 _continueStateData?.Clear(_stateObj, trackStack: false);
