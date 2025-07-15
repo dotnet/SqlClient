@@ -877,19 +877,6 @@ namespace Microsoft.Data.SqlClient
                         bool processFinallyBlock = true;
                         try
                         {
-                            // NOTE: The state object isn't actually needed for this, but it is still here for back-compat (since it does a bunch of checks)
-                            GetStateObject();
-
-                            // Loop through parameters ensuring that we do not have unspecified types, sizes, scales, or precisions
-                            if (_parameters != null)
-                            {
-                                int count = _parameters.Count;
-                                for (int i = 0; i < count; ++i)
-                                {
-                                    _parameters[i].Prepare(this);
-                                }
-                            }
-
                             InternalPrepare();
                         }
                         catch (Exception e)
@@ -917,6 +904,19 @@ namespace Microsoft.Data.SqlClient
 
         private void InternalPrepare()
         {
+            // NOTE: The state object isn't actually needed for this, but it is still here for back-compat (since it does a bunch of checks)
+            GetStateObject();
+
+            // Loop through parameters ensuring that we do not have unspecified types, sizes, scales, or precisions
+            if (_parameters != null)
+            {
+                int count = _parameters.Count;
+                for (int i = 0; i < count; ++i)
+                {
+                    _parameters[i].Prepare(this);
+                }
+            }
+            
             if (this.IsDirty)
             {
                 Debug.Assert(_cachedMetaData == null || !_dirty, "dirty query should not have cached metadata!"); // can have cached metadata if dirty because of parameters
