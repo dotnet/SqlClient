@@ -65,6 +65,11 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         // @TODO: Make auto-property
         private bool _inPrepare = false;
+
+        /// <summary>
+        /// TDS session the current instance is using.
+        /// </summary>
+        private TdsParserStateObject _stateObj;
         
         #endregion
 
