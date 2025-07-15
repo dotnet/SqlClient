@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     // make call for SSPI data
-                    _authenticationProvider!.SSPIData(receivedBuff.AsSpan(0, receivedLength), writer, _serverSpn);
+                    _authenticationProvider!.WriteSSPIContext(receivedBuff.AsSpan(0, receivedLength), writer);
 
                     // DO NOT SEND LENGTH - TDS DOC INCORRECT!  JUST SEND SSPI DATA!
                     _physicalStateObj.WriteByteSpan(writer.WrittenSpan);
@@ -179,7 +179,7 @@ namespace Microsoft.Data.SqlClient
                         // byte[] buffer and 0 for the int length.
                         Debug.Assert(SniContext.Snix_Login == _physicalStateObj.SniContext, $"Unexpected SniContext. Expecting Snix_Login, actual value is '{_physicalStateObj.SniContext}'");
                         _physicalStateObj.SniContext = SniContext.Snix_LoginSspi;
-                        _authenticationProvider.SSPIData(ReadOnlySpan<byte>.Empty, sspiWriter, _serverSpn);
+                        _authenticationProvider.WriteSSPIContext(ReadOnlySpan<byte>.Empty, sspiWriter);
 
                         _physicalStateObj.SniContext = SniContext.Snix_Login;
 
