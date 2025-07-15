@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient
                         //       This first connection is established to SqlExpress to get the instance name
                         //       of the UserInstance.
                         SqlConnectionString sseopt = new SqlConnectionString(opt, opt.DataSource, userInstance: true, setEnlistValue: false);
-                        sseConnection = new SqlInternalConnectionTds(identity, sseopt, key.Credential, null, "", null, false, applyTransientFaultHandling: applyTransientFaultHandling);
+                        sseConnection = new SqlInternalConnectionTds(identity, sseopt, key.Credential, null, "", null, false, applyTransientFaultHandling: applyTransientFaultHandling, sspiContextProvider: key.SspiContextProvider);
                         // NOTE: Retrieve <UserInstanceName> here. This user instance name will be used below to connect to the Sql Express User Instance.
                         instanceName = sseConnection.InstanceName;
 
@@ -157,7 +157,8 @@ namespace Microsoft.Data.SqlClient
                 applyTransientFaultHandling,
                 key.AccessToken,
                 pool,
-                key.AccessTokenCallback);
+                key.AccessTokenCallback,
+                key.SspiContextProvider);
         }
 
         protected override DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous)

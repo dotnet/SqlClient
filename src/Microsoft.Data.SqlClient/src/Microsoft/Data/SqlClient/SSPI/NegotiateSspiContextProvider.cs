@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient
     {
         private NegotiateAuthentication? _negotiateAuth;
 
-        protected override bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams)
+        protected override bool GenerateContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams)
         {
             var negotiateAuth = GetNegotiateAuthenticationForParams(authParams);
             var sendBuff = negotiateAuth.GetOutgoingBlob(incomingBlob, out var statusCode)!;
