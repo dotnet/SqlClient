@@ -17,7 +17,7 @@ using static Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests.TestFixtures;
 
 namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 {
-    public class SqlColumnEncryptionCertificateStoreProviderWindowsShould : IClassFixture<ColumnEncryptionCertificateFixture>
+    public class SqlColumnEncryptionCertificateStoreProviderShould : IClassFixture<ColumnEncryptionCertificateFixture>
     {
         private const string PRIMARY_CERTIFICATE_PATH = "CurrentUser/My/{primary_thumbprint}";
         private const string SECONDARY_CERTIFICATE_PATH = "CurrentUser/My/{secondary_thumbprint}";
@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         private readonly ColumnEncryptionCertificateFixture _certFixture;
 
-        public SqlColumnEncryptionCertificateStoreProviderWindowsShould(ColumnEncryptionCertificateFixture certFixture)
+        public SqlColumnEncryptionCertificateStoreProviderShould(ColumnEncryptionCertificateFixture certFixture)
         {
             _certFixture = certFixture;
 
@@ -107,7 +107,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         [Theory]
         [InvalidDecryptionParameters]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void ThrowExceptionWithInvalidParameterWhileDecryptingColumnEncryptionKey(string errorMsg, Type exceptionType, string masterKeyPath, string encryptionAlgorithm, byte[] bytes)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
@@ -118,7 +117,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         [Theory]
         [InvalidEncryptionParameters]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void ThrowExceptionWithInvalidParameterWhileEncryptingColumnEncryptionKey(string errorMsg, Type exceptionType, string masterKeyPath, string encryptionAlgorithm, byte[] bytes)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
@@ -128,7 +126,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         [Theory]
         [InvalidSigningParameters]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void ThrowExceptionWithInvalidParameterWhileSigningColumnMasterKeyMetadata(string errorMsg, Type exceptionType, string masterKeyPath)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
@@ -140,7 +137,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [InlineData("CurrentUser/My/{primary_thumbprint}")]
         [InlineData("CURRENTUSER/My/{primary_thumbprint}")]
         [InlineData("currentuser/My/{primary_thumbprint}")]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void SetStoreLocationAppropriatelyFromMasterKeyPathRegardlessOfCase(string masterKeyPath)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
@@ -152,7 +148,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [InlineData("CurrentUser/my/{primary_thumbprint}")]
         [InlineData("CurrentUser/MY/{primary_thumbprint}")]
         [InlineData("CurrentUser/My/{primary_thumbprint}")]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void SetStoreNameAppropriatelyFromMasterKeyPathRegardlessOfCase(string masterKeyPath)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
@@ -164,7 +159,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [InlineData("RSA_OAEP")]
         [InlineData("rsa_oaep")]
         [InlineData("RsA_oAeP")]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void AcceptEncryptionAlgorithmRegardlessOfCase(string algorithm)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
@@ -176,7 +170,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [InlineData(32)]
         [InlineData(64)]
         [InlineData(128)]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void EncryptKeyAndThenDecryptItSuccessfully(int dataSize)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
@@ -192,7 +185,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void SignAndVerifyColumnMasterKeyMetadataSuccessfully(bool allowEnclaveComputations)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
@@ -205,7 +197,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void FailToVerifyColumnMasterKeyMetadataWithWrongCertificate(bool allowEnclaveComputations)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
@@ -217,7 +208,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
         [Fact]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void EncryptAndDecryptDataSuccessfully()
         {
             var input = new byte[] { 1, 2, 3, 4, 5 };
@@ -240,7 +230,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             , DisableDiscoveryEnumeration = true
 #endif
             )]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void TestCEKEncryptionReversal(StoreLocation certificateStoreLocation, String certificateStoreNameAndLocation)
         {
             Assert.True(!string.IsNullOrWhiteSpace(certificateStoreNameAndLocation));
@@ -304,7 +293,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
         [Theory]
-        [PlatformSpecific(TestPlatforms.Windows)]
         [AeadEncryptionParameters]
         public void TestAeadEncryptionReversal(string dataType, object data, Utility.CColumnEncryptionType encType)
         {
@@ -339,7 +327,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
         [Fact]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void TestCustomKeyProviderListSetter()
         {
             lock (Utility.ClearSqlConnectionGlobalProvidersLock)
@@ -396,7 +383,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             , DisableDiscoveryEnumeration = true
 #endif
             )]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void TestValidCertificatePaths(string certificateStoreNameAndLocation, object location)
         {
             StoreLocation certificateStoreLocation;
@@ -411,7 +397,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             }
             else
             {
-                certificateStoreLocation = StoreLocation.CurrentUser;
+                certificateStoreLocation = Environment.OSVersion.Platform == PlatformID.Win32NT
+                    ? StoreLocation.LocalMachine
+                    : StoreLocation.CurrentUser;
             }
 
             // Fetch the newly created cert.
@@ -436,7 +424,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
         [Theory]
-        [PlatformSpecific(TestPlatforms.Windows)]
         [InlineData(new object[3] { @"iv", Utility.CColumnEncryptionType.Randomized, @"Specified ciphertext has an invalid authentication tag.\s+\(?Parameter (name: )?'?cipherText('\))?" })]
         [InlineData(new object[3] { @"tag", Utility.CColumnEncryptionType.Randomized, @"Specified ciphertext has an invalid authentication tag.\s+\(?Parameter (name: )?'?cipherText('\))?" })]
         [InlineData(new object[3] { @"cipher", Utility.CColumnEncryptionType.Randomized, @"Specified ciphertext has an invalid authentication tag.\s+\(?Parameter (name: )?'?cipherText('\))?" })]
@@ -532,26 +519,35 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public static IEnumerable<object[]> ValidCertificatePathsData()
         {
             yield return new object[2] { CurrentUserMyPathPrefix, StoreLocation.CurrentUser };
-            // use localmachine cert path (or an incomplete path, which defaults to localmachine) only when current user is Admin.
-            if (ColumnEncryptionCertificateFixture.IsAdmin)
+
+            // use localmachine cert path (or a location in the cert path which defaults to localmachine) only when current user is Admin.
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                yield return new object[2] { MyPathPrefix, StoreLocation.LocalMachine };
-                yield return new object[2] { @"", StoreLocation.LocalMachine };
-                yield return new object[2] { LocalMachineMyPathPrefix, StoreLocation.LocalMachine };
+                yield return new object[2] { @"", null };
+                yield return new object[2] { MyPathPrefix, null };
+
+                if (ColumnEncryptionCertificateFixture.IsAdmin)
+                {
+                    yield return new object[2] { LocalMachineMyPathPrefix, StoreLocation.LocalMachine };
+                }
             }
         }
 
         public class InvalidDecryptionParameters : DataAttribute
         {
-            private const string TCE_NullCertificatePath = @"Internal error. Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_EmptyCertificatePath = @"Internal error. Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_NullCertificatePath_Windows = @"Internal error. Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_NullCertificatePath_Unix = @"Internal error. Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_EmptyCertificatePath_Windows = @"Internal error. Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_EmptyCertificatePath_Unix = @"Internal error. Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_NullEncryptedColumnEncryptionKey = @"Internal error. Encrypted column encryption key cannot be null.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
             private const string TCE_EmptyEncryptedColumnEncryptionKey = @"Internal error. Empty encrypted column encryption key specified.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
             private const string TCE_NullKeyEncryptionAlgorithm = @"Internal error. Key encryption algorithm cannot be null.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?";
             private const string TCE_InvalidKeyEncryptionAlgorithm = @"Internal error. Invalid key encryption algorithm specified: ''. Expected value: 'RSA_OAEP'.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?";
             private const string TCE_LargeCertificatePathLength = @"Internal error. Specified certificate path has 32768 bytes, which exceeds maximum length of 32767 bytes.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_InvalidCertificatePath = @"Internal error. Invalid certificate path: 'CurrentUser/My/Thumbprint/extra'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_InvalidCertificateLocation = @"Internal error. Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_InvalidCertificatePath_Windows = @"Internal error. Invalid certificate path: 'CurrentUser/My/Thumbprint/extra'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_InvalidCertificatePath_Unix = @"Internal error. Invalid certificate path: 'CurrentUser/My/Thumbprint/extra'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_InvalidCertificateLocation_Windows = @"Internal error. Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_InvalidCertificateLocation_Unix = @"Internal error. Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidCertificateStore = @"Internal error. Invalid certificate store 'Invalid' specified in certificate path 'CurrentUser/Invalid/Thumbprint'. Expected value: 'My'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_CertificateNotFound = @"Certificate with thumbprint 'JunkThumbprint' not found in certificate store 'My' in certificate location 'CurrentUser'. Verify the certificate path in the column master key definition in the database is correct, and the certificate has been imported correctly into the certificate location/store.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_CertificateWithNoPrivateKey = @"Certificate specified in key path 'CurrentUser/My/{npk_thumbprint}' does not have a private key to decrypt a column encryption key. Verify the certificate is imported correctly.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
@@ -560,6 +556,11 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             private const string TCE_InvalidCiphertextLengthInEncryptedCEK = @"The specified encrypted column encryption key's ciphertext length: 128 does not match the ciphertext length: 256 when using column master key \(certificate\) in 'CurrentUser/My/{primary_thumbprint}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
             private const string TCE_InvalidSignatureInEncryptedCEK = @"The specified encrypted column encryption key's signature length: 128 does not match the signature length: 256 when using column master key \(certificate\) in 'CurrentUser/My/{primary_thumbprint}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
             private const string TCE_InvalidSignature = @"The specified encrypted column encryption key signature does not match the signature computed with the column master key \(certificate\) in 'CurrentUser/My/{primary_thumbprint}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+
+            private static readonly string TCE_NullCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_NullCertificatePath_Windows : TCE_NullCertificatePath_Unix;
+            private static readonly string TCE_EmptyCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_EmptyCertificatePath_Windows : TCE_EmptyCertificatePath_Unix;
+            private static readonly string TCE_InvalidCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_InvalidCertificatePath_Windows : TCE_InvalidCertificatePath_Unix;
+            private static readonly string TCE_InvalidCertificateLocation = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_InvalidCertificateLocation_Windows : TCE_InvalidCertificateLocation_Unix;
 
             public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
             {
@@ -585,19 +586,28 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public class InvalidEncryptionParameters : DataAttribute
         {
-            private const string TCE_NullCertificatePath = @"Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_EmptyCertificatePath = @"Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_NullCertificatePath_Windows = @"Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_NullCertificatePath_Unix = @"Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_EmptyCertificatePath_Windows = @"Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_EmptyCertificatePath_Unix = @"Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_NullEncryptedColumnEncryptionKey = @"Column encryption key cannot be null.\s+\(?Parameter (name: )?'?columnEncryptionKey('\))?";
             private const string TCE_EmptyEncryptedColumnEncryptionKey = @"Empty column encryption key specified.\s+\(?Parameter (name: )?'?columnEncryptionKey('\))?";
             private const string TCE_NullKeyEncryptionAlgorithm = @"Key encryption algorithm cannot be null.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?";
             private const string TCE_InvalidKeyEncryptionAlgorithm = @"Invalid key encryption algorithm specified: ''. Expected value: 'RSA_OAEP'.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?";
             private const string TCE_LargeCertificatePathLength = @"Specified certificate path has 32768 bytes, which exceeds maximum length of 32767 bytes.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_InvalidCertificatePath = @"Invalid certificate path: 'CurrentUser/My/Thumbprint/extra'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_InvalidCertificateLocation = @"Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_InvalidCertificatePath_Windows = @"Invalid certificate path: 'CurrentUser/My/Thumbprint/extra'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_InvalidCertificatePath_Unix = @"Invalid certificate path: 'CurrentUser/My/Thumbprint/extra'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_InvalidCertificateLocation_Windows = @"Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_InvalidCertificateLocation_Unix = @"Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidCertificateStore = @"Invalid certificate store 'Invalid' specified in certificate path 'CurrentUser/Invalid/Thumbprint'. Expected value: 'My'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_CertificateNotFound = @"Certificate with thumbprint 'JunkThumbprint' not found in certificate store 'My' in certificate location 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_CertificateWithNoPrivateKey = @"Certificate specified in key path 'CurrentUser/My/{npk_thumbprint}' does not have a private key to encrypt a column encryption key. Verify the certificate is imported correctly.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidCertificateSignature = @"Empty certificate thumbprint specified in certificate path 'CurrentUser/My/'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+
+            private static readonly string TCE_NullCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_NullCertificatePath_Windows : TCE_NullCertificatePath_Unix;
+            private static readonly string TCE_EmptyCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_EmptyCertificatePath_Windows : TCE_EmptyCertificatePath_Unix;
+            private static readonly string TCE_InvalidCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_InvalidCertificatePath_Windows : TCE_InvalidCertificatePath_Unix;
+            private static readonly string TCE_InvalidCertificateLocation = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_InvalidCertificateLocation_Windows : TCE_InvalidCertificateLocation_Unix;
 
             public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
             {
@@ -619,9 +629,14 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public class InvalidSigningParameters : DataAttribute
         {
-            private const string TCE_NullCertificatePath = @"Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_EmptyCertificatePath = @"Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_NullCertificatePath_Windows = @"Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_NullCertificatePath_Unix = @"Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_EmptyCertificatePath_Windows = @"Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_EmptyCertificatePath_Unix = @"Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_LargeCertificatePathLength = @"Specified certificate path has 32768 bytes, which exceeds maximum length of 32767 bytes.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+
+            private static readonly string TCE_NullCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_NullCertificatePath_Windows : TCE_NullCertificatePath_Unix;
+            private static readonly string TCE_EmptyCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_EmptyCertificatePath_Windows : TCE_EmptyCertificatePath_Unix;
 
             public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
             {
@@ -642,20 +657,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             }
 
             return s.ToString();
-        }
-    }
-
-    public class SqlColumnEncryptionCertificateStoreProviderUnixShould
-    {
-        [Fact]
-        [PlatformSpecific(TestPlatforms.AnyUnix)]
-        public void ThrowPlatformNotSupportedExceptionInUnix()
-        {
-            var provider = new SqlColumnEncryptionCertificateStoreProvider();
-            Assert.Throws<PlatformNotSupportedException>(() => provider.EncryptColumnEncryptionKey("", "", new byte[] { }));
-            Assert.Throws<PlatformNotSupportedException>(() => provider.DecryptColumnEncryptionKey("", "", new byte[] { }));
-            Assert.Throws<PlatformNotSupportedException>(() => provider.SignColumnMasterKeyMetadata("", false));
-            Assert.Throws<PlatformNotSupportedException>(() => provider.VerifyColumnMasterKeyMetadata("", false, new byte[] { }));
         }
     }
 }

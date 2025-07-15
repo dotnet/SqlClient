@@ -11,16 +11,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// <summary>
     /// Always Encrypted public API Manual tests.
     /// </summary>
-    public class BulkCopyAEErrorMessage : IClassFixture<PlatformSpecificTestContext>
+    public class BulkCopyAEErrorMessage : IClassFixture<SQLSetupStrategyCertStoreProvider>
     {
         private SQLSetupStrategy _fixture;
 
         private readonly string _tableName;
         private readonly string _columnName;
 
-        public BulkCopyAEErrorMessage(PlatformSpecificTestContext context)
+        public BulkCopyAEErrorMessage(SQLSetupStrategyCertStoreProvider context)
         {
-            _fixture = context.Fixture;
+            _fixture = context;
             _tableName = _fixture.BulkCopyAEErrorMessageTestTable.Name;
             _columnName = "c1";
         }
