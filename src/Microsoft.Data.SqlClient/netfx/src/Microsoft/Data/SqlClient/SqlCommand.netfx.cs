@@ -6843,16 +6843,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool IsPrepared
-        {
-            get { return (_execType != EXECTYPE.UNPREPARED); }
-        }
-
-        private bool IsUserPrepared
-        {
-            get { return IsPrepared && !_hiddenPrepare && !IsDirty; }
-        }
-
         /// <summary>
         /// Get or add to the number of records affected by SpDescribeParameterEncryption.
         /// The below line is used only for debug asserts and not exposed publicly or impacts functionality otherwise.
