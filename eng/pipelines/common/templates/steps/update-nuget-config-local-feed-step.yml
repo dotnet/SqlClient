@@ -27,13 +27,13 @@ steps:
 
     #Set the Nuget.config file in the project to use extracted package
     $rootFolder = Get-location
-    [Xml] $nugetConfig = Get-Content -Path "src\Nuget.config"
+    [Xml] $nugetConfig = Get-Content -Path "Nuget.config"
     $Value = Resolve-Path ${{parameters.downloadedNugetPath }}
     $newAdd = $nugetConfig.CreateElement("add")
     $newAdd.SetAttribute("key","Package source")
     $newAdd.SetAttribute("value", "$Value\" )
     $nugetConfig.configuration.packageSources.AppendChild($newAdd)
-    $nugetConfig.Save("$rootFolder\src\Nuget.config")
+    $nugetConfig.Save("$rootFolder\Nuget.config")
   displayName: 'Update NuGet config file to read from Nuget folder'
 
 - task: MSBuild@1

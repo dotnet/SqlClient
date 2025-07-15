@@ -28,7 +28,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <tags>sqlclient microsoft.data.sqlclient</tags>
     <dependencies>
       <group targetFramework="net462">
-        <dependency id="Microsoft.Data.SqlClient.SNI" version="5.1.1" />
+        <dependency id="Microsoft.Data.SqlClient.SNI" version="5.1.2" />
         <dependency id="Azure.Identity" version="1.11.4" />
         <dependency id="Microsoft.Identity.Client" version="4.61.3" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.35.0" />
@@ -36,10 +36,11 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="System.Buffers" version="4.5.1" />
         <dependency id="System.Configuration.ConfigurationManager" version="6.0.1" exclude="Compile" />
         <dependency id="System.Runtime.InteropServices.RuntimeInformation" version="4.3.0" />
-        <dependency id="System.Text.Encodings.Web" version="6.0.0" />
+        <dependency id="System.Text.Encodings.Web" version="6.0.1" />
+        <dependency id="System.Text.Json" version="6.0.11" />
       </group>
       <group targetFramework="net6.0">
-        <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="5.1.1" exclude="Compile" />
+        <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="5.1.2" exclude="Compile" />
         <dependency id="Azure.Identity" version="1.11.4" />
         <dependency id="Microsoft.Identity.Client" version="4.61.3" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.35.0" />
@@ -49,12 +50,12 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="System.Diagnostics.DiagnosticSource" version="6.0.1" exclude="Compile" />
         <dependency id="System.Runtime.Caching" version="6.0.0" exclude="Compile" />
         <dependency id="System.Text.Encoding.CodePages" version="6.0.0" exclude="Compile" />
-        <dependency id="System.Text.Encodings.Web" version="6.0.0" />
+        <dependency id="System.Text.Encodings.Web" version="6.0.1" />
         <dependency id="System.Security.Cryptography.Cng" version="5.0.0" />
         <dependency id="System.Security.Principal.Windows" version="5.0.0" exclude="Compile" />
       </group>
       <group targetFramework="netstandard2.0">
-        <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="5.1.1" exclude="Compile" />
+        <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="5.1.2" exclude="Compile" />
         <dependency id="Azure.Identity" version="1.11.4" />
         <dependency id="Microsoft.Identity.Client" version="4.61.3" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.35.0" />
@@ -65,13 +66,13 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="System.Configuration.ConfigurationManager" version="6.0.1" exclude="Compile" />
         <dependency id="System.Runtime.Caching" version="6.0.0" exclude="Compile" />
         <dependency id="System.Text.Encoding.CodePages" version="6.0.0" exclude="Compile" />
-        <dependency id="System.Text.Encodings.Web" version="6.0.0" />
+        <dependency id="System.Text.Encodings.Web" version="6.0.1" />
         <dependency id="System.Runtime.Loader" version="4.3.0" />
         <dependency id="System.Security.Cryptography.Cng" version="5.0.0" />
         <dependency id="System.Security.Principal.Windows" version="5.0.0" exclude="Compile" />
       </group>
       <group targetFramework="netstandard2.1">
-        <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="5.1.1" exclude="Compile" />
+        <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="5.1.2" exclude="Compile" />
         <dependency id="Azure.Identity" version="1.11.4" />
         <dependency id="Microsoft.Identity.Client" version="4.61.3" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.35.0" />
@@ -81,7 +82,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="System.Configuration.ConfigurationManager" version="6.0.1" exclude="Compile" />
         <dependency id="System.Runtime.Caching" version="6.0.0" exclude="Compile" />
         <dependency id="System.Text.Encoding.CodePages" version="6.0.0" exclude="Compile" />
-        <dependency id="System.Text.Encodings.Web" version="6.0.0" />
+        <dependency id="System.Text.Encodings.Web" version="6.0.1" />
         <dependency id="System.Runtime.Loader" version="4.3.0" />
         <dependency id="System.Security.Cryptography.Cng" version="5.0.0" />
         <dependency id="System.Security.Principal.Windows" version="5.0.0" exclude="Compile" />

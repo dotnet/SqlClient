@@ -1447,6 +1447,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Socket is null.
+        /// </summary>
+        internal static string SNI_ERROR_10 {
+            get {
+                return ResourceManager.GetString("SNI_ERROR_10", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Timeout error.
         /// </summary>
         internal static string SNI_ERROR_11 {
