@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient
                 // _dirty, but that's not the only consideration when determining dirtiness.
                 
                 // only mark the command as dirty if it is already prepared
-                // but always clear the value if it we are clearing the dirty flag
+                // but always clear the value if we are clearing the dirty flag
                 _dirty = value ? IsPrepared : false;
                 if (_parameters != null)
                 {
@@ -128,6 +128,11 @@ namespace Microsoft.Data.SqlClient
                 _cachedMetaData = null;
             }
         }
+
+        private bool IsPrepared => _execType is not EXECTYPE.UNPREPARED;
+        
+        // @TODO: IsPrepared is part of IsDirty - this is confusing.
+        private bool IsUserPrepared => IsPrepared && !_hiddenPrepare && !IsDirty;
 
         #endregion
     }
