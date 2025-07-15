@@ -29,12 +29,8 @@ using System.Collections.Concurrent;
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/SqlCommand/*'/>
-    [DefaultEvent("RecordsAffected")]
-    [ToolboxItem(true)]
-    [DesignerCategory("")]
     // TODO: Add designer attribute when Microsoft.VSDesigner.Data.VS.SqlCommandDesigner uses Microsoft.Data.SqlClient
-    public sealed class SqlCommand : DbCommand, ICloneable
+    public sealed partial class SqlCommand : DbCommand, ICloneable
     {
         private static int _objectTypeCount; // EventSource Counter
         private const int MaxRPCNameLength = 1046;
