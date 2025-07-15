@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Utilities;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -145,6 +146,78 @@ namespace Microsoft.Data.SqlClient
         
         #region Public Methods
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Prepare/*'/>
+        public override void Prepare()
+        {
+            #if NETFRAMEWORK
+            SqlConnection.ExecutePermission.Demand();
+            #endif
+
+            using var _ = TryEventScope.Create("SqlCommand.Prepare | API | Object Id {0}", ObjectID);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                "SqlCommand.Prepare | API | Correlation | " +
+                $"Object Id {ObjectID}, " +
+                $"ActivityID {ActivityCorrelator.Current}, " +
+                $"Client Connection Id {Connection?.ClientConnectionId}");
+
+            // Reset _pendingCancel upon entry into any Execute - used to synchronize state
+            // between entry into Execute* API and the thread obtaining the stateObject.
+            _pendingCancel = false;
+            
+            SqlStatistics statistics = null;
+            try
+            {
+                statistics = SqlStatistics.StartTimer(Statistics);
+                
+                // Only prepare batch has parameters
+                // @TODO: Factor out stored proc/text+parameter count to property
+                // @TODO: Not using parentheses is confusing here b/c it relies on order of operations knowledge
+                if (IsPrepared && !IsDirty || CommandType == CommandType.StoredProcedure
+                                           || (CommandType == CommandType.Text && GetParameterCount(_parameters) == 0))
+                {
+                    Statistics?.SafeIncrement(ref Statistics._prepares);
+                    _hiddenPrepare = false;
+                }
+                else
+                {
+                    // Validate the command outside the try\catch to avoid putting the _stateObj on error
+                    ValidateCommand(isAsync: false);
+
+                    bool processFinallyBlock = true;
+                    try
+                    {
+                        #if NET
+                        PrepareInternal();
+                        #else
+                        ConstrainedExecutionHelper.RunWithConnectionAbortAndCleanup(PrepareInternal, _activeConnection);
+                        #endif
+                    }
+                    catch (Exception e)
+                    {
+                        // NOTE: This will catch any CER exceptions that were rethrown in netfx.
+                        //    they will always be uncatchable, so this is equivalent to setting
+                        //    processFinallyBlock to false inside the CER handlers.
+                        processFinallyBlock = ADP.IsCatchableExceptionType(e);
+                        throw;
+                    }
+                    finally
+                    {
+                        if (processFinallyBlock)
+                        {
+                            // The command is now officially prepared
+                            _hiddenPrepare = false;
+                            ReliablePutStateObject();
+                        }
+                    }
+                    
+                }
+            }
+            finally
+            {
+                SqlStatistics.StopTimer(statistics);
+            }
+        }
+        
         #endregion
         
         #region Private Methods

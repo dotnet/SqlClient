@@ -842,66 +842,6 @@ namespace Microsoft.Data.SqlClient
             this.IsDirty = true;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Prepare/*'/>
-        public override void Prepare()
-        {
-            // Reset _pendingCancel upon entry into any Execute - used to synchronize state
-            // between entry into Execute* API and the thread obtaining the stateObject.
-            _pendingCancel = false;
-
-            SqlStatistics statistics = null;
-            using (TryEventScope.Create("SqlCommand.Prepare | API | Object Id {0}", ObjectID))
-            {
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.Prepare | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId);
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-
-                    // only prepare if batch with parameters
-                    if (this.IsPrepared && !this.IsDirty
-                        || (this.CommandType == CommandType.StoredProcedure)
-                        || ((System.Data.CommandType.Text == this.CommandType)
-                                && (0 == GetParameterCount(_parameters))))
-                    {
-                        if (Statistics != null)
-                        {
-                            Statistics.SafeIncrement(ref Statistics._prepares);
-                        }
-                        _hiddenPrepare = false;
-                    }
-                    else
-                    {
-                        // Validate the command outside of the try/catch to avoid putting the _stateObj on error
-                        ValidateCommand(isAsync: false);
-
-                        bool processFinallyBlock = true;
-                        try
-                        {
-                            PrepareInternal();
-                        }
-                        catch (Exception e)
-                        {
-                            processFinallyBlock = ADP.IsCatchableExceptionType(e);
-                            throw;
-                        }
-                        finally
-                        {
-                            if (processFinallyBlock)
-                            {
-                                _hiddenPrepare = false; // The command is now officially prepared
-
-                                ReliablePutStateObject();
-                            }
-                        }
-                    }
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                }
-            }
-        }
-
         // SqlInternalConnectionTds needs to be able to unprepare a statement
         internal void Unprepare()
         {
