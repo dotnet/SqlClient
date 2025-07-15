@@ -22,10 +22,39 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private static int _objectTypeCount = 0;
 
+        /// <summary>
+        /// Current state of preparation of the command.
+        /// By default, assume the user is not sharing a connection so the command has not been prepared.
+        /// </summary>
+        private EXECTYPE _execType = EXECTYPE.UNPREPARED;
+
         #endregion
 
+        #region Enums
+        
+        // @TODO: Rename to match naming conventions
+        private enum EXECTYPE
+        {
+            /// <summary>
+            /// Execute unprepared commands, all server versions (results in sp_execsql call)
+            /// </summary>
+            UNPREPARED, 
+            
+            /// <summary>
+            /// Prepare and execute command, 8.0 and above only  (results in sp_prepexec call)
+            /// </summary>
+            PREPAREPENDING,
+            
+            /// <summary>
+            /// execute prepared commands, all server versions   (results in sp_exec call)
+            /// </summary>
+            PREPARED,           
+        }
+        
+        #endregion
+        
         #region Properties
-
+        
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
 
         #endregion
