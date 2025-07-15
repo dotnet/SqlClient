@@ -63,32 +63,31 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private SNIErrorDetails GetSniErrorDetails()
+        private TdsParserStateObject.SniErrorDetails GetSniErrorDetails()
         {
-            SNIErrorDetails details = new SNIErrorDetails();
-
             if (TdsParserStateObjectFactory.UseManagedSNI)
             {
                 SniError sniError = SniProxy.Instance.GetLastError();
-                details.sniErrorNumber = sniError.sniError;
-                details.errorMessage = sniError.errorMessage;
-                details.nativeError = sniError.nativeError;
-                details.provider = (int)sniError.provider;
-                details.lineNumber = sniError.lineNumber;
-                details.function = sniError.function;
-                details.exception = sniError.exception;
+                return new(
+                    sniError.errorMessage,
+                    sniError.nativeError,
+                    sniError.sniError,
+                    (int)sniError.provider,
+                    sniError.lineNumber,
+                    sniError.function,
+                    sniError.exception);
             }
             else
             {
                 SniNativeWrapper.SniGetLastError(out Interop.Windows.Sni.SniError sniError);
-                details.sniErrorNumber = sniError.sniError;
-                details.errorMessage = sniError.errorMessage;
-                details.nativeError = sniError.nativeError;
-                details.provider = (int)sniError.provider;
-                details.lineNumber = sniError.lineNumber;
-                details.function = sniError.function;
+                return new(
+                    sniError.errorMessage,
+                    sniError.nativeError,
+                    sniError.sniError,
+                    (int)sniError.provider,
+                    sniError.lineNumber,
+                    sniError.function);
             }
-            return details;
         }
 
     }    // tdsparser
