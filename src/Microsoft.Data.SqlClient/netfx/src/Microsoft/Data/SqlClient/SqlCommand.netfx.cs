@@ -158,18 +158,6 @@ namespace Microsoft.Data.SqlClient
 #endif
         internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
 
-        // Prepare
-        // Against 7.0 Serve a prepare/unprepare requires an extra roundtrip to the server.
-        //
-        // From 8.0 and above, the preparation can be done as part of the command execution.
-
-        private enum EXECTYPE
-        {
-            UNPREPARED,         // execute unprepared commands, all server versions (results in sp_execsql call)
-            PREPAREPENDING,     // prepare and execute command, 8.0 and above only  (results in sp_prepexec call)
-            PREPARED,           // execute prepared commands, all server versions   (results in sp_exec call)
-        }
-
         // devnotes
         //
         // _hiddenPrepare
@@ -191,7 +179,6 @@ namespace Microsoft.Data.SqlClient
         private SqlParameterCollection _parameters;
         private SqlConnection _activeConnection;
         private bool _dirty = false;               // true if the user changes the commandtext or number of parameters after the command is already prepared
-        private EXECTYPE _execType = EXECTYPE.UNPREPARED; // by default, assume the user is not sharing a connection so the command has not been prepared
         private _SqlRPC[] _rpcArrayOf1 = null;                // Used for RPC executes
         private _SqlRPC _rpcForEncryption = null;                // Used for sp_describe_parameter_encryption RPC executes
 
