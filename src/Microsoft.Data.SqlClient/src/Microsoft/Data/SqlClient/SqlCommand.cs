@@ -27,9 +27,18 @@ namespace Microsoft.Data.SqlClient
         /// By default, assume the user is not sharing a connection so the command has not been prepared.
         /// </summary>
         private EXECTYPE _execType = EXECTYPE.UNPREPARED;
+
+        /// <summary>
+        /// On 8.0 and above the Prepared state cannot be left. Once a command is prepared it will
+        /// always be prepared. A change in parameters, command text, etc (IsDirty) automatically
+        /// causes a hidden prepare.
+        /// </summary>
+        private bool _hiddenPrepare = false;
         
         /// <summary>
-        /// Whether the current instance is in the middle of preparation.
+        /// _inPrepare will be set immediately before the actual prepare is done. The OnReturnValue
+        /// function will test this flag to determine whether the returned value is a
+        /// _prepareHandle or something else.
         /// </summary>
         // @TODO: Make auto-property
         private bool _inPrepare = false;
