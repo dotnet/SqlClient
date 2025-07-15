@@ -9,16 +9,28 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <summary>
         /// Azure Key Vault Domain Name
         /// </summary>
-        internal static readonly string[] AzureKeyVaultPublicDomainNames = new string[] {
-            @"vault.azure.net", // default
-            @"vault.azure.cn", // Azure China
-            @"vault.usgovcloudapi.net", // US Government
-            @"vault.microsoftazure.de", // Azure Germany
-            @"managedhsm.azure.net", // public HSM vault
-            @"managedhsm.azure.cn", // Azure China HSM vault
-            @"managedhsm.usgovcloudapi.net", // US Government HSM vault
-            @"managedhsm.microsoftazure.de" // Azure Germany HSM vault
-        };
+        internal static readonly string[] AzureKeyVaultPublicDomainNames =
+        [
+            // Azure Key Vaults
+            @"vault.azure.net",                 // Default
+            @"vault.azure.cn",                  // China
+            @"vault.usgovcloudapi.net",         // US Government
+            @"vault.microsoftazure.de",         // Azure Germany
+            @"vault.cloudapi.microsoft.scloud", // USSec
+            @"vault.cloudapi.eaglex.ic.gov",    // USNat
+            @"vault.sovcloud-api.fr",           // France (Bleu)
+            @"vault.sovcloud-api.de",           // Germany (Delos)
+
+            // Managed High Security Modules (HSM) Vaults
+            @"managedhsm.azure.net",
+            @"managedhsm.azure.cn",
+            @"managedhsm.usgovcloudapi.net",
+            @"managedhsm.microsoftazure.de",
+            @"managedhsm.cloudapi.microsoft.scloud",
+            @"managedhsm.cloudapi.eaglex.ic.gov",
+            @"managedhsm.sovcloud-api.fr",
+            @"managedhsm.sovcloud-api.de",
+        ];
 
         /// <summary>
         /// Always Encrypted Parameter names for exec handling
