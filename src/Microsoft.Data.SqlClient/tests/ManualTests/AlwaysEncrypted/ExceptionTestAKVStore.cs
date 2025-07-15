@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void EmptyColumnEncryptionKey()
         {
             Exception ex1 = Assert.Throws<ArgumentException>(() => _fixture.AkvStoreProvider.EncryptColumnEncryptionKey(_fixture.AkvKeyUrl, MasterKeyEncAlgo, new byte[] { }));
-            Assert.Matches($@"Internal error. Empty columnEncryptionKey specified.", ex1.Message);
+            Assert.Matches($@"Internal error. Empty 'columnEncryptionKey' specified.", ex1.Message);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void EmptyEncryptedColumnEncryptionKey()
         {
             Exception ex1 = Assert.Throws<ArgumentException>(() => _fixture.AkvStoreProvider.DecryptColumnEncryptionKey(_fixture.AkvKeyUrl, MasterKeyEncAlgo, new byte[] { }));
-            Assert.Matches($@"Internal error. Empty encryptedColumnEncryptionKey specified", ex1.Message);
+            Assert.Matches($@"Internal error. Empty 'encryptedColumnEncryptionKey' specified", ex1.Message);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
@@ -250,7 +250,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(
                     new SqlClientCustomTokenCredential(), trustedEndpoints);
             });
-            Assert.Matches("One or more of the elements in trustedEndpoints are null or empty or consist of only whitespace.", ex.Message);
+            Assert.Matches("One or more of the elements in 'trustedEndpoints' are null or empty or consist of only whitespace.", ex.Message);
         }
 
         [InlineData(null)]
@@ -264,7 +264,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(
                     new SqlClientCustomTokenCredential(), trustedEndpoint);
             });
-            Assert.Matches("One or more of the elements in trustedEndpoints are null or empty or consist of only whitespace.", ex.Message);
+            Assert.Matches("One or more of the elements in 'trustedEndpoints' are null or empty or consist of only whitespace.", ex.Message);
         }
     }
 }

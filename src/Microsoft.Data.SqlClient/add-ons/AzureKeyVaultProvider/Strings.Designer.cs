@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Fetching the key failed: &apos;{0}&apos;.
+        ///   Looks up a localized string similar to: Failed to fetch key from Azure Key Vault. Key: {0}.
         /// </summary>
         internal static string GetKeyFailed
         {
