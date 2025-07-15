@@ -5,6 +5,7 @@
 using System;
 using System.ComponentModel;
 using System.Data.Common;
+using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -14,6 +15,19 @@ namespace Microsoft.Data.SqlClient
     [ToolboxItem(true)]
     public sealed partial class SqlCommand : DbCommand, ICloneable
     {
-        
+        #region Fields
+
+        /// <summary>
+        /// Number of instances of SqlCommand that have been created. Used to generate ObjectId
+        /// </summary>
+        private static int _objectTypeCount = 0;
+
+        #endregion
+
+        #region Properties
+
+        internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
+
+        #endregion
     }
 }
