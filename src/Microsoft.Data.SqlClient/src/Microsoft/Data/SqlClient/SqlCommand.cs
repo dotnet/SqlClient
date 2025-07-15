@@ -6,7 +6,9 @@ using System;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Threading;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -139,6 +141,58 @@ namespace Microsoft.Data.SqlClient
         // @TODO: IsPrepared is part of IsDirty - this is confusing.
         private bool IsUserPrepared => IsPrepared && !_hiddenPrepare && !IsDirty;
 
+        #endregion
+        
+        #region Public Methods
+
+        #endregion
+        
+        #region Private Methods
+
+        private void PrepareInternal()
+        {
+            // NOTE: The state object isn't actually needed for this, but it is still here for
+            // back-compat (since it does a bunch of checks)
+            GetStateObject();
+
+            // Loop through parameters ensuring that we do not have unspecified types, sizes,
+            // scales, or precisions
+            if (_parameters is not null)
+            {
+                int count = _parameters.Count;
+                for (int i = 0; i < count; ++i)
+                {
+                    _parameters[i].Prepare(this);
+                }
+            }
+            
+            if (IsDirty)
+            {
+                Debug.Assert(_cachedMetaData is null || !_dirty, "dirty query should not have cached metadata!");
+
+                // Someone changed the command text or the parameter schema so we must unprepare the command
+                this.Unprepare();
+                IsDirty = false;
+            }
+            
+            Debug.Assert(_execType is not EXECTYPE.PREPARED, "Invalid attempt to Prepare already Prepared command!");
+            Debug.Assert(_activeConnection is not null, "must have an open connection to Prepare");
+            Debug.Assert(_stateObj is not null, "TdsParserStateObject should not be null");
+            Debug.Assert(_stateObj.Parser is not null, "TdsParser class should not be null in Command.Execute!");
+            Debug.Assert(_stateObj.Parser == _activeConnection.Parser, "stateobject parser not same as connection parser");
+            Debug.Assert(!_inPrepare, "Already in Prepare cycle, this.inPrepare should be false!");
+
+            // Remember that the user wants to do a prepare but don't actually do an rpc
+            _execType = EXECTYPE.PREPAREPENDING;
+            
+            // Note the current close count of the connection - this will tell us if the connection has been
+            // closed between calls to Prepare and Execute
+            _preparedConnectionCloseCount = _activeConnection.CloseCount;
+            _preparedConnectionReconnectCount = _activeConnection.ReconnectCount;
+
+            Statistics?.SafeIncrement(ref Statistics._prepares);
+        }
+        
         #endregion
     }
 }
