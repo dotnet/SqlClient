@@ -343,8 +343,6 @@ namespace Microsoft.Data.SqlClient
 
         private StatementCompletedEventHandler _statementCompletedEventHandler;
 
-        private TdsParserStateObject _stateObj; // this is the TDS session we're using.
-
         // Volatile bool used to synchronize with cancel thread the state change of an executing
         // command going from pre-processing to obtaining a stateObject.  The cancel synchronization
         // we require in the command is only from entering an Execute* API to obtaining a
@@ -6548,14 +6546,6 @@ namespace Microsoft.Data.SqlClient
             if (stateObj != null)
             {
                 stateObj.OnConnectionClosed();
-            }
-        }
-
-        internal TdsParserStateObject StateObject
-        {
-            get
-            {
-                return _stateObj;
             }
         }
 
