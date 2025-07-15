@@ -1450,12 +1450,12 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.ProcessSNIError|ERR> SNIContext must not be None = {0}, _fMARS = {1}, TDS Parser State = {2}", stateObj.DebugOnlyCopyOfSniContext, _fMARS, _state);
 
 #endif
-                SNIErrorDetails details = GetSniErrorDetails();
+                TdsParserStateObject.SniErrorDetails details = GetSniErrorDetails();
 
-                if (details.sniErrorNumber != 0)
+                if (details.SniErrorNumber != 0)
                 {
                     // handle special SNI error codes that are converted into exception which is not a SqlException.
-                    switch (details.sniErrorNumber)
+                    switch (details.SniErrorNumber)
                     {
                         case SniErrors.MultiSubnetFailoverWithMoreThan64IPs:
                             // Connecting with the MultiSubnetFailover connection option to a SQL Server instance configured with more than 64 IP addresses is not supported.
@@ -1476,8 +1476,8 @@ namespace Microsoft.Data.SqlClient
                 }
                 // PInvoke code automatically sets the length of the string for us
                 // So no need to look for \0
-                string errorMessage = details.errorMessage;
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("< sc.TdsParser.ProcessSNIError |ERR|ADV > Error message Detail: {0}", details.errorMessage);
+                string errorMessage = details.ErrorMessage;
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("< sc.TdsParser.ProcessSNIError |ERR|ADV > Error message Detail: {0}", details.ErrorMessage);
 
                 /*  Format SNI errors and add Context Information
                  *
@@ -1494,23 +1494,23 @@ namespace Microsoft.Data.SqlClient
 
                 if (TdsParserStateObjectFactory.UseManagedSNI)
                 {
-                    Debug.Assert(!string.IsNullOrEmpty(details.errorMessage) || details.sniErrorNumber != 0, "Empty error message received from SNI");
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Empty error message received from SNI. Error Message = {0}, SNI Error Number ={1}", details.errorMessage, details.sniErrorNumber);
+                    Debug.Assert(!string.IsNullOrEmpty(details.ErrorMessage) || details.SniErrorNumber != 0, "Empty error message received from SNI");
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Empty error message received from SNI. Error Message = {0}, SNI Error Number ={1}", details.ErrorMessage, details.SniErrorNumber);
                 }
                 else
                 {
-                    Debug.Assert(!string.IsNullOrEmpty(details.errorMessage), "Empty error message received from SNI");
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Empty error message received from SNI. Error Message = {0}", details.errorMessage);
+                    Debug.Assert(!string.IsNullOrEmpty(details.ErrorMessage), "Empty error message received from SNI");
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Empty error message received from SNI. Error Message = {0}", details.ErrorMessage);
                 }
 
                 string sqlContextInfo = StringsHelper.GetResourceString(stateObj.SniContext.ToString());
-                string providerRid = string.Format("SNI_PN{0}", details.provider);
+                string providerRid = string.Format("SNI_PN{0}", details.Provider);
                 string providerName = StringsHelper.GetResourceString(providerRid);
                 Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
                 int win32ErrorCode = details.NativeError;
 
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Native Error Code = {0}", win32ErrorCode);
-                if (details.sniErrorNumber == 0)
+                if (details.SniErrorNumber == 0)
                 {
                     // Provider error. The message from provider is preceeded with non-localizable info from SNI
                     // strip provider info from SNI
@@ -1544,7 +1544,7 @@ namespace Microsoft.Data.SqlClient
                     if (TdsParserStateObjectFactory.UseManagedSNI)
                     {
                         // SNI error. Append additional error message info if available and hasn't been included.
-                        string sniLookupMessage = SQL.GetSNIErrorMessage(details.sniErrorNumber);
+                        string sniLookupMessage = SQL.GetSNIErrorMessage(details.SniErrorNumber);
                         errorMessage = (string.IsNullOrEmpty(errorMessage) || errorMessage.Contains(sniLookupMessage))
                                         ? sniLookupMessage
                                         : (sniLookupMessage + ": " + errorMessage);
@@ -1552,10 +1552,10 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         // SNI error. Replace the entire message.
-                        errorMessage = SQL.GetSNIErrorMessage(details.sniErrorNumber);
+                        errorMessage = SQL.GetSNIErrorMessage(details.SniErrorNumber);
 
                         // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
-                        if (details.sniErrorNumber == SniErrors.LocalDBErrorCode)
+                        if (details.SniErrorNumber == SniErrors.LocalDBErrorCode)
                         {
                             errorMessage += LocalDbApi.GetLocalDbMessage(details.NativeError);
                             win32ErrorCode = 0;
@@ -1564,7 +1564,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
                 errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})",
-                    sqlContextInfo, providerName, (int)details.sniErrorNumber, errorMessage);
+                    sqlContextInfo, providerName, (int)details.SniErrorNumber, errorMessage);
 
                 SqlClientEventSource.Log.TryAdvancedTraceErrorEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Error Message. Native Error = {0}, Line Number ={1}, Function ={2}, Exception ={3}, Server = {4}",
                     details.NativeError, (int)details.LineNumber, details.Function, details.Exception, _server);

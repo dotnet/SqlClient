@@ -1589,7 +1589,7 @@ namespace Microsoft.Data.SqlClient
             string providerRid = string.Format("SNI_PN{0}", (int)details.provider);
             string providerName = StringsHelper.GetString(providerRid);
             Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
-            int win32ErrorCode = details.NativeError;
+            int win32ErrorCode = details.nativeError;
 
             if (details.sniError == 0)
             {
@@ -1627,15 +1627,15 @@ namespace Microsoft.Data.SqlClient
                 // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
                 if (details.sniError == SniErrors.LocalDBErrorCode)
                 {
-                    errorMessage += LocalDbApi.GetLocalDbMessage(details.NativeError);
+                    errorMessage += LocalDbApi.GetLocalDbMessage(details.nativeError);
                     win32ErrorCode = 0;
                 }
             }
             errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})",
                 sqlContextInfo, providerName, (int)details.sniError, errorMessage);
 
-            return new SqlError(details.NativeError, 0x00, TdsEnums.FATAL_ERROR_CLASS,
-                                _server, errorMessage, details.Function, (int)details.LineNumber, win32ErrorCode);
+            return new SqlError(details.nativeError, 0x00, TdsEnums.FATAL_ERROR_CLASS,
+                                _server, errorMessage, details.function, (int)details.lineNumber, win32ErrorCode);
         }
 
         internal void CheckResetConnection(TdsParserStateObject stateObj)
