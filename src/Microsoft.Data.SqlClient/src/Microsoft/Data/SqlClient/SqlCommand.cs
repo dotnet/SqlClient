@@ -27,7 +27,13 @@ namespace Microsoft.Data.SqlClient
         /// By default, assume the user is not sharing a connection so the command has not been prepared.
         /// </summary>
         private EXECTYPE _execType = EXECTYPE.UNPREPARED;
-
+        
+        /// <summary>
+        /// Whether the current instance is in the middle of preparation.
+        /// </summary>
+        // @TODO: Make auto-property
+        private bool _inPrepare = false;
+        
         #endregion
 
         #region Enums
@@ -54,6 +60,8 @@ namespace Microsoft.Data.SqlClient
         #endregion
         
         #region Properties
+        
+        internal bool InPrepare => _inPrepare;
         
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
 

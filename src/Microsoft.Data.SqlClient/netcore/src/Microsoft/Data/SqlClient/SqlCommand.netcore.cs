@@ -170,7 +170,6 @@ namespace Microsoft.Data.SqlClient
         // _prepareHandle - the handle of a prepared command. Apparently there can be multiple prepared commands at a time - a feature that we do not support yet.
 
         private static readonly object s_cachedInvalidPrepareHandle = (object)-1;
-        private bool _inPrepare = false;
         private object _prepareHandle = s_cachedInvalidPrepareHandle; // this is an int which is used in the object typed SqlParameter.Value field, avoid repeated boxing by storing in a box
         private bool _hiddenPrepare = false;
         private int _preparedConnectionCloseCount = -1;
@@ -209,13 +208,6 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
         internal static int DebugForceAsyncWriteDelay { get; set; }
 #endif
-        internal bool InPrepare
-        {
-            get
-            {
-                return _inPrepare;
-            }
-        }
 
         /// <summary>
         /// Return if column encryption setting is enabled.
