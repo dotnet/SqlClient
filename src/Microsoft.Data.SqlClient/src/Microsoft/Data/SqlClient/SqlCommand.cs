@@ -4,6 +4,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Data;
 using System.Data.Common;
 using System.Threading;
 
@@ -22,6 +23,21 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private static int _objectTypeCount = 0;
 
+        /// <summary>
+        /// Connection that will be used to process the current instance.
+        /// </summary>
+        private SqlConnection _activeConnection;
+
+        /// <summary>
+        /// Text to execute when executing the command.
+        /// </summary>
+        private string _commandText;
+
+        /// <summary>
+        /// Type of the command to execute.
+        /// </summary>
+        private CommandType _commandType;
+        
         /// <summary>
         /// Current state of preparation of the command.
         /// By default, assume the user is not sharing a connection so the command has not been prepared.
