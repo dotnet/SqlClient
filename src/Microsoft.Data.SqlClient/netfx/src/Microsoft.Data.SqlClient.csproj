@@ -870,6 +870,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\BufferWriterExtensions.netfx.cs">
       <Link>Microsoft\Data\SqlClient\Utilities\BufferWriterExtensions.netfx.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\ConstrainedExecutionHelper.netfx.cs">
+      <Link>Microsoft\Data\SqlClient\Utilities\ConstrainedExecutionHelper.netfx.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\ObjectPool.cs">
       <Link>Microsoft\Data\SqlClient\Utilities\ObjectPool.cs</Link>
     </Compile>
