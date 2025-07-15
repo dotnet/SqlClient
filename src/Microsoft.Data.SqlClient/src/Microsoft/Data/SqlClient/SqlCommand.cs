@@ -29,6 +29,13 @@ namespace Microsoft.Data.SqlClient
         private EXECTYPE _execType = EXECTYPE.UNPREPARED;
 
         /// <summary>
+        /// True if the user changes the command text or number of parameters after the command has
+        /// already prepared.
+        /// </summary>
+        // @TODO: Consider renaming "_IsUserDirty"
+        private bool _dirty = false;
+        
+        /// <summary>
         /// On 8.0 and above the Prepared state cannot be left. Once a command is prepared it will
         /// always be prepared. A change in parameters, command text, etc (IsDirty) automatically
         /// causes a hidden prepare.
@@ -72,7 +79,39 @@ namespace Microsoft.Data.SqlClient
         
         internal bool InPrepare => _inPrepare;
         
+        // @TODO: Rename to match conventions.
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
+
+        private bool IsDirty
+        {
+            get
+            {
+                // @TODO: Factor out closeCount/reconnectCount checks to properties and clean up.
+                // To wit: closeCount checks whether the connection has been closed after preparation,
+                //    reconnectCount, the same only with reconnections.
+                
+                // only dirty if prepared
+                var activeConnection = _activeConnection;
+                return IsPrepared &&
+                       (_dirty ||
+                        (_parameters != null && _parameters.IsDirty) ||
+                        (activeConnection != null && (activeConnection.CloseCount != _preparedConnectionCloseCount || activeConnection.ReconnectCount != _preparedConnectionReconnectCount)));
+            }
+            set
+            {
+                // @TODO: Consider reworking to do this in a helper method, since setting, sets to the
+                // _dirty, but that's not the only consideration when determining dirtiness.
+                
+                // only mark the command as dirty if it is already prepared
+                // but always clear the value if it we are clearing the dirty flag
+                _dirty = value ? IsPrepared : false;
+                if (_parameters != null)
+                {
+                    _parameters.IsDirty = _dirty;
+                }
+                _cachedMetaData = null;
+            }
+        }
 
         #endregion
     }
