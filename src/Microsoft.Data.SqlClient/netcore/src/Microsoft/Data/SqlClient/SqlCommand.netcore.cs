@@ -107,8 +107,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private string _commandText;
-        private CommandType _commandType;
         private int? _commandTimeout;
         private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
         private bool _designTimeInvisible;
@@ -170,7 +168,6 @@ namespace Microsoft.Data.SqlClient
         private int _preparedConnectionReconnectCount = -1;
 
         private SqlParameterCollection _parameters;
-        private SqlConnection _activeConnection;
         private _SqlRPC[] _rpcArrayOf1 = null;                // Used for RPC executes
         private _SqlRPC _rpcForEncryption = null;                // Used for sp_describe_parameter_encryption RPC executes
 
