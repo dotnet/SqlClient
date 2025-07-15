@@ -411,6 +411,10 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 new DbConnectionOptions("", null),
                 out recycledConnection
             );
+
+            // Gives time for the recycled connection to be queued before the failed request is initiated.
+            await Task.Delay(1000);
+
             DbConnectionInternal failedConnection = null;
             var exceeded2 = pool.TryGetConnection(
                 new SqlConnection("Timeout=1"),
