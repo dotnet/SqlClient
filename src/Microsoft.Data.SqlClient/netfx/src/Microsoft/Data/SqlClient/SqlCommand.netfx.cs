@@ -32,9 +32,7 @@ namespace Microsoft.Data.SqlClient
     // TODO: Add designer attribute when Microsoft.VSDesigner.Data.VS.SqlCommandDesigner uses Microsoft.Data.SqlClient
     public sealed partial class SqlCommand : DbCommand, ICloneable
     {
-        private static int _objectTypeCount; // EventSource Counter
         private const int MaxRPCNameLength = 1046;
-        internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount);
 
         internal sealed class ExecuteReaderAsyncCallContext : AAsyncCallContext<SqlCommand, SqlDataReader, CancellationTokenRegistration>
         {
