@@ -167,7 +167,6 @@ namespace Microsoft.Data.SqlClient
 
         private SqlParameterCollection _parameters;
         private SqlConnection _activeConnection;
-        private bool _dirty = false;               // true if the user changes the commandtext or number of parameters after the command is already prepared
         private _SqlRPC[] _rpcArrayOf1 = null;                // Used for RPC executes
         private _SqlRPC _rpcForEncryption = null;                // Used for sp_describe_parameter_encryption RPC executes
 
@@ -6855,30 +6854,6 @@ namespace Microsoft.Data.SqlClient
         private bool IsUserPrepared
         {
             get { return IsPrepared && !_hiddenPrepare && !IsDirty; }
-        }
-
-        internal bool IsDirty
-        {
-            get
-            {
-                // only dirty if prepared
-                var activeConnection = _activeConnection;
-                return (IsPrepared &&
-                    (_dirty ||
-                    ((_parameters != null) && (_parameters.IsDirty)) ||
-                    ((activeConnection != null) && ((activeConnection.CloseCount != _preparedConnectionCloseCount) || (activeConnection.ReconnectCount != _preparedConnectionReconnectCount)))));
-            }
-            set
-            {
-                // only mark the command as dirty if it is already prepared
-                // but always clear the value if it we are clearing the dirty flag
-                _dirty = value ? IsPrepared : false;
-                if (_parameters != null)
-                {
-                    _parameters.IsDirty = _dirty;
-                }
-                _cachedMetaData = null;
-            }
         }
 
         /// <summary>
