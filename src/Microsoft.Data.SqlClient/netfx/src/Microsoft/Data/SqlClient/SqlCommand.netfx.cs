@@ -158,20 +158,10 @@ namespace Microsoft.Data.SqlClient
 #endif
         internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
 
-        // devnotes
-        //
-        // _hiddenPrepare
-        // On 8.0 and above the Prepared state cannot be left. Once a command is prepared it will always be prepared.
-        // A change in parameters, commandtext etc (IsDirty) automatically causes a hidden prepare
-        //
-        // _inPrepare will be set immediately before the actual prepare is done.
-        // The OnReturnValue function will test this flag to determine whether the returned value is a _prepareHandle or something else.
-        //
         // _prepareHandle - the handle of a prepared command. Apparently there can be multiple prepared commands at a time - a feature that we do not support yet.
 
         private static readonly object s_cachedInvalidPrepareHandle = (object)-1;
         private object _prepareHandle = s_cachedInvalidPrepareHandle; // this is an int which is used in the object typed SqlParameter.Value field, avoid repeated boxing by storing in a box
-        private bool _hiddenPrepare = false;
         private int _preparedConnectionCloseCount = -1;
         private int _preparedConnectionReconnectCount = -1;
 
