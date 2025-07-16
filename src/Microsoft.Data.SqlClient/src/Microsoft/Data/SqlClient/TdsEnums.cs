@@ -604,7 +604,7 @@ namespace Microsoft.Data.SqlClient
         public const uint SNI_UNINITIALIZED = unchecked((uint)-1);
         public const uint SNI_SUCCESS = 0;        // The operation completed successfully.
         public const uint SNI_ERROR = 1;          // Error
-        public const uint SNI_WAIT_TIMEOUT = 258;      // The wait operation timed out.
+        public const int SNI_WAIT_TIMEOUT = 258;      // The wait operation timed out.
         public const uint SNI_SUCCESS_IO_PENDING = 997;      // Overlapped I/O operation is in progress.
 
         // Windows Sockets Error Codes

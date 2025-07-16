@@ -9678,6 +9678,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to: The connection attempt timed out.
+        /// </summary>
+        internal static string SQL_ConnectTimeout {
+            get {
+                return ResourceManager.GetString("SQL_ConnectTimeout", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Timeout expired.  The connection has been broken as a result..
         /// </summary>
         internal static string SQL_FatalTimeout {
