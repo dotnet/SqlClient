@@ -236,9 +236,8 @@ namespace Microsoft.Data.SqlClient
             if (IsDirty)
             {
                 Debug.Assert(_cachedMetaData == null || !_dirty, "dirty query should not have cached metadata!"); // can have cached metadata if dirty because of parameters
-                //
-                // someone changed the command text or the parameter schema so we must unprepare the command
-                //
+
+                // Someone changed the command text or the parameter schema so we must unprepare the command
                 Unprepare();
                 IsDirty = false;
             }
@@ -259,6 +258,35 @@ namespace Microsoft.Data.SqlClient
             _preparedConnectionReconnectCount = _activeConnection.ReconnectCount;
 
             Statistics?.SafeIncrement(ref Statistics._prepares);
+        }
+
+        private void Unprepare()
+        {
+            Debug.Assert(IsPrepared, "Invalid attempt to Unprepare a non-prepared command!");
+            Debug.Assert(_activeConnection is not null, "must have an open connection to UnPrepare");
+            Debug.Assert(!_inPrepare, "_inPrepare should be false!");
+
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlCommand.UnPrepare | Info | " +
+                $"Object Id {ObjectID}, " +
+                $"Current Prepared Handle {_prepareHandle}");
+
+            _execType = EXECTYPE.PREPAREPENDING;
+
+            // Don't zero out the handle because we'll pass it in to sp_prepexec on the next prepare
+            // Unless the close count isn't the same as when we last prepared
+            if (_activeConnection.CloseCount != _preparedConnectionCloseCount ||
+                _activeConnection.ReconnectCount != _preparedConnectionReconnectCount)
+            {
+                // Reset our handle
+                _prepareHandle = s_cachedInvalidPrepareHandle;
+            }
+
+            _cachedMetaData = null;
+
+            SqlClientEventSource.Log.TryTraceEvent(
+                $"SqlCommand.UnPrepare | Info | " +
+                $"Object Id {ObjectID}, Command unprepared.");
         }
 
         #endregion

@@ -858,28 +858,6 @@ namespace Microsoft.Data.SqlClient
             this.IsDirty = true;
         }
 
-        // SqlInternalConnectionTds needs to be able to unprepare a statement
-        internal void Unprepare()
-        {
-            Debug.Assert(true == IsPrepared, "Invalid attempt to Unprepare a non-prepared command!");
-            Debug.Assert(_activeConnection != null, "must have an open connection to UnPrepare");
-            Debug.Assert(false == _inPrepare, "_inPrepare should be false!");
-            _execType = EXECTYPE.PREPAREPENDING;
-
-            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.UnPrepare | Info | Object Id {0}, Current Prepared Handle {1}", ObjectID, _prepareHandle);
-
-            // Don't zero out the handle because we'll pass it in to sp_prepexec on the next prepare
-            // Unless the close count isn't the same as when we last prepared
-            if ((_activeConnection.CloseCount != _preparedConnectionCloseCount) || (_activeConnection.ReconnectCount != _preparedConnectionReconnectCount))
-            {
-                // reset our handle
-                _prepareHandle = -1;
-            }
-
-            _cachedMetaData = null;
-            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.UnPrepare | Info | Object Id {0}, Command unprepared.", ObjectID);
-        }
-
         // Cancel is supposed to be multi-thread safe.
         // It doesn't make sense to verify the connection exists or that it is open during cancel
         // because immediately after checkin the connection can be closed or removed via another thread.
