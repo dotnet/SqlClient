@@ -11,8 +11,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
     /// </summary>
     public interface ITDSServer
     {
-        public IPEndPoint Endpoint { get; }
-
         /// <summary>
         /// Create a new TDS server session
         /// </summary>

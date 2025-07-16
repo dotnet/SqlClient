@@ -3,10 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Data.Common;
-using System.Net;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.EndPoint;
 using Microsoft.SqlServer.TDS.EnvChange;
@@ -19,48 +15,26 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// <summary>
     /// TDS Server that authenticates clients according to the requested parameters
     /// </summary>
-    public class TransientFaultTDSServer : GenericTDSServer, IDisposable
+    public class TransientFaultTDSServer : GenericTDSServer<TransientFaultTDSServerArguments>, IDisposable
     {
         private static int RequestCounter = 0;
 
-        public int Port { get; set; }
-        public override IPEndPoint Endpoint => _endpoint.ServerEndPoint;
-
-
         public void SetErrorBehavior(bool isEnabledTransientFault, uint errorNumber, string message)
         {
-            if (Arguments is TransientFaultTDSServerArguments ServerArguments)
-            {
-                ServerArguments.IsEnabledTransientError = isEnabledTransientFault;
-                ServerArguments.Number = errorNumber;
-                ServerArguments.Message = message;
-            }
-        }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        public TransientFaultTDSServer() => new TransientFaultTDSServer(new TransientFaultTDSServerArguments());
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="arguments"></param>
-        public TransientFaultTDSServer(TransientFaultTDSServerArguments arguments) :
-            base(arguments)
-        { }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="engine"></param>
-        /// <param name="args"></param>
-        public TransientFaultTDSServer(QueryEngine engine, TransientFaultTDSServerArguments args) : base(args)
-        {
-            Engine = engine;
+            Arguments.IsEnabledTransientError = isEnabledTransientFault;
+            Arguments.Number = errorNumber;
+            Arguments.Message = message;
         }
 
         private TDSServerEndPoint _endpoint = null;
+
+        public TransientFaultTDSServer(TransientFaultTDSServerArguments arguments) : base(arguments)
+        {
+        }
+
+        public TransientFaultTDSServer(TransientFaultTDSServerArguments arguments, QueryEngine queryEngine) : base(arguments, queryEngine)
+        {
+        }
 
         private static string GetErrorMessage(uint errorNumber)
         {
@@ -137,82 +111,44 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Delegate to the base class
             TDSMessageCollection responseMessageCollection = base.OnAuthenticationCompleted(session);
 
-            // Check if arguments are of routing server
-            if (Arguments is TransientFaultTDSServerArguments)
+            if (Arguments.FailoverPartner == "")
             {
-                // Cast to transient fault TDS server arguments
-                TransientFaultTDSServerArguments serverArguments = Arguments as TransientFaultTDSServerArguments;
+                return responseMessageCollection;
+            } 
 
-                if (serverArguments.FailoverPartner == "")
-                {
-                    return responseMessageCollection;
-                } 
+            var envChangeToken = new TDSEnvChangeToken(TDSEnvChangeTokenType.RealTimeLogShipping, Arguments.FailoverPartner);
 
-                var envChangeToken = new TDSEnvChangeToken(TDSEnvChangeTokenType.RealTimeLogShipping, serverArguments.FailoverPartner);
+            // Log response
+            TDSUtilities.Log(Arguments.Log, "Response", envChangeToken);
 
-                // Log response
-                TDSUtilities.Log(Arguments.Log, "Response", envChangeToken);
+            // Get the first message
+            TDSMessage targetMessage = responseMessageCollection[0];
 
-                // Get the first message
-                TDSMessage targetMessage = responseMessageCollection[0];
+            // Index at which to insert the routing token
+            int insertIndex = targetMessage.Count - 1;
 
-                // Index at which to insert the routing token
-                int insertIndex = targetMessage.Count - 1;
+            // VSTS# 1021027 - Read-Only Routing yields TDS protocol error
+            // Resolution: Send TDS FeatureExtAct token before TDS ENVCHANGE token with routing information
+            TDSPacketToken featureExtAckToken = targetMessage.Find(t => t is TDSFeatureExtAckToken);
 
-                // VSTS# 1021027 - Read-Only Routing yields TDS protocol error
-                // Resolution: Send TDS FeatureExtAct token before TDS ENVCHANGE token with routing information
-                TDSPacketToken featureExtAckToken = targetMessage.Find(t => t is TDSFeatureExtAckToken);
-
-                // Check if found
-                if (featureExtAckToken != null)
-                {
-                    // Find token position
-                    insertIndex = targetMessage.IndexOf(featureExtAckToken);
-                }
-
-                // Insert right before the done token
-                targetMessage.Insert(insertIndex, envChangeToken);
-                
+            // Check if found
+            if (featureExtAckToken != null)
+            {
+                // Find token position
+                insertIndex = targetMessage.IndexOf(featureExtAckToken);
             }
+
+            // Insert right before the done token
+            targetMessage.Insert(insertIndex, envChangeToken);
 
             return responseMessageCollection;
         }
 
-        public static TransientFaultTDSServer StartTestServer(bool isEnabledTransientFault, bool enableLog, uint errorNumber, string failoverPartner = "", [CallerMemberName] string methodName = "")
-         => StartServerWithQueryEngine(null, isEnabledTransientFault, enableLog, errorNumber, failoverPartner, methodName);
 
-        public static TransientFaultTDSServer StartServerWithQueryEngine(QueryEngine engine, bool isEnabledTransientFault, bool enableLog, uint errorNumber, string failoverPartner = "", [CallerMemberName] string methodName = "")
-        {
-            TransientFaultTDSServerArguments args = new TransientFaultTDSServerArguments()
-            {
-                Log = enableLog ? Console.Out : null,
-                IsEnabledTransientError = isEnabledTransientFault,
-                Number = errorNumber,
-                Message = GetErrorMessage(errorNumber),
-                FailoverPartner = failoverPartner
-            };
 
-            TransientFaultTDSServer server = engine == null ? new TransientFaultTDSServer(args) : new TransientFaultTDSServer(engine, args);
-            server._endpoint = new TDSServerEndPoint(server) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
-            server._endpoint.EndpointName = methodName;
-
-            // The server EventLog should be enabled as it logs the exceptions.
-            server._endpoint.EventLog = enableLog ? Console.Out : null;
-            server._endpoint.Start();
-
-            server.Port = server._endpoint.ServerEndPoint.Port;
-            return server;
-        }
-
-        public void Dispose() => Dispose(true);
-
-        private void Dispose(bool isDisposing)
-        {
-            if (isDisposing)
-            {
-                _endpoint?.Stop();
-                RequestCounter = 0;
-            }
+        public override void Dispose() {
+            base.Dispose();
+            RequestCounter = 0;
         }
     }
 }

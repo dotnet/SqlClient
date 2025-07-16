@@ -5,6 +5,7 @@
 using System;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Threading;
 using Microsoft.SqlServer.TDS.Authentication;
@@ -23,10 +24,27 @@ using Microsoft.SqlServer.TDS.SSPI;
 
 namespace Microsoft.SqlServer.TDS.Servers
 {
+    public class GenericTDSServer : GenericTDSServer<TDSServerArguments>
+    {
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        public GenericTDSServer() : this(new TDSServerArguments())
+        {
+        }
+        /// <summary>
+        /// Constructor with arguments
+        /// </summary>
+        public GenericTDSServer(TDSServerArguments arguments) : base(arguments)
+        {
+        }
+    }
+
     /// <summary>
     /// Generic TDS server without specialization
     /// </summary>
-    public abstract class GenericTDSServer : ITDSServer
+    public class GenericTDSServer<T> : ITDSServer, IDisposable
+        where T : TDSServerArguments
     {
         /// <summary>
         /// Delegate to be called when a LOGIN7 request has been received and is
@@ -75,20 +93,19 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         private int _preLoginCount = 0;
 
+        private TDSServerEndPoint _endpoint;
+
+        public IPEndPoint EndPoint => _endpoint.ServerEndPoint;
+
         /// <summary>
         /// Server configuration
         /// </summary>
-        protected TDSServerArguments Arguments { get; set; }
+        protected T Arguments { get; set; }
 
         /// <summary>
         /// Query engine instance
         /// </summary>
         protected QueryEngine Engine { get; set; }
-
-        /// <inheritdoc />
-        public abstract IPEndPoint Endpoint { get;}
-
-        public string ConnectionString { get; protected set; }
 
         /// <summary>
         /// Counts unique pre-login requests to the server.
@@ -96,17 +113,9 @@ namespace Microsoft.SqlServer.TDS.Servers
         public int PreLoginCount => _preLoginCount;
 
         /// <summary>
-        /// Default constructor
-        /// </summary>
-        public GenericTDSServer() :
-            this(new TDSServerArguments())
-        {
-        }
-
-        /// <summary>
         /// Initialization constructor
         /// </summary>
-        public GenericTDSServer(TDSServerArguments arguments) :
+        public GenericTDSServer(T arguments) :
             this(arguments, new QueryEngine(arguments))
         {
         }
@@ -114,7 +123,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public GenericTDSServer(TDSServerArguments arguments, QueryEngine queryEngine)
+        public GenericTDSServer(T arguments, QueryEngine queryEngine)
         {
             // Save arguments
             Arguments = arguments;
@@ -124,6 +133,16 @@ namespace Microsoft.SqlServer.TDS.Servers
 
             // Configure log for the query engine
             Engine.Log = Arguments.Log;
+        }
+
+        public void Start(bool enableLog = false, [CallerMemberName] string methodName = "")
+        {
+            _endpoint = new TDSServerEndPoint(this) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
+            _endpoint.EndpointName = methodName;
+
+            // The server EventLog should be enabled as it logs the exceptions.
+            _endpoint.EventLog = enableLog ? Console.Out : null;
+            _endpoint.Start();
         }
 
         /// <summary>
@@ -898,5 +917,7 @@ namespace Microsoft.SqlServer.TDS.Servers
 
             return left.SequenceEqual<byte>(right);
         }
+
+        public virtual void Dispose() => _endpoint?.Stop();
     }
 }

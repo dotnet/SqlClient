@@ -64,8 +64,6 @@
     <Compile Include="SqlConnectionStringBuilderTest.cs" />
     <Compile Include="SerializeSqlTypesTest.cs" />
     <Compile Include="TdsParserStateObject.TestHarness.cs" />
-    <Compile Include="TestTdsServer.cs" />
-    <Compile Include="TestRoutingTdsServer.cs" />
     <Compile Include="SqlHelperTest.cs" />
     <Compile Include="..\..\src\Microsoft\Data\Common\MultipartIdentifier.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserStateObject.Multiplexer.cs" />
@@ -143,8 +141,5 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>xunit.runner.json</TargetPath>
     </ContentWithTargetPath>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="TestTdsServer\" />
   </ItemGroup>
 </Project>

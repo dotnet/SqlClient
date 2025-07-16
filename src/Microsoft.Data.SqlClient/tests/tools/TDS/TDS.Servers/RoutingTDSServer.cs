@@ -16,7 +16,7 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// <summary>
     /// TDS Server that routes clients to the configured destination
     /// </summary>
-    public abstract class RoutingTDSServer : GenericTDSServer
+    public class RoutingTDSServer : GenericTDSServer<RoutingTDSServerArguments>
     {
         /// <summary>
         /// Initialization constructor
