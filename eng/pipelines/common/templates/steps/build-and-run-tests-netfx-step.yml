@@ -55,7 +55,7 @@ steps:
   inputs:
     solution: build.proj
     msbuildArchitecture: x64
-    msbuildArguments: '-p:Configuration=${{parameters.configuration }} -t:BuildAKVNetFx  -p:ReferenceType=${{parameters.referenceType }}  '
+    msbuildArguments: '-p:Configuration=${{parameters.configuration }} -t:BuildAKVNetFx -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }}'
 
 - task: MSBuild@1
   displayName: 'MSBuild Build Tests for ${{parameters.TargetNetFxVersion }}'

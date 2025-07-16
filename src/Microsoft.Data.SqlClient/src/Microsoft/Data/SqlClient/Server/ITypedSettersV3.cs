@@ -21,58 +21,62 @@ namespace Microsoft.Data.SqlClient.Server
         //  the following pairs are the only setters/sqldbtypes that need this call:
         //      NVarChar/VarChar + SetString (needed only for non-global collation, i.e. SqlString)
         //      Money/SmallMoney + SetInt64
-        void SetVariantMetaData(SmiEventSink sink, int ordinal, SmiMetaData metaData);
+        void SetVariantMetaData(int ordinal, SmiMetaData metaData);
 
         // Set value to null
         //  valid for all types
-        void SetDBNull(SmiEventSink sink, int ordinal);
+        void SetDBNull(int ordinal);
 
         //  valid for SqlDbType.Bit
-        void SetBoolean(SmiEventSink sink, int ordinal, bool value);
+        void SetBoolean(int ordinal, bool value);
 
         //  valid for SqlDbType.TinyInt
-        void SetByte(SmiEventSink sink, int ordinal, byte value);
+        void SetByte(int ordinal, byte value);
 
         // Semantics for SetBytes are to modify existing value, not overwrite
         //  Use in combination with SetLength to ensure overwriting when necessary
         // valid for SqlDbTypes: Binary, VarBinary, Image, Udt, Xml
         //      (VarBinary assumed for variants)
-        int SetBytes(SmiEventSink sink, int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length);
-        void SetBytesLength(SmiEventSink sink, int ordinal, long length);
+        int SetBytes(int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length);
+        void SetBytesLength(int ordinal, long length);
 
         // Semantics for SetChars are to modify existing value, not overwrite
         //  Use in combination with SetLength to ensure overwriting when necessary
         // valid for character types: Char, VarChar, Text, NChar, NVarChar, NText
         //      (NVarChar and global clr collation assumed for variants)
-        int SetChars(SmiEventSink sink, int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length);
-        void SetCharsLength(SmiEventSink sink, int ordinal, long length);
+        int SetChars(int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length);
+        void SetCharsLength(int ordinal, long length);
 
         // valid for character types: Char, VarChar, Text, NChar, NVarChar, NText
-        void SetString(SmiEventSink sink, int ordinal, string value, int offset, int length);
+        void SetString(int ordinal, string value, int offset, int length);
 
         // valid for SqlDbType.SmallInt
-        void SetInt16(SmiEventSink sink, int ordinal, short value);
+        void SetInt16(int ordinal, short value);
 
         // valid for SqlDbType.Int
-        void SetInt32(SmiEventSink sink, int ordinal, int value);
+        void SetInt32(int ordinal, int value);
 
         // valid for SqlDbType.BigInt, SqlDbType.Money, SqlDbType.SmallMoney
-        void SetInt64(SmiEventSink sink, int ordinal, long value);
+        void SetInt64(int ordinal, long value);
 
         // valid for SqlDbType.Real
-        void SetSingle(SmiEventSink sink, int ordinal, float value);
+        void SetSingle(int ordinal, float value);
 
         // valid for SqlDbType.Float
-        void SetDouble(SmiEventSink sink, int ordinal, double value);
+        void SetDouble(int ordinal, double value);
 
         // valid for SqlDbType.Numeric (uses SqlDecimal since Decimal cannot hold full range)
-        void SetSqlDecimal(SmiEventSink sink, int ordinal, SqlDecimal value);
+        void SetSqlDecimal(int ordinal, SqlDecimal value);
 
         // valid for DateTime & SmallDateTime
-        void SetDateTime(SmiEventSink sink, int ordinal, DateTime value);
+        void SetDateTime(int ordinal, DateTime value);
 
         // valid for UniqueIdentifier
-        void SetGuid(SmiEventSink sink, int ordinal, Guid value);
+        void SetGuid(int ordinal, Guid value);
+        // valid for SqlDbType.Time
+        void SetTimeSpan(int ordinal, TimeSpan value);
+        // valid for DateTimeOffset
+        void SetDateTimeOffset(int ordinal, DateTimeOffset value);
     }
 }
 

@@ -236,7 +236,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static bool TryGetSystemColumnEncryptionKeyStoreProvider(string keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider)
         {
-            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider);
+            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider); 
         }
 
         /// <summary>
@@ -276,9 +276,9 @@ namespace Microsoft.Data.SqlClient
         {
             if (s_systemColumnEncryptionKeyStoreProviders.Count > 0)
             {
-                return new List<string>(s_systemColumnEncryptionKeyStoreProviders.Keys);
+                return [.. s_systemColumnEncryptionKeyStoreProviders.Keys];
             }
-            return new List<string>(0);
+            return [];
         }
 
         /// <summary>
@@ -291,13 +291,13 @@ namespace Microsoft.Data.SqlClient
             if (_customColumnEncryptionKeyStoreProviders is not null &&
                 _customColumnEncryptionKeyStoreProviders.Count > 0)
             {
-                return new List<string>(_customColumnEncryptionKeyStoreProviders.Keys);
+                return [.. _customColumnEncryptionKeyStoreProviders.Keys];
             }
             if (s_globalCustomColumnEncryptionKeyStoreProviders is not null)
             {
-                return new List<string>(s_globalCustomColumnEncryptionKeyStoreProviders.Keys);
+                return [.. s_globalCustomColumnEncryptionKeyStoreProviders.Keys];
             }
-            return new List<string>(0);
+            return [];
         }
 
         /// <summary>
@@ -325,7 +325,9 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.CanOnlyCallOnce();
                 }
 
-                // to prevent conflicts between CEK caches, global providers should not use their own CEK caches
+                // AKV provider registration supports multi-user scenarios, so it is not safe to cache the CEK in the global provider.
+                // The CEK cache is a global cache, and is shared across all connections.
+                // To prevent conflicts between CEK caches, global providers should not use their own CEK caches
                 foreach (SqlColumnEncryptionKeyStoreProvider provider in customProviders.Values)
                 {
                     provider.ColumnEncryptionKeyCacheTtl = new TimeSpan(0);
@@ -663,7 +665,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                return constr != null ? constr.ConnectTimeout : SqlConnectionString.DEFAULT.Connect_Timeout;
+                return constr != null ? constr.ConnectTimeout : DbConnectionStringDefaults.ConnectTimeout;
             }
         }
 
@@ -675,7 +677,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                return constr != null ? constr.CommandTimeout : SqlConnectionString.DEFAULT.Command_Timeout;
+                return constr != null ? constr.CommandTimeout : DbConnectionStringDefaults.CommandTimeout;
             }
         }
 
@@ -757,7 +759,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = constr != null ? constr.InitialCatalog : SqlConnectionString.DEFAULT.Initial_Catalog;
+                    result = constr != null ? constr.InitialCatalog : DbConnectionStringDefaults.InitialCatalog;
                 }
                 return result;
             }
@@ -830,7 +832,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = constr != null ? constr.DataSource : SqlConnectionString.DEFAULT.Data_Source;
+                    result = constr != null ? constr.DataSource : DbConnectionStringDefaults.DataSource;
                 }
                 return result;
             }
@@ -857,7 +859,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = constr != null ? constr.PacketSize : SqlConnectionString.DEFAULT.Packet_Size;
+                    result = constr != null ? constr.PacketSize : DbConnectionStringDefaults.PacketSize;
                 }
                 return result;
             }
@@ -2272,7 +2274,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDbFilename);
                 }
 
                 ChangePassword(connectionString, connectionOptions, null, newPassword, null);
@@ -2329,7 +2331,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDbFilename);
                 }
 
                 ChangePassword(connectionString, connectionOptions, credential, null, newSecurePassword);

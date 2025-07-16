@@ -92,8 +92,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //SQL Server EngineEdition
         private static string s_sqlServerEngineEdition;
 
-        // JSON Coloumn type
+        // JSON Column type
         public static readonly bool IsJsonSupported = false;
+
+        // VECTOR column type
+        public static readonly bool IsVectorSupported = false;
 
         // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
@@ -1089,6 +1092,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public readonly ref struct XEventScope // : IDisposable
         {
+            private const int MaxXEventsLatencyS = 5;
+
             private readonly SqlConnection _connection;
             private readonly bool _useDatabaseSession;
 
@@ -1123,6 +1128,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using (SqlCommand command = new SqlCommand(xEventQuery, _connection))
                 {
+                    Thread.Sleep(MaxXEventsLatencyS * 1000);
+
                     if (_connection.State == ConnectionState.Closed)
                     {
                         _connection.Open();
@@ -1143,9 +1150,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         {eventSpecification}
                         {targetSpecification}
                         WITH (
-                            MAX_MEMORY=4096 KB,
+                            MAX_MEMORY=16 MB,
                             EVENT_RETENTION_MODE=ALLOW_SINGLE_EVENT_LOSS,
-                            MAX_DISPATCH_LATENCY=30 SECONDS,
+                            MAX_DISPATCH_LATENCY={MaxXEventsLatencyS} SECONDS,
                             MAX_EVENT_SIZE=0 KB,
                             MEMORY_PARTITION_MODE=NONE,
                             TRACK_CAUSALITY=ON,

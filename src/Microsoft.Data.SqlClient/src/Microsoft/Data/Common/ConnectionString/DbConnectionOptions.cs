@@ -6,8 +6,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+
+#if NETFRAMEWORK
+using System.Runtime.Versioning;
+using System.Security;
+#endif
 
 namespace Microsoft.Data.Common.ConnectionString
 {
@@ -39,7 +45,7 @@ namespace Microsoft.Data.Common.ConnectionString
         internal Dictionary<string, string> Parsetable => _parsetable;
         public bool IsEmpty => _keyChain == null;
 
-        public DbConnectionOptions(string connectionString, Dictionary<string, string> synonyms)
+        public DbConnectionOptions(string connectionString, IReadOnlyDictionary<string, string> synonyms)
         {
             _parsetable = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
             _usersConnectionString = connectionString ?? "";
@@ -50,8 +56,8 @@ namespace Microsoft.Data.Common.ConnectionString
                 _keyChain = ParseInternal(_parsetable, _usersConnectionString, true, synonyms, false);
                 _hasPasswordKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.Password) || 
                                       _parsetable.ContainsKey(DbConnectionStringSynonyms.Pwd);
-                _hasUserIdKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.UserID) ||
-                                    _parsetable.ContainsKey(DbConnectionStringSynonyms.UID);
+                _hasUserIdKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.UserId) ||
+                                    _parsetable.ContainsKey(DbConnectionStringSynonyms.Uid);
             }
         }
 
@@ -225,6 +231,7 @@ namespace Microsoft.Data.Common.ConnectionString
             NullTermination,
         };
 
+        // @TODO: This should probably be extracted into its own parser class
         internal static int GetKeyValuePair(string connectionString, int currentPosition, StringBuilder buffer, bool useOdbcRules, out string keyname, out string keyvalue)
         {
             int startposition = currentPosition;
@@ -455,7 +462,12 @@ namespace Microsoft.Data.Common.ConnectionString
             return false;
         }
 
-        private static NameValuePair ParseInternal(Dictionary<string, string> parsetable, string connectionString, bool buildChain, Dictionary<string, string> synonyms, bool firstKey)
+        private static NameValuePair ParseInternal(
+            Dictionary<string, string> parsetable,
+            string connectionString,
+            bool buildChain,
+            IReadOnlyDictionary<string, string> synonyms,
+            bool firstKey)
         {
             Debug.Assert(connectionString != null, "null connectionstring");
             StringBuilder buffer = new StringBuilder();
@@ -566,5 +578,202 @@ namespace Microsoft.Data.Common.ConnectionString
             constr = builder.ToString();
             return head;
         }
+        
+        // SxS notes:
+        // * this method queries "DataDirectory" value from the current AppDomain.
+        //   This string is used for to replace "!DataDirectory!" values in the connection string, it is not considered as an "exposed resource".
+        // * This method uses GetFullPath to validate that root path is valid, the result is not exposed out.
+        #if NETFRAMEWORK
+        [ResourceExposure(ResourceScope.None)]
+        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
+        #endif
+        internal static string ExpandDataDirectory(string keyword, string value)
+        {
+            string fullPath = null;
+            if (value != null && value.StartsWith(DataDirectory, StringComparison.OrdinalIgnoreCase))
+            {
+                // find the replacement path
+                object rootFolderObject = AppDomain.CurrentDomain.GetData("DataDirectory");
+                var rootFolderPath = (rootFolderObject as string);
+                if (rootFolderObject != null && rootFolderPath == null)
+                {
+                    throw ADP.InvalidDataDirectory();
+                }
+
+                if (string.IsNullOrEmpty(rootFolderPath))
+                {
+                    rootFolderPath = AppDomain.CurrentDomain.BaseDirectory;
+                }
+
+                var fileName = value.Substring(DataDirectory.Length);
+
+                if (Path.IsPathRooted(fileName))
+                {
+                    fileName = fileName.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                }
+
+                fullPath = Path.Combine(rootFolderPath, fileName);
+
+                // verify root folder path is a real path without unexpected "..\"
+                if (!Path.GetFullPath(fullPath).StartsWith(rootFolderPath, StringComparison.Ordinal))
+                {
+                    throw ADP.InvalidConnectionOptionValue(keyword);
+                }
+            }
+            return fullPath;
+        }
+        
+        #region NetCore Methods
+        #if NET
+        
+        internal string ExpandAttachDbFileName(string replacementValue)
+        {
+            int copyPosition = 0;
+
+            StringBuilder builder = new(_usersConnectionString.Length);
+            for (NameValuePair current = _keyChain; current != null; current = current.Next)
+            {
+                if (string.Equals(current.Name, DbConnectionStringKeywords.AttachDbFilename, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    builder.Append($"{current.Name}={replacementValue};");
+                }
+                else
+                {
+                    builder.Append(_usersConnectionString, copyPosition, current.Length);
+                }
+                copyPosition += current.Length;
+            }
+
+            return builder.ToString();
+        }
+        
+        #endif
+        #endregion
+        
+        #region NetFx Methods
+        #if NETFRAMEWORK
+        
+        public string this[string keyword] => _parsetable[keyword];
+
+        private PermissionSet _permissionset;
+
+        protected internal virtual PermissionSet CreatePermissionSet() => null;
+
+        internal void DemandPermission()
+        {
+            if (_permissionset is null)
+            {
+                _permissionset = CreatePermissionSet();
+            }
+            _permissionset.Demand();
+        }
+
+        internal bool HasBlankPassword
+        {
+            get
+            {
+                if (!ConvertValueToIntegratedSecurity())
+                {
+                    if (_parsetable.TryGetValue(DbConnectionStringKeywords.Password, out string value))
+                    {
+                        return string.IsNullOrEmpty(value);
+                    }
+                    
+                    if (_parsetable.TryGetValue(DbConnectionStringSynonyms.Pwd, out value))
+                    {
+                        return string.IsNullOrEmpty(value); // MDAC 83097
+                    }
+
+                    return (_parsetable.TryGetValue(DbConnectionStringKeywords.UserId, out value) && !string.IsNullOrEmpty(value)) || 
+                           (_parsetable.TryGetValue(DbConnectionStringSynonyms.Uid, out value) && !string.IsNullOrEmpty(value));
+                }
+                return false;
+            }
+        }
+
+        internal string ExpandKeyword(string keyword, string replacementValue)
+        {
+            // preserve duplicates, updated keyword value with replacement value
+            // if keyword not specified, append to end of the string
+            bool expanded = false;
+            int copyPosition = 0;
+
+            StringBuilder builder = new(_usersConnectionString.Length);
+            for (NameValuePair current = _keyChain; current != null; current = current.Next)
+            {
+                if ((current.Name == keyword) && (current.Value == this[keyword]))
+                {
+                    // only replace the parse end-result value instead of all values
+                    // so that when duplicate-keywords occur other original values remain in place
+                    AppendKeyValuePairBuilder(builder, current.Name, replacementValue);
+                    builder.Append(';');
+                    expanded = true;
+                }
+                else
+                {
+                    builder.Append(_usersConnectionString, copyPosition, current.Length);
+                }
+                copyPosition += current.Length;
+            }
+
+            if (!expanded)
+            {
+                AppendKeyValuePairBuilder(builder, keyword, replacementValue);
+            }
+            return builder.ToString();
+        }
+
+        internal static void AppendKeyValuePairBuilder(StringBuilder builder, string keyName, string keyValue)
+        {
+            ADP.CheckArgumentNull(builder, nameof(builder));
+            ADP.CheckArgumentLength(keyName, nameof(keyName));
+
+            if (keyName == null || !s_connectionStringValidKeyRegex.IsMatch(keyName))
+            {
+                throw ADP.InvalidKeyname(keyName);
+            }
+            if (keyValue != null && !IsValueValidInternal(keyValue))
+            {
+                throw ADP.InvalidValue(keyName);
+            }
+
+            if ((0 < builder.Length) && (';' != builder[builder.Length - 1]))
+            {
+                builder.Append(";");
+            }
+
+            builder.Append(keyName.Replace("=", "=="));
+            builder.Append("=");
+
+            if (keyValue != null)
+            { // else <keyword>=;
+                if (s_connectionStringQuoteValueRegex.IsMatch(keyValue))
+                {
+                    // <value> -> <value>
+                    builder.Append(keyValue);
+                }
+                else if ((-1 != keyValue.IndexOf('\"')) && (-1 == keyValue.IndexOf('\'')))
+                {
+                    // <val"ue> -> <'val"ue'>
+                    builder.Append('\'');
+                    builder.Append(keyValue);
+                    builder.Append('\'');
+                }
+                else
+                {
+                    // <val'ue> -> <"val'ue">
+                    // <=value> -> <"=value">
+                    // <;value> -> <";value">
+                    // < value> -> <" value">
+                    // <va lue> -> <"va lue">
+                    // <va'"lue> -> <"va'""lue">
+                    builder.Append('\"');
+                    builder.Append(keyValue.Replace("\"", "\"\""));
+                    builder.Append('\"');
+                }
+            }
+        }
+        #endif
+        #endregion
     }
 }
