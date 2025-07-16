@@ -182,7 +182,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             string dummyPathWithOnlyHost = @"https://www.microsoft.com";
             string invalidUrlErrorMessage = $@"Invalid url specified: '{dummyPathWithOnlyHost}'";
             string dummyPathWithInvalidKey = @"https://www.microsoft.vault.azure.com/keys/dummykey/dummykeyid";
-            string invalidTrustedEndpointErrorMessage = $@"Invalid Azure Key Vault key path specified: '{dummyPathWithInvalidKey}'. Valid trusted endpoints: vault.azure.net, vault.azure.cn, vault.usgovcloudapi.net, vault.microsoftazure.de, managedhsm.azure.net, managedhsm.azure.cn, managedhsm.usgovcloudapi.net, managedhsm.microsoftazure.de.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
 
             Exception ex = Assert.Throws<ArgumentException>(
                 () => _fixture.AkvStoreProvider.EncryptColumnEncryptionKey(dummyPathWithOnlyHost, MasterKeyEncAlgo, cek));
@@ -190,7 +189,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             ex = Assert.Throws<ArgumentException>(
                 () => _fixture.AkvStoreProvider.EncryptColumnEncryptionKey(dummyPathWithInvalidKey, MasterKeyEncAlgo, cek));
-            Assert.Matches(invalidTrustedEndpointErrorMessage, ex.Message);
+            Assert.Matches(TrustedUrlsTest.MakeInvalidVaultErrorMessage(dummyPathWithInvalidKey), ex.Message);
 
             ex = Assert.Throws<ArgumentException>(
                  () => _fixture.AkvStoreProvider.DecryptColumnEncryptionKey(dummyPathWithOnlyHost, MasterKeyEncAlgo, encryptedCek));
@@ -198,7 +197,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             ex = Assert.Throws<ArgumentException>(
                  () => _fixture.AkvStoreProvider.DecryptColumnEncryptionKey(dummyPathWithInvalidKey, MasterKeyEncAlgo, encryptedCek));
-            Assert.Matches(invalidTrustedEndpointErrorMessage, ex.Message);
+            Assert.Matches(TrustedUrlsTest.MakeInvalidVaultErrorMessage(dummyPathWithInvalidKey), ex.Message);
         }
 
         [InlineData(true)]
