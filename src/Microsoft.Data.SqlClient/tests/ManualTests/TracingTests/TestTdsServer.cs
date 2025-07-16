@@ -30,6 +30,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Engine = engine;
         }
 
+        public override IPEndPoint Endpoint => _endpoint.ServerEndPoint;
+
         public static TestTdsServer StartServerWithQueryEngine(QueryEngine engine, bool enableFedAuth = false, bool enableLog = false,
             int connectionTimeout = DefaultConnectionTimeout, [CallerMemberName] string methodName = "",
             X509Certificate2 encryptionCertificate = null, SslProtocols encryptionProtocols = SslProtocols.Tls12, TDSPreLoginTokenEncryptionType encryptionType = TDSPreLoginTokenEncryptionType.NotSupported)
@@ -87,7 +89,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         public void Dispose() => _endpoint?.Stop();
-
-        public string ConnectionString { get; private set; }
     }
 }

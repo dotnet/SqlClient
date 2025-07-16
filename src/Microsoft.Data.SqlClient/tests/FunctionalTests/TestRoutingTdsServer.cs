@@ -20,6 +20,8 @@ namespace Microsoft.Data.SqlClient.Tests
 
         public TestRoutingTdsServer(RoutingTDSServerArguments args) : base(args) { }
 
+        public override IPEndPoint Endpoint => _endpoint.ServerEndPoint;
+
         public static TestRoutingTdsServer StartTestServer(IPEndPoint destinationEndpoint, bool enableFedAuth = false, bool enableLog = false, int connectionTimeout = DefaultConnectionTimeout, bool excludeEncryption = false, [CallerMemberName] string methodName = "")
         {
             RoutingTDSServerArguments args = new RoutingTDSServerArguments()
@@ -51,14 +53,9 @@ namespace Microsoft.Data.SqlClient.Tests
                 ? new SqlConnectionStringBuilder() { DataSource = "localhost," + port, ConnectTimeout = connectionTimeout, Encrypt = SqlConnectionEncryptOption.Mandatory }
                 : new SqlConnectionStringBuilder() { DataSource = "localhost," + port, ConnectTimeout = connectionTimeout, Encrypt = SqlConnectionEncryptOption.Optional };
             server.ConnectionString = server._connectionStringBuilder.ConnectionString;
-            server.Endpoint = server._endpoint.ServerEndPoint;
             return server;
         }
 
         public void Dispose() => _endpoint?.Stop();
-
-        public string ConnectionString { get; private set; }
-
-        public IPEndPoint Endpoint { get; private set; }
     }
 }

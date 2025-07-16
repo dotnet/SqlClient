@@ -12,7 +12,7 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// <summary>
     /// TDS Server that authenticates clients according to the requested parameters
     /// </summary>
-    public class AuthenticatingTDSServer : GenericTDSServer
+    public abstract class AuthenticatingTDSServer : GenericTDSServer
     {
         /// <summary>
         /// Initialization constructor

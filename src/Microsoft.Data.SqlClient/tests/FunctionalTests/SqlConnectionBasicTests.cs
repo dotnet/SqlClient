@@ -187,38 +187,6 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
-        public void RedirectToTransientFailureServer()
-        {
-            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
-
-            // Arrange: Create a few pooled connections to a server that will raise a transient fault.
-            using TransientFaultTDSServer failoverServer = TransientFaultTDSServer.StartTestServer(false, false, 40613);
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(false, false, 40613);
-            SqlConnectionStringBuilder builder = new()
-            {
-                DataSource = "localhost," + server.Port,
-                IntegratedSecurity = true,
-                ConnectRetryCount = 0,
-                Encrypt = SqlConnectionEncryptOption.Optional,
-                FailoverPartner = failoverDataSource,
-                InitialCatalog = "test"
-            };
-
-            using SqlConnection connection = new(builder.ConnectionString);
-            connection.Open();
-            {
-                using SqlConnection connection2 = new(builder.ConnectionString);
-                connection2.Open();
-            }
-            using SqlConnection connection3 = new(builder.ConnectionString);
-            connection3.Open();
-
-            server.SetErrorBehavior(true, 40613, "Transient fault occurred.");
-            using SqlConnection failedConnection = new(builder.ConnectionString);
-            failedConnection.Open();
-        }
-
-        [Fact]
         public void SqlConnectionDbProviderFactoryTest()
         {
             SqlConnection con = new();

@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Data.Common;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -23,8 +24,8 @@ namespace Microsoft.SqlServer.TDS.Servers
         private static int RequestCounter = 0;
 
         public int Port { get; set; }
+        public override IPEndPoint Endpoint => _endpoint.ServerEndPoint;
 
-        public string ConnectionString { get; private set; }
 
         public void SetErrorBehavior(bool isEnabledTransientFault, uint errorNumber, string message)
         {

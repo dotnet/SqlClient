@@ -4,6 +4,7 @@
 
 using System;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Threading;
 using Microsoft.SqlServer.TDS.Authentication;
@@ -25,7 +26,7 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// <summary>
     /// Generic TDS server without specialization
     /// </summary>
-    public class GenericTDSServer : ITDSServer
+    public abstract class GenericTDSServer : ITDSServer
     {
         /// <summary>
         /// Delegate to be called when a LOGIN7 request has been received and is
@@ -70,6 +71,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         private int _sessionCount = 0;
 
         /// <summary>
+        /// Counts unique pre-login requests to the server.
+        /// </summary>
+        private int _preLoginCount = 0;
+
+        /// <summary>
         /// Server configuration
         /// </summary>
         protected TDSServerArguments Arguments { get; set; }
@@ -78,6 +84,16 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// Query engine instance
         /// </summary>
         protected QueryEngine Engine { get; set; }
+
+        /// <inheritdoc />
+        public abstract IPEndPoint Endpoint { get;}
+
+        public string ConnectionString { get; protected set; }
+
+        /// <summary>
+        /// Counts unique pre-login requests to the server.
+        /// </summary>
+        public int PreLoginCount => _preLoginCount;
 
         /// <summary>
         /// Default constructor
@@ -142,6 +158,8 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public virtual TDSMessageCollection OnPreLoginRequest(ITDSServerSession session, TDSMessage request)
         {
+            Interlocked.Increment(ref _preLoginCount);
+
             // Inflate pre-login request from the message
             TDSPreLoginToken preLoginRequest = request[0] as TDSPreLoginToken;
 

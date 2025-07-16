@@ -4,8 +4,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.Identity.Client;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
@@ -135,6 +137,43 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlException sqlEx = await Assert.ThrowsAsync<SqlException>(() => RecursivelyRoutedAsyncConnection(12)); // This will fail on the 11th redirect
 
             Assert.Contains("Too many redirections have occurred.", sqlEx.Message, StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
+        [InlineData(40613)]
+        [InlineData(42108)]
+        [InlineData(42109)]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public void TransientFaultAtRoutedLocationTest(uint errorCode)
+        {
+            // Arrange
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(
+                isEnabledTransientFault: true,
+                enableLog: false, 
+                errorCode);
+            TestRoutingTdsServer router = TestRoutingTdsServer.StartTestServer(server.Endpoint);
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(router.ConnectionString) { 
+                ApplicationIntent = ApplicationIntent.ReadOnly,
+                ConnectTimeout = 30,
+                ConnectRetryInterval = 1
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            try
+            {
+                // Act
+                connection.Open();
+            }
+            catch (Exception e)
+            {
+                Assert.Fail(e.Message);
+            }
+
+            // Assert
+            Assert.Equal(ConnectionState.Open, connection.State);
+
+            // Failures should prompt the client to return to the original server, resulting in a login count of 2
+            Assert.Equal(2, router.PreLoginCount);
+            Assert.Equal(2, server.PreLoginCount);
         }
     }
 }

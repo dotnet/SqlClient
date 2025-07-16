@@ -303,8 +303,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.Un
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Microsoft.Data.SqlClient\tests\Common\Common.csproj", "{67128EC0-30F5-6A98-448B-55F88A1DE707}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "failovertest", "..\failovertest\failovertest.csproj", "{C691C5B5-0C25-45D1-8B9B-4D7E13034A2E}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -573,18 +571,6 @@ Global
 		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|x64.Build.0 = Release|x64
 		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|x86.ActiveCfg = Release|x86
 		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|x86.Build.0 = Release|x86
-		{C691C5B5-0C25-45D1-8B9B-4D7E13034A2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C691C5B5-0C25-45D1-8B9B-4D7E13034A2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C691C5B5-0C25-45D1-8B9B-4D7E13034A2E}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{C691C5B5-0C25-45D1-8B9B-4D7E13034A2E}.Debug|x64.Build.0 = Debug|Any CPU
-		{C691C5B5-0C25-45D1-8B9B-4D7E13034A2E}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{C691C5B5-0C25-45D1-8B9B-4D7E13034A2E}.Debug|x86.Build.0 = Debug|Any CPU
-		{C691C5B5-0C25-45D1-8B9B-4D7E13034A2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C691C5B5-0C25-45D1-8B9B-4D7E13034A2E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C691C5B5-0C25-45D1-8B9B-4D7E13034A2E}.Release|x64.ActiveCfg = Release|Any CPU
-		{C691C5B5-0C25-45D1-8B9B-4D7E13034A2E}.Release|x64.Build.0 = Release|Any CPU
-		{C691C5B5-0C25-45D1-8B9B-4D7E13034A2E}.Release|x86.ActiveCfg = Release|Any CPU
-		{C691C5B5-0C25-45D1-8B9B-4D7E13034A2E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -635,7 +621,6 @@ Global
 		{AD738BD4-6A02-4B88-8F93-FBBBA49A74C8} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
 		{4461063D-2F2B-274C-7E6F-F235119D258E} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{67128EC0-30F5-6A98-448B-55F88A1DE707} = {0CC4817A-12F3-4357-912C-09315FAAD008}
-		{C691C5B5-0C25-45D1-8B9B-4D7E13034A2E} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}

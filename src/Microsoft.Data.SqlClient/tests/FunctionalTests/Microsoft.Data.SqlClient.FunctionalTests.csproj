@@ -144,4 +144,7 @@
       <TargetPath>xunit.runner.json</TargetPath>
     </ContentWithTargetPath>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="TestTdsServer\" />
+  </ItemGroup>
 </Project>
