@@ -211,6 +211,9 @@ namespace Microsoft.Data.SqlClient
         // Vector Support Flag
         internal bool IsVectorSupportEnabled = false;
 
+        // User Agent Flag
+        internal bool IsUserAgentEnabled = true;
+
         // TCE flags
         internal byte _tceVersionSupported;
 
@@ -1435,6 +1438,10 @@ namespace Microsoft.Data.SqlClient
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
             requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
+
+        #if DEBUG    
+            requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
+        #endif
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }

@@ -121,8 +121,6 @@ namespace Microsoft.Data.SqlClient
 
         private bool _is2022 = false;
 
-        private string _serverSpn = null;
-
         // SqlStatistics
         private SqlStatistics _statistics = null;
 
@@ -396,6 +394,8 @@ namespace Microsoft.Data.SqlClient
                 Debug.Fail("SNI returned status != success, but no error thrown?");
             }
 
+            string serverSpn = null;
+
             //Create LocalDB instance if necessary
             if (connHandler.ConnectionOptions.LocalDBInstance != null)
             {
@@ -415,13 +415,13 @@ namespace Microsoft.Data.SqlClient
 
                 if (!string.IsNullOrEmpty(serverInfo.ServerSPN))
                 {
-                    _serverSpn = serverInfo.ServerSPN;
+                    serverSpn = serverInfo.ServerSPN;
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Server SPN `{0}` from the connection string is used.", serverInfo.ServerSPN);
                 }
                 else
                 {
                     // Empty signifies to interop layer that SPN needs to be generated
-                    _serverSpn = string.Empty;
+                    serverSpn = string.Empty;
                 }
 
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SSPI or Active Directory Authentication Library for SQL Server based integrated authentication");
@@ -429,7 +429,6 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 _authenticationProvider = null;
-                _serverSpn = null;
 
                 switch (authType)
                 {
@@ -508,7 +507,7 @@ namespace Microsoft.Data.SqlClient
                 serverInfo.ExtendedServerName,
                 timeout,
                 out instanceName,
-                ref _serverSpn,
+                ref serverSpn,
                 false,
                 true,
                 fParallel,
@@ -517,8 +516,6 @@ namespace Microsoft.Data.SqlClient
                 _connHandler.ConnectionOptions.IPAddressPreference,
                 FQDNforDNSCache,
                 hostNameInCertificate);
-
-            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
 
             if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
             {
@@ -602,7 +599,7 @@ namespace Microsoft.Data.SqlClient
                     serverInfo.ExtendedServerName,
                     timeout,
                     out instanceName,
-                    ref _serverSpn,
+                    ref serverSpn,
                     true,
                     true,
                     fParallel,
@@ -611,8 +608,6 @@ namespace Microsoft.Data.SqlClient
                     _connHandler.ConnectionOptions.IPAddressPreference,
                     serverInfo.ResolvedServerName,
                     hostNameInCertificate);
-
-                _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
 
                 if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
                 {
@@ -647,6 +642,8 @@ namespace Microsoft.Data.SqlClient
                 }
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Prelogin handshake successful");
+
+            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this, serverSpn);
 
             if (_fMARS && marsCapable)
             {
@@ -1542,14 +1539,13 @@ namespace Microsoft.Data.SqlClient
             // There is an exception here for MARS as its possible that another thread has closed the connection just as we see an error
             Debug.Assert(SniContext.Undefined != stateObj.DebugOnlyCopyOfSniContext || ((_fMARS) && ((_state == TdsParserState.Closed) || (_state == TdsParserState.Broken))), "SniContext must not be None");
 #endif
-            SniError details = new SniError();
-            SniNativeWrapper.SniGetLastError(out details);
+            TdsParserStateObject.SniErrorDetails details = stateObj.GetErrorDetails();
 
-            if (details.sniError != 0)
+            if (details.SniErrorNumber != 0)
             {
 
                 // handle special SNI error codes that are converted into exception which is not a SqlException.
-                switch (details.sniError)
+                switch (details.SniErrorNumber)
                 {
                     case SniErrors.MultiSubnetFailoverWithMoreThan64IPs:
                         // Connecting with the MultiSubnetFailover connection option to a SQL Server instance configured with more than 64 IP addresses is not supported.
@@ -1569,7 +1565,7 @@ namespace Microsoft.Data.SqlClient
 
             // error.errorMessage is null terminated with garbage beyond that, since fixed length
             string errorMessage;
-            errorMessage = string.IsNullOrEmpty(details.errorMessage) ? string.Empty : details.errorMessage;
+            errorMessage = string.IsNullOrEmpty(details.ErrorMessage) ? string.Empty : details.ErrorMessage;
             /*  Format SNI errors and add Context Information
              *
              *  General syntax is:
@@ -1586,12 +1582,12 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(!string.IsNullOrEmpty(errorMessage), "Empty error message received from SNI");
 
             string sqlContextInfo = StringsHelper.GetString(Enum.GetName(typeof(SniContext), stateObj.SniContext));
-            string providerRid = string.Format("SNI_PN{0}", (int)details.provider);
+            string providerRid = string.Format("SNI_PN{0}", (int)details.Provider);
             string providerName = StringsHelper.GetString(providerRid);
             Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
-            uint win32ErrorCode = details.nativeError;
+            int win32ErrorCode = details.NativeError;
 
-            if (details.sniError == 0)
+            if (details.SniErrorNumber == 0)
             {
                 // Provider error. The message from provider is preceeded with non-localizable info from SNI
                 // strip provider info from SNI
@@ -1622,20 +1618,20 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // SNI error. Replace the entire message.
-                errorMessage = SQL.GetSNIErrorMessage(details.sniError);
+                errorMessage = SQL.GetSNIErrorMessage(details.SniErrorNumber);
 
                 // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
-                if (details.sniError == SniErrors.LocalDBErrorCode)
+                if (details.SniErrorNumber == SniErrors.LocalDBErrorCode)
                 {
-                    errorMessage += LocalDbApi.GetLocalDbMessage((int)details.nativeError);
+                    errorMessage += LocalDbApi.GetLocalDbMessage(details.NativeError);
                     win32ErrorCode = 0;
                 }
             }
             errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})",
-                sqlContextInfo, providerName, (int)details.sniError, errorMessage);
+                sqlContextInfo, providerName, (int)details.SniErrorNumber, errorMessage);
 
-            return new SqlError((int)details.nativeError, 0x00, TdsEnums.FATAL_ERROR_CLASS,
-                                _server, errorMessage, details.function, (int)details.lineNumber, win32ErrorCode);
+            return new SqlError(details.NativeError, 0x00, TdsEnums.FATAL_ERROR_CLASS,
+                                _server, errorMessage, details.Function, (int)details.LineNumber, win32ErrorCode);
         }
 
         internal void CheckResetConnection(TdsParserStateObject stateObj)
@@ -6416,7 +6412,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLUNIQUEID:
                     {
                         Debug.Assert(length == 16, "invalid length for SqlGuid type!");
-                        value.SqlGuid = SqlTypeWorkarounds.SqlGuidCtor(unencryptedBytes, true);   // doesn't copy the byte array
+                        value.SqlGuid = SqlTypeWorkarounds.ByteArrayToSqlGuid(unencryptedBytes);
                         break;
                     }
 
@@ -6437,7 +6433,7 @@ namespace Microsoft.Data.SqlClient
                             unencryptedBytes = bytes;
                         }
 
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(unencryptedBytes, true);   // doesn't copy the byte array
+                        value.SqlBinary = SqlTypeWorkarounds.ByteArrayToSqlBinary(unencryptedBytes);
                         break;
                     }
 
@@ -6662,7 +6658,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true); // doesn't copy the byte array
+                        value.SqlBinary = SqlTypeWorkarounds.ByteArrayToSqlBinary(b);
                     }
                     break;
 
@@ -6677,7 +6673,7 @@ namespace Microsoft.Data.SqlClient
 
                     // Internally, we use Sqlbinary to deal with varbinary data and store it in 
                     // SqlBuffer as SqlBinary value.
-                    value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);
+                    value.SqlBinary = SqlTypeWorkarounds.ByteArrayToSqlBinary(b);
 
                     // Extract the metadata from the payload and set it as the vector attributes
                     // in the SqlBuffer. This metadata is further used when constructing a SqlVector
@@ -7006,8 +7002,8 @@ namespace Microsoft.Data.SqlClient
                         {
                             return result;
                         }
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true); // doesn't copy the byte array
-
+                        
+                        value.SqlBinary = SqlTypeWorkarounds.ByteArrayToSqlBinary(b);
                         break;
                     }
 
@@ -7887,22 +7883,27 @@ namespace Microsoft.Data.SqlClient
 
             // sign
             if (d.IsPositive)
+            {
                 bytes[current++] = 1;
+            }
             else
+            {
                 bytes[current++] = 0;
+            }
 
-            uint data1, data2, data3, data4;
-            SqlTypeWorkarounds.SqlDecimalExtractData(d, out data1, out data2, out data3, out data4);
-            byte[] bytesPart = SerializeUnsignedInt(data1, stateObj);
+            Span<uint> data = stackalloc uint[4];
+            SqlTypeWorkarounds.SqlDecimalWriteTdsValue(d, data);
+            
+            byte[] bytesPart = SerializeUnsignedInt(data[0], stateObj);
             Buffer.BlockCopy(bytesPart, 0, bytes, current, 4);
             current += 4;
-            bytesPart = SerializeUnsignedInt(data2, stateObj);
+            bytesPart = SerializeUnsignedInt(data[1], stateObj);
             Buffer.BlockCopy(bytesPart, 0, bytes, current, 4);
             current += 4;
-            bytesPart = SerializeUnsignedInt(data3, stateObj);
+            bytesPart = SerializeUnsignedInt(data[2], stateObj);
             Buffer.BlockCopy(bytesPart, 0, bytes, current, 4);
             current += 4;
-            bytesPart = SerializeUnsignedInt(data4, stateObj);
+            bytesPart = SerializeUnsignedInt(data[3], stateObj);
             Buffer.BlockCopy(bytesPart, 0, bytes, current, 4);
 
             return bytes;
@@ -7912,16 +7913,21 @@ namespace Microsoft.Data.SqlClient
         {
             // sign
             if (d.IsPositive)
+            {
                 stateObj.WriteByte(1);
+            }
             else
+            {
                 stateObj.WriteByte(0);
+            }
 
-            uint data1, data2, data3, data4;
-            SqlTypeWorkarounds.SqlDecimalExtractData(d, out data1, out data2, out data3, out data4);
-            WriteUnsignedInt(data1, stateObj);
-            WriteUnsignedInt(data2, stateObj);
-            WriteUnsignedInt(data3, stateObj);
-            WriteUnsignedInt(data4, stateObj);
+            Span<uint> data = stackalloc uint[4];
+            SqlTypeWorkarounds.SqlDecimalWriteTdsValue(d, data);
+
+            WriteUnsignedInt(data[0], stateObj);
+            WriteUnsignedInt(data[1], stateObj);
+            WriteUnsignedInt(data[2], stateObj);
+            WriteUnsignedInt(data[3], stateObj);
         }
 
         private byte[] SerializeDecimal(decimal value, TdsParserStateObject stateObj)
@@ -8760,6 +8766,49 @@ namespace Microsoft.Data.SqlClient
             }
 
             return len;
+        }
+
+        /// <summary>
+        /// Writes the User Agent feature request to the physical state object.
+        /// The request includes the feature ID, feature data length, version number and encoded JSON payload.
+        /// </summary>
+        /// <param name="userAgentJsonPayload"> Byte array of UTF-8 encoded JSON payload for User Agent</param>
+        /// <param name="write">
+        /// If true, writes the feature request to the physical state object.
+        /// If false, just calculates the length.
+        /// </param>
+        /// <returns>The length of the feature request in bytes.</returns>
+        /// <remarks>
+        /// The feature request consists of:
+        /// - 1 byte for the feature ID.
+        /// - 4 bytes for the feature data length.
+        /// - 1 byte for the version number.
+        /// - N bytes for the JSON payload
+        /// </remarks>
+        internal int WriteUserAgentFeatureRequest(byte[] userAgentJsonPayload,
+                                                  bool write)
+        {
+            // 1byte (Feature Version) + size of UTF-8 encoded JSON payload 
+            int dataLen = 1 + userAgentJsonPayload.Length;
+            // 1byte (Feature ID) + 4bytes (Feature Data Length) + 1byte (Version) + N(JSON payload size)
+            int totalLen = 1 + 4 + dataLen;
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_USERAGENT);
+
+                // Feature Data Length
+                WriteInt(dataLen, _physicalStateObj);
+
+                // Write Feature Version
+                _physicalStateObj.WriteByte(TdsEnums.SUPPORTED_USER_AGENT_VERSION);
+
+                // Write encoded JSON payload
+                _physicalStateObj.WriteByteArray(userAgentJsonPayload, userAgentJsonPayload.Length, 0);
+            }
+
+            return totalLen;
         }
 
         private void WriteLoginData(SqlLogin rec,
@@ -13544,6 +13593,13 @@ namespace Microsoft.Data.SqlClient
                     break;
                 }
             }
+
+            if (writeDataSizeToSnapshot)
+            {
+                stateObj.SetSnapshotStorage(null);
+                stateObj.ClearSnapshotDataSize();
+            }
+
             return TdsOperationStatus.Done;
 
             static int IncrementSnapshotDataSize(TdsParserStateObject stateObj, bool resetting, int previousPacketId, int value)
@@ -13563,7 +13619,7 @@ namespace Microsoft.Data.SqlClient
                         current = 0;
                     }
 
-                    stateObj.SetSnapshotDataSize(current + value);
+                    stateObj.AddSnapshotDataSize(current + value);
 
                     // return new packetid so next time we see this packet we know it isn't new
                     return currentPacketId;
@@ -13571,7 +13627,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     current = stateObj.GetSnapshotDataSize();
-                    stateObj.SetSnapshotDataSize(current + value);
+                    stateObj.AddSnapshotDataSize(current + value);
                     return previousPacketId;
                 }
             }
@@ -13761,15 +13817,14 @@ namespace Microsoft.Data.SqlClient
                                         + "         _connHandler = {14}\n\t"
                                         + "         _fMARS = {15}\n\t"
                                         + "         _sessionPool = {16}\n\t"
-                                        + "         _sniSpnBuffer = {17}\n\t"
-                                        + "         _errors = {18}\n\t"
-                                        + "         _warnings = {19}\n\t"
-                                        + "         _attentionErrors = {20}\n\t"
-                                        + "         _attentionWarnings = {21}\n\t"
-                                        + "         _statistics = {22}\n\t"
-                                        + "         _statisticsIsInTransaction = {23}\n\t"
-                                        + "         _fPreserveTransaction = {24}"
-                                        + "         _fParallel = {25}"
+                                        + "         _errors = {17}\n\t"
+                                        + "         _warnings = {18}\n\t"
+                                        + "         _attentionErrors = {19}\n\t"
+                                        + "         _attentionWarnings = {20}\n\t"
+                                        + "         _statistics = {21}\n\t"
+                                        + "         _statisticsIsInTransaction = {22}\n\t"
+                                        + "         _fPreserveTransaction = {23}"
+                                        + "         _fParallel = {24}"
                                         ;
         internal string TraceString()
         {
@@ -13792,7 +13847,6 @@ namespace Microsoft.Data.SqlClient
                             _connHandler == null ? "(null)" : _connHandler.ObjectID.ToString((IFormatProvider)null),
                             _fMARS ? bool.TrueString : bool.FalseString,
                             _sessionPool == null ? "(null)" : _sessionPool.TraceString(),
-                            _serverSpn == null ? "(null)" : _serverSpn.Length.ToString((IFormatProvider)null),
                             _physicalStateObj != null ? "(null)" : _physicalStateObj.ErrorCount.ToString((IFormatProvider)null),
                             _physicalStateObj != null ? "(null)" : _physicalStateObj.WarningCount.ToString((IFormatProvider)null),
                             _physicalStateObj != null ? "(null)" : _physicalStateObj.PreAttentionErrorCount.ToString((IFormatProvider)null),
