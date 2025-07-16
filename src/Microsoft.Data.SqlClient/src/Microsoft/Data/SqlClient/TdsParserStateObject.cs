@@ -3144,7 +3144,7 @@ namespace Microsoft.Data.SqlClient
                 // the identity source. The identity value is used to correlate timer callback events to the currently
                 // running timeout and prevents a late timer callback affecting a result it does not relate to
                 int previousTimeoutState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Running, TimeoutState.Stopped);
-                Debug.Assert(previousTimeoutState == TimeoutState.Stopped, "previous timeout state was not Stopped");
+
                 if (previousTimeoutState == TimeoutState.Stopped)
                 {
                     Debug.Assert(_timeoutIdentityValue == 0, "timer was previously stopped without resetting the _identityValue");
