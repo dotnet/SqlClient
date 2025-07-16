@@ -157,10 +157,6 @@ namespace Microsoft.Data.SqlClient
 
         internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
 
-        private int _preparedConnectionCloseCount = -1;
-        private int _preparedConnectionReconnectCount = -1;
-
-        private SqlParameterCollection _parameters;
         private _SqlRPC[] _rpcArrayOf1 = null;                // Used for RPC executes
         private _SqlRPC _rpcForEncryption = null;                // Used for sp_describe_parameter_encryption RPC executes
 
@@ -338,13 +334,6 @@ namespace Microsoft.Data.SqlClient
         private SqlTransaction _transaction;
 
         private StatementCompletedEventHandler _statementCompletedEventHandler;
-
-        // Volatile bool used to synchronize with cancel thread the state change of an executing
-        // command going from pre-processing to obtaining a stateObject.  The cancel synchronization
-        // we require in the command is only from entering an Execute* API to obtaining a
-        // stateObj.  Once a stateObj is successfully obtained, cancel synchronization is handled
-        // by the stateObject.
-        private volatile bool _pendingCancel;
 
         private bool _batchRPCMode;
         private List<_SqlRPC> _RPCList;
@@ -543,22 +532,6 @@ namespace Microsoft.Data.SqlClient
                 _sqlDep = null;
                 _notification = value;
                 SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_Notification | API | Object Id {0}", ObjectID);
-            }
-        }
-
-        internal SqlStatistics Statistics
-        {
-            get
-            {
-                if (_activeConnection != null)
-                {
-                    if (_activeConnection.StatisticsEnabled ||
-                        s_diagnosticListener.IsEnabled(SqlClientCommandAfter.Name))
-                    {
-                        return _activeConnection.Statistics;
-                    }
-                }
-                return null;
             }
         }
 

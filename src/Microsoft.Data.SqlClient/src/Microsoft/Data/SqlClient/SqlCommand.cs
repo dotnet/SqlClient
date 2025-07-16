@@ -10,6 +10,10 @@ using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
 
+#if NET
+using Microsoft.Data.SqlClient.Diagnostics;
+#endif
+
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/SqlCommand/*'/>
@@ -20,6 +24,9 @@ namespace Microsoft.Data.SqlClient
     {
         #region Constants
 
+        /// <summary>
+        /// Pre-boxed invalid prepare handle - used to optimize boxing behavior.
+        /// </summary>
         private static readonly object s_cachedInvalidPrepareHandle = (object)-1;
 
         #endregion
@@ -75,11 +82,37 @@ namespace Microsoft.Data.SqlClient
         private bool _inPrepare = false;
 
         /// <summary>
-        /// The handle of a prepared command. Apparently there can be multiple prepared commands at
-        /// a time - a feature that we do not support yet. this is an int which is used in the
+        /// Parameters that have been added to the current instance.
+        /// </summary>
+        private SqlParameterCollection _parameters;
+
+        /// <summary>
+        /// Volatile bool used to synchronize with cancel thread the state change of an executing
+        /// command going from pre-processing to obtaining a stateObject. The cancel
+        /// synchronization we require in the command is only from entering an Execute* API to
+        /// obtaining a stateObj. Once a stateObj is successfully obtained, cancel synchronization
+        /// is handled by the stateObject.
+        /// </summary>
+        private volatile bool _pendingCancel;
+
+        /// <summary>
+        /// Number of times the connection was closed when the command was prepared. Used to
+        /// determine if the connection has closed between prepare and execute.
+        /// </summary>
+        private int _preparedConnectionCloseCount = -1;
+
+        /// <summary>
+        /// Number of times the connection was reconnected when the command was prepared. Used to
+        /// determine if the connection has reconnected between prepare and execute.
+        /// </summary>
+        private int _preparedConnectionReconnectCount = -1;
+
+        /// <summary>
+        /// the handle of a prepared command. Apparently there can be multiple prepared commands at
+        /// a time - a feature that we do not support yet. This is an int which is used in the
         /// object typed SqlParameter.Value field, avoid repeated boxing by storing in a box.
         /// </summary>
-        private object _prepareHandle = s_cachedInvalidPrepareHandle; // this is an int which is used in the object typed SqlParameter.Value field, avoid repeated boxing by storing in a box
+        private object _prepareHandle = s_cachedInvalidPrepareHandle;
 
         /// <summary>
         /// TDS session the current instance is using.
@@ -118,6 +151,29 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Rename to match conventions.
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
 
+        internal SqlStatistics Statistics
+        {
+            get
+            {
+                if (_activeConnection is not null)
+                {
+                    #if NET
+                    bool isStatisticsEnabled = _activeConnection.StatisticsEnabled ||
+                                               s_diagnosticListener.IsEnabled(SqlClientCommandAfter.Name);
+                    #else
+                    bool isStatisticsEnabled = _activeConnection.StatisticsEnabled;
+                    #endif
+
+                    if (isStatisticsEnabled)
+                    {
+                        return _activeConnection.Statistics;
+                    }
+                }
+
+                return null;
+            }
+        }
+
         private bool IsDirty
         {
             get
@@ -146,6 +202,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     _parameters.IsDirty = _dirty;
                 }
+
                 _cachedMetaData = null;
             }
         }
