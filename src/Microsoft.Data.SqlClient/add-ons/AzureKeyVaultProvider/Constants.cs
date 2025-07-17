@@ -10,7 +10,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// Azure Key Vault Domain Name
         /// </summary>
         internal static readonly string[] AzureKeyVaultPublicDomainNames =
-        [
+        new string[]
+        {
             // Azure Key Vaults
             "vault.azure.net",                 // Default
             "vault.azure.cn",                  // China
@@ -30,7 +31,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             "managedhsm.cloudapi.eaglex.ic.gov",
             "managedhsm.sovcloud-api.fr",
             "managedhsm.sovcloud-api.de"
-        ];
+        };
 
         /// <summary>
         /// Always Encrypted Parameter names for exec handling
