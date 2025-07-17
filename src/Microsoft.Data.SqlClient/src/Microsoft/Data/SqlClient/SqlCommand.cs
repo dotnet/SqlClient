@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
+using Microsoft.SqlServer.Server;
 
 #if NET
 using Microsoft.Data.SqlClient.Diagnostics;
@@ -147,6 +148,12 @@ namespace Microsoft.Data.SqlClient
         /// TDS session the current instance is using.
         /// </summary>
         private TdsParserStateObject _stateObj;
+
+        /// <summary>
+        /// How command results are applied to a DataRow when used by the update method of
+        /// DbDataAdapter.
+        /// </summary>
+        private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
         
         #endregion
 
@@ -340,6 +347,9 @@ namespace Microsoft.Data.SqlClient
             set => _designTimeInvisible = !value;
         }
         
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EnableOptimizedParameterBinding/*'/>
+        public bool EnableOptimizedParameterBinding { get; set; }
+        
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
@@ -403,6 +413,35 @@ namespace Microsoft.Data.SqlClient
                     "SqlCommand.Set_Transaction | API | " +
                     $"Object Id {ObjectID}, " +
                     $"Internal Transaction Id {value?.InternalTransaction?.TransactionId}, " +
+                    $"Client Connection Id {Connection?.ClientConnectionId}");
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/UpdatedRowSource/*'/>
+        [DefaultValue(UpdateRowSource.Both)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Update)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_UpdatedRowSource)]
+        public override UpdateRowSource UpdatedRowSource
+        {
+            get => _updatedRowSource;
+            set
+            {
+                switch (value)
+                {
+                    case UpdateRowSource.None:
+                    case UpdateRowSource.OutputParameters:
+                    case UpdateRowSource.FirstReturnedRecord:
+                    case UpdateRowSource.Both:
+                        _updatedRowSource = value;
+                        break;
+                    default:
+                        throw ADP.InvalidUpdateRowSource(value);
+                }
+                
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.UpdatedRowSource | API | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Updated Row Source value {(int)value}, " +
                     $"Client Connection Id {Connection?.ClientConnectionId}");
             }
         }

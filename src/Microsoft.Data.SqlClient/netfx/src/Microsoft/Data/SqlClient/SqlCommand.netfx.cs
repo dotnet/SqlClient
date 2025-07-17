@@ -110,8 +110,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
-
         /// <summary>
         /// Indicates if the column encryption setting was set at-least once in the batch rpc mode, when using AddBatchCommand.
         /// </summary>
@@ -467,37 +465,6 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 return _activeConnection?.CommandTimeout ?? ADP.DefaultCommandTimeout;
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EnableOptimizedParameterBinding/*'/>
-        public bool EnableOptimizedParameterBinding { get; set; }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/UpdatedRowSource/*'/>
-        [DefaultValue(UpdateRowSource.Both)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Update)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_UpdatedRowSource)]
-        public override UpdateRowSource UpdatedRowSource
-        {
-            get
-            {
-                return _updatedRowSource;
-            }
-            set
-            {
-                switch (value)
-                {
-                    case UpdateRowSource.None:
-                    case UpdateRowSource.OutputParameters:
-                    case UpdateRowSource.FirstReturnedRecord:
-                    case UpdateRowSource.Both:
-                        _updatedRowSource = value;
-                        break;
-                    default:
-                        throw ADP.InvalidUpdateRowSource(value);
-                }
-
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.UpdatedRowSource | API | ObjectId {0}, Updated row source value {1}, Client Connection Id {2}", ObjectID, (int)value, Connection?.ClientConnectionId);
             }
         }
 
