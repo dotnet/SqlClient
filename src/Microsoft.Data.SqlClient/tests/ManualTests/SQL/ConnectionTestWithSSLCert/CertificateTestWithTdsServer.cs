@@ -12,6 +12,7 @@ using System.Security.Principal;
 using System.ServiceProcess;
 using System.Text;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon;
+using Microsoft.SqlServer.TDS.Servers;
 using Microsoft.Win32;
 using Xunit;
 
@@ -129,18 +130,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string userId = string.IsNullOrWhiteSpace(builder.UserID) ? "user" : builder.UserID;
             string password = string.IsNullOrWhiteSpace(builder.Password) ? "password" : builder.Password;
 
-            using TestTdsServer server = TestTdsServer.StartTestServer(enableFedAuth: false, enableLog: false, connectionTimeout: 15,
-                methodName: "",
-#if NET9_0_OR_GREATER
-                X509CertificateLoader.LoadPkcs12FromFile(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),
-#else
-                new X509Certificate2(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),
-#endif
-                encryptionProtocols: connectionTestParameters.EncryptionProtocols,
-                encryptionType: connectionTestParameters.TdsEncryptionType);
-
-            builder = new(server.ConnectionString)
+            using GenericTDSServer server = new GenericTDSServer(new TDSServerArguments
             {
+                #if NET9_0_OR_GREATER
+                EncryptionCertificate = X509CertificateLoader.LoadPkcs12FromFile(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),
+                #else
+                EncryptionCertificate = new X509Certificate2(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),
+                #endif
+                EncryptionProtocols = connectionTestParameters.EncryptionProtocols,
+                Encryption = connectionTestParameters.TdsEncryptionType,
+            });
+
+            server.Start();
+
+            builder = new()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                ConnectTimeout = 15,
                 UserID = userId,
                 Password = password,
                 TrustServerCertificate = connectionTestParameters.TrustServerCertificate,
