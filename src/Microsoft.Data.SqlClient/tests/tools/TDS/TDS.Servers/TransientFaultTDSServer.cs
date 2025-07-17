@@ -26,8 +26,6 @@ namespace Microsoft.SqlServer.TDS.Servers
             Arguments.Message = message;
         }
 
-        private TDSServerEndPoint _endpoint = null;
-
         public TransientFaultTDSServer(TransientFaultTDSServerArguments arguments) : base(arguments)
         {
         }
@@ -102,49 +100,6 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Return login response from the base class
             return base.OnLogin7Request(session, request);
         }
-
-        /// <summary>
-        /// Complete login sequence
-        /// </summary>
-        protected override TDSMessageCollection OnAuthenticationCompleted(ITDSServerSession session)
-        {
-            // Delegate to the base class
-            TDSMessageCollection responseMessageCollection = base.OnAuthenticationCompleted(session);
-
-            if (Arguments.FailoverPartner == "")
-            {
-                return responseMessageCollection;
-            } 
-
-            var envChangeToken = new TDSEnvChangeToken(TDSEnvChangeTokenType.RealTimeLogShipping, Arguments.FailoverPartner);
-
-            // Log response
-            TDSUtilities.Log(Arguments.Log, "Response", envChangeToken);
-
-            // Get the first message
-            TDSMessage targetMessage = responseMessageCollection[0];
-
-            // Index at which to insert the routing token
-            int insertIndex = targetMessage.Count - 1;
-
-            // VSTS# 1021027 - Read-Only Routing yields TDS protocol error
-            // Resolution: Send TDS FeatureExtAct token before TDS ENVCHANGE token with routing information
-            TDSPacketToken featureExtAckToken = targetMessage.Find(t => t is TDSFeatureExtAckToken);
-
-            // Check if found
-            if (featureExtAckToken != null)
-            {
-                // Find token position
-                insertIndex = targetMessage.IndexOf(featureExtAckToken);
-            }
-
-            // Insert right before the done token
-            targetMessage.Insert(insertIndex, envChangeToken);
-
-            return responseMessageCollection;
-        }
-
-
 
         public override void Dispose() {
             base.Dispose();

@@ -38,6 +38,15 @@ namespace Microsoft.SqlServer.TDS.Servers
         public GenericTDSServer(TDSServerArguments arguments) : base(arguments)
         {
         }
+
+        /// <summary>
+        /// Constructor with arguments and query engine
+        /// </summary>
+        /// <param name="queryEngine">Query engine</param>
+        /// <param name="arguments">Server arguments</param>
+        public GenericTDSServer(QueryEngine queryEngine, TDSServerArguments arguments) : base(arguments, queryEngine)
+        {
+        }
     }
 
     /// <summary>
@@ -135,13 +144,13 @@ namespace Microsoft.SqlServer.TDS.Servers
             Engine.Log = Arguments.Log;
         }
 
-        public void Start(bool enableLog = false, [CallerMemberName] string methodName = "")
+        public void Start([CallerMemberName] string methodName = "")
         {
             _endpoint = new TDSServerEndPoint(this) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
             _endpoint.EndpointName = methodName;
 
             // The server EventLog should be enabled as it logs the exceptions.
-            _endpoint.EventLog = enableLog ? Console.Out : null;
+            _endpoint.EventLog = Arguments.Log;
             _endpoint.Start();
         }
 
@@ -595,6 +604,17 @@ namespace Microsoft.SqlServer.TDS.Servers
 
             // Serialize the login token into the response packet
             responseMessage.Add(envChange);
+
+
+            if (!String.IsNullOrEmpty(Arguments.FailoverPartner))
+            {
+                envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.RealTimeLogShipping, Arguments.FailoverPartner);
+
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", envChange);
+
+                responseMessage.Add(envChange);
+            }
 
             // Create information token on the change
             infoToken = new TDSInfoToken(5703, 1, 0, string.Format("Changed language setting to {0}", envChange.NewValue), Arguments.ServerName);

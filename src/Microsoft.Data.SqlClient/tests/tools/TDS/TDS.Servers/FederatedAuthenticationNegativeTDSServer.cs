@@ -12,7 +12,7 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// <summary>
     /// TDS Server that generates invalid TDS scenarios according to the requested parameters
     /// </summary>
-    public abstract class FederatedAuthenticationNegativeTDSServer : GenericTDSServer<FederatedAuthenticationNegativeTDSServerArguments>
+    public class FederatedAuthenticationNegativeTDSServer : GenericTDSServer<FederatedAuthenticationNegativeTDSServerArguments>
     {
         /// <summary>
         /// Initialization constructor

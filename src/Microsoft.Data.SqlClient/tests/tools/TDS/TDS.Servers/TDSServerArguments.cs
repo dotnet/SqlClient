@@ -76,6 +76,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         public SslProtocols EncryptionProtocols { get; set; }
 
         /// <summary>
+        /// Routing destination protocol
+        /// </summary>
+        public string FailoverPartner { get; set; }
+
+        /// <summary>
         /// Initialization constructor
         /// </summary>
         public TDSServerArguments()
@@ -98,6 +103,7 @@ namespace Microsoft.SqlServer.TDS.Servers
 
             ServerPrincipalName = AzureADServicePrincipalName;
             StsUrl = AzureADProductionTokenEndpoint;
+            FailoverPartner = string.Empty;
         }
     }
 }

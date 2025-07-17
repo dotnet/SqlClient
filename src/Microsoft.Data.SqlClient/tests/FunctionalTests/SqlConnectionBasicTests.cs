@@ -183,32 +183,33 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(ConnectionState.Closed, connection.State);
         }
 
-        [Fact]
-        public void ConnectionPoolNotInvalidatedOnTransientFault()
+        [Theory]
+        [InlineData(40613)]
+        [InlineData(42108)]
+        [InlineData(42109)]
+        public void PoolClearedOnFailover(uint errorCode)
         {
             AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
 
-            // Arrange: Create a few pooled connections to a server that will raise a transient fault.
-            using TransientFaultTDSServer failoverServer = new TransientFaultTDSServer(new TransientFaultTDSServerArguments
+            // Arrange
+            using GenericTDSServer failoverServer = new GenericTDSServer(new TDSServerArguments
             {
-                IsEnabledTransientError = false,
-                Number = 40613,
+                // Doesn't need to point to a real endpoint, just needs a value specified
                 FailoverPartner = "localhost,1234"
             });
             failoverServer.Start();
             var failoverDataSource = $"localhost,{failoverServer.EndPoint.Port}";
 
-            using TransientFaultTDSServer server = new TransientFaultTDSServer(new TransientFaultTDSServerArguments
+            // Errors are off to start to allow the pool to warm up
+            using TransientFaultTDSServer initialServer = new TransientFaultTDSServer(new TransientFaultTDSServerArguments
             {
-                IsEnabledTransientError = false,
-                Number = 40613,
                 FailoverPartner = failoverDataSource
             });
-            failoverServer.Start();
+            initialServer.Start();
 
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
+                DataSource = "localhost," + initialServer.EndPoint.Port,
                 IntegratedSecurity = true,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional,
@@ -218,16 +219,25 @@ namespace Microsoft.Data.SqlClient.Tests
 
             using SqlConnection connection = new(builder.ConnectionString);
             connection.Open();
-            {
-                using SqlConnection connection2 = new(builder.ConnectionString);
-                connection2.Open();
-            }
-            using SqlConnection connection3 = new(builder.ConnectionString);
-            connection3.Open();
 
-            server.SetErrorBehavior(true, 40613, "Transient fault occurred.");
-            using SqlConnection failedConnection = new(builder.ConnectionString);
-            failedConnection.Open();
+            // Act
+            initialServer.SetErrorBehavior(true, errorCode, "Transient fault occurred.");
+            using SqlConnection failoverConnection = new(builder.ConnectionString);
+            // Should fail over to the failover server
+            failoverConnection.Open();
+
+            // Request a new connection, should initiate a fresh connection attempt if the pool was cleared.
+            connection.Close();
+            connection.Open();
+
+            // Assert
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal(ConnectionState.Open, failoverConnection.State);
+
+            // 1 for the initial connection, 1 for the failover connection
+            Assert.Equal(2, initialServer.PreLoginCount);
+            // 1 for the failover connection, 1 for the reconnection after failover
+            Assert.Equal(2, failoverServer.PreLoginCount);
         }
 
         [Fact]
