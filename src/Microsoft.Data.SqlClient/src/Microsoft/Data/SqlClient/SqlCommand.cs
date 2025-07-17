@@ -155,6 +155,13 @@ namespace Microsoft.Data.SqlClient
         private SqlRetryLogicBaseProvider _retryLogicProvider;
 
         /// <summary>
+        /// Sql reader will pull this value out for each NextResult call. It is not cumulative.
+        /// _rowsAffected is cumulative for ExecuteNonQuery across all rpc batches
+        /// </summary>
+        // @TODO: Use int? and replace -1 usage with null
+        private int _rowsAffected = -1;
+
+        /// <summary>
         /// TDS session the current instance is using.
         /// </summary>
         private TdsParserStateObject _stateObj;
@@ -516,7 +523,23 @@ namespace Microsoft.Data.SqlClient
         #region Internal/Protected/Private Properties
         
         internal bool InPrepare => _inPrepare;
-        
+
+        internal int InternalRecordsAffected
+        {
+            get => _rowsAffected;
+            set
+            {
+                if (_rowsAffected == -1)
+                {
+                    _rowsAffected = value;
+                }
+                else if (value > 0)
+                {
+                    _rowsAffected += value;
+                }
+            }
+        }
+
         // @TODO: Rename to match conventions.
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
 
@@ -570,6 +593,34 @@ namespace Microsoft.Data.SqlClient
                     $"Object Id {ObjectID}, " +
                     $"Client Connection Id {Connection?.ClientConnectionId}");
             }
+        }
+
+        private int DefaultCommandTimeout
+        {
+            // @TODO: Should use connection? Should DefaultCommandTimeout be defined *in the command object*?
+            get => _activeConnection?.CommandTimeout ?? ADP.DefaultCommandTimeout;
+        }
+
+        // @TODO: Should be used in more than one place to justify its existence
+        private SqlInternalConnectionTds InternalTdsConnection
+        {
+            // @TODO: Should check for null? Should use Connection?
+            get => (SqlInternalConnectionTds)_activeConnection.InnerConnection;
+        }
+
+        private bool IsColumnEncryptionEnabled
+        {
+            // The order in the below if is important since _activeConnection.Parser can throw if
+            // the underlying tds connection is closed, and we don't want to change the behavior
+            // for folks not trying to use transparent parameter encryption i.e. who don't use
+            // (SqlCommandColumnEncryptionSetting.Enabled or
+            // _activeConnection.IsColumnEncryptionSettingEnabled) here.
+            get => _columnEncryptionSetting is SqlCommandColumnEncryptionSetting.Enabled
+                                            or SqlCommandColumnEncryptionSetting.UseConnectionSetting
+                && _activeConnection is not null
+                && _activeConnection.Parser is not null
+                && _activeConnection.Parser.IsColumnEncryptionSupported;
+
         }
 
         private bool IsDirty
@@ -730,6 +781,11 @@ namespace Microsoft.Data.SqlClient
             _preparedConnectionReconnectCount = _activeConnection.ReconnectCount;
 
             Statistics?.SafeIncrement(ref Statistics._prepares);
+        }
+
+        private void PropertyChanging()
+        {
+            IsDirty = true;
         }
 
         private void Unprepare()
