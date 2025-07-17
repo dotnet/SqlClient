@@ -161,6 +161,7 @@ namespace Microsoft.Data.SqlClient
             set
             {
                 // Don't allow the connection to be changed while in an async operation
+                // @TODO: Factor out
                 if (_activeConnection != value && _activeConnection != null)
                 {
                     // If new value...
@@ -224,6 +225,45 @@ namespace Microsoft.Data.SqlClient
             set => _retryLogicProvider = value;
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Transaction/*'/>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_Transaction)]
+        public new SqlTransaction Transaction
+        {
+            get
+            {
+                // If the transaction object has been zombied, just return null
+                if (_transaction is not null && _transaction.Connection is null)
+                {
+                    _transaction = null;
+                }
+
+                return _transaction;
+            }
+            set
+            {
+                // Don't allow the transaction to be changed while in an async operation
+                if (_transaction != value && _activeConnection is not null)
+                {
+                    // If new value...
+                    if (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation)
+                    {
+                        // If in pending async state, throw.
+                        throw SQL.CannotModifyPropertyAsyncOperationInProgress();
+                    }
+                }
+
+                _transaction = value;
+
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.Set_Transaction | API | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Internal Transaction Id {value?.InternalTransaction?.TransactionId}, " +
+                    $"Client Connection Id {Connection?.ClientConnectionId}");
+            }
+        }
+
         #endregion
 
         #region Internal/Protected/Private Properties
@@ -260,7 +300,22 @@ namespace Microsoft.Data.SqlClient
         protected override DbConnection DbConnection
         {
             get => Connection;
+            // @TODO: Does set need a trace event like DbTransaction?
             set => Connection = (SqlConnection)value;
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbTransaction/*'/>
+        protected override DbTransaction DbTransaction
+        {
+            get => Transaction;
+            set
+            {
+                Transaction = (SqlTransaction)value;
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.Set_DbTransaction | API | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Client Connection Id {Connection?.ClientConnectionId}");
+            }
         }
 
         private bool IsDirty
