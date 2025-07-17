@@ -5,6 +5,8 @@ using System.Text.Json;
 using Microsoft.Data.SqlClient;
 using Xunit;
 
+#nullable enable
+
 namespace Microsoft.Data.SqlClient.UnitTests
 {
     /// <summary>
@@ -74,11 +76,19 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             byte[] payload = (byte[])mi!.Invoke(null, new object?[] { dto })!;
 
-            // Final payload must satisfy spec limit
-            Assert.InRange(payload.Length, 1, UserAgentInfo.JsonPayloadMaxBytesSpec);
+            // Final payload must satisfy limits
+            Assert.InRange(payload.Length, 1, UserAgentInfo.UserAgentPayloadMaxBytes);
 
             // Convert to string for field presence checks
             string json = Encoding.UTF8.GetString(payload);
+
+            // We either receive the minimal payload with only high‑priority fields,
+            // or we receive an empty payload in case of overflow despite dropping fields.
+            if (payload.Length <= 2)
+            {
+                Assert.Equal("{}", json.Trim());
+                return;
+            }
 
             // High‑priority fields remain
             Assert.Contains(UserAgentInfoDto.DriverJsonKey, json);

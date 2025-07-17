@@ -23,14 +23,48 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     public static class UserAgentInfo
     {
-        public const int DriverNameMaxChars = 16;
-        public const int VersionMaxChars = 16;   
-        public const int OsTypeMaxChars = 16;
-        public const int OsDetailsMaxChars = 128;
-        public const int ArchMaxChars = 16;
-        public const int RuntimeMaxChars = 128;
+        /// <summary>
+        /// Maximum number of characters allowed for the driver name.
+        /// </summary>
+        private const int DriverNameMaxChars = 16;
+
+        /// <summary>
+        /// Maximum number of characters allowed for the driver version.
+        /// </summary>
+        private const int VersionMaxChars = 16;
+
+        /// <summary>
+        /// Maximum number of characters allowed for the operating system type.
+        /// </summary>
+        private const int OsTypeMaxChars = 16;
+
+        /// <summary>
+        /// Maximum number of characters allowed for the operating system details.
+        /// </summary>  
+        private const int OsDetailsMaxChars = 128;
+
+        /// <summary>
+        /// Maximum number of characters allowed for the system architecture.
+        /// </summary>
+        private const int ArchMaxChars = 16;
+
+        /// <summary>
+        /// Maximum number of characters allowed for the driver runtime.
+        /// </summary>
+        private const int RuntimeMaxChars = 128;
+
+        /// <summary>
+        /// Maximum number of bytes allowed for the user agent json payload.
+        /// payloads larger than this may be rejected by the server.
+        /// </summary>
         public const int JsonPayloadMaxBytesSpec = 2047;
+
+        /// <summary>
+        /// Maximum number of bytes allowed before we drop multiple fields 
+        /// and only send bare minimum useragent info.
+        /// </summary>
         public const int UserAgentPayloadMaxBytes = 10000;
+
 
         private const string DefaultJsonValue = "Unknown";
         private const string DefaultDriverName = "MS-MDS";
@@ -60,7 +94,7 @@ namespace Microsoft.Data.SqlClient
 
         static UserAgentInfo()
         {
-            /// Note: We serialize 6 fields in total:
+            // Note: We serialize 6 fields in total:
             // - 4 fields with up to 16 characters each
             // - 2 fields with up to 128 characters each
             //
@@ -100,7 +134,7 @@ namespace Microsoft.Data.SqlClient
             //   some servers may silently drop or reject such packets — behavior we may use for future probing or diagnostics.
 
             driverName = TruncateOrDefault(DefaultDriverName, DriverNameMaxChars);
-            version = TruncateOrDefault(ADP.GetAssemblyVersion.ToString(), VersionMaxChars);
+            version = TruncateOrDefault(ADP.GetAssemblyVersion().ToString(), VersionMaxChars);
             var osVal = DetectOsType();
             osType = TruncateOrDefault(osVal.ToString(), OsTypeMaxChars);
             osDetails = TruncateOrDefault(DetectOsDetails(osVal), OsDetailsMaxChars);
@@ -157,11 +191,11 @@ namespace Microsoft.Data.SqlClient
                 dto.Arch = null; // drop Arch
                 payload = JsonSerializer.SerializeToUtf8Bytes(dto, options);
             }
-#if DEBUG
-            Debug.Assert(payload.Length <= JsonPayloadMaxBytesSpec,
-                $"UserAgent payload is {payload.Length} bytes (spec max {JsonPayloadMaxBytesSpec}).");
-#endif
-            return payload;
+
+            // Last check to ensure we are within the limits(in case remaining fields are still too large)
+            return payload.Length > UserAgentPayloadMaxBytes
+                ? JsonSerializer.SerializeToUtf8Bytes(new { }, options)
+                : payload;
 
         }
 
