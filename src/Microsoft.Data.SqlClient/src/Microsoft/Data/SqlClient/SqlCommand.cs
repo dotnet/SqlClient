@@ -207,6 +207,41 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandType/*'/>
+        [DefaultValue(CommandType.Text)]
+        [RefreshProperties(RefreshProperties.All)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandType)]
+        public override CommandType CommandType
+        {
+            get => _commandType != 0 ? _commandType : CommandType.Text;
+            set
+            {
+                if (_commandType != value)
+                {
+                    switch (value)
+                    {
+                        case CommandType.Text:
+                        case CommandType.StoredProcedure:
+                            PropertyChanging();
+                            _commandType = value;
+                            break;
+                        case CommandType.TableDirect:
+                            throw SQL.NotSupportedCommandType(value);
+                        default:
+                            throw ADP.InvalidCommandType(value);
+                    }
+
+                    // @TODO: Either move this outside the if block or move all the other instances inside the if block.
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        "SqlCommand.Set_CommandType | API | " +
+                        $"Object Id {ObjectID}, " +
+                        $"Command Type value {(int)value}, " +
+                        $"Client Connection Id {Connection?.ClientConnectionId}");
+                }
+            }
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Connection/*'/>
         [DefaultValue(null)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
