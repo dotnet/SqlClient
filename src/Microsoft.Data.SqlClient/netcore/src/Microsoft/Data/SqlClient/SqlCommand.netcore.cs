@@ -175,23 +175,6 @@ namespace Microsoft.Data.SqlClient
         internal static int DebugForceAsyncWriteDelay { get; set; }
 #endif
 
-        /// <summary>
-        /// Return if column encryption setting is enabled.
-        /// The order in the below if is important since _activeConnection.Parser can throw if the
-        /// underlying tds connection is closed and we don't want to change the behavior for folks
-        /// not trying to use transparent parameter encryption i.e. who don't use (SqlCommandColumnEncryptionSetting.Enabled or _activeConnection.IsColumnEncryptionSettingEnabled) here.
-        /// </summary>
-        internal bool IsColumnEncryptionEnabled
-        {
-            get
-            {
-                return (_columnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled
-                        || (_columnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && _activeConnection.IsColumnEncryptionSettingEnabled))
-                       && _activeConnection.Parser != null
-                       && _activeConnection.Parser.IsColumnEncryptionSupported;
-            }
-        }
-
         internal bool ShouldUseEnclaveBasedWorkflow =>
             (!string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) || Connection.AttestationProtocol == SqlConnectionAttestationProtocol.None) &&
                   IsColumnEncryptionEnabled;
@@ -307,10 +290,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // sql reader will pull this value out for each NextResult call.  It is not cumulative
-        // _rowsAffected is cumulative for ExecuteNonQuery across all rpc batches
-        internal int _rowsAffected = -1; // rows affected by the command
-
         // number of rows affected by sp_describe_parameter_encryption.
         // The below line is used only for debug asserts and not exposed publicly or impacts functionality otherwise.
         private int _rowsAffectedBySpDescribeParameterEncryption = -1;
@@ -399,14 +378,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private SqlInternalConnectionTds InternalTdsConnection
-        {
-            get
-            {
-                return (SqlInternalConnectionTds)_activeConnection.InnerConnection;
-            }
-        }
-
         private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
@@ -416,14 +387,6 @@ namespace Microsoft.Data.SqlClient
             {
                 PropertyChanging();
                 _commandTimeout = DefaultCommandTimeout;
-            }
-        }
-
-        private int DefaultCommandTimeout
-        {
-            get
-            {
-                return _activeConnection?.CommandTimeout ?? ADP.DefaultCommandTimeout;
             }
         }
 
@@ -448,12 +411,6 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-        }
-
-        private void PropertyChanging()
-        {
-            // also called from SqlParameterCollection
-            this.IsDirty = true;
         }
 
         // Cancel is supposed to be multi-thread safe.
@@ -6231,25 +6188,6 @@ namespace Microsoft.Data.SqlClient
                 else if (0 < value)
                 {
                     _rowsAffectedBySpDescribeParameterEncryption += value;
-                }
-            }
-        }
-
-        internal int InternalRecordsAffected
-        {
-            get
-            {
-                return _rowsAffected;
-            }
-            set
-            {
-                if (-1 == _rowsAffected)
-                {
-                    _rowsAffected = value;
-                }
-                else if (0 < value)
-                {
-                    _rowsAffected += value;
                 }
             }
         }
