@@ -205,16 +205,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static bool EnableTruncateSwitch
-        {
-            get
-            {
-                bool value;
-                value = AppContext.TryGetSwitch(enableTruncateSwitch, out value) ? value : false;
-                return value;
-            }
-        }
-
         internal SqlInternalTransaction CurrentTransaction
         {
             get
@@ -7849,7 +7839,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (d.Scale != newScale)
             {
-                bool round = !EnableTruncateSwitch;
+                bool round = !LocalAppContextSwitches.TruncateScaledDecimal;
                 return SqlDecimal.AdjustScale(d, newScale - d.Scale, round);
             }
 
@@ -7862,7 +7852,7 @@ namespace Microsoft.Data.SqlClient
 
             if (newScale != oldScale)
             {
-                bool round = !EnableTruncateSwitch;
+                bool round = !LocalAppContextSwitches.TruncateScaledDecimal;
                 SqlDecimal num = new SqlDecimal(value);
                 num = SqlDecimal.AdjustScale(num, newScale - oldScale, round);
                 return num.Value;

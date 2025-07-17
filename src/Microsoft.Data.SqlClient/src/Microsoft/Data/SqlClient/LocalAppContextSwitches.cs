@@ -23,6 +23,7 @@ namespace Microsoft.Data.SqlClient
         private const string UseCompatibilityProcessSniString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni";
         private const string UseCompatibilityAsyncBehaviourString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour";
         private const string UseConnectionPoolV2String = @"Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
+        private const string TruncateScaledDecimalString = @"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal";
 
         // this field is accessed through reflection in tests and should not be renamed or have the type changed without refactoring NullRow related tests
         private static Tristate s_legacyRowVersionNullBehavior;
@@ -34,6 +35,7 @@ namespace Microsoft.Data.SqlClient
         private static Tristate s_useCompatibilityProcessSni;
         private static Tristate s_useCompatibilityAsyncBehaviour;
         private static Tristate s_useConnectionPoolV2;
+        private static Tristate s_truncateScaledDecimal;
 
 #if NET
         static LocalAppContextSwitches()
@@ -294,6 +296,28 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
                 return s_useConnectionPoolV2 == Tristate.True;
+            }
+        }
+
+        /// <summary>
+        /// When set to true, TdsParser will truncate (rather than round) decimal and SqlDecimal values when scaling them.
+        /// </summary>
+        public static bool TruncateScaledDecimal
+        {
+            get
+            {
+                if (s_truncateScaledDecimal == Tristate.NotInitialized)
+                {
+                    if (AppContext.TryGetSwitch(TruncateScaledDecimalString, out bool returnedValue) && returnedValue)
+                    {
+                        s_truncateScaledDecimal = Tristate.True;
+                    }
+                    else
+                    {
+                        s_truncateScaledDecimal = Tristate.False;
+                    }
+                }
+                return s_truncateScaledDecimal == Tristate.True;
             }
         }
 

@@ -25,6 +25,7 @@ public class LocalAppContextSwitchesTest
         Assert.False(LocalAppContextSwitches.UseCompatibilityProcessSni);
         Assert.False(LocalAppContextSwitches.UseCompatibilityAsyncBehaviour);
         Assert.False(LocalAppContextSwitches.UseConnectionPoolV2);
+        Assert.False(LocalAppContextSwitches.TruncateScaledDecimal);
         #if NETFRAMEWORK
         Assert.False(LocalAppContextSwitches.DisableTnirByDefault);
         #endif
