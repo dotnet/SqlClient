@@ -9,7 +9,6 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
-using Microsoft.SqlServer.Server;
 
 #if NET
 using Microsoft.Data.SqlClient.Diagnostics;
@@ -150,6 +149,12 @@ namespace Microsoft.Data.SqlClient
         private TdsParserStateObject _stateObj;
 
         /// <summary>
+        /// Event to call when a statement completes.
+        /// </summary>
+        // @TODO: Make auto-event?
+        private StatementCompletedEventHandler _statementCompletedEventHandler;
+
+        /// <summary>
         /// How command results are applied to a DataRow when used by the update method of
         /// DbDataAdapter.
         /// </summary>
@@ -157,6 +162,25 @@ namespace Microsoft.Data.SqlClient
         
         #endregion
 
+        #region Events
+        
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/StatementCompleted/*'/>
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_StatementCompleted)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_StatementCompleted)]
+        public event StatementCompletedEventHandler StatementCompleted
+        {
+            add
+            {
+                _statementCompletedEventHandler += value;
+            }
+            remove
+            {
+                _statementCompletedEventHandler -= value;
+            }
+        }
+        
+        #endregion
+        
         #region Enums
         
         // @TODO: Rename to match naming conventions
