@@ -44,6 +44,16 @@ namespace Microsoft.Data.SqlClient
         private SqlConnection _activeConnection;
 
         /// <summary>
+        /// Column Encryption Override. Defaults to SqlConnectionSetting, in which case it will be
+        /// Enabled if SqlConnectionOptions.IsColumnEncryptionSettingEnabled = true, Disabled if
+        /// false. This may also be used to set other behavior which overrides connection level
+        /// setting.
+        /// </summary>
+        // @TODO: Make auto-property
+        private SqlCommandColumnEncryptionSetting _columnEncryptionSetting =
+            SqlCommandColumnEncryptionSetting.UseConnectionSetting;
+        
+        /// <summary>
         /// Text to execute when executing the command.
         /// </summary>
         private string _commandText;
@@ -156,6 +166,13 @@ namespace Microsoft.Data.SqlClient
         
         #region Public Properties
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ColumnEncryptionSetting/*'/>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescription(StringsHelper.ResourceNames.TCE_SqlCommand_ColumnEncryptionSetting)]
+        public SqlCommandColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
+        
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandTimeout/*'/>
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
         [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandTimeout)]

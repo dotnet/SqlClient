@@ -118,13 +118,6 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private bool _wasBatchModeColumnEncryptionSettingSetOnce;
 
-        /// <summary>
-        /// Column Encryption Override. Defaults to SqlConnectionSetting, in which case
-        /// it will be Enabled if SqlConnectionOptions.IsColumnEncryptionSettingEnabled = true, Disabled if false.
-        /// This may also be used to set other behavior which overrides connection level setting.
-        /// </summary>
-        private SqlCommandColumnEncryptionSetting _columnEncryptionSetting = SqlCommandColumnEncryptionSetting.UseConnectionSetting;
-
         internal SqlDependency _sqlDep;
 
 #if DEBUG
@@ -459,13 +452,6 @@ namespace Microsoft.Data.SqlClient
                 _notification = value;
             }
         }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ColumnEncryptionSetting/*'/>
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.TCE_SqlCommand_ColumnEncryptionSetting)]
-        public SqlCommandColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
         public void ResetCommandTimeout()
