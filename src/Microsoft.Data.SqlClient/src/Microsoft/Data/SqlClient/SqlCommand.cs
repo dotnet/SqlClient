@@ -320,6 +320,21 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_Parameters)]
+        public new SqlParameterCollection Parameters
+        {
+            get
+            {
+                // Delay the creation of the SqlParameterCollection until user actually uses the
+                // Parameters property.
+                _parameters ??= new SqlParameterCollection();
+                return _parameters;
+            }
+        }
+        
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -412,12 +427,19 @@ namespace Microsoft.Data.SqlClient
             set => Connection = (SqlConnection)value;
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbParameterCollection/*'/>
+        protected override DbParameterCollection DbParameterCollection
+        {
+            get => Parameters;
+        }
+        
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbTransaction/*'/>
         protected override DbTransaction DbTransaction
         {
             get => Transaction;
             set
             {
+                // @TODO: Does this need a trace event, we have one in Transaction?
                 Transaction = (SqlTransaction)value;
                 SqlClientEventSource.Log.TryTraceEvent(
                     "SqlCommand.Set_DbTransaction | API | " +

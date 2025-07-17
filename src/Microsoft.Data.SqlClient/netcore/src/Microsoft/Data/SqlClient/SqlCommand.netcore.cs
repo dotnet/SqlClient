@@ -479,33 +479,6 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EnableOptimizedParameterBinding/*'/>
         public bool EnableOptimizedParameterBinding { get; set; }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_Parameters)]
-        new public SqlParameterCollection Parameters
-        {
-            get
-            {
-                if (_parameters == null)
-                {
-                    // delay the creation of the SqlParameterCollection
-                    // until user actually uses the Parameters property
-                    _parameters = new SqlParameterCollection();
-                }
-                return _parameters;
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbParameterCollection/*'/>
-        protected override DbParameterCollection DbParameterCollection
-        {
-            get
-            {
-                return Parameters;
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/UpdatedRowSource/*'/>
         [DefaultValue(UpdateRowSource.Both)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Update)]
