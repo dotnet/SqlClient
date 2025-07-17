@@ -16,8 +16,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             "vault.azure.cn",                  // China
             "vault.usgovcloudapi.net",         // US Government
             "vault.microsoftazure.de",         // Azure Germany
-            "vault.cloudapi.microsoft.scloud", // USSec
-            "vault.cloudapi.eaglex.ic.gov",    // USNat
             "vault.sovcloud-api.fr",           // France (Bleu)
             "vault.sovcloud-api.de",           // Germany (Delos)
 
@@ -26,8 +24,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             "managedhsm.azure.cn",
             "managedhsm.usgovcloudapi.net",
             "managedhsm.microsoftazure.de",
-            "managedhsm.cloudapi.microsoft.scloud",
-            "managedhsm.cloudapi.eaglex.ic.gov",
             "managedhsm.sovcloud-api.fr",
             "managedhsm.sovcloud-api.de"
         ];
