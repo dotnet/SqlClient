@@ -37,21 +37,22 @@
   <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == 'AE'">
     <Compile Include="AlwaysEncrypted\AKVTests.cs" />
     <Compile Include="AlwaysEncrypted\AKVUnitTests.cs" />
-    <Compile Include="AlwaysEncrypted\EnclaveAzureDatabaseTests.cs" />
-    <Compile Include="AlwaysEncrypted\ExceptionTestAKVStore.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AKVTestTable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AkvColumnMasterKey.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyAzureKeyVault.cs" />
     <Compile Include="AlwaysEncrypted\ApiShould.cs" />
     <Compile Include="AlwaysEncrypted\BulkCopyAE.cs" />
     <Compile Include="AlwaysEncrypted\BulkCopyAEErrorMessage.cs" />
     <Compile Include="AlwaysEncrypted\ColumnDecryptErrorTests.cs" />
+    <Compile Include="AlwaysEncrypted\EnclaveAzureDatabaseTests.cs" />
     <Compile Include="AlwaysEncrypted\End2EndSmokeTests.cs" />
+    <Compile Include="AlwaysEncrypted\ExceptionTestAKVStore.cs" />
     <Compile Include="AlwaysEncrypted\SqlBulkCopyTruncation.cs" />
     <Compile Include="AlwaysEncrypted\SqlNullValues.cs" />
+    <Compile Include="AlwaysEncrypted\TrustedUrlsTest.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\DatabaseHelper.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategy.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyAzureKeyVault.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCertStoreProvider.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AKVTestTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AkvColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ApiTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAETestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAEErrorMessageTestTable.cs" />
