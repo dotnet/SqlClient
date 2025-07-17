@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsNotKerberos))]
         public void TestConnectionStateWithErrorClass20()
         {
-            using GenericTDSServer server = new GenericTDSServer();
+            using TdsServer server = new TdsServer();
             server.Start();
             using SqlConnection conn = new(
                 new SqlConnectionStringBuilder

@@ -24,31 +24,6 @@ using Microsoft.SqlServer.TDS.SSPI;
 
 namespace Microsoft.SqlServer.TDS.Servers
 {
-    public class GenericTDSServer : GenericTDSServer<TDSServerArguments>
-    {
-        /// <summary>
-        /// Default constructor
-        /// </summary>
-        public GenericTDSServer() : this(new TDSServerArguments())
-        {
-        }
-        /// <summary>
-        /// Constructor with arguments
-        /// </summary>
-        public GenericTDSServer(TDSServerArguments arguments) : base(arguments)
-        {
-        }
-
-        /// <summary>
-        /// Constructor with arguments and query engine
-        /// </summary>
-        /// <param name="queryEngine">Query engine</param>
-        /// <param name="arguments">Server arguments</param>
-        public GenericTDSServer(QueryEngine queryEngine, TDSServerArguments arguments) : base(arguments, queryEngine)
-        {
-        }
-    }
-
     /// <summary>
     /// Generic TDS server without specialization
     /// </summary>
@@ -124,7 +99,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public GenericTDSServer(T arguments) :
+        protected GenericTDSServer(T arguments) :
             this(arguments, new QueryEngine(arguments))
         {
         }
@@ -132,7 +107,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public GenericTDSServer(T arguments, QueryEngine queryEngine)
+        protected GenericTDSServer(T arguments, QueryEngine queryEngine)
         {
             // Save arguments
             Arguments = arguments;

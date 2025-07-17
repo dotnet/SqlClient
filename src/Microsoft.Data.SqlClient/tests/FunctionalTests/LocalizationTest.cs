@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Thread.CurrentThread.CurrentCulture = new CultureInfo(culture);
             Thread.CurrentThread.CurrentUICulture = new CultureInfo(culture);
 
-            using GenericTDSServer server = new GenericTDSServer(new TDSServerArguments() { });
+            using TdsServer server = new TdsServer(new TDSServerArguments() { });
             server.Start();
             var connStr = new SqlConnectionStringBuilder() { DataSource = $"dummy,{server.EndPoint.Port}" }.ConnectionString;
             using SqlConnection connection = new SqlConnection(connStr);

@@ -24,6 +24,7 @@
     <Compile Include="RoutingTDSServerArguments.cs" />
     <Compile Include="ServerNameFilterType.cs" />
     <Compile Include="TDSServerArguments.cs" />
+    <Compile Include="TdsServer.cs" />
     <Compile Include="TransientFaultTDSServer.cs" />
     <Compile Include="TransientFaultTDSServerArguments.cs" />
   </ItemGroup>

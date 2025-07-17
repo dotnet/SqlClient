@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void ConnectionTest()
         {
-            using GenericTDSServer server = new GenericTDSServer(new TDSServerArguments() { });
+            using TdsServer server = new TdsServer(new TDSServerArguments() { });
             server.Start();
             var connStr = new SqlConnectionStringBuilder() { DataSource = $"localhost,{server.EndPoint.Port}" }.ConnectionString;
             using SqlConnection connection = new SqlConnection(connStr);
@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void IntegratedAuthConnectionTest()
         {
-            using GenericTDSServer server = new GenericTDSServer(new TDSServerArguments() { });
+            using TdsServer server = new TdsServer(new TDSServerArguments() { });
             server.Start();
             var connStr = new SqlConnectionStringBuilder() { DataSource = $"localhost,{server.EndPoint.Port}" }.ConnectionString;
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connStr);
@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public async Task PreLoginEncryptionExcludedTest()
         {
-            using GenericTDSServer server = new GenericTDSServer(new TDSServerArguments() {Encryption = TDSPreLoginTokenEncryptionType.None });
+            using TdsServer server = new TdsServer(new TDSServerArguments() {Encryption = TDSPreLoginTokenEncryptionType.None });
             server.Start();
             var connStr = new SqlConnectionStringBuilder() { DataSource = $"localhost,{server.EndPoint.Port}" }.ConnectionString;
             SqlConnectionStringBuilder builder = new(connStr)
@@ -192,7 +192,7 @@ namespace Microsoft.Data.SqlClient.Tests
             AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
 
             // Arrange
-            using GenericTDSServer failoverServer = new GenericTDSServer(new TDSServerArguments
+            using TdsServer failoverServer = new TdsServer(new TDSServerArguments
             {
                 // Doesn't need to point to a real endpoint, just needs a value specified
                 FailoverPartner = "localhost,1234"
@@ -398,7 +398,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             // Start a server with connection timeout from the inline data.
             //TODO: do we even need a server for this test?
-            using GenericTDSServer server = new GenericTDSServer();
+            using TdsServer server = new TdsServer();
             server.Start();
             var connStr = new SqlConnectionStringBuilder() { 
                 DataSource = $"localhost,{server.EndPoint.Port}", 
@@ -443,7 +443,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             // Start a server with connection timeout from the inline data.
             //TODO: do we even need a server for this test?
-            using GenericTDSServer server = new GenericTDSServer();
+            using TdsServer server = new TdsServer();
             server.Start();
             var connStr = new SqlConnectionStringBuilder()
             {
@@ -506,7 +506,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 Thread.CurrentThread.CurrentUICulture = new CultureInfo("th-TH");
 
                 //TODO: do we even need a server for this test?
-                using GenericTDSServer server = new GenericTDSServer();
+                using TdsServer server = new TdsServer();
                 server.Start();
                 var connStr = new SqlConnectionStringBuilder()
                 {
@@ -616,7 +616,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             Version simulatedServerVersion = new Version(major, minor, build);
 
-            using GenericTDSServer server = new GenericTDSServer(
+            using TdsServer server = new TdsServer(
                 new TDSServerArguments
                 {
                     ServerVersion = simulatedServerVersion,
@@ -643,7 +643,7 @@ namespace Microsoft.Data.SqlClient.Tests
         public void ConnectionTestDeniedVersion(int major, int minor, int build)
         {
             Version simulatedServerVersion = new Version(major, minor, build);
-            using GenericTDSServer server = new GenericTDSServer(
+            using TdsServer server = new TdsServer(
                 new TDSServerArguments
                 {
                     ServerVersion = simulatedServerVersion,
@@ -671,7 +671,7 @@ namespace Microsoft.Data.SqlClient.Tests
         public void TestConnWithVectorFeatExtVersionNegotiation(bool expectedConnectionResult, byte serverVersion, byte expectedNegotiatedVersion)
         {
             // Start the test TDS server.
-            using var server = new GenericTDSServer();
+            using var server = new TdsServer();
             server.Start();
             server.ServerSupportedVectorFeatureExtVersion = serverVersion;
             server.EnableVectorFeatureExt = serverVersion == 0xFF ? false : true;

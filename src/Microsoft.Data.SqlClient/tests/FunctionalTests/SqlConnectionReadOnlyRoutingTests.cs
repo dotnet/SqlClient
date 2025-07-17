@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void NonRoutedConnection()
         {
-            using GenericTDSServer server = new GenericTDSServer();
+            using TdsServer server = new TdsServer();
             server.Start();
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder() { DataSource = $"localhost,{server.EndPoint.Port}", ApplicationIntent = ApplicationIntent.ReadOnly };
             using SqlConnection connection = new SqlConnection(builder.ConnectionString);
@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public async Task NonRoutedAsyncConnection()
         {
-            using GenericTDSServer server = new GenericTDSServer();
+            using TdsServer server = new TdsServer();
             server.Start();
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder() { DataSource = $"localhost,{server.EndPoint.Port}", ApplicationIntent = ApplicationIntent.ReadOnly };
             using SqlConnection connection = new SqlConnection(builder.ConnectionString);
@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(11)] // The driver rejects more than 10 redirects (11 layers of redirecting servers)
         public void RecursivelyRoutedConnection(int layers)
         {
-            using GenericTDSServer innerServer = new GenericTDSServer();
+            using TdsServer innerServer = new TdsServer();
             innerServer.Start();
             IPEndPoint lastEndpoint = innerServer.EndPoint;
             Stack<RoutingTDSServer> routingLayers = new(layers + 1);
@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(11)] // The driver rejects more than 10 redirects (11 layers of redirecting servers)
         public async Task RecursivelyRoutedAsyncConnection(int layers)
         {
-            using GenericTDSServer innerServer = new GenericTDSServer();
+            using TdsServer innerServer = new TdsServer();
             innerServer.Start();
             IPEndPoint lastEndpoint = innerServer.EndPoint;
             Stack<RoutingTDSServer> routingLayers = new(layers + 1);

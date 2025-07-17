@@ -671,7 +671,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 Console.WriteLine(string.Format("Test: {0} Enabled Listeners", methodName));
 
-                using (var server = new GenericTDSServer(new DiagnosticsQueryEngine(), new TDSServerArguments()))
+                using (var server = new TdsServer(new DiagnosticsQueryEngine(), new TDSServerArguments()))
                 {
                     server.Start(methodName);
                     Console.WriteLine(string.Format("Test: {0} Started Server", methodName));
@@ -867,7 +867,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (DiagnosticListener.AllListeners.Subscribe(diagnosticListenerObserver))
             {
                 Console.WriteLine(string.Format("Test: {0} Enabled Listeners", methodName));
-                using (var server = new GenericTDSServer(new DiagnosticsQueryEngine(), new TDSServerArguments()))
+                using (var server = new TdsServer(new DiagnosticsQueryEngine(), new TDSServerArguments()))
                 {
                     server.Start(methodName);
                     Console.WriteLine(string.Format("Test: {0} Started Server", methodName));
