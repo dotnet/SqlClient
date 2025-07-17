@@ -445,52 +445,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Transaction/*'/>
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_Transaction)]
-        new public SqlTransaction Transaction
-        {
-            get
-            {
-                // if the transaction object has been zombied, just return null
-                if (_transaction != null && _transaction.Connection == null)
-                {
-                    _transaction = null;
-                }
-                return _transaction;
-            }
-            set
-            {
-                // Don't allow the transaction to be changed while in an async operation.
-                if (_transaction != value && _activeConnection != null)
-                {
-                    // If new value...
-                    if (CachedAsyncState.PendingAsyncOperation)
-                    {
-                        // If in pending async state, throw
-                        throw SQL.CannotModifyPropertyAsyncOperationInProgress();
-                    }
-                }
-                _transaction = value;
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_Transaction | API | Object Id {0}, Internal Transaction Id {1}, Client Connection Id {2}", ObjectID, value?.InternalTransaction?.TransactionId, Connection?.ClientConnectionId);
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbTransaction/*'/>
-        protected override DbTransaction DbTransaction
-        {
-            get
-            {
-                return Transaction;
-            }
-            set
-            {
-                Transaction = (SqlTransaction)value;
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_DbTransaction | API | Object Id {0}, Client Connection Id {1}", ObjectID, Connection?.ClientConnectionId);
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandText/*'/>
         [DefaultValue("")]
         [RefreshProperties(RefreshProperties.All)] // MDAC 67707
