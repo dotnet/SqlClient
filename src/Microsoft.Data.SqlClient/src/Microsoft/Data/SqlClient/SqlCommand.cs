@@ -144,7 +144,71 @@ namespace Microsoft.Data.SqlClient
         
         #endregion
         
-        #region Properties
+        #region Public Properties
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Connection/*'/>
+        [DefaultValue(null)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_Connection)]
+        public new SqlConnection Connection
+        {
+            get => _activeConnection;
+            set
+            {
+                // Don't allow the connection to be changed while in an async operation
+                if (_activeConnection != value && _activeConnection != null)
+                {
+                    // If new value...
+                    if (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation)
+                    {
+                        // If in pending async state, throw.
+                        throw SQL.CannotModifyPropertyAsyncOperationInProgress();
+                    }
+                }
+
+                // Check to see if the currently set transaction has completed. If so, null out
+                // our local reference.
+                if (_transaction?.Connection is null)
+                {
+                    _transaction = null;
+                }
+
+                if (IsPrepared)
+                {
+                    if (_activeConnection != value && _activeConnection != null)
+                    {
+                        try
+                        {
+                            Unprepare();
+                        }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
+                        catch (Exception)
+                        {
+                            // We do not really care about errors in unprepare (maybe the old
+                            // connection went bad?)
+                        }
+                        finally
+                        {
+                            // Clean prepare status (even successful unprepare does not do that)
+                            // @TODO: ... but it does?
+                            _prepareHandle = s_cachedInvalidPrepareHandle;
+                            _execType = EXECTYPE.UNPREPARED;
+                        }
+                    }
+                }
+
+                _activeConnection = value;
+
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.Set_Connection | API | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Client Connection Id {value?.ClientConnectionId}");
+            }
+        }
+
+        #endregion
+
+        #region Internal/Protected/Private Properties
         
         internal bool InPrepare => _inPrepare;
         
@@ -172,6 +236,13 @@ namespace Microsoft.Data.SqlClient
 
                 return null;
             }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbConnection/*'/>
+        protected override DbConnection DbConnection
+        {
+            get => Connection;
+            set => Connection = (SqlConnection)value;
         }
 
         private bool IsDirty
@@ -309,7 +380,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (IsDirty)
             {
-                Debug.Assert(_cachedMetaData == null || !_dirty, "dirty query should not have cached metadata!"); // can have cached metadata if dirty because of parameters
+                Debug.Assert(_cachedMetaData is null || !_dirty, "dirty query should not have cached metadata!");
 
                 // Someone changed the command text or the parameter schema so we must unprepare the command
                 Unprepare();
