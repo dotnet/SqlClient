@@ -115,6 +115,11 @@ namespace Microsoft.Data.SqlClient
         private object _prepareHandle = s_cachedInvalidPrepareHandle;
 
         /// <summary>
+        /// Retry logic provider to use for execution of the current instance.
+        /// </summary>
+        private SqlRetryLogicBaseProvider _retryLogicProvider;
+
+        /// <summary>
         /// TDS session the current instance is using.
         /// </summary>
         private TdsParserStateObject _stateObj;
@@ -204,6 +209,19 @@ namespace Microsoft.Data.SqlClient
                     $"Object Id {ObjectID}, " +
                     $"Client Connection Id {value?.ClientConnectionId}");
             }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public SqlRetryLogicBaseProvider RetryLogicProvider
+        {
+            get
+            {
+                _retryLogicProvider ??= SqlConfigurableRetryLogicManager.CommandProvider;
+                return _retryLogicProvider;
+            }
+            set => _retryLogicProvider = value;
         }
 
         #endregion
