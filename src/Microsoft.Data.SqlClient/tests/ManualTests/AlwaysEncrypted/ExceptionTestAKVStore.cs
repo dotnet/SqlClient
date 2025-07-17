@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void EmptyColumnEncryptionKey()
         {
             Exception ex1 = Assert.Throws<ArgumentException>(() => _fixture.AkvStoreProvider.EncryptColumnEncryptionKey(_fixture.AkvKeyUrl, MasterKeyEncAlgo, new byte[] { }));
-            Assert.Matches($@"Internal error. Empty columnEncryptionKey specified.", ex1.Message);
+            Assert.Matches($@"Internal error. Empty 'columnEncryptionKey' specified.", ex1.Message);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void EmptyEncryptedColumnEncryptionKey()
         {
             Exception ex1 = Assert.Throws<ArgumentException>(() => _fixture.AkvStoreProvider.DecryptColumnEncryptionKey(_fixture.AkvKeyUrl, MasterKeyEncAlgo, new byte[] { }));
-            Assert.Matches($@"Internal error. Empty encryptedColumnEncryptionKey specified", ex1.Message);
+            Assert.Matches($@"Internal error. Empty 'encryptedColumnEncryptionKey' specified", ex1.Message);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
@@ -182,7 +182,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             string dummyPathWithOnlyHost = @"https://www.microsoft.com";
             string invalidUrlErrorMessage = $@"Invalid url specified: '{dummyPathWithOnlyHost}'";
             string dummyPathWithInvalidKey = @"https://www.microsoft.vault.azure.com/keys/dummykey/dummykeyid";
-            string invalidTrustedEndpointErrorMessage = $@"Invalid Azure Key Vault key path specified: '{dummyPathWithInvalidKey}'. Valid trusted endpoints: vault.azure.net, vault.azure.cn, vault.usgovcloudapi.net, vault.microsoftazure.de, managedhsm.azure.net, managedhsm.azure.cn, managedhsm.usgovcloudapi.net, managedhsm.microsoftazure.de.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
 
             Exception ex = Assert.Throws<ArgumentException>(
                 () => _fixture.AkvStoreProvider.EncryptColumnEncryptionKey(dummyPathWithOnlyHost, MasterKeyEncAlgo, cek));
@@ -190,7 +189,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             ex = Assert.Throws<ArgumentException>(
                 () => _fixture.AkvStoreProvider.EncryptColumnEncryptionKey(dummyPathWithInvalidKey, MasterKeyEncAlgo, cek));
-            Assert.Matches(invalidTrustedEndpointErrorMessage, ex.Message);
+            Assert.Matches(TrustedUrlsTest.MakeInvalidVaultErrorMessage(dummyPathWithInvalidKey), ex.Message);
 
             ex = Assert.Throws<ArgumentException>(
                  () => _fixture.AkvStoreProvider.DecryptColumnEncryptionKey(dummyPathWithOnlyHost, MasterKeyEncAlgo, encryptedCek));
@@ -198,7 +197,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             ex = Assert.Throws<ArgumentException>(
                  () => _fixture.AkvStoreProvider.DecryptColumnEncryptionKey(dummyPathWithInvalidKey, MasterKeyEncAlgo, encryptedCek));
-            Assert.Matches(invalidTrustedEndpointErrorMessage, ex.Message);
+            Assert.Matches(TrustedUrlsTest.MakeInvalidVaultErrorMessage(dummyPathWithInvalidKey), ex.Message);
         }
 
         [InlineData(true)]
@@ -250,7 +249,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(
                     new SqlClientCustomTokenCredential(), trustedEndpoints);
             });
-            Assert.Matches("One or more of the elements in trustedEndpoints are null or empty or consist of only whitespace.", ex.Message);
+            Assert.Matches("One or more of the elements in 'trustedEndpoints' are null or empty or consist of only whitespace.", ex.Message);
         }
 
         [InlineData(null)]
@@ -264,7 +263,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(
                     new SqlClientCustomTokenCredential(), trustedEndpoint);
             });
-            Assert.Matches("One or more of the elements in trustedEndpoints are null or empty or consist of only whitespace.", ex.Message);
+            Assert.Matches("One or more of the elements in 'trustedEndpoints' are null or empty or consist of only whitespace.", ex.Message);
         }
     }
 }

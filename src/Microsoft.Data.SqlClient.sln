@@ -172,6 +172,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlTypes", "
 	ProjectSection(SolutionItems) = preProject
 		..\doc\snippets\Microsoft.Data.SqlTypes\SqlFileStream.xml = ..\doc\snippets\Microsoft.Data.SqlTypes\SqlFileStream.xml
 		..\doc\snippets\Microsoft.Data.SqlTypes\SqlJson.xml = ..\doc\snippets\Microsoft.Data.SqlTypes\SqlJson.xml
+		..\doc\snippets\Microsoft.Data.SqlTypes\SqlVector.xml = ..\doc\snippets\Microsoft.Data.SqlTypes\SqlVector.xml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.TestUtilities", "Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.TestUtilities\Microsoft.Data.SqlClient.TestUtilities.csproj", "{89D6D382-9B36-43C9-A912-03802FDA8E36}"
@@ -603,7 +604,6 @@ Global
 		{89D6D382-9B36-43C9-A912-03802FDA8E36} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{E4C08DCE-DC29-4FEB-B655-1E7287DB5A2B} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{B499E477-C9B1-4087-A5CF-5C762D90E433} = {0CC4817A-12F3-4357-912C-09315FAAD008}
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{599A336B-2A5F-473D-8442-1223ED37C93E} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{A314812A-7820-4565-A2A8-ABBE391C11E4} = {4F3CD363-B1E6-4D6D-9466-97D78A56BE45}
 		{869A9BCC-D303-4365-9BF7-958CD6387916} = {71F356DC-DFA3-4163-8BFE-D268722CE189}

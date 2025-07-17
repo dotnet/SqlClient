@@ -1,20 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <RootNamespace />
-  </PropertyGroup>
-
+	<PropertyGroup>
+		<TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<RootNamespace />
+	</PropertyGroup>
+  
+  <!-- References ====================================================== -->
   <ItemGroup>
-    <Reference Include="System.Configuration" Condition="'$(TargetFramework)' == 'net462'" />
-	  <Reference Include="System.Transactions" Condition="'$(TargetFramework)' == 'net462'" />
-	</ItemGroup>
-	<ItemGroup>
+    <!-- References that apply to all target frameworks -->
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="System.Buffers" />
     <PackageReference Include="System.Memory" />
-    <PackageReference Include="System.Data.Common" Condition="'$(TargetFramework)' == 'net462'" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
-    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs"  />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <!-- References that only apply to net462 -->
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Configuration.ConfigurationManager" />
+    <Reference Include="System.Transactions" />
+    <PackageReference Include="System.Data.Common" />
+    <PackageReference Include="System.ValueTuple" />
+	</ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <!-- References that only apply to netcore -->
+    <PackageReference Include="System.Configuration.ConfigurationManager" />
   </ItemGroup>
 </Project>

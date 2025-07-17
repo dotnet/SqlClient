@@ -33,7 +33,7 @@
   <PropertyGroup>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFramework)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
-  <ItemGroup>
+  <ItemGroup Condition="$(CDP_BUILD_TYPE)!=Official">
     <InternalsVisibleTo Include="UnitTests" />
   </ItemGroup>
   <ItemGroup>
@@ -282,6 +282,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\ConcurrentQueueSemaphore.netcore.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\ConcurrentQueueSemaphore.netcore.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\ResolvedServerSpn.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\ResolvedServerSpn.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniAsyncCallback.netcore.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\SniAsyncCallback.netcore.cs</Link>
     </Compile>
@@ -408,14 +411,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\ExtendedClrTypeCode.cs">
       <Link>Microsoft\Data\SqlClient\Server\ExtendedClrTypeCode.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\ITypedGetters.cs">
-      <Link>Microsoft\Data\SqlClient\Server\ITypedGetters.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\ITypedGettersV3.cs">
       <Link>Microsoft\Data\SqlClient\Server\ITypedGettersV3.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\ITypedSetters.cs">
-      <Link>Microsoft\Data\SqlClient\Server\ITypedSetters.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\ITypedSettersV3.cs">
       <Link>Microsoft\Data\SqlClient\Server\ITypedSettersV3.cs</Link>
@@ -426,12 +423,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs">
       <Link>Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiEventSink.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SmiEventSink.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiEventSink_Default.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SmiEventSink_Default.Common.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiGettersStream.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiGettersStream.cs</Link>
     </Compile>
@@ -440,9 +431,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiSettersStream.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiSettersStream.cs</Link>
@@ -459,9 +447,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlDataRecord.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlDataRecord.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.netcore.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlMetaData.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlMetaData.cs</Link>
     </Compile>
@@ -477,6 +462,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs">
       <Link>Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ISqlVector.cs">
+      <Link>Microsoft\Data\SqlClient\ISqlVector.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SignatureVerificationCache.cs">
       <Link>Microsoft\Data\SqlClient\SignatureVerificationCache.cs</Link>
     </Compile>
@@ -491,6 +479,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs">
       <Link>Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAppContextSwitchManager.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\SqlAppContextSwitchManager.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs">
       <Link>Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs</Link>
@@ -795,6 +786,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlJson.cs">
       <Link>Microsoft\Data\SqlTypes\SqlJson.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlVector.cs">
+      <Link>Microsoft\Data\SqlTypes\SqlVector.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Resources\ResCategoryAttribute.cs">
       <Link>Resources\ResCategoryAttribute.cs</Link>
     </Compile>
@@ -804,8 +798,7 @@
     <Compile Include="$(CommonSourceRoot)System\Diagnostics\CodeAnalysis.cs">
       <Link>System\Diagnostics\CodeAnalysis.cs</Link>
     </Compile>
-
-    <Compile Include="Microsoft\Data\SqlClient\SqlAppContextSwitchManager.NetCoreApp.cs" />
+    
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
@@ -817,6 +810,7 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
   </ItemGroup>
+
   <!-- Windows only -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Handles\SafeLibraryHandle.netcore.cs">
@@ -963,9 +957,11 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
+    
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
   </ItemGroup>
+
   <!-- Unix only -->
   <ItemGroup Condition="'$(TargetsUnix)' == 'true'">
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Unix.cs">
@@ -1004,8 +1000,10 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs</Link>
     </Compile>
+
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
   </ItemGroup>
+
   <!-- Resources -->
   <ItemGroup>
     <Compile Include="$(CommonSourceRoot)Resources\StringsHelper.cs">
@@ -1033,6 +1031,7 @@
       <Link>Resources\Microsoft.Data.SqlClient.SqlMetaData.xml</Link>
     </EmbeddedResource>
   </ItemGroup>
+
   <!-- Package References Etc -->
   <ItemGroup>
     <PackageReference Include="Azure.Identity" />

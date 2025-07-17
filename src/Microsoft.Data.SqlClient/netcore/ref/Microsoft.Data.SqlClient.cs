@@ -19,6 +19,8 @@ namespace Microsoft.Data
     {
         /// <include file='../../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlJson[@name="default"]' />
         public const System.Data.SqlDbType Json = (System.Data.SqlDbType)35;
+        /// <include file='../../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlVector[@name="default"]' />
+        public const System.Data.SqlDbType Vector = (System.Data.SqlDbType)36;
     }
 }
 
@@ -116,6 +118,26 @@ namespace Microsoft.Data.SqlTypes
         public static SqlJson Null => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/Value/*' />
         public string Value { get { throw null; } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ToString/*' />
+        public override string ToString() { throw null; }
+    }
+
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/SqlVector/*' />
+    public readonly struct SqlVector<T> : System.Data.SqlTypes.INullable
+    where T : unmanaged
+    {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor1/*' />
+        public SqlVector(System.ReadOnlyMemory<T> memory) { }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/IsNull/*' />
+        public bool IsNull => throw null;
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Null/*' />
+        public static SqlVector<T> Null => throw null;
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Length/*' />
+        public int Length { get { throw null; } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Memory/*' />
+        public System.ReadOnlyMemory<T> Memory { get { throw null; } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/CreateNull/*' />
+        public static SqlVector<T> CreateNull(int length) { throw null; }
     }
 }
 namespace Microsoft.Data.SqlClient
@@ -1368,6 +1390,8 @@ namespace Microsoft.Data.SqlClient
         public virtual object GetSqlValue(int i) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlValues/*'/>
         public virtual int GetSqlValues(object[] values) { throw null; }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlVector/*'/>
+        public virtual Microsoft.Data.SqlTypes.SqlVector<T> GetSqlVector<T>(int i) where T : unmanaged { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlXml/*'/>
         public virtual System.Data.SqlTypes.SqlXml GetSqlXml(int i) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSchemaTable/*'/>
