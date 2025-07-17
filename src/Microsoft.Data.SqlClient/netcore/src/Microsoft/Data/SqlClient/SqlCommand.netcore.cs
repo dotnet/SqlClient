@@ -322,8 +322,6 @@ namespace Microsoft.Data.SqlClient
         // transaction support
         private SqlTransaction _transaction;
 
-        private StatementCompletedEventHandler _statementCompletedEventHandler;
-
         private bool _batchRPCMode;
         private List<_SqlRPC> _RPCList;
         private _SqlRPC[] _sqlRPCParameterEncryptionReqArray;
@@ -449,21 +447,6 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 return _activeConnection?.CommandTimeout ?? ADP.DefaultCommandTimeout;
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/StatementCompleted/*'/>
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_StatementCompleted)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_StatementCompleted)]
-        public event StatementCompletedEventHandler StatementCompleted
-        {
-            add
-            {
-                _statementCompletedEventHandler += value;
-            }
-            remove
-            {
-                _statementCompletedEventHandler -= value;
             }
         }
 
