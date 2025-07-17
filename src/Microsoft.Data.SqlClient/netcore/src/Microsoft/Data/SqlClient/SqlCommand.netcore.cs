@@ -108,7 +108,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
-        private bool _designTimeInvisible;
 
         /// <summary>
         /// Indicates if the column encryption setting was set at-least once in the batch rpc mode, when using AddBatchCommand.
@@ -452,27 +451,6 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 return _activeConnection?.CommandTimeout ?? ADP.DefaultCommandTimeout;
-            }
-        }
-
-        // By default, the cmd object is visible on the design surface (i.e. VS7 Server Tray)
-        // to limit the number of components that clutter the design surface,
-        // when the DataAdapter design wizard generates the insert/update/delete commands it will
-        // set the DesignTimeVisible property to false so that cmds won't appear as individual objects
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DesignTimeVisible/*'/>
-        [DefaultValue(true)]
-        [DesignOnly(true)]
-        [Browsable(false)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public override bool DesignTimeVisible
-        {
-            get
-            {
-                return !_designTimeInvisible;
-            }
-            set
-            {
-                _designTimeInvisible = !value;
             }
         }
 

@@ -67,6 +67,15 @@ namespace Microsoft.Data.SqlClient
         /// Type of the command to execute.
         /// </summary>
         private CommandType _commandType;
+
+        /// <summary>
+        /// By default, the cmd object is visible on the design surface (i.e. VS7 Server Tray) to
+        /// limit the number of components that clutter the design surface, when the DataAdapter
+        /// design wizard generates the insert/update/delete commands it will set the
+        /// DesignTimeVisible property to false so that cmds won't appear as individual objects
+        /// </summary>
+        // @TODO: Make auto-property
+        private bool _designTimeInvisible;
         
         /// <summary>
         /// Current state of preparation of the command.
@@ -320,6 +329,17 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DesignTimeVisible/*'/>
+        [DefaultValue(true)]
+        [DesignOnly(true)]
+        [Browsable(false)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public override bool DesignTimeVisible
+        {
+            get => !_designTimeInvisible;
+            set => _designTimeInvisible = !value;
+        }
+        
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
