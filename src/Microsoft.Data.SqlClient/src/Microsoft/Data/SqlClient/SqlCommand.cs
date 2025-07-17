@@ -49,6 +49,11 @@ namespace Microsoft.Data.SqlClient
         private string _commandText;
 
         /// <summary>
+        /// Maximum amount of time, in seconds, the command will execute before timing out.
+        /// </summary>
+        private int? _commandTimeout;
+        
+        /// <summary>
         /// Type of the command to execute.
         /// </summary>
         private CommandType _commandType;
@@ -151,6 +156,33 @@ namespace Microsoft.Data.SqlClient
         
         #region Public Properties
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandTimeout/*'/>
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandTimeout)]
+        public override int CommandTimeout
+        {
+            get => _commandTimeout ?? DefaultCommandTimeout;
+            set
+            {
+                if (value < 0)
+                {
+                    throw ADP.InvalidCommandTimeout(value);
+                }
+
+                if (value != _commandTimeout)
+                {
+                    PropertyChanging();
+                    _commandTimeout = value;
+                }
+                
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.Set_CommandTimeout | API | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Command Timeout value {value}, " +
+                    $"Client Connection Id {Connection?.ClientConnectionId}");
+            }
+        }
+        
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandText/*'/>
         [DefaultValue("")]
         [RefreshProperties(RefreshProperties.All)]

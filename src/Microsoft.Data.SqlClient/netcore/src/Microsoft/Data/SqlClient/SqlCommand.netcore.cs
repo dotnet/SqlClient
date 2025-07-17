@@ -107,7 +107,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private int? _commandTimeout;
         private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
         private bool _designTimeInvisible;
 
@@ -451,32 +450,6 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
         [ResDescription(StringsHelper.ResourceNames.TCE_SqlCommand_ColumnEncryptionSetting)]
         public SqlCommandColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandTimeout/*'/>
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandTimeout)]
-        public override int CommandTimeout
-        {
-            get
-            {
-                return _commandTimeout ?? DefaultCommandTimeout;
-            }
-            set
-            {
-                if (value < 0)
-                {
-                    throw ADP.InvalidCommandTimeout(value);
-                }
-
-                if (value != _commandTimeout)
-                {
-                    PropertyChanging();
-                    _commandTimeout = value;
-                }
-
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_CommandTimeout | API | ObjectId {0}, Command Timeout value {1}, Client Connection Id {2}", ObjectID, value, Connection?.ClientConnectionId);
-            }
-        }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
         public void ResetCommandTimeout()
