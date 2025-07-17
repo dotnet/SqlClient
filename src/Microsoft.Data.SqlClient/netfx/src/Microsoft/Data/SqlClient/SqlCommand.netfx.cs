@@ -115,8 +115,6 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private bool _wasBatchModeColumnEncryptionSettingSetOnce;
 
-        internal SqlDependency _sqlDep;
-
 #if DEBUG
         /// <summary>
         /// Force the client to sleep during sp_describe_parameter_encryption in the function TryFetchInputParameterEncryptionInfo.
@@ -316,9 +314,6 @@ namespace Microsoft.Data.SqlClient
         // The below line is used only for debug asserts and not exposed publicly or impacts functionality otherwise.
         private int _rowsAffectedBySpDescribeParameterEncryption = -1;
 
-        private SqlNotificationRequest _notification;
-        private bool _notificationAutoEnlist = true;            // Notifications auto enlistment is turned on by default
-
         // transaction support
         private SqlTransaction _transaction;
 
@@ -412,41 +407,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/NotificationAutoEnlist/*'/>
-        [DefaultValue(true)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Notification)]
-        [ResDescription(StringsHelper.ResourceNames.SqlCommand_NotificationAutoEnlist)]
-        public bool NotificationAutoEnlist
-        {
-            get
-            {
-                return _notificationAutoEnlist;
-            }
-            set
-            {
-                _notificationAutoEnlist = value;
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Notification/*'/>
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)] // MDAC 90471
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Notification)]
-        [ResDescription(StringsHelper.ResourceNames.SqlCommand_Notification)]
-        public SqlNotificationRequest Notification
-        {
-            get
-            {
-                return _notification;
-            }
-            set
-            {
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlCommand.set_Notification|API> {0}", ObjectID);
-                _sqlDep = null;
-                _notification = value;
-            }
-        }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
         public void ResetCommandTimeout()
