@@ -16,20 +16,20 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// <summary>
     /// TDS Server that routes clients to the configured destination
     /// </summary>
-    public class RoutingTDSServer : GenericTDSServer<RoutingTDSServerArguments>
+    public class RoutingTdsServer : GenericTdsServer<RoutingTdsServerArguments>
     {
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public RoutingTDSServer() :
-            this(new RoutingTDSServerArguments())
+        public RoutingTdsServer() :
+            this(new RoutingTdsServerArguments())
         {
         }
 
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public RoutingTDSServer(RoutingTDSServerArguments arguments) :
+        public RoutingTdsServer(RoutingTdsServerArguments arguments) :
             base(arguments)
         {
         }
@@ -43,10 +43,10 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSMessageCollection response = base.OnPreLoginRequest(session, request);
 
             // Check if arguments are of the routing server
-            if (Arguments is RoutingTDSServerArguments)
+            if (Arguments is RoutingTdsServerArguments)
             {
                 // Cast to routing server arguments
-                RoutingTDSServerArguments serverArguments = Arguments as RoutingTDSServerArguments;
+                RoutingTdsServerArguments serverArguments = Arguments as RoutingTdsServerArguments;
 
                 // Check if routing is configured during login
                 if (serverArguments.RouteOnPacket == TDSMessageType.TDS7Login)
@@ -78,10 +78,10 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
 
             // Check if arguments are of the routing server
-            if (Arguments is RoutingTDSServerArguments)
+            if (Arguments is RoutingTdsServerArguments)
             {
                 // Cast to routing server arguments
-                RoutingTDSServerArguments ServerArguments = Arguments as RoutingTDSServerArguments;
+                RoutingTdsServerArguments ServerArguments = Arguments as RoutingTdsServerArguments;
 
                 // Check filter
                 if (ServerArguments.RequireReadOnly && (loginRequest.TypeFlags.ReadOnlyIntent != TDSLogin7TypeFlagsReadOnlyIntent.ReadOnly))
@@ -136,10 +136,10 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSMessageCollection batchResponse = base.OnSQLBatchRequest(session, request);
 
             // Check if arguments are of routing server
-            if (Arguments is RoutingTDSServerArguments)
+            if (Arguments is RoutingTdsServerArguments)
             {
                 // Cast to routing server arguments
-                RoutingTDSServerArguments ServerArguments = Arguments as RoutingTDSServerArguments;
+                RoutingTdsServerArguments ServerArguments = Arguments as RoutingTdsServerArguments;
 
                 // Check routing condition
                 if (ServerArguments.RouteOnPacket == TDSMessageType.SQLBatch)
@@ -188,10 +188,10 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSMessageCollection responseMessageCollection = base.OnAuthenticationCompleted(session);
 
             // Check if arguments are of routing server
-            if (Arguments is RoutingTDSServerArguments)
+            if (Arguments is RoutingTdsServerArguments)
             {
                 // Cast to routing server arguments
-                RoutingTDSServerArguments serverArguments = Arguments as RoutingTDSServerArguments;
+                RoutingTdsServerArguments serverArguments = Arguments as RoutingTdsServerArguments;
 
                 // Check routing condition
                 if (serverArguments.RouteOnPacket == TDSMessageType.TDS7Login)
@@ -233,7 +233,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         protected TDSPacketToken CreateRoutingToken()
         {
             // Cast to routing server arguments
-            RoutingTDSServerArguments ServerArguments = Arguments as RoutingTDSServerArguments;
+            RoutingTdsServerArguments ServerArguments = Arguments as RoutingTdsServerArguments;
 
             // Construct routing token value
             TDSRoutingEnvChangeTokenValue routingInfo = new TDSRoutingEnvChangeTokenValue();

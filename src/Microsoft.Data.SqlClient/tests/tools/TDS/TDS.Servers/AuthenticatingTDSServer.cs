@@ -12,20 +12,20 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// <summary>
     /// TDS Server that authenticates clients according to the requested parameters
     /// </summary>
-    public class AuthenticatingTDSServer : GenericTDSServer<AuthenticatingTDSServerArguments>
+    public class AuthenticatingTdsServer : GenericTdsServer<AuthenticatingTdsServerArguments>
     {
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public AuthenticatingTDSServer() :
-            this(new AuthenticatingTDSServerArguments())
+        public AuthenticatingTdsServer() :
+            this(new AuthenticatingTdsServerArguments())
         {
         }
 
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public AuthenticatingTDSServer(AuthenticatingTDSServerArguments arguments) :
+        public AuthenticatingTdsServer(AuthenticatingTdsServerArguments arguments) :
             base(arguments)
         {
         }
@@ -39,10 +39,10 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
 
             // Check if arguments are of the authenticating TDS server
-            if (Arguments is AuthenticatingTDSServerArguments)
+            if (Arguments is AuthenticatingTdsServerArguments)
             {
                 // Cast to authenticating TDS server arguments
-                AuthenticatingTDSServerArguments ServerArguments = Arguments as AuthenticatingTDSServerArguments;
+                AuthenticatingTdsServerArguments ServerArguments = Arguments as AuthenticatingTdsServerArguments;
 
                 // Check if we're still processing normal login
                 if (ServerArguments.ApplicationIntentFilter != ApplicationIntentFilterType.All)

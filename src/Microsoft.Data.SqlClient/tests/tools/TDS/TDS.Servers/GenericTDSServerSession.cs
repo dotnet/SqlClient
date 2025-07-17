@@ -17,7 +17,7 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// <summary>
     /// Generic session for TDS Server
     /// </summary>
-    public class GenericTDSServerSession : ITDSServerSession
+    public class GenericTdsServerSession : ITDSServerSession
     {
         /// <summary>
         /// Server that created the session
@@ -259,7 +259,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public GenericTDSServerSession(ITDSServer server, uint sessionID) :
+        public GenericTdsServerSession(ITDSServer server, uint sessionID) :
             this(server, sessionID, 4096)
         {
         }
@@ -267,7 +267,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public GenericTDSServerSession(ITDSServer server, uint sessionID, uint packetSize)
+        public GenericTdsServerSession(ITDSServer server, uint sessionID, uint packetSize)
         {
             // Save the server
             Server = server;

@@ -52,15 +52,15 @@ namespace Microsoft.Data.SqlClient.Tests
             using TdsServer innerServer = new TdsServer();
             innerServer.Start();
             IPEndPoint lastEndpoint = innerServer.EndPoint;
-            Stack<RoutingTDSServer> routingLayers = new(layers + 1);
+            Stack<RoutingTdsServer> routingLayers = new(layers + 1);
             string lastConnectionString = (new SqlConnectionStringBuilder() { DataSource = $"localhost,{lastEndpoint.Port}" }).ConnectionString;
 
             try
             {
                 for (int i = 0; i < layers; i++)
                 {
-                    RoutingTDSServer router = new RoutingTDSServer(
-                        new RoutingTDSServerArguments()
+                    RoutingTdsServer router = new RoutingTdsServer(
+                        new RoutingTdsServerArguments()
                     {
                         RoutingTCPHost = lastEndpoint.Address.ToString(),
                         RoutingTCPPort = (ushort)lastEndpoint.Port,
@@ -93,15 +93,15 @@ namespace Microsoft.Data.SqlClient.Tests
             using TdsServer innerServer = new TdsServer();
             innerServer.Start();
             IPEndPoint lastEndpoint = innerServer.EndPoint;
-            Stack<RoutingTDSServer> routingLayers = new(layers + 1);
+            Stack<RoutingTdsServer> routingLayers = new(layers + 1);
             string lastConnectionString = (new SqlConnectionStringBuilder() { DataSource = $"localhost,{lastEndpoint.Port}" }).ConnectionString;
 
             try
             {
                 for (int i = 0; i < layers; i++)
                 {
-                    RoutingTDSServer router = new RoutingTDSServer(
-                        new RoutingTDSServerArguments()
+                    RoutingTdsServer router = new RoutingTdsServer(
+                        new RoutingTdsServerArguments()
                         {
                             RoutingTCPHost = lastEndpoint.Address.ToString(),
                             RoutingTCPPort = (ushort)lastEndpoint.Port,
@@ -149,8 +149,8 @@ namespace Microsoft.Data.SqlClient.Tests
         public void TransientFaultAtRoutedLocationTest(uint errorCode)
         {
             // Arrange
-            using TransientFaultTDSServer server = new TransientFaultTDSServer(
-                new TransientFaultTDSServerArguments()
+            using TransientFaultTdsServer server = new TransientFaultTdsServer(
+                new TransientFaultTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,
@@ -158,8 +158,8 @@ namespace Microsoft.Data.SqlClient.Tests
 
             server.Start();
 
-            using RoutingTDSServer router = new RoutingTDSServer(
-                new RoutingTDSServerArguments()
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
                 {
                     RoutingTCPHost = server.EndPoint.Address.ToString(),
                     RoutingTCPPort = (ushort)server.EndPoint.Port,

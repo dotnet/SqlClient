@@ -4,18 +4,18 @@
 
 namespace Microsoft.SqlServer.TDS.Servers
 {
-    public class TdsServer : GenericTDSServer<TDSServerArguments>
+    public class TdsServer : GenericTdsServer<TdsServerArguments>
     {
         /// <summary>
         /// Default constructor
         /// </summary>
-        public TdsServer() : this(new TDSServerArguments())
+        public TdsServer() : this(new TdsServerArguments())
         {
         }
         /// <summary>
         /// Constructor with arguments
         /// </summary>
-        public TdsServer(TDSServerArguments arguments) : base(arguments)
+        public TdsServer(TdsServerArguments arguments) : base(arguments)
         {
         }
 
@@ -24,7 +24,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         /// <param name="queryEngine">Query engine</param>
         /// <param name="arguments">Server arguments</param>
-        public TdsServer(QueryEngine queryEngine, TDSServerArguments arguments) : base(arguments, queryEngine)
+        public TdsServer(QueryEngine queryEngine, TdsServerArguments arguments) : base(arguments, queryEngine)
         {
         }
     }

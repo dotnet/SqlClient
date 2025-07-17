@@ -7,7 +7,7 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// <summary>
     /// Arguments for routing TDS Server
     /// </summary>
-    public class RoutingTDSServerArguments : TDSServerArguments
+    public class RoutingTdsServerArguments : TdsServerArguments
     {
         /// <summary>
         /// Routing destination protocol
@@ -37,7 +37,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public RoutingTDSServerArguments()
+        public RoutingTdsServerArguments()
         {
             // By default we route on login
             RouteOnPacket = TDSMessageType.TDS7Login;

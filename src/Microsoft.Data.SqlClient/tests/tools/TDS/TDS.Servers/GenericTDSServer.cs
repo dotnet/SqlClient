@@ -27,8 +27,8 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// <summary>
     /// Generic TDS server without specialization
     /// </summary>
-    public class GenericTDSServer<T> : ITDSServer, IDisposable
-        where T : TDSServerArguments
+    public abstract class GenericTdsServer<T> : ITDSServer, IDisposable
+        where T : TdsServerArguments
     {
         /// <summary>
         /// Delegate to be called when a LOGIN7 request has been received and is
@@ -99,7 +99,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        protected GenericTDSServer(T arguments) :
+        protected GenericTdsServer(T arguments) :
             this(arguments, new QueryEngine(arguments))
         {
         }
@@ -107,7 +107,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        protected GenericTDSServer(T arguments, QueryEngine queryEngine)
+        protected GenericTdsServer(T arguments, QueryEngine queryEngine)
         {
             // Save arguments
             Arguments = arguments;
@@ -139,7 +139,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             Interlocked.Increment(ref _sessionCount);
 
             // Create a new session
-            GenericTDSServerSession session = new GenericTDSServerSession(this, (uint)_sessionCount);
+            GenericTdsServerSession session = new GenericTdsServerSession(this, (uint)_sessionCount);
 
             // Use configured encryption certificate and protocols
             session.EncryptionCertificate = Arguments.EncryptionCertificate;
@@ -179,7 +179,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSPreLoginToken preLoginToken = new TDSPreLoginToken(Arguments.ServerVersion, serverResponse, false); // TDS server doesn't support MARS
 
             // Cache the received Nonce into the session
-            (session as GenericTDSServerSession).ClientNonce = preLoginRequest.Nonce;
+            (session as GenericTdsServerSession).ClientNonce = preLoginRequest.Nonce;
 
             // Check if the server has been started up as requiring FedAuth when choosing between SSPI and FedAuth
             if (Arguments.FedAuthRequiredPreLoginOption == TdsPreLoginFedAuthRequiredOption.FedAuthRequired)
@@ -191,7 +191,7 @@ namespace Microsoft.SqlServer.TDS.Servers
                 }
 
                 // Keep the federated authentication required flag in the server session
-                (session as GenericTDSServerSession).FedAuthRequiredPreLoginServerResponse = preLoginToken.FedAuthRequired;
+                (session as GenericTdsServerSession).FedAuthRequiredPreLoginServerResponse = preLoginToken.FedAuthRequired;
 
                 if (preLoginRequest.Nonce != null)
                 {
@@ -201,7 +201,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             }
 
             // Cache the server Nonce in a session
-            (session as GenericTDSServerSession).ServerNonce = preLoginToken.Nonce;
+            (session as GenericTdsServerSession).ServerNonce = preLoginToken.Nonce;
 
             // Log response
             TDSUtilities.Log(Arguments.Log, "Response", preLoginToken);
@@ -265,7 +265,7 @@ namespace Microsoft.SqlServer.TDS.Servers
                                 TDSLogin7SessionRecoveryOptionToken sessionStateOption = option as TDSLogin7SessionRecoveryOptionToken;
 
                                 // Inflate session state
-                                (session as GenericTDSServerSession).Inflate(sessionStateOption.Initial, sessionStateOption.Current);
+                                (session as GenericTdsServerSession).Inflate(sessionStateOption.Initial, sessionStateOption.Current);
 
                                 break;
                             }
@@ -287,7 +287,7 @@ namespace Microsoft.SqlServer.TDS.Servers
                                 }
 
                                 // Save the fed auth library to be used
-                                (session as GenericTDSServerSession).FederatedAuthenticationLibrary = federatedAuthenticationOption.Library;
+                                (session as GenericTdsServerSession).FederatedAuthenticationLibrary = federatedAuthenticationOption.Library;
 
                                 break;
                             }
@@ -563,7 +563,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             responseMessage.Add(infoToken);
 
             // Create new collation change token
-            envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.SQLCollation, (session as GenericTDSServerSession).Collation);
+            envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.SQLCollation, (session as GenericTdsServerSession).Collation);
 
             // Log response
             TDSUtilities.Log(Arguments.Log, "Response", envChange);
@@ -572,7 +572,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             responseMessage.Add(envChange);
 
             // Create new language change token
-            envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.Language, LanguageString.ToString((session as GenericTDSServerSession).Language));
+            envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.Language, LanguageString.ToString((session as GenericTdsServerSession).Language));
 
             // Log response
             TDSUtilities.Log(Arguments.Log, "Response", envChange);
@@ -625,7 +625,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             if (session.IsSessionRecoveryEnabled)
             {
                 // Create Feature extension Ack token
-                TDSFeatureExtAckToken featureExtActToken = new TDSFeatureExtAckToken(new TDSFeatureExtAckSessionStateOption((session as GenericTDSServerSession).Deflate()));
+                TDSFeatureExtAckToken featureExtActToken = new TDSFeatureExtAckToken(new TDSFeatureExtAckSessionStateOption((session as GenericTdsServerSession).Deflate()));
 
                 // Log response
                 TDSUtilities.Log(Arguments.Log, "Response", featureExtActToken);
@@ -720,7 +720,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             try
             {
                 // Get the Federated Authentication ticket using RPS
-                decryptedTicket = FederatedAuthenticationTicketService.DecryptTicket((session as GenericTDSServerSession).FederatedAuthenticationLibrary, ticket);
+                decryptedTicket = FederatedAuthenticationTicketService.DecryptTicket((session as GenericTdsServerSession).FederatedAuthenticationLibrary, ticket);
 
                 if (decryptedTicket is RpsTicket)
                 {
@@ -751,17 +751,17 @@ namespace Microsoft.SqlServer.TDS.Servers
 
             // Create federated authentication extension option
             TDSFeatureExtAckFederatedAuthenticationOption federatedAuthenticationOption;
-            if ((session as GenericTDSServerSession).FederatedAuthenticationLibrary == TDSFedAuthLibraryType.MSAL)
+            if ((session as GenericTdsServerSession).FederatedAuthenticationLibrary == TDSFedAuthLibraryType.MSAL)
             {
                 // For the time being, fake fedauth tokens are used for ADAL, so decryptedTicket is null.
                 federatedAuthenticationOption =
-                    new TDSFeatureExtAckFederatedAuthenticationOption((session as GenericTDSServerSession).ClientNonce, null);
+                    new TDSFeatureExtAckFederatedAuthenticationOption((session as GenericTdsServerSession).ClientNonce, null);
             }
             else
             {
                 federatedAuthenticationOption =
-                    new TDSFeatureExtAckFederatedAuthenticationOption((session as GenericTDSServerSession).ClientNonce,
-                                                                       decryptedTicket.GetSignature((session as GenericTDSServerSession).ClientNonce));
+                    new TDSFeatureExtAckFederatedAuthenticationOption((session as GenericTdsServerSession).ClientNonce,
+                                                                       decryptedTicket.GetSignature((session as GenericTdsServerSession).ClientNonce));
             }
 
             // Look for feature extension token
@@ -796,12 +796,12 @@ namespace Microsoft.SqlServer.TDS.Servers
         protected virtual TDSMessageCollection CheckFederatedAuthenticationOption(ITDSServerSession session, TDSLogin7FedAuthOptionToken federatedAuthenticationOption)
         {
             // Check if server's prelogin response for FedAuthRequired prelogin option is echoed back correctly in FedAuth Feature Extenion Echo
-            if (federatedAuthenticationOption.Echo != (session as GenericTDSServerSession).FedAuthRequiredPreLoginServerResponse)
+            if (federatedAuthenticationOption.Echo != (session as GenericTdsServerSession).FedAuthRequiredPreLoginServerResponse)
             {
                 // Create Error message
                 string message =
                     string.Format("FEDAUTHREQUIRED option in the prelogin response is not echoed back correctly: in prelogin response, it is {0} and in login, it is {1}: ",
-                    (session as GenericTDSServerSession).FedAuthRequiredPreLoginServerResponse,
+                    (session as GenericTdsServerSession).FedAuthRequiredPreLoginServerResponse,
                     federatedAuthenticationOption.Echo);
 
                 // Create errorToken token
@@ -822,7 +822,7 @@ namespace Microsoft.SqlServer.TDS.Servers
 
             // Check if the nonce exists
             if ((federatedAuthenticationOption.Nonce == null && federatedAuthenticationOption.Library == TDSFedAuthLibraryType.IDCRL)
-                || !AreEqual((session as GenericTDSServerSession).ServerNonce, federatedAuthenticationOption.Nonce))
+                || !AreEqual((session as GenericTdsServerSession).ServerNonce, federatedAuthenticationOption.Nonce))
             {
                 // Error message
                 string message = string.Format("Unexpected NONCEOPT specified in the Federated authentication feature extension");

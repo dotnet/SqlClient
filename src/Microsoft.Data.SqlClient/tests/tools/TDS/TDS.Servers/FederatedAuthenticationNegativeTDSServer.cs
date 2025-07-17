@@ -12,20 +12,20 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// <summary>
     /// TDS Server that generates invalid TDS scenarios according to the requested parameters
     /// </summary>
-    public class FederatedAuthenticationNegativeTDSServer : GenericTDSServer<FederatedAuthenticationNegativeTDSServerArguments>
+    public class FederatedAuthenticationNegativeTdsServer : GenericTdsServer<FederatedAuthenticationNegativeTdsServerArguments>
     {
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public FederatedAuthenticationNegativeTDSServer() :
-            this(new FederatedAuthenticationNegativeTDSServerArguments())
+        public FederatedAuthenticationNegativeTdsServer() :
+            this(new FederatedAuthenticationNegativeTdsServerArguments())
         {
         }
 
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public FederatedAuthenticationNegativeTDSServer(FederatedAuthenticationNegativeTDSServerArguments arguments) :
+        public FederatedAuthenticationNegativeTdsServer(FederatedAuthenticationNegativeTdsServerArguments arguments) :
             base(arguments)
         {
         }
@@ -39,10 +39,10 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSMessageCollection preLoginCollection = base.OnPreLoginRequest(session, request);
 
             // Check if arguments are of the Federated Authentication server
-            if (Arguments is FederatedAuthenticationNegativeTDSServerArguments)
+            if (Arguments is FederatedAuthenticationNegativeTdsServerArguments)
             {
                 // Cast to federated authentication server arguments
-                FederatedAuthenticationNegativeTDSServerArguments ServerArguments = Arguments as FederatedAuthenticationNegativeTDSServerArguments;
+                FederatedAuthenticationNegativeTdsServerArguments ServerArguments = Arguments as FederatedAuthenticationNegativeTdsServerArguments;
 
                 // Find the is token carrying on TDSPreLoginToken
                 TDSPreLoginToken preLoginToken = preLoginCollection.Find(message => message.Exists(packetToken => packetToken is TDSPreLoginToken)).
@@ -50,7 +50,7 @@ namespace Microsoft.SqlServer.TDS.Servers
 
                 switch (ServerArguments.Scenario)
                 {
-                    case FederatedAuthenticationNegativeTDSScenarioType.NonceMissingInFedAuthPreLogin:
+                    case FederatedAuthenticationNegativeTdsScenarioType.NonceMissingInFedAuthPreLogin:
                         {
                             // If we have the prelogin token
                             if (preLoginToken != null && preLoginToken.Nonce != null)
@@ -62,7 +62,7 @@ namespace Microsoft.SqlServer.TDS.Servers
                             break;
                         }
 
-                    case FederatedAuthenticationNegativeTDSScenarioType.InvalidB_FEDAUTHREQUIREDResponse:
+                    case FederatedAuthenticationNegativeTdsScenarioType.InvalidB_FEDAUTHREQUIREDResponse:
                         {
                             // If we have the prelogin token
                             if (preLoginToken != null)
@@ -89,10 +89,10 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSMessageCollection login7Collection = base.OnLogin7Request(session, request);
 
             // Check if arguments are of the Federated Authentication server
-            if (Arguments is FederatedAuthenticationNegativeTDSServerArguments)
+            if (Arguments is FederatedAuthenticationNegativeTdsServerArguments)
             {
                 // Cast to federated authentication server arguments
-                FederatedAuthenticationNegativeTDSServerArguments ServerArguments = Arguments as FederatedAuthenticationNegativeTDSServerArguments;
+                FederatedAuthenticationNegativeTdsServerArguments ServerArguments = Arguments as FederatedAuthenticationNegativeTdsServerArguments;
 
                 // Get the Federated Authentication ExtAck from Login 7
                 TDSFeatureExtAckFederatedAuthenticationOption fedAutExtAct = GetFeatureExtAckFederatedAuthenticationOptionFromLogin7(login7Collection);
@@ -102,21 +102,21 @@ namespace Microsoft.SqlServer.TDS.Servers
                 {
                     switch (ServerArguments.Scenario)
                     {
-                        case FederatedAuthenticationNegativeTDSScenarioType.NonceMissingInFedAuthFEATUREXTACK:
+                        case FederatedAuthenticationNegativeTdsScenarioType.NonceMissingInFedAuthFEATUREXTACK:
                             {
                                 // Delete the nonce from the Token
                                 fedAutExtAct.ClientNonce = null;
 
                                 break;
                             }
-                        case FederatedAuthenticationNegativeTDSScenarioType.FedAuthMissingInFEATUREEXTACK:
+                        case FederatedAuthenticationNegativeTdsScenarioType.FedAuthMissingInFEATUREEXTACK:
                             {
                                 // Remove the Fed Auth Ext Ack from the options list in the FeatureExtAckToken
                                 GetFeatureExtAckTokenFromLogin7(login7Collection).Options.Remove(fedAutExtAct);
 
                                 break;
                             }
-                        case FederatedAuthenticationNegativeTDSScenarioType.SignatureMissingInFedAuthFEATUREXTACK:
+                        case FederatedAuthenticationNegativeTdsScenarioType.SignatureMissingInFedAuthFEATUREXTACK:
                             {
                                 // Delete the signature from the Token
                                 fedAutExtAct.Signature = null;

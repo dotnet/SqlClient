@@ -15,7 +15,7 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// <summary>
     /// TDS Server that authenticates clients according to the requested parameters
     /// </summary>
-    public class TransientFaultTDSServer : GenericTDSServer<TransientFaultTDSServerArguments>, IDisposable
+    public class TransientFaultTdsServer : GenericTdsServer<TransientFaultTdsServerArguments>, IDisposable
     {
         private static int RequestCounter = 0;
 
@@ -26,11 +26,11 @@ namespace Microsoft.SqlServer.TDS.Servers
             Arguments.Message = message;
         }
 
-        public TransientFaultTDSServer(TransientFaultTDSServerArguments arguments) : base(arguments)
+        public TransientFaultTdsServer(TransientFaultTdsServerArguments arguments) : base(arguments)
         {
         }
 
-        public TransientFaultTDSServer(TransientFaultTDSServerArguments arguments, QueryEngine queryEngine) : base(arguments, queryEngine)
+        public TransientFaultTdsServer(TransientFaultTdsServerArguments arguments, QueryEngine queryEngine) : base(arguments, queryEngine)
         {
         }
 
@@ -58,10 +58,10 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
 
             // Check if arguments are of the transient fault TDS server
-            if (Arguments is TransientFaultTDSServerArguments)
+            if (Arguments is TransientFaultTdsServerArguments)
             {
                 // Cast to transient fault TDS server arguments
-                TransientFaultTDSServerArguments ServerArguments = Arguments as TransientFaultTDSServerArguments;
+                TransientFaultTdsServerArguments ServerArguments = Arguments as TransientFaultTdsServerArguments;
 
                 // Check if we're still going to raise transient error
                 if (ServerArguments.IsEnabledTransientError && RequestCounter < 1) // Fail first time, then connect

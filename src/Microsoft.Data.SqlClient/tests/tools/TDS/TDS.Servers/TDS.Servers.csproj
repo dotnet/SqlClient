@@ -11,22 +11,22 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ApplicationIntentFilterType.cs" />
-    <Compile Include="AuthenticatingTDSServer.cs" />
-    <Compile Include="AuthenticatingTDSServerArguments.cs" />
+    <Compile Include="AuthenticatingTdsServer.cs" />
+    <Compile Include="AuthenticatingTdsServerArguments.cs" />
     <Compile Include="DateFormatString.cs" />
-    <Compile Include="FederatedAuthenticationNegativeTDSServer.cs" />
-    <Compile Include="FederatedAuthenticationNegativeTDSServerArguments.cs" />
-    <Compile Include="FederatedAuthenticationNegativeTDSScenarioType.cs" />
-    <Compile Include="GenericTDSServer.cs" />
-    <Compile Include="GenericTDSServerSession.cs" />
+    <Compile Include="FederatedAuthenticationNegativeTdsServer.cs" />
+    <Compile Include="FederatedAuthenticationNegativeTdsServerArguments.cs" />
+    <Compile Include="FederatedAuthenticationNegativeTdsScenarioType.cs" />
+    <Compile Include="GenericTdsServer.cs" />
+    <Compile Include="GenericTdsServerSession.cs" />
     <Compile Include="QueryEngine.cs" />
-    <Compile Include="RoutingTDSServer.cs" />
-    <Compile Include="RoutingTDSServerArguments.cs" />
+    <Compile Include="RoutingTdsServer.cs" />
+    <Compile Include="RoutingTdsServerArguments.cs" />
     <Compile Include="ServerNameFilterType.cs" />
-    <Compile Include="TDSServerArguments.cs" />
+    <Compile Include="TdsServerArguments.cs" />
     <Compile Include="TdsServer.cs" />
-    <Compile Include="TransientFaultTDSServer.cs" />
-    <Compile Include="TransientFaultTDSServerArguments.cs" />
+    <Compile Include="TransientFaultTdsServer.cs" />
+    <Compile Include="TransientFaultTdsServerArguments.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj">

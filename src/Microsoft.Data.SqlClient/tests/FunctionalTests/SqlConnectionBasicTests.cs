@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void ConnectionTest()
         {
-            using TdsServer server = new TdsServer(new TDSServerArguments() { });
+            using TdsServer server = new TdsServer(new TdsServerArguments() { });
             server.Start();
             var connStr = new SqlConnectionStringBuilder() { DataSource = $"localhost,{server.EndPoint.Port}" }.ConnectionString;
             using SqlConnection connection = new SqlConnection(connStr);
@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void IntegratedAuthConnectionTest()
         {
-            using TdsServer server = new TdsServer(new TDSServerArguments() { });
+            using TdsServer server = new TdsServer(new TdsServerArguments() { });
             server.Start();
             var connStr = new SqlConnectionStringBuilder() { DataSource = $"localhost,{server.EndPoint.Port}" }.ConnectionString;
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connStr);
@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public async Task PreLoginEncryptionExcludedTest()
         {
-            using TdsServer server = new TdsServer(new TDSServerArguments() {Encryption = TDSPreLoginTokenEncryptionType.None });
+            using TdsServer server = new TdsServer(new TdsServerArguments() {Encryption = TDSPreLoginTokenEncryptionType.None });
             server.Start();
             var connStr = new SqlConnectionStringBuilder() { DataSource = $"localhost,{server.EndPoint.Port}" }.ConnectionString;
             SqlConnectionStringBuilder builder = new(connStr)
@@ -75,8 +75,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public async Task TransientFaultTestAsync(uint errorCode)
         {
-            using TransientFaultTDSServer server = new TransientFaultTDSServer(
-                new TransientFaultTDSServerArguments() 
+            using TransientFaultTdsServer server = new TransientFaultTdsServer(
+                new TransientFaultTdsServerArguments() 
                 {
                   IsEnabledTransientError = true,
                   Number = errorCode,
@@ -101,8 +101,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TransientFaultTest(uint errorCode)
         {
-            using TransientFaultTDSServer server = new TransientFaultTDSServer(
-                new TransientFaultTDSServerArguments()
+            using TransientFaultTdsServer server = new TransientFaultTdsServer(
+                new TransientFaultTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,
@@ -134,8 +134,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TransientFaultDisabledTestAsync(uint errorCode)
         {
-            using TransientFaultTDSServer server = new TransientFaultTDSServer(
-                new TransientFaultTDSServerArguments()
+            using TransientFaultTdsServer server = new TransientFaultTdsServer(
+                new TransientFaultTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,
@@ -162,8 +162,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TransientFaultDisabledTest(uint errorCode)
         {
-            using TransientFaultTDSServer server = new TransientFaultTDSServer(
-                new TransientFaultTDSServerArguments()
+            using TransientFaultTdsServer server = new TransientFaultTdsServer(
+                new TransientFaultTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,
@@ -192,7 +192,7 @@ namespace Microsoft.Data.SqlClient.Tests
             AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
 
             // Arrange
-            using TdsServer failoverServer = new TdsServer(new TDSServerArguments
+            using TdsServer failoverServer = new TdsServer(new TdsServerArguments
             {
                 // Doesn't need to point to a real endpoint, just needs a value specified
                 FailoverPartner = "localhost,1234"
@@ -201,7 +201,7 @@ namespace Microsoft.Data.SqlClient.Tests
             var failoverDataSource = $"localhost,{failoverServer.EndPoint.Port}";
 
             // Errors are off to start to allow the pool to warm up
-            using TransientFaultTDSServer initialServer = new TransientFaultTDSServer(new TransientFaultTDSServerArguments
+            using TransientFaultTdsServer initialServer = new TransientFaultTdsServer(new TransientFaultTdsServerArguments
             {
                 FailoverPartner = failoverDataSource
             });
@@ -617,7 +617,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Version simulatedServerVersion = new Version(major, minor, build);
 
             using TdsServer server = new TdsServer(
-                new TDSServerArguments
+                new TdsServerArguments
                 {
                     ServerVersion = simulatedServerVersion,
                 });
@@ -644,7 +644,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             Version simulatedServerVersion = new Version(major, minor, build);
             using TdsServer server = new TdsServer(
-                new TDSServerArguments
+                new TdsServerArguments
                 {
                     ServerVersion = simulatedServerVersion,
                 });

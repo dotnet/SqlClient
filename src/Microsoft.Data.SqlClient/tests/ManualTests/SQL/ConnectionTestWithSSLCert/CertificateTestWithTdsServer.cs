@@ -130,7 +130,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string userId = string.IsNullOrWhiteSpace(builder.UserID) ? "user" : builder.UserID;
             string password = string.IsNullOrWhiteSpace(builder.Password) ? "password" : builder.Password;
 
-            using TdsServer server = new TdsServer(new TDSServerArguments
+            using TdsServer server = new TdsServer(new TdsServerArguments
             {
                 #if NET9_0_OR_GREATER
                 EncryptionCertificate = X509CertificateLoader.LoadPkcs12FromFile(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),

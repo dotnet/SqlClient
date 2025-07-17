@@ -7,7 +7,7 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// <summary>
     /// Arguments for authenticating TDS Server
     /// </summary>
-    public class AuthenticatingTDSServerArguments : TDSServerArguments
+    public class AuthenticatingTdsServerArguments : TdsServerArguments
     {
         /// <summary>
         /// Type of the application intent filter
@@ -37,7 +37,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public AuthenticatingTDSServerArguments()
+        public AuthenticatingTdsServerArguments()
         {
             // Allow everyone to connect
             ApplicationIntentFilter = ApplicationIntentFilterType.All;
