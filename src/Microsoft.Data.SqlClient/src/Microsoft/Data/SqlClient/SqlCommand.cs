@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
+using Microsoft.Data.Sql;
 
 #if NET
 using Microsoft.Data.SqlClient.Diagnostics;
@@ -33,6 +34,9 @@ namespace Microsoft.Data.SqlClient
 
         #region Fields
 
+        // @TODO: Make property - non-private fields are bad
+        internal SqlDependency _sqlDep;
+        
         /// <summary>
         /// Number of instances of SqlCommand that have been created. Used to generate ObjectId
         /// </summary>
@@ -104,7 +108,14 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         // @TODO: Make auto-property
         private bool _inPrepare = false;
-
+        
+        private SqlNotificationRequest _notification;
+        
+        #if NETFRAMEWORK
+        // @TODO: Make auto-property
+        private bool _notificationAutoEnlist = true;
+        #endif
+        
         /// <summary>
         /// Parameters that have been added to the current instance.
         /// </summary>
@@ -373,6 +384,36 @@ namespace Microsoft.Data.SqlClient
         
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EnableOptimizedParameterBinding/*'/>
         public bool EnableOptimizedParameterBinding { get; set; }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Notification/*'/>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Notification)]
+        [ResDescription(StringsHelper.ResourceNames.SqlCommand_Notification)]
+        public SqlNotificationRequest Notification
+        {
+            get => _notification;
+            set
+            {
+                _sqlDep = null;
+                _notification = value;
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.Set_Notification | API | " +
+                    $"Object Id {ObjectID}");
+            }
+        }
+        
+        #if NETFRAMEWORK
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/NotificationAutoEnlist/*'/>
+        [DefaultValue(true)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Notification)]
+        [ResDescription(StringsHelper.ResourceNames.SqlCommand_NotificationAutoEnlist)]
+        public bool NotificationAutoEnlist
+        {
+            get => _notificationAutoEnlist;
+            set => _notificationAutoEnlist = value;
+        }
+        #endif
         
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
