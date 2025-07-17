@@ -485,40 +485,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandType/*'/>
-        [DefaultValue(CommandType.Text)]
-        [RefreshProperties(RefreshProperties.All)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandType)]
-        public override CommandType CommandType
-        {
-            get
-            {
-                CommandType cmdType = _commandType;
-                return ((0 != cmdType) ? cmdType : CommandType.Text);
-            }
-            set
-            {
-                if (_commandType != value)
-                {
-                    switch (value)
-                    {
-                        case CommandType.Text:
-                        case CommandType.StoredProcedure:
-                            PropertyChanging();
-                            _commandType = value;
-                            break;
-                        case System.Data.CommandType.TableDirect:
-                            throw SQL.NotSupportedCommandType(value);
-                        default:
-                            throw ADP.InvalidCommandType(value);
-                    }
-
-                    SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_CommandType | API | ObjectId {0}, Command type value {1}, Client Connection Id {2}", ObjectID, (int)value, Connection?.ClientConnectionId);
-                }
-            }
-        }
-
         // By default, the cmd object is visible on the design surface (i.e. VS7 Server Tray)
         // to limit the number of components that clutter the design surface,
         // when the DataAdapter design wizard generates the insert/update/delete commands it will
