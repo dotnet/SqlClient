@@ -151,6 +151,30 @@ namespace Microsoft.Data.SqlClient
         
         #region Public Properties
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandText/*'/>
+        [DefaultValue("")]
+        [RefreshProperties(RefreshProperties.All)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandText)]
+        public override string CommandText
+        {
+            get => _commandText ?? string.Empty;
+            set
+            {
+                if (_commandText != value)
+                {
+                    PropertyChanging();
+                    _commandText = value;
+                }
+
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.Set_CommandText | API | " +
+                    $"Object Id {ObjectID}, " +
+                    $"String Value = '{value}', " +
+                    $"Client Connection Id {Connection?.ClientConnectionId}");
+            }
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Connection/*'/>
         [DefaultValue(null)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
