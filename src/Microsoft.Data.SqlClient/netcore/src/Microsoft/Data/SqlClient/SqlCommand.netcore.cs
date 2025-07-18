@@ -539,48 +539,6 @@ namespace Microsoft.Data.SqlClient
                 () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method));
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalar/*'/>
-        public override object ExecuteScalar()
-        {
-            // Reset _pendingCancel upon entry into any Execute - used to synchronize state
-            // between entry into Execute* API and the thread obtaining the stateObject.
-            _pendingCancel = false;
-
-            using (DiagnosticScope diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction))
-            using (TryEventScope.Create("SqlCommand.ExecuteScalar | API | ObjectId {0}", ObjectID))
-            {
-                SqlStatistics statistics = null;
-                bool success = false;
-                int? sqlExceptionNumber = null;
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteScalar | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    WriteBeginExecuteEvent();
-                    SqlDataReader ds = IsProviderRetriable
-                        ? RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, returnStream: true)
-                        : RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true);
-                    success = true;
-                    return CompleteExecuteScalar(ds, _batchRPCMode);
-                }
-                catch (Exception ex)
-                {
-                    diagnosticScope.SetException(ex);
-                    if (ex is SqlException sqlException)
-                    {
-                        sqlExceptionNumber = sqlException.Number;
-                    }
-                    throw;
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                    WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
-                }
-            }
-        }
-
         private object CompleteExecuteScalar(SqlDataReader ds, bool returnLastResult)
         {
             object retResult = null;
