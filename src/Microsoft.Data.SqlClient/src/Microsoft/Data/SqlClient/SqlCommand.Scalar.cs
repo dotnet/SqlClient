@@ -44,6 +44,7 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
                 WriteBeginExecuteEvent();
 
+                // @TODO: Rename ds to reader
                 SqlDataReader ds = IsProviderRetriable
                     ? RunExecuteReaderWithRetry(CommandBehavior.Default, RunBehavior.ReturnImmediately, returnStream: true)
                     : RunExecuteReader(CommandBehavior.Default, RunBehavior.ReturnImmediately, returnStream: true);
@@ -75,8 +76,28 @@ namespace Microsoft.Data.SqlClient
         #endregion
         
         #region Private Methods
-        
-        
+
+        private static object CompleteExecuteScalar(SqlDataReader reader, bool returnLastResult)
+        {
+            object result = null;
+            try
+            {
+                do
+                {
+                    if (reader.Read() && reader.FieldCount > 0)
+                    {
+                        result = reader.GetValue(0);
+                    }
+                } while (returnLastResult && reader.NextResult());
+            }
+            finally
+            {
+                // Clean off the wire
+                reader.Close();
+            }
+
+            return result;
+        }
         
         #endregion
     }
