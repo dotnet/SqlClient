@@ -21,7 +21,8 @@
     <Reference Include="System.Transactions" />
     <PackageReference Include="System.Data.Common" />
     <PackageReference Include="System.ValueTuple" />
-	</ItemGroup>
+    <PackageReference Include="System.Threading.Channels" />
+  </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
     <!-- References that only apply to netcore -->
     <PackageReference Include="System.Configuration.ConfigurationManager" />

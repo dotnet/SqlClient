@@ -3,153 +3,1039 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Data.Common;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
+using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.UnitTests
+namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 {
     public class ChannelDbConnectionPoolTest
     {
-        private readonly ChannelDbConnectionPool _pool;
+        private ChannelDbConnectionPool pool;
+        private DbConnectionFactory connectionFactory;
+        private DbConnectionPoolGroup dbConnectionPoolGroup;
+        private DbConnectionPoolGroupOptions poolGroupOptions;
+        private DbConnectionPoolIdentity identity;
+        private DbConnectionPoolProviderInfo connectionPoolProviderInfo;
 
-        public ChannelDbConnectionPoolTest()
+        private static readonly DbConnectionFactory SuccessfulConnectionFactory = new SuccessfulDbConnectionFactory();
+        private static readonly DbConnectionFactory TimeoutConnectionFactory = new TimeoutDbConnectionFactory();
+
+        private void Setup(DbConnectionFactory connectionFactory)
         {
-            _pool = new ChannelDbConnectionPool();
+            this.connectionFactory = connectionFactory;
+            identity = DbConnectionPoolIdentity.NoIdentity;
+            connectionPoolProviderInfo = new DbConnectionPoolProviderInfo();
+            poolGroupOptions = new DbConnectionPoolGroupOptions(
+                    poolByIdentity: false,
+                    minPoolSize: 0,
+                    maxPoolSize: 50,
+                    creationTimeout: 15,
+                    loadBalanceTimeout: 0,
+                    hasTransactionAffinity: true
+            );
+            dbConnectionPoolGroup = new DbConnectionPoolGroup(
+                new DbConnectionOptions("DataSource=localhost;", null),
+                new DbConnectionPoolKey("TestDataSource"),
+                poolGroupOptions
+            );
+            pool = new ChannelDbConnectionPool(
+                connectionFactory,
+                dbConnectionPoolGroup,
+                identity,
+                connectionPoolProviderInfo
+            );
+        }
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(5)]
+        [InlineData(10)]
+        public void GetConnectionEmptyPool_ShouldCreateNewConnection(int numConnections)
+        {
+            // Arrange
+            Setup(SuccessfulConnectionFactory);
+
+            // Act
+            for (int i = 0; i < numConnections; i++)
+            {
+                DbConnectionInternal internalConnection = null;
+                var completed = pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out internalConnection
+                );
+
+                // Assert
+                Assert.True(completed);
+                Assert.NotNull(internalConnection);
+            }
+
+
+            // Assert
+            Assert.Equal(numConnections, pool.Count);
+        }
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(5)]
+        [InlineData(10)]
+        public async Task GetConnectionAsyncEmptyPool_ShouldCreateNewConnection(int numConnections)
+        {
+            // Arrange
+            Setup(SuccessfulConnectionFactory);
+
+            // Act
+            for (int i = 0; i < numConnections; i++)
+            {
+                var tcs = new TaskCompletionSource<DbConnectionInternal>();
+                DbConnectionInternal internalConnection = null;
+                var completed = pool.TryGetConnection(
+                    new SqlConnection(),
+                    tcs,
+                    new DbConnectionOptions("", null),
+                    out internalConnection
+                );
+
+                // Assert
+                Assert.False(completed);
+                Assert.Null(internalConnection);
+                Assert.NotNull(await tcs.Task);
+            }
+
+
+            // Assert
+            Assert.Equal(numConnections, pool.Count);
         }
 
         [Fact]
-        public void TestAuthenticationContexts()
+        public void GetConnectionMaxPoolSize_ShouldTimeoutAfterPeriod()
         {
-            Assert.Throws<NotImplementedException>(() => _ = _pool.AuthenticationContexts);
+            // Arrange
+            Setup(SuccessfulConnectionFactory);
+
+            for (int i = 0; i < poolGroupOptions.MaxPoolSize; i++)
+            {
+                DbConnectionInternal internalConnection = null;
+                var completed = pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out internalConnection
+                );
+
+                Assert.True(completed);
+                Assert.NotNull(internalConnection);
+            }
+
+            try
+            {
+                // Act
+                DbConnectionInternal extraConnection = null;
+                var exceeded = pool.TryGetConnection(
+                    new SqlConnection("Timeout=1"),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out extraConnection
+                );
+            }
+            catch (Exception ex)
+            {
+                // Assert
+                Assert.IsType<InvalidOperationException>(ex);
+                Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.Message);
+            }
+
+            // Assert
+            Assert.Equal(poolGroupOptions.MaxPoolSize, pool.Count);
         }
+
+        [Fact]
+        public async Task GetConnectionAsyncMaxPoolSize_ShouldTimeoutAfterPeriod()
+        {
+            // Arrange
+            Setup(SuccessfulConnectionFactory);
+
+            for (int i = 0; i < poolGroupOptions.MaxPoolSize; i++)
+            {
+                DbConnectionInternal internalConnection = null;
+                var completed = pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out internalConnection
+                );
+
+                Assert.True(completed);
+                Assert.NotNull(internalConnection);
+            }
+
+            try
+            {
+                // Act
+                TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new TaskCompletionSource<DbConnectionInternal>();
+                DbConnectionInternal extraConnection = null;
+                var exceeded = pool.TryGetConnection(
+                    new SqlConnection("Timeout=1"),
+                    taskCompletionSource,
+                    new DbConnectionOptions("", null),
+                    out extraConnection
+                );
+                await taskCompletionSource.Task;
+            }
+            catch (Exception ex)
+            {
+                // Assert
+                Assert.IsType<InvalidOperationException>(ex);
+                Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.Message);
+            }
+
+            // Assert
+            Assert.Equal(poolGroupOptions.MaxPoolSize, pool.Count);
+        }
+
+        [Fact]
+        public async Task GetConnectionMaxPoolSize_ShouldReuseAfterConnectionReleased()
+        {
+            // Arrange
+            Setup(SuccessfulConnectionFactory);
+            DbConnectionInternal firstConnection = null;
+            SqlConnection firstOwningConnection = new SqlConnection();
+
+            pool.TryGetConnection(
+                firstOwningConnection,
+                taskCompletionSource: null,
+                new DbConnectionOptions("", null),
+                out firstConnection
+            );
+
+            for (int i = 1; i < poolGroupOptions.MaxPoolSize; i++)
+            {
+                DbConnectionInternal internalConnection = null;
+                var completed = pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out internalConnection
+                );
+
+                Assert.True(completed);
+                Assert.NotNull(internalConnection);
+            }
+
+            TaskCompletionSource<DbConnectionInternal> tcs = new TaskCompletionSource<DbConnectionInternal>();
+
+            // Act
+            var task = Task.Run(() =>
+            {
+                DbConnectionInternal extraConnection = null;
+                var exceeded = pool.TryGetConnection(
+                    new SqlConnection(""),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out extraConnection
+                );
+                return extraConnection;
+            });
+            pool.ReturnInternalConnection(firstConnection, firstOwningConnection);
+            var extraConnection = await task;
+
+            // Assert
+            Assert.Equal(firstConnection, extraConnection);
+        }
+
+        [Fact]
+        public async Task GetConnectionAsyncMaxPoolSize_ShouldReuseAfterConnectionReleased()
+        {
+            // Arrange
+            Setup(SuccessfulConnectionFactory);
+            DbConnectionInternal firstConnection = null;
+            SqlConnection firstOwningConnection = new SqlConnection();
+
+            pool.TryGetConnection(
+                firstOwningConnection,
+                taskCompletionSource: null,
+                new DbConnectionOptions("", null),
+                out firstConnection
+            );
+
+            for (int i = 1; i < poolGroupOptions.MaxPoolSize; i++)
+            {
+                DbConnectionInternal internalConnection = null;
+                var completed = pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out internalConnection
+                );
+
+                Assert.True(completed);
+                Assert.NotNull(internalConnection);
+            }
+
+            TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new TaskCompletionSource<DbConnectionInternal>();
+
+            // Act
+            DbConnectionInternal recycledConnection = null;
+            var exceeded = pool.TryGetConnection(
+                new SqlConnection(""),
+                taskCompletionSource,
+                new DbConnectionOptions("", null),
+                out recycledConnection
+            );
+            pool.ReturnInternalConnection(firstConnection, firstOwningConnection);
+            recycledConnection = await taskCompletionSource.Task;
+
+            // Assert
+            Assert.Equal(firstConnection, recycledConnection);
+        }
+
+        [Fact]
+        public async Task GetConnectionMaxPoolSize_ShouldRespectOrderOfRequest()
+        {
+            // Arrange
+            Setup(SuccessfulConnectionFactory);
+            DbConnectionInternal firstConnection = null;
+            SqlConnection firstOwningConnection = new SqlConnection();
+
+            pool.TryGetConnection(
+                firstOwningConnection,
+                taskCompletionSource: null,
+                new DbConnectionOptions("", null),
+                out firstConnection
+            );
+
+            for (int i = 1; i < poolGroupOptions.MaxPoolSize; i++)
+            {
+                DbConnectionInternal internalConnection = null;
+                var completed = pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out internalConnection
+                );
+
+                Assert.True(completed);
+                Assert.NotNull(internalConnection);
+            }
+
+            // Use ManualResetEventSlim to synchronize the tasks
+            // and force the request queueing order.
+            using ManualResetEventSlim mresQueueOrder = new ManualResetEventSlim();
+            using CountdownEvent allRequestsQueued = new CountdownEvent(2);
+
+            // Act
+            var recycledTask = Task.Run(() =>
+            {
+                DbConnectionInternal recycledConnection = null;
+                mresQueueOrder.Set();
+                allRequestsQueued.Signal();
+                pool.TryGetConnection(
+                    new SqlConnection(""),
+                    null,
+                    new DbConnectionOptions("", null),
+                    out recycledConnection
+                );
+                return recycledConnection;
+            });
+            var failedTask = Task.Run(() =>
+            {
+                DbConnectionInternal failedConnection = null;
+                // Force this request to be second in the queue.
+                mresQueueOrder.Wait();
+                allRequestsQueued.Signal();
+                pool.TryGetConnection(
+                    new SqlConnection("Timeout=1"),
+                    null,
+                    new DbConnectionOptions("", null),
+                    out failedConnection
+                );
+                return failedConnection;
+            });
+
+            allRequestsQueued.Wait();
+            pool.ReturnInternalConnection(firstConnection, firstOwningConnection);
+            var recycledConnection = await recycledTask;
+
+            // Assert
+            Assert.Equal(firstConnection, recycledConnection);
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => await failedTask);
+        }
+
+        [Fact]
+        public async Task GetConnectionAsyncMaxPoolSize_ShouldRespectOrderOfRequest()
+        {
+            // Arrange
+            Setup(SuccessfulConnectionFactory);
+            DbConnectionInternal firstConnection = null;
+            SqlConnection firstOwningConnection = new SqlConnection();
+
+            pool.TryGetConnection(
+                firstOwningConnection,
+                taskCompletionSource: null,
+                new DbConnectionOptions("", null),
+                out firstConnection
+            );
+
+            for (int i = 1; i < poolGroupOptions.MaxPoolSize; i++)
+            {
+                DbConnectionInternal internalConnection = null;
+                var completed = pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out internalConnection
+                );
+
+                Assert.True(completed);
+                Assert.NotNull(internalConnection);
+            }
+
+            TaskCompletionSource<DbConnectionInternal> recycledTaskCompletionSource = new TaskCompletionSource<DbConnectionInternal>();
+            TaskCompletionSource<DbConnectionInternal> failedCompletionSource = new TaskCompletionSource<DbConnectionInternal>();
+
+            // Act
+            DbConnectionInternal recycledConnection = null;
+            var exceeded = pool.TryGetConnection(
+                new SqlConnection(""),
+                recycledTaskCompletionSource,
+                new DbConnectionOptions("", null),
+                out recycledConnection
+            );
+
+            // Gives time for the recycled connection to be queued before the failed request is initiated.
+            await Task.Delay(1000);
+
+            DbConnectionInternal failedConnection = null;
+            var exceeded2 = pool.TryGetConnection(
+                new SqlConnection("Timeout=1"),
+                failedCompletionSource,
+                new DbConnectionOptions("", null),
+                out failedConnection
+            );
+
+            pool.ReturnInternalConnection(firstConnection, firstOwningConnection);
+            recycledConnection = await recycledTaskCompletionSource.Task;
+
+            // Assert
+            Assert.Equal(firstConnection, recycledConnection);
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => failedConnection = await failedCompletionSource.Task);
+        }
+
+        [Fact]
+        public void ConnectionsAreReused()
+        {
+            // Arrange
+            Setup(SuccessfulConnectionFactory);
+            SqlConnection owningConnection = new SqlConnection();
+            DbConnectionInternal internalConnection1 = null;
+            DbConnectionInternal internalConnection2 = null;
+
+            // Act: Get the first connection
+            var completed1 = pool.TryGetConnection(
+                owningConnection,
+                null,
+                new DbConnectionOptions("", null),
+                out internalConnection1
+            );
+
+            // Assert: First connection should succeed
+            Assert.True(completed1);
+            Assert.NotNull(internalConnection1);
+
+            // Act: Return the first connection to the pool
+            pool.ReturnInternalConnection(internalConnection1, owningConnection);
+
+            // Act: Get the second connection (should reuse the first one)
+            var completed2 = pool.TryGetConnection(
+                owningConnection,
+                null,
+                new DbConnectionOptions("", null),
+                out internalConnection2
+            );
+
+            // Assert: Second connection should succeed and reuse the first connection
+            Assert.True(completed2);
+            Assert.NotNull(internalConnection2);
+            Assert.Same(internalConnection1, internalConnection2);
+        }
+
+        [Fact]
+        public void GetConnectionTimeout_ShouldThrowTimeoutException()
+        {
+            // Arrange
+            Setup(TimeoutConnectionFactory);
+            DbConnectionInternal internalConnection = null;
+
+            // Act & Assert
+            var ex = Assert.Throws<Exception>(() =>
+            {
+                var completed = pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out internalConnection
+                );
+            });
+
+            Assert.IsType<InvalidOperationException>(ex.InnerException);
+
+            Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.InnerException.Message);
+        }
+
+        [Fact]
+        public async Task GetConnectionAsyncTimeout_ShouldThrowTimeoutException()
+        {
+            // Arrange
+            Setup(TimeoutConnectionFactory);
+            DbConnectionInternal internalConnection = null;
+            TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new TaskCompletionSource<DbConnectionInternal>();
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<Exception>(async () =>
+            {
+                var completed = pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource,
+                    new DbConnectionOptions("", null),
+                    out internalConnection
+                );
+
+                await taskCompletionSource.Task;
+            });
+
+            Assert.IsType<InvalidOperationException>(ex.InnerException);
+
+            Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.InnerException.Message);
+        }
+
+        [Fact]
+        public void StressTest()
+        {
+            //Arrange
+            Setup(SuccessfulConnectionFactory);
+            ConcurrentBag<Task> tasks = new ConcurrentBag<Task>();
+
+
+            for (int i = 1; i < poolGroupOptions.MaxPoolSize * 3; i++)
+            {
+                var t = Task.Run(() =>
+                {
+                    DbConnectionInternal internalConnection = null;
+                    SqlConnection owningObject = new SqlConnection();
+                    var completed = pool.TryGetConnection(
+                        owningObject,
+                        taskCompletionSource: null,
+                        new DbConnectionOptions("", null),
+                        out internalConnection
+                    );
+                    if (completed)
+                    {
+                        pool.ReturnInternalConnection(internalConnection, owningObject);
+                    }
+
+                    Assert.True(completed);
+                    Assert.NotNull(internalConnection);
+                });
+                tasks.Add(t);
+            }
+
+            Task.WaitAll(tasks.ToArray());
+            Assert.True(pool.Count <= poolGroupOptions.MaxPoolSize, "Pool size exceeded max pool size after stress test.");
+        }
+
+        [Fact]
+        public void StressTestAsync()
+        {
+            //Arrange
+            Setup(SuccessfulConnectionFactory);
+            ConcurrentBag<Task> tasks = new ConcurrentBag<Task>();
+
+
+            for (int i = 1; i < poolGroupOptions.MaxPoolSize * 3; i++)
+            {
+                var t = Task.Run(async () =>
+                {
+                    DbConnectionInternal internalConnection = null;
+                    SqlConnection owningObject = new SqlConnection();
+                    TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new TaskCompletionSource<DbConnectionInternal>();
+                    var completed = pool.TryGetConnection(
+                        owningObject,
+                        taskCompletionSource,
+                        new DbConnectionOptions("", null),
+                        out internalConnection
+                    );
+                    internalConnection = await taskCompletionSource.Task;
+                    pool.ReturnInternalConnection(internalConnection, owningObject);
+
+                    Assert.NotNull(internalConnection);
+                });
+                tasks.Add(t);
+            }
+
+            Task.WaitAll(tasks.ToArray());
+            Assert.True(pool.Count <= poolGroupOptions.MaxPoolSize, "Pool size exceeded max pool size after stress test.");
+        }
+
+
+        #region Property Tests
 
         [Fact]
         public void TestConnectionFactory()
         {
-            Assert.Throws<NotImplementedException>(() => _ = _pool.ConnectionFactory);
+            Setup(SuccessfulConnectionFactory);
+            Assert.Equal(connectionFactory, pool.ConnectionFactory);
         }
 
         [Fact]
         public void TestCount()
         {
-            Assert.Throws<NotImplementedException>(() => _ = _pool.Count);
+            Setup(SuccessfulConnectionFactory);
+            Assert.Equal(0, pool.Count);
         }
 
         [Fact]
         public void TestErrorOccurred()
         {
-            Assert.Throws<NotImplementedException>(() => _ = _pool.ErrorOccurred);
+            Setup(SuccessfulConnectionFactory);
+            Assert.Throws<NotImplementedException>(() => _ = pool.ErrorOccurred);
         }
 
         [Fact]
         public void TestId()
         {
-            Assert.Throws<NotImplementedException>(() => _ = _pool.Id);
+            Setup(SuccessfulConnectionFactory);
+            Assert.True(pool.Id >= 1);
         }
 
         [Fact]
         public void TestIdentity()
         {
-            Assert.Throws<NotImplementedException>(() => _ = _pool.Identity);
+            Setup(SuccessfulConnectionFactory);
+            Assert.Equal(identity, pool.Identity);
         }
 
         [Fact]
         public void TestIsRunning()
         {
-            Assert.Throws<NotImplementedException>(() => _ = _pool.IsRunning);
+            Setup(SuccessfulConnectionFactory);
+            Assert.True(pool.IsRunning);
         }
 
         [Fact]
         public void TestLoadBalanceTimeout()
         {
-            Assert.Throws<NotImplementedException>(() => _ = _pool.LoadBalanceTimeout);
+            Setup(SuccessfulConnectionFactory);
+            Assert.Equal(poolGroupOptions.LoadBalanceTimeout, pool.LoadBalanceTimeout);
         }
 
         [Fact]
         public void TestPoolGroup()
         {
-            Assert.Throws<NotImplementedException>(() => _ = _pool.PoolGroup);
+            Setup(SuccessfulConnectionFactory);
+            Assert.Equal(dbConnectionPoolGroup, pool.PoolGroup);
         }
 
         [Fact]
         public void TestPoolGroupOptions()
         {
-            Assert.Throws<NotImplementedException>(() => _ = _pool.PoolGroupOptions);
+            Setup(SuccessfulConnectionFactory);
+            Assert.Equal(poolGroupOptions, pool.PoolGroupOptions);
         }
 
         [Fact]
         public void TestProviderInfo()
         {
-            Assert.Throws<NotImplementedException>(() => _ = _pool.ProviderInfo);
+            Setup(SuccessfulConnectionFactory);
+            Assert.Equal(connectionPoolProviderInfo, pool.ProviderInfo);
         }
 
         [Fact]
         public void TestStateGetter()
         {
-            Assert.Throws<NotImplementedException>(() => _ = _pool.State);
+            Setup(SuccessfulConnectionFactory);
+            Assert.Equal(DbConnectionPoolState.Running, pool.State);
         }
 
         [Fact]
         public void TestStateSetter()
         {
-            Assert.Throws<NotImplementedException>(() => _pool.State = DbConnectionPoolState.Running);
+            Setup(SuccessfulConnectionFactory);
+            Assert.Equal(DbConnectionPoolState.Running, pool.State);
         }
 
         [Fact]
         public void TestUseLoadBalancing()
         {
-            Assert.Throws<NotImplementedException>(() => _ = _pool.UseLoadBalancing);
+            Setup(SuccessfulConnectionFactory);
+            Assert.Equal(poolGroupOptions.UseLoadBalancing, pool.UseLoadBalancing);
         }
+
+        #endregion
+
+        #region Not Implemented Method Tests
 
         [Fact]
         public void TestClear()
         {
-            Assert.Throws<NotImplementedException>(() => _pool.Clear());
+            Setup(SuccessfulConnectionFactory);
+            Assert.Throws<NotImplementedException>(() => pool.Clear());
         }
 
         [Fact]
         public void TestPutObjectFromTransactedPool()
         {
-            Assert.Throws<NotImplementedException>(() => _pool.PutObjectFromTransactedPool(null!));
+            Setup(SuccessfulConnectionFactory);
+            Assert.Throws<NotImplementedException>(() => pool.PutObjectFromTransactedPool(null!));
         }
 
         [Fact]
         public void TestReplaceConnection()
         {
-            Assert.Throws<NotImplementedException>(() => _pool.ReplaceConnection(null!, null!, null!));
-        }
-
-        [Fact]
-        public void TestReturnInternalConnection()
-        {
-            Assert.Throws<NotImplementedException>(() => _pool.ReturnInternalConnection(null!, null!));
+            Setup(SuccessfulConnectionFactory);
+            Assert.Throws<NotImplementedException>(() => pool.ReplaceConnection(null!, null!, null!));
         }
 
         [Fact]
         public void TestShutdown()
         {
-            Assert.Throws<NotImplementedException>(() => _pool.Shutdown());
+            Setup(SuccessfulConnectionFactory);
+            Assert.Throws<NotImplementedException>(() => pool.Shutdown());
         }
 
         [Fact]
         public void TestStartup()
         {
-            Assert.Throws<NotImplementedException>(() => _pool.Startup());
+            Setup(SuccessfulConnectionFactory);
+            Assert.Throws<NotImplementedException>(() => pool.Startup());
         }
 
         [Fact]
         public void TestTransactionEnded()
         {
-            Assert.Throws<NotImplementedException>(() => _pool.TransactionEnded(null!, null!));
+            Setup(SuccessfulConnectionFactory);
+            Assert.Throws<NotImplementedException>(() => pool.TransactionEnded(null!, null!));
+        }
+        #endregion
+
+        #region Test classes
+        internal class SuccessfulDbConnectionFactory : DbConnectionFactory
+        {
+            protected override DbConnectionInternal CreateConnection(
+                DbConnectionOptions options, 
+                DbConnectionPoolKey poolKey, 
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo, 
+                IDbConnectionPool pool, 
+                DbConnection owningConnection,
+                DbConnectionOptions userOptions)
+            {
+                return new StubDbConnectionInternal();
+            }
+
+            #region Not Implemented Members
+            public override DbProviderFactory ProviderFactory => throw new NotImplementedException();
+
+            protected override DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous)
+            {
+                throw new NotImplementedException();
+            }
+
+            protected override DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(DbConnectionOptions options)
+            {
+                throw new NotImplementedException();
+            }
+
+            protected override int GetObjectId(DbConnection connection)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override DbConnectionPoolGroup GetConnectionPoolGroup(DbConnection connection)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override DbConnectionInternal GetInnerConnection(DbConnection connection)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override void PermissionDemand(DbConnection outerConnection)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override void SetConnectionPoolGroup(DbConnection outerConnection, DbConnectionPoolGroup poolGroup)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override void SetInnerConnectionEvent(DbConnection owningObject, DbConnectionInternal to)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override bool SetInnerConnectionFrom(DbConnection owningObject, DbConnectionInternal to, DbConnectionInternal from)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override void SetInnerConnectionTo(DbConnection owningObject, DbConnectionInternal to)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(DbConnectionOptions connectionOptions)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(DbConnectionOptions connectionOptions)
+            {
+                throw new NotImplementedException();
+            }
+            #endregion
+        }
+
+        internal class TimeoutDbConnectionFactory : DbConnectionFactory
+        {
+            protected override DbConnectionInternal CreateConnection(
+                                DbConnectionOptions options,
+                DbConnectionPoolKey poolKey,
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+                IDbConnectionPool pool,
+                DbConnection owningConnection,
+                DbConnectionOptions userOptions)
+            {
+                throw ADP.PooledOpenTimeout();
+            }
+
+            #region Not Implemented Members
+            public override DbProviderFactory ProviderFactory => throw new NotImplementedException();
+
+            protected override DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous)
+            {
+                throw new NotImplementedException();
+            }
+
+            protected override DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(DbConnectionOptions options)
+            {
+                throw new NotImplementedException();
+            }
+
+            protected override int GetObjectId(DbConnection connection)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override DbConnectionPoolGroup GetConnectionPoolGroup(DbConnection connection)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override DbConnectionInternal GetInnerConnection(DbConnection connection)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override void PermissionDemand(DbConnection outerConnection)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override void SetConnectionPoolGroup(DbConnection outerConnection, DbConnectionPoolGroup poolGroup)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override void SetInnerConnectionEvent(DbConnection owningObject, DbConnectionInternal to)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override bool SetInnerConnectionFrom(DbConnection owningObject, DbConnectionInternal to, DbConnectionInternal from)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override void SetInnerConnectionTo(DbConnection owningObject, DbConnectionInternal to)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(DbConnectionOptions connectionOptions)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(DbConnectionOptions connectionOptions)
+            {
+                throw new NotImplementedException();
+            }
+            #endregion
+        }
+
+        internal class StubDbConnectionInternal : DbConnectionInternal
+        {
+            #region Not Implemented Members
+            public override string ServerVersion => throw new NotImplementedException();
+
+            public override DbTransaction BeginTransaction(System.Data.IsolationLevel il)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override void EnlistTransaction(Transaction transaction)
+            {
+                return;
+            }
+
+            protected override void Activate(Transaction transaction)
+            {
+                return;
+            }
+
+            protected override void Deactivate()
+            {
+                return;
+            }
+            #endregion
+        }
+        #endregion
+
+        [Fact]
+        public void Constructor_WithZeroMaxPoolSize_ThrowsArgumentOutOfRangeException()
+        {
+            // Arrange
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 0, // This should cause an exception
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true
+            );
+            var dbConnectionPoolGroup = new DbConnectionPoolGroup(
+                new DbConnectionOptions("DataSource=localhost;", null),
+                new DbConnectionPoolKey("TestDataSource"),
+                poolGroupOptions
+            );
+
+            // Act & Assert
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() => 
+                new ChannelDbConnectionPool(
+                    SuccessfulConnectionFactory,
+                    dbConnectionPoolGroup,
+                    DbConnectionPoolIdentity.NoIdentity,
+                    new DbConnectionPoolProviderInfo()
+                ));
+            
+            Assert.Equal("fixedCapacity", exception.ParamName);
+            Assert.Contains("Capacity must be greater than zero", exception.Message);
         }
 
         [Fact]
-        public void TestTryGetConnection()
+        public void Constructor_WithMaxIntMaxPoolSize_DoesNotThrow()
         {
-            Assert.Throws<NotImplementedException>(() => _pool.TryGetConnection(null!, null!, null!, out _));
+            // Arrange - Test that Int32.MaxValue is accepted as a valid pool size
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: int.MaxValue,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true
+            );
+            var dbConnectionPoolGroup = new DbConnectionPoolGroup(
+                new DbConnectionOptions("DataSource=localhost;", null),
+                new DbConnectionPoolKey("TestDataSource"),
+                poolGroupOptions
+            );
+
+            try
+            {
+                // Act & Assert - This should not throw ArgumentOutOfRangeException, but may throw OutOfMemoryException
+                var pool = new ChannelDbConnectionPool(
+                    SuccessfulConnectionFactory,
+                    dbConnectionPoolGroup,
+                    DbConnectionPoolIdentity.NoIdentity,
+                    new DbConnectionPoolProviderInfo()
+                );
+
+                Assert.NotNull(pool);
+                Assert.Equal(0, pool.Count);
+            }
+            catch (OutOfMemoryException)
+            {
+                // OutOfMemoryException is acceptable when trying to allocate an array of int.MaxValue size
+                // This test is primarily checking that ArgumentOutOfRangeException is not thrown for the capacity validation
+                // The fact that we reach the OutOfMemoryException means the capacity validation passed
+            }
+        }
+
+        [Fact]
+        public void Constructor_WithValidSmallPoolSizes_WorksCorrectly()
+        {
+            // Arrange - Test various small pool sizes that should work correctly
+            
+            // Test with pool size of 1
+            var poolGroupOptions1 = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 1,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true
+            );
+            var dbConnectionPoolGroup1 = new DbConnectionPoolGroup(
+                new DbConnectionOptions("DataSource=localhost;", null),
+                new DbConnectionPoolKey("TestDataSource"),
+                poolGroupOptions1
+            );
+
+            // Act & Assert - Pool size of 1 should work
+            var pool1 = new ChannelDbConnectionPool(
+                SuccessfulConnectionFactory,
+                dbConnectionPoolGroup1,
+                DbConnectionPoolIdentity.NoIdentity,
+                new DbConnectionPoolProviderInfo()
+            );
+
+            Assert.NotNull(pool1);
+            Assert.Equal(0, pool1.Count);
+
+            // Test with pool size of 2
+            var poolGroupOptions2 = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 2,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true
+            );
+            var dbConnectionPoolGroup2 = new DbConnectionPoolGroup(
+                new DbConnectionOptions("DataSource=localhost;", null),
+                new DbConnectionPoolKey("TestDataSource"),
+                poolGroupOptions2
+            );
+
+            var pool2 = new ChannelDbConnectionPool(
+                SuccessfulConnectionFactory,
+                dbConnectionPoolGroup2,
+                DbConnectionPoolIdentity.NoIdentity,
+                new DbConnectionPoolProviderInfo()
+            );
+
+            Assert.NotNull(pool2);
+            Assert.Equal(0, pool2.Count);
         }
     }
 }

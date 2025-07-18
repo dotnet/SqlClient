@@ -133,7 +133,20 @@ namespace Microsoft.Data.ProviderBase
 
                 newConnection.MakePooledConnection(pool);
             }
+
+            if (newConnection == null)
+            {
+                throw ADP.InternalError(ADP.InternalErrorCode.CreateObjectReturnedNull);    // CreateObject succeeded, but null object
+            }
+            if (!newConnection.CanBePooled)
+            {
+                throw ADP.InternalError(ADP.InternalErrorCode.NewObjectCannotBePooled);        // CreateObject succeeded, but non-poolable object
+            }
+
             SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionFactory.CreatePooledConnection|RES|CPOOL> {0}, Pooled database connection created.", ObjectID);
+
+            newConnection.PrePush(null);
+
             return newConnection;
         }
 
