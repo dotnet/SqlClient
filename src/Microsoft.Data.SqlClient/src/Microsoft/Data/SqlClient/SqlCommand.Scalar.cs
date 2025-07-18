@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient
 {
     public partial class SqlCommand
     {
-        #region Public Methods
+        #region Public/Internal Methods
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalar/*'/>
         public override object ExecuteScalar()
@@ -79,6 +79,93 @@ namespace Microsoft.Data.SqlClient
             // Do not use retry logic here as ExecuteReaderAsyncInternal handles retry logic
             return ExecuteScalarAsyncInternal(cancellationToken);
         }
+        
+        #if NET
+        internal Task<object> ExecuteScalarBatchAsync(CancellationToken cancellationToken)
+        {
+            Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
+            _parentOperationStarted = true;
+            
+            // @TODO: This code is almost identical to ExecuteScalarAsyncInternal - we can definitely refactor it!
+            return ExecuteReaderAsync(cancellationToken).ContinueWith(executeTask =>
+            {
+                TaskCompletionSource<object> source = new TaskCompletionSource<object>();
+
+                if (executeTask.IsCanceled)
+                {
+                    source.SetCanceled();
+                }
+                else if (executeTask.IsFaulted)
+                {
+                    s_diagnosticListener.WriteCommandError(
+                        operationId,
+                        this,
+                        _transaction,
+                        executeTask.Exception.InnerException);
+                    source.SetException(executeTask.Exception.InnerException);
+                }
+                else
+                {
+                    SqlDataReader reader = executeTask.Result;
+                    ExecuteScalarUntilEndAsync(reader, cancellationToken).ContinueWith(readTask =>
+                    {
+                        try
+                        {
+                            if (readTask.IsCanceled)
+                            {
+                                reader.Dispose();
+                                source.SetCanceled();
+                            }
+                            else if (readTask.IsFaulted)
+                            {
+                                reader.Dispose();
+                                s_diagnosticListener.WriteCommandError(
+                                    operationId,
+                                    this,
+                                    _transaction,
+                                    readTask.Exception.InnerException);
+                                source.SetException(readTask.Exception.InnerException);
+                            }
+                            else
+                            {
+                                Exception exception = null;
+                                object result = null;
+                                try
+                                {
+                                    result = readTask.Result;
+                                }
+                                finally
+                                {
+                                    reader.Dispose();
+                                }
+
+                                if (exception is not null)
+                                {
+                                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
+                                    source.SetException(exception);
+                                }
+                                else
+                                {
+                                    s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                                    source.SetResult(result);
+                                }
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            // Exception thrown by dispose
+                            source.SetException(e);
+                        }
+                    },
+                    TaskScheduler.Default);
+                }
+
+                _parentOperationStarted = false;
+                return source.Task;
+            },
+            TaskScheduler.Default).Unwrap();
+        }
+        #endif
         
         #endregion
         
