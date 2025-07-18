@@ -539,32 +539,6 @@ namespace Microsoft.Data.SqlClient
                 () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method));
         }
 
-        private object CompleteExecuteScalar(SqlDataReader ds, bool returnLastResult)
-        {
-            object retResult = null;
-
-            try
-            {
-                do
-                {
-                    if (ds.Read())
-                    {
-                        if (ds.FieldCount > 0)
-                        {
-                            retResult = ds.GetValue(0);
-                        }
-                    }
-                } while (returnLastResult && ds.NextResult());
-            }
-            finally
-            {
-                // clean off the wire
-                ds.Close();
-            }
-
-            return retResult;
-        }
-
         private Task InternalExecuteNonQueryWithRetry(
             bool sendToPipe,
             int timeout,
