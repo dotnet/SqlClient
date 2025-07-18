@@ -2223,20 +2223,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private async Task<object> ExecuteScalarUntilEndAsync(SqlDataReader reader, CancellationToken cancellationToken)
-        {
-            object retval = null;
-            do
-            {
-                if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false) && reader.FieldCount > 0)
-                {
-                    retval = reader.GetValue(0); // no async untyped value getter, this will work ok as long as the value is in the current packet
-                }
-            }
-            while (_batchRPCMode && !cancellationToken.IsCancellationRequested && await reader.NextResultAsync(cancellationToken).ConfigureAwait(false));
-            return retval;
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="default"]/*'/>
         public Task<XmlReader> ExecuteXmlReaderAsync() => 
             ExecuteXmlReaderAsync(CancellationToken.None);

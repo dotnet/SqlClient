@@ -193,6 +193,25 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
+        private async Task<object> ExecuteScalarUntilEndAsync(
+            SqlDataReader reader,
+            CancellationToken cancellationToken)
+        {
+            // @TODO: This is doing almost the same thing as CompleteExecuteScalar when returnLastResult is true
+            object result = null;
+            do
+            {
+                if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false) && reader.FieldCount > 0)
+                {
+                    result = reader.GetValue(0);
+                }
+            } while (_batchRPCMode &&
+                     !cancellationToken.IsCancellationRequested &&
+                     await reader.NextResultAsync(cancellationToken).ConfigureAwait(false));
+
+            return result;
+        }
+        
         private Task<object> ExecuteScalarAsyncInternal(CancellationToken cancellationToken)
         {
             SqlClientEventSource.Log.TryTraceEvent(
