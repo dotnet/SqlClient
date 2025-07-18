@@ -4,6 +4,7 @@
 
 using System;
 using System.Text;
+using System.Threading;
 using Azure.Core;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using static Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.Validator;
@@ -55,6 +56,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
         private readonly static KeyWrapAlgorithm s_keyWrapAlgorithm = KeyWrapAlgorithm.RsaOaep;
 
+        private SemaphoreSlim _cacheSemaphore = new(1, 1);
+
         /// <summary>
         /// List of Trusted Endpoints
         /// 
@@ -69,7 +72,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <summary>
         /// A cache for storing the results of signature verification of column master key metadata.
         /// </summary>
-        private readonly LocalCache<Tuple<string, bool, string>, bool> _columnMasterKeyMetadataSignatureVerificationCache = 
+        private readonly LocalCache<Tuple<string, bool, string>, bool> _columnMasterKeyMetadataSignatureVerificationCache =
             new(maxSizeLimit: 2000) { TimeToLive = TimeSpan.FromDays(10) };
 
         /// <summary>
@@ -230,7 +233,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 // Get ciphertext
                 byte[] cipherText = new byte[cipherTextLength];
                 Array.Copy(encryptedColumnEncryptionKey, currentIndex, cipherText, 0, cipherTextLength);
-                
+
                 currentIndex += cipherTextLength;
 
                 // Get signature
@@ -394,17 +397,10 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="source">An array of bytes to convert.</param>
         /// <returns>A string of hexadecimal characters</returns>
         /// <remarks>
-        /// Produces a string of hexadecimal character pairs preceded with "0x", where each pair represents the corresponding element in value; for example, "0x7F2C4A00".
+        /// Produces a string of hexadecimal character pairs preceded with "0x", where each pair represents the corresponding element in source; for example, "0x7F2C4A00".
         /// </remarks>
         private string ToHexString(byte[] source)
-        {
-            if (source is null)
-            {
-                return null;
-            }
-
-            return "0x" + BitConverter.ToString(source).Replace("-", "");
-        }
+            => source is null ? null : "0x" + BitConverter.ToString(source).Replace("-", "");
 
         /// <summary>
         /// Returns the cached decrypted column encryption key, or unwraps the encrypted column encryption key if not present.
@@ -415,8 +411,21 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <remarks>
         ///
         /// </remarks>
-        private byte[] GetOrCreateColumnEncryptionKey(string encryptedColumnEncryptionKey, Func<byte[]> createItem) 
-            => _columnEncryptionKeyCache.GetOrCreate(encryptedColumnEncryptionKey, createItem);
+        private byte[] GetOrCreateColumnEncryptionKey(string encryptedColumnEncryptionKey, Func<byte[]> createItem)
+        {
+            // Allow only one thread to access the cache at a time.
+            _cacheSemaphore.Wait();
+
+            try
+            {
+                return _columnEncryptionKeyCache.GetOrCreate(encryptedColumnEncryptionKey, createItem);
+            }
+            finally
+            {
+                // Release the semaphore to allow other threads to access the cache.
+                _cacheSemaphore.Release();
+            }
+        }
 
         /// <summary>
         /// Returns the cached signature verification result, or proceeds to verify if not present.

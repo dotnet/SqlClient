@@ -918,11 +918,12 @@ namespace Microsoft.Data.SqlClient
                     {
                         return SqlMoney.Null;
                     }
-#if NET
+                    
+                    #if NET
                     return SqlMoney.FromTdsValue(_value._int64);
-#else
-                    return SqlTypeWorkarounds.SqlMoneyCtor(_value._int64, 1/*ignored*/);
-#endif
+                    #else
+                    return SqlTypeWorkarounds.LongToSqlMoney(_value._int64);
+                    #endif
                 }
                 return (SqlMoney)SqlValue; // anything else we haven't thought of goes through boxing.
             }
@@ -993,7 +994,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (IsNull)
                 {
-                    return new SqlVector<T>(_value._vectorInfo._elementCount);
+                    return SqlVector<T>.CreateNull(_value._vectorInfo._elementCount);
                 }
                 return new SqlVector<T>(SqlBinary.Value);
             }

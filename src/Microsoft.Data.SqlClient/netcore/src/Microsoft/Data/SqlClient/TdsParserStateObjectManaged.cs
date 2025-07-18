@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            ref string[] spns,
+            out ResolvedServerSpn resolvedSpn,
             bool flushCache,
             bool async,
             bool parallel,
@@ -95,7 +95,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             string hostNameInCertificate,
             string serverCertificateFilename)
         {
-            SniHandle? sessionHandle = SniProxy.CreateConnectionHandle(serverName, timeout, out instanceName, ref spns, serverSPN,
+            SniHandle? sessionHandle = SniProxy.CreateConnectionHandle(serverName, timeout, out instanceName, out resolvedSpn, serverSPN,
                 flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
                 hostNameInCertificate, serverCertificateFilename);
 
@@ -392,6 +392,15 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             protocolVersion = GetSessionSNIHandleHandleOrThrow().ProtocolVersion;
             return 0;
+        }
+
+        internal override SniErrorDetails GetErrorDetails()
+        {
+            SniError sniError = SniProxy.Instance.GetLastError();
+
+            return new SniErrorDetails(sniError.errorMessage, sniError.nativeError, sniError.sniError,
+                (int)sniError.provider, sniError.lineNumber, sniError.function,
+                sniError.exception);
         }
 
         private SniHandle GetSessionSNIHandleHandleOrThrow()

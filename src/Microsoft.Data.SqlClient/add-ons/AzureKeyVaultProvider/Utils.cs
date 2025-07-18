@@ -86,7 +86,10 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             new(string.Format(Strings.NullOrWhitespaceForEach, name));
 
         internal static KeyNotFoundException MasterKeyNotFound(string masterKeyPath) =>
-            new(string.Format(CultureInfo.InvariantCulture, Strings.InvalidSignatureTemplate, masterKeyPath));
+            new(string.Format(CultureInfo.InvariantCulture, Strings.MasterKeyNotFound, masterKeyPath));
+
+        internal static KeyNotFoundException GetKeyFailed(string masterKeyPath) =>
+            new(string.Format(CultureInfo.InvariantCulture, Strings.GetKeyFailed, masterKeyPath));
 
         internal static FormatException NonRsaKeyFormat(string keyType) =>
             new(string.Format(CultureInfo.InvariantCulture, Strings.NonRsaKeyTemplate, keyType));
@@ -138,7 +141,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         internal static ArgumentException InvalidAKVUrl(string masterKeyPath) =>
             new(string.Format(CultureInfo.InvariantCulture, Strings.InvalidAkvUrlTemplate, masterKeyPath), Constants.AeParamMasterKeyPath);
 
-        internal static Exception InvalidAKVUrlTrustedEndpoints(string masterKeyPath, string endpoints) =>
+        internal static ArgumentException InvalidAKVUrlTrustedEndpoints(string masterKeyPath, string endpoints) =>
             new ArgumentException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidAkvKeyPathTrustedTemplate, masterKeyPath, endpoints),
                 Constants.AeParamMasterKeyPath);
     }

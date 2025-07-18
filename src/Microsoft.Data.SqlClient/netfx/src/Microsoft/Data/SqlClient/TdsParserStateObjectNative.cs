@@ -133,7 +133,7 @@ namespace Microsoft.Data.SqlClient
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            ref string[] spns,
+            out ManagedSni.ResolvedServerSpn resolvedSpn,
             bool flushCache,
             bool async,
             bool fParallel,
@@ -171,7 +171,7 @@ namespace Microsoft.Data.SqlClient
             _sessionHandle = new SNIHandle(myInfo, serverName, ref serverSPN, timeout.MillisecondsRemainingInt,
                 out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout,
                 iPAddressPreference, cachedDNSInfo, hostNameInCertificate);
-            spns = new[] { serverSPN.TrimEnd() };
+            resolvedSpn = new(serverSPN.TrimEnd());
         }
 
         protected override uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
@@ -362,6 +362,13 @@ namespace Microsoft.Data.SqlClient
 
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
             => SniNativeWrapper.SniSetInfo(Handle, QueryType.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
+
+        internal override SniErrorDetails GetErrorDetails()
+        {
+            SniNativeWrapper.SniGetLastError(out SniError sniError);
+
+            return new SniErrorDetails(sniError.errorMessage, sniError.nativeError, sniError.sniError, (int)sniError.provider, sniError.lineNumber, sniError.function);
+        }
 
         internal override void DisposePacketCache()
         {
