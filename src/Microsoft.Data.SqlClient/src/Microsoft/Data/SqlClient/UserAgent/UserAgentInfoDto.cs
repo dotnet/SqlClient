@@ -1,7 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.UserAgent
 {
     internal class UserAgentInfoDto
     {

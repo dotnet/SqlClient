@@ -15,13 +15,13 @@ using Microsoft.Data.Common;
 using System.Management;
 #endif
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.UserAgent
 {
     /// <summary>
     /// Gathers driver + environment info, enforces size constraints,
     /// and serializes into a UTF-8 JSON payload.
     /// </summary>
-    public static class UserAgentInfo
+    internal static class UserAgentInfo
     {
         /// <summary>
         /// Maximum number of characters allowed for the driver name.
@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient
 
         // P/Invoke signature for glibc detection
         [DllImport("libc", EntryPoint = "gnu_get_libc_version", CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr gnu_get_libc_version();
+        private static extern nint gnu_get_libc_version();
 
         static UserAgentInfo()
         {
@@ -132,7 +132,7 @@ namespace Microsoft.Data.SqlClient
             //   'driver', 'version', and 'os.type'
             // - If the payload exceeds 2,047 bytes but remains within sensible limits, we still send it, but note that
             //   some servers may silently drop or reject such packets — behavior we may use for future probing or diagnostics.
-
+            // - If payload exceeds 10KB even after dropping fields , we send an empty payload.
             driverName = TruncateOrDefault(DefaultDriverName, DriverNameMaxChars);
             version = TruncateOrDefault(ADP.GetAssemblyVersion().ToString(), VersionMaxChars);
             var osVal = DetectOsType();
@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient
                     Details = osDetails
                 },
                 Arch = architecture,
-                Runtime = runtime,
+                Runtime = runtime
 
             };
 
@@ -377,7 +377,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     // P/Invoke into libc
-                    IntPtr ptr = gnu_get_libc_version();
+                    nint ptr = gnu_get_libc_version();
                     string glibc = Marshal.PtrToStringAnsi(ptr);
                     if (!string.IsNullOrWhiteSpace(glibc))
                         return "glibc " + glibc.Trim();
