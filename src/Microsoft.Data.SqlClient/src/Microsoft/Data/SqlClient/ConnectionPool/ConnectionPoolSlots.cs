@@ -5,8 +5,6 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Channels;
-using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
 
 #nullable enable
@@ -14,38 +12,14 @@ using Microsoft.Data.ProviderBase;
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
     /// <summary>
-    /// A thread-safe collection with a fixed capacity that allows reservations.
-    /// A reservation *must* be made before adding a connection to the collection.
-    /// Exceptions *must* be handled by the caller when trying to add connections
-    /// and the caller *must* release the reservation.
+    /// A thread-safe collection with a fixed capacity. Avoids wasted work by reserving a slot before adding an item.
     /// </summary>
-    /// <example>
-    /// <code>
-    /// ConnectionPoolSlots slots = new ConnectionPoolSlots(100);
-    /// 
-    /// if (slots.TryReserve())
-    /// {
-    ///     try {
-    ///         var connection = OpenConnection();
-    ///         slots.Add(connection);
-    ///     }
-    ///     catch (InvalidOperationException ex)
-    ///     {
-    ///         slots.ReleaseReservation();
-    ///         throw;
-    ///     }
-    /// }
-    /// 
-    /// if (slots.TryRemove())
-    /// {
-    ///     slots.ReleaseReservation();
-    /// }
-    /// 
-    /// </code>
-    /// </example>
     internal sealed class ConnectionPoolSlots
     {
-
+        /// <summary>
+        /// Represents a reservation that manages a resource and ensures cleanup when no longer needed.
+        /// </summary>
+        /// <typeparam name="T">The type of the resource being managed by the reservation.</typeparam>
         private sealed class Reservation<T> : IDisposable
         {
             private Action<T> cleanupCallback;
@@ -91,29 +65,46 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Constructs a ConnectionPoolSlots instance with the given fixed capacity.
         /// </summary>
         /// <param name="fixedCapacity">The fixed capacity of the collection.</param>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// Thrown when fixedCapacity is greater than Int32.MaxValue or equal to zero.
+        /// </exception>
         internal ConnectionPoolSlots(uint fixedCapacity)
         {
+            if (fixedCapacity > int.MaxValue)
+            {
+                throw new ArgumentOutOfRangeException(nameof(fixedCapacity), "Capacity must be less than or equal to Int32.MaxValue.");
+            }
+
+            if (fixedCapacity == 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(fixedCapacity), "Capacity must be greater than zero.");
+            }
+
             _capacity = fixedCapacity;
             _reservations = 0;
             _connections = new DbConnectionInternal?[fixedCapacity];
         }
 
         /// <summary>
-        /// Gets the total number of reservations.
+        /// Gets the total number of reservations currently held.
         /// </summary>
         internal int ReservationCount => _reservations;
 
         /// <summary>
-        /// Adds a connection to the collection. Can only be called after a reservation has been made.
+        /// Adds a connection to the collection.
         /// </summary>
-        /// <param name="createCallback">The connection to add to the collection.</param>
-        /// <param name="cleanupCallback">Callback to clean up resources if an exception occurs.</param>
+        /// <param name="createCallback">Callback that provides the connection to add to the collection. This callback 
+        /// *must not* call any other ConnectionPoolSlots methods.</param>
+        /// <param name="cleanupCallback">Callback to clean up resources if an exception occurs. This callback *must 
+        /// not* call any other ConnectionPoolSlots methods.</param>
         /// <param name="createState">State made available to the create callback.</param>
         /// <param name="cleanupState">State made available to the cleanup callback.</param>
-        /// <exception cref="InvalidOperationException">
-        /// Thrown when unable to find an empty slot. 
-        /// This can occur if a reservation is not taken before adding a connection.
+        /// <exception cref="Exception">
+        /// Throws when createCallback throws an exception.
+        /// Throws when a reservation is successfully made, but an empty slot cannot be found. This condition is 
+        /// unexpected and indicates a bug.
         /// </exception>
+        /// <returns>Returns the new connection, or null if there was not available space.</returns>
         internal DbConnectionInternal? Add<T, S>(
             CreateCallback<DbConnectionInternal?, T> createCallback, 
             CleanupCallback<S> cleanupCallback, 
@@ -186,7 +177,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>
         /// Attempts to reserve a spot in the collection.
         /// </summary>
-        /// <returns>True if a reservation was successfully obtained.</returns>
+        /// <returns>A Reservation if successful, otherwise returns null.</returns>
         private Reservation<ConnectionPoolSlots>? TryReserve()
         {
             for (var expected = _reservations; expected < _capacity; expected = _reservations)

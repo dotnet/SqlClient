@@ -911,5 +911,123 @@ namespace Microsoft.Data.SqlClient.UnitTests
             #endregion
         }
         #endregion
+
+        [Fact]
+        public void Constructor_WithZeroMaxPoolSize_ThrowsArgumentOutOfRangeException()
+        {
+            // Arrange
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 0, // This should cause an exception
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true
+            );
+            var dbConnectionPoolGroup = new DbConnectionPoolGroup(
+                new DbConnectionOptions("DataSource=localhost;", null),
+                new DbConnectionPoolKey("TestDataSource"),
+                poolGroupOptions
+            );
+
+            // Act & Assert
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() => 
+                new ChannelDbConnectionPool(
+                    SuccessfulConnectionFactory,
+                    dbConnectionPoolGroup,
+                    DbConnectionPoolIdentity.NoIdentity,
+                    new DbConnectionPoolProviderInfo()
+                ));
+            
+            Assert.Equal("fixedCapacity", exception.ParamName);
+            Assert.Contains("Capacity must be greater than zero", exception.Message);
+        }
+
+        [Fact]
+        public void Constructor_WithMaxIntMaxPoolSize_DoesNotThrow()
+        {
+            // Arrange - Test that Int32.MaxValue is accepted as a valid pool size
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: int.MaxValue,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true
+            );
+            var dbConnectionPoolGroup = new DbConnectionPoolGroup(
+                new DbConnectionOptions("DataSource=localhost;", null),
+                new DbConnectionPoolKey("TestDataSource"),
+                poolGroupOptions
+            );
+
+            // Act & Assert - This should not throw
+            var pool = new ChannelDbConnectionPool(
+                SuccessfulConnectionFactory,
+                dbConnectionPoolGroup,
+                DbConnectionPoolIdentity.NoIdentity,
+                new DbConnectionPoolProviderInfo()
+            );
+
+            Assert.NotNull(pool);
+            Assert.Equal(0, pool.Count);
+        }
+
+        [Fact]
+        public void Constructor_WithValidSmallPoolSizes_WorksCorrectly()
+        {
+            // Arrange - Test various small pool sizes that should work correctly
+            
+            // Test with pool size of 1
+            var poolGroupOptions1 = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 1,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true
+            );
+            var dbConnectionPoolGroup1 = new DbConnectionPoolGroup(
+                new DbConnectionOptions("DataSource=localhost;", null),
+                new DbConnectionPoolKey("TestDataSource"),
+                poolGroupOptions1
+            );
+
+            // Act & Assert - Pool size of 1 should work
+            var pool1 = new ChannelDbConnectionPool(
+                SuccessfulConnectionFactory,
+                dbConnectionPoolGroup1,
+                DbConnectionPoolIdentity.NoIdentity,
+                new DbConnectionPoolProviderInfo()
+            );
+
+            Assert.NotNull(pool1);
+            Assert.Equal(0, pool1.Count);
+
+            // Test with pool size of 2
+            var poolGroupOptions2 = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 2,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true
+            );
+            var dbConnectionPoolGroup2 = new DbConnectionPoolGroup(
+                new DbConnectionOptions("DataSource=localhost;", null),
+                new DbConnectionPoolKey("TestDataSource"),
+                poolGroupOptions2
+            );
+
+            var pool2 = new ChannelDbConnectionPool(
+                SuccessfulConnectionFactory,
+                dbConnectionPoolGroup2,
+                DbConnectionPoolIdentity.NoIdentity,
+                new DbConnectionPoolProviderInfo()
+            );
+
+            Assert.NotNull(pool2);
+            Assert.Equal(0, pool2.Count);
+        }
     }
 }
