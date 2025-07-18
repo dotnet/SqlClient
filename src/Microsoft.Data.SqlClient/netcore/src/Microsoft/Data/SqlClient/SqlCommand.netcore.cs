@@ -2223,11 +2223,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalarAsync[@name="CancellationToken"]/*'/>
-        public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken) =>
-            // Do not use retry logic here as internal call to ExecuteReaderAsync handles retry logic.
-            InternalExecuteScalarAsync(cancellationToken);
-
         private Task<object> InternalExecuteScalarAsync(CancellationToken cancellationToken)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteScalarAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);

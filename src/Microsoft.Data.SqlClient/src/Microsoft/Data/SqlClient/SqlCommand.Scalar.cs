@@ -4,6 +4,8 @@
 
 using System;
 using System.Data;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
@@ -70,7 +72,13 @@ namespace Microsoft.Data.SqlClient
                 SqlStatistics.StopTimer(statistics);
                 WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
             }
-            
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalarAsync[@name="CancellationToken"]/*'/>
+        public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
+        {
+            // Do not use retry logic here as ExecuteReaderAsyncInternal handles retry logic
+            return InternalExecuteScalarAsync(cancellationToken);
         }
         
         #endregion
