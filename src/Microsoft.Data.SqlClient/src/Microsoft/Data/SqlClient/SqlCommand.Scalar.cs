@@ -37,7 +37,6 @@ namespace Microsoft.Data.SqlClient
                 $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
                 $"Command Text '{CommandText}'");
             
-            
             SqlStatistics statistics = null;
             bool success = false;
             int? sqlExceptionNumber = null;
@@ -78,7 +77,7 @@ namespace Microsoft.Data.SqlClient
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
             // Do not use retry logic here as ExecuteReaderAsyncInternal handles retry logic
-            return InternalExecuteScalarAsync(cancellationToken);
+            return ExecuteScalarAsyncInternal(cancellationToken);
         }
         
         #endregion
@@ -105,6 +104,137 @@ namespace Microsoft.Data.SqlClient
             }
 
             return result;
+        }
+
+        private Task<object> ExecuteScalarAsyncInternal(CancellationToken cancellationToken)
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlCommand.ExecuteScalarAsyncInternal | API " +
+                $"Object Id {ObjectID}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"Command Text '{CommandText}'");
+            SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                "SqlCommand.InternalExecuteScalarAsync | API | Correlation | " +
+                $"Object Id {ObjectID}, " +
+                $"Activity Id {ActivityCorrelator.Current}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"Command Text '{CommandText}'");
+
+            #if NET
+            Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
+            _parentOperationStarted = true;
+            #endif
+
+            // @TODO: Use continue with state? This would be a good candidate for rewriting async/await
+            return ExecuteReaderAsync(cancellationToken).ContinueWith(executeTask =>
+            {
+                TaskCompletionSource<object> source = new TaskCompletionSource<object>();
+
+                if (executeTask.IsCanceled)
+                {
+                    source.SetCanceled();
+                }
+                else if (executeTask.IsFaulted)
+                {
+                    #if NET
+                    s_diagnosticListener.WriteCommandError(
+                        operationId,
+                        this,
+                        _transaction,
+                        executeTask.Exception.InnerException);
+                    #endif
+                    
+                    source.SetException(executeTask.Exception.InnerException);
+                }
+                else
+                {
+                    SqlDataReader reader = executeTask.Result;
+                    
+                    // @TODO: Use continue with state?
+                    reader.ReadAsync(cancellationToken).ContinueWith(readTask =>
+                    {
+                        // @TODO: This seems a bit confusing with unnecessary extra dispose calls and try/finally blocks
+                        try
+                        {
+                            
+                            if (readTask.IsCanceled)
+                            {
+                                reader.Dispose();
+                                source.SetCanceled();
+                            }
+                            else if (readTask.IsFaulted)
+                            {
+                                reader.Dispose();
+                                
+                                #if NET
+                                s_diagnosticListener.WriteCommandError(
+                                    operationId,
+                                    this,
+                                    _transaction,
+                                    readTask.Exception.InnerException);
+                                #endif
+                                
+                                source.SetException(readTask.Exception.InnerException);
+                            }
+                            else
+                            {
+                                Exception exception = null;
+                                object result = null;
+                                try
+                                {
+                                    bool more = readTask.Result;
+                                    if (more && reader.FieldCount > 0)
+                                    {
+                                        try
+                                        {
+                                            result = reader.GetValue(0);
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            // @TODO: Yeah, this code doesn't understand how finally blocks work.
+                                            exception = e;
+                                        }
+                                    }
+                                }
+                                finally
+                                {
+                                    reader.Dispose();
+                                }
+
+                                if (exception is not null)
+                                {
+                                    #if NET
+                                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
+                                    #endif
+                                    
+                                    source.SetException(exception);
+                                }
+                                else
+                                {
+                                    #if NET
+                                    s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                                    #endif
+                                    
+                                    source.SetResult(result);
+                                }
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            // Exception thrown by Dispose
+                            source.SetException(e);
+                        }
+                    },
+                    TaskScheduler.Default);
+                }
+
+                #if NET
+                _parentOperationStarted = false;
+                #endif
+                
+                return source.Task;
+            },
+            TaskScheduler.Default).Unwrap();
         }
         
         #endregion
