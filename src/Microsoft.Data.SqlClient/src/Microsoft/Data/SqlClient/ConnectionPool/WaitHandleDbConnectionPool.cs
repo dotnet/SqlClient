@@ -745,15 +745,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             try
             {
                 newObj = _connectionFactory.CreatePooledConnection(this, owningObject, _connectionPoolGroup.ConnectionOptions, _connectionPoolGroup.PoolKey, userOptions);
-                if (newObj == null)
-                {
-                    throw ADP.InternalError(ADP.InternalErrorCode.CreateObjectReturnedNull);    // CreateObject succeeded, but null object
-                }
-                if (!newObj.CanBePooled)
-                {
-                    throw ADP.InternalError(ADP.InternalErrorCode.NewObjectCannotBePooled);        // CreateObject succeeded, but non-poolable object
-                }
-                newObj.PrePush(null);
 
                 lock (_objectList)
                 {
