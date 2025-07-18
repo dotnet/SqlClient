@@ -5,6 +5,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
 
@@ -45,15 +46,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     internal sealed class ConnectionPoolSlots
     {
 
-        private sealed class Reservation : IDisposable
+        private sealed class Reservation<T> : IDisposable
         {
-            private readonly ConnectionPoolSlots _slots;
+            private Action<T> cleanupCallback;
+            private T state;
             private bool _retain = false;
             private bool _disposed = false;
 
-            internal Reservation(ConnectionPoolSlots slots)
+            internal Reservation(T state, Action<T> cleanupCallback)
             {
-                _slots = slots;
+                this.state = state;
+                this.cleanupCallback = cleanupCallback;
             }
 
             public void Dispose()
@@ -65,19 +68,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 if (!_retain)
                 {
-                    _slots.ReleaseReservation();
-                    _disposed = true;
+                    cleanupCallback(state);
                 }
+
+                _disposed = true;
             }
 
             internal void Keep()
             {
                 _retain = true;
             }
-
         }
 
-        internal delegate void CleanupCallback(DbConnectionInternal? connection);
+        internal delegate T CreateCallback<T, S>(S state);
+        internal delegate void CleanupCallback<T>(DbConnectionInternal? connection, T state);
 
         private readonly DbConnectionInternal?[] _connections;
         private readonly uint _capacity;
@@ -104,11 +108,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         /// <param name="createCallback">The connection to add to the collection.</param>
         /// <param name="cleanupCallback">Callback to clean up resources if an exception occurs.</param>
+        /// <param name="createState">State made available to the create callback.</param>
+        /// <param name="cleanupState">State made available to the cleanup callback.</param>
         /// <exception cref="InvalidOperationException">
         /// Thrown when unable to find an empty slot. 
         /// This can occur if a reservation is not taken before adding a connection.
         /// </exception>
-        internal DbConnectionInternal? Add(Func<DbConnectionInternal?> createCallback, CleanupCallback cleanupCallback)
+        internal DbConnectionInternal? Add<T, S>(
+            CreateCallback<DbConnectionInternal?, T> createCallback, 
+            CleanupCallback<S> cleanupCallback, 
+            T createState,
+            S cleanupState)
         {
             DbConnectionInternal? connection = null;
             try
@@ -119,7 +129,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     return null;
                 }
 
-                connection = createCallback();
+                connection = createCallback(createState);
 
                 if (connection is null)
                 {
@@ -139,7 +149,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             catch (Exception e)
             {
-                cleanupCallback(connection);
+                cleanupCallback(connection, cleanupState);
                 throw new Exception("Failed to create or add connection", e);
             }
         }
@@ -177,7 +187,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Attempts to reserve a spot in the collection.
         /// </summary>
         /// <returns>True if a reservation was successfully obtained.</returns>
-        private Reservation? TryReserve()
+        private Reservation<ConnectionPoolSlots>? TryReserve()
         {
             for (var expected = _reservations; expected < _capacity; expected = _reservations)
             {
@@ -191,7 +201,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     continue;
                 }
 
-                return new Reservation(this);
+                return new Reservation<ConnectionPoolSlots>(this, (slots) => slots.ReleaseReservation());
             }
             return null;
         }
