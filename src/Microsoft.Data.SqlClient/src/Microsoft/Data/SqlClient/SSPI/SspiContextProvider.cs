@@ -6,7 +6,8 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal abstract class SspiContextProvider
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/SspiContextProvider/*'/>
+    public abstract class SspiContextProvider
     {
         private TdsParser _parser = null!;
         private ServerInfo _serverInfo = null!;
@@ -15,6 +16,11 @@ namespace Microsoft.Data.SqlClient
         private SspiAuthenticationParameters? _secondaryAuthParams;
 
         private protected TdsParserStateObject _physicalStateObj = null!;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/SspiContextProvider/*'/>
+        protected SspiContextProvider()
+        {
+        }
 
 #if NET
         /// <remarks>
@@ -58,7 +64,8 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        protected abstract bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams);
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/SspiContextProvider/GenerateContext'/>
+        protected abstract bool GenerateContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams);
 
         internal void WriteSSPIContext(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter)
         {
@@ -94,9 +101,9 @@ namespace Microsoft.Data.SqlClient
         {
             try
             {
-                SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | SPN={1}", GetType().FullName, nameof(GenerateSspiClientContext), authParams.Resource);
+                SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | SPN={1}", GetType().FullName, nameof(GenerateContext), authParams.Resource);
 
-                return GenerateSspiClientContext(incomingBlob, outgoingBlobWriter, authParams);
+                return GenerateContext(incomingBlob, outgoingBlobWriter, authParams);
             }
             catch (Exception e)
             {
@@ -105,7 +112,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        protected void SSPIError(string error, string procedure)
+        private protected void SSPIError(string error, string procedure)
         {
             Debug.Assert(!string.IsNullOrEmpty(procedure), "TdsParser.SSPIError called with an empty or null procedure string");
             Debug.Assert(!string.IsNullOrEmpty(error), "TdsParser.SSPIError called with an empty or null error string");
