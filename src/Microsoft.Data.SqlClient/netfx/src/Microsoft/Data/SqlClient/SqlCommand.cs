@@ -1448,8 +1448,14 @@ namespace Microsoft.Data.SqlClient
                         asyncWrite,
                         globalCompletion,
                         localCompletion,
-                        InternalEndExecuteNonQuery,
-                        BeginExecuteNonQueryInternal,
+                        endFunc: static (SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod) =>
+                        {
+                            return command.InternalEndExecuteNonQuery(asyncResult, isInternal, endMethod);
+                        },
+                        retryFunc: static (SqlCommand command, CommandBehavior commandBehavior, AsyncCallback callback, object stateObject, int timeout, bool isRetry, bool asyncWrite) =>
+                        {
+                            return command.BeginExecuteNonQueryInternal(commandBehavior, callback, stateObject, timeout, isRetry, asyncWrite);
+                        },
                         nameof(EndExecuteNonQuery)))
                 {
                     globalCompletion = localCompletion;
@@ -2039,8 +2045,14 @@ namespace Microsoft.Data.SqlClient
                         asyncWrite,
                         globalCompletion,
                         localCompletion,
-                        InternalEndExecuteReader,
-                        BeginExecuteXmlReaderInternal,
+                        endFunc: static (SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod) =>
+                        {
+                            return command.InternalEndExecuteReader(asyncResult, isInternal, endMethod);
+                        },
+                        retryFunc: static (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool isRetry, bool asyncWrite) =>
+                        {
+                            return command.BeginExecuteXmlReaderInternal(behavior, callback, stateObject, timeout, isRetry, asyncWrite);                    
+                        },
                         endMethod: nameof(EndExecuteXmlReader)))
                 {
                     globalCompletion = localCompletion;
@@ -2516,8 +2528,14 @@ namespace Microsoft.Data.SqlClient
                         asyncWrite,
                         globalCompletion,
                         localCompletion,
-                        InternalEndExecuteReader,
-                        BeginExecuteReaderInternal,
+                        endFunc: static (SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod) =>
+                        {
+                            return command.InternalEndExecuteReader(asyncResult, isInternal, endMethod);
+                        },
+                        retryFunc: static (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool isRetry, bool asyncWrite) =>
+                        {
+                            return command.BeginExecuteReaderInternal(behavior, callback, stateObject, timeout, isRetry, asyncWrite);
+                        },
                         nameof(EndExecuteReader)))
                 {
                     globalCompletion = localCompletion;
@@ -2546,8 +2564,8 @@ namespace Microsoft.Data.SqlClient
             bool asyncWrite,
             TaskCompletionSource<object> globalCompletion,
             TaskCompletionSource<object> localCompletion,
-            Func<IAsyncResult, bool, string, object> endFunc,
-            Func<CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc,
+            Func<SqlCommand, IAsyncResult, bool, string, object> endFunc,
+            Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc,
             string endMethod)
         {
             // We shouldn't be using the cache if we are in retry.
@@ -2584,7 +2602,7 @@ namespace Microsoft.Data.SqlClient
                             // lock on _stateObj prevents races with close/cancel.
                             lock (_stateObj)
                             {
-                                endFunc(tsk, /*isInternal:*/ true, endMethod);
+                                endFunc(this, tsk, /*isInternal:*/ true, endMethod);
                             }
                             globalCompletion.TrySetResult(tsk.Result);
                         }
@@ -2635,7 +2653,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                // Remove the enrty from the cache since it was inconsistent.
+                                // Remove the entry from the cache since it was inconsistent.
                                 SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
 
                                 InvalidateEnclaveSession();
@@ -2645,6 +2663,7 @@ namespace Microsoft.Data.SqlClient
                                     // Kick off the retry.
                                     _internalEndExecuteInitiated = false;
                                     Task<object> retryTask = (Task<object>)retryFunc(
+                                        this,
                                         behavior,
                                         null,
                                         stateObject,
