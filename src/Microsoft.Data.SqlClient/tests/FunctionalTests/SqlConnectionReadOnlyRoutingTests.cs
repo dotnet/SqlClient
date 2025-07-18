@@ -4,8 +4,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.Identity.Client;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
@@ -16,8 +18,9 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void NonRoutedConnection()
         {
-            using TestTdsServer server = TestTdsServer.StartTestServer();
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(server.ConnectionString) { ApplicationIntent = ApplicationIntent.ReadOnly };
+            using TdsServer server = new TdsServer();
+            server.Start();
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder() { DataSource = $"localhost,{server.EndPoint.Port}", ApplicationIntent = ApplicationIntent.ReadOnly };
             using SqlConnection connection = new SqlConnection(builder.ConnectionString);
             connection.Open();
         }
@@ -25,8 +28,9 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public async Task NonRoutedAsyncConnection()
         {
-            using TestTdsServer server = TestTdsServer.StartTestServer();
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(server.ConnectionString) { ApplicationIntent = ApplicationIntent.ReadOnly };
+            using TdsServer server = new TdsServer();
+            server.Start();
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder() { DataSource = $"localhost,{server.EndPoint.Port}", ApplicationIntent = ApplicationIntent.ReadOnly };
             using SqlConnection connection = new SqlConnection(builder.ConnectionString);
             await connection.OpenAsync();
         }
@@ -45,21 +49,26 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(11)] // The driver rejects more than 10 redirects (11 layers of redirecting servers)
         public void RecursivelyRoutedConnection(int layers)
         {
-            TestTdsServer innerServer = TestTdsServer.StartTestServer();
-            IPEndPoint lastEndpoint = innerServer.Endpoint;
-            Stack<GenericTDSServer> routingLayers = new(layers + 1);
-            string lastConnectionString = innerServer.ConnectionString;
+            using TdsServer innerServer = new TdsServer();
+            innerServer.Start();
+            IPEndPoint lastEndpoint = innerServer.EndPoint;
+            Stack<RoutingTdsServer> routingLayers = new(layers + 1);
+            string lastConnectionString = (new SqlConnectionStringBuilder() { DataSource = $"localhost,{lastEndpoint.Port}" }).ConnectionString;
 
             try
             {
-                routingLayers.Push(innerServer);
                 for (int i = 0; i < layers; i++)
                 {
-                    TestRoutingTdsServer router = TestRoutingTdsServer.StartTestServer(lastEndpoint);
-
+                    RoutingTdsServer router = new RoutingTdsServer(
+                        new RoutingTdsServerArguments()
+                    {
+                        RoutingTCPHost = lastEndpoint.Address.ToString(),
+                        RoutingTCPPort = (ushort)lastEndpoint.Port,
+                    });
+                    router.Start();
                     routingLayers.Push(router);
-                    lastEndpoint = router.Endpoint;
-                    lastConnectionString = router.ConnectionString;
+                    lastEndpoint = router.EndPoint;
+                    lastConnectionString = (new SqlConnectionStringBuilder() { DataSource = $"localhost,{lastEndpoint.Port}" }).ConnectionString;
                 }
 
                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(lastConnectionString) { ApplicationIntent = ApplicationIntent.ReadOnly };
@@ -70,12 +79,7 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 while (routingLayers.Count > 0)
                 {
-                    GenericTDSServer layer = routingLayers.Pop();
-
-                    if (layer is IDisposable disp)
-                    {
-                        disp.Dispose();
-                    }
+                    routingLayers.Pop().Dispose();
                 }
             }
         }
@@ -86,21 +90,26 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(11)] // The driver rejects more than 10 redirects (11 layers of redirecting servers)
         public async Task RecursivelyRoutedAsyncConnection(int layers)
         {
-            TestTdsServer innerServer = TestTdsServer.StartTestServer();
-            IPEndPoint lastEndpoint = innerServer.Endpoint;
-            Stack<GenericTDSServer> routingLayers = new(layers + 1);
-            string lastConnectionString = innerServer.ConnectionString;
+            using TdsServer innerServer = new TdsServer();
+            innerServer.Start();
+            IPEndPoint lastEndpoint = innerServer.EndPoint;
+            Stack<RoutingTdsServer> routingLayers = new(layers + 1);
+            string lastConnectionString = (new SqlConnectionStringBuilder() { DataSource = $"localhost,{lastEndpoint.Port}" }).ConnectionString;
 
             try
             {
-                routingLayers.Push(innerServer);
                 for (int i = 0; i < layers; i++)
                 {
-                    TestRoutingTdsServer router = TestRoutingTdsServer.StartTestServer(lastEndpoint);
-
+                    RoutingTdsServer router = new RoutingTdsServer(
+                        new RoutingTdsServerArguments()
+                        {
+                            RoutingTCPHost = lastEndpoint.Address.ToString(),
+                            RoutingTCPPort = (ushort)lastEndpoint.Port,
+                        });
+                    router.Start();
                     routingLayers.Push(router);
-                    lastEndpoint = router.Endpoint;
-                    lastConnectionString = router.ConnectionString;
+                    lastEndpoint = router.EndPoint;
+                    lastConnectionString = (new SqlConnectionStringBuilder() { DataSource = $"localhost,{lastEndpoint.Port}" }).ConnectionString;
                 }
 
                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(lastConnectionString) { ApplicationIntent = ApplicationIntent.ReadOnly };
@@ -111,12 +120,7 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 while (routingLayers.Count > 0)
                 {
-                    GenericTDSServer layer = routingLayers.Pop();
-
-                    if (layer is IDisposable disp)
-                    {
-                        disp.Dispose();
-                    }
+                    routingLayers.Pop().Dispose();
                 }
             }
         }
@@ -135,6 +139,55 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlException sqlEx = await Assert.ThrowsAsync<SqlException>(() => RecursivelyRoutedAsyncConnection(12)); // This will fail on the 11th redirect
 
             Assert.Contains("Too many redirections have occurred.", sqlEx.Message, StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
+        [InlineData(40613)]
+        [InlineData(42108)]
+        [InlineData(42109)]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public void TransientFaultAtRoutedLocationTest(uint errorCode)
+        {
+            // Arrange
+            using TransientFaultTdsServer server = new TransientFaultTdsServer(
+                new TransientFaultTdsServerArguments()
+                {
+                    IsEnabledTransientError = true,
+                    Number = errorCode,
+                });
+
+            server.Start();
+
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = server.EndPoint.Address.ToString(),
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                });
+            router.Start();
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder() {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                ApplicationIntent = ApplicationIntent.ReadOnly,
+                ConnectTimeout = 30,
+                ConnectRetryInterval = 1
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            try
+            {
+                // Act
+                connection.Open();
+            }
+            catch (Exception e)
+            {
+                Assert.Fail(e.Message);
+            }
+
+            // Assert
+            Assert.Equal(ConnectionState.Open, connection.State);
+
+            // Failures should prompt the client to return to the original server, resulting in a login count of 2
+            Assert.Equal(2, router.PreLoginCount);
+            Assert.Equal(2, server.PreLoginCount);
         }
     }
 }

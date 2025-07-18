@@ -7,17 +7,17 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// <summary>
     /// Arguments for Fed Auth Negative TDS Server
     /// </summary>
-    public class FederatedAuthenticationNegativeTDSServerArguments : TDSServerArguments
+    public class FederatedAuthenticationNegativeTdsServerArguments : TdsServerArguments
     {
         /// <summary>
         /// Type of the Fed Auth Negative TDS Server
         /// </summary>
-        public FederatedAuthenticationNegativeTDSScenarioType Scenario { get; set; }
+        public FederatedAuthenticationNegativeTdsScenarioType Scenario { get; set; }
 
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public FederatedAuthenticationNegativeTDSServerArguments()
+        public FederatedAuthenticationNegativeTdsServerArguments()
         {
         }
     }
