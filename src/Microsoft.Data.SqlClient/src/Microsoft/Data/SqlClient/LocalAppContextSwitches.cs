@@ -324,8 +324,10 @@ namespace Microsoft.Data.SqlClient
 #if NET
         private const string GlobalizationInvariantModeString = @"System.Globalization.Invariant";
         private const string GlobalizationInvariantModeEnvironmentVariable = "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT";
+        internal const string UseManagedNetworkingOnWindowsString = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
         private static Tristate s_globalizationInvariantMode;
+        private static Tristate s_useManagedNetworkingOnWindows;
 
         /// <summary>
         /// .NET Core 2.0 and up supports Globalization Invariant mode, which reduces the size of the required libraries for
@@ -375,11 +377,46 @@ namespace Microsoft.Data.SqlClient
                 return s_globalizationInvariantMode == Tristate.True;
             }
         }
+
+        /// <summary>
+        /// When set to true, .NET Core will use the managed SNI implementation instead of the native SNI implementation.
+        /// </summary>
+        /// <remarks>
+        /// Non-Windows platforms will always use the managed networking implementation. Windows platforms will use the native SNI
+        /// implementation by default, but this can be overridden by setting the AppContext switch
+        /// </remarks>
+        public static bool UseManagedNetworking
+        {
+            get
+            {
+                if (s_useManagedNetworkingOnWindows == Tristate.NotInitialized)
+                {
+                    if (!OperatingSystem.IsWindows())
+                    {
+                        s_useManagedNetworkingOnWindows = Tristate.True;
+                    }
+                    else if (AppContext.TryGetSwitch(UseManagedNetworkingOnWindowsString, out bool returnedValue) && returnedValue)
+                    {
+                        s_useManagedNetworkingOnWindows = Tristate.True;
+                    }
+                    else
+                    {
+                        s_useManagedNetworkingOnWindows = Tristate.False;
+                    }
+                }
+                return s_useManagedNetworkingOnWindows == Tristate.True;
+            }
+        }
 #else
         /// <summary>
         /// .NET Framework does not support Globalization Invariant mode, so this will always be false.
         /// </summary>
         public const bool GlobalizationInvariantMode = false;
+
+        /// <summary>
+        /// .NET Framework does not support the managed SNI, so this will always be false.
+        /// </summary>
+        public const bool UseManagedNetworking = false;
 #endif
     }
 }

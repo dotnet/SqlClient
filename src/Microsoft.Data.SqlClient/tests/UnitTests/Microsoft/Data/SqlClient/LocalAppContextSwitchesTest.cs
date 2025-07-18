@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
@@ -26,8 +27,11 @@ public class LocalAppContextSwitchesTest
         Assert.False(LocalAppContextSwitches.UseCompatibilityAsyncBehaviour);
         Assert.False(LocalAppContextSwitches.UseConnectionPoolV2);
         Assert.False(LocalAppContextSwitches.TruncateScaledDecimal);
-        #if NETFRAMEWORK
+#if NETFRAMEWORK
         Assert.False(LocalAppContextSwitches.DisableTnirByDefault);
-        #endif
+        Assert.False(LocalAppContextSwitches.UseManagedNetworking);
+#else
+        Assert.Equal(!OperatingSystem.IsWindows(), LocalAppContextSwitches.UseManagedNetworking);
+#endif
     }
 }

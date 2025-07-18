@@ -3224,7 +3224,7 @@ namespace Microsoft.Data.SqlClient
                     ReadAsyncCallback(IntPtr.Zero, readPacket, 0);
 
                     // Only release packet for Managed SNI as for Native SNI packet is released in finally block.
-                    if (TdsParserStateObjectFactory.UseManagedSNI && readFromNetwork && !IsPacketEmpty(readPacket))
+                    if (LocalAppContextSwitches.UseManagedNetworking && readFromNetwork && !IsPacketEmpty(readPacket))
                     {
                         ReleasePacket(readPacket);
                     }
@@ -3260,7 +3260,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                if (!TdsParserStateObjectFactory.UseManagedSNI)
+                if (!LocalAppContextSwitches.UseManagedNetworking)
                 {
                     if (readFromNetwork && !IsPacketEmpty(readPacket))
                     {

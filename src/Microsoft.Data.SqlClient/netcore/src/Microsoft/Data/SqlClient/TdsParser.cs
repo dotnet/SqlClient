@@ -621,7 +621,7 @@ namespace Microsoft.Data.SqlClient
                 // Cache physical stateObj and connection.
                 _pMarsPhysicalConObj = _physicalStateObj;
 
-                if (TdsParserStateObjectFactory.UseManagedSNI)
+                if (LocalAppContextSwitches.UseManagedNetworking)
                     _pMarsPhysicalConObj.IncrementPendingCallbacks();
 
                 uint info = 0;
@@ -1479,7 +1479,7 @@ namespace Microsoft.Data.SqlClient
                  * !=null       | == 0     | replace text left of errorMessage
                  */
 
-                if (TdsParserStateObjectFactory.UseManagedSNI)
+                if (LocalAppContextSwitches.UseManagedNetworking)
                 {
                     Debug.Assert(!string.IsNullOrEmpty(details.ErrorMessage) || details.SniErrorNumber != 0, "Empty error message received from SNI");
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Empty error message received from SNI. Error Message = {0}, SNI Error Number ={1}", details.ErrorMessage, details.SniErrorNumber);
@@ -1528,7 +1528,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    if (TdsParserStateObjectFactory.UseManagedSNI)
+                    if (LocalAppContextSwitches.UseManagedNetworking)
                     {
                         // SNI error. Append additional error message info if available and hasn't been included.
                         string sniLookupMessage = SQL.GetSNIErrorMessage(details.SniErrorNumber);
