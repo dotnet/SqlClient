@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Specialized;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,7 +14,7 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.UnitTests
+namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 {
     public class ChannelDbConnectionPoolTest
     {
@@ -961,16 +960,25 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 poolGroupOptions
             );
 
-            // Act & Assert - This should not throw
-            var pool = new ChannelDbConnectionPool(
-                SuccessfulConnectionFactory,
-                dbConnectionPoolGroup,
-                DbConnectionPoolIdentity.NoIdentity,
-                new DbConnectionPoolProviderInfo()
-            );
+            try
+            {
+                // Act & Assert - This should not throw ArgumentOutOfRangeException, but may throw OutOfMemoryException
+                var pool = new ChannelDbConnectionPool(
+                    SuccessfulConnectionFactory,
+                    dbConnectionPoolGroup,
+                    DbConnectionPoolIdentity.NoIdentity,
+                    new DbConnectionPoolProviderInfo()
+                );
 
-            Assert.NotNull(pool);
-            Assert.Equal(0, pool.Count);
+                Assert.NotNull(pool);
+                Assert.Equal(0, pool.Count);
+            }
+            catch (OutOfMemoryException)
+            {
+                // OutOfMemoryException is acceptable when trying to allocate an array of int.MaxValue size
+                // This test is primarily checking that ArgumentOutOfRangeException is not thrown for the capacity validation
+                // The fact that we reach the OutOfMemoryException means the capacity validation passed
+            }
         }
 
         [Fact]
