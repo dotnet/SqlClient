@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient
         private SqlRetryLogicBaseProvider _retryLogicProvider;
 
         // diagnostics listener
-        private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener();
+        private static readonly SqlDiagnosticListener s_diagnosticListener = new();
 
         // Transient Fault handling flag. This is needed to convey to the downstream mechanism of connection establishment, if Transient Fault handling should be used or not
         // The downstream handling of Connection open is the same for idle connection resiliency. Currently we want to apply transient fault handling only to the connections opened
@@ -1457,8 +1457,8 @@ namespace Microsoft.Data.SqlClient
                 PrepareStatisticsForNewConnection();
 
                 SqlStatistics statistics = null;
-
                 Exception e = null;
+
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
