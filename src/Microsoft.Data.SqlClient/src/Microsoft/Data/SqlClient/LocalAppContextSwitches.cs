@@ -327,7 +327,7 @@ namespace Microsoft.Data.SqlClient
         internal const string UseManagedNetworkingOnWindowsString = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
         private static Tristate s_globalizationInvariantMode;
-        private static Tristate s_useManagedNetworkingOnWindows;
+        private static Tristate s_useManagedNetworking;
 
         /// <summary>
         /// .NET Core 2.0 and up supports Globalization Invariant mode, which reduces the size of the required libraries for
@@ -389,22 +389,22 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (s_useManagedNetworkingOnWindows == Tristate.NotInitialized)
+                if (s_useManagedNetworking == Tristate.NotInitialized)
                 {
                     if (!OperatingSystem.IsWindows())
                     {
-                        s_useManagedNetworkingOnWindows = Tristate.True;
+                        s_useManagedNetworking = Tristate.True;
                     }
                     else if (AppContext.TryGetSwitch(UseManagedNetworkingOnWindowsString, out bool returnedValue) && returnedValue)
                     {
-                        s_useManagedNetworkingOnWindows = Tristate.True;
+                        s_useManagedNetworking = Tristate.True;
                     }
                     else
                     {
-                        s_useManagedNetworkingOnWindows = Tristate.False;
+                        s_useManagedNetworking = Tristate.False;
                     }
                 }
-                return s_useManagedNetworkingOnWindows == Tristate.True;
+                return s_useManagedNetworking == Tristate.True;
             }
         }
 #else
