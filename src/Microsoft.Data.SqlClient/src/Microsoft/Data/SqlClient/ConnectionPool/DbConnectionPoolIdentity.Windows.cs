@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 #else
         internal static DbConnectionPoolIdentity GetCurrent()
         {
-            return TdsParserStateObjectFactory.UseManagedSNI ? GetCurrentManaged() : GetCurrentNative();
+            return LocalAppContextSwitches.UseManagedNetworking ? GetCurrentManaged() : GetCurrentNative();
         }
 #endif
 

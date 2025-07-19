@@ -15,7 +15,7 @@ namespace Microsoft.Data.Sql
 #if NETFRAMEWORK
             return SqlDataSourceEnumeratorNativeHelper.GetDataSources();
 #else
-            return SqlClient.TdsParserStateObjectFactory.UseManagedSNI ? SqlDataSourceEnumeratorManagedHelper.GetDataSources() : SqlDataSourceEnumeratorNativeHelper.GetDataSources();
+            return SqlClient.LocalAppContextSwitches.UseManagedNetworking ? SqlDataSourceEnumeratorManagedHelper.GetDataSources() : SqlDataSourceEnumeratorNativeHelper.GetDataSources();
 #endif
         }
     }

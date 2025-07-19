@@ -15,14 +15,15 @@ namespace Microsoft.Data.SqlClient
             True = 2
         }
 
-        internal const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
-        internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
-        internal const string SuppressInsecureTlsWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
-        internal const string UseMinimumLoginTimeoutString = @"Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin";
-        internal const string LegacyVarTimeZeroScaleBehaviourString = @"Switch.Microsoft.Data.SqlClient.LegacyVarTimeZeroScaleBehaviour";
-        internal const string UseCompatibilityProcessSniString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni";
-        internal const string UseCompatibilityAsyncBehaviourString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour";
-        internal const string UseConnectionPoolV2String = @"Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
+        private const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
+        private const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
+        private const string SuppressInsecureTlsWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
+        private const string UseMinimumLoginTimeoutString = @"Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin";
+        private const string LegacyVarTimeZeroScaleBehaviourString = @"Switch.Microsoft.Data.SqlClient.LegacyVarTimeZeroScaleBehaviour";
+        private const string UseCompatibilityProcessSniString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni";
+        private const string UseCompatibilityAsyncBehaviourString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour";
+        private const string UseConnectionPoolV2String = @"Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
+        private const string TruncateScaledDecimalString = @"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal";
 
         // this field is accessed through reflection in tests and should not be renamed or have the type changed without refactoring NullRow related tests
         private static Tristate s_legacyRowVersionNullBehavior;
@@ -34,6 +35,7 @@ namespace Microsoft.Data.SqlClient
         private static Tristate s_useCompatibilityProcessSni;
         private static Tristate s_useCompatibilityAsyncBehaviour;
         private static Tristate s_useConnectionPoolV2;
+        private static Tristate s_truncateScaledDecimal;
 
 #if NET
         static LocalAppContextSwitches()
@@ -296,5 +298,125 @@ namespace Microsoft.Data.SqlClient
                 return s_useConnectionPoolV2 == Tristate.True;
             }
         }
+
+        /// <summary>
+        /// When set to true, TdsParser will truncate (rather than round) decimal and SqlDecimal values when scaling them.
+        /// </summary>
+        public static bool TruncateScaledDecimal
+        {
+            get
+            {
+                if (s_truncateScaledDecimal == Tristate.NotInitialized)
+                {
+                    if (AppContext.TryGetSwitch(TruncateScaledDecimalString, out bool returnedValue) && returnedValue)
+                    {
+                        s_truncateScaledDecimal = Tristate.True;
+                    }
+                    else
+                    {
+                        s_truncateScaledDecimal = Tristate.False;
+                    }
+                }
+                return s_truncateScaledDecimal == Tristate.True;
+            }
+        }
+
+#if NET
+        private const string GlobalizationInvariantModeString = @"System.Globalization.Invariant";
+        private const string GlobalizationInvariantModeEnvironmentVariable = "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT";
+        internal const string UseManagedNetworkingOnWindowsString = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
+
+        private static Tristate s_globalizationInvariantMode;
+        private static Tristate s_useManagedNetworking;
+
+        /// <summary>
+        /// .NET Core 2.0 and up supports Globalization Invariant mode, which reduces the size of the required libraries for
+        /// applications which don't need globalization support. SqlClient requires those libraries for core functionality,
+        /// and will throw exceptions later if they are not present. This switch allows SqlClient to detect this mode early.
+        /// </summary>
+        public static bool GlobalizationInvariantMode
+        {
+            get
+            {
+                if (s_globalizationInvariantMode == Tristate.NotInitialized)
+                {
+                    // Check if invariant mode is has been set by the AppContext switch directly
+                    if (AppContext.TryGetSwitch(GlobalizationInvariantModeString, out bool returnedValue) && returnedValue)
+                    {
+                        s_globalizationInvariantMode = Tristate.True;
+                    }
+                    else
+                    {
+                        // If the switch is not set, we check the environment variable as the first fallback
+                        string envValue = Environment.GetEnvironmentVariable(GlobalizationInvariantModeEnvironmentVariable);
+
+                        if (string.Equals(envValue, bool.TrueString, StringComparison.OrdinalIgnoreCase) || string.Equals(envValue, "1", StringComparison.OrdinalIgnoreCase))
+                        {
+                            s_globalizationInvariantMode = Tristate.True;
+                        }
+                        else
+                        {
+                            // If this hasn't been manually set, it could still apply if the OS doesn't have ICU libraries installed,
+                            // or if the application is a native binary with ICU support trimmed away.
+                            // .NET 3.1 to 5.0 do not throw in attempting to create en-US in invariant mode, but .NET 6+ does. In
+                            // such cases, catch and infer invariant mode from the exception.
+                            try
+                            {
+                                s_globalizationInvariantMode = System.Globalization.CultureInfo.GetCultureInfo("en-US").EnglishName.Contains("Invariant")
+                                    ? Tristate.True
+                                    : Tristate.False;
+                            }
+                            catch (System.Globalization.CultureNotFoundException)
+                            {
+                                // If the culture is not found, it means we are in invariant mode
+                                s_globalizationInvariantMode = Tristate.True;
+                            }
+                        }
+                    }
+                }
+                return s_globalizationInvariantMode == Tristate.True;
+            }
+        }
+
+        /// <summary>
+        /// When set to true, .NET Core will use the managed SNI implementation instead of the native SNI implementation.
+        /// </summary>
+        /// <remarks>
+        /// Non-Windows platforms will always use the managed networking implementation. Windows platforms will use the native SNI
+        /// implementation by default, but this can be overridden by setting the AppContext switch
+        /// </remarks>
+        public static bool UseManagedNetworking
+        {
+            get
+            {
+                if (s_useManagedNetworking == Tristate.NotInitialized)
+                {
+                    if (!OperatingSystem.IsWindows())
+                    {
+                        s_useManagedNetworking = Tristate.True;
+                    }
+                    else if (AppContext.TryGetSwitch(UseManagedNetworkingOnWindowsString, out bool returnedValue) && returnedValue)
+                    {
+                        s_useManagedNetworking = Tristate.True;
+                    }
+                    else
+                    {
+                        s_useManagedNetworking = Tristate.False;
+                    }
+                }
+                return s_useManagedNetworking == Tristate.True;
+            }
+        }
+#else
+        /// <summary>
+        /// .NET Framework does not support Globalization Invariant mode, so this will always be false.
+        /// </summary>
+        public const bool GlobalizationInvariantMode = false;
+
+        /// <summary>
+        /// .NET Framework does not support the managed SNI, so this will always be false.
+        /// </summary>
+        public const bool UseManagedNetworking = false;
+#endif
     }
 }

@@ -8,9 +8,6 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed class TdsParserStateObjectFactory
     {
-
-        public static bool UseManagedSNI => true;
-
         public static readonly TdsParserStateObjectFactory Singleton = new TdsParserStateObjectFactory();
 
         public EncryptionOptions EncryptionOptions => ManagedSni.SniLoadHandle.SingletonInstance.Options;

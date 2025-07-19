@@ -1,0 +1,9 @@
+<linker>
+  <assembly fullname="Microsoft.Data.SqlClient">
+    <type fullname="Microsoft.Data.SqlClient.LocalAppContextSwitches">
+      <!-- Enable the unused SNI to be trimmed based upon the publish-time value of the Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows switch -->
+      <method signature="System.Boolean get_UseManagedNetworking()" body="stub" value="false" feature="Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows" featurevalue="false" />
+      <method signature="System.Boolean get_UseManagedNetworking()" body="stub" value="true" feature="Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows" featurevalue="true" />
+    </type>
+  </assembly>
+</linker>
