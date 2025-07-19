@@ -961,6 +961,7 @@
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
     <PackageReference Include="System.Buffers" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" />
     <PackageReference Include="System.Memory" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.Text.Encodings.Web" />
