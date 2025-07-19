@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET
-
 using System;
 using System.Data;
 using System.Diagnostics;
@@ -483,5 +481,3 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         }
     }
 }
-
-#endif
