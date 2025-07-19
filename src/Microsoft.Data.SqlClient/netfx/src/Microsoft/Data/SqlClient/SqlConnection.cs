@@ -1461,17 +1461,7 @@ namespace Microsoft.Data.SqlClient
 
                 Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
 
-                if (StatisticsEnabled)
-                {
-                    if (_statistics == null)
-                    {
-                        _statistics = new SqlStatistics();
-                    }
-                    else
-                    {
-                        _statistics.ContinueOnNewConnection();
-                    }
-                }
+                PrepareStatisticsForNewConnection();
 
                 SqlStatistics statistics = null;
                 Exception e = null;
@@ -1752,17 +1742,7 @@ namespace Microsoft.Data.SqlClient
             {
                 Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
 
-                if (StatisticsEnabled)
-                {
-                    if (_statistics == null)
-                    {
-                        _statistics = new SqlStatistics();
-                    }
-                    else
-                    {
-                        _statistics.ContinueOnNewConnection();
-                    }
-                }
+                PrepareStatisticsForNewConnection();
 
                 SqlStatistics statistics = null;
                 RuntimeHelpers.PrepareConstrainedRegions();
@@ -1928,6 +1908,23 @@ namespace Microsoft.Data.SqlClient
                     _parent.CloseInnerConnection();
                     _parent._currentCompletion = null;
                     _result.SetException(e);
+                }
+            }
+        }
+
+        private void PrepareStatisticsForNewConnection()
+        {
+            if (StatisticsEnabled ||
+                s_diagnosticListener.IsEnabled(SqlClientCommandAfter.Name) ||
+                s_diagnosticListener.IsEnabled(SqlClientConnectionOpenAfter.Name))
+            {
+                if (_statistics == null)
+                {
+                    _statistics = new SqlStatistics();
+                }
+                else
+                {
+                    _statistics.ContinueOnNewConnection();
                 }
             }
         }
