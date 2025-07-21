@@ -50,7 +50,7 @@ namespace Microsoft.Data.Common.ConnectionString
         #endif
         
         [Conditional("DEBUG")]
-        private static void DebugTraceKeyValuePair(string keyname, string keyvalue, Dictionary<string, string> synonyms)
+        private static void DebugTraceKeyValuePair(string keyname, string keyvalue, IReadOnlyDictionary<string, string> synonyms)
         {
             if (SqlClientEventSource.Log.IsAdvancedTraceOn())
             {
@@ -77,7 +77,7 @@ namespace Microsoft.Data.Common.ConnectionString
         private static void ParseComparison(
             Dictionary<string, string> parseTable,
             string connectionString,
-            Dictionary<string, string> synonyms,
+            IReadOnlyDictionary<string, string> synonyms,
             bool firstKey,
             Exception e)
         {
@@ -138,7 +138,7 @@ namespace Microsoft.Data.Common.ConnectionString
         #if DEBUG
         private static Dictionary<string, string> SplitConnectionString(
             string connectionString,
-            Dictionary<string, string> synonyms,
+            IReadOnlyDictionary<string, string> synonyms,
             bool firstKey)
         {
             var parseTable = new Dictionary<string, string>();

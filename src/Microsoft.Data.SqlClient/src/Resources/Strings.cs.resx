@@ -231,17 +231,11 @@
   <data name="ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity" xml:space="preserve">
     <value>Nelze použít pověření (Credential) s klíčovým slovem Integrated Security, které může být součástí připojovacího řetězce.</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection" xml:space="preserve">
-    <value>Nelze použít pověření (Credential) s klíčovým slovem Context Connection.</value>
-  </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword" xml:space="preserve">
     <value>Pokud je v připojovacím řetězci zadané UserID, UID, Password nebo PWD, nejde vlastnost AccessToken nastavit.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity" xml:space="preserve">
     <value>Pokud je klíčové slovo Integrated Security připojovacího řetězce nastavené na hodnotu true nebo SSPI, nejde vlastnost AccessToken nastavit.</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndContextConnection" xml:space="preserve">
-    <value>Vlastnost AccessToken nejde nastavit s klíčovým slovem Context Connection.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndCredential" xml:space="preserve">
     <value>Pokud už je nastavená vlastnost Credential, nejde vlastnost AccessToken nastavit.</value>
@@ -2073,9 +2067,6 @@
   <data name="ADP_InvalidDestinationBufferIndex" xml:space="preserve">
     <value>Neplatný posun cílové vyrovnávací paměti (velikost: {0}, posun: {1})</value>
   </data>
-  <data name="ADP_DataReaderNoData" xml:space="preserve">
-    <value>Pro řádek nebo sloupec neexistují data.</value>
-  </data>
   <data name="ADP_NumericToDecimalOverflow" xml:space="preserve">
     <value>Číselná hodnota je příliš velká. Nemůže ji obsahovat desítková 96bitová hodnota.</value>
   </data>
@@ -2529,6 +2520,9 @@
   <data name="SQL_AsyncConnectionRequired" xml:space="preserve">
     <value>Tento příkaz vyžaduje asynchronní připojení. Nastavte v připojovacím řetězci hodnotu Asynchronous Processing=true.</value>
   </data>
+  <data name="SQL_ConnectTimeout" xml:space="preserve">
+    <value>The connection attempt timed out.</value>
+  </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>Časový limit vypršel.  V důsledku toho bylo připojení přerušeno.</value>
   </data>
@@ -2778,30 +2772,6 @@
   <data name="SQL_InvalidDataLength" xml:space="preserve">
     <value>Délka dat {0} je menší než 0.</value>
   </data>
-  <data name="SQL_SqlResultSetClosed" xml:space="preserve">
-    <value>Neplatný pokus o volání metody {0}, pokud je zavřena třída SqlResultSet.</value>
-  </data>
-  <data name="SQL_SqlResultSetClosed2" xml:space="preserve">
-    <value>Operaci nelze dokončit, protože třída SqlResultSet je zavřena.</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly" xml:space="preserve">
-    <value>{0} nelze volat, pokud je záznam určen jen pro čtení.</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly2" xml:space="preserve">
-    <value>Operaci nelze dokončit, protože záznam je jen pro čtení.</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted" xml:space="preserve">
-    <value>Neplatný pokus o volání metody {0}, pokud je aktuální řádek odstraněn.</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted2" xml:space="preserve">
-    <value>Operaci nelze dokončit, protože aktuální řádek je odstraněn.</value>
-  </data>
-  <data name="SQL_SqlResultSetCommandNotInSameConnection" xml:space="preserve">
-    <value>Operaci nelze dokončit, protože příkaz, který vytvořil objekt SqlResultSet, byl odpojen od původního připojení. Objekt SqlResultSet je uzavřen.</value>
-  </data>
-  <data name="SQL_SqlResultSetNoAcceptableCursor" xml:space="preserve">
-    <value>SqlResultSet nebylo možné vytvořit pro daný dotaz s požadovanými možnostmi.</value>
-  </data>
   <data name="SQL_SqlUpdatableRecordReadOnly" xml:space="preserve">
     <value>{0} nelze volat, pokud je třída SqlDataRecord určena jen pro čtení.</value>
   </data>
@@ -2871,50 +2841,20 @@
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
     <value>Aktuálně načtená knihovna System.Transactions.dll nepodporuje globální transakce. Upgradujte prosím na .NET Framework 4.6.2 nebo novější.</value>
   </data>
-  <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
-    <value>Dávkové aktualizace nejsou u připojení kontextu podporovány.</value>
-  </data>
-  <data name="SQL_ContextAllowsLimitedKeywords" xml:space="preserve">
-    <value>Jediné další klíčové slovo řetězce připojení, které by bylo možné používat při požadavku na připojení kontextu, je klíčové slovo Type System Version.</value>
-  </data>
-  <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
-    <value>Připojení kontextu nepodporuje nastavení Type System Version=SQL Server 2000.</value>
-  </data>
   <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
     <value>Připojení ke kontextu pomocí Microsoft.Data.SqlClient není podporováno.</value>
-  </data>
-  <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
-    <value>Připojení kontextu se už používá.</value>
-  </data>
-  <data name="SQL_ContextUnavailableOutOfProc" xml:space="preserve">
-    <value>Požadovaná operace vyžaduje kontext SqlClr, který je k dispozici pouze při spuštění v procesu systému Sql Server.</value>
-  </data>
-  <data name="SQL_ContextUnavailableWhileInProc" xml:space="preserve">
-    <value>Požadovaná operace vyžaduje vlákno prováděného procesu systému Sql Server.  Aktuální vlákno bylo spuštěno uživatelským kódem či jiným kódem, který není kódem modulu systému Sql Server.</value>
   </data>
   <data name="SQL_NestedTransactionScopesNotSupported" xml:space="preserve">
     <value>Vnořené objekty TransactionScopes nejsou podporovány.</value>
   </data>
-  <data name="SQL_NotAvailableOnContextConnection" xml:space="preserve">
-    <value>Požadovaná operace není dostupná u připojení kontextu.</value>
-  </data>
-  <data name="SQL_NotificationsNotAvailableOnContextConnection" xml:space="preserve">
-    <value>Upozornění nejsou k dispozici u připojení kontextu.</value>
-  </data>
   <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
     <value>Neočekávaná událost serveru: {0}</value>
-  </data>
-  <data name="SQL_UserInstanceNotAvailableInProc" xml:space="preserve">
-    <value>Uživatelské instance nejsou povoleny při spuštění v procesu systému Sql Server.</value>
   </data>
   <data name="SQL_ArgumentLengthMismatch" xml:space="preserve">
     <value>Délka argumentu {0} se musí shodovat s délkou argumentu {1}.</value>
   </data>
   <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
     <value>Hodnota SqlDbType {0} je pro {1} neplatná.  Podporuje se pouze {2}.</value>
-  </data>
-  <data name="SQL_PipeErrorRequiresSendEnd" xml:space="preserve">
-    <value>U předcházejícího řádku odeslaného do SqlPipe došlo k chybě.  Před odesláním dalších dat se musí volat metoda SendResultsEnd.</value>
   </data>
   <data name="SQL_TooManyValues" xml:space="preserve">
     <value>Příliš mnoho hodnot</value>
@@ -3663,9 +3603,6 @@
   <data name="SQLNotify_AlreadyHasCommand" xml:space="preserve">
     <value>Tento objekt SqlCommand je již spojen s jiným objektem SqlDependency.</value>
   </data>
-  <data name="SqlNotify_SqlDepCannotBeCreatedInProc" xml:space="preserve">
-    <value>Objekt SqlDependency nelze vytvořit při spuštění z procesu systému SQL Server.</value>
-  </data>
   <data name="SqlDependency_DatabaseBrokerDisabled" xml:space="preserve">
     <value>SQL Server Service Broker pro aktuální databázi není povolen. Nejsou proto podporována upozornění na výsledky dotazů.  Chcete-li používat upozornění, povolte zprostředkovatele Service Broker pro tuto databázi.</value>
   </data>
@@ -3725,21 +3662,6 @@
   </data>
   <data name="IEnumerableOfSqlDataRecordHasNoRows" xml:space="preserve">
     <value>Ve výčtu SqlDataRecord nejsou žádné záznamy. Pokud chcete odeslat parametr vracející tabulku bez řádků, použijte pro hodnotu odkaz s hodnotou null.</value>
-  </data>
-  <data name="SqlPipe_CommandHookedUpToNonContextConnection" xml:space="preserve">
-    <value>Třída SqlPipe nepodporuje provádění příkazu s připojením, které není připojením kontextu.</value>
-  </data>
-  <data name="SqlPipe_MessageTooLong" xml:space="preserve">
-    <value>Délka zprávy {0} překračuje maximální podporovanou délku 4000.</value>
-  </data>
-  <data name="SqlPipe_IsBusy" xml:space="preserve">
-    <value>Kanál nelze používat, pokud zpracovává jinou operaci.</value>
-  </data>
-  <data name="SqlPipe_AlreadyHasAnOpenResultSet" xml:space="preserve">
-    <value>Sada výsledků dotazu je momentálně odesílána do kanálu. Před voláním metody {0} ukončete aktuální sadu výsledků dotazu.</value>
-  </data>
-  <data name="SqlPipe_DoesNotHaveAnOpenResultSet" xml:space="preserve">
-    <value>Sada výsledků dotazu nebyla inicializována.  Před voláním metody {0} volejte metodu SendResultSetStart.</value>
   </data>
   <data name="SNI_PN0" xml:space="preserve">
     <value>Zprostředkovatel HTTP:</value>
@@ -4742,5 +4664,20 @@
   </data>
   <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
     <value>Seznam SqlBatchCommand nebyl inicializován.</value>
+  </data>
+  <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
+    <value>Invalid attempt to get vector data from column '{0}'. Vectors are only supported for columns of type vector.</value>
+  </data>
+  <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
+    <value>Unsupported Vector type '{0}'.</value>
+  </data>
+  <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
+    <value>'null' value not supported for output parameter '{0}' of SqlDbtype Vector.</value>
+  </data>
+  <data name="ADP_InvalidVectorHeader" xml:space="preserve">
+    <value>Invalid vector header received.</value>
+  </data>
+  <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
+    <value>{0} Invalid JSON string for vector.</value>
   </data>
 </root>

@@ -7,10 +7,9 @@
 using System;
 using System.Data.SqlTypes;
 using System.Text.Json;
-using Microsoft.Data.SqlTypes;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.UnitTests;
+namespace Microsoft.Data.SqlTypes.UnitTests;
 
 #pragma warning disable CS1591 // Test classes do not require XML documentation comments
 

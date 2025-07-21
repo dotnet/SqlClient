@@ -175,6 +175,13 @@ namespace Microsoft.Data.SqlClient
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
             => SniNativeWrapper.SniSetInfo(Handle, QueryType.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
 
+        internal override SniErrorDetails GetErrorDetails()
+        {
+            SniNativeWrapper.SniGetLastError(out SniError sniError);
+
+            return new SniErrorDetails(sniError.errorMessage, sniError.nativeError, sniError.sniError, (int)sniError.provider, sniError.lineNumber, sniError.function);
+        }
+
         internal override void DisposePacketCache()
         {
             lock (_writePacketLockObject)

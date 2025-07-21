@@ -211,6 +211,9 @@ namespace Microsoft.Data.SqlClient
         // Vector Support Flag
         internal bool IsVectorSupportEnabled = false;
 
+        // User Agent Flag
+        internal bool IsUserAgentEnabled = true;
+
         // TCE flags
         internal byte _tceVersionSupported;
 
@@ -1436,6 +1439,10 @@ namespace Microsoft.Data.SqlClient
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
             requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
 
+        #if DEBUG    
+            requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
+        #endif
+
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
 
@@ -1799,7 +1806,7 @@ namespace Microsoft.Data.SqlClient
 
             // Check if the user had explicitly specified the TNIR option in the connection string or the connection string builder.
             // If the user has specified the option in the connection string explicitly, then we shouldn't disable TNIR.
-            bool isTnirExplicitlySpecifiedInConnectionOptions = connectionOptions.Parsetable.ContainsKey(SqlConnectionString.KEY.TransparentNetworkIPResolution);
+            bool isTnirExplicitlySpecifiedInConnectionOptions = connectionOptions.Parsetable.ContainsKey(DbConnectionStringKeywords.TransparentNetworkIpResolution);
 
             return isTnirExplicitlySpecifiedInConnectionOptions ? false : (isAzureEndPoint || isFedAuthEnabled);
         }
@@ -3103,9 +3110,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override bool TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
+        internal override bool TryReplaceConnection(
+            DbConnection outerConnection,
+            SqlConnectionFactory connectionFactory,
+            TaskCompletionSource<DbConnectionInternal> retry,
+            DbConnectionOptions userOptions)
         {
-            return base.TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
+            return TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
         }
     }
 
