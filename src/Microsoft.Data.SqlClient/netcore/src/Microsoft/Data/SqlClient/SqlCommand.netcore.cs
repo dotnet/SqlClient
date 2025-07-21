@@ -293,11 +293,7 @@ namespace Microsoft.Data.SqlClient
         // number of rows affected by sp_describe_parameter_encryption.
         // The below line is used only for debug asserts and not exposed publicly or impacts functionality otherwise.
         private int _rowsAffectedBySpDescribeParameterEncryption = -1;
-
-        // transaction support
-        private SqlTransaction _transaction;
-
-        private bool _batchRPCMode;
+        
         private List<_SqlRPC> _RPCList;
         private _SqlRPC[] _sqlRPCParameterEncryptionReqArray;
         private int _currentlyExecutingBatch;
