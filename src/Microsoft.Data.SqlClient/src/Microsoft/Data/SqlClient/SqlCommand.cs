@@ -33,9 +33,12 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Fields
-
+        
         // @TODO: Make property - non-private fields are bad
         internal SqlDependency _sqlDep;
+
+        // @TODO: Rename _batchRpcMode to follow pattern
+        private bool _batchRPCMode;
         
         /// <summary>
         /// Number of instances of SqlCommand that have been created. Used to generate ObjectId
@@ -172,6 +175,11 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Make auto-event?
         private StatementCompletedEventHandler _statementCompletedEventHandler;
 
+        /// <summary>
+        /// Current transaction the command is participating in.
+        /// </summary>
+        private SqlTransaction _transaction;
+        
         /// <summary>
         /// How command results are applied to a DataRow when used by the update method of
         /// DbDataAdapter.
