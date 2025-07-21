@@ -240,7 +240,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // dealing with v200 SMI
-        internal static DateTimeOffset GetDateTimeOffset(SmiTypedGetterSetter getters, int ordinal, SmiMetaData metaData)
+        internal static DateTimeOffset GetDateTimeOffset(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             ThrowIfITypedGettersIsNull(getters, ordinal);
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.DateTimeOffset))
@@ -851,7 +851,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
          // dealing with v200 SMI
-        internal static TimeSpan GetTimeSpan(SmiTypedGetterSetter getters, int ordinal, SmiMetaData metaData)
+        internal static TimeSpan GetTimeSpan(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             ThrowIfITypedGettersIsNull(getters, ordinal);
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.TimeSpan))
@@ -863,7 +863,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         // GetValue() for v200 SMI (2008 Date/Time types)
         internal static object GetValue200(
-            SmiTypedGetterSetter getters,
+            ITypedGettersV3 getters,
             int ordinal,
             SmiMetaData metaData)
         {
@@ -1005,7 +1005,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         // dealing with v200 SMI
         internal static object GetSqlValue200(
-            SmiTypedGetterSetter getters,
+            ITypedGettersV3 getters,
             int ordinal,
             SmiMetaData metaData)
         {
@@ -1290,14 +1290,10 @@ namespace Microsoft.Data.SqlClient.Server
             SetDateTime_Checked(setters, ordinal, metaData, value);
         }
 
-        internal static void SetDateTimeOffset(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DateTimeOffset value, bool settersSupport2008DateTime = true)
+        internal static void SetDateTimeOffset(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DateTimeOffset value)
         {
-            if (!settersSupport2008DateTime)
-            {
-                throw ADP.InvalidCast();
-            }
             ThrowIfInvalidSetterAccess(metaData, ExtendedClrTypeCode.DateTimeOffset);
-            SetDateTimeOffset_Unchecked((SmiTypedGetterSetter)setters, ordinal, value);
+            SetDateTimeOffset_Unchecked(setters, ordinal, value);
         }
 
         internal static void SetDecimal(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, decimal value)
@@ -1445,14 +1441,10 @@ namespace Microsoft.Data.SqlClient.Server
             SetString_LengthChecked(setters, ordinal, metaData, value, 0);
         }
 
-        internal static void SetTimeSpan(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, TimeSpan value, bool settersSupport2008DateTime = true)
+        internal static void SetTimeSpan(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, TimeSpan value)
         {
-            if (!settersSupport2008DateTime)
-            {
-                throw ADP.InvalidCast();
-            }
             ThrowIfInvalidSetterAccess(metaData, ExtendedClrTypeCode.TimeSpan);
-            SetTimeSpan_Checked((SmiTypedGetterSetter)setters, ordinal, metaData, value);
+            SetTimeSpan_Checked(setters, ordinal, metaData, value);
         }
 
         //  Implements SqlClient 2.0-compatible SetValue() semantics
@@ -1502,7 +1494,7 @@ namespace Microsoft.Data.SqlClient.Server
                     SetDateTime_Checked(setters, ordinal, metaData, ((DateOnly)value).ToDateTime(new TimeOnly(0, 0)));
                     break;
                 case ExtendedClrTypeCode.TimeOnly:
-                    SetTimeSpan_Checked((SmiTypedGetterSetter)setters, ordinal, metaData, ((TimeOnly)value).ToTimeSpan());
+                    SetTimeSpan_Checked(setters, ordinal, metaData, ((TimeOnly)value).ToTimeSpan());
                     break;
 #endif
                 case ExtendedClrTypeCode.DateTime:
@@ -2150,7 +2142,7 @@ namespace Microsoft.Data.SqlClient.Server
             SetDateTime_Unchecked(setters, ordinal, (metaData.SqlDbType == SqlDbType.Date) ? value.Date : value);
         }
 
-        private static void SetTimeSpan_Checked(SmiTypedGetterSetter setters, int ordinal, SmiMetaData metaData, TimeSpan value)
+        private static void SetTimeSpan_Checked(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, TimeSpan value)
         {
             VerifyTimeRange(metaData.SqlDbType, value);
             SetTimeSpan_Unchecked(setters, ordinal, value);
@@ -2260,7 +2252,7 @@ namespace Microsoft.Data.SqlClient.Server
             setters.SetBytesLength(ordinal, currentOffset);
         }
 
-        private static void SetBytes_FromReader(SmiTypedGetterSetter setters, int ordinal, SmiMetaData metaData, DbDataReader reader, int offset)
+        private static void SetBytes_FromReader(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DbDataReader reader, int offset)
         {
             // Deal with large values by sending bufferLength of NoLengthLimit (== assume 
             //  CheckXetParameters will ignore requested-length checks in this case)
@@ -2365,7 +2357,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Transfer a character value from a reader when we're not sure which GetXXX method the reader will support.
         //  Prefers to chunk data via GetChars, but falls back to GetString if that fails.
         //  Mainly put in place because DataTableReader doesn't support GetChars on string columns, but others could fail too...
-        private static void SetCharsOrString_FromReader(SmiTypedGetterSetter setters, int ordinal, SmiMetaData metaData, DbDataReader reader, int offset)
+        private static void SetCharsOrString_FromReader(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DbDataReader reader, int offset)
         {
             bool success = false;
             try
@@ -2388,7 +2380,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // Use chunking via SetChars to transfer a value from a reader to a gettersetter
-        private static void SetChars_FromReader(SmiTypedGetterSetter setters, int ordinal, SmiMetaData metaData, DbDataReader reader, int offset)
+        private static void SetChars_FromReader(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DbDataReader reader, int offset)
         {
             // Deal with large values by sending bufferLength of NoLengthLimit (== assume 
             //  CheckXetParameters will ignore requested-length checks in this case)
@@ -2429,7 +2421,7 @@ namespace Microsoft.Data.SqlClient.Server
             setters.SetCharsLength(ordinal, currentOffset);
         }
 
-        private static void SetString_FromReader(SmiTypedGetterSetter setters, int ordinal, SmiMetaData metaData, DbDataReader reader, int offset)
+        private static void SetString_FromReader(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DbDataReader reader, int offset)
         {
             string value = reader.GetString(ordinal);
             int length = CheckXetParameters(metaData.SqlDbType, metaData.MaxLength, value.Length, fieldOffset: 0, bufferLength: NoLengthLimit, bufferOffset: offset, length: NoLengthLimit);
@@ -2888,7 +2880,7 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        private static DateTimeOffset GetDateTimeOffset_Unchecked(SmiTypedGetterSetter getters, int ordinal)
+        private static DateTimeOffset GetDateTimeOffset_Unchecked(ITypedGettersV3 getters, int ordinal)
         {
             Debug.Assert(!IsDBNull_Unchecked(getters, ordinal));
 
@@ -2965,11 +2957,12 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(getters, ordinal));
 
             long temp = getters.GetInt64(ordinal);
-#if NET
+
+            #if NET
             return SqlMoney.FromTdsValue(temp);
-#else
-            return SqlTypeWorkarounds.SqlMoneyCtor(temp, 1 /* ignored */ );
-#endif
+            #else
+            return SqlTypeWorkarounds.LongToSqlMoney(temp);
+            #endif
         }
 
         private static SqlXml GetSqlXml_Unchecked(ITypedGettersV3 getters, int ordinal)
@@ -2995,7 +2988,7 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        private static TimeSpan GetTimeSpan_Unchecked(SmiTypedGetterSetter getters, int ordinal)
+        private static TimeSpan GetTimeSpan_Unchecked(ITypedGettersV3 getters, int ordinal)
         {
             Debug.Assert(!IsDBNull_Unchecked(getters, ordinal));
 
@@ -3132,12 +3125,12 @@ namespace Microsoft.Data.SqlClient.Server
             setters.SetDateTime(ordinal, value);
         }
 
-        private static void SetTimeSpan_Unchecked(SmiTypedGetterSetter setters, int ordinal, TimeSpan value)
+        private static void SetTimeSpan_Unchecked(ITypedSettersV3 setters, int ordinal, TimeSpan value)
         {
             setters.SetTimeSpan(ordinal, value);
         }
 
-        private static void SetDateTimeOffset_Unchecked(SmiTypedGetterSetter setters, int ordinal, DateTimeOffset value)
+        private static void SetDateTimeOffset_Unchecked(ITypedSettersV3 setters, int ordinal, DateTimeOffset value)
         {
             setters.SetDateTimeOffset(ordinal, value);
         }
@@ -3395,11 +3388,13 @@ namespace Microsoft.Data.SqlClient.Server
                     setters.SetVariantMetaData(ordinal, SmiMetaData.DefaultMoney);
                 }
 
-#if NET
-                setters.SetInt64(ordinal, value.GetTdsValue());
-#else
-                setters.SetInt64(ordinal, SqlTypeWorkarounds.SqlMoneyToSqlInternalRepresentation(value));
-#endif
+                #if NET
+                long longValue = value.GetTdsValue();
+                #else
+                long longValue = SqlTypeWorkarounds.SqlMoneyToLong(value);
+                #endif
+                
+                setters.SetInt64(ordinal, longValue);
             }
         }
 

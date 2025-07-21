@@ -12,20 +12,12 @@ namespace Microsoft.Data.SqlClient
     internal class SqlUdtInfo
     {
         internal readonly Format SerializationFormat;
-        internal readonly bool IsByteOrdered;
-        internal readonly bool IsFixedLength;
         internal readonly int MaxByteSize;
-        internal readonly string Name;
-        internal readonly string ValidationMethodName;
 
         private SqlUdtInfo(SqlUserDefinedTypeAttribute attr)
         {
             SerializationFormat = attr.Format;
-            IsByteOrdered = attr.IsByteOrdered;
-            IsFixedLength = attr.IsFixedLength;
             MaxByteSize = attr.MaxByteSize;
-            Name = attr.Name;
-            ValidationMethodName = attr.ValidationMethodName;
         }
 
         internal static SqlUdtInfo GetFromType(Type target)

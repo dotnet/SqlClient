@@ -318,7 +318,9 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.CanOnlyCallOnce();
                 }
 
-                // to prevent conflicts between CEK caches, global providers should not use their own CEK caches
+                // AKV provider registration supports multi-user scenarios, so it is not safe to cache the CEK in the global provider.
+                // The CEK cache is a global cache, and is shared across all connections.
+                // To prevent conflicts between CEK caches, global providers should not use their own CEK caches
                 foreach (SqlColumnEncryptionKeyStoreProvider provider in customProviders.Values)
                 {
                     provider.ColumnEncryptionKeyCacheTtl = new TimeSpan(0);
@@ -657,7 +659,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                return constr != null ? constr.ConnectTimeout : SqlConnectionString.DEFAULT.Connect_Timeout;
+                return constr != null ? constr.ConnectTimeout : DbConnectionStringDefaults.ConnectTimeout;
             }
         }
 
@@ -669,7 +671,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                return constr != null ? constr.CommandTimeout : SqlConnectionString.DEFAULT.Command_Timeout;
+                return constr != null ? constr.CommandTimeout : DbConnectionStringDefaults.CommandTimeout;
             }
         }
 
@@ -750,7 +752,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = constr != null ? constr.InitialCatalog : SqlConnectionString.DEFAULT.Initial_Catalog;
+                    result = constr != null ? constr.InitialCatalog : DbConnectionStringDefaults.InitialCatalog;
                 }
                 return result;
             }
@@ -822,7 +824,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = constr != null ? constr.DataSource : SqlConnectionString.DEFAULT.Data_Source;
+                    result = constr != null ? constr.DataSource : DbConnectionStringDefaults.DataSource;
                 }
                 return result;
             }
@@ -847,7 +849,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = constr != null ? constr.PacketSize : SqlConnectionString.DEFAULT.Packet_Size;
+                    result = constr != null ? constr.PacketSize : DbConnectionStringDefaults.PacketSize;
                 }
                 
                 return result;
@@ -1266,7 +1268,7 @@ namespace Microsoft.Data.SqlClient
         public static void ClearAllPools()
         {
             (new SqlClientPermission(PermissionState.Unrestricted)).Demand();
-            SqlConnectionFactory.SingletonInstance.ClearAllPools();
+            SqlConnectionFactory.Instance.ClearAllPools();
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearPool/*' />
@@ -1278,7 +1280,7 @@ namespace Microsoft.Data.SqlClient
             if (connectionOptions != null)
             {
                 connectionOptions.DemandPermission();
-                SqlConnectionFactory.SingletonInstance.ClearPool(connection);
+                SqlConnectionFactory.Instance.ClearPool(connection);
             }
         }
 
@@ -1988,11 +1990,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                SqlInternalConnectionTds tdsConnection = (GetOpenConnection() as SqlInternalConnectionTds);
-                if (tdsConnection == null)
-                {
-                    throw SQL.NotAvailableOnContextConnection();
-                }
+                SqlInternalConnectionTds tdsConnection = GetOpenTdsConnection();
                 return tdsConnection.Parser;
             }
         }
@@ -2188,14 +2186,14 @@ namespace Microsoft.Data.SqlClient
 
                 SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, accessTokenCallback: null);
 
-                SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
+                SqlConnectionString connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
                 if (connectionOptions.IntegratedSecurity || connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
                 {
                     throw SQL.ChangePasswordConflictsWithSSPI();
                 }
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDbFilename);
                 }
 
                 PermissionSet permissionSet = connectionOptions.CreatePermissionSet();
@@ -2240,7 +2238,7 @@ namespace Microsoft.Data.SqlClient
 
                 SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
 
-                SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
+                SqlConnectionString connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
 
                 // Check for connection string values incompatible with SqlCredential
                 if (!string.IsNullOrEmpty(connectionOptions.UserID) || !string.IsNullOrEmpty(connectionOptions.Password))
@@ -2255,7 +2253,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDbFilename);
                 }
 
                 PermissionSet permissionSet = connectionOptions.CreatePermissionSet();
@@ -2281,7 +2279,7 @@ namespace Microsoft.Data.SqlClient
             }
             SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
 
-            SqlConnectionFactory.SingletonInstance.ClearPool(key);
+            SqlConnectionFactory.Instance.ClearPool(key);
         }
 
         internal Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outerTask, object value, int tag)
@@ -2458,11 +2456,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal byte[] GetBytes(object o, out Format format, out int maxSize)
+        internal byte[] GetBytes(object o, out int maxSize)
         {
             SqlUdtInfo attr = GetInfoFromType(o.GetType());
             maxSize = attr.MaxByteSize;
-            format = attr.SerializationFormat;
 
             if (maxSize < -1 || maxSize >= ushort.MaxValue)
             {

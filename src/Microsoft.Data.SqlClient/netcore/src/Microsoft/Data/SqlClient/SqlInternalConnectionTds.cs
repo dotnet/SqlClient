@@ -208,7 +208,11 @@ namespace Microsoft.Data.SqlClient
         internal bool IsJsonSupportEnabled = false;
 
         // User Agent Flag
+<<<<<<< HEAD
         internal bool IsUserAgentSupportEnabled = true;
+=======
+        internal bool IsUserAgentEnabled = true;
+>>>>>>> 81edbdf31b7cc1b6f01620be7eaa198799c08db7
 
         // Vector Support Flag
         internal bool IsVectorSupportEnabled = false;
@@ -1434,6 +1438,10 @@ namespace Microsoft.Data.SqlClient
             requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
             requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
         
+
+        #if DEBUG
+            requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
+        #endif
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
@@ -3076,9 +3084,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override bool TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
+        internal override bool TryReplaceConnection(
+            DbConnection outerConnection,
+            SqlConnectionFactory connectionFactory,
+            TaskCompletionSource<DbConnectionInternal> retry,
+            DbConnectionOptions userOptions)
         {
-            return base.TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
+            return TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
         }
     }
 
