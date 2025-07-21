@@ -10,7 +10,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    public partial class SqlCommand
+    public sealed partial class SqlCommand
     {
         #region Public/Internal Methods
 
