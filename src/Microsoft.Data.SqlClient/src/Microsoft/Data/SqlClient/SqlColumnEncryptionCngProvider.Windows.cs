@@ -301,7 +301,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert((dataToSign != null) && (dataToSign.Length != 0));
             Debug.Assert(rsaCngProvider != null);
 
-            return rsaCngProvider.SignData(dataToSign, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            return rsaCngProvider.SignData(dataToSign, HashAlgorithmName.SHA256, RSASignaturePadding.Pss);
         }
 
         /// <summary>
@@ -317,7 +317,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert((signature != null) && (signature.Length != 0));
             Debug.Assert(rsaCngProvider != null);
 
-            return rsaCngProvider.VerifyData(dataToVerify, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            return rsaCngProvider.VerifyData(dataToVerify, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pss);
         }
 
         /// <summary>
