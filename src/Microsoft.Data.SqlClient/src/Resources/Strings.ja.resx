@@ -231,17 +231,11 @@
   <data name="ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity" xml:space="preserve">
     <value>Integrated Security 接続文字列キーワードを含む Credential は使用できません。</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection" xml:space="preserve">
-    <value>Context Connection キーワードを含む Credential は使用できません。</value>
-  </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword" xml:space="preserve">
     <value>接続文字列で 'UserID'、'UID'、'Password'、または 'PWD' が指定されている場合は、AccessToken プロパティを設定できません。</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity" xml:space="preserve">
     <value>'Integrated Security' 接続文字列キーワードが 'true' または 'SSPI' に設定されている場合は、AccessToken プロパティを設定できません。</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndContextConnection" xml:space="preserve">
-    <value>'Context Connection' キーワードを含む AccessToken プロパティは設定できません。</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndCredential" xml:space="preserve">
     <value>Credential プロパティが既に設定されている場合は、AccessToken プロパティを設定できません。</value>
@@ -2073,9 +2067,6 @@
   <data name="ADP_InvalidDestinationBufferIndex" xml:space="preserve">
     <value>ターゲット バッファー (サイズ {0}) オフセット : {1} が無効です。</value>
   </data>
-  <data name="ADP_DataReaderNoData" xml:space="preserve">
-    <value>行および列にデータが存在しません。</value>
-  </data>
   <data name="ADP_NumericToDecimalOverflow" xml:space="preserve">
     <value>この数値は 10 進数の 96 ビットに適合させるには大きすぎます。</value>
   </data>
@@ -2529,6 +2520,9 @@
   <data name="SQL_AsyncConnectionRequired" xml:space="preserve">
     <value>このコマンドには非同期接続が必要です。接続文字列に "Asynchronous Processing=true" を設定してください。</value>
   </data>
+  <data name="SQL_ConnectTimeout" xml:space="preserve">
+    <value>The connection attempt timed out.</value>
+  </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>タイムアウトに達しました。その結果、接続が切断されました。</value>
   </data>
@@ -2778,30 +2772,6 @@
   <data name="SQL_InvalidDataLength" xml:space="preserve">
     <value>データの長さ '{0}' が 0 未満です。</value>
   </data>
-  <data name="SQL_SqlResultSetClosed" xml:space="preserve">
-    <value>SqlResultSet が閉じている場合は、メソッド {0} の呼び出しは無効です。</value>
-  </data>
-  <data name="SQL_SqlResultSetClosed2" xml:space="preserve">
-    <value>SqlResultSet が閉じているため、操作を完了できません。</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly" xml:space="preserve">
-    <value>レコードが読み取り専用の場合は、'{0}' を呼び出すことはできません。</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly2" xml:space="preserve">
-    <value>レコードが読み取り専用のため、操作を完了できません。</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted" xml:space="preserve">
-    <value>現在の行が削除されている場合は、メソッド {0} の呼び出しは無効です。</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted2" xml:space="preserve">
-    <value>現在の行が削除されているため、操作を完了できません。</value>
-  </data>
-  <data name="SQL_SqlResultSetCommandNotInSameConnection" xml:space="preserve">
-    <value>SqlResultSet を作成したコマンドが元の接続から切断されているため、操作を完了できません。SqlResultSet は閉じています。</value>
-  </data>
-  <data name="SQL_SqlResultSetNoAcceptableCursor" xml:space="preserve">
-    <value>要求されたオプションを使用して指定されたクエリの SqlResultSet を作成できません。</value>
-  </data>
   <data name="SQL_SqlUpdatableRecordReadOnly" xml:space="preserve">
     <value>SqlDataRecord が読み取り専用の場合は、'{0}' を呼び出すことはできません。</value>
   </data>
@@ -2871,50 +2841,20 @@
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
     <value>現在読み込まれている System.Transactions.dll では、グローバル トランザクションはサポートされていません。.NET Framework 4.6.2 またはそれ以降にアップグレードしてください。</value>
   </data>
-  <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
-    <value>コンテキスト接続では、更新のバッチ処理はサポートされていません。</value>
-  </data>
-  <data name="SQL_ContextAllowsLimitedKeywords" xml:space="preserve">
-    <value>コンテキスト接続を要求する際に、この他に使用される唯一の接続文字列キーワードは Type System Version キーワードです。</value>
-  </data>
-  <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
-    <value>コンテキスト接続は Type System Version=SQL Server 2000 をサポートしていません。</value>
-  </data>
   <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
     <value>Microsoft.Data.SqlClient を使用したコンテキスト接続への接続はサポートされていません。</value>
-  </data>
-  <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
-    <value>コンテキスト接続は既に使用されています。</value>
-  </data>
-  <data name="SQL_ContextUnavailableOutOfProc" xml:space="preserve">
-    <value>要求された操作には、SqlClr コンテキストが必要です。このコンテキストは、Sql Server プロセス内で実行する場合にのみ使用できます。</value>
-  </data>
-  <data name="SQL_ContextUnavailableWhileInProc" xml:space="preserve">
-    <value>要求された操作には、Sql Server の実行スレッドが必要です。現在のスレッドはユーザー コードまたはその他の non-Sql Server エンジン コードによって開始されました。</value>
   </data>
   <data name="SQL_NestedTransactionScopesNotSupported" xml:space="preserve">
     <value>TransactionScopes を入れ子にすることはできません。</value>
   </data>
-  <data name="SQL_NotAvailableOnContextConnection" xml:space="preserve">
-    <value>要求された操作をコンテキスト接続で行うことはできません。</value>
-  </data>
-  <data name="SQL_NotificationsNotAvailableOnContextConnection" xml:space="preserve">
-    <value>コンテキスト接続で通知を使用することはできません。</value>
-  </data>
   <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
     <value>サーバーの予期しないイベント : {0}。</value>
-  </data>
-  <data name="SQL_UserInstanceNotAvailableInProc" xml:space="preserve">
-    <value>Sql Server プロセスで実行している場合は、ユーザー インスタンスは許可されません。</value>
   </data>
   <data name="SQL_ArgumentLengthMismatch" xml:space="preserve">
     <value>'{0}' と '{1}' の長さは同じである必要があります。</value>
   </data>
   <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
     <value>{1} に対し、SqlDbType '{0}' は無効です。サポートしているのは {2} のみです。</value>
-  </data>
-  <data name="SQL_PipeErrorRequiresSendEnd" xml:space="preserve">
-    <value>SqlPipe に送信された前の行でエラーが発生しました。他のものを送信する前に SendResultsEnd を呼び出す必要があります。</value>
   </data>
   <data name="SQL_TooManyValues" xml:space="preserve">
     <value>値が多すぎます。</value>
@@ -3663,9 +3603,6 @@
   <data name="SQLNotify_AlreadyHasCommand" xml:space="preserve">
     <value>この SqlCommand オブジェクトは、既に別の SqlDependency オブジェクトに関連付けられています。</value>
   </data>
-  <data name="SqlNotify_SqlDepCannotBeCreatedInProc" xml:space="preserve">
-    <value>SQL Server プロセス内で実行されている場合、SqlDependency オブジェクトは作成できません。</value>
-  </data>
   <data name="SqlDependency_DatabaseBrokerDisabled" xml:space="preserve">
     <value>現在のデータベースの SQL Server Service Broker は有効になっていません。このため、クエリ通知はサポートされません。通知を利用する場合は、このデータベースの Service Broker を有効にしてください。</value>
   </data>
@@ -3725,21 +3662,6 @@
   </data>
   <data name="IEnumerableOfSqlDataRecordHasNoRows" xml:space="preserve">
     <value>SqlDataRecord 列挙にレコードがありません。行のない table-valued parameter を送信したい場合は、代わりにその値の null 参照を使用します。</value>
-  </data>
-  <data name="SqlPipe_CommandHookedUpToNonContextConnection" xml:space="preserve">
-    <value>SqlPipe では、コンテキスト接続ではない接続を使用してコマンドを実行することはできません。</value>
-  </data>
-  <data name="SqlPipe_MessageTooLong" xml:space="preserve">
-    <value>メッセージの長さ {0} が、サポートしている最大長である 4000 を超えています。</value>
-  </data>
-  <data name="SqlPipe_IsBusy" xml:space="preserve">
-    <value>別の操作でパイプがビジー状態である場合、このパイプを使用できない可能性があります。</value>
-  </data>
-  <data name="SqlPipe_AlreadyHasAnOpenResultSet" xml:space="preserve">
-    <value>結果セットをパイプに送信しています。{0} を呼び出す前に現在の結果セットを終了してください。</value>
-  </data>
-  <data name="SqlPipe_DoesNotHaveAnOpenResultSet" xml:space="preserve">
-    <value>結果セットが初期化されていません。{0} を呼び出す前に SendResultSetStart を呼び出してください。</value>
   </data>
   <data name="SNI_PN0" xml:space="preserve">
     <value>HTTP プロバイダー</value>
@@ -4742,5 +4664,20 @@
   </data>
   <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
     <value>SqlBatchCommand リストが初期化されていません。</value>
+  </data>
+  <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
+    <value>Invalid attempt to get vector data from column '{0}'. Vectors are only supported for columns of type vector.</value>
+  </data>
+  <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
+    <value>Unsupported Vector type '{0}'.</value>
+  </data>
+  <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
+    <value>'null' value not supported for output parameter '{0}' of SqlDbtype Vector.</value>
+  </data>
+  <data name="ADP_InvalidVectorHeader" xml:space="preserve">
+    <value>Invalid vector header received.</value>
+  </data>
+  <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
+    <value>{0} Invalid JSON string for vector.</value>
   </data>
 </root>
