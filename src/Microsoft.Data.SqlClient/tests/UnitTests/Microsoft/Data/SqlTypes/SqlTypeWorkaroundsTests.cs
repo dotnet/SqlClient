@@ -8,6 +8,7 @@ using Microsoft.Data.SqlTypes;
 using Xunit;
 
 #nullable enable
+#pragma warning disable CS1591 // Test classes do not require XML documentation comments
 
 namespace Microsoft.Data.SqlClient.UnitTests
 {
@@ -20,7 +21,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         #region SqlBinary
         
         public static TheoryData<byte[]> ByteArrayToSqlBinary_NonNullInput_Data => 
-            new TheoryData<byte[]>
+            new()
             {
                 Array.Empty<byte>(),
                 new byte[] { 1, 2, 3, 4},
@@ -53,7 +54,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         #region SqlDecimal
         
         public static TheoryData<SqlDecimal> SqlDecimalWriteTdsValue_NonNullInput_Data =>
-            new TheoryData<SqlDecimal>
+            new()
             {
                 SqlDecimal.MinValue,
                 new SqlDecimal(-1.2345678),
@@ -102,7 +103,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         #region SqlGuid
         
         public static TheoryData<byte[]?> ByteArrayToSqlGuid_InvalidInput_Data =>
-            new TheoryData<byte[]?>
+            new()
             {
                 null,
                 Array.Empty<byte>(),
@@ -122,7 +123,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
         
         public static TheoryData<byte[]> ByteArrayToSqlGuid_ValidInput_Data => 
-            new TheoryData<byte[]>
+            new()
             {
                 new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0 },
                 new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 }
@@ -145,7 +146,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         #region SqlMoney
 
         public static TheoryData<long, SqlMoney> LongToSqlMoney_Data =>
-            new TheoryData<long, SqlMoney>
+            new()
             {
                 { long.MinValue, SqlMoney.MinValue },
                 { (long)((decimal)-123000000 / 10000), new SqlMoney(-1.23) },
@@ -166,7 +167,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
         
         public static TheoryData<SqlMoney, long> SqlMoneyToLong_NonNullInput_Data =>
-            new TheoryData<SqlMoney, long>
+            new()
             {
                 { SqlMoney.MinValue, long.MinValue },
                 { new SqlMoney(-1.23), (long)(new SqlMoney(-1.23).ToDecimal() * 10000) },
@@ -204,3 +205,5 @@ namespace Microsoft.Data.SqlClient.UnitTests
         #endif
     }
 }
+
+#pragma warning restore CS1591
