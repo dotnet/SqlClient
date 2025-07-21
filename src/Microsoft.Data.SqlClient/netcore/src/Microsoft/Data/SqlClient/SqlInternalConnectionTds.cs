@@ -208,11 +208,7 @@ namespace Microsoft.Data.SqlClient
         internal bool IsJsonSupportEnabled = false;
 
         // User Agent Flag
-<<<<<<< HEAD
         internal bool IsUserAgentSupportEnabled = true;
-=======
-        internal bool IsUserAgentEnabled = true;
->>>>>>> 81edbdf31b7cc1b6f01620be7eaa198799c08db7
 
         // Vector Support Flag
         internal bool IsVectorSupportEnabled = false;
