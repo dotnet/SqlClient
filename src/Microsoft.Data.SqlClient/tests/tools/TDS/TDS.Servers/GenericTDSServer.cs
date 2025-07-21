@@ -52,7 +52,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Default feature extension version supported on the server for user agent.
         /// </summary>
-        public const byte DefaultSupportedUserAgentFeatureExtVersion = 0x01;
+        public const byte DefaultSupportedUserAgentFeatureExtVersion = 0x0F;
 
         /// <summary>
         /// Property for setting server version for vector feature extension.
@@ -678,32 +678,9 @@ namespace Microsoft.SqlServer.TDS.Servers
                     featureExtAckToken.Options.Add(vectorSupportOption);
                 }
             }
-            // Note: there should be case 
-            //// Check if UserAgent is supported
-            //if (session.IsUserAgentSupportEnabled)
-            //{
-            //    // Create ack data (1 byte: Version number)
-            //    byte[] data = new byte[1];
-            //    data[0] = ServerSupportedUserAgentFeatureExtVersion;
 
-            //    // Create vector support as a generic feature extension option
-            //    TDSFeatureExtAckGenericOption userAgentSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.UserAgentSupport, (uint)data.Length, data);
-
-            //    // Look for feature extension token
-            //    TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
-
-            //    if (featureExtAckToken == null)
-            //    {
-            //        // Create feature extension ack token
-            //        featureExtAckToken = new TDSFeatureExtAckToken(userAgentSupportOption);
-            //        responseMessage.Add(featureExtAckToken);
-            //    }
-            //    else
-            //    {
-            //        // Update the existing token
-            //        featureExtAckToken.Options.Add(userAgentSupportOption);
-            //    }
-            //}
+            // Note: there can be a case here handling User Agent support, but since server
+            // should not actually ack this feature extension, we don't handle it here.
 
             // Create DONE token
             TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final);

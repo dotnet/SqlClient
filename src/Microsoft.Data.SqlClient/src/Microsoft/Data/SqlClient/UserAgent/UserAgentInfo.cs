@@ -416,6 +416,15 @@ namespace Microsoft.Data.SqlClient.UserAgent
             return DefaultJsonValue;
         }
 
+        /// <summary>
+        /// Retrieves a copy of the cached payload.
+        /// </summary>
+        /// <returns>A byte array containing a copy of the cached payload. The caller receives a clone of the original data to
+        /// ensure data integrity.</returns>
+        public static byte[] GetCachedPayload()
+        {
+            return (byte[])_cachedPayload.Clone();
+        }
     }
 }
 

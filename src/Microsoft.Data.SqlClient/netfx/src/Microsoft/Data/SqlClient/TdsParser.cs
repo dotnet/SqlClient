@@ -30,6 +30,8 @@ using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.UserAgent;
+
 #if NETFRAMEWORK
 using Microsoft.Data.SqlTypes;
 #endif
@@ -9074,9 +9076,16 @@ namespace Microsoft.Data.SqlClient
                         _physicalStateObj.WriteByteArray(encryptedChangePassword, encryptedChangePasswordLengthInBytes, 0);
                     }
                 }
-                // TODO: User Agent Json Payload will go here
-                byte[] emptyBytes = new byte[0];
-                ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, emptyBytes, useFeatureExt, length, true);
+                
+                ApplyFeatureExData(
+                    requestedFeatures, 
+                    recoverySessionData, 
+                    fedAuthFeatureExtensionData, 
+                    UserAgentInfo.GetCachedPayload(), 
+                    useFeatureExt, 
+                    length, 
+                    true
+                );
             }
             catch (Exception e)
             {

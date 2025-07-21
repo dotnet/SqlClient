@@ -3071,6 +3071,7 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.FEATUREEXT_USERAGENT:
                     {
+                        // Note: We do not expect an ACK for USERAGENT feature extension, but if we receive it, we will log it.
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for USERAGENT", ObjectID);
                         if (data.Length != 1)
                         {
