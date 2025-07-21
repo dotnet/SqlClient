@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>
         /// Gets the factory used to create database connections.
         /// </summary>
-        DbConnectionFactory ConnectionFactory { get; }
+        SqlConnectionFactory ConnectionFactory { get; }
 
         /// <summary>
         /// The number of connections currently managed by the pool.

@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlConnection : DbConnection
     {
-        private static readonly DbConnectionFactory _connectionFactory = SqlConnectionFactory.SingletonInstance;
+        private static readonly SqlConnectionFactory _connectionFactory = SqlConnectionFactory.Instance;
         internal static readonly System.Security.CodeAccessPermission ExecutePermission = SqlConnection.CreateExecutePermission();
 
         private DbConnectionOptions _userConnectionOptions;
@@ -69,7 +69,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal DbConnectionFactory ConnectionFactory
+        internal SqlConnectionFactory ConnectionFactory
         {
             get
             {
@@ -203,8 +203,7 @@ namespace Microsoft.Data.SqlClient
         {
             using (TryEventScope.Create("<prov.DbConnectionHelper.CreateDbCommand|API> {0}", ObjectID))
             {
-                DbProviderFactory providerFactory = ConnectionFactory.ProviderFactory;
-                DbCommand command = providerFactory.CreateCommand();
+                DbCommand command = SqlClientFactory.Instance.CreateCommand();
                 command.Connection = this;
                 return command;
             }
@@ -212,8 +211,8 @@ namespace Microsoft.Data.SqlClient
 
         private static System.Security.CodeAccessPermission CreateExecutePermission()
         {
-            DBDataPermission p = (DBDataPermission)SqlConnectionFactory.SingletonInstance.ProviderFactory.CreatePermission(System.Security.Permissions.PermissionState.None);
-            p.Add(String.Empty, String.Empty, KeyRestrictionBehavior.AllowOnly);
+            DBDataPermission p = (DBDataPermission)SqlClientFactory.Instance.CreatePermission(System.Security.Permissions.PermissionState.None);
+            p.Add(string.Empty, string.Empty, KeyRestrictionBehavior.AllowOnly);
             return p;
         }
 

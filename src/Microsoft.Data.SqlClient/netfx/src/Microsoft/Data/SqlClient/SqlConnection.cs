@@ -318,7 +318,9 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.CanOnlyCallOnce();
                 }
 
-                // to prevent conflicts between CEK caches, global providers should not use their own CEK caches
+                // AKV provider registration supports multi-user scenarios, so it is not safe to cache the CEK in the global provider.
+                // The CEK cache is a global cache, and is shared across all connections.
+                // To prevent conflicts between CEK caches, global providers should not use their own CEK caches
                 foreach (SqlColumnEncryptionKeyStoreProvider provider in customProviders.Values)
                 {
                     provider.ColumnEncryptionKeyCacheTtl = new TimeSpan(0);
@@ -1266,7 +1268,7 @@ namespace Microsoft.Data.SqlClient
         public static void ClearAllPools()
         {
             (new SqlClientPermission(PermissionState.Unrestricted)).Demand();
-            SqlConnectionFactory.SingletonInstance.ClearAllPools();
+            SqlConnectionFactory.Instance.ClearAllPools();
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearPool/*' />
@@ -1278,7 +1280,7 @@ namespace Microsoft.Data.SqlClient
             if (connectionOptions != null)
             {
                 connectionOptions.DemandPermission();
-                SqlConnectionFactory.SingletonInstance.ClearPool(connection);
+                SqlConnectionFactory.Instance.ClearPool(connection);
             }
         }
 
@@ -2184,7 +2186,7 @@ namespace Microsoft.Data.SqlClient
 
                 SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, accessTokenCallback: null);
 
-                SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
+                SqlConnectionString connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
                 if (connectionOptions.IntegratedSecurity || connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
                 {
                     throw SQL.ChangePasswordConflictsWithSSPI();
@@ -2236,7 +2238,7 @@ namespace Microsoft.Data.SqlClient
 
                 SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
 
-                SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
+                SqlConnectionString connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
 
                 // Check for connection string values incompatible with SqlCredential
                 if (!string.IsNullOrEmpty(connectionOptions.UserID) || !string.IsNullOrEmpty(connectionOptions.Password))
@@ -2277,7 +2279,7 @@ namespace Microsoft.Data.SqlClient
             }
             SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
 
-            SqlConnectionFactory.SingletonInstance.ClearPool(key);
+            SqlConnectionFactory.Instance.ClearPool(key);
         }
 
         internal Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outerTask, object value, int tag)
@@ -2454,11 +2456,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal byte[] GetBytes(object o, out Format format, out int maxSize)
+        internal byte[] GetBytes(object o, out int maxSize)
         {
             SqlUdtInfo attr = GetInfoFromType(o.GetType());
             maxSize = attr.MaxByteSize;
-            format = attr.SerializationFormat;
 
             if (maxSize < -1 || maxSize >= ushort.MaxValue)
             {

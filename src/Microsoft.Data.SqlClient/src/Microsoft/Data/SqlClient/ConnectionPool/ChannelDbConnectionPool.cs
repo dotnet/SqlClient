@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Initializes a new PoolingDataSource.
         /// </summary>
         internal ChannelDbConnectionPool(
-            DbConnectionFactory connectionFactory,
+            SqlConnectionFactory connectionFactory,
             DbConnectionPoolGroup connectionPoolGroup,
             DbConnectionPoolIdentity identity,
             DbConnectionPoolProviderInfo connectionPoolProviderInfo)
@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             DbConnectionPoolAuthenticationContext> AuthenticationContexts { get; }
 
         /// <inheritdoc />
-        public DbConnectionFactory ConnectionFactory { get; }
+        public SqlConnectionFactory ConnectionFactory { get; }
 
         /// <inheritdoc />
         public int Count => _connectionSlots.ReservationCount;
@@ -329,10 +329,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // throughput high than to queue all of our opens onto a single worker thread. Add an async path 
                     // when this support is added to DbConnectionInternal.
                     return state.pool.ConnectionFactory.CreatePooledConnection(
-                        state.pool,
                         state.owningConnection,
-                        state.pool.PoolGroup.ConnectionOptions,
+                        state.pool,
                         state.pool.PoolGroup.PoolKey,
+                        state.pool.PoolGroup.ConnectionOptions,
                         state.userOptions);
                 },
                 cleanupCallback: static (newConnection, idleConnectionWriter) =>

@@ -19,16 +19,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     public class ChannelDbConnectionPoolTest
     {
         private ChannelDbConnectionPool pool;
-        private DbConnectionFactory connectionFactory;
+        private SqlConnectionFactory connectionFactory;
         private DbConnectionPoolGroup dbConnectionPoolGroup;
         private DbConnectionPoolGroupOptions poolGroupOptions;
         private DbConnectionPoolIdentity identity;
         private DbConnectionPoolProviderInfo connectionPoolProviderInfo;
 
-        private static readonly DbConnectionFactory SuccessfulConnectionFactory = new SuccessfulDbConnectionFactory();
-        private static readonly DbConnectionFactory TimeoutConnectionFactory = new TimeoutDbConnectionFactory();
+        private static readonly SqlConnectionFactory SuccessfulConnectionFactory = new SuccessfulSqlConnectionFactory();
+        private static readonly SqlConnectionFactory TimeoutConnectionFactory = new TimeoutSqlConnectionFactory();
 
-        private void Setup(DbConnectionFactory connectionFactory)
+        private void Setup(SqlConnectionFactory connectionFactory)
         {
             this.connectionFactory = connectionFactory;
             identity = DbConnectionPoolIdentity.NoIdentity;
@@ -727,88 +727,24 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         #endregion
 
         #region Test classes
-        internal class SuccessfulDbConnectionFactory : DbConnectionFactory
+        internal class SuccessfulSqlConnectionFactory : SqlConnectionFactory
         {
             protected override DbConnectionInternal CreateConnection(
-                DbConnectionOptions options, 
-                DbConnectionPoolKey poolKey, 
-                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo, 
-                IDbConnectionPool pool, 
+                DbConnectionOptions options,
+                DbConnectionPoolKey poolKey,
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+                IDbConnectionPool pool,
                 DbConnection owningConnection,
                 DbConnectionOptions userOptions)
             {
                 return new StubDbConnectionInternal();
             }
-
-            #region Not Implemented Members
-            public override DbProviderFactory ProviderFactory => throw new NotImplementedException();
-
-            protected override DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous)
-            {
-                throw new NotImplementedException();
-            }
-
-            protected override DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(DbConnectionOptions options)
-            {
-                throw new NotImplementedException();
-            }
-
-            protected override int GetObjectId(DbConnection connection)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override DbConnectionPoolGroup GetConnectionPoolGroup(DbConnection connection)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override DbConnectionInternal GetInnerConnection(DbConnection connection)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override void PermissionDemand(DbConnection outerConnection)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override void SetConnectionPoolGroup(DbConnection outerConnection, DbConnectionPoolGroup poolGroup)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override void SetInnerConnectionEvent(DbConnection owningObject, DbConnectionInternal to)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override bool SetInnerConnectionFrom(DbConnection owningObject, DbConnectionInternal to, DbConnectionInternal from)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override void SetInnerConnectionTo(DbConnection owningObject, DbConnectionInternal to)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(DbConnectionOptions connectionOptions)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(DbConnectionOptions connectionOptions)
-            {
-                throw new NotImplementedException();
-            }
-            #endregion
         }
 
-        internal class TimeoutDbConnectionFactory : DbConnectionFactory
+        internal class TimeoutSqlConnectionFactory : SqlConnectionFactory
         {
             protected override DbConnectionInternal CreateConnection(
-                                DbConnectionOptions options,
+                DbConnectionOptions options,
                 DbConnectionPoolKey poolKey,
                 DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
                 IDbConnectionPool pool,
@@ -817,70 +753,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             {
                 throw ADP.PooledOpenTimeout();
             }
-
-            #region Not Implemented Members
-            public override DbProviderFactory ProviderFactory => throw new NotImplementedException();
-
-            protected override DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous)
-            {
-                throw new NotImplementedException();
-            }
-
-            protected override DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(DbConnectionOptions options)
-            {
-                throw new NotImplementedException();
-            }
-
-            protected override int GetObjectId(DbConnection connection)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override DbConnectionPoolGroup GetConnectionPoolGroup(DbConnection connection)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override DbConnectionInternal GetInnerConnection(DbConnection connection)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override void PermissionDemand(DbConnection outerConnection)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override void SetConnectionPoolGroup(DbConnection outerConnection, DbConnectionPoolGroup poolGroup)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override void SetInnerConnectionEvent(DbConnection owningObject, DbConnectionInternal to)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override bool SetInnerConnectionFrom(DbConnection owningObject, DbConnectionInternal to, DbConnectionInternal from)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override void SetInnerConnectionTo(DbConnection owningObject, DbConnectionInternal to)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(DbConnectionOptions connectionOptions)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal override DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(DbConnectionOptions connectionOptions)
-            {
-                throw new NotImplementedException();
-            }
-            #endregion
         }
 
         internal class StubDbConnectionInternal : DbConnectionInternal

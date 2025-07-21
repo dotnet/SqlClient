@@ -121,8 +121,6 @@ namespace Microsoft.Data.SqlClient
 
         private bool _is2022 = false;
 
-        private string _serverSpn = null;
-
         // SqlStatistics
         private SqlStatistics _statistics = null;
 
@@ -396,6 +394,8 @@ namespace Microsoft.Data.SqlClient
                 Debug.Fail("SNI returned status != success, but no error thrown?");
             }
 
+            string serverSpn = null;
+
             //Create LocalDB instance if necessary
             if (connHandler.ConnectionOptions.LocalDBInstance != null)
             {
@@ -415,13 +415,13 @@ namespace Microsoft.Data.SqlClient
 
                 if (!string.IsNullOrEmpty(serverInfo.ServerSPN))
                 {
-                    _serverSpn = serverInfo.ServerSPN;
+                    serverSpn = serverInfo.ServerSPN;
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Server SPN `{0}` from the connection string is used.", serverInfo.ServerSPN);
                 }
                 else
                 {
                     // Empty signifies to interop layer that SPN needs to be generated
-                    _serverSpn = string.Empty;
+                    serverSpn = string.Empty;
                 }
 
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SSPI or Active Directory Authentication Library for SQL Server based integrated authentication");
@@ -429,7 +429,6 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 _authenticationProvider = null;
-                _serverSpn = null;
 
                 switch (authType)
                 {
@@ -508,7 +507,7 @@ namespace Microsoft.Data.SqlClient
                 serverInfo.ExtendedServerName,
                 timeout,
                 out instanceName,
-                ref _serverSpn,
+                ref serverSpn,
                 false,
                 true,
                 fParallel,
@@ -517,8 +516,6 @@ namespace Microsoft.Data.SqlClient
                 _connHandler.ConnectionOptions.IPAddressPreference,
                 FQDNforDNSCache,
                 hostNameInCertificate);
-
-            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
 
             if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
             {
@@ -602,7 +599,7 @@ namespace Microsoft.Data.SqlClient
                     serverInfo.ExtendedServerName,
                     timeout,
                     out instanceName,
-                    ref _serverSpn,
+                    ref serverSpn,
                     true,
                     true,
                     fParallel,
@@ -611,8 +608,6 @@ namespace Microsoft.Data.SqlClient
                     _connHandler.ConnectionOptions.IPAddressPreference,
                     serverInfo.ResolvedServerName,
                     hostNameInCertificate);
-
-                _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
 
                 if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
                 {
@@ -647,6 +642,8 @@ namespace Microsoft.Data.SqlClient
                 }
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Prelogin handshake successful");
+
+            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this, serverSpn);
 
             if (_fMARS && marsCapable)
             {
@@ -10142,7 +10139,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     int maxSupportedSize = Is2008OrNewer ? int.MaxValue : short.MaxValue;
                     byte[] udtVal = null;
-                    Format format = Format.Native;
 
                     if (string.IsNullOrEmpty(param.UdtTypeName))
                     {
@@ -10176,7 +10172,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
-                            udtVal = _connHandler.Connection.GetBytes(value, out format, out maxsize);
+                            udtVal = _connHandler.Connection.GetBytes(value, out maxsize);
                         }
 
                         Debug.Assert(udtVal != null, "GetBytes returned null instance. Make sure that it always returns non-null value");
@@ -13596,6 +13592,13 @@ namespace Microsoft.Data.SqlClient
                     break;
                 }
             }
+
+            if (writeDataSizeToSnapshot)
+            {
+                stateObj.SetSnapshotStorage(null);
+                stateObj.ClearSnapshotDataSize();
+            }
+
             return TdsOperationStatus.Done;
 
             static int IncrementSnapshotDataSize(TdsParserStateObject stateObj, bool resetting, int previousPacketId, int value)
@@ -13615,7 +13618,7 @@ namespace Microsoft.Data.SqlClient
                         current = 0;
                     }
 
-                    stateObj.SetSnapshotDataSize(current + value);
+                    stateObj.AddSnapshotDataSize(current + value);
 
                     // return new packetid so next time we see this packet we know it isn't new
                     return currentPacketId;
@@ -13623,7 +13626,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     current = stateObj.GetSnapshotDataSize();
-                    stateObj.SetSnapshotDataSize(current + value);
+                    stateObj.AddSnapshotDataSize(current + value);
                     return previousPacketId;
                 }
             }
@@ -13813,15 +13816,14 @@ namespace Microsoft.Data.SqlClient
                                         + "         _connHandler = {14}\n\t"
                                         + "         _fMARS = {15}\n\t"
                                         + "         _sessionPool = {16}\n\t"
-                                        + "         _sniSpnBuffer = {17}\n\t"
-                                        + "         _errors = {18}\n\t"
-                                        + "         _warnings = {19}\n\t"
-                                        + "         _attentionErrors = {20}\n\t"
-                                        + "         _attentionWarnings = {21}\n\t"
-                                        + "         _statistics = {22}\n\t"
-                                        + "         _statisticsIsInTransaction = {23}\n\t"
-                                        + "         _fPreserveTransaction = {24}"
-                                        + "         _fParallel = {25}"
+                                        + "         _errors = {17}\n\t"
+                                        + "         _warnings = {18}\n\t"
+                                        + "         _attentionErrors = {19}\n\t"
+                                        + "         _attentionWarnings = {20}\n\t"
+                                        + "         _statistics = {21}\n\t"
+                                        + "         _statisticsIsInTransaction = {22}\n\t"
+                                        + "         _fPreserveTransaction = {23}"
+                                        + "         _fParallel = {24}"
                                         ;
         internal string TraceString()
         {
@@ -13844,7 +13846,6 @@ namespace Microsoft.Data.SqlClient
                             _connHandler == null ? "(null)" : _connHandler.ObjectID.ToString((IFormatProvider)null),
                             _fMARS ? bool.TrueString : bool.FalseString,
                             _sessionPool == null ? "(null)" : _sessionPool.TraceString(),
-                            _serverSpn == null ? "(null)" : _serverSpn.Length.ToString((IFormatProvider)null),
                             _physicalStateObj != null ? "(null)" : _physicalStateObj.ErrorCount.ToString((IFormatProvider)null),
                             _physicalStateObj != null ? "(null)" : _physicalStateObj.WarningCount.ToString((IFormatProvider)null),
                             _physicalStateObj != null ? "(null)" : _physicalStateObj.PreAttentionErrorCount.ToString((IFormatProvider)null),
