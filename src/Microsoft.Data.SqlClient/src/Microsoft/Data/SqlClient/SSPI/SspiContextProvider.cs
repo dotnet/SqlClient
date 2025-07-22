@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClient
         {
             try
             {
-                SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | SPN={1}", GetType().FullName, nameof(GenerateSspiClientContext), authParams.Resource);
+                SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | SPN={2}", GetType().FullName, nameof(GenerateSspiClientContext), authParams.Resource);
 
                 return GenerateSspiClientContext(incomingBlob, outgoingBlobWriter, authParams);
             }
