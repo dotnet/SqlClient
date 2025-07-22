@@ -361,7 +361,7 @@ The following example supplies a simple SQL Server connection string in the <xre
 This property corresponds to the "Connect Retry Count" key within the <xref:Microsoft.Data.SqlClient.SqlConnection> connection string.
 
 > [!NOTE]
-> Since version 5.x the default value for none Azure endpoints is 1 and for Azure SQL and Azure Synapse has increased to 2 and 5 to imporve the recovery against on high demand Azure endpoints. It should be detected first, and Synapse could be detected as a regular Azure SQL DB endpoint.
+> Since version 5.x the default value for none Azure endpoints is 1 and for Azure SQL and Azure Synapse has increased to 2 and 5 to improve the recovery against on high demand Azure endpoints. It should be detected first, and Synapse could be detected as a regular Azure SQL DB endpoint.
 
 ]]>
         </format>
@@ -539,7 +539,7 @@ This property corresponds to the "Connect Retry Count" key within the <xref:Micr
       </value>
       <remarks>
         <para>
-          This property corresponds to the "Data Source", "server", "address", "addr", and "network address" keys within the connection string. Regardless of which of these values has been supplied within the supplied connection string, the connection string created by the <c>SqlConnectionStringBuilder</c> will use the well-known "Data Source" key. The port number can be specified after the server name: <c>server=tcp:servername,portnumber</c> .
+          This property corresponds to the "Data Source", "server", "address", "addr", and "network address" keys within the connection string. Regardless of which of these values has been supplied within the supplied connection string, the connection string created by the <c>SqlConnectionStringBuilder</c> will use the well-known "Data Source" key. The port number can be specified after the server name: <c>server=tcp:servername,port</c> .
         </para>
         <para>
           When specifying a local instance, always use (local). To force a protocol, add one of the following prefixes: <c>np:(local),  tcp:(local), lpc:(local)</c> .
@@ -664,7 +664,7 @@ When `TrustServerCertificate` is false and `Encrypt` is <xref:Microsoft.Data.Sql
     </Encrypt>
     <Enlist>
       <summary>
-        Gets or sets a Boolean value that indicates whether the SQL Server connection pooler automatically enlists the connection in the creation thread's current transaction context.
+        Gets or sets a Boolean value that indicates whether the SQL Server connection pool automatically enlists the connection in the creation thread's current transaction context.
       </summary>
       <value>
         The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Enlist" /> property, or <see langword="true" /> if none has been supplied.
@@ -727,7 +727,7 @@ This property corresponds to the "FailoverPartnerSPN" and "Failover Partner SPN"
       <remarks>
         <format type="text/markdown">
           <![CDATA[  
-This property corresponds to the "HostNameInCertificiate" and "Host Name in Certificiate" keys within the connection string. 
+This property corresponds to the "HostNameInCertificate" and "Host Name in Certificate" keys within the connection string. 
 
 > [!NOTE]
 > This property only applies when using `Encrypt` in <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A> or <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> mode, otherwise it is ignored.
