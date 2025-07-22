@@ -582,6 +582,10 @@ namespace Microsoft.Data.SqlClient
                     defaultAzureCredentialOptions.WorkloadIdentityClientId = tokenCredentialKey._clientId;
                 }
 
+                // This is library code that is not deployed, so we can default
+                // to DefaultAzureCredential.  Applications that use our library
+                // are responsible for replacing it with a more secure option.
+                // CodeQL [SM05137]
                 return new TokenCredentialData(new DefaultAzureCredential(defaultAzureCredentialOptions), GetHash(secret));
             }
 
