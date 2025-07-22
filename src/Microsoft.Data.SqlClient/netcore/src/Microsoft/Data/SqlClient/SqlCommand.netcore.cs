@@ -562,58 +562,6 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQuery[@name="default"]/*'/>
-        public override int ExecuteNonQuery()
-        {
-            // Reset _pendingCancel upon entry into any Execute - used to synchronize state
-            // between entry into Execute* API and the thread obtaining the stateObject.
-            _pendingCancel = false;
-
-            using (var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction))
-            using (TryEventScope.Create("SqlCommand.ExecuteNonQuery | API | Object Id {0}", ObjectID))
-            {
-                SqlStatistics statistics = null;
-                bool success = false;
-                int? sqlExceptionNumber = null;
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteNonQuery | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}, Command Text {3}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    WriteBeginExecuteEvent();
-                    if (IsProviderRetriable)
-                    {
-                        InternalExecuteNonQueryWithRetry(
-                            sendToPipe: false,
-                            timeout: CommandTimeout,
-                            out _,
-                            asyncWrite: false,
-                            isRetry: false);
-                    }
-                    else
-                    {
-                        InternalExecuteNonQuery(completion: null, sendToPipe: false, CommandTimeout, out _);
-                    }
-                    success = true;
-                    return _rowsAffected;
-                }
-                catch (Exception ex)
-                {
-                    diagnosticScope.SetException(ex);
-                    if (ex is SqlException sqlException)
-                    {
-                        sqlExceptionNumber = sqlException.Number;
-                    }
-                    throw;
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                    WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
-                }
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="default"]/*'/>
         public IAsyncResult BeginExecuteNonQuery() =>
             BeginExecuteNonQuery(null, null);
