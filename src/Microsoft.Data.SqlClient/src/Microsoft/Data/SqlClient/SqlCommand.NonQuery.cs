@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
@@ -87,6 +89,30 @@ namespace Microsoft.Data.SqlClient
         #endregion
         
         #region Private Methods
+
+        private Task InternalExecuteNonQueryWithRetry( // @TODO: Task is ignored
+            bool sendToPipe,
+            int timeout,
+            out bool usedCache, // @TODO: Always discarded!
+            bool asyncWrite,
+            bool isRetry,
+            [CallerMemberName] string methodName = "")
+        {
+            bool innerUsedCache = false;
+            Task result = RetryLogicProvider.Execute(
+                sender: this,
+                function: () => InternalExecuteNonQuery(
+                    completion: null,
+                    sendToPipe,
+                    timeout,
+                    out innerUsedCache,
+                    asyncWrite,
+                    isRetry,
+                    methodName));
+            
+            usedCache = innerUsedCache;
+            return result;
+        }
         
         #endregion
     }

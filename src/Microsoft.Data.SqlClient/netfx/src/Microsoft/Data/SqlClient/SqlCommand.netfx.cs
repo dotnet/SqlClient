@@ -541,29 +541,6 @@ namespace Microsoft.Data.SqlClient
                 () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method));
         }
 
-        private Task InternalExecuteNonQueryWithRetry(
-            bool sendToPipe,
-            int timeout,
-            out bool usedCache,
-            bool asyncWrite,
-            bool isRetry,
-            [CallerMemberName] string methodName = "")
-        {
-            bool innerUsedCache = false;
-            Task result = RetryLogicProvider.Execute(
-                this,
-                () => InternalExecuteNonQuery(
-                    completion: null,
-                    sendToPipe,
-                    timeout,
-                    out innerUsedCache,
-                    asyncWrite,
-                    isRetry,
-                    methodName));
-            usedCache = innerUsedCache;
-            return result;
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="default"]/*'/>
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public IAsyncResult BeginExecuteNonQuery() =>
