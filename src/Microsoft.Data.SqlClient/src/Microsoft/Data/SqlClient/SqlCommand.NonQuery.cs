@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Data;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
@@ -90,6 +92,115 @@ namespace Microsoft.Data.SqlClient
         
         #region Private Methods
 
+        private Task InternalExecuteNonQuery(
+            TaskCompletionSource<object> completion, // @TODO: Create internally, don't pass in if possible
+            bool sendToPipe, // @TODO: Must always be false!
+            int timeout,
+            out bool usedCache,
+            bool asyncWrite = false,
+            bool isRetry = false,
+            [CallerMemberName] string methodName = "")
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlCommand.InternalExecuteNonQuery | INFO | " +
+                $"Object Id {ObjectID}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
+
+            bool isAsync = completion is not null;
+            usedCache = false;
+
+            SqlStatistics statistics = Statistics;
+            _rowsAffected = -1;
+            
+            // @TODO: Break into smaller methods ("full" and "simple")
+
+            // This function may throw for an invalid connection
+            if (!isRetry)
+            {
+                ValidateCommand(isAsync, methodName);
+            }
+
+            // Only call after validate - requires non-null connection!
+            CheckNotificationStateAndAutoEnlist();
+
+            Task task = null;
+
+            Debug.Assert(!sendToPipe, "Trying to send non-context command to pipe");
+
+            // Always Encrypted generally operates only on parameterized queries. However,
+            // enclave-based Always encrypted also supports unparameterized queries. We skip
+            // this block for enclave-based always encrypted so that we can make a call to SQL
+            // Server to get the encryption information
+            if (!ShouldUseEnclaveBasedWorkflow && !_batchRPCMode &&
+                CommandType is CommandType.Text && GetParameterCount(_parameters) == 0)
+            {
+                if (statistics is not null)
+                {
+                    // @TODO: IsDirty contains IsPrepared - this is confusing!
+                    if (!IsDirty && IsPrepared)
+                    {
+                        statistics.SafeIncrement(ref statistics._preparedExecs);
+                    }
+                    else
+                    {
+                        statistics.SafeIncrement(ref statistics._unpreparedExecs);
+                    }
+                }
+
+                // We should never get here for a retry since we only have retries for parameters.
+                Debug.Assert(!isRetry);
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.InternalExecuteNonQuery | INFO | " +
+                    $"Object Id {ObjectID}," +
+                    $" RPC execute method name {methodName}, " +
+                    $"isAsync {isAsync}, " +
+                    $"isRetry {isRetry}");
+
+                task = RunExecuteNonQueryTds(methodName, isAsync, timeout, asyncWrite);
+            }
+            else
+            {
+                // Otherwise, use a full-fledged execute that can handle parameters and sprocs
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.InternalExecuteNonQuery | INFO | " +
+                    $"Object Id {ObjectID}, " +
+                    $"RPC execute method name {methodName}, " +
+                    $"isAsync {isAsync}, " +
+                    $"isRetry {isRetry}");
+
+                SqlDataReader reader = RunExecuteReader(
+                    CommandBehavior.Default,
+                    RunBehavior.UntilDone,
+                    returnStream: false,
+                    completion,
+                    timeout,
+                    out task,
+                    out usedCache,
+                    asyncWrite,
+                    isRetry,
+                    methodName);
+
+                if (reader is not null)
+                {
+                    if (task is not null)
+                    {
+                        task = AsyncHelper.CreateContinuationTaskWithState(
+                            task,
+                            state: reader,
+                            onSuccess: static state => ((SqlDataReader)state).Close());
+                    }
+                    else
+                    {
+                        reader.Close();
+                    }
+                }
+            }
+
+            return task;
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
+        }
+        
         private Task InternalExecuteNonQueryWithRetry( // @TODO: Task is ignored
             bool sendToPipe,
             int timeout,
