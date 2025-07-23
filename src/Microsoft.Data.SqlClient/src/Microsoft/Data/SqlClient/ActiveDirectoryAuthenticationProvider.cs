@@ -582,10 +582,18 @@ namespace Microsoft.Data.SqlClient
                     defaultAzureCredentialOptions.WorkloadIdentityClientId = tokenCredentialKey._clientId;
                 }
 
-                // This is library code that is not deployed, so we can default
-                // to DefaultAzureCredential.  Applications that use our library
-                // are responsible for replacing it with a more secure option.
-                // CodeQL [SM05137]
+                // SqlClient is a library and provides support to acquire access
+                // token using 'DefaultAzureCredential' on user demand when they
+                // specify 'Authentication = Active Directory Default' in
+                // connection string.
+                //
+                // CodeQL Suppression - do not modify this comment:
+                //
+                // CodeQL [SM05137] Default Azure Credential is instantiated by
+                // the calling application when using "Active Directory Default"
+                // authentication code to connect to Azure SQL instance.
+                // SqlClient is a library, doesn't instantiate the credential
+                // without running application instructions.
                 return new TokenCredentialData(new DefaultAzureCredential(defaultAzureCredentialOptions), GetHash(secret));
             }
 
