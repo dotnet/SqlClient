@@ -539,17 +539,6 @@ namespace Microsoft.Data.SqlClient
                 () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method));
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="default"]/*'/>
-        public IAsyncResult BeginExecuteNonQuery() =>
-            BeginExecuteNonQuery(null, null);
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="AsyncCallbackAndStateObject"]/*'/>
-        public IAsyncResult BeginExecuteNonQuery(AsyncCallback callback, object stateObject)
-        {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteNonQuery | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-            return BeginExecuteNonQueryInternal(0, callback, stateObject, 0, isRetry: false);
-        }
-
         private IAsyncResult BeginExecuteNonQueryInternal(CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool isRetry, bool asyncWrite = false)
         {
             TaskCompletionSource<object> globalCompletion = new TaskCompletionSource<object>(stateObject);
