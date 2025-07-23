@@ -10,11 +10,47 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 
+#if NETFRAMEWORK
+using System.Security.Permissions;
+#endif
+
 namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlCommand
     {
         #region Public/Internal Methods
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="default"]/*'/>
+        #if NETFRAMEWORK
+        [HostProtection(ExternalThreading = true)]
+        #endif
+        public IAsyncResult BeginExecuteNonQuery() =>
+            BeginExecuteNonQuery(callback: null, stateObject: null);
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="AsyncCallbackAndStateObject"]/*'/>
+        #if NETFRAMEWORK
+        [HostProtection(ExternalThreading = true)]
+        #endif
+        public IAsyncResult BeginExecuteNonQuery(AsyncCallback callback, object stateObject)
+        {
+            #if NETFRAMEWORK
+            SqlConnection.ExecutePermission.Demand();
+            #endif
+
+            SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                "SqlCommand.BeginExecuteNonQuery | API | Correlation | " +
+                $"Object Id {ObjectID}, " +
+                $"Activity Id {ActivityCorrelator.Current}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"Command Text '{CommandText}'");
+
+            return BeginExecuteNonQueryInternal(
+                CommandBehavior.Default,
+                callback,
+                stateObject,
+                timeout: 0,
+                isRetry: false);
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQuery[@name="default"]/*'/>
         public override int ExecuteNonQuery()
