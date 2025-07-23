@@ -42,14 +42,12 @@ namespace Microsoft.Data.SqlClient
 #if NET
             if (LocalAppContextSwitches.UseManagedNetworking)
             {
-                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectFactory.CreateTdsParserStateObject | Info | Found AppContext switch '{0}' enabled, managed networking implementation will be used.",
-                    LocalAppContextSwitches.UseManagedNetworkingOnWindowsString);
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectFactory.CreateTdsParserStateObject | Info | Using managed networking implementation.");
                 return new TdsParserStateObjectManaged(parser);
             }
             else
             {
-                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectFactory.CreateTdsParserStateObject | Info | AppContext switch '{0}' not enabled, native networking implementation will be used.",
-                   LocalAppContextSwitches.UseManagedNetworkingOnWindowsString);
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectFactory.CreateTdsParserStateObject | Info | Using native networking implementation.");
                 return new TdsParserStateObjectNative(parser);
             }
 #else

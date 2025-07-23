@@ -24,6 +24,13 @@ namespace Microsoft.Data.SqlClient
         private const string UseCompatibilityAsyncBehaviourString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour";
         private const string UseConnectionPoolV2String = @"Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
         private const string TruncateScaledDecimalString = @"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal";
+#if NET
+        private const string GlobalizationInvariantModeString = @"System.Globalization.Invariant";
+        private const string GlobalizationInvariantModeEnvironmentVariable = "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT";
+        private const string UseManagedNetworkingOnWindowsString = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
+#else
+        private const string DisableTnirByDefaultString = @"Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString";
+#endif
 
         // this field is accessed through reflection in tests and should not be renamed or have the type changed without refactoring NullRow related tests
         private static Tristate s_legacyRowVersionNullBehavior;
@@ -36,6 +43,12 @@ namespace Microsoft.Data.SqlClient
         private static Tristate s_useCompatibilityAsyncBehaviour;
         private static Tristate s_useConnectionPoolV2;
         private static Tristate s_truncateScaledDecimal;
+#if NET
+        private static Tristate s_globalizationInvariantMode;
+        private static Tristate s_useManagedNetworking;
+#else
+        private static Tristate s_disableTnirByDefault;
+#endif
 
 #if NET
         static LocalAppContextSwitches()
@@ -53,44 +66,6 @@ namespace Microsoft.Data.SqlClient
         }
 #endif
 
-#if NETFRAMEWORK
-        internal const string DisableTnirByDefaultString = @"Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString";
-        private static Tristate s_disableTnirByDefault;
-
-        /// <summary>
-        /// Transparent Network IP Resolution (TNIR) is a revision of the existing MultiSubnetFailover feature.
-        /// TNIR affects the connection sequence of the driver in the case where the first resolved IP of the hostname
-        /// doesn't respond and there are multiple IPs associated with the hostname.
-        /// 
-        /// TNIR interacts with MultiSubnetFailover to provide the following three connection sequences:
-        /// 0: One IP is attempted, followed by all IPs in parallel
-        /// 1: All IPs are attempted in parallel
-        /// 2: All IPs are attempted one after another
-        /// 
-        /// TransparentNetworkIPResolution is enabled by default. MultiSubnetFailover is disabled by default.
-        /// To disable TNIR, you can enable the app context switch.
-        /// 
-        /// This app context switch defaults to 'false'.
-        /// </summary>
-        public static bool DisableTnirByDefault
-        {
-            get
-            {
-                if (s_disableTnirByDefault == Tristate.NotInitialized)
-                {
-                    if (AppContext.TryGetSwitch(DisableTnirByDefaultString, out bool returnedValue) && returnedValue)
-                    {
-                        s_disableTnirByDefault = Tristate.True;
-                    }
-                    else
-                    {
-                        s_disableTnirByDefault = Tristate.False;
-                    }
-                }
-                return s_disableTnirByDefault == Tristate.True;
-            }
-        }
-#endif
         /// <summary>
         /// In TdsParser the ProcessSni function changed significantly when the packet
         /// multiplexing code needed for high speed multi-packet column values was added.
@@ -322,13 +297,6 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if NET
-        private const string GlobalizationInvariantModeString = @"System.Globalization.Invariant";
-        private const string GlobalizationInvariantModeEnvironmentVariable = "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT";
-        internal const string UseManagedNetworkingOnWindowsString = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
-
-        private static Tristate s_globalizationInvariantMode;
-        private static Tristate s_useManagedNetworking;
-
         /// <summary>
         /// .NET Core 2.0 and up supports Globalization Invariant mode, which reduces the size of the required libraries for
         /// applications which don't need globalization support. SqlClient requires those libraries for core functionality,
@@ -382,8 +350,15 @@ namespace Microsoft.Data.SqlClient
         /// When set to true, .NET Core will use the managed SNI implementation instead of the native SNI implementation.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// Non-Windows platforms will always use the managed networking implementation. Windows platforms will use the native SNI
-        /// implementation by default, but this can be overridden by setting the AppContext switch
+        /// implementation by default, but this can be overridden by setting the AppContext switch.
+        /// </para>
+        /// <para>
+        /// ILLink.Substitutions.xml allows the unused SNI implementation to be trimmed away when the corresponding AppContext
+        /// switch is set at compile time. In such cases, this property will return a constant value, even if the AppContext switch is
+        /// set or reset at runtime. See the ILLink.Substitutions.Windows.xml and ILLink.Substitutions.Unix.xml resource files for details.
+        /// </para>
         /// </remarks>
         public static bool UseManagedNetworking
         {
@@ -417,6 +392,40 @@ namespace Microsoft.Data.SqlClient
         /// .NET Framework does not support the managed SNI, so this will always be false.
         /// </summary>
         public const bool UseManagedNetworking = false;
+
+        /// <summary>
+        /// Transparent Network IP Resolution (TNIR) is a revision of the existing MultiSubnetFailover feature.
+        /// TNIR affects the connection sequence of the driver in the case where the first resolved IP of the hostname
+        /// doesn't respond and there are multiple IPs associated with the hostname.
+        /// 
+        /// TNIR interacts with MultiSubnetFailover to provide the following three connection sequences:
+        /// 0: One IP is attempted, followed by all IPs in parallel
+        /// 1: All IPs are attempted in parallel
+        /// 2: All IPs are attempted one after another
+        /// 
+        /// TransparentNetworkIPResolution is enabled by default. MultiSubnetFailover is disabled by default.
+        /// To disable TNIR, you can enable the app context switch.
+        /// 
+        /// This app context switch defaults to 'false'.
+        /// </summary>
+        public static bool DisableTnirByDefault
+        {
+            get
+            {
+                if (s_disableTnirByDefault == Tristate.NotInitialized)
+                {
+                    if (AppContext.TryGetSwitch(DisableTnirByDefaultString, out bool returnedValue) && returnedValue)
+                    {
+                        s_disableTnirByDefault = Tristate.True;
+                    }
+                    else
+                    {
+                        s_disableTnirByDefault = Tristate.False;
+                    }
+                }
+                return s_disableTnirByDefault == Tristate.True;
+            }
+        }
 #endif
     }
 }
