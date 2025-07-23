@@ -2521,7 +2521,7 @@
     <value>此命令要求异步连接。请在连接字符串中设置“Asynchronous Processing=true”。</value>
   </data>
   <data name="SQL_ConnectTimeout" xml:space="preserve">
-    <value>The connection attempt timed out.</value>
+    <value>连接尝试超时。</value>
   </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>超时时间已到。因此，连接被中断。</value>
@@ -4666,18 +4666,18 @@
     <value>SqlBatchCommand 列表尚未初始化。</value>
   </data>
   <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to get vector data from column '{0}'. Vectors are only supported for columns of type vector.</value>
+    <value>从列“{0}”获取矢量数据的尝试无效。仅矢量类型的列支持矢量。</value>
   </data>
   <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
-    <value>Unsupported Vector type '{0}'.</value>
+    <value>矢量类型“{0}”不受支持。</value>
   </data>
   <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
-    <value>'null' value not supported for output parameter '{0}' of SqlDbtype Vector.</value>
+    <value>SqlDbtype 向量的输出参数“{0}”不支持 "null" 值。</value>
   </data>
   <data name="ADP_InvalidVectorHeader" xml:space="preserve">
-    <value>Invalid vector header received.</value>
+    <value>收到的矢量标头无效。</value>
   </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
-    <value>{0} Invalid JSON string for vector.</value>
+    <value>{0} 矢量的 JSON 字符串无效。</value>
   </data>
 </root>
