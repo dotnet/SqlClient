@@ -95,6 +95,12 @@
   <!--
     The Extensions package must be built and packed into the packages/
     directory before the MDS projects can be restored.
+
+    We cannot make the driver targets depend on this one because of the way
+    MSBuild restores projects in "solution mode".  It will attempt to restore
+    all targets in the graph before building any of them, which fails because
+    MDS depends on the Extensions package being built and packed into packages/
+    first.
   -->
   <Target Name="BuildExtensionsPackage">
     <PropertyGroup>

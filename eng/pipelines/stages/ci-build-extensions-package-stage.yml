@@ -155,7 +155,7 @@ stages:
       - task: UseDotNet@2
         displayName: Install .NET 8.0 Runtime
         inputs:
-          packageType: sdk
+          packageType: runtime
           version: 8.x
 
       # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't
