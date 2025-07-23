@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(s_EnlistedTransactionPreservedWhilePooledCondition), Timeout = 10000)]
         public void Test_EnlistedTransactionPreservedWhilePooled()
         {
-#if NET
+#if NET7_0_OR_GREATER
             TransactionManager.ImplicitDistributedTransactions = true;
 #endif
             RunTestSet(EnlistedTransactionPreservedWhilePooled);
