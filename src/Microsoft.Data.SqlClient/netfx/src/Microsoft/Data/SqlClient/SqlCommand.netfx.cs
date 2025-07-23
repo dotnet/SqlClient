@@ -2672,104 +2672,36 @@ namespace Microsoft.Data.SqlClient
             return (System.Runtime.Remoting.Messaging.CallContext.GetData("MS.SqlDependencyCookie") as string);
         }
 
-        // Tds-specific logic for ExecuteNonQuery run handling
-        private Task RunExecuteNonQueryTds(string methodName, bool isAsync, int timeout, bool asyncWrite)
+        // This is in its own method to avoid always allocating the lambda in RunExecuteNonQueryTds, cannot use ContinueTaskWithState because of MarshalByRef and the CompareExchange
+        private void RunExecuteNonQueryTdsSetupReconnnectContinuation(string methodName, bool isAsync, int timeout, bool asyncWrite, Task reconnectTask, long reconnectionStart, TaskCompletionSource<object> completion)
         {
-            Debug.Assert(!asyncWrite || isAsync, "AsyncWrite should be always accompanied by Async");
-            bool processFinallyBlock = true;
-            try
-            {
-                Task reconnectTask = _activeConnection.ValidateAndReconnect(null, timeout);
-
-                if (reconnectTask != null)
+            CancellationTokenSource timeoutCTS = new CancellationTokenSource();
+            AsyncHelper.SetTimeoutException(completion, timeout, static () => SQL.CR_ReconnectTimeout(), timeoutCTS.Token);
+            AsyncHelper.ContinueTask(reconnectTask, completion,
+                () =>
                 {
-                    long reconnectionStart = ADP.TimerCurrent();
-                    if (isAsync)
+                    if (completion.Task.IsCompleted)
                     {
-                        TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
-                        _activeConnection.RegisterWaitingForReconnect(completion.Task);
-                        _reconnectionCompletionSource = completion;
-                        CancellationTokenSource timeoutCTS = new CancellationTokenSource();
-                        AsyncHelper.SetTimeoutException(completion, timeout, static () => SQL.CR_ReconnectTimeout(), timeoutCTS.Token);
-                        AsyncHelper.ContinueTask(reconnectTask, completion,
-                            () =>
-                            {
-                                if (completion.Task.IsCompleted)
-                                {
-                                    return;
-                                }
-                                Interlocked.CompareExchange(ref _reconnectionCompletionSource, null, completion);
-                                timeoutCTS.Cancel();
-                                Task subTask = RunExecuteNonQueryTds(methodName, isAsync, TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart), asyncWrite);
-                                if (subTask == null)
-                                {
-                                    completion.SetResult(null);
-                                }
-                                else
-                                {
-                                    AsyncHelper.ContinueTaskWithState(subTask, completion, completion, static (object state) => ((TaskCompletionSource<object>)state).SetResult(null));
-                                }
-                            },
-                            connectionToAbort: _activeConnection
-                        );
-                        return completion.Task;
+                        return;
+                    }
+                    Interlocked.CompareExchange(ref _reconnectionCompletionSource, null, completion);
+                    timeoutCTS.Cancel();
+                    Task subTask = RunExecuteNonQueryTds(methodName, isAsync, TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart), asyncWrite);
+                    if (subTask == null)
+                    {
+                        completion.SetResult(null);
                     }
                     else
                     {
-                        AsyncHelper.WaitForCompletion(reconnectTask, timeout, static () => throw SQL.CR_ReconnectTimeout());
-                        timeout = TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart);
+                        AsyncHelper.ContinueTaskWithState(subTask, completion,
+                            state: completion,
+                            onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
+                        );
                     }
                 }
-
-                if (asyncWrite)
-                {
-                    _activeConnection.AddWeakReference(this, SqlReferenceCollection.CommandTag);
-                }
-
-                GetStateObject();
-
-                // Reset the encryption state in case it has been set by a previous command.
-                ResetEncryptionState();
-
-                // we just send over the raw text with no annotation
-                // no parameters are sent over
-                // no data reader is returned
-                // use this overload for "batch SQL" tds token type
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.RunExecuteNonQueryTds | Info | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command executed as SQLBATCH, Command Text '{3}' ", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-                Task executeTask = _stateObj.Parser.TdsExecuteSQLBatch(this.CommandText, timeout, this.Notification, _stateObj, sync: true);
-                Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
-
-                NotifyDependency();
-                if (isAsync)
-                {
-                    _activeConnection.GetOpenTdsConnection(methodName).IncrementAsyncCount();
-                }
-                else
-                {
-                    Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                    TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out _);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        throw SQL.SynchronousCallMayNotPend();
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                processFinallyBlock = ADP.IsCatchableExceptionType(e);
-                throw;
-            }
-            finally
-            {
-                if (processFinallyBlock && !isAsync)
-                {
-                    // When executing Async, we need to keep the _stateObj alive...
-                    PutStateObject();
-                }
-            }
-            return null;
+            );
         }
-
+        
         /// <summary>
         /// Resets the encryption related state of the command object and each of the parameters.
         /// BatchRPC doesn't need special handling to cleanup the state of each RPC object and its parameters since a new RPC object and
