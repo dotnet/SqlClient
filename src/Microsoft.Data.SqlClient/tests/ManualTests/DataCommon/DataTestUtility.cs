@@ -108,8 +108,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     s_sqlServerEngineEdition ??= GetSqlServerProperty(TCPConnectionString, "EngineEdition");
                 }
-                _ = int.TryParse(s_sqlServerEngineEdition, out int engineEditon);
-                return engineEditon == 6;
+                _ = int.TryParse(s_sqlServerEngineEdition, out int engineEdition);
+                return engineEdition == 6;
             }
         }
 
@@ -231,6 +231,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStringsSetup.Add(TCPConnectionString);
                 }
             }
+        }
+
+        public static IEnumerable<object[]> GetConnectionStringsWithEnclaveMemberData()
+        {
+            return GetConnectionStrings(true).Select(x => new object[] { x });
+        }
+
+        public static IEnumerable<object[]> GetConnectionStringsWithoutEnclaveMemberData()
+        {
+            return GetConnectionStrings(false).Select(x => new object[] { x });
         }
 
         public static IEnumerable<string> ConnectionStrings => GetConnectionStrings(withEnclave: true);
@@ -456,15 +466,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !AreConnStringsSetup() || !Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource);
         }
 
-        public static bool IsNotNamedInstance()
-        {
-            return !AreConnStringsSetup() || !new SqlConnectionStringBuilder(TCPConnectionString).DataSource.Contains(@"\");
-        }
-
         public static bool IsLocalHost()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
             return ParseDataSource(builder.DataSource, out string hostname, out _, out _) && string.Equals("localhost", hostname, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool IsNotNamedInstance()
+        {
+            return !AreConnStringsSetup() || !new SqlConnectionStringBuilder(TCPConnectionString).DataSource.Contains(@"\");
         }
 
         // Synapse: Always Encrypted is not supported with Azure Synapse.
