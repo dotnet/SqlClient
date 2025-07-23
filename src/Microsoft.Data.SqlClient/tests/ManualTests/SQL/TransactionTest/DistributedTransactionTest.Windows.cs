@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 #endif
 
 
-        private static bool s_EnlistedTransactionPreservedWhilePooledCondition => DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsNotX86Architecture;
+        private static bool s_EnlistedTransactionPreservedWhilePooledCondition => DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsSupportingDistributedTransactions();
 
         [ConditionalFact(nameof(s_EnlistedTransactionPreservedWhilePooledCondition), Timeout = 10000)]
         public void Test_EnlistedTransactionPreservedWhilePooled()
