@@ -1819,69 +1819,6 @@ namespace Microsoft.Data.SqlClient
                 () => InternalExecuteNonQueryAsync(cancellationToken),
                 cancellationToken);
 
-        private Task<int> InternalExecuteNonQueryAsync(CancellationToken cancellationToken)
-        {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteNonQueryAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-            Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
-
-            // connection can be used as state in RegisterForConnectionCloseNotification continuation
-            // to avoid an allocation so use it as the state value if possible but it can be changed if
-            // you need it for a more important piece of data that justifies the tuple allocation later
-            TaskCompletionSource<int> source = new TaskCompletionSource<int>(_activeConnection);
-
-            CancellationTokenRegistration registration = new CancellationTokenRegistration();
-            if (cancellationToken.CanBeCanceled)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    source.SetCanceled();
-                    return source.Task;
-                }
-                registration = cancellationToken.Register(s_cancelIgnoreFailure, this);
-            }
-
-            Task<int> returnedTask = source.Task;
-            returnedTask = RegisterForConnectionCloseNotification(returnedTask);
-
-            ExecuteNonQueryAsyncCallContext context = new ExecuteNonQueryAsyncCallContext();
-            context.Set(this, source, registration, operationId);
-            try
-            {
-                Task<int>.Factory.FromAsync(
-                    beginMethod: static (AsyncCallback callback, object stateObject) => // with c# 10/NET6 add [StackTraceHidden] to this
-                    {
-                        return ((ExecuteNonQueryAsyncCallContext)stateObject).Command.BeginExecuteNonQueryAsync(callback, stateObject);
-                    },
-                    endMethod: static (IAsyncResult asyncResult) => // with c# 10/NET6 add [StackTraceHidden] to this
-                    {
-                        return ((ExecuteNonQueryAsyncCallContext)asyncResult.AsyncState).Command.EndExecuteNonQueryAsync(asyncResult);
-                    },
-                    state: context
-                )
-                .ContinueWith(
-                    static (Task<int> task) => // with c# 10/NET6 add [StackTraceHidden] to this
-                    {
-                        ExecuteNonQueryAsyncCallContext context = (ExecuteNonQueryAsyncCallContext)task.AsyncState;
-                        SqlCommand command = context.Command;
-                        Guid operationId = context.OperationID;
-                        TaskCompletionSource<int> source = context.TaskCompletionSource;
-                        context.Dispose();
-
-                        command.CleanupAfterExecuteNonQueryAsync(task, source, operationId);
-                    },
-                    scheduler: TaskScheduler.Default
-                );
-            }
-            catch (Exception e)
-            {
-                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                source.SetException(e);
-                context.Dispose();
-            }
-
-            return returnedTask;
-        }
-
         private void CleanupAfterExecuteNonQueryAsync(Task<int> task, TaskCompletionSource<int> source, Guid operationId)
         {
             if (task.IsFaulted)
