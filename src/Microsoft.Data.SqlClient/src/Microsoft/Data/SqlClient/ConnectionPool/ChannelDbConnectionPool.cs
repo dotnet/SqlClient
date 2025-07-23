@@ -305,7 +305,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="userOptions">The options for the connection.</param>
         /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
         /// <returns>A task representing the asynchronous operation, with a result of the new internal connection.</returns>
-        /// <throws>InvalidOperationException - when the newly created connection is invalid or already in the pool.</throws>
+        /// <exception cref="OperationCanceledException">
+        /// Thrown when the cancellation token is cancelled before the connection operation completes.
+        /// </exception>
         private DbConnectionInternal? OpenNewInternalConnection(
             DbConnection? owningConnection, 
             DbConnectionOptions userOptions, 
@@ -419,6 +421,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="async">A boolean indicating whether the operation should be asynchronous.</param>
         /// <param name="timeout">The timeout for the operation.</param>
         /// <returns>Returns a DbConnectionInternal that is retrieved from the pool.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown when an OperationCanceledException is caught, indicating that the timeout period 
+        /// elapsed prior to obtaining a connection from the pool.
+        /// </exception>
+        /// <exception cref="Exception">
+        /// Thrown when a ChannelClosedException is caught, indicating that the connection pool 
+        /// has been shut down.
+        /// </exception>
         private async Task<DbConnectionInternal> GetInternalConnection(
             DbConnection owningConnection, 
             DbConnectionOptions userOptions, 
@@ -519,6 +529,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         /// <param name="owningObject">The owning DbConnection instance.</param>
         /// <param name="connection">The DbConnectionInternal to be activated.</param>
+        /// <exception cref="Exception">
+        /// Thrown when any exception occurs during connection activation. 
+        /// </exception>
         private void PrepareConnection(DbConnection owningObject, DbConnectionInternal connection)
         {
             lock (connection)

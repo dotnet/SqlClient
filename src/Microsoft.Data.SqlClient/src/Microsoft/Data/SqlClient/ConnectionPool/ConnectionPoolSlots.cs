@@ -40,12 +40,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     return;
                 }
 
+                _disposed = true;
+
                 if (!_retain)
                 {
                     cleanupCallback(state);
                 }
-
-                _disposed = true;
             }
 
             internal void Keep()
@@ -96,7 +96,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="createCallback">Callback that provides the connection to add to the collection. This callback 
         /// *must not* call any other ConnectionPoolSlots methods.</param>
         /// <param name="cleanupCallback">Callback to clean up resources if an exception occurs. This callback *must 
-        /// not* call any other ConnectionPoolSlots methods.</param>
+        /// not* call any other ConnectionPoolSlots methods. This callback *must not* throw exceptions.</param>
         /// <param name="createState">State made available to the create callback.</param>
         /// <param name="cleanupState">State made available to the cleanup callback.</param>
         /// <exception cref="Exception">
