@@ -99,8 +99,9 @@ namespace Microsoft.Data.SqlClient
         
         #region Private Methods
         
+        // @TODO: Restructure to make this a sync-only method
         private Task InternalExecuteNonQuery(
-            TaskCompletionSource<object> completion, // @TODO: Create internally, don't pass in if possible
+            TaskCompletionSource<object> completion,
             bool sendToPipe, // @TODO: Must always be false!
             int timeout,
             out bool usedCache,
@@ -207,6 +208,93 @@ namespace Microsoft.Data.SqlClient
             return task;
             // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
+
+        private Task<int> InternalExecuteNonQueryAsync(CancellationToken cancellationToken)
+        {
+            #if NETFRAMEWORK
+            SqlConnection.ExecutePermission.Demand();
+            #endif
+            
+            SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                "SqlCommand.InternalExecuteNonQueryAsync | API | Correlation | " +
+                $"Object Id {ObjectID}, " +
+                $"Activity Id {ActivityCorrelator.Current}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"Command Text '{CommandText}'");
+            
+            #if NET
+            Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
+            #else
+            Guid operationId = Guid.Empty;
+            #endif
+            
+            // Connection can be used as state in RegisterForConnectionCloseNotification continuation
+            // to avoid an allocation so use it as the state value if possible but it can be changed if
+            // you need it for a more important piece of data that justifies the tuple allocation later
+            TaskCompletionSource<int> source = new TaskCompletionSource<int>(_activeConnection);
+
+            CancellationTokenRegistration registration = new CancellationTokenRegistration();
+            if (cancellationToken.CanBeCanceled)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    source.SetCanceled();
+                    return source.Task;
+                }
+
+                registration = cancellationToken.Register(callback: s_cancelIgnoreFailure, state: this);
+            }
+
+            Task<int> returnedTask = source.Task;
+            returnedTask = RegisterForConnectionCloseNotification(returnedTask);
+
+            ExecuteNonQueryAsyncCallContext context = new ExecuteNonQueryAsyncCallContext();
+            context.Set(this, source, registration, operationId);
+            try
+            {
+                // @TODO: Replace with native async implementation, make Begin/End implementation rely on async implementation
+                Task<int>.Factory.FromAsync(
+                    beginMethod: static (callback, stateObject) =>
+                    {
+                        // @TODO: With C# 10/net6 add [StackTraceHidden]
+                        return ((ExecuteNonQueryAsyncCallContext)stateObject).Command.BeginExecuteNonQueryAsync(
+                            callback,
+                            stateObject);
+                    },
+                    endMethod: static asyncResult =>
+                    {
+                        // @TODO: With C# 10/net6 add [StackTraceHidden]
+                        return ((ExecuteNonQueryAsyncCallContext)asyncResult.AsyncState).Command.EndExecuteNonQueryAsync(
+                                asyncResult);
+                    },
+                    state: context
+                ).ContinueWith(
+                    static task =>
+                    {
+                        // @TODO: With C#/net6 add [StackTraceHidden]
+                        ExecuteNonQueryAsyncCallContext context = (ExecuteNonQueryAsyncCallContext)task.AsyncState;
+                        SqlCommand command = context.Command;
+                        Guid operationId = context.OperationID;
+                        TaskCompletionSource<int> source = context.TaskCompletionSource;
+
+                        context.Dispose();
+
+                        command.CleanupAfterExecuteNonQueryAsync(task, source, operationId);
+                    },
+                    scheduler: TaskScheduler.Default);
+            }
+            catch (Exception e)
+            {
+                #if NET
+                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                #endif
+                
+                source.SetException(e);
+                context.Dispose();
+            }
+
+            return returnedTask;
+        }
         
         private Task InternalExecuteNonQueryWithRetry( // @TODO: Task is ignored
             bool sendToPipe,
@@ -233,6 +321,7 @@ namespace Microsoft.Data.SqlClient
         }
         
         // @TODO: Sort args, drop TDS from name
+        // @TODO: Restructure to make this the common method for sync and async methods (not InternalExecuteNonQuery)
         private Task RunExecuteNonQueryTds(string methodName, bool isAsync, int timeout, bool asyncWrite)
         {
             Debug.Assert(!asyncWrite || isAsync, "AsyncWrite should be always accompanied by Async");
