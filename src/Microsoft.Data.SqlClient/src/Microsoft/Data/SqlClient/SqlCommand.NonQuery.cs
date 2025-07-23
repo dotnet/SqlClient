@@ -338,6 +338,107 @@ namespace Microsoft.Data.SqlClient
             return EndExecuteNonQueryInternal(asyncResult);
         }
         
+        // @TODO: Return int?
+        private object InternalEndExecuteNonQuery(
+            IAsyncResult asyncResult,
+            bool isInternal, // @TODO: is this ever true?
+            [CallerMemberName] string endMethod = "")
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlCommand.InternalEndExecuteNonQuery | INFO | " +
+                $"Object Id {ObjectID}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"MARS={_activeConnection?.Parser.MARSOn}, " +
+                $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
+            
+            VerifyEndExecuteState((Task)asyncResult, endMethod);
+            WaitForAsyncResults(asyncResult, isInternal);
+            
+            // If column encryption is enabled, also check the state after waiting for the task.
+            // It would be better to do this for all cases, but avoiding for compatibility reasons.
+            if (IsColumnEncryptionEnabled)
+            {
+                VerifyEndExecuteState((Task)asyncResult, endMethod, fullCheckForColumnEncryption: true);
+            }
+            
+            bool processFinallyBlock = true;
+            try
+            {
+                // If this is not for internal usage, notify the dependency.
+                // If we have already initiated the end internally, the reader should be ready, so
+                // just return the rows affected.
+                if (!isInternal)
+                {
+                    NotifyDependency();
+
+                    if (_internalEndExecuteInitiated)
+                    {
+                        Debug.Assert(_stateObj is null);
+
+                        // Reset the state since we exit early.
+                        CachedAsyncState.ResetAsyncState();
+
+                        return _rowsAffected;
+                    }
+                }
+
+                CheckThrowSNIException();
+
+                // @TODO: I swear I've seen this code before in this file.......
+                // Only send over SQL Batch command if we are not a stored proc and have no parameters
+                if (CommandType is CommandType.Text && GetParameterCount(_parameters) == 0)
+                {
+                    try
+                    {
+                        Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
+                        TdsOperationStatus result = _stateObj.Parser.TryRun(
+                            RunBehavior.UntilDone,
+                            cmdHandler: this,
+                            dataStream: null,
+                            bulkCopyHandler: null,
+                            _stateObj,
+                            out _);
+
+                        if (result is not TdsOperationStatus.Done)
+                        {
+                            throw SQL.SynchronousCallMayNotPend();
+                        }
+                    }
+                    finally
+                    {
+                        // Don't reset the state for internal end. The user end will do that eventually.
+                        if (!isInternal)
+                        {
+                            CachedAsyncState.ResetAsyncState();
+                        }
+                    }
+                }
+                else
+                {
+                    // Otherwise, use a full-fledged execute that can handle params and stored sprocs
+                    SqlDataReader reader = CompleteAsyncExecuteReader(isInternal);
+                    reader?.Close();
+                }
+            }
+            catch (Exception e)
+            {
+                processFinallyBlock = ADP.IsCatchableExceptionType(e);
+                throw;
+            }
+            finally
+            {
+                if (processFinallyBlock)
+                {
+                    PutStateObject();
+                }
+            }
+            
+            Debug.Assert(_stateObj == null, "non-null state object in EndExecuteNonQuery");
+            
+            return _rowsAffected;
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
+        }
+        
         // @TODO: Restructure to make this a sync-only method
         private Task InternalExecuteNonQuery(
             TaskCompletionSource<object> completion,
