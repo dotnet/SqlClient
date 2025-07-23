@@ -98,6 +98,25 @@ namespace Microsoft.Data.SqlClient
         #endregion
         
         #region Private Methods
+
+        // @TODO: This can be inlined into InternalExecuteNonQueryAsync before restructuring into async pathway
+        private IAsyncResult BeginExecuteNonQueryAsync(AsyncCallback callback, object stateObject)
+        {
+            SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                "SqlCommand.BeginExecuteNonQueryAsync | API | Correlation | " +
+                $"Object Id {ObjectID}, " +
+                $"Activity Id {ActivityCorrelator.Current}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"Command Text '{CommandText}'");
+            
+            return BeginExecuteNonQueryInternal(
+                CommandBehavior.Default,
+                callback,
+                stateObject,
+                CommandTimeout,
+                isRetry: false,
+                asyncWrite: true);
+        }
         
         // @TODO: Restructure to make this a sync-only method
         private Task InternalExecuteNonQuery(
