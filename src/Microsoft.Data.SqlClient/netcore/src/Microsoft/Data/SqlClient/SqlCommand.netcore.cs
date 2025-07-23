@@ -780,38 +780,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
-        {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteNonQueryAsync | Info | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-            Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
-
-            Exception asyncException = ((Task)asyncResult).Exception;
-            if (asyncException != null)
-            {
-                // Leftover exception from the Begin...InternalReadStage
-                CachedAsyncState?.ResetAsyncState();
-                ReliablePutStateObject();
-                throw asyncException.InnerException;
-            }
-            else
-            {
-                ThrowIfReconnectionHasBeenCanceled();
-                // lock on _stateObj prevents races with close/cancel.
-                // If we have already initiate the End call internally, we have already done that, so no point doing it again.
-                if (!_internalEndExecuteInitiated)
-                {
-                    lock (_stateObj)
-                    {
-                        return EndExecuteNonQueryInternal(asyncResult);
-                    }
-                }
-                else
-                {
-                    return EndExecuteNonQueryInternal(asyncResult);
-                }
-            }
-        }
-
         private int EndExecuteNonQueryInternal(IAsyncResult asyncResult)
         {
             SqlStatistics statistics = null;

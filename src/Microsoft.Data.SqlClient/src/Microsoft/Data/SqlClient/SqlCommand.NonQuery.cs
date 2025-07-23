@@ -117,6 +117,42 @@ namespace Microsoft.Data.SqlClient
                 isRetry: false,
                 asyncWrite: true);
         }
+
+        // @TODO: This can be inlined into InternalExecuteNonQueryAsync before restructuring into async pathway
+        private int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
+        {
+            Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
+            
+            SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                "SqlCommand.EndExecuteNonQueryAsync | Info | Correlation | " +
+                $"Object Id {ObjectID}, " +
+                $"Activity Id {ActivityCorrelator.Current}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"Command Text '{CommandText}'");
+
+            Exception asyncException = ((Task)asyncResult).Exception;
+            if (asyncException is not null)
+            {
+                // Leftover exception from the Begin...InternalReadStage
+                CachedAsyncState?.ResetAsyncState();
+                ReliablePutStateObject();
+                throw asyncException.InnerException;
+            }
+            
+            ThrowIfReconnectionHasBeenCanceled();
+            // lock on _stateObj prevents races with close/cancel.
+            // If we have already initiated the End call internally, we have already done that, so
+            // no point doing it again.
+            if (!_internalEndExecuteInitiated)
+            {
+                lock (_stateObj)
+                {
+                    return EndExecuteNonQueryInternal(asyncResult);
+                }
+            }
+            
+            return EndExecuteNonQueryInternal(asyncResult);
+        }
         
         // @TODO: Restructure to make this a sync-only method
         private Task InternalExecuteNonQuery(
