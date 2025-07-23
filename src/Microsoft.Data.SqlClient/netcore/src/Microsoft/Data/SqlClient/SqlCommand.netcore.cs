@@ -1813,12 +1813,6 @@ namespace Microsoft.Data.SqlClient
             return reader;
         }
 
-        private Task<int> InternalExecuteNonQueryWithRetryAsync(CancellationToken cancellationToken) =>
-            RetryLogicProvider.ExecuteAsync(
-                sender: this,
-                () => InternalExecuteNonQueryAsync(cancellationToken),
-                cancellationToken);
-
         private void CleanupAfterExecuteNonQueryAsync(Task<int> task, TaskCompletionSource<int> source, Guid operationId)
         {
             if (task.IsFaulted)

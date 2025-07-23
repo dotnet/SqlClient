@@ -319,6 +319,12 @@ namespace Microsoft.Data.SqlClient
             usedCache = innerUsedCache;
             return result;
         }
+
+        private Task<int> InternalExecuteNonQueryWithRetryAsync(CancellationToken cancellationToken) =>
+            RetryLogicProvider.ExecuteAsync(
+                sender: this,
+                function: () => InternalExecuteNonQueryAsync(cancellationToken),
+                cancellationToken);
         
         // @TODO: Sort args, drop TDS from name
         // @TODO: Restructure to make this the common method for sync and async methods (not InternalExecuteNonQuery)
