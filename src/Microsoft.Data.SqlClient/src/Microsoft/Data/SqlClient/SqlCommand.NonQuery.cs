@@ -88,6 +88,12 @@ namespace Microsoft.Data.SqlClient
                 WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
             }
         }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
+        public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken) =>
+            IsProviderRetriable
+                ? InternalExecuteNonQueryWithRetryAsync(cancellationToken)
+                : InternalExecuteNonQueryAsync(cancellationToken);
         
         #endregion
         

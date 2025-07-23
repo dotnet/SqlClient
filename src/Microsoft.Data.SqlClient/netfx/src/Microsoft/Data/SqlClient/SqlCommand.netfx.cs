@@ -1775,12 +1775,6 @@ namespace Microsoft.Data.SqlClient
             // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
-        public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken) =>
-            IsProviderRetriable
-                ? InternalExecuteNonQueryWithRetryAsync(cancellationToken)
-                : InternalExecuteNonQueryAsync(cancellationToken);
-
         private Task<int> InternalExecuteNonQueryWithRetryAsync(CancellationToken cancellationToken) =>
             RetryLogicProvider.ExecuteAsync(
                 sender: this,
