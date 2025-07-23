@@ -6,6 +6,7 @@ using System;
 using System.Data;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 
@@ -233,6 +234,7 @@ namespace Microsoft.Data.SqlClient
             bool processFinallyBlock = true;
             try
             {
+                // @TODO: I suspect the reconnect and re-run process is used extensively through the code. We can likely factor this out.
                 Task reconnectTask = _activeConnection.ValidateAndReconnect(beforeDisconnect: null, timeout);
                 if (reconnectTask is not null)
                 {
@@ -242,6 +244,8 @@ namespace Microsoft.Data.SqlClient
                         TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
                         _activeConnection.RegisterWaitingForReconnect(completion.Task);
                         _reconnectionCompletionSource = completion;
+                        
+                        // Basically, this RunExecuteNonQueryTds onto the end of the reconnection
                         RunExecuteNonQueryTdsSetupReconnnectContinuation(
                             methodName,
                             isAsync,
@@ -326,6 +330,63 @@ namespace Microsoft.Data.SqlClient
             }
 
             return null;
+        }
+        
+        /// <remarks>
+        /// Since we use CompareExchange, we cannot make the reconnect success continuation static.
+        /// Thus, we cannot use the "WithState" continuation helper. If this was part of
+        /// RunExecuteNonQueryTds, we would be allocating the lambda each time. So, we make this a
+        /// separate method. 
+        /// </remarks>
+        // @TODO: Sort args, fix name
+        private void RunExecuteNonQueryTdsSetupReconnnectContinuation(
+            string methodName,
+            bool isAsync,
+            int timeout,
+            bool asyncWrite,
+            Task reconnectTask,
+            long reconnectionStart,
+            TaskCompletionSource<object> completion)
+        {
+            CancellationTokenSource timeoutCts = new CancellationTokenSource();
+            AsyncHelper.SetTimeoutException(
+                completion,
+                timeout,
+                static () => SQL.CR_ReconnectTimeout(),
+                timeoutCts.Token);
+            
+            AsyncHelper.ContinueTask(
+                reconnectTask,
+                completion,
+                onSuccess: () =>
+                {
+                    if (completion.Task.IsCompleted)
+                    {
+                        return;
+                    }
+                    
+                    Interlocked.CompareExchange(ref _reconnectionCompletionSource, null, completion);
+                    timeoutCts.Cancel();
+
+                    Task subTask = RunExecuteNonQueryTds(
+                        methodName,
+                        isAsync,
+                        TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart),
+                        asyncWrite);
+
+                    if (subTask is null)
+                    {
+                        completion.SetResult(null);
+                    }
+                    else
+                    {
+                        AsyncHelper.ContinueTaskWithState(
+                            subTask,
+                            completion,
+                            state: completion,
+                            onSuccess: static state => ((TaskCompletionSource<object>)state).SetResult(null));
+                    }
+                });
         }
         
         #endregion
