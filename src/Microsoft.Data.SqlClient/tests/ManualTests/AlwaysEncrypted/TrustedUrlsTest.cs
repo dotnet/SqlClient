@@ -27,6 +27,27 @@ public class TrustedUrlsTest
             System.Reflection.BindingFlags.Instance);
     }
 
+    public const string InvalidVaultKeyPathErrorMessage =
+        @"Invalid Azure Key Vault key path specified: 'https://www.microsoft.com'. " +
+        "Valid trusted endpoints: " +
+        "vault.azure.net, " +
+        "vault.azure.cn, " +
+        "vault.usgovcloudapi.net, " +
+        "vault.microsoftazure.de, " +
+        "vault.cloudapi.microsoft.scloud, " +
+        "vault.cloudapi.eaglex.ic.gov, " +
+        "vault.sovcloud-api.fr, " +
+        "vault.sovcloud-api.de, " +
+        "managedhsm.azure.net, " +
+        "managedhsm.azure.cn, " +
+        "managedhsm.usgovcloudapi.net, " +
+        "managedhsm.microsoftazure.de, " +
+        "managedhsm.cloudapi.microsoft.scloud, " +
+        "managedhsm.cloudapi.eaglex.ic.gov, " +
+        "managedhsm.sovcloud-api.fr, " +
+        "managedhsm.sovcloud-api.de." +
+        @"\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+
     private static string MakeUrl(string vault)
     {
         return $"https://{vault}/keys/dummykey/dummykeyid";
@@ -41,12 +62,16 @@ public class TrustedUrlsTest
             "vault.azure.cn, " +
             "vault.usgovcloudapi.net, " +
             "vault.microsoftazure.de, " +
+            "vault.cloudapi.microsoft.scloud, " +
+            "vault.cloudapi.eaglex.ic.gov, " +
             "vault.sovcloud-api.fr, " +
             "vault.sovcloud-api.de, " +
             "managedhsm.azure.net, " +
             "managedhsm.azure.cn, " +
             "managedhsm.usgovcloudapi.net, " +
             "managedhsm.microsoftazure.de, " +
+            "managedhsm.cloudapi.microsoft.scloud, " +
+            "managedhsm.cloudapi.eaglex.ic.gov, " +
             "managedhsm.sovcloud-api.fr, " +
             "managedhsm.sovcloud-api.de." +
             @"\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
@@ -71,7 +96,10 @@ public class TrustedUrlsTest
             // Unwrap the exception to get the actual ArgumentException thrown
             var argEx = ex.InnerException as ArgumentException;
             Assert.NotNull(argEx);
-            Assert.Matches(MakeInvalidVaultErrorMessage(url), argEx.Message);
+            var expected = MakeInvalidVaultErrorMessage(url);
+            Console.WriteLine("Actual:   " + argEx.Message);
+            Console.WriteLine("Expected: " + expected);
+            Assert.Matches(expected, argEx.Message);
         }
     }
 
@@ -81,6 +109,8 @@ public class TrustedUrlsTest
     [InlineData("vault.azure.cn")]
     [InlineData("vault.usgovcloudapi.net")]
     [InlineData("vault.microsoftazure.de")]
+    [InlineData("vault.cloudapi.microsoft.scloud")]
+    [InlineData("vault.cloudapi.eaglex.ic.gov")]
     [InlineData("vault.sovcloud-api.fr")]
     [InlineData("vault.sovcloud-api.de")]
     // HSM vaults.
@@ -88,6 +118,8 @@ public class TrustedUrlsTest
     [InlineData("managedhsm.azure.cn")]
     [InlineData("managedhsm.usgovcloudapi.net")]
     [InlineData("managedhsm.microsoftazure.de")]
+    [InlineData("managedhsm.cloudapi.microsoft.scloud")]
+    [InlineData("managedhsm.cloudapi.eaglex.ic.gov")]
     [InlineData("managedhsm.sovcloud-api.fr")]
     [InlineData("managedhsm.sovcloud-api.de")]
     // Vaults with prefixes.
