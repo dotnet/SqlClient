@@ -2695,36 +2695,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // This is in its own method to avoid always allocating the lambda in RunExecuteNonQueryTds, cannot use ContinueTaskWithState because of MarshalByRef and the CompareExchange
-        private void RunExecuteNonQueryTdsSetupReconnnectContinuation(string methodName, bool isAsync, int timeout, bool asyncWrite, Task reconnectTask, long reconnectionStart, TaskCompletionSource<object> completion)
-        {
-            CancellationTokenSource timeoutCTS = new CancellationTokenSource();
-            AsyncHelper.SetTimeoutException(completion, timeout, static () => SQL.CR_ReconnectTimeout(), timeoutCTS.Token);
-            AsyncHelper.ContinueTask(reconnectTask, completion,
-                () =>
-                {
-                    if (completion.Task.IsCompleted)
-                    {
-                        return;
-                    }
-                    Interlocked.CompareExchange(ref _reconnectionCompletionSource, null, completion);
-                    timeoutCTS.Cancel();
-                    Task subTask = RunExecuteNonQueryTds(methodName, isAsync, TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart), asyncWrite);
-                    if (subTask == null)
-                    {
-                        completion.SetResult(null);
-                    }
-                    else
-                    {
-                        AsyncHelper.ContinueTaskWithState(subTask, completion,
-                            state: completion,
-                            onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
-                        );
-                    }
-                }
-            );
-        }
-
         /// <summary>
         /// Resets the encryption related state of the command object and each of the parameters.
         /// BatchRPC doesn't need special handling to cleanup the state of each RPC object and its parameters since a new RPC object and
