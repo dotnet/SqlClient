@@ -154,6 +154,129 @@ namespace Microsoft.Data.SqlClient
                 asyncWrite: true);
         }
 
+        private IAsyncResult BeginExecuteNonQueryInternal(
+            CommandBehavior behavior,
+            AsyncCallback callback,
+            object stateObject,
+            int timeout,
+            bool isRetry,
+            bool asyncWrite = false)
+        {
+            TaskCompletionSource<object> globalCompletion = new TaskCompletionSource<object>(stateObject);
+            TaskCompletionSource<object> localCompletion = new TaskCompletionSource<object>(stateObject);
+
+            if (!isRetry)
+            {
+                // Reset _pendingCancel upon entry into any Execute - used to synchronize state
+                // between entry into Execute* API and the thread obtaining the stateObject.
+                _pendingCancel = false;
+
+                // Special case - done outside of try/catches to prevent putting a stateObj back
+                // into pool when we should not.
+                ValidateAsyncCommand();
+            }
+
+            SqlStatistics statistics = null;
+            try
+            {
+                if (!isRetry)
+                {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    WriteBeginExecuteEvent();
+                }
+
+                bool usedCache;
+                try
+                {
+                    // InternalExecuteNonQuery already has reliability block, but if it fails, it
+                    // will not put stateObj back into pool.
+                    Task execNonQuery = InternalExecuteNonQuery(
+                        localCompletion,
+                        sendToPipe: false,
+                        timeout,
+                        out usedCache,
+                        asyncWrite,
+                        isRetry,
+                        methodName: nameof(BeginExecuteNonQuery));
+
+                    if (execNonQuery is not null)
+                    {
+                        AsyncHelper.ContinueTaskWithState(
+                            task: execNonQuery,
+                            completion: localCompletion,
+                            state: Tuple.Create(this, localCompletion),
+                            onSuccess: state =>
+                            {
+                                var parameters = (Tuple<SqlCommand, TaskCompletionSource<object>>)state;
+                                parameters.Item1.BeginExecuteNonQueryInternalReadStage(parameters.Item2);
+                            });
+                    }
+                    else
+                    {
+                        BeginExecuteNonQueryInternalReadStage(localCompletion);
+                    }
+                }
+                catch (Exception e)
+                {
+                    // @TODO: Invert.
+                    if (!ADP.IsCatchableOrSecurityExceptionType(e))
+                    {
+                        // Exception is not catchable, the connection has already been caught and
+                        // doomed in a lower level.
+                        throw;
+                    }
+
+                    // For async, RunExecuteReader will never put the stateObj back into the pool,
+                    // so, do so now.
+                    ReliablePutStateObject();
+                    throw;
+                }
+
+                // When we use query caching for parameter encryption we need to retry on specific errors.
+                // In these cases finalize the call internally and trigger a retry when needed.
+                // When we use query caching for parameter encryption we need to retry on specific errors.
+                // In these cases finalize the call internally and trigger a retry when needed.
+                // @TODO: store this method call in a variable, it's faaaaar too big to be used in an if statement 
+                if (
+                    !TriggerInternalEndAndRetryIfNecessary(
+                        behavior,
+                        stateObject,
+                        timeout,
+                        usedCache,
+                        isRetry,
+                        asyncWrite,
+                        globalCompletion,
+                        localCompletion,
+                        endFunc: static (SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod) =>
+                        {
+                            return command.InternalEndExecuteNonQuery(asyncResult, isInternal, endMethod);
+                        },
+                        retryFunc: static (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool isRetry, bool asyncWrite) =>
+                        {
+                            return command.BeginExecuteNonQueryInternal(behavior, callback, stateObject, timeout, isRetry, asyncWrite);
+                        },
+                        nameof(EndExecuteNonQuery)))
+                {
+                    globalCompletion = localCompletion;
+                }
+                
+                // Add callback after work is done to avoid overlapping Begin/End methods
+                if (callback != null)
+                {
+                    globalCompletion.Task.ContinueWith(
+                        static (task, state) => ((AsyncCallback)state)(task),
+                        state: callback
+                    );
+                }
+
+                return globalCompletion.Task;
+            }
+            finally
+            {
+                SqlStatistics.StopTimer(statistics);
+            }
+        }
+        
         // @TODO: This can be inlined into InternalExecuteNonQueryAsync before restructuring into async pathway
         private int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
         {
