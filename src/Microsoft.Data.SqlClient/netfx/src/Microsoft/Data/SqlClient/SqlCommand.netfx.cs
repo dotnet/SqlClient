@@ -555,12 +555,6 @@ namespace Microsoft.Data.SqlClient
             return BeginExecuteNonQueryInternal(0, callback, stateObject, 0, isRetry: false);
         }
 
-        private IAsyncResult BeginExecuteNonQueryAsync(AsyncCallback callback, object stateObject)
-        {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteNonQueryAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-            return BeginExecuteNonQueryInternal(0, callback, stateObject, CommandTimeout, isRetry: false, asyncWrite: true);
-        }
-
         private IAsyncResult BeginExecuteNonQueryInternal(CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool isRetry, bool asyncWrite = false)
         {
             TaskCompletionSource<object> globalCompletion = new TaskCompletionSource<object>(stateObject);
