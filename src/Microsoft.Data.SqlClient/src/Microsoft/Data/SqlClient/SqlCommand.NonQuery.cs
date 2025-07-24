@@ -52,6 +52,24 @@ namespace Microsoft.Data.SqlClient
                 isRetry: false);
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteNonQuery[@name="IAsyncResult"]/*'/>
+        public int EndExecuteNonQuery(IAsyncResult asyncResult)
+        {
+            try
+            {
+                return EndExecuteNonQueryInternal(asyncResult);
+            }
+            finally
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                    "SqlCommand.EndExecuteNonQuery | API | Correlation | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Activity Id {ActivityCorrelator.Current}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"Command Text '{CommandText}'");
+            }
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQuery[@name="default"]/*'/>
         public override int ExecuteNonQuery()
         {
