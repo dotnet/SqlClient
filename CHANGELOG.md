@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 # Release Notes
 
-## [Stable Release 6.1.0] - 2025-08-05
+## [Stable Release 6.1.0] - 2025-07-25
 
 This update brings the following changes since the
 [6.1.0-preview2](release-notes/6.1/6.1.0-preview2.md) release:
@@ -28,6 +28,8 @@ No new features were added.
   ([#3474](https://github.com/dotnet/SqlClient/pull/3474))
 - Fixed some spelling errors in the API docs.
   ([#3500](https://github.com/dotnet/SqlClient/pull/3500))
+- Fixed a rare multi-packet string corruption bug.
+  ([#3513](https://github.com/dotnet/SqlClient/pull/3513))
 
 ### Changed
 
