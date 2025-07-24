@@ -69,7 +69,6 @@ namespace Microsoft.Data.SqlClient
         // Constants
         private const int constBinBufferSize = 4096; // Size of the buffer used to read input parameter of type Stream
         private const int constTextBufferSize = 4096; // Size of the buffer (in chars) user to read input parameter of type TextReader
-        private const string enableTruncateSwitch = "Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal"; // for applications that need to maintain backwards compatibility with the previous behavior
 
         // State variables
         internal TdsParserState _state = TdsParserState.Closed; // status flag for connection
@@ -201,16 +200,6 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 return _connHandler;
-            }
-        }
-
-        private static bool EnableTruncateSwitch
-        {
-            get
-            {
-                bool value;
-                value = AppContext.TryGetSwitch(enableTruncateSwitch, out value) ? value : false;
-                return value;
             }
         }
 
@@ -631,7 +620,7 @@ namespace Microsoft.Data.SqlClient
                 // Cache physical stateObj and connection.
                 _pMarsPhysicalConObj = _physicalStateObj;
 
-                if (TdsParserStateObjectFactory.UseManagedSNI)
+                if (LocalAppContextSwitches.UseManagedNetworking)
                     _pMarsPhysicalConObj.IncrementPendingCallbacks();
 
                 uint info = 0;
@@ -1489,7 +1478,7 @@ namespace Microsoft.Data.SqlClient
                  * !=null       | == 0     | replace text left of errorMessage
                  */
 
-                if (TdsParserStateObjectFactory.UseManagedSNI)
+                if (LocalAppContextSwitches.UseManagedNetworking)
                 {
                     Debug.Assert(!string.IsNullOrEmpty(details.ErrorMessage) || details.SniErrorNumber != 0, "Empty error message received from SNI");
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Empty error message received from SNI. Error Message = {0}, SNI Error Number ={1}", details.ErrorMessage, details.SniErrorNumber);
@@ -1538,7 +1527,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    if (TdsParserStateObjectFactory.UseManagedSNI)
+                    if (LocalAppContextSwitches.UseManagedNetworking)
                     {
                         // SNI error. Append additional error message info if available and hasn't been included.
                         string sniLookupMessage = SQL.GetSNIErrorMessage(details.SniErrorNumber);
@@ -7653,7 +7642,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (d.Scale != newScale)
             {
-                bool round = !EnableTruncateSwitch;
+                bool round = !LocalAppContextSwitches.TruncateScaledDecimal;
                 return SqlDecimal.AdjustScale(d, newScale - d.Scale, round);
             }
 
@@ -7666,7 +7655,7 @@ namespace Microsoft.Data.SqlClient
 
             if (newScale != oldScale)
             {
-                bool round = !EnableTruncateSwitch;
+                bool round = !LocalAppContextSwitches.TruncateScaledDecimal;
                 SqlDecimal num = new SqlDecimal(value);
                 num = SqlDecimal.AdjustScale(num, newScale - oldScale, round);
                 return num.Value;
@@ -13127,11 +13116,10 @@ namespace Microsoft.Data.SqlClient
 
             if (canContinue)
             {
-                if (isContinuing || isStarting)
-                {
-                    temp = stateObj.TryTakeSnapshotStorage() as char[];
-                    Debug.Assert(temp == null || length == int.MaxValue || temp.Length == length, "stored buffer length must be null or must have been created with the correct length");
-                }
+                temp = stateObj.TryTakeSnapshotStorage() as char[];
+                Debug.Assert(temp != null || !isContinuing, "if continuing stored buffer must be present to contain previous data to continue from");
+                Debug.Assert(temp == null || length == int.MaxValue || temp.Length == length, "stored buffer length must be null or must have been created with the correct length");
+                
                 if (temp != null)
                 {
                     startOffset = stateObj.GetSnapshotTotalSize();
@@ -13147,7 +13135,7 @@ namespace Microsoft.Data.SqlClient
                 supportRentedBuff: !canContinue, // do not use the arraypool if we are going to keep the buffer in the snapshot
                 rentedBuff: ref buffIsRented,
                 startOffset,
-                isStarting || isContinuing
+                canContinue
             );
 
             if (result == TdsOperationStatus.Done)
@@ -13174,7 +13162,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (result == TdsOperationStatus.NeedMoreData)
             {
-                if (isStarting || isContinuing)
+                if (canContinue)
                 {
                     stateObj.SetSnapshotStorage(temp);
                 }

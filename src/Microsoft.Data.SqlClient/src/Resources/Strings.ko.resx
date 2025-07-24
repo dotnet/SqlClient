@@ -2521,7 +2521,7 @@
     <value>이 명령을 사용하려면 비동기 연결이 필요합니다. 연결 문자열에서 "Asynchronous Processing=true"로 설정하십시오.</value>
   </data>
   <data name="SQL_ConnectTimeout" xml:space="preserve">
-    <value>The connection attempt timed out.</value>
+    <value>연결 시도 시간이 초과되었습니다.</value>
   </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>제한 시간이 만료되었으므로 연결이 끊겼습니다.</value>
@@ -4666,18 +4666,18 @@
     <value>SqlBatchCommand 목록이 초기화되지 않았습니다.</value>
   </data>
   <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to get vector data from column '{0}'. Vectors are only supported for columns of type vector.</value>
+    <value>열 '{0}'에서 벡터 데이터를 가져오려는 시도가 잘못되었습니다. 벡터는 벡터 형식의 열에서만 지원됩니다.</value>
   </data>
   <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
-    <value>Unsupported Vector type '{0}'.</value>
+    <value>지원되지 않는 벡터 형식 '{0}'입니다.</value>
   </data>
   <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
-    <value>'null' value not supported for output parameter '{0}' of SqlDbtype Vector.</value>
+    <value>SqlDbType Vector의 출력 매개변수 '{0}'에는 'null' 값이 지원되지 않습니다.</value>
   </data>
   <data name="ADP_InvalidVectorHeader" xml:space="preserve">
-    <value>Invalid vector header received.</value>
+    <value>잘못된 벡터 헤더가 수신되었습니다.</value>
   </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
-    <value>{0} Invalid JSON string for vector.</value>
+    <value>{0} 벡터에 대한 JSON 문자열이 잘못되었습니다.</value>
   </data>
 </root>

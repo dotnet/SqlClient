@@ -31,13 +31,6 @@ namespace Microsoft.Data.SqlClient
     [DesignerCategory("")]
     public sealed partial class SqlConnection : DbConnection, ICloneable
     {
-        private enum CultureCheckState : uint
-        {
-            Unknown = 0,
-            Standard = 1,
-            Invariant = 2
-        }
-
         private bool _AsyncCommandInProgress;
 
         // SQLStatistics support
@@ -74,9 +67,6 @@ namespace Microsoft.Data.SqlClient
         // The downstream handling of Connection open is the same for idle connection resiliency. Currently we want to apply transient fault handling only to the connections opened
         // using SqlConnection.Open() method.
         internal bool _applyTransientFaultHandling = false;
-
-        // status of invariant culture environment check
-        private static CultureCheckState _cultureCheckState;
 
         // System column encryption key store providers are added by default
         private static readonly Dictionary<string, SqlColumnEncryptionKeyStoreProvider> s_systemColumnEncryptionKeyStoreProviders
@@ -1968,48 +1958,9 @@ namespace Microsoft.Data.SqlClient
         {
             SqlConnectionString connectionOptions = (SqlConnectionString)ConnectionOptions;
 
-            if (_cultureCheckState != CultureCheckState.Standard)
+            if (LocalAppContextSwitches.GlobalizationInvariantMode)
             {
-                // .NET Core 2.0 and up supports a Globalization Invariant Mode to reduce the size of
-                // required libraries for applications which don't need globalization support. SqlClient
-                // requires those libraries for core functionality and will throw exceptions later if they
-                // are not present. Throwing on open with a meaningful message helps identify the issue.
-                if (_cultureCheckState == CultureCheckState.Unknown)
-                {
-                    // check if invariant state has been set by appcontext switch directly 
-                    if (AppContext.TryGetSwitch("System.Globalization.Invariant", out bool isEnabled) && isEnabled)
-                    {
-                        _cultureCheckState = CultureCheckState.Invariant;
-                    }
-                    else
-                    {
-                        // check if invariant state has been set through environment variables
-                        string envValue = Environment.GetEnvironmentVariable("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT");
-                        if (string.Equals(envValue, bool.TrueString, StringComparison.OrdinalIgnoreCase) || string.Equals(envValue, "1", StringComparison.OrdinalIgnoreCase))
-                        {
-                            _cultureCheckState = CultureCheckState.Invariant;
-                        }
-                        else
-                        {
-                            // if it hasn't been manually set it could still apply if the os doesn't have
-                            //  icu libs installed or is a native binary with icu support trimmed away
-                            // netcore 3.1 to net5 do not throw in attempting to create en-us in inariant mode
-                            // net6 and greater will throw so catch and infer invariant mode from the exception
-                            try
-                            {
-                                _cultureCheckState = CultureInfo.GetCultureInfo("en-US").EnglishName.Contains("Invariant") ? CultureCheckState.Invariant : CultureCheckState.Standard;
-                            }
-                            catch (CultureNotFoundException)
-                            {
-                                _cultureCheckState = CultureCheckState.Invariant;
-                            }
-                        }
-                    }
-                }
-                if (_cultureCheckState == CultureCheckState.Invariant)
-                {
-                    throw SQL.GlobalizationInvariantModeNotSupported();
-                }
+                throw SQL.GlobalizationInvariantModeNotSupported();
             }
 
             _applyTransientFaultHandling = (!overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);

@@ -2521,7 +2521,7 @@
     <value>Il comando richiede una connessione asincrona. Impostare "Asynchronous Processing=true" nella stringa di connessione.</value>
   </data>
   <data name="SQL_ConnectTimeout" xml:space="preserve">
-    <value>The connection attempt timed out.</value>
+    <value>Timeout del tentativo di connessione.</value>
   </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>Timeout scaduto. La connessione è stata interrotta.</value>
@@ -4666,18 +4666,18 @@
     <value>L'elenco SqlBatchCommand non è stato inizializzato.</value>
   </data>
   <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to get vector data from column '{0}'. Vectors are only supported for columns of type vector.</value>
+    <value>Tentativo non valido di ottenere dati vettoriali dalla colonna '{0}'. I vettori sono supportati solo per le colonne di tipo vettore.</value>
   </data>
   <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
-    <value>Unsupported Vector type '{0}'.</value>
+    <value>Tipo di vettore '{0}' non supportato.</value>
   </data>
   <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
-    <value>'null' value not supported for output parameter '{0}' of SqlDbtype Vector.</value>
+    <value>Il valore 'null' non è supportato per il parametro di output '{0}' di SqlDbtype Vector.</value>
   </data>
   <data name="ADP_InvalidVectorHeader" xml:space="preserve">
-    <value>Invalid vector header received.</value>
+    <value>Intestazione del vettore non valida ricevuta.</value>
   </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
-    <value>{0} Invalid JSON string for vector.</value>
+    <value>{0} Stringa JSON non valida per il vettore.</value>
   </data>
 </root>

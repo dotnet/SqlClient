@@ -2521,7 +2521,7 @@
     <value>Для этой команды необходимо асинхронное подключение. Укажите в строке подключения «Asynchronous Processing=true».</value>
   </data>
   <data name="SQL_ConnectTimeout" xml:space="preserve">
-    <value>The connection attempt timed out.</value>
+    <value>Истекло время ожидания для попытки подключения.</value>
   </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>Истекло время ожидания. Подключение разорвано.</value>
@@ -4666,18 +4666,18 @@
     <value>Список SqlBatchCommand не инициализирован.</value>
   </data>
   <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to get vector data from column '{0}'. Vectors are only supported for columns of type vector.</value>
+    <value>Недопустимая попытка получить векторные данные из столбца "{0}". Векторы поддерживаются только для столбцов векторного типа.</value>
   </data>
   <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
-    <value>Unsupported Vector type '{0}'.</value>
+    <value>Неподдерживаемый тип вектора "{0}".</value>
   </data>
   <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
-    <value>'null' value not supported for output parameter '{0}' of SqlDbtype Vector.</value>
+    <value>Значение null не поддерживается для выходного параметра "{0}" вектора SqlDbType.</value>
   </data>
   <data name="ADP_InvalidVectorHeader" xml:space="preserve">
-    <value>Invalid vector header received.</value>
+    <value>Получен недопустимый заголовок вектора.</value>
   </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
-    <value>{0} Invalid JSON string for vector.</value>
+    <value>{0} Недопустимая строка JSON для вектора.</value>
   </data>
 </root>
