@@ -5,9 +5,7 @@
 using System;
 using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.EndPoint;
-using Microsoft.SqlServer.TDS.EnvChange;
 using Microsoft.SqlServer.TDS.Error;
-using Microsoft.SqlServer.TDS.FeatureExtAck;
 using Microsoft.SqlServer.TDS.Login7;
 
 namespace Microsoft.SqlServer.TDS.Servers
@@ -19,7 +17,7 @@ namespace Microsoft.SqlServer.TDS.Servers
     {
         private static int RequestCounter = 0;
 
-        public void SetErrorBehavior(bool isEnabledTransientFault, uint errorNumber, string message)
+        public void SetErrorBehavior(bool isEnabledTransientFault, uint errorNumber, string message = null)
         {
             Arguments.IsEnabledTransientError = isEnabledTransientFault;
             Arguments.Number = errorNumber;
@@ -49,52 +47,45 @@ namespace Microsoft.SqlServer.TDS.Servers
             return "Unknown server error occurred";
         }
 
-        /// <summary>
-        /// Handler for login request
-        /// </summary>
+            /// <summary>
+            /// Handler for login request
+            /// </summary>
         public override TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
         {
             // Inflate login7 request from the message
             TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
 
-            // Check if arguments are of the transient fault TDS server
-            if (Arguments is TransientFaultTdsServerArguments)
+            // Check if we're still going to raise transient error
+            if (Arguments.IsEnabledTransientError && RequestCounter < 1) // Fail first time, then connect
             {
-                // Cast to transient fault TDS server arguments
-                TransientFaultTdsServerArguments ServerArguments = Arguments as TransientFaultTdsServerArguments;
+                uint errorNumber = Arguments.Number;
+                string errorMessage = Arguments.Message ?? GetErrorMessage(errorNumber);
 
-                // Check if we're still going to raise transient error
-                if (ServerArguments.IsEnabledTransientError && RequestCounter < 1) // Fail first time, then connect
-                {
-                    uint errorNumber = ServerArguments.Number;
-                    string errorMessage = ServerArguments.Message;
+                // Log request to which we're about to send a failure
+                TDSUtilities.Log(Arguments.Log, "Request", loginRequest);
 
-                    // Log request to which we're about to send a failure
-                    TDSUtilities.Log(Arguments.Log, "Request", loginRequest);
+                // Prepare ERROR token with the denial details
+                TDSErrorToken errorToken = new TDSErrorToken(errorNumber, 1, 20, errorMessage);
 
-                    // Prepare ERROR token with the denial details
-                    TDSErrorToken errorToken = new TDSErrorToken(errorNumber, 1, 20, errorMessage);
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", errorToken);
 
-                    // Log response
-                    TDSUtilities.Log(Arguments.Log, "Response", errorToken);
+                // Serialize the error token into the response packet
+                TDSMessage responseMessage = new TDSMessage(TDSMessageType.Response, errorToken);
 
-                    // Serialize the error token into the response packet
-                    TDSMessage responseMessage = new TDSMessage(TDSMessageType.Response, errorToken);
+                // Create DONE token
+                TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
 
-                    // Create DONE token
-                    TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", doneToken);
 
-                    // Log response
-                    TDSUtilities.Log(Arguments.Log, "Response", doneToken);
+                // Serialize DONE token into the response packet
+                responseMessage.Add(doneToken);
 
-                    // Serialize DONE token into the response packet
-                    responseMessage.Add(doneToken);
+                RequestCounter++;
 
-                    RequestCounter++;
-
-                    // Put a single message into the collection and return it
-                    return new TDSMessageCollection(responseMessage);
-                }
+                // Put a single message into the collection and return it
+                return new TDSMessageCollection(responseMessage);
             }
 
             // Return login response from the base class

@@ -20,7 +20,11 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             using TdsServer server = new TdsServer();
             server.Start();
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder() { DataSource = $"localhost,{server.EndPoint.Port}", ApplicationIntent = ApplicationIntent.ReadOnly };
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder() {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                ApplicationIntent = ApplicationIntent.ReadOnly,
+                Encrypt = SqlConnectionEncryptOption.Optional
+            };
             using SqlConnection connection = new SqlConnection(builder.ConnectionString);
             connection.Open();
         }
@@ -30,7 +34,11 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             using TdsServer server = new TdsServer();
             server.Start();
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder() { DataSource = $"localhost,{server.EndPoint.Port}", ApplicationIntent = ApplicationIntent.ReadOnly };
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder() {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                ApplicationIntent = ApplicationIntent.ReadOnly,
+                Encrypt = SqlConnectionEncryptOption.Optional
+             };
             using SqlConnection connection = new SqlConnection(builder.ConnectionString);
             await connection.OpenAsync();
         }
@@ -161,15 +169,18 @@ namespace Microsoft.Data.SqlClient.Tests
             using RoutingTdsServer router = new RoutingTdsServer(
                 new RoutingTdsServerArguments()
                 {
-                    RoutingTCPHost = server.EndPoint.Address.ToString(),
+                    //RoutingTCPHost = server.EndPoint.Address.ToString() == IPAddress.Any.ToString() ? IPAddress.Loopback.ToString() : server.EndPoint.Address.ToString(),
+                    RoutingTCPHost = "localhost",
                     RoutingTCPPort = (ushort)server.EndPoint.Port,
                 });
             router.Start();
+
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder() {
-                DataSource = $"localhost,{server.EndPoint.Port}",
+                DataSource = "localhost," + router.EndPoint.Port,
                 ApplicationIntent = ApplicationIntent.ReadOnly,
                 ConnectTimeout = 30,
-                ConnectRetryInterval = 1
+                ConnectRetryInterval = 1,
+                Encrypt = false,
             };
             using SqlConnection connection = new(builder.ConnectionString);
             try
@@ -187,6 +198,118 @@ namespace Microsoft.Data.SqlClient.Tests
 
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
             Assert.Equal(2, router.PreLoginCount);
+            Assert.Equal(2, server.PreLoginCount);
+        }
+
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
+        [InlineData(40613)]
+        [InlineData(42108)]
+        [InlineData(42109)]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public void TransientFaultAtRoutedLocationWithFailover(uint errorCode)
+        {
+            // Arrange
+            using TdsServer failoverServer = new TdsServer(
+                new TdsServerArguments
+                {
+                    // Doesn't need to point to a real endpoint, just needs a value specified
+                    FailoverPartner = "localhost:1234",
+                });
+            failoverServer.Start();
+
+            using TransientFaultTdsServer server = new TransientFaultTdsServer(
+                new TransientFaultTdsServerArguments()
+                {
+                    IsEnabledTransientError = true,
+                    Number = errorCode,
+                    FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}",
+                });
+            server.Start();
+
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                    RequireReadOnly = false,
+                });
+            router.Start();
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            {
+                DataSource = $"localhost,{router.EndPoint.Port}",
+                InitialCatalog = "master",
+                ConnectTimeout = 30,
+                ConnectRetryInterval = 1,
+                Encrypt = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            try
+            {
+                // Act
+                connection.Open();
+            }
+            catch (Exception e)
+            {
+                Assert.Fail(e.Message);
+            }
+
+            // Assert
+            Assert.Equal(ConnectionState.Open, connection.State);
+
+            // Failures should prompt the client to return to the original server, resulting in a login count of 2
+            Assert.Equal(2, router.PreLoginCount);
+            Assert.Equal(2, server.PreLoginCount);
+        }
+
+        [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public void TransientTimeoutAtRoutedLocationTest()
+        {
+            // Arrange
+            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
+                new TransientTimeoutTdsServerArguments()
+                {
+                    IsEnabledTransientTimeout = true,
+                    SleepDuration = TimeSpan.FromMilliseconds(10000),
+                });
+
+            server.Start();
+
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    //RoutingTCPHost = server.EndPoint.Address.ToString() == IPAddress.Any.ToString() ? IPAddress.Loopback.ToString() : server.EndPoint.Address.ToString(),
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                });
+            router.Start();
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            {
+                DataSource = "localhost," + router.EndPoint.Port,
+                ApplicationIntent = ApplicationIntent.ReadOnly,
+                ConnectTimeout = 30,
+                ConnectRetryInterval = 1,
+                ConnectRetryCount = 0,
+                Encrypt = false,
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            try
+            {
+                // Act
+                connection.Open();
+            }
+            catch (Exception e)
+            {
+                Assert.Fail(e.Message);
+            }
+
+            // Assert
+            Assert.Equal(ConnectionState.Open, connection.State);
+
+            // Failures should prompt the client to return to the original server, resulting in a login count of 2
+            Assert.Equal(1, router.PreLoginCount);
             Assert.Equal(2, server.PreLoginCount);
         }
     }

@@ -27,6 +27,8 @@
     <Compile Include="TdsServer.cs" />
     <Compile Include="TransientFaultTdsServer.cs" />
     <Compile Include="TransientFaultTdsServerArguments.cs" />
+    <Compile Include="TransientTimeoutTdsServer.cs" />
+    <Compile Include="TransientTimeoutTdsServerArguments.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj">

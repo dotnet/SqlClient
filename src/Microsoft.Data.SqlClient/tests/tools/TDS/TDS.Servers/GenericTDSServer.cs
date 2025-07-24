@@ -123,8 +123,6 @@ namespace Microsoft.SqlServer.TDS.Servers
         {
             _endpoint = new TDSServerEndPoint(this) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
             _endpoint.EndpointName = methodName;
-
-            // The server EventLog should be enabled as it logs the exceptions.
             _endpoint.EventLog = Arguments.Log;
             _endpoint.Start();
         }
@@ -580,17 +578,6 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Serialize the login token into the response packet
             responseMessage.Add(envChange);
 
-
-            if (!String.IsNullOrEmpty(Arguments.FailoverPartner))
-            {
-                envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.RealTimeLogShipping, Arguments.FailoverPartner);
-
-                // Log response
-                TDSUtilities.Log(Arguments.Log, "Response", envChange);
-
-                responseMessage.Add(envChange);
-            }
-
             // Create information token on the change
             infoToken = new TDSInfoToken(5703, 1, 0, string.Format("Changed language setting to {0}", envChange.NewValue), Arguments.ServerName);
 
@@ -684,6 +671,16 @@ namespace Microsoft.SqlServer.TDS.Servers
                     // Update the existing token
                     featureExtAckToken.Options.Add(vectorSupportOption);
                 }
+            }
+
+            if (!String.IsNullOrEmpty(Arguments.FailoverPartner))
+            {
+                envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.RealTimeLogShipping, Arguments.FailoverPartner);
+
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", envChange);
+
+                responseMessage.Add(envChange);
             }
 
             // Create DONE token
