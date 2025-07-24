@@ -10,7 +10,7 @@
   <PropertyGroup>
     <!--
       We use the ExtensionsPackageVersion from Versions.props.  It may be
-      specified on the command-line, or a default vlaue is used.
+      specified on the command-line, or a default value is used.
     -->
     <PackageVersion>$(ExtensionsPackageVersion)</PackageVersion>
     <!--
@@ -45,9 +45,12 @@
     <RootNamespace>Microsoft.Data.SqlClient.Extensions</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Our API is CLS Compliant. -->
     <AssemblyAttribute Include="System.CLSCompliantAttribute">
       <_Parameter1>true</_Parameter1>
     </AssemblyAttribute>
+
+    <!-- Our unit tests have access to our internal types. -->
     <InternalsVisibleTo Include="Microsoft.Data.SqlClient.Extensions.Test" />
   </ItemGroup>
 

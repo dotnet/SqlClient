@@ -89,7 +89,7 @@ variables:
 stages:
 
   # Build the Extensions package, and publish it to the pipeline artifacts
-  # under the default name 'Extensions.Artifact'.
+  # under the name specified by the 'extensionsArtifactName' variable.
   - template: stages/ci-build-extensions-package-stage.yml@self
     parameters:
       buildConfiguration: Release

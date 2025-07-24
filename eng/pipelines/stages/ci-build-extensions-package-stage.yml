@@ -207,7 +207,7 @@ stages:
       - task: UseDotNet@2
         displayName: Install .NET 8.0 Runtime
         inputs:
-          packageType: sdk
+          packageType: runtime
           version: 8.x
 
       - task: DotNetCoreCLI@2
@@ -264,7 +264,7 @@ stages:
       - task: UseDotNet@2
         displayName: Install .NET 8.0 Runtime
         inputs:
-          packageType: sdk
+          packageType: runtime
           version: 8.x
 
       - task: DotNetCoreCLI@2
