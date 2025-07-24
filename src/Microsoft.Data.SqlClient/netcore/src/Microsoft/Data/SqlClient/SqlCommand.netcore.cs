@@ -617,19 +617,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteNonQuery[@name="IAsyncResult"]/*'/>
-        public int EndExecuteNonQuery(IAsyncResult asyncResult)
-        {
-            try
-            {
-                return EndExecuteNonQueryInternal(asyncResult);
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteNonQuery | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-            }
-        }
-
         private void ThrowIfReconnectionHasBeenCanceled()
         {
             if (_stateObj == null)
