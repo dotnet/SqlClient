@@ -910,8 +910,8 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         {
             // The test data is taken from a production sample which exhibited multiple problems around async string reads.
             //  The lengths of the field names and data values are important to reproducing the problems. The values have been
-            //  changed to randomized values. Changes to the column names or value lengths can the problems to move or fail
-            //  to reproduce entirely because of packet and data alignment. The data is not randomly generated to help with
+            //  changed to randomized values. Changes to the column names or value lengths can cause the problems to move or
+            //  fail to reproduce entirely because of packet and data alignment. The data is not randomly generated to help with
             //  debugging failures in the test.
             _Row[] rows = new _Row[]
             {
