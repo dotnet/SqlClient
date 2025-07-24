@@ -604,50 +604,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReader/*'/>
-        public XmlReader ExecuteXmlReader()
-        {
-            // Reset _pendingCancel upon entry into any Execute - used to synchronize state
-            // between entry into Execute* API and the thread obtaining the stateObject.
-            _pendingCancel = false;
-
-            using (DiagnosticScope diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction))
-            using (TryEventScope.Create("SqlCommand.ExecuteXmlReader | API | Object Id {0}", ObjectID))
-            {
-                SqlStatistics statistics = null;
-                bool success = false;
-                int? sqlExceptionNumber = null;
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteXmlReader | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    WriteBeginExecuteEvent();
-
-                    // use the reader to consume metadata
-                    SqlDataReader ds = IsProviderRetriable ?
-                        RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true) :
-                        RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true);
-                    success = true;
-                    return CompleteXmlReader(ds);
-                }
-                catch (Exception ex)
-                {
-                    diagnosticScope.SetException(ex);
-                    if (ex is SqlException sqlException)
-                    {
-                        sqlExceptionNumber = sqlException.Number;
-                    }
-                    throw;
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                    WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
-                }
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="default"]/*'/>
         public IAsyncResult BeginExecuteXmlReader()
         {
