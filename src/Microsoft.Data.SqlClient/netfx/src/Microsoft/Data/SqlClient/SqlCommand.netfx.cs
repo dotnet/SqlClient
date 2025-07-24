@@ -836,39 +836,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private XmlReader CompleteXmlReader(SqlDataReader ds, bool isAsync = false)
-        {
-            XmlReader xr = null;
-
-            SmiExtendedMetaData[] md = ds.GetInternalSmiMetaData();
-            bool isXmlCapable = (md != null && md.Length == 1 && (md[0].SqlDbType == SqlDbType.NText
-                                                                  || md[0].SqlDbType == SqlDbType.NVarChar
-                                                                  || md[0].SqlDbType == SqlDbType.Xml));
-
-            if (isXmlCapable)
-            {
-                try
-                {
-                    SqlStream sqlBuf = new SqlStream(ds, true /*addByteOrderMark*/, (md[0].SqlDbType == SqlDbType.Xml) ? false : true /*process all rows*/);
-                    xr = sqlBuf.ToXmlReader(isAsync);
-                }
-                catch (Exception e)
-                {
-                    if (ADP.IsCatchableExceptionType(e))
-                    {
-                        ds.Close();
-                    }
-                    throw;
-                }
-            }
-            if (xr == null)
-            {
-                ds.Close();
-                throw SQL.NonXmlResult();
-            }
-            return xr;
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="default"]/*'/>
         [HostProtection(ExternalThreading = true)]
         public IAsyncResult BeginExecuteReader() =>
