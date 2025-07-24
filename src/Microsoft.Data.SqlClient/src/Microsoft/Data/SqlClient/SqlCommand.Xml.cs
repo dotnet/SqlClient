@@ -127,6 +127,12 @@ namespace Microsoft.Data.SqlClient
             return xmlReader;
         }
 
+        private Task<XmlReader> InternalExecuteXmlReaderWithRetryAsync(CancellationToken cancellationToken) =>
+            RetryLogicProvider.ExecuteAsync(
+                sender: this,
+                () => InternalExecuteXmlReaderAsync(cancellationToken),
+                cancellationToken);
+
         #endregion
     }
 }
