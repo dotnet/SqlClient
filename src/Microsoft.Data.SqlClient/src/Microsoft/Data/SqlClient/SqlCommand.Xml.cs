@@ -4,6 +4,8 @@
 
 using System;
 using System.Data;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Server;
@@ -72,6 +74,16 @@ namespace Microsoft.Data.SqlClient
                 WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
             }
         }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="default"]/*'/>
+        public Task<XmlReader> ExecuteXmlReaderAsync() =>
+            ExecuteXmlReaderAsync(CancellationToken.None);
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
+        public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken) =>
+            IsProviderRetriable
+                ? InternalExecuteXmlReaderWithRetryAsync(cancellationToken)
+                : InternalExecuteXmlReaderAsync(cancellationToken);
         
         #endregion
         
