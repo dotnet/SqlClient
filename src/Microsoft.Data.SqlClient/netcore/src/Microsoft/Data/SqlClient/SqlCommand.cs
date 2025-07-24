@@ -1233,7 +1233,7 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
 
-            using (var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction))
+            using (DiagnosticScope diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction))
             using (TryEventScope.Create("SqlCommand.ExecuteNonQuery | API | Object Id {0}", ObjectID))
             {
                 SqlStatistics statistics = null;
