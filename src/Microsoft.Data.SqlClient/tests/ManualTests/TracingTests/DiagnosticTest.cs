@@ -679,6 +679,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     var connectionString = new SqlConnectionStringBuilder
                     {
                         DataSource = $"localhost,{server.EndPoint.Port}",
+                        Encrypt = SqlConnectionEncryptOption.Optional
                     }.ConnectionString;
 
                     sqlOperation(connectionString);
@@ -875,6 +876,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     var connectionString = new SqlConnectionStringBuilder
                     {
                         DataSource = $"localhost,{server.EndPoint.Port}",
+                        Encrypt = SqlConnectionEncryptOption.Optional
                     }.ConnectionString;
                     await sqlOperation(connectionString);
 

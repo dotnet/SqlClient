@@ -30,6 +30,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 new SqlConnectionStringBuilder
                 {
                     DataSource = $"localhost,{server.EndPoint.Port}",
+                    Encrypt = SqlConnectionEncryptOption.Optional
                 }.ConnectionString);
 
             conn.Open();
