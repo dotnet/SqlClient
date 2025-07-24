@@ -6,6 +6,7 @@ using System;
 using System.Data;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -50,7 +51,7 @@ namespace Microsoft.Data.SqlClient
                     : RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true);
                 success = true;
 
-                return CompleteXmlReader(reader);
+                return CompleteXmlReader(reader, isAsync: false);
             }
             catch (Exception ex)
             {
@@ -75,7 +76,45 @@ namespace Microsoft.Data.SqlClient
         #endregion
         
         #region Private Methods
-        
+
+        private static XmlReader CompleteXmlReader(SqlDataReader dataReader, bool isAsync)
+        {
+            XmlReader xmlReader = null;
+
+            SmiExtendedMetaData[] metaData = dataReader.GetInternalSmiMetaData();
+            bool isXmlCapable = metaData?.Length == 1 &&
+                                metaData[0].SqlDbType is SqlDbType.NVarChar or SqlDbType.NText or SqlDbType.Xml;
+
+            if (isXmlCapable)
+            {
+                try
+                {
+                    SqlStream sqlStream = new SqlStream(
+                        dataReader,
+                        addByteOrderMark: true,
+                        processAllRows: metaData[0].SqlDbType is not SqlDbType.Xml);
+                    xmlReader = sqlStream.ToXmlReader(isAsync);
+                }
+                catch (Exception e)
+                {
+                    if (ADP.IsCatchableExceptionType(e))
+                    {
+                        dataReader.Close();
+                    }
+
+                    throw;
+                }
+            }
+
+            if (xmlReader is null)
+            {
+                dataReader.Close();
+                throw SQL.NonXmlResult();
+            }
+
+            return xmlReader;
+        }
+
         #endregion
     }
 }
