@@ -319,6 +319,37 @@ namespace Microsoft.Data.SqlClient
                 throw;
             }
         }
+
+        private void CleanupAfterExecuteNonQueryAsync(Task<int> task, TaskCompletionSource<int> source, Guid operationId)
+        {
+            if (task.IsFaulted)
+            {
+                Exception e = task.Exception?.InnerException;
+                
+                #if NET
+                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                #endif
+                
+                source.SetException(e);
+            }
+            else if (task.IsCanceled)
+            {
+                #if NET
+                s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                #endif
+                
+                source.SetCanceled();
+            }
+            else
+            {
+                // Task successful
+                #if NET
+                s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                #endif
+                
+                source.SetResult(task.Result);
+            }
+        }
         
         // @TODO: This can be inlined into InternalExecuteNonQueryAsync before restructuring into async pathway
         private int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
