@@ -2521,7 +2521,7 @@
     <value>Tento příkaz vyžaduje asynchronní připojení. Nastavte v připojovacím řetězci hodnotu Asynchronous Processing=true.</value>
   </data>
   <data name="SQL_ConnectTimeout" xml:space="preserve">
-    <value>The connection attempt timed out.</value>
+    <value>Časový limit pokusu o připojení vypršel.</value>
   </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>Časový limit vypršel.  V důsledku toho bylo připojení přerušeno.</value>
@@ -4666,18 +4666,18 @@
     <value>Seznam SqlBatchCommand nebyl inicializován.</value>
   </data>
   <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to get vector data from column '{0}'. Vectors are only supported for columns of type vector.</value>
+    <value>Pokus o načtení vektorových dat ze sloupce {0} byl neplatný. Vektory jsou podporovány pouze pro sloupce typu vektor.</value>
   </data>
   <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
-    <value>Unsupported Vector type '{0}'.</value>
+    <value>Nepodporovaný typ vektoru „{0}“.</value>
   </data>
   <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
-    <value>'null' value not supported for output parameter '{0}' of SqlDbtype Vector.</value>
+    <value>Hodnota null není podporována pro výstupní parametr „{0}“ vektoru SqlDbtype.</value>
   </data>
   <data name="ADP_InvalidVectorHeader" xml:space="preserve">
-    <value>Invalid vector header received.</value>
+    <value>Byla přijata neplatná hlavička vektoru.</value>
   </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
-    <value>{0} Invalid JSON string for vector.</value>
+    <value>{0}: Neplatný řetězec JSON pro vektor.</value>
   </data>
 </root>
