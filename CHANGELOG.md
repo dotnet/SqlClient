@@ -21,7 +21,7 @@ No new features were added.
   ([#3475](https://github.com/dotnet/SqlClient/pull/3475))
 - Fixed primary/secondary server SPN handling during SSPI negotiation.
   ([#3478](https://github.com/dotnet/SqlClient/pull/3478))
-- Fixed AzureKeyVaultProvider package key caching to seralize Azure key fetch
+- Fixed AzureKeyVaultProvider package key caching to serialize Azure key fetch
   operations.
   ([#3477](https://github.com/dotnet/SqlClient/pull/3477))
 - Fixed a rare error related to multi-packet async text reads.
