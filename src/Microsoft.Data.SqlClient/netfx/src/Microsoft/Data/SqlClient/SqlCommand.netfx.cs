@@ -1461,26 +1461,6 @@ namespace Microsoft.Data.SqlClient
             // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
-        private void CleanupAfterExecuteNonQueryAsync(Task<int> task, TaskCompletionSource<int> source, Guid operationId)
-        {
-            if (task.IsFaulted)
-            {
-                Exception e = task.Exception.InnerException;
-                source.SetException(e);
-            }
-            else
-            {
-                if (task.IsCanceled)
-                {
-                    source.SetCanceled();
-                }
-                else
-                {
-                    source.SetResult(task.Result);
-                }
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReaderAsync/*'/>
         protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
