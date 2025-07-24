@@ -54,7 +54,7 @@ No new features were added.
 *What Changed:*
 
 - Several changes were made to the SqlVector API published in the
-  [6.1.0-preview2](6.1.0-preview2.md) release
+  [6.1.0-preview2](release-notes/6.1/6.1.0-preview2.md) release
   ([#3472](https://github.com/dotnet/SqlClient/pull/3472)):
   - The SqlVector class was changed to a readonly struct.
   - The null value constructor was changed to a static `CreateNull()` method.
@@ -71,7 +71,8 @@ No new features were added.
 
 ## [Preview Release 6.1.0-preview2.25178.5] - 2025-06-27
 
-This update brings the following changes since the [6.1.0-preview1](release-notes/6.1/6.1.0-preview1.md) release:
+This update brings the following changes since the
+[6.1.0-preview1](release-notes/6.1/6.1.0-preview1.md) release:
 
 ### Added
 
