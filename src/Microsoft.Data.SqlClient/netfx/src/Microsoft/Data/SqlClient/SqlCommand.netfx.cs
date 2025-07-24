@@ -1492,12 +1492,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private Task<XmlReader> InternalExecuteXmlReaderWithRetryAsync(CancellationToken cancellationToken) =>
-            RetryLogicProvider.ExecuteAsync(
-                sender: this,
-                () => InternalExecuteXmlReaderAsync(cancellationToken),
-                cancellationToken);
-
         private Task<XmlReader> InternalExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteXmlReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
