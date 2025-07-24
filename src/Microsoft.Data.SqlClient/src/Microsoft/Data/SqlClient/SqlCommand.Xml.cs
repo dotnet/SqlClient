@@ -127,6 +127,101 @@ namespace Microsoft.Data.SqlClient
             return xmlReader;
         }
 
+        private Task<XmlReader> InternalExecuteXmlReaderAsync(CancellationToken cancellationToken)
+        {
+            #if NETFRAMEWORK
+            SqlConnection.ExecutePermission.Demand();
+            #endif
+            
+            SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                "SqlCommand.InternalExecuteXmlReaderAsync | API | Correlation | " +
+                $"Object Id {ObjectID}, " +
+                $"Activity Id {ActivityCorrelator.Current}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"Command Text '{CommandText}'");
+            
+            #if NET
+            Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
+            #else
+            Guid operationId = Guid.Empty;
+            #endif
+            
+            // Connection can be used as state in RegisterForConnectionCloseNotification continuation
+            // to avoid an allocation so use it as the state value if possible but it can be changed if
+            // you need it for a more important piece of data that justifies the tuple allocation later
+            TaskCompletionSource<XmlReader> source = new TaskCompletionSource<XmlReader>(_activeConnection);
+            
+            CancellationTokenRegistration registration = new CancellationTokenRegistration();
+            if (cancellationToken.CanBeCanceled)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    source.SetCanceled();
+                    return source.Task;
+                }
+
+                registration = cancellationToken.Register(callback: s_cancelIgnoreFailure, state: this);
+            }
+
+            // @TODO: This can be cleaned up to lines if InnerConnection is always SqlInternalConnection 
+            ExecuteXmlReaderAsyncCallContext context = null;
+            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            {
+                context = Interlocked.Exchange(
+                    ref sqlInternalConnection.CachedCommandExecuteXmlReaderAsyncContext,
+                    null);
+            }
+
+            context ??= new ExecuteXmlReaderAsyncCallContext();
+            context.Set(this, source, registration, operationId);
+
+            Task<XmlReader> returnedTask = source.Task;
+            try
+            {
+                returnedTask = RegisterForConnectionCloseNotification(returnedTask);
+
+                // @TODO: Replace with native async implementation, make Begin/End implementation rely on async implementation
+                Task<XmlReader>.Factory.FromAsync(
+                    beginMethod: static (callback, stateObject) =>
+                    {
+                        // @TODO: With C# 10/net6 add [StackTraceHidden]
+                        return ((ExecuteXmlReaderAsyncCallContext)stateObject).Command.BeginExecuteXmlReaderAsync(
+                            callback,
+                            stateObject);
+                    },
+                    endMethod: static asyncResult =>
+                    {
+                        // @TODO: With C# 10/net6 add [StackTraceHidden]
+                        return ((ExecuteXmlReaderAsyncCallContext)asyncResult.AsyncState).Command.EndExecuteXmlReaderAsync(
+                            asyncResult);
+                    },
+                    state: context
+                ).ContinueWith(static task =>
+                {
+                    // @TODO: With C#/net6 add [StackTraceHidden]
+                    ExecuteXmlReaderAsyncCallContext context = (ExecuteXmlReaderAsyncCallContext)task.AsyncState;
+                    SqlCommand command = context.Command;
+                    Guid operationId = context.OperationID;
+                    TaskCompletionSource<XmlReader> source = context.TaskCompletionSource;
+
+                    context.Dispose();
+                        
+                    command.CleanupAfterExecuteXmlReaderAsync(task, source, operationId);
+                },
+                scheduler: TaskScheduler.Default);
+            }
+            catch (Exception e) 
+            {
+                #if NET
+                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                #endif
+                
+                source.SetException(e);
+            }
+
+            return returnedTask;
+        }
+        
         private Task<XmlReader> InternalExecuteXmlReaderWithRetryAsync(CancellationToken cancellationToken) =>
             RetryLogicProvider.ExecuteAsync(
                 sender: this,
