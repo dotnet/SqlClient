@@ -29,7 +29,10 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             using TdsServer server = new TdsServer(new TdsServerArguments() { });
             server.Start();
-            var connStr = new SqlConnectionStringBuilder() { DataSource = $"localhost,{server.EndPoint.Port}" }.ConnectionString;
+            var connStr = new SqlConnectionStringBuilder() {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+            }.ConnectionString;
             using SqlConnection connection = new SqlConnection(connStr);
             connection.Open();
         }
@@ -40,7 +43,10 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             using TdsServer server = new TdsServer(new TdsServerArguments() { });
             server.Start();
-            var connStr = new SqlConnectionStringBuilder() { DataSource = $"localhost,{server.EndPoint.Port}" }.ConnectionString;
+            var connStr = new SqlConnectionStringBuilder() {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+            }.ConnectionString;
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connStr);
             builder.IntegratedSecurity = true;
             using SqlConnection connection = new SqlConnection(builder.ConnectionString);
@@ -57,7 +63,10 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             using TdsServer server = new TdsServer(new TdsServerArguments() {Encryption = TDSPreLoginTokenEncryptionType.None });
             server.Start();
-            var connStr = new SqlConnectionStringBuilder() { DataSource = $"localhost,{server.EndPoint.Port}" }.ConnectionString;
+            var connStr = new SqlConnectionStringBuilder() {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+            }.ConnectionString;
             SqlConnectionStringBuilder builder = new(connStr)
             {
                 IntegratedSecurity = true
@@ -212,6 +221,8 @@ namespace Microsoft.Data.SqlClient.Tests
                 DataSource = "localhost," + initialServer.EndPoint.Port,
                 IntegratedSecurity = true,
                 ConnectRetryCount = 0,
+                ConnectRetryInterval = 1,
+                ConnectTimeout = 30,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 FailoverPartner = failoverDataSource,
                 InitialCatalog = "test"
@@ -221,7 +232,7 @@ namespace Microsoft.Data.SqlClient.Tests
             connection.Open();
 
             // Act
-            initialServer.SetErrorBehavior(true, errorCode, "Transient fault occurred.");
+            initialServer.SetErrorBehavior(true, errorCode);
             using SqlConnection failoverConnection = new(builder.ConnectionString);
             // Should fail over to the failover server
             failoverConnection.Open();
@@ -400,9 +411,10 @@ namespace Microsoft.Data.SqlClient.Tests
             //TODO: do we even need a server for this test?
             using TdsServer server = new TdsServer();
             server.Start();
-            var connStr = new SqlConnectionStringBuilder() { 
-                DataSource = $"localhost,{server.EndPoint.Port}", 
-                ConnectTimeout = timeout 
+            var connStr = new SqlConnectionStringBuilder() {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                ConnectTimeout = timeout,
+                Encrypt = SqlConnectionEncryptOption.Optional
             }.ConnectionString;
             using SqlConnection connection = new SqlConnection(connStr);
 
@@ -448,7 +460,8 @@ namespace Microsoft.Data.SqlClient.Tests
             var connStr = new SqlConnectionStringBuilder()
             {
                 DataSource = $"localhost,{server.EndPoint.Port}",
-                ConnectTimeout = timeout
+                ConnectTimeout = timeout,
+                Encrypt = SqlConnectionEncryptOption.Optional
             }.ConnectionString;
             using SqlConnection connection = new SqlConnection(connStr);
 
@@ -511,6 +524,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 var connStr = new SqlConnectionStringBuilder()
                 {
                     DataSource = $"localhost,{server.EndPoint.Port}",
+                    Encrypt = SqlConnectionEncryptOption.Optional
                 }.ConnectionString;
                 using SqlConnection connection = new SqlConnection(connStr);
                 connection.Open();
@@ -624,7 +638,8 @@ namespace Microsoft.Data.SqlClient.Tests
             server.Start();
             var connStr = new SqlConnectionStringBuilder()
             {
-                DataSource = $"localhost,{server.EndPoint.Port}"
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
             }.ConnectionString;
             using SqlConnection conn = new SqlConnection(connStr);
 
@@ -651,7 +666,8 @@ namespace Microsoft.Data.SqlClient.Tests
             server.Start();
             var connStr = new SqlConnectionStringBuilder()
             {
-                DataSource = $"localhost,{server.EndPoint.Port}"
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
             }.ConnectionString;
             using SqlConnection conn = new SqlConnection(connStr);
 
@@ -727,6 +743,7 @@ namespace Microsoft.Data.SqlClient.Tests
             var connStr = new SqlConnectionStringBuilder
             {
                 DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
             }.ConnectionString;
             using var connection = new SqlConnection(connStr);
             if (expectedConnectionResult)
