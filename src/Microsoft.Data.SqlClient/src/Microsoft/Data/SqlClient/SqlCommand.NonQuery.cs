@@ -355,6 +355,47 @@ namespace Microsoft.Data.SqlClient
             
             return EndExecuteNonQueryInternal(asyncResult);
         }
+
+        private int EndExecuteNonQueryInternal(IAsyncResult asyncResult)
+        {
+            SqlStatistics statistics = null;
+            int? sqlExceptionNumber = null;
+            bool success = false;
+
+            try
+            {
+                statistics = SqlStatistics.StartTimer(Statistics);
+
+                int result = (int)InternalEndExecuteNonQuery(
+                    asyncResult,
+                    isInternal: false,
+                    endMethod: nameof(EndExecuteNonQuery));
+                success = true;
+
+                return result;
+            }
+            catch (Exception e)
+            {
+                if (e is SqlException sqlException)
+                {
+                    sqlExceptionNumber = sqlException.Number;
+                }
+
+                CachedAsyncState?.ResetAsyncState();
+
+                if (ADP.IsCatchableExceptionType(e))
+                {
+                    ReliablePutStateObject();
+                }
+
+                throw;
+            }
+            finally
+            {
+                SqlStatistics.StopTimer(statistics);
+                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: false);
+            }
+        }
         
         // @TODO: Return int?
         private object InternalEndExecuteNonQuery(

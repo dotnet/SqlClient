@@ -629,44 +629,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private int EndExecuteNonQueryInternal(IAsyncResult asyncResult)
-        {
-            SqlStatistics statistics = null;
-            int? sqlExceptionNumber = null;
-            bool success = false;
-
-            try
-            {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                int result = (int)InternalEndExecuteNonQuery(asyncResult, isInternal: false, endMethod: nameof(EndExecuteNonQuery));
-                success = true;
-                return result;
-            }
-            catch (SqlException e)
-            {
-                sqlExceptionNumber = e.Number;
-                CachedAsyncState?.ResetAsyncState();
-
-                //  SqlException is always catchable
-                ReliablePutStateObject();
-                throw;
-            }
-            catch (Exception e)
-            {
-                CachedAsyncState?.ResetAsyncState();
-                if (ADP.IsCatchableExceptionType(e))
-                {
-                    ReliablePutStateObject();
-                };
-                throw;
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: false);
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReader/*'/>
         public XmlReader ExecuteXmlReader()
         {
