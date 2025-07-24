@@ -3,9 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Net;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.EndPoint;
 using Microsoft.SqlServer.TDS.Error;
@@ -16,36 +13,24 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// <summary>
     /// TDS Server that authenticates clients according to the requested parameters
     /// </summary>
-    public class TransientFaultTDSServer : GenericTDSServer, IDisposable
+    public class TransientFaultTdsServer : GenericTdsServer<TransientFaultTdsServerArguments>, IDisposable
     {
         private static int RequestCounter = 0;
 
-        public int Port { get; set; }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        public TransientFaultTDSServer() => new TransientFaultTDSServer(new TransientFaultTDSServerArguments());
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="arguments"></param>
-        public TransientFaultTDSServer(TransientFaultTDSServerArguments arguments) :
-            base(arguments)
-        { }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="engine"></param>
-        /// <param name="args"></param>
-        public TransientFaultTDSServer(QueryEngine engine, TransientFaultTDSServerArguments args) : base(args)
+        public void SetErrorBehavior(bool isEnabledTransientFault, uint errorNumber, string message = null)
         {
-            Engine = engine;
+            Arguments.IsEnabledTransientError = isEnabledTransientFault;
+            Arguments.Number = errorNumber;
+            Arguments.Message = message;
         }
 
-        private TDSServerEndPoint _endpoint = null;
+        public TransientFaultTdsServer(TransientFaultTdsServerArguments arguments) : base(arguments)
+        {
+        }
+
+        public TransientFaultTdsServer(TransientFaultTdsServerArguments arguments, QueryEngine queryEngine) : base(arguments, queryEngine)
+        {
+        }
 
         private static string GetErrorMessage(uint errorNumber)
         {
@@ -62,92 +47,54 @@ namespace Microsoft.SqlServer.TDS.Servers
             return "Unknown server error occurred";
         }
 
-        /// <summary>
-        /// Handler for login request
-        /// </summary>
+            /// <summary>
+            /// Handler for login request
+            /// </summary>
         public override TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
         {
             // Inflate login7 request from the message
             TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
 
-            // Check if arguments are of the transient fault TDS server
-            if (Arguments is TransientFaultTDSServerArguments)
+            // Check if we're still going to raise transient error
+            if (Arguments.IsEnabledTransientError && RequestCounter < 1) // Fail first time, then connect
             {
-                // Cast to transient fault TDS server arguments
-                TransientFaultTDSServerArguments ServerArguments = Arguments as TransientFaultTDSServerArguments;
+                uint errorNumber = Arguments.Number;
+                string errorMessage = Arguments.Message ?? GetErrorMessage(errorNumber);
 
-                // Check if we're still going to raise transient error
-                if (ServerArguments.IsEnabledTransientError && RequestCounter < 1) // Fail first time, then connect
-                {
-                    uint errorNumber = ServerArguments.Number;
-                    string errorMessage = ServerArguments.Message;
+                // Log request to which we're about to send a failure
+                TDSUtilities.Log(Arguments.Log, "Request", loginRequest);
 
-                    // Log request to which we're about to send a failure
-                    TDSUtilities.Log(Arguments.Log, "Request", loginRequest);
+                // Prepare ERROR token with the denial details
+                TDSErrorToken errorToken = new TDSErrorToken(errorNumber, 1, 20, errorMessage);
 
-                    // Prepare ERROR token with the denial details
-                    TDSErrorToken errorToken = new TDSErrorToken(errorNumber, 1, 20, errorMessage);
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", errorToken);
 
-                    // Log response
-                    TDSUtilities.Log(Arguments.Log, "Response", errorToken);
+                // Serialize the error token into the response packet
+                TDSMessage responseMessage = new TDSMessage(TDSMessageType.Response, errorToken);
 
-                    // Serialize the error token into the response packet
-                    TDSMessage responseMessage = new TDSMessage(TDSMessageType.Response, errorToken);
+                // Create DONE token
+                TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
 
-                    // Create DONE token
-                    TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", doneToken);
 
-                    // Log response
-                    TDSUtilities.Log(Arguments.Log, "Response", doneToken);
+                // Serialize DONE token into the response packet
+                responseMessage.Add(doneToken);
 
-                    // Serialize DONE token into the response packet
-                    responseMessage.Add(doneToken);
+                RequestCounter++;
 
-                    RequestCounter++;
-
-                    // Put a single message into the collection and return it
-                    return new TDSMessageCollection(responseMessage);
-                }
+                // Put a single message into the collection and return it
+                return new TDSMessageCollection(responseMessage);
             }
 
             // Return login response from the base class
             return base.OnLogin7Request(session, request);
         }
 
-        public static TransientFaultTDSServer StartTestServer(bool isEnabledTransientFault, bool enableLog, uint errorNumber, [CallerMemberName] string methodName = "")
-         => StartServerWithQueryEngine(null, isEnabledTransientFault, enableLog, errorNumber, methodName);
-
-        public static TransientFaultTDSServer StartServerWithQueryEngine(QueryEngine engine, bool isEnabledTransientFault, bool enableLog, uint errorNumber, [CallerMemberName] string methodName = "")
-        {
-            TransientFaultTDSServerArguments args = new TransientFaultTDSServerArguments()
-            {
-                Log = enableLog ? Console.Out : null,
-                IsEnabledTransientError = isEnabledTransientFault,
-                Number = errorNumber,
-                Message = GetErrorMessage(errorNumber)
-            };
-
-            TransientFaultTDSServer server = engine == null ? new TransientFaultTDSServer(args) : new TransientFaultTDSServer(engine, args);
-            server._endpoint = new TDSServerEndPoint(server) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
-            server._endpoint.EndpointName = methodName;
-
-            // The server EventLog should be enabled as it logs the exceptions.
-            server._endpoint.EventLog = enableLog ? Console.Out : null;
-            server._endpoint.Start();
-
-            server.Port = server._endpoint.ServerEndPoint.Port;
-            return server;
-        }
-
-        public void Dispose() => Dispose(true);
-
-        private void Dispose(bool isDisposing)
-        {
-            if (isDisposing)
-            {
-                _endpoint?.Stop();
-                RequestCounter = 0;
-            }
+        public override void Dispose() {
+            base.Dispose();
+            RequestCounter = 0;
         }
     }
 }

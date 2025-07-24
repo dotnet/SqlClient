@@ -4,7 +4,7 @@
 
 namespace Microsoft.SqlServer.TDS.Servers
 {
-    public class TransientFaultTDSServerArguments : TDSServerArguments
+    public class TransientFaultTdsServerArguments : TdsServerArguments
     {
         /// <summary>
         /// Transient error number to be raised by server.
@@ -24,7 +24,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Constructor to initialize
         /// </summary>
-        public TransientFaultTDSServerArguments()
+        public TransientFaultTdsServerArguments()
         {
             Number = 0;
             Message = string.Empty;

@@ -13,7 +13,7 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// <summary>
     /// Common arguments for TDS Server
     /// </summary>
-    public class TDSServerArguments
+    public class TdsServerArguments
     {
         /// <summary>
         /// Service Principal Name, representing Azure SQL Database in Azure Active Directory.
@@ -76,9 +76,14 @@ namespace Microsoft.SqlServer.TDS.Servers
         public SslProtocols EncryptionProtocols { get; set; }
 
         /// <summary>
+        /// Routing destination protocol
+        /// </summary>
+        public string FailoverPartner { get; set; }
+
+        /// <summary>
         /// Initialization constructor
         /// </summary>
-        public TDSServerArguments()
+        public TdsServerArguments()
         {
             // Assign default server version
             ServerName = Environment.MachineName;
@@ -98,6 +103,7 @@ namespace Microsoft.SqlServer.TDS.Servers
 
             ServerPrincipalName = AzureADServicePrincipalName;
             StsUrl = AzureADProductionTokenEndpoint;
+            FailoverPartner = string.Empty;
         }
     }
 }
