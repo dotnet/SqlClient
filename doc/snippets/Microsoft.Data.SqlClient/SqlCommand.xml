@@ -150,7 +150,7 @@ Next, compile and execute the following:
       </remarks>
       <example>
         <para>
-          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, passing in the connection string and command text.
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, passing in the command text.
         </para>
         <!-- SqlCommand_SqlCommand1 -->
         <code language="c#">

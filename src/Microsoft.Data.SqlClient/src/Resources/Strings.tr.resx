@@ -231,17 +231,11 @@
   <data name="ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity" xml:space="preserve">
     <value>Integrated Security anahtar sözcüğüyle Credential kullanılamaz.</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection" xml:space="preserve">
-    <value>Context Connection anahtar sözcüğüyle Credential kullanılamaz.</value>
-  </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword" xml:space="preserve">
     <value>'UserID', 'UID', 'Password' veya 'PWD' bağlantı dizesinde belirtilmişse AccessToken özelliği ayarlanamaz.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity" xml:space="preserve">
     <value>'Integrated Security' bağlantı dizesi anahtar sözcüğü 'true' veya 'SSPI' olarak ayarlanmışsa AccessToken özelliği ayarlanamaz.</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndContextConnection" xml:space="preserve">
-    <value>'Context Connection' anahtar sözcüğü ile AccessToken özelliği ayarlanamaz.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndCredential" xml:space="preserve">
     <value>Credential özelliği zaten ayarlanmışsa AccessToken özelliği ayarlanamaz.</value>
@@ -2073,9 +2067,6 @@
   <data name="ADP_InvalidDestinationBufferIndex" xml:space="preserve">
     <value>Geçersiz hedef arabellek (boyutu {0}) uzaklığı: {1}</value>
   </data>
-  <data name="ADP_DataReaderNoData" xml:space="preserve">
-    <value>Satır/sütun için hiç veri yok.</value>
-  </data>
   <data name="ADP_NumericToDecimalOverflow" xml:space="preserve">
     <value>Sayı değeri 96 bit ondalık basamağa sığmayacak kadar büyük.</value>
   </data>
@@ -2529,6 +2520,9 @@
   <data name="SQL_AsyncConnectionRequired" xml:space="preserve">
     <value>Bu komut, zaman uyumsuz bağlantı gerektiriyor. Bağlantı dizesinde “Asynchronous Processing=true” ayarını yapın.</value>
   </data>
+  <data name="SQL_ConnectTimeout" xml:space="preserve">
+    <value>Bağlantı denemesi zaman aşımına uğradı.</value>
+  </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>Zaman aşımı süresi sona erdi.  Sonuç olarak bağlantı kesildi.</value>
   </data>
@@ -2778,30 +2772,6 @@
   <data name="SQL_InvalidDataLength" xml:space="preserve">
     <value>Veri uzunluğu '{0}' 0'dan küçük.</value>
   </data>
-  <data name="SQL_SqlResultSetClosed" xml:space="preserve">
-    <value>SqlResultSet kapalıyken geçersiz bir {0} metodu çağırma girişimi.</value>
-  </data>
-  <data name="SQL_SqlResultSetClosed2" xml:space="preserve">
-    <value>SqlResultSet kapalı olduğundan işlem tamamlanamıyor.</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly" xml:space="preserve">
-    <value>Kayıt salt okunur olduğunda '{0}' çağrılamaz.</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly2" xml:space="preserve">
-    <value>Kayıt salt okunur olduğundan işlem tamamlanamıyor.</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted" xml:space="preserve">
-    <value>Geçerli satır silinmişken geçersiz bir {0} metodunu çağırma girişimi</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted2" xml:space="preserve">
-    <value>Geçerli satır silindiğinden işlem tamamlanamıyor</value>
-  </data>
-  <data name="SQL_SqlResultSetCommandNotInSameConnection" xml:space="preserve">
-    <value>SqlResultSet'i oluşturan komutun özgün bağlantıyla ilişkisi kesildiği için işlem tamamlanamıyor. SqlResultSet kapalı.</value>
-  </data>
-  <data name="SQL_SqlResultSetNoAcceptableCursor" xml:space="preserve">
-    <value>SqlResultSet, verilen sorgu için istenen seçeneklerle oluşturulamadı.</value>
-  </data>
   <data name="SQL_SqlUpdatableRecordReadOnly" xml:space="preserve">
     <value>SqlDataRecord salt okunur olduğunda '{0}' çağrılamaz.</value>
   </data>
@@ -2871,50 +2841,20 @@
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
     <value>Şu anda yüklü olan System.Transactions.dll, Genel İşlemleri desteklemiyor. Lütfen .NET Framework 4.6.2 veya sonraki bir sürüme yükseltin.</value>
   </data>
-  <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
-    <value>Güncelleştirmelerin toplu işlenmesi, içerik bağlantısında desteklenmiyor.</value>
-  </data>
-  <data name="SQL_ContextAllowsLimitedKeywords" xml:space="preserve">
-    <value>İçerik bağlantısı istenirken kullanılabilecek tek ek bağlantı dizesi anahtar sözcüğü, Type System Version anahtar sözcüğüdür.</value>
-  </data>
-  <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
-    <value>İçerik bağlantısı, Type System Version=SQL Server 2000 desteklemiyor.</value>
-  </data>
   <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
     <value>Microsoft.Data.SqlClient kullanarak bağlam bağlantısına bağlanma desteklenmiyor.</value>
-  </data>
-  <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
-    <value>İçerik bağlantısı zaten kullanılıyor.</value>
-  </data>
-  <data name="SQL_ContextUnavailableOutOfProc" xml:space="preserve">
-    <value>İstenen işlem, yalnızca Sql Server işleminde çalışılırken kullanılabilen bir SqlClr içeriği gerektiriyor.</value>
-  </data>
-  <data name="SQL_ContextUnavailableWhileInProc" xml:space="preserve">
-    <value>İstenen işlem bir Sql Server yürütme iş parçacığı gerektirir.  Geçerli iş parçacığı kullanıcı kodu veya diğer Sql Server motoru olmayan kodlar tarafından başlatılmıştır.</value>
   </data>
   <data name="SQL_NestedTransactionScopesNotSupported" xml:space="preserve">
     <value>İç içe TransactionScopes desteklenmiyor.</value>
   </data>
-  <data name="SQL_NotAvailableOnContextConnection" xml:space="preserve">
-    <value>İstenen işlem içerik bağlantısında kullanılamıyor.</value>
-  </data>
-  <data name="SQL_NotificationsNotAvailableOnContextConnection" xml:space="preserve">
-    <value>İçerik bağlantısında bildirim kullanılamıyor.</value>
-  </data>
   <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
     <value>Beklenmeyen sunucu olayı: {0}.</value>
-  </data>
-  <data name="SQL_UserInstanceNotAvailableInProc" xml:space="preserve">
-    <value>Sql Server işleminde çalışırken kullanıcı örneklerine izin verilmez.</value>
   </data>
   <data name="SQL_ArgumentLengthMismatch" xml:space="preserve">
     <value>‘{0}’ uzunluğu, ‘{1}’ uzunluğu ile aynı olmalıdır.</value>
   </data>
   <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
     <value>SqlDbType '{0}' {1} için geçersiz.  Yalnızca {2} desteklenir.</value>
-  </data>
-  <data name="SQL_PipeErrorRequiresSendEnd" xml:space="preserve">
-    <value>SqlPipe'a gönderilen önceki satırla ilgili bir hata oluştu.  Başka bir şey gönderilmeden önce SendResultsEnd çağrılmalıdır.</value>
   </data>
   <data name="SQL_TooManyValues" xml:space="preserve">
     <value>Çok fazla değer.</value>
@@ -3663,9 +3603,6 @@
   <data name="SQLNotify_AlreadyHasCommand" xml:space="preserve">
     <value>Bu SqlCommand nesnesi, zaten başka bir SqlDependency nesnesiyle ilişkilendirildi.</value>
   </data>
-  <data name="SqlNotify_SqlDepCannotBeCreatedInProc" xml:space="preserve">
-    <value>SqlDependency nesnesi, SQL Server işleminde çalışılırken oluşturulamaz.</value>
-  </data>
   <data name="SqlDependency_DatabaseBrokerDisabled" xml:space="preserve">
     <value>Geçerli veritabanı için SQL Server Hizmet Aracısı etkin değil ve sonuç olarak sorgu bildirimleri desteklenmiyor.  Bildirimleri kullanmak istiyorsanız lütfen bu veritabanı için Hizmet Aracısını etkinleştirin.</value>
   </data>
@@ -3725,21 +3662,6 @@
   </data>
   <data name="IEnumerableOfSqlDataRecordHasNoRows" xml:space="preserve">
     <value>SqlDataRecord numaralandırması içinde kayıt yok. Satır içermeyen tablo değerli bir parametre göndermek için değer olarak bunun yerine bir null başvuru kullanın.</value>
-  </data>
-  <data name="SqlPipe_CommandHookedUpToNonContextConnection" xml:space="preserve">
-    <value>SqlPipe, içerik bağlantısı olmayan bir bağlantıyla komut yürütmeyi desteklemez.</value>
-  </data>
-  <data name="SqlPipe_MessageTooLong" xml:space="preserve">
-    <value>İleti uzunluğu {0}, desteklenen en fazla uzunluk olan 4000'i aşıyor.</value>
-  </data>
-  <data name="SqlPipe_IsBusy" xml:space="preserve">
-    <value>Kanal, başka bir işlemle meşgulken kullanılamadı.</value>
-  </data>
-  <data name="SqlPipe_AlreadyHasAnOpenResultSet" xml:space="preserve">
-    <value>Şu anda kanala bir sonuç kümesi gönderiliyor. {0}‘i çağırmadan önce geçerli sonuç kümesini sonlandırın.</value>
-  </data>
-  <data name="SqlPipe_DoesNotHaveAnOpenResultSet" xml:space="preserve">
-    <value>Sonuç kümesi başlatılmadı.  {0}'i çağırmadan önce SendResultSetStart'ı çağırın.</value>
   </data>
   <data name="SNI_PN0" xml:space="preserve">
     <value>HTTP Sağlayıcısı</value>
@@ -4742,5 +4664,20 @@
   </data>
   <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
     <value>SqlBatchCommand listesi başlatılmadı.</value>
+  </data>
+  <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
+    <value>'{0}' sütunundan vektör verilerini alma  denemesi geçersiz. Vektörler yalnızca vektör türündeki sütunlar için desteklenir.</value>
+  </data>
+  <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
+    <value>'{0}' vektör türü desteklenmiyor.</value>
+  </data>
+  <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
+    <value>SqlDbType Vector'ın '{0}' çıkış parametresi için 'null' değeri desteklenmiyor.</value>
+  </data>
+  <data name="ADP_InvalidVectorHeader" xml:space="preserve">
+    <value>Geçersiz vektör başlığı alındı.</value>
+  </data>
+  <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
+    <value>Vektör JSON dizesi {0} geçersiz.</value>
   </data>
 </root>
