@@ -42,16 +42,6 @@ steps:
       configuration: '${{parameters.configuration }}'
       msbuildArguments: '-t:BuildTestsNetFx -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
 
-# - ${{else if contains(parameters.targetFramework, 'netstandard')}}: # .NET Standard
-#   - task: MSBuild@1
-#     displayName: 'Build Tests NetStandard'
-#     inputs:
-#       solution: build.proj
-#       platform: '${{parameters.platform }}'
-#       configuration: '${{parameters.configuration }}'
-#       msbuildArguments: '-t:BuildTestsNetCore -p:ReferenceType=NetStandard -p:TargetNetStandardVersion=${{parameters.targetNetStandardVersion }} -p:TF=${{parameters.targetFramework }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
-#     condition: and(succeeded(), not(startsWith(variables['TF'], 'net4')), startsWith(variables['TargetNetStandardVersion'], 'netstandard'))
-
 - ${{elseif eq(parameters.OSGroup, '')}}: # .NET on Windows
   - task: MSBuild@1
     displayName: 'Build Tests NetCore [Win]'

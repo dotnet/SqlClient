@@ -36,10 +36,10 @@ parameters:
       public: true
 
   - name: referenceType
-    default: project
+    default: Project
     values:
-    - project
-    - package
+    - Project
+    - Package
 
   - name: product
     default: MDS

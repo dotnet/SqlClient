@@ -2,8 +2,11 @@
 <Project ToolsVersion="Current" DefaultTargets="Build" 
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <!-- Import parent Directory.build.props -->
-  <Import Project="..\..\src\Directory.Build.props" />
+  <!--
+    Import the "root" Directory.build.props, which lives in src/ rather than
+    the repo root.
+  -->
+  <Import Project="../../src/Directory.Build.props" />
 
   <!-- Audit Settings -->
   <PropertyGroup>
