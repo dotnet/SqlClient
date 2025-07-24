@@ -1498,28 +1498,6 @@ namespace Microsoft.Data.SqlClient
             return reader;
         }
 
-        private void CleanupAfterExecuteNonQueryAsync(Task<int> task, TaskCompletionSource<int> source, Guid operationId)
-        {
-            if (task.IsFaulted)
-            {
-                Exception e = task.Exception.InnerException;
-                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                source.SetException(e);
-            }
-            else
-            {
-                if (task.IsCanceled)
-                {
-                    source.SetCanceled();
-                }
-                else
-                {
-                    source.SetResult(task.Result);
-                }
-                s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReaderAsync/*'/>
         protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
