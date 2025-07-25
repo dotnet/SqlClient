@@ -307,6 +307,31 @@ namespace Microsoft.Data.SqlClient
                 SqlStatistics.StopTimer(statistics);
             }
         }
+
+        private void BeginExecuteXmlReaderInternalReadStage(TaskCompletionSource<object> completion)
+        {
+            // Read SNI does not have catches for async exceptions, handle here.
+
+            try
+            {
+                // Must finish caching information before ReadSni which can activate the callback
+                // before returning.
+                CachedAsyncState.SetActiveConnectionAndResult(
+                    completion,
+                    nameof(EndExecuteXmlReader),
+                    _activeConnection);
+                _stateObj.ReadSni(completion);
+            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            catch (Exception e)
+            {
+                // Similarly, if an exception occurs put the stateObj back into the pool.
+                // and reset async cache information to allow a second async execute
+                CachedAsyncState?.ResetAsyncState();
+                ReliablePutStateObject();
+                completion.TrySetException(e);
+            }
+        }
         
         private Task<XmlReader> InternalExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {
