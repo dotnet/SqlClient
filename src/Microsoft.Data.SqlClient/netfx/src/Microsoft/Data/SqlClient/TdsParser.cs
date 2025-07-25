@@ -69,7 +69,6 @@ namespace Microsoft.Data.SqlClient
         // Constants
         private const int constBinBufferSize = 4096; // Size of the buffer used to read input parameter of type Stream
         private const int constTextBufferSize = 4096; // Size of the buffer (in chars) user to read input parameter of type TextReader
-        private const string enableTruncateSwitch = "Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal"; // for applications that need to maintain backwards compatibility with the previous behavior
 
         // State variables
         internal TdsParserState _state = TdsParserState.Closed; // status flag for connection
@@ -202,16 +201,6 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 return _connHandler;
-            }
-        }
-
-        private static bool EnableTruncateSwitch
-        {
-            get
-            {
-                bool value;
-                value = AppContext.TryGetSwitch(enableTruncateSwitch, out value) ? value : false;
-                return value;
             }
         }
 
@@ -414,7 +403,8 @@ namespace Microsoft.Data.SqlClient
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
-                _authenticationProvider = _physicalStateObj.CreateSspiContextProvider();
+                _authenticationProvider = Connection._sspiContextProvider ?? _physicalStateObj.CreateSspiContextProvider();
+
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SSPI or Active Directory Authentication Library for SQL Server based integrated authentication");
             }
             else
@@ -7853,7 +7843,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (d.Scale != newScale)
             {
-                bool round = !EnableTruncateSwitch;
+                bool round = !LocalAppContextSwitches.TruncateScaledDecimal;
                 return SqlDecimal.AdjustScale(d, newScale - d.Scale, round);
             }
 
@@ -7866,7 +7856,7 @@ namespace Microsoft.Data.SqlClient
 
             if (newScale != oldScale)
             {
-                bool round = !EnableTruncateSwitch;
+                bool round = !LocalAppContextSwitches.TruncateScaledDecimal;
                 SqlDecimal num = new SqlDecimal(value);
                 num = SqlDecimal.AdjustScale(num, newScale - oldScale, round);
                 return num.Value;
@@ -13321,11 +13311,10 @@ namespace Microsoft.Data.SqlClient
 
             if (canContinue)
             {
-                if (isContinuing || isStarting)
-                {
-                    temp = stateObj.TryTakeSnapshotStorage() as char[];
-                    Debug.Assert(temp == null || length == int.MaxValue || temp.Length == length, "stored buffer length must be null or must have been created with the correct length");
-                }
+                temp = stateObj.TryTakeSnapshotStorage() as char[];
+                Debug.Assert(temp != null || !isContinuing, "if continuing stored buffer must be present to contain previous data to continue from");
+                Debug.Assert(temp == null || length == int.MaxValue || temp.Length == length, "stored buffer length must be null or must have been created with the correct length");
+
                 if (temp != null)
                 {
                     startOffset = stateObj.GetSnapshotTotalSize();
@@ -13340,8 +13329,8 @@ namespace Microsoft.Data.SqlClient
                 out length, 
                 supportRentedBuff: !canContinue, // do not use the arraypool if we are going to keep the buffer in the snapshot
                 rentedBuff: ref buffIsRented, 
-                startOffset, 
-                isStarting || isContinuing
+                startOffset,
+                canContinue
             );
 
             if (result == TdsOperationStatus.Done)
@@ -13368,7 +13357,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (result == TdsOperationStatus.NeedMoreData)
             {
-                if (isStarting || isContinuing)
+                if (canContinue)
                 {
                     stateObj.SetSnapshotStorage(temp);
                 }

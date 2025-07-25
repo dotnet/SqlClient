@@ -18,10 +18,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly SqlCredential _credential;
         private readonly string _accessToken;
         private Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
+        private SspiContextProvider _sspiContextProvider;
 
         internal SqlCredential Credential => _credential;
         internal string AccessToken => _accessToken;
         internal Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback => _accessTokenCallback;
+        internal SspiContextProvider SspiContextProvider => _sspiContextProvider;
 
         internal override string ConnectionString
         {
@@ -33,12 +35,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
-        internal SqlConnectionPoolKey(string connectionString, SqlCredential credential, string accessToken, Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback) : base(connectionString)
+        internal SqlConnectionPoolKey(
+            string connectionString,
+            SqlCredential credential,
+            string accessToken,
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback,
+            SspiContextProvider sspiContextProvider) : base(connectionString)
         {
             Debug.Assert(credential == null || accessToken == null || accessTokenCallback == null, "Credential, AccessToken, and Callback can't have a value at the same time.");
             _credential = credential;
             _accessToken = accessToken;
             _accessTokenCallback = accessTokenCallback;
+            _sspiContextProvider = sspiContextProvider;
             CalculateHashCode();
         }
 
@@ -47,6 +55,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _credential = key.Credential;
             _accessToken = key.AccessToken;
             _accessTokenCallback = key._accessTokenCallback;
+            _sspiContextProvider = key._sspiContextProvider;
+
             CalculateHashCode();
         }
 
@@ -61,7 +71,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 && _credential == key._credential
                 && ConnectionString == key.ConnectionString
                 && _accessTokenCallback == key._accessTokenCallback
-                && string.CompareOrdinal(_accessToken, key._accessToken) == 0);
+                && string.CompareOrdinal(_accessToken, key._accessToken) == 0
+                && _sspiContextProvider == key._sspiContextProvider);
         }
 
         public override int GetHashCode()
@@ -93,6 +104,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 {
                     _hashValue = _hashValue * 17 + _accessTokenCallback.GetHashCode();
                 }
+            }
+
+            if (_sspiContextProvider != null)
+            {
+                _hashValue = _hashValue * 17 + _sspiContextProvider.GetHashCode();
             }
         }
     }

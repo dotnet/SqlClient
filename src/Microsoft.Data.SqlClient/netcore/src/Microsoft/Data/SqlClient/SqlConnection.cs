@@ -31,13 +31,6 @@ namespace Microsoft.Data.SqlClient
     [DesignerCategory("")]
     public sealed partial class SqlConnection : DbConnection, ICloneable
     {
-        private enum CultureCheckState : uint
-        {
-            Unknown = 0,
-            Standard = 1,
-            Invariant = 2
-        }
-
         private bool _AsyncCommandInProgress;
 
         // SQLStatistics support
@@ -75,9 +68,6 @@ namespace Microsoft.Data.SqlClient
         // using SqlConnection.Open() method.
         internal bool _applyTransientFaultHandling = false;
 
-        // status of invariant culture environment check
-        private static CultureCheckState _cultureCheckState;
-
         // System column encryption key store providers are added by default
         private static readonly Dictionary<string, SqlColumnEncryptionKeyStoreProvider> s_systemColumnEncryptionKeyStoreProviders
             = new(capacity: 3, comparer: StringComparer.OrdinalIgnoreCase)
@@ -91,6 +81,7 @@ namespace Microsoft.Data.SqlClient
         private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
 
         private Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
+        private SspiContextProvider _sspiContextProvider;
 
         internal bool HasColumnEncryptionKeyStoreProvidersRegistered =>
             _customColumnEncryptionKeyStoreProviders is not null && _customColumnEncryptionKeyStoreProviders.Count > 0;
@@ -650,7 +641,7 @@ namespace Microsoft.Data.SqlClient
                         CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(connectionOptions);
                     }
                 }
-                ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken, _accessTokenCallback));
+                ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken, _accessTokenCallback, _sspiContextProvider));
                 _connectionString = value;  // Change _connectionString value only after value is validated
                 CacheConnectionStringProperties();
             }
@@ -710,7 +701,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: value, accessTokenCallback: null));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: value, accessTokenCallback: null, sspiContextProvider: null));
                 _accessToken = value;
             }
         }
@@ -733,8 +724,18 @@ namespace Microsoft.Data.SqlClient
                     CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback((SqlConnectionString)ConnectionOptions);
                 }
 
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: value));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: value, sspiContextProvider: null));
                 _accessTokenCallback = value;
+            }
+        }
+
+        internal SspiContextProvider SspiContextProvider
+        {
+            get { return _sspiContextProvider; }
+            set
+            {
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: value));
+                _sspiContextProvider = value;
             }
         }
 
@@ -1035,7 +1036,7 @@ namespace Microsoft.Data.SqlClient
                 _credential = value;
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, accessToken: _accessToken, accessTokenCallback: _accessTokenCallback));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, accessToken: _accessToken, accessTokenCallback: _accessTokenCallback, sspiContextProvider: null));
             }
         }
 
@@ -1274,7 +1275,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearAllPools/*' />
         public static void ClearAllPools()
         {
-            SqlConnectionFactory.SingletonInstance.ClearAllPools();
+            SqlConnectionFactory.Instance.ClearAllPools();
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearPool/*' />
@@ -1285,7 +1286,7 @@ namespace Microsoft.Data.SqlClient
             DbConnectionOptions connectionOptions = connection.UserConnectionOptions;
             if (connectionOptions != null)
             {
-                SqlConnectionFactory.SingletonInstance.ClearPool(connection);
+                SqlConnectionFactory.Instance.ClearPool(connection);
             }
         }
 
@@ -1956,48 +1957,9 @@ namespace Microsoft.Data.SqlClient
         {
             SqlConnectionString connectionOptions = (SqlConnectionString)ConnectionOptions;
 
-            if (_cultureCheckState != CultureCheckState.Standard)
+            if (LocalAppContextSwitches.GlobalizationInvariantMode)
             {
-                // .NET Core 2.0 and up supports a Globalization Invariant Mode to reduce the size of
-                // required libraries for applications which don't need globalization support. SqlClient
-                // requires those libraries for core functionality and will throw exceptions later if they
-                // are not present. Throwing on open with a meaningful message helps identify the issue.
-                if (_cultureCheckState == CultureCheckState.Unknown)
-                {
-                    // check if invariant state has been set by appcontext switch directly 
-                    if (AppContext.TryGetSwitch("System.Globalization.Invariant", out bool isEnabled) && isEnabled)
-                    {
-                        _cultureCheckState = CultureCheckState.Invariant;
-                    }
-                    else
-                    {
-                        // check if invariant state has been set through environment variables
-                        string envValue = Environment.GetEnvironmentVariable("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT");
-                        if (string.Equals(envValue, bool.TrueString, StringComparison.OrdinalIgnoreCase) || string.Equals(envValue, "1", StringComparison.OrdinalIgnoreCase))
-                        {
-                            _cultureCheckState = CultureCheckState.Invariant;
-                        }
-                        else
-                        {
-                            // if it hasn't been manually set it could still apply if the os doesn't have
-                            //  icu libs installed or is a native binary with icu support trimmed away
-                            // netcore 3.1 to net5 do not throw in attempting to create en-us in inariant mode
-                            // net6 and greater will throw so catch and infer invariant mode from the exception
-                            try
-                            {
-                                _cultureCheckState = CultureInfo.GetCultureInfo("en-US").EnglishName.Contains("Invariant") ? CultureCheckState.Invariant : CultureCheckState.Standard;
-                            }
-                            catch (CultureNotFoundException)
-                            {
-                                _cultureCheckState = CultureCheckState.Invariant;
-                            }
-                        }
-                    }
-                }
-                if (_cultureCheckState == CultureCheckState.Invariant)
-                {
-                    throw SQL.GlobalizationInvariantModeNotSupported();
-                }
+                throw SQL.GlobalizationInvariantModeNotSupported();
             }
 
             _applyTransientFaultHandling = (!overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
@@ -2265,9 +2227,9 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength(nameof(newPassword), TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, accessTokenCallback: null);
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null);
 
-                SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
+                SqlConnectionString connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
                 if (connectionOptions.IntegratedSecurity)
                 {
                     throw SQL.ChangePasswordConflictsWithSSPI();
@@ -2314,9 +2276,9 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength(nameof(newSecurePassword), TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: null);
 
-                SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
+                SqlConnectionString connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
 
                 // Check for connection string values incompatible with SqlCredential
                 if (!string.IsNullOrEmpty(connectionOptions.UserID) || !string.IsNullOrEmpty(connectionOptions.Password))
@@ -2352,9 +2314,9 @@ namespace Microsoft.Data.SqlClient
             {
                 con?.Dispose();
             }
-            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
+            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: null);
 
-            SqlConnectionFactory.SingletonInstance.ClearPool(key);
+            SqlConnectionFactory.Instance.ClearPool(key);
         }
 
         internal Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outerTask, object value, int tag)

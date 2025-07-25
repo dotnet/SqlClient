@@ -1559,11 +1559,10 @@ namespace Microsoft.Data.SqlClient
             (bool canContinue, bool isStarting, bool isContinuing) = GetSnapshotStatuses();
             if (canContinue)
             {
-                if (isContinuing || isStarting)
-                {
-                    temp = TryTakeSnapshotStorage() as byte[];
-                    Debug.Assert(bytes == null || bytes.Length == length, "stored buffer length must be null or must have been created with the correct length");
-                }
+                temp = TryTakeSnapshotStorage() as byte[];
+                Debug.Assert(temp != null || !isContinuing, "if continuing stored buffer must be present to contain previous data to continue from");
+                Debug.Assert(bytes == null || bytes.Length == length, "stored buffer length must be null or must have been created with the correct length");
+                
                 if (temp != null)
                 {
                     offset = GetSnapshotTotalSize();
@@ -1584,7 +1583,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (result == TdsOperationStatus.NeedMoreData)
             {
-                if (isStarting || isContinuing)
+                if (canContinue)
                 {
                     SetSnapshotStorage(temp);
                 }
@@ -2013,11 +2012,10 @@ namespace Microsoft.Data.SqlClient
                     int startOffset = 0;
                     if (canContinue)
                     {
-                        if (isContinuing || isStarting)
-                        {
-                            buf = TryTakeSnapshotStorage() as byte[];
-                            Debug.Assert(buf == null || buf.Length == length, "stored buffer length must be null or must have been created with the correct length");
-                        }
+                        buf = TryTakeSnapshotStorage() as byte[];
+                        Debug.Assert(buf != null || !isContinuing, "if continuing stored buffer must be present to contain previous data to continue from");
+                        Debug.Assert(buf == null || buf.Length == length, "stored buffer length must be null or must have been created with the correct length");
+                        
                         if (buf != null)
                         {
                             startOffset = GetSnapshotTotalSize();
@@ -2035,7 +2033,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (result == TdsOperationStatus.NeedMoreData)
                         {
-                            if (isStarting || isContinuing)
+                            if (canContinue)
                             {
                                 SetSnapshotStorage(buf);
                             }
@@ -3254,7 +3252,7 @@ namespace Microsoft.Data.SqlClient
                     ReadAsyncCallback(IntPtr.Zero, readPacket, 0);
 
                     // Only release packet for Managed SNI as for Native SNI packet is released in finally block.
-                    if (TdsParserStateObjectFactory.UseManagedSNI && readFromNetwork && !IsPacketEmpty(readPacket))
+                    if (LocalAppContextSwitches.UseManagedNetworking && readFromNetwork && !IsPacketEmpty(readPacket))
                     {
                         ReleasePacket(readPacket);
                     }
@@ -3290,7 +3288,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                if (!TdsParserStateObjectFactory.UseManagedSNI)
+                if (!LocalAppContextSwitches.UseManagedNetworking)
                 {
                     if (readFromNetwork && !IsPacketEmpty(readPacket))
                     {

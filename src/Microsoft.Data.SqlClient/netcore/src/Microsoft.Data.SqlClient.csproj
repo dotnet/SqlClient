@@ -99,9 +99,6 @@
     <Compile Include="$(CommonSourceRoot)\Microsoft\Data\ProviderBase\DbConnectionClosed.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionClosed.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)\Microsoft\Data\ProviderBase\DbConnectionFactory.cs">
-      <Link>Microsoft\Data\ProviderBase\DbConnectionFactory.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\ChannelDbConnectionPool.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\ChannelDbConnectionPool.cs</Link>
     </Compile>
@@ -963,6 +960,11 @@
     
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
+
+    <EmbeddedResource Include="$(CommonSourceRoot)Resources\ILLink.Substitutions.Windows.xml">
+      <LogicalName>ILLink.Substitutions.xml</LogicalName>
+      <Link>Resources\ILLink.Substitutions.Windows.xml</Link>
+    </EmbeddedResource>
   </ItemGroup>
 
   <!-- Unix only -->
@@ -1005,6 +1007,11 @@
     </Compile>
 
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
+
+    <EmbeddedResource Include="$(CommonSourceRoot)Resources\ILLink.Substitutions.Unix.xml">
+      <LogicalName>ILLink.Substitutions.xml</LogicalName>
+      <Link>Resources\ILLink.Substitutions.Unix.xml</Link>
+    </EmbeddedResource>
   </ItemGroup>
 
   <!-- Resources -->

@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient
     {
         internal void PostReadAsyncForMars()
         {
-            if (TdsParserStateObjectFactory.UseManagedSNI)
+            if (LocalAppContextSwitches.UseManagedNetworking)
                 return;
 
             // HACK HACK HACK - for Async only
