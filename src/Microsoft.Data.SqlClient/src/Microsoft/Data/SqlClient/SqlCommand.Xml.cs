@@ -10,12 +10,48 @@ using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Server;
 
+#if NETFRAMEWORK
+using System.Security.Permissions;
+#endif
+
 namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlCommand
     {
         #region Public/Internal Methods
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="default"]/*'/>
+        #if NETFRAMEWORK
+        [HostProtection(ExternalThreading = true)]
+        #endif
+        public IAsyncResult BeginExecuteXmlReader() =>
+            BeginExecuteXmlReader(callback: null, stateObject: null);
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="AsyncCallbackAndstateObject"]/*'/>
+        #if NETFRAMEWORK
+        [HostProtection(ExternalThreading = true)]
+        #endif
+        public IAsyncResult BeginExecuteXmlReader(AsyncCallback callback, object stateObject)
+        {
+            #if NETFRAMEWORK
+            SqlConnection.ExecutePermission.Demand();
+            #endif
+            
+            SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                "SqlCommand.BeginExecuteXmlReader | API | Correlation | " +
+                $"Object Id {ObjectID}, " +
+                $"Activity Id {ActivityCorrelator.Current}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"Command Text '{CommandText}'");
+
+            return BeginExecuteXmlReaderInternal(
+                CommandBehavior.SequentialAccess,
+                callback,
+                stateObject,
+                timeout: 0,
+                isRetry: false);
+        }
+        
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReader/*'/>
         public XmlReader ExecuteXmlReader()
         {
