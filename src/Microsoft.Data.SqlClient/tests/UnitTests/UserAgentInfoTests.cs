@@ -1,6 +1,4 @@
-﻿using System;
-using System.Reflection;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using Microsoft.Data.SqlClient.UserAgent;
 using Xunit;
@@ -13,9 +11,10 @@ namespace Microsoft.Data.SqlClient.UnitTests
     /// Unit tests for <see cref="UserAgentInfo"/> and its companion DTO.
     /// Focus areas:
     ///   1. Field truncation logic
-    ///   2. Payload sizing and field‑dropping policy
-    ///   3. DTO JSON contract (key names)
-    ///   4. Cached payload invariants
+    ///   2. Truncation verification
+    ///   3. Payload size adjustment and field dropping
+    ///   4. DTO JSON contract (key names and values)
+    ///   5. Combined truncation, adjustment, and serialization
     /// </summary>
     public class UserAgentInfoTests
     {
@@ -23,30 +22,21 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Fact]
         public void CachedPayload_IsNotNull_And_WithinSpecLimit()
         {
-            var field = typeof(UserAgentInfo).GetField(
-                    name: "_cachedPayload",
-                    bindingAttr: BindingFlags.NonPublic | BindingFlags.Static);
-            Assert.NotNull(field);
-
-            byte[] payload = (byte[])field!.GetValue(null)!;
+            byte[] payload = UserAgentInfo._cachedPayload;
             Assert.NotNull(payload);
-            Assert.InRange(payload.Length, 1, UserAgentInfo.JsonPayloadMaxBytesSpec);
+            Assert.InRange(payload.Length, 1, UserAgentInfo.JsonPayloadMaxBytes);
         }
 
         // 2. TruncateOrDefault respects null, empty, fit, and overflow cases
         [Theory]
-        [InlineData(null, 5, "Unknown")]              // null returns default
-        [InlineData("", 5, "Unknown")]                // empty returns default
-        [InlineData("abc", 5, "abc")]                // within limit unchanged
-        [InlineData("abcdef", 5, "abcde")]          // overflow truncated
+        [InlineData(null, 5, "Unknown")]        // null returns default
+        [InlineData("", 5, "Unknown")]          // empty returns default
+        [InlineData("abc", 5, "abc")]           // within limit unchanged
+        [InlineData("abcde", 5, "abcde")]       // exact max chars
+        [InlineData("abcdef", 5, "abcde")]      // overflow truncated
         public void TruncateOrDefault_Behaviour(string? input, int max, string expected)
         {
-            var mi = typeof(UserAgentInfo).GetMethod(
-                name: "TruncateOrDefault",
-                bindingAttr: BindingFlags.NonPublic | BindingFlags.Static);
-            Assert.NotNull(mi);
-
-            string actual = (string)mi!.Invoke(null, new object?[] { input, max })!;
+            string actual = UserAgentInfo.TruncateOrDefault(input!, max);
             Assert.Equal(expected, actual);
         }
 
@@ -54,7 +44,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Fact]
         public void AdjustJsonPayloadSize_StripsLowPriorityFields_When_PayloadTooLarge()
         {
-            // Build an inflated DTO so the raw JSON exceeds 10 KB.
+            // Build an inflated DTO so AdjustJsonPayloadSize
+            // must fall back to its “drop fields” logic.
             string huge = new string('x', 20_000);
             var dto = new UserAgentInfoDto
             {
@@ -69,39 +60,36 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 Runtime = huge
             };
 
-            var mi = typeof(UserAgentInfo).GetMethod(
-                name: "AdjustJsonPayloadSize",
-                bindingAttr: BindingFlags.NonPublic | BindingFlags.Static);
-            Assert.NotNull(mi);
+            // Capture the size before the helper mutates the DTO
+            byte[] original = JsonSerializer.SerializeToUtf8Bytes(dto);
+            Assert.True(original.Length > UserAgentInfo.JsonPayloadMaxBytes);
 
-            byte[] payload = (byte[])mi!.Invoke(null, new object?[] { dto })!;
+            // Run the field‑dropping logic
+            byte[] payload = UserAgentInfo.AdjustJsonPayloadSize(dto);
+            Assert.NotEmpty(payload);
+            Assert.True(payload.Length < original.Length);   // verify shrinkage
 
-            // Final payload must satisfy limits
-            Assert.InRange(payload.Length, 1, UserAgentInfo.UserAgentPayloadMaxBytes);
+            // Structural checks using JsonDocument
+            using JsonDocument doc = JsonDocument.Parse(payload);
+            JsonElement root = doc.RootElement;
 
-            // Convert to string for field presence checks
-            string json = Encoding.UTF8.GetString(payload);
+            // High‑priority fields must survive.
+            Assert.True(root.TryGetProperty(UserAgentInfoDto.DriverJsonKey, out _));
+            Assert.True(root.TryGetProperty(UserAgentInfoDto.VersionJsonKey, out _));
 
-            // We either receive the minimal payload with only high‑priority fields,
-            // or we receive an empty payload in case of overflow despite dropping fields.
-            if (payload.Length <= 2)
+            // Low‑priority fields must be gone.
+            Assert.False(root.TryGetProperty(UserAgentInfoDto.ArchJsonKey, out _));
+            Assert.False(root.TryGetProperty(UserAgentInfoDto.RuntimeJsonKey, out _));
+
+            // If the "os" object survived, only its "type" sub‑field may remain.
+            if (root.TryGetProperty(UserAgentInfoDto.OsJsonKey, out JsonElement os))
             {
-                Assert.Equal("{}", json.Trim());
-                return;
+                Assert.True(os.TryGetProperty(UserAgentInfoDto.OsInfo.TypeJsonKey, out _));
+                Assert.False(os.TryGetProperty(UserAgentInfoDto.OsInfo.DetailsJsonKey, out _));
             }
-
-            // High‑priority fields remain
-            Assert.Contains(UserAgentInfoDto.DriverJsonKey, json);
-            Assert.Contains(UserAgentInfoDto.VersionJsonKey, json);
-            Assert.Contains(UserAgentInfoDto.OsJsonKey, json);
-
-            // Low‑priority fields removed
-            Assert.DoesNotContain(UserAgentInfoDto.ArchJsonKey, json);
-            Assert.DoesNotContain(UserAgentInfoDto.RuntimeJsonKey, json);
-            Assert.DoesNotContain(UserAgentInfoDto.OsInfo.DetailsJsonKey, json);
         }
 
-        // 4. DTO serializes with expected JSON property names
+        // 4. DTO JSON contract - verify names and values
         [Fact]
         public void Dto_JsonPropertyNames_MatchConstants()
         {
@@ -116,15 +104,51 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             string json = JsonSerializer.Serialize(dto);
             using JsonDocument doc = JsonDocument.Parse(json);
+            JsonElement root = doc.RootElement;
+
+            // Assert – root‑level fields
+            Assert.Equal("d", root.GetProperty(UserAgentInfoDto.DriverJsonKey).GetString());
+            Assert.Equal("v", root.GetProperty(UserAgentInfoDto.VersionJsonKey).GetString());
+            Assert.Equal("a", root.GetProperty(UserAgentInfoDto.ArchJsonKey).GetString());
+            Assert.Equal("r", root.GetProperty(UserAgentInfoDto.RuntimeJsonKey).GetString());
+
+            // Assert – nested os object
+            JsonElement os = root.GetProperty(UserAgentInfoDto.OsJsonKey);
+            Assert.Equal("t", os.GetProperty(UserAgentInfoDto.OsInfo.TypeJsonKey).GetString());
+            Assert.Equal("dd", os.GetProperty(UserAgentInfoDto.OsInfo.DetailsJsonKey).GetString());
+        }
+
+        // 5. End-to-end test that combines truncation, adjustment, and serialization
+        [Fact]
+        public void EndToEnd_Truncate_Adjust_Serialize_Works()
+        {
+            string raw = new string('x', 2_000);
+            const int Max = 100;
+
+            string driver = UserAgentInfo.TruncateOrDefault(raw, Max);
+            string version = UserAgentInfo.TruncateOrDefault(raw, Max);
+            string osType = UserAgentInfo.TruncateOrDefault(raw, Max);
+
+            var dto = new UserAgentInfoDto
+            {
+                Driver = driver,
+                Version = version,
+                OS = new UserAgentInfoDto.OsInfo { Type = osType, Details = raw },
+                Arch = raw,
+                Runtime = raw
+            };
+
+            byte[] payload = UserAgentInfo.AdjustJsonPayloadSize(dto);
+            string json = Encoding.UTF8.GetString(payload);
+
+            using JsonDocument doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            Assert.True(root.TryGetProperty(UserAgentInfoDto.DriverJsonKey, out _));
-            Assert.True(root.TryGetProperty(UserAgentInfoDto.VersionJsonKey, out _));
-            Assert.True(root.TryGetProperty(UserAgentInfoDto.OsJsonKey, out var osElement));
-            Assert.True(osElement.TryGetProperty(UserAgentInfoDto.OsInfo.TypeJsonKey, out _));
-            Assert.True(osElement.TryGetProperty(UserAgentInfoDto.OsInfo.DetailsJsonKey, out _));
-            Assert.True(root.TryGetProperty(UserAgentInfoDto.ArchJsonKey, out _));
-            Assert.True(root.TryGetProperty(UserAgentInfoDto.RuntimeJsonKey, out _));
+            Assert.Equal(driver, root.GetProperty(UserAgentInfoDto.DriverJsonKey).GetString());
+            Assert.Equal(version, root.GetProperty(UserAgentInfoDto.VersionJsonKey).GetString());
+
+            JsonElement os = root.GetProperty(UserAgentInfoDto.OsJsonKey);
+            Assert.Equal(osType, os.GetProperty(UserAgentInfoDto.OsInfo.TypeJsonKey).GetString());
         }
     }
 }
