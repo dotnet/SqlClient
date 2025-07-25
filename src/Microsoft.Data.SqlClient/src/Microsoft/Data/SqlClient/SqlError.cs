@@ -33,16 +33,16 @@ namespace Microsoft.Data.SqlClient
         //  to find and invoke the functions, changing the signatures will break many
         //  things elsewhere
 
-        internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, uint win32ErrorCode, Exception exception = null)
+        internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, int win32ErrorCode, Exception exception = null)
             : this(infoNumber, errorState, errorClass, server, errorMessage, procedure, lineNumber, win32ErrorCode, exception, -1)
         {
         }
 
-        internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, uint win32ErrorCode, Exception exception, int batchIndex)
+        internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, int win32ErrorCode, Exception exception, int batchIndex)
             : this(infoNumber, errorState, errorClass, server, errorMessage, procedure, lineNumber, exception, batchIndex)
         {
             _server = server;
-            _win32ErrorCode = (int)win32ErrorCode;
+            _win32ErrorCode = win32ErrorCode;
         }
 
         internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, Exception exception = null)
@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/LineNumber/*' />
         public int LineNumber => _lineNumber;
 
-        internal int Win32ErrorCode  => _win32ErrorCode;
+        internal int Win32ErrorCode => _win32ErrorCode;
 
         internal Exception Exception => _exception;
 

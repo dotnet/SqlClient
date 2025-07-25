@@ -18,24 +18,23 @@ public class SqlVectorTest
     [Fact]
     public void UnsupportedType()
     {
-        Assert.Throws<NotSupportedException>(() => new SqlVector<int>(5));
-        Assert.Throws<NotSupportedException>(() => new SqlVector<byte>(5));
-        Assert.Throws<NotSupportedException>(() => new SqlVector<double>(5));
+        Assert.Throws<NotSupportedException>(() => SqlVector<int>.CreateNull(5));
+        Assert.Throws<NotSupportedException>(() => SqlVector<byte>.CreateNull(5));
+        Assert.Throws<NotSupportedException>(() => SqlVector<double>.CreateNull(5));
     }
 
     [Fact]
     public void Construct_Length_Negative()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new SqlVector<float>(-1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => SqlVector<float>.CreateNull(-1));
     }
 
     [Fact]
     public void Construct_Length()
     {
-        var vec = new SqlVector<float>(5);
+        var vec = SqlVector<float>.CreateNull(5);
         Assert.True(vec.IsNull);
         Assert.Equal(5, vec.Length);
-        Assert.Equal(28, vec.Size);
         // Note that ReadOnlyMemory<> equality checks that both instances point
         // to the same memory.  We want to check memory content equality, so we
         // compare their arrays instead.
@@ -45,16 +44,17 @@ public class SqlVectorTest
         var ivec = vec as ISqlVector;
         Assert.Equal(0x00, ivec.ElementType);
         Assert.Equal(0x04, ivec.ElementSize);
+        Assert.Equal(28, ivec.Size);
         Assert.Empty(ivec.VectorPayload);
     }
 
     [Fact]
     public void Construct_WithLengthZero()
     {
-        var vec = new SqlVector<float>(0);
+        var vec = SqlVector<float>.CreateNull(0);
         Assert.True(vec.IsNull);
         Assert.Equal(0, vec.Length);
-        Assert.Equal(8, vec.Size);
+        
         // Note that ReadOnlyMemory<> equality checks that both instances point
         // to the same memory.  We want to check memory content equality, so we
         // compare their arrays instead.
@@ -64,6 +64,7 @@ public class SqlVectorTest
         var ivec = vec as ISqlVector;
         Assert.Equal(0x00, ivec.ElementType);
         Assert.Equal(0x04, ivec.ElementSize);
+        Assert.Equal(8, ivec.Size);
         Assert.Empty(ivec.VectorPayload);
     }
 
@@ -73,13 +74,13 @@ public class SqlVectorTest
         SqlVector<float> vec = new(new ReadOnlyMemory<float>());
         Assert.False(vec.IsNull);
         Assert.Equal(0, vec.Length);
-        Assert.Equal(8, vec.Size);
         Assert.Equal(new ReadOnlyMemory<float>().ToArray(), vec.Memory.ToArray());
         Assert.Equal("[]", vec.GetString());
 
         var ivec = vec as ISqlVector;
         Assert.Equal(0x00, ivec.ElementType);
         Assert.Equal(0x04, ivec.ElementSize);
+        Assert.Equal(8, ivec.Size);
         Assert.Equal(
             new byte[] { 0xA9, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
             ivec.VectorPayload);
@@ -93,7 +94,6 @@ public class SqlVectorTest
         SqlVector<float> vec = new(memory);
         Assert.False(vec.IsNull);
         Assert.Equal(2, vec.Length);
-        Assert.Equal(16, vec.Size);
         Assert.Equal(memory.ToArray(), vec.Memory.ToArray());
         Assert.Equal(data, vec.Memory.ToArray());
         #if NETFRAMEWORK
@@ -104,6 +104,7 @@ public class SqlVectorTest
         var ivec = vec as ISqlVector;
         Assert.Equal(0x00, ivec.ElementType);
         Assert.Equal(0x04, ivec.ElementSize);
+        Assert.Equal(16, ivec.Size);
         Assert.Equal(
             MakeTdsPayload(
                 new byte[] { 0xA9, 0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00 },
@@ -118,7 +119,6 @@ public class SqlVectorTest
         var vec = new SqlVector<float>(data);
         Assert.False(vec.IsNull);
         Assert.Equal(3, vec.Length);
-        Assert.Equal(20, vec.Size);
         Assert.Equal(new ReadOnlyMemory<float>(data).ToArray(), vec.Memory.ToArray());
         Assert.Equal(data, vec.Memory.ToArray());
         #if NETFRAMEWORK
@@ -130,6 +130,7 @@ public class SqlVectorTest
         var ivec = vec as ISqlVector;
         Assert.Equal(0x00, ivec.ElementType);
         Assert.Equal(0x04, ivec.ElementSize);
+        Assert.Equal(20, ivec.Size);
         Assert.Equal(
             MakeTdsPayload(
                 new byte[] { 0xA9, 0x01, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00 },
@@ -149,7 +150,6 @@ public class SqlVectorTest
         var vec = new SqlVector<float>(bytes);
         Assert.False(vec.IsNull);
         Assert.Equal(2, vec.Length);
-        Assert.Equal(16, vec.Size);
         Assert.Equal(new ReadOnlyMemory<float>(data).ToArray(), vec.Memory.ToArray());
         Assert.Equal(data, vec.Memory.ToArray());
         #if NETFRAMEWORK
@@ -161,6 +161,7 @@ public class SqlVectorTest
         var ivec = vec as ISqlVector;
         Assert.Equal(0x00, ivec.ElementType);
         Assert.Equal(0x04, ivec.ElementSize);
+        Assert.Equal(16, ivec.Size);
         Assert.Equal(bytes, ivec.VectorPayload);
     }
 

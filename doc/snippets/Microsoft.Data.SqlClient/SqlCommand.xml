@@ -150,7 +150,7 @@ Next, compile and execute the following:
       </remarks>
       <example>
         <para>
-          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, passing in the connection string and command text.
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, passing in the command text.
         </para>
         <!-- SqlCommand_SqlCommand1 -->
         <code language="c#">
@@ -3604,7 +3604,9 @@ Before you call <xref:Microsoft.Data.SqlClient.SqlCommand.Prepare%2A>, specify t
 
 If you call an `Execute` method after calling <xref:Microsoft.Data.SqlClient.SqlCommand.Prepare%2A>, any parameter value that is larger than the value specified by the <xref:Microsoft.Data.SqlClient.SqlParameter.Size%2A> property is automatically truncated to the original specified size of the parameter, and no truncation errors are returned.
 
-Output parameters (whether prepared or not) must have a user-specified data type. If you specify a variable length data type, you must also specify the maximum <xref:Microsoft.Data.SqlClient.SqlParameter.Size%2A>.
+Output parameters (whether prepared or not) must have a user-specified data type. If you specify a variable length data type except vector, you must also specify the maximum <xref:Microsoft.Data.SqlClient.SqlParameter.Size%2A>.
+
+For vector data types, the <xref:Microsoft.Data.SqlClient.SqlParameter.Size%2A> property is ignored. The size of the vector is inferred from the <xref:Microsoft.Data.SqlClient.SqlParameter.Value%2A> of type <xref:Microsoft.Data.SqlTypes.SqlVector%2A>.
 
 Prior to Visual Studio 2010, <xref:Microsoft.Data.SqlClient.SqlCommand.Prepare%2A> threw an exception.  Beginning in Visual Studio 2010, this method does not throw an exception.
 

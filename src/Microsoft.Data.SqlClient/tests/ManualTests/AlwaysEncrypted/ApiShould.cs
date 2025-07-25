@@ -47,10 +47,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         private HashSet<string> _cancellationExceptionMessages = new HashSet<string>()
         {
-            "A severe error occurred on the current command.  The results, if any, should be discarded.\r\nOperation cancelled by user.",
-            "A severe error occurred on the current command.  The results, if any, should be discarded.",
+            "A severe error occurred on the current command.  " +
+            "The results, if any, should be discarded." + Environment.NewLine +
             "Operation cancelled by user.",
-            "The request failed to run because the batch is aborted, this can be caused by abort signal sent from client, or another request is running in the same session, which makes the session busy.\r\nOperation cancelled by user."
+
+            "A severe error occurred on the current command.  " +
+            "The results, if any, should be discarded.",
+
+            "Operation cancelled by user.",
+
+            "The request failed to run because the batch is aborted, " +
+            "this can be caused by abort signal sent from client, " +
+            "or another request is running in the same session, " +
+            "which makes the session busy." + Environment.NewLine +
+            "Operation cancelled by user."
         };
 
         public ApiShould(PlatformSpecificTestContext context)
@@ -3195,7 +3205,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     while (reader.Read())
                     { }
                 });
-                Assert.Contains(ex.Message, _cancellationExceptionMessages);
+
+                // We don't use Assert.Contains() here because it truncates the
+                // actual and expected strings when outputting a failure.
+                if (!_cancellationExceptionMessages.Contains(ex.Message))
+                {
+                    Assert.Fail(
+                        $"Exception message \"{ex.Message}\" not found in: [\"" +
+                        string.Join("\", \"", _cancellationExceptionMessages) + "\"]");
+                }
             }
             finally
             {
@@ -3219,7 +3237,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 cancelCommandTestParamsObject.StartWorkloadSignal.Wait();
 
                 Exception ex = Assert.ThrowsAny<Exception>(() => sqlCommand.ExecuteNonQuery());
-                Assert.Contains(ex.Message, _cancellationExceptionMessages);
+
+                // We don't use Assert.Contains() here because it truncates the
+                // actual and expected strings when outputting a failure.
+                if (!_cancellationExceptionMessages.Contains(ex.Message))
+                {
+                    Assert.Fail(
+                        $"Exception message \"{ex.Message}\" not found in: [\"" +
+                        string.Join("\", \"", _cancellationExceptionMessages) + "\"]");
+                }
             }
             finally
             {
