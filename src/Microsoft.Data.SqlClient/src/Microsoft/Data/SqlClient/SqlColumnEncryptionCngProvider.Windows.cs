@@ -301,7 +301,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert((dataToSign != null) && (dataToSign.Length != 0));
             Debug.Assert(rsaCngProvider != null);
 
-            // CodeQL [SM03796] Required for backwards compatibility with existing data and cross-driver compability
+            // CodeQL [SM03796] Required for backwards compatibility with existing data and cross-driver compatability
             return rsaCngProvider.SignData(dataToSign, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         }
 
@@ -318,7 +318,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert((signature != null) && (signature.Length != 0));
             Debug.Assert(rsaCngProvider != null);
 
-            // CodeQL [SM03796] Required for backwards compatibility with existing data and cross-driver compability
+            // CodeQL [SM03796] Required for backwards compatibility with existing data and cross-driver compatability
             return rsaCngProvider.VerifyData(dataToVerify, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         }
 
