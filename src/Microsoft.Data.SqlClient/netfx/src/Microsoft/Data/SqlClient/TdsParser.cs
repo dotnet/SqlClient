@@ -974,7 +974,7 @@ namespace Microsoft.Data.SqlClient
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
 
-            uint protocolVersion = 0;
+            SslProtocols protocol = 0;
 
             // in the case where an async connection is made, encryption is used and Windows Authentication is used,
             // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its
@@ -984,7 +984,7 @@ namespace Microsoft.Data.SqlClient
             if (OperatingSystem.IsWindows())
 #endif
             {
-                error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocolVersion);
+                error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocol);
                 if (error != TdsEnums.SNI_SUCCESS)
                 {
                     _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
@@ -992,7 +992,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            SslProtocols protocol = (SslProtocols)protocolVersion;
             string warningMessage = protocol.GetProtocolWarning();
             if (!string.IsNullOrEmpty(warningMessage))
             {

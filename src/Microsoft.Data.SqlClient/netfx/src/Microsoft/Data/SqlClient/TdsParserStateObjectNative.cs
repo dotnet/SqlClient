@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Security.Authentication;
 using System.Threading.Tasks;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
@@ -212,9 +213,12 @@ namespace Microsoft.Data.SqlClient
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
             => SniNativeWrapper.SniSetInfo(Handle, QueryType.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
 
-        internal override uint WaitForSSLHandShakeToComplete(out uint protocolVersion)
+        internal override uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion)
         {
-            return SniNativeWrapper.SniWaitForSslHandshakeToComplete(Handle, GetTimeoutRemaining(), out protocolVersion);
+            uint returnValue = SniNativeWrapper.SniWaitForSslHandshakeToComplete(Handle, GetTimeoutRemaining(), out uint nativeProtocolVersion);
+
+            protocolVersion = (SslProtocols)nativeProtocolVersion;
+            return returnValue;
         }
 
         internal override SniErrorDetails GetErrorDetails()

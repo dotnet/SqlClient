@@ -7,6 +7,7 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Security;
+using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -533,7 +534,7 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract uint SniGetConnectionId(ref Guid clientConnectionId);
 
-        internal abstract uint WaitForSSLHandShakeToComplete(out uint protocolVersion);
+        internal abstract uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion);
 
         internal abstract uint DisableSsl();
 

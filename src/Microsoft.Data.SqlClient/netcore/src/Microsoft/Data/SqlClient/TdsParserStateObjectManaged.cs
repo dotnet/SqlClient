@@ -8,6 +8,7 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
@@ -388,9 +389,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return TdsEnums.SNI_SUCCESS;
         }
 
-        internal override uint WaitForSSLHandShakeToComplete(out uint protocolVersion)
+        internal override uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion)
         {
-            protocolVersion = (uint)GetSessionSNIHandleHandleOrThrow().ProtocolVersion;
+            protocolVersion = GetSessionSNIHandleHandleOrThrow().ProtocolVersion;
             return TdsEnums.SNI_SUCCESS;
         }
 
