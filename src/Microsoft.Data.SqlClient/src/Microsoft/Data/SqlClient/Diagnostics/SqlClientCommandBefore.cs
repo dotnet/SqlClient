@@ -2,36 +2,32 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace Microsoft.Data.SqlClient.Diagnostics
 {
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenAfter"]/SqlClientConnectionOpenAfter/*'/>
-    public sealed class SqlClientConnectionOpenAfter : IReadOnlyList<KeyValuePair<string, object>>
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandBefore"]/SqlClientCommandBefore/*'/>
+    public sealed class SqlClientCommandBefore : IReadOnlyList<KeyValuePair<string, object>>
     {
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenAfter"]/Name/*'/>
-        public const string Name = "Microsoft.Data.SqlClient.WriteConnectionOpenAfter";
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandBefore"]/SqlClientCommandBefore/*'/>
+        public const string Name = "Microsoft.Data.SqlClient.WriteCommandBefore";
 
-        internal SqlClientConnectionOpenAfter(
+        internal SqlClientCommandBefore(
             Guid operationId,
             string operation,
             long timestamp,
-            Guid connectionId,
-            SqlConnection connection,
-            string clientVersion,
-            IDictionary statistics)
+            Guid? connectionId,
+            long? transactionId,
+            SqlCommand command)
         {
             OperationId = operationId;
             Operation = operation;
             Timestamp = timestamp;
             ConnectionId = connectionId;
-            Connection = connection;
-            ClientVersion = clientVersion;
-            Statistics = statistics;
+            TransactionId = transactionId;
+            Command = command;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
@@ -40,17 +36,15 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         public string Operation { get; }
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
         public long Timestamp { get; }
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenAfter"]/ConnectionId/*'/>
-        public Guid ConnectionId { get; }
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenAfter"]/Connection/*'/>
-        public SqlConnection Connection { get; }
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenAfter"]/ClientVersion/*'/>
-        public string ClientVersion { get; }
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenAfter"]/Statistics/*'/>
-        public IDictionary Statistics { get; }
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandBefore"]/ConnectionId/*'/>
+        public Guid? ConnectionId { get; }
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandBefore"]/TransactionId/*'/>
+        public long? TransactionId { get; }
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandBefore"]/Command/*'/>
+        public SqlCommand Command { get; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
-        public int Count => 3 + 4;
+        public int Count => 3 + 3;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
@@ -61,9 +55,8 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                 1 => new KeyValuePair<string, object>(nameof(Operation), Operation),
                 2 => new KeyValuePair<string, object>(nameof(Timestamp), Timestamp),
                 3 => new KeyValuePair<string, object>(nameof(ConnectionId), ConnectionId),
-                4 => new KeyValuePair<string, object>(nameof(Connection), Connection),
-                5 => new KeyValuePair<string, object>(nameof(ClientVersion), ClientVersion),
-                6 => new KeyValuePair<string, object>(nameof(Statistics), Statistics),
+                4 => new KeyValuePair<string, object>(nameof(TransactionId), TransactionId),
+                5 => new KeyValuePair<string, object>(nameof(Command), Command),
                 _ => throw new IndexOutOfRangeException(nameof(index)),
             };
         }
@@ -82,5 +75,3 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         }
     }
 }
-
-#endif
