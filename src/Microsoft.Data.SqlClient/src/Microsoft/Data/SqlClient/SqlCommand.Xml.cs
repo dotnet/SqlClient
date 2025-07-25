@@ -124,7 +124,7 @@ namespace Microsoft.Data.SqlClient
         #endregion
         
         #region Private Methods
-
+        
         private static XmlReader CompleteXmlReader(SqlDataReader dataReader, bool isAsync)
         {
             XmlReader xmlReader = null;
@@ -163,6 +163,24 @@ namespace Microsoft.Data.SqlClient
             return xmlReader;
         }
 
+        private IAsyncResult BeginExecuteXmlReaderAsync(AsyncCallback callback, object stateObject)
+        {
+            SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                "SqlCommand.BeginExecuteXmlReaderAsync | API | Correlation | " +
+                $"Object Id {ObjectID}, " +
+                $"Activity Id {ActivityCorrelator.Current}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"Command Text '{CommandText}'");
+            
+            return BeginExecuteXmlReaderInternal(
+                CommandBehavior.SequentialAccess,
+                callback,
+                stateObject,
+                CommandTimeout,
+                isRetry: false,
+                asyncWrite: true);
+        }
+        
         private Task<XmlReader> InternalExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {
             #if NETFRAMEWORK
