@@ -49,7 +49,8 @@ namespace Microsoft.Data.SqlClient
                 callback,
                 stateObject,
                 timeout: 0,
-                isRetry: false);
+                isRetry: false,
+                asyncWrite: false);
         }
         
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReader/*'/>
@@ -179,6 +180,132 @@ namespace Microsoft.Data.SqlClient
                 CommandTimeout,
                 isRetry: false,
                 asyncWrite: true);
+        }
+
+        private IAsyncResult BeginExecuteXmlReaderInternal(
+            CommandBehavior behavior,
+            AsyncCallback callback,
+            object stateObject,
+            int timeout,
+            bool isRetry,
+            bool asyncWrite)
+        {
+            TaskCompletionSource<object> globalCompletion = new TaskCompletionSource<object>(stateObject);
+            TaskCompletionSource<object> localCompletion = new TaskCompletionSource<object>(stateObject);
+
+            if (!isRetry)
+            {
+                // Reset _pendingCancel upon entry into any Execute - used to synchronize state
+                // between entry into Execute* API and the thread obtaining the stateObject.
+                _pendingCancel = false;
+                
+                // Special case - done outside of try/catches to prevent putting a stateObj back
+                // into pool when we should not.
+                ValidateAsyncCommand();
+            }
+
+            SqlStatistics statistics = null;
+            try
+            {
+                if (!isRetry)
+                {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    WriteBeginExecuteEvent();
+                }
+
+                bool usedCache; // @TODO: Is this used *usefully* anywhere?
+                Task writeTask;
+                try
+                {
+                    // RunExecuteReader already has reliability block, but if it fails, it
+                    // will not put stateObj back into pool.
+                    RunExecuteReader(
+                        behavior,
+                        RunBehavior.ReturnImmediately,
+                        returnStream: true,
+                        localCompletion,
+                        timeout,
+                        out writeTask,
+                        out usedCache,
+                        asyncWrite,
+                        isRetry);
+
+                    // @TODO: NonQuery pathway has the continueTaskWithState block inside this try. One or the other seems wrong 
+                }
+                catch (Exception e)
+                {
+                    // @TODO: Invert
+                    if (!ADP.IsCatchableOrSecurityExceptionType(e))
+                    {
+                        // If not catchable - the connection has already been caught and doomed in
+                        // RunExecuteReader.
+                        throw;
+                    }
+
+                    // For async, RunExecuteReader will never put the stateObj back into the pool,
+                    // so, do so now.
+                    ReliablePutStateObject();
+                    throw;
+                }
+
+                if (writeTask is not null)
+                {
+                    AsyncHelper.ContinueTaskWithState(
+                        task: writeTask,
+                        completion: localCompletion,
+                        state: Tuple.Create(this, localCompletion),
+                        onSuccess: static state =>
+                        {
+                            var parameters = (Tuple<SqlCommand, TaskCompletionSource<object>>)state;
+                            parameters.Item1.BeginExecuteXmlReaderInternalReadStage(parameters.Item2);
+                        });
+                }
+                else
+                {
+                    BeginExecuteXmlReaderInternalReadStage(localCompletion);
+                }
+
+                // When we use query caching for parameter encryption we need to retry on specific
+                // errors. In these cases finalize the call internally and trigger a retry when needed.
+                // @TODO: store this method call in a variable, it's faaaaar too big to be used in an if statement
+                if (
+                    !TriggerInternalEndAndRetryIfNecessary(
+                        behavior,
+                        stateObject,
+                        timeout,
+                        usedCache,
+                        isRetry,
+                        asyncWrite,
+                        globalCompletion,
+                        localCompletion,
+                        endFunc: static (SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod) =>
+                        {
+                            return command.InternalEndExecuteReader(asyncResult, isInternal, endMethod);
+                        },
+                        retryFunc: static (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool isRetry, bool asyncWrite) =>
+                        {
+                            return command.BeginExecuteXmlReaderInternal(behavior, callback, stateObject, timeout, isRetry, asyncWrite);
+                        },
+                        endMethod: nameof(EndExecuteXmlReader)))
+                {
+                    // @TODO: globalCompletion isn't being used past here! Why are we doing this??
+                    globalCompletion = localCompletion;
+                }
+
+                // Add callback after work is done to avoid overlapping Begin/End methods
+                if (callback is not null)
+                {
+                    localCompletion.Task.ContinueWith(
+                        static (task, state) => ((AsyncCallback)state)(task),
+                        state: callback);
+                }
+
+                return localCompletion.Task;
+            }
+            finally
+            {
+                SqlStatistics.StopTimer(statistics);
+            }
         }
         
         private Task<XmlReader> InternalExecuteXmlReaderAsync(CancellationToken cancellationToken)
