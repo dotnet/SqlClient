@@ -141,7 +141,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             catch (Exception e)
             {
                 cleanupCallback(connection, cleanupState);
-                throw new Exception("Failed to create or add connection", e);
+                throw;
             }
         }
 

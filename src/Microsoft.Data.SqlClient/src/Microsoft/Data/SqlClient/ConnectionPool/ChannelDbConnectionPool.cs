@@ -151,7 +151,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <inheritdoc />
-        public void ReturnInternalConnection(DbConnectionInternal connection, DbConnection? owningObject)
+        public void ReturnInternalConnection(DbConnectionInternal connection, DbConnection owningObject)
         {
             ValidateOwnershipAndSetPoolingState(connection, owningObject);
 
@@ -545,13 +545,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 //TODO: pass through transaction
                 connection.ActivateConnection(null);
             }
-            catch (Exception e)
+            catch
             {
                 // At this point, the connection is "out of the pool" (the call to postpop). If we hit a transient
                 // error anywhere along the way when enlisting the connection in the transaction, we need to get
                 // the connection back into the pool so that it isn't leaked.
                 ReturnInternalConnection(connection, owningObject);
-                throw new Exception("Failed to activate connection", e);
+                throw;
             }
         }
 
