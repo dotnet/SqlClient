@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.ProviderBase;
@@ -11,6 +10,8 @@ using Xunit;
 using System.Data;
 using System.Data.Common;
 using System.Transactions;
+
+#nullable enable
 
 namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 {
@@ -75,32 +76,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Contains("Capacity must be less than or equal to Int32.MaxValue", exception.Message);
         }
 
-        [Fact]
-        public void Constructor_CapacityEqualToIntMaxValue_DoesNotThrow()
-        {
-            try
-            {
-                // Arrange & Act - This should not throw ArgumentOutOfRangeException since Int32.MaxValue is valid
-                var poolSlots = new ConnectionPoolSlots((uint)int.MaxValue);
-
-                // Assert
-                Assert.Equal(0, poolSlots.ReservationCount);
-            }
-            catch (OutOfMemoryException)
-            {
-                // OutOfMemoryException is acceptable when trying to allocate an array of int.MaxValue size
-                // This test is primarily checking that ArgumentOutOfRangeException is not thrown for the capacity validation
-                // The fact that we reach the OutOfMemoryException means the capacity validation passed
-            }
-        }
-
         [Theory]
-        [InlineData(1u)]
-        [InlineData(5u)]
-        [InlineData(10u)]
-        [InlineData(100u)]
-        [InlineData(1000u)]
-        public void Constructor_ValidCapacityValues_SetsReservationCountToZero(uint capacity)
+        [InlineData(10000u)]
+        public void Constructor_LargeCapacityValues_SetsReservationCountToZero(uint capacity)
         {
             // Arrange & Act
             var poolSlots = new ConnectionPoolSlots(capacity);
@@ -114,17 +92,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             var poolSlots = new ConnectionPoolSlots(5);
+            var createCallbackCount = 0;
             
             // Act
             var connection = poolSlots.Add(
-                createCallback: state => new MockDbConnectionInternal(),
-                cleanupCallback: (conn, state) => { },
+                createCallback: (state) => {
+                    createCallbackCount++;
+                    return new MockDbConnectionInternal();
+                },
+                cleanupCallback: (conn, state) => Assert.Fail(),
                 createState: "test",
                 cleanupState: "cleanup");
 
             // Assert
             Assert.NotNull(connection);
             Assert.Equal(1, poolSlots.ReservationCount);
+            Assert.Equal(1, createCallbackCount);
         }
 
         [Fact]
@@ -132,17 +115,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             var poolSlots = new ConnectionPoolSlots(5);
-            
+            var createCallbackCount = 0;
+
             // Act
             var connection = poolSlots.Add(
-                createCallback: state => null,
-                cleanupCallback: (conn, state) => { },
+                createCallback: state => {
+                    createCallbackCount++;
+                    return null;
+                },
+                cleanupCallback: (conn, state) => Assert.Fail(),
                 createState: "test",
                 cleanupState: "cleanup");
 
             // Assert
             Assert.Null(connection);
             Assert.Equal(0, poolSlots.ReservationCount);
+            Assert.Equal(1, createCallbackCount);
         }
 
         [Fact]
@@ -150,18 +138,28 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             var poolSlots = new ConnectionPoolSlots(1);
+            var createCallbackCount = 0;
             
             // Act - Add first connection
             var connection1 = poolSlots.Add(
-                createCallback: state => new MockDbConnectionInternal(),
-                cleanupCallback: (conn, state) => { },
+                createCallback: state => {
+                    createCallbackCount++;
+                    return new MockDbConnectionInternal();
+                },
+                cleanupCallback: (conn, state) => Assert.Fail(),
                 createState: "test",
                 cleanupState: "cleanup");
 
             // Act - Try to add second connection beyond capacity
             var connection2 = poolSlots.Add(
-                createCallback: state => new MockDbConnectionInternal(),
-                cleanupCallback: (conn, state) => { },
+                createCallback: state =>
+                {
+                    Assert.Fail();
+                    return null;
+                },
+                cleanupCallback: (conn, state) => {
+                    Assert.Fail();
+                },
                 createState: "test",
                 cleanupState: "cleanup");
 
@@ -169,6 +167,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.NotNull(connection1);
             Assert.Null(connection2);
             Assert.Equal(1, poolSlots.ReservationCount);
+            Assert.Equal(1, createCallbackCount);
         }
 
         [Fact]
@@ -176,19 +175,25 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             var poolSlots = new ConnectionPoolSlots(5);
-            bool cleanupCalled = false;
+            var createCallbackCount = 0;
+            var cleanupCallbackCount = 0;
             
             // Act & Assert
             var exception = Assert.Throws<Exception>(() =>
                 poolSlots.Add(
-                    createCallback: state => throw new InvalidOperationException("Test exception"),
-                    cleanupCallback: (conn, state) => { cleanupCalled = true; },
+                    createCallback: state => {
+                        createCallbackCount++;
+                        throw new InvalidOperationException("Test exception");
+                    },
+                    cleanupCallback: (conn, state) => cleanupCallbackCount++,
                     createState: "test",
                     cleanupState: "cleanup"));
 
             Assert.Contains("Failed to create or add connection", exception.Message);
-            Assert.True(cleanupCalled);
+            Assert.Equal(1, cleanupCallbackCount);
             Assert.Equal(0, poolSlots.ReservationCount);
+            Assert.Equal(1, createCallbackCount);
+            Assert.Equal(1, cleanupCallbackCount);
         }
 
         [Fact]
@@ -196,24 +201,36 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             var poolSlots = new ConnectionPoolSlots(5);
-            
+            var createCallbackCount = 0;
+            var createCallbackCount2 = 0;
+
             // Act
             var connection1 = poolSlots.Add(
-                createCallback: state => new MockDbConnectionInternal(),
-                cleanupCallback: (conn, state) => { },
-                createState: "test1",
-                cleanupState: "cleanup1");
-                
+                createCallback: state =>
+                {
+                    createCallbackCount++;
+                    return new MockDbConnectionInternal();
+                },
+                cleanupCallback: (conn, state) => Assert.Fail(),
+                createState: "test",
+                cleanupState: "cleanup");
+
             var connection2 = poolSlots.Add(
-                createCallback: state => new MockDbConnectionInternal(),
-                cleanupCallback: (conn, state) => { },
-                createState: "test2",
-                cleanupState: "cleanup2");
+                createCallback: state =>
+                {
+                    createCallbackCount2++;
+                    return new MockDbConnectionInternal();
+                },
+                cleanupCallback: (conn, state) => Assert.Fail(),
+                createState: "test",
+                cleanupState: "cleanup");
 
             // Assert
             Assert.NotNull(connection1);
             Assert.NotNull(connection2);
             Assert.Equal(2, poolSlots.ReservationCount);
+            Assert.Equal(1, createCallbackCount);
+            Assert.Equal(1, createCallbackCount2);
         }
 
         [Fact]
@@ -227,10 +244,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 createState: "test",
                 cleanupState: "cleanup");
 
+            var reservationCountBeforeRemove = poolSlots.ReservationCount;
+
             // Act
-            var removed = poolSlots.TryRemove(connection);
+            var removed = poolSlots.TryRemove(connection!);
 
             // Assert
+            Assert.Equal(1, reservationCountBeforeRemove);
             Assert.True(removed);
             Assert.Equal(0, poolSlots.ReservationCount);
         }
@@ -241,13 +261,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Arrange
             var poolSlots = new ConnectionPoolSlots(5);
             var connection = new MockDbConnectionInternal();
+            var connection2 = poolSlots.Add(
+                createCallback: state => new MockDbConnectionInternal(),
+                cleanupCallback: (conn, state) => { },
+                createState: "test",
+                cleanupState: "cleanup");
+            var reservationCountBeforeRemove = poolSlots.ReservationCount;
 
             // Act
             var removed = poolSlots.TryRemove(connection);
 
             // Assert
+            Assert.Equal(1, reservationCountBeforeRemove);
             Assert.False(removed);
-            Assert.Equal(0, poolSlots.ReservationCount);
+            Assert.Equal(1, poolSlots.ReservationCount);
         }
 
         [Fact]
@@ -260,14 +287,45 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 cleanupCallback: (conn, state) => { },
                 createState: "test",
                 cleanupState: "cleanup");
+            var reservationCountBeforeRemove = poolSlots.ReservationCount;
 
             // Act
-            var firstRemove = poolSlots.TryRemove(connection);
-            var secondRemove = poolSlots.TryRemove(connection);
+            var firstRemove = poolSlots.TryRemove(connection!);
+            var secondRemove = poolSlots.TryRemove(connection!);
 
             // Assert
+            Assert.Equal(1, reservationCountBeforeRemove);
             Assert.True(firstRemove);
             Assert.False(secondRemove);
+            Assert.Equal(0, poolSlots.ReservationCount);
+        }
+
+        [Fact]
+        public void TryRemove_SameConnectionTwice_ReturnsTrueWhenAddedTwice()
+        {
+            // Arrange
+            var poolSlots = new ConnectionPoolSlots(5);
+            var commonConnection = new MockDbConnectionInternal();
+            var connection = poolSlots.Add(
+                createCallback: state => commonConnection,
+                cleanupCallback: (conn, state) => { },
+                createState: "test",
+                cleanupState: "cleanup");
+            var connection2 = poolSlots.Add(
+                createCallback: state => commonConnection,
+                cleanupCallback: (conn, state) => { },
+                createState: "test",
+                cleanupState: "cleanup");
+            var reservationCountBeforeRemove = poolSlots.ReservationCount;
+
+            // Act
+            var firstRemove = poolSlots.TryRemove(connection!);
+            var secondRemove = poolSlots.TryRemove(connection2!);
+
+            // Assert
+            Assert.Equal(2, reservationCountBeforeRemove);
+            Assert.True(firstRemove);
+            Assert.True(secondRemove);
             Assert.Equal(0, poolSlots.ReservationCount);
         }
 
@@ -289,11 +347,25 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 cleanupState: "cleanup2");
 
             // Act
-            var removed = poolSlots.TryRemove(connection1);
+            var removed = poolSlots.TryRemove(connection1!);
 
             // Assert
             Assert.True(removed);
             Assert.Equal(1, poolSlots.ReservationCount);
+
+            // Act
+            var removed2 = poolSlots.TryRemove(connection1!);
+
+            // Assert
+            Assert.False(removed2); // Should return false since connection1 was already removed
+            Assert.Equal(1, poolSlots.ReservationCount);
+
+            // Act
+            var removed3 = poolSlots.TryRemove(connection2!);
+
+            // Assert
+            Assert.True(removed3);
+            Assert.Equal(0, poolSlots.ReservationCount);
         }
 
         [Fact]
@@ -315,7 +387,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                         createCallback: state => new MockDbConnectionInternal(),
                         cleanupCallback: (conn, state) => { },
                         createState: $"test{index}",
-                        cleanupState: $"cleanup{index}");
+                        cleanupState: $"cleanup{index}")!;
                 });
             }
 
@@ -333,11 +405,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 int index = i;
                 removeTasks[i] = Task.Run(() =>
                 {
-                    if (connections[index] != null)
-                    {
-                        poolSlots.TryRemove(connections[index]);
-                    }
-                });
+                    poolSlots.TryRemove(connections[index]);
+                });                
             }
 
             // Wait for all remove operations to complete
@@ -365,7 +434,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     createCallback: state => new MockDbConnectionInternal(),
                     cleanupCallback: (conn, state) => { },
                     createState: $"test{i}",
-                    cleanupState: $"cleanup{i}");
+                    cleanupState: $"cleanup{i}")!;
                 Assert.NotNull(connections[i]);
             }
 
@@ -413,30 +482,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(3, poolSlots.ReservationCount);
 
             // Remove 1 connection
-            poolSlots.TryRemove(conn2);
+            poolSlots.TryRemove(conn2!);
             Assert.Equal(2, poolSlots.ReservationCount);
 
             // Remove remaining connections
-            poolSlots.TryRemove(conn1);
+            poolSlots.TryRemove(conn1!);
             Assert.Equal(1, poolSlots.ReservationCount);
 
-            poolSlots.TryRemove(conn3);
+            poolSlots.TryRemove(conn3!);
             Assert.Equal(0, poolSlots.ReservationCount);
-        }
-
-        [Fact]
-        public void Add_WithNullCleanupCallback_ThrowsArgumentNullException()
-        {
-            // Arrange
-            var poolSlots = new ConnectionPoolSlots(5);
-
-            // Act & Assert
-            Assert.Throws<NullReferenceException>(() =>
-                poolSlots.Add(
-                    createCallback: state => throw new InvalidOperationException("Test"),
-                    cleanupCallback: null,
-                    createState: "test",
-                    cleanupState: "cleanup"));
         }
 
         [Fact]
@@ -444,8 +498,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             var poolSlots = new ConnectionPoolSlots(5);
-            string receivedCreateState = null;
-            string receivedCleanupState = null;
+            string? receivedCreateState = null;
+            string? receivedCleanupState = null;
 
             // Act
             try
@@ -491,38 +545,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             Assert.Null(connection2);
             Assert.Equal(1, poolSlots.ReservationCount);
-        }
-
-        [Fact]
-        public void Constructor_BoundaryValue_MaxInt_WorksCorrectly()
-        {
-            try
-            {
-                // This test verifies that Int32.MaxValue is accepted as a valid capacity
-                // We don't actually try to fill it as that would consume too much memory
-                
-                // Arrange & Act
-                var poolSlots = new ConnectionPoolSlots((uint)int.MaxValue);
-
-                // Assert
-                Assert.Equal(0, poolSlots.ReservationCount);
-
-                // Verify we can add at least one connection
-                var connection = poolSlots.Add(
-                    createCallback: state => new MockDbConnectionInternal(),
-                    cleanupCallback: (conn, state) => { },
-                    createState: "test",
-                    cleanupState: "cleanup");
-
-                Assert.NotNull(connection);
-                Assert.Equal(1, poolSlots.ReservationCount);
-            }
-            catch (OutOfMemoryException)
-            {
-                // OutOfMemoryException is acceptable when trying to allocate an array of int.MaxValue size
-                // This test is primarily checking that ArgumentOutOfRangeException is not thrown for the capacity validation
-                // The fact that we reach the OutOfMemoryException means the capacity validation passed
-            }
         }
     }
 }

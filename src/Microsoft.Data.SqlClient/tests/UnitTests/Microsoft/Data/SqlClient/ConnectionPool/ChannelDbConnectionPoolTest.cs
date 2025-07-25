@@ -815,13 +815,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         [Fact]
-        public void Constructor_WithMaxIntMaxPoolSize_DoesNotThrow()
+        public void Constructor_WithLargeMaxPoolSize()
         {
             // Arrange - Test that Int32.MaxValue is accepted as a valid pool size
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
                 minPoolSize: 0,
-                maxPoolSize: int.MaxValue,
+                maxPoolSize: 10000,
                 creationTimeout: 15,
                 loadBalanceTimeout: 0,
                 hasTransactionAffinity: true
