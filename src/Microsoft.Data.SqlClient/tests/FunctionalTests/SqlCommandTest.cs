@@ -3,8 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Data;
 using Microsoft.Data.Sql;
+using Microsoft.Data.SqlClient.Server;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -518,5 +520,110 @@ namespace Microsoft.Data.SqlClient.Tests
                 cmd.Parameters.Remove(cmd.Parameters[0]);
             }
         }
+
+        #region fixing "Change SqlParameter to allow empty IEnumerable<SqlDataRecord>? #2971"
+        public const string DbName = "TVPTestDb";
+        public const string ServerConnection = @"Server=.;Integrated Security=true;Encrypt=false;";
+        public static string DbConnection => ServerConnection + $"Initial Catalog={DbName};";
+        private static class SqlDataRecordTestCases
+        {
+            public static IEnumerable<object[]> TestSqlDataRecordParameters => new List<object[]>
+            {
+                new object[] { null },
+                new object[] { new List<SqlDataRecord>() } // empty list, and the issue it throw an Arrgument Error Exception
+            };
+        }
+
+        private static void CreateDatabaseAndSchema()
+        {
+            string createDb = $@"
+                                IF DB_ID('{DbName}') IS NULL
+                                 CREATE DATABASE {DbName};";
+
+            string createSchema = @"
+                                    USE TVPTestDb;
+
+                                        IF NOT EXISTS (SELECT * FROM sys.types WHERE is_table_type = 1 AND name = 'MySimpleTableType')
+                                        BEGIN
+                                        CREATE TYPE dbo.MySimpleTableType AS TABLE
+                                        (
+                                            Id INT,
+                                            Name NVARCHAR(100)
+                                        );
+                                        END;
+
+                                        IF OBJECT_ID('dbo.TargetTable', 'U') IS NULL
+                                        BEGIN
+                                        CREATE TABLE dbo.TargetTable
+                                        (
+                                            Id INT PRIMARY KEY,
+                                            Name NVARCHAR(100)
+                                        );
+                                        END;
+
+                                        IF OBJECT_ID('dbo.InsertFromTVP', 'P') IS NULL
+                                        BEGIN
+                                        EXEC('
+                                            CREATE PROCEDURE dbo.InsertFromTVP
+                                            @MyTVP dbo.MySimpleTableType READONLY
+                                                AS
+                                            BEGIN
+                                            SET NOCOUNT ON;
+                                            INSERT INTO dbo.TargetTable (Id, Name)
+                                            SELECT Id, Name FROM @MyTVP;
+                                            END
+                                            ');
+                                        END;";
+
+            using var conn = new SqlConnection(ServerConnection);
+            conn.Open();
+            new SqlCommand(createDb, conn).ExecuteNonQuery();
+
+            using var connDb = new SqlConnection(DbConnection);
+            connDb.Open();
+            new SqlCommand(createSchema, connDb).ExecuteNonQuery();
+        }
+
+        private static void DeleteDatabase()
+        {
+            string dropDb = $@"
+                                IF DB_ID('{DbName}') IS NOT NULL
+                                BEGIN
+                                ALTER DATABASE {DbName} SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+                                DROP DATABASE {DbName};
+                                END;";
+            using var conn = new SqlConnection(ServerConnection);
+            conn.Open();
+            new SqlCommand(dropDb, conn).ExecuteNonQuery();
+        }
+        private int perpare_SqlRecord_tests(List<SqlDataRecord> records = null)
+        {
+            SqlConnection cn = new SqlConnection(DbConnection);
+
+            SqlCommand cmd;
+            // Text, with parameters
+            cmd = new SqlCommand("dbo.InsertFromTVP", cn);
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            var paramEmpty = cmd.Parameters.AddWithValue("@MyTVP", records);
+            paramEmpty.SqlDbType = SqlDbType.Structured;
+            paramEmpty.TypeName = "dbo.MySimpleTableType";
+            cn.Open();
+            return cmd.ExecuteNonQuery();
+
+        }
+        [Theory]
+        [MemberData(nameof(SqlDataRecordTestCases.TestSqlDataRecordParameters), MemberType = typeof(SqlDataRecordTestCases))]
+        public void SqlDataRecord_TABLE_deafult(List<SqlDataRecord> parameters)
+        {
+            CreateDatabaseAndSchema();
+            int rowAffects = perpare_SqlRecord_tests(parameters);
+            DeleteDatabase();
+            Assert.Equal(-1, rowAffects);
+
+        }
+        #endregion
+
+
     }
 }
