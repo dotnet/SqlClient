@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Extensions.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Extensions.Test.csproj" />
+  </Folder>
+</Solution>
