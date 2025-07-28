@@ -637,48 +637,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private XmlReader EndExecuteXmlReaderInternal(IAsyncResult asyncResult)
-        {
-            bool success = false;
-            int? sqlExceptionNumber = null;
-            try
-            {
-                XmlReader result = CompleteXmlReader(
-                    InternalEndExecuteReader(asyncResult, isInternal: false,  nameof(EndExecuteXmlReader)),
-                    isAsync: true);
-                success = true;
-                return result;
-            }
-            catch (SqlException e)
-            {
-                sqlExceptionNumber = e.Number;
-                if (CachedAsyncState != null)
-                {
-                    CachedAsyncState.ResetAsyncState();
-                };
-
-                //  SqlException is always catchable 
-                ReliablePutStateObject();
-                throw;
-            }
-            catch (Exception e)
-            {
-                if (CachedAsyncState != null)
-                {
-                    CachedAsyncState.ResetAsyncState();
-                };
-                if (ADP.IsCatchableExceptionType(e))
-                {
-                    ReliablePutStateObject();
-                };
-                throw;
-            }
-            finally
-            {
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: false);
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="default"]/*'/>
         [HostProtection(ExternalThreading = true)]
         public IAsyncResult BeginExecuteReader() =>
@@ -1332,26 +1290,6 @@ namespace Microsoft.Data.SqlClient
             if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
             {
                 Interlocked.CompareExchange(ref sqlInternalConnection.CachedCommandExecuteXmlReaderAsyncContext, instance, null);
-            }
-        }
-
-        private void CleanupAfterExecuteXmlReaderAsync(Task<XmlReader> task, TaskCompletionSource<XmlReader> source, Guid operationId)
-        {
-            if (task.IsFaulted)
-            {
-                Exception e = task.Exception.InnerException;
-                source.SetException(e);
-            }
-            else
-            {
-                if (task.IsCanceled)
-                {
-                    source.SetCanceled();
-                }
-                else
-                {
-                    source.SetResult(task.Result);
-                }
             }
         }
 

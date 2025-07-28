@@ -635,38 +635,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private XmlReader EndExecuteXmlReaderInternal(IAsyncResult asyncResult)
-        {
-            bool success = false;
-            int? sqlExceptionNumber = null;
-            try
-            {
-                success = true;
-                return CompleteXmlReader(InternalEndExecuteReader(asyncResult, false, nameof(EndExecuteXmlReader)), true);
-            }
-            catch (Exception e)
-            {
-                if (e is SqlException)
-                {
-                    SqlException ex = (SqlException)e;
-                    sqlExceptionNumber = ex.Number;
-                }
-                if (CachedAsyncState != null)
-                {
-                    CachedAsyncState.ResetAsyncState();
-                };
-                if (ADP.IsCatchableExceptionType(e))
-                {
-                    ReliablePutStateObject();
-                };
-                throw;
-            }
-            finally
-            {
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: false);
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="default"]/*'/>
         public IAsyncResult BeginExecuteReader() =>
             BeginExecuteReader(callback: null, stateObject: null, CommandBehavior.Default);
@@ -1369,28 +1337,6 @@ namespace Microsoft.Data.SqlClient
             if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
             {
                 Interlocked.CompareExchange(ref sqlInternalConnection.CachedCommandExecuteXmlReaderAsyncContext, instance, null);
-            }
-        }
-
-        private void CleanupAfterExecuteXmlReaderAsync(Task<XmlReader> task, TaskCompletionSource<XmlReader> source, Guid operationId)
-        {
-            if (task.IsFaulted)
-            {
-                Exception e = task.Exception.InnerException;
-                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                source.SetException(e);
-            }
-            else
-            {
-                if (task.IsCanceled)
-                {
-                    source.SetCanceled();
-                }
-                else
-                {
-                    source.SetResult(task.Result);
-                }
-                s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
             }
         }
 
