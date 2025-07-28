@@ -533,7 +533,7 @@ namespace Microsoft.Data.SqlClient
                     // @TODO: With C#/net6 add [StackTraceHidden]
                     ExecuteXmlReaderAsyncCallContext context = (ExecuteXmlReaderAsyncCallContext)task.AsyncState;
                     SqlCommand command = context.Command;
-                    Guid operationId = context.OperationID;
+                    Guid operationId = context.OperationId;
                     TaskCompletionSource<XmlReader> source = context.TaskCompletionSource;
 
                     context.Dispose();
@@ -560,6 +560,48 @@ namespace Microsoft.Data.SqlClient
                 () => InternalExecuteXmlReaderAsync(cancellationToken),
                 cancellationToken);
 
+        private void SetCachedCommandExecuteXmlReaderContext(ExecuteXmlReaderAsyncCallContext instance)
+        {
+            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            {
+                // @TODO: Move this compare exchange into the SqlInternalConnection class (or better yet, do away with this context)
+                Interlocked.CompareExchange(
+                    ref sqlInternalConnection.CachedCommandExecuteXmlReaderAsyncContext,
+                    instance,
+                    comparand: null);
+            }
+        }
+        
         #endregion
+
+        internal sealed class ExecuteXmlReaderAsyncCallContext
+            : AAsyncCallContext<SqlCommand, XmlReader, CancellationTokenRegistration>
+        {
+            public SqlCommand Command => _owner;
+            
+            public Guid OperationId { get; set; }
+
+            public TaskCompletionSource<XmlReader> TaskCompletionSource => _source;
+
+            public void Set(
+                SqlCommand command,
+                TaskCompletionSource<XmlReader> source,
+                CancellationTokenRegistration disposable,
+                Guid operationId)
+            {
+                base.Set(command,source, disposable);
+                OperationId = operationId;
+            }
+
+            protected override void AfterCleared(SqlCommand owner)
+            {
+                owner?.SetCachedCommandExecuteXmlReaderContext(this);
+            }
+
+            protected override void Clear()
+            {
+                OperationId = Guid.Empty;
+            }
+        }
     }
 }

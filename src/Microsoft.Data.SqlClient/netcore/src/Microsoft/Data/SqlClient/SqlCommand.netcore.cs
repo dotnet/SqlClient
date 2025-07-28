@@ -58,30 +58,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal sealed class ExecuteXmlReaderAsyncCallContext : AAsyncCallContext<SqlCommand, XmlReader, CancellationTokenRegistration>
-        {
-            public Guid OperationID;
-
-            public SqlCommand Command => _owner;
-            public TaskCompletionSource<XmlReader> TaskCompletionSource => _source;
-
-            public void Set(SqlCommand command, TaskCompletionSource<XmlReader> source, CancellationTokenRegistration disposable, Guid operationID)
-            {
-                base.Set(command, source, disposable);
-                OperationID = operationID;
-            }
-
-            protected override void Clear()
-            {
-                OperationID = default;
-            }
-
-            protected override void AfterCleared(SqlCommand owner)
-            {
-                owner?.SetCachedCommandExecuteXmlReaderContext(this);
-            }
-        }
-
         /// <summary>
         /// Indicates if the column encryption setting was set at-least once in the batch rpc mode, when using AddBatchCommand.
         /// </summary>
@@ -604,11 +580,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="default"]/*'/>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="default"]/*'/>
         public IAsyncResult BeginExecuteReader() =>
             BeginExecuteReader(callback: null, stateObject: null, CommandBehavior.Default);
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="AsyncCallbackAndstateObject"]/*'/>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndstateObject"]/*'/>
         public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject) =>
             BeginExecuteReader(callback, stateObject, CommandBehavior.Default);
 
@@ -1298,14 +1274,6 @@ namespace Microsoft.Data.SqlClient
             if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
             {
                 Interlocked.CompareExchange(ref sqlInternalConnection.CachedCommandExecuteReaderAsyncContext, instance, null);
-            }
-        }
-
-        private void SetCachedCommandExecuteXmlReaderContext(ExecuteXmlReaderAsyncCallContext instance)
-        {
-            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
-            {
-                Interlocked.CompareExchange(ref sqlInternalConnection.CachedCommandExecuteXmlReaderAsyncContext, instance, null);
             }
         }
 
