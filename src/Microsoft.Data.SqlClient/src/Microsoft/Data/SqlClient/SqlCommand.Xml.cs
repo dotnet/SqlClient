@@ -350,6 +350,78 @@ namespace Microsoft.Data.SqlClient
                 completion.TrySetException(e);
             }
         }
+
+        // @TODO: This is basically identical to non-query (and probably the reader) versions. Can be refactored to be generic.
+        private void CleanupAfterExecuteXmlReaderAsync(
+            Task<XmlReader> task,
+            TaskCompletionSource<XmlReader> source,
+            Guid operationId)
+        {
+            if (task.IsFaulted)
+            {
+                Exception e = task.Exception?.InnerException;
+                
+                #if NET
+                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                #endif
+                
+                source.SetException(e);
+            }
+            else if (task.IsCanceled)
+            {
+                #if NET
+                s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                #endif
+                
+                source.SetCanceled();
+            }
+            else
+            {
+                #if NET
+                s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                #endif
+                
+                source.SetResult(task.Result);
+            }
+        }
+        
+        private XmlReader EndExecuteXmlReaderInternal(IAsyncResult asyncResult)
+        {
+            bool success = false;
+            int? sqlExceptionNumber = null;
+
+            try
+            {
+                SqlDataReader dataReader = InternalEndExecuteReader(
+                    asyncResult,
+                    isInternal: false,
+                    endMethod: nameof(EndExecuteXmlReader));
+                XmlReader result = CompleteXmlReader(dataReader, isAsync: true);
+
+                success = true;
+                return result;
+            }
+            catch (Exception e)
+            {
+                if (e is SqlException sqlException)
+                {
+                    sqlExceptionNumber = sqlException.Number;
+                }
+
+                CachedAsyncState?.ResetAsyncState();
+
+                if (ADP.IsCatchableExceptionType(e))
+                {
+                    ReliablePutStateObject();
+                }
+
+                throw;
+            }
+            finally
+            {
+                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: false);
+            }
+        }
         
         private Task<XmlReader> InternalExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {
