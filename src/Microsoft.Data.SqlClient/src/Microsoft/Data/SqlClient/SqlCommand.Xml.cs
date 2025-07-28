@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -383,6 +384,41 @@ namespace Microsoft.Data.SqlClient
                 
                 source.SetResult(task.Result);
             }
+        }
+
+        private XmlReader EndExecuteXmlReaderAsync(IAsyncResult asyncResult)
+        {
+            Debug.Assert(!_internalEndExecuteInitiated || _stateObj is null);
+            
+            SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                "SqlCommand.EndExecuteXmlReaderAsync | API | Correlation | " +
+                $"Object Id {ObjectID}, " +
+                $"Activity Id {ActivityCorrelator.Current}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"Command Text '{CommandText}'");
+
+            Exception asyncException = ((Task)asyncResult).Exception;
+            if (asyncException is not null)
+            {
+                CachedAsyncState?.ResetAsyncState();
+                ReliablePutStateObject();
+                throw asyncException.InnerException;
+            }
+            
+            ThrowIfReconnectionHasBeenCanceled();
+            
+            // Locking _stateObj prevents races with close/cancel.
+            // If we have already initiated the End call internally, we have already done that, so
+            // no point doing it again.
+            if (!_internalEndExecuteInitiated)
+            {
+                lock (_stateObj)
+                {
+                    return EndExecuteXmlReaderInternal(asyncResult);
+                }
+            }
+
+            return EndExecuteXmlReaderInternal(asyncResult);
         }
         
         private XmlReader EndExecuteXmlReaderInternal(IAsyncResult asyncResult)
