@@ -6,10 +6,6 @@ using Microsoft.Data.Common;
 
 #nullable enable
 
-#if WINDOWS
-using System.Management;
-#endif
-
 namespace Microsoft.Data.SqlClient.UserAgent;
 
 /// <summary>
@@ -53,10 +49,10 @@ internal static class UserAgentInfo
     /// Maximum number of bytes allowed for the user agent json payload.
     /// Payloads larger than this may be rejected by the server.
     /// </summary>
-    public const int JsonPayloadMaxBytes = 2047;
+    internal const int JsonPayloadMaxBytes = 2047;
 
     private const string DefaultJsonValue = "Unknown";
-    private const string DriverName = "MS-MDS";
+    internal const string DriverName = "MS-MDS";
 
     private static readonly UserAgentInfoDto _dto;
     public static readonly byte[] _cachedPayload;
@@ -77,7 +73,7 @@ internal static class UserAgentInfo
         _cachedPayload = AdjustJsonPayloadSize(_dto);
     }
 
-    static UserAgentInfoDto BuildDto()
+    internal static UserAgentInfoDto BuildDto()
     {
         // Note: We serialize 6 fields in total:
         // - 4 fields with up to 16 characters each
@@ -118,26 +114,19 @@ internal static class UserAgentInfo
         // - If the payload exceeds 2,047 bytes but remains within sensible limits, we still send it, but note that
         //   some servers may silently drop or reject such packets — behavior we may use for future probing or diagnostics.
         // - If payload exceeds 10KB even after dropping fields , we send an empty payload.
-        var driverName = TruncateOrDefault(DriverName, DriverNameMaxChars);
-        var version = TruncateOrDefault(ADP.GetAssemblyVersion().ToString(), VersionMaxChars);
-        var osType = TruncateOrDefault(DetectOsType().ToString(), OsTypeMaxChars);
-        var osDetails = TruncateOrDefault(DetectOsDetails(), OsDetailsMaxChars);
-        var architecture = TruncateOrDefault(DetectArchitecture(), ArchMaxChars);
-        var runtime = TruncateOrDefault(DetectRuntime(), RuntimeMaxChars);
 
         // Instantiate DTO before serializing
         return new UserAgentInfoDto
         {
-            Driver = driverName,
-            Version = version,
+            Driver = TruncateOrDefault(DriverName, DriverNameMaxChars),
+            Version = TruncateOrDefault(ADP.GetAssemblyVersion().ToString(), VersionMaxChars),
             OS = new UserAgentInfoDto.OsInfo
             { 
-                Type = osType,
-                Details = osDetails
+                Type = TruncateOrDefault(DetectOsType().ToString(), OsTypeMaxChars),
+                Details = TruncateOrDefault(DetectOsDetails(), OsDetailsMaxChars)
             },
-            Arch = architecture,
-            Runtime = runtime
-
+            Arch = TruncateOrDefault(DetectArchitecture(), ArchMaxChars),
+            Runtime = TruncateOrDefault(DetectRuntime(), RuntimeMaxChars)
         };
 
     }
@@ -224,26 +213,51 @@ internal static class UserAgentInfo
         {
             // first we try with built-in checks (Android and FreeBSD also report Linux so they are checked first)
 #if NET6_0_OR_GREATER
-            if (OperatingSystem.IsAndroid())  return OsType.Android;
-            if (OperatingSystem.IsFreeBSD())  return OsType.FreeBSD;
-            if (OperatingSystem.IsWindows()) return OsType.Windows;
-            if (OperatingSystem.IsLinux())   return OsType.Linux;
-            if (OperatingSystem.IsMacOS())   return OsType.macOS;
+            if (OperatingSystem.IsAndroid())  
+            {
+                return OsType.Android;
+            }
+            if (OperatingSystem.IsFreeBSD())
+            {
+                return OsType.FreeBSD;
+            }
+            if (OperatingSystem.IsWindows()) 
+            {
+                return OsType.Windows;
+            }
+            if (OperatingSystem.IsLinux())
+            {
+                return OsType.Linux;
+            }
+            if (OperatingSystem.IsMacOS())
+            {
+                return OsType.macOS;
+            }
 #endif
-            // second we fallback to OSPlatform checks
-#if NETCOREAPP3_0_OR_GREATER || NET5_0_OR_GREATER
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
-                return OsType.FreeBSD;
-#else
+
+#if NET462
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Create("FREEBSD")))
+            {
                 return OsType.FreeBSD;
+            }
+#else
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+            {   
+                return OsType.FreeBSD;
+            }                
 #endif
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
                 return OsType.Windows;
+            }
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
                 return OsType.Linux;
+            }
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
                 return OsType.macOS;
+            }
 
             // Final fallback is inspecting OSDecription
             // Note: This is not based on any formal specification,
@@ -297,8 +311,8 @@ internal static class UserAgentInfo
         catch
         {
             // In case RuntimeInformation isn’t available or something unexpected happens
+            return DefaultJsonValue;
         }
-        return DefaultJsonValue;
     }
 
     /// <summary>
@@ -309,7 +323,9 @@ internal static class UserAgentInfo
         // FrameworkDescription is never null, but IsNullOrWhiteSpace covers it anyway
         var desc = RuntimeInformation.FrameworkDescription;
         if (string.IsNullOrWhiteSpace(desc))
+        {
             return DefaultJsonValue;
+        }
 
         // at this point, desc is non‑null, non‑empty (after trimming)
         return desc.Trim();

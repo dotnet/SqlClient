@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Data.SqlClient.UserAgent;
 using Xunit;
 
@@ -60,8 +61,15 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 Runtime = huge
             };
 
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = null,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                WriteIndented = false
+            };
+
             // Capture the size before the helper mutates the DTO
-            byte[] original = JsonSerializer.SerializeToUtf8Bytes(dto);
+            byte[] original = JsonSerializer.SerializeToUtf8Bytes(dto, options);
             Assert.True(original.Length > UserAgentInfo.JsonPayloadMaxBytes);
 
             // Run the field‑dropping logic
@@ -89,33 +97,94 @@ namespace Microsoft.Data.SqlClient.UnitTests
             }
         }
 
-        // 4. DTO JSON contract - verify names and values
-        [Fact]
-        public void Dto_JsonPropertyNames_MatchConstants()
+        // 4. DTO JSON contract - verify names and values(parameterized)
+        [Theory]
+        [InlineData("d", "v", "t", "dd", "a", "r")]
+        [InlineData("DeReaver", "1.2", "linux", "kernel", "", "")]
+        [InlineData("LongDrv", "2.0", "win", null, null, null)]
+        [InlineData("Driver", "Version", null, null, null, null)] // all optional fields null
+        public void Dto_JsonPropertyNames_MatchConstants(
+            string driver,
+            string version,
+            string? osType,
+            string? osDetails,
+            string? arch,
+            string? runtime)
         {
             var dto = new UserAgentInfoDto
             {
-                Driver = "d",
-                Version = "v",
-                OS = new UserAgentInfoDto.OsInfo { Type = "t", Details = "dd" },
-                Arch = "a",
-                Runtime = "r"
+                Driver = driver,
+                Version = version,
+                OS = new UserAgentInfoDto.OsInfo
+                {
+                    Type = osType,
+                    Details = string.IsNullOrEmpty(osDetails) ? null : osDetails
+                },
+                Arch = string.IsNullOrEmpty(arch) ? null : arch,
+                Runtime = string.IsNullOrEmpty(runtime) ? null : runtime
             };
 
-            string json = JsonSerializer.Serialize(dto);
-            using JsonDocument doc = JsonDocument.Parse(json);
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = null,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                WriteIndented = false
+            };
+
+            string json = JsonSerializer.Serialize(dto, options);
+            JsonDocument doc = JsonDocument.Parse(json);
             JsonElement root = doc.RootElement;
 
-            // Assert – root‑level fields
-            Assert.Equal("d", root.GetProperty(UserAgentInfoDto.DriverJsonKey).GetString());
-            Assert.Equal("v", root.GetProperty(UserAgentInfoDto.VersionJsonKey).GetString());
-            Assert.Equal("a", root.GetProperty(UserAgentInfoDto.ArchJsonKey).GetString());
-            Assert.Equal("r", root.GetProperty(UserAgentInfoDto.RuntimeJsonKey).GetString());
+            // always expected
+            Assert.Equal(driver,
+                root.GetProperty(UserAgentInfoDto.DriverJsonKey).GetString());
+            Assert.Equal(version,
+                root.GetProperty(UserAgentInfoDto.VersionJsonKey).GetString());
 
-            // Assert – nested os object
+            // optional Arch
+            if (dto.Arch is null)
+            {
+                Assert.False(root.TryGetProperty(UserAgentInfoDto.ArchJsonKey, out _));
+            }
+            else
+            {
+                Assert.Equal(dto.Arch,
+                    root.GetProperty(UserAgentInfoDto.ArchJsonKey).GetString());
+            }
+
+            // optional Runtime
+            if (dto.Runtime is null)
+            {
+                Assert.False(root.TryGetProperty(UserAgentInfoDto.RuntimeJsonKey, out _));
+            }
+            else
+            {
+                Assert.Equal(dto.Runtime,
+                    root.GetProperty(UserAgentInfoDto.RuntimeJsonKey).GetString());
+            }
+
+            // nested OS object
             JsonElement os = root.GetProperty(UserAgentInfoDto.OsJsonKey);
-            Assert.Equal("t", os.GetProperty(UserAgentInfoDto.OsInfo.TypeJsonKey).GetString());
-            Assert.Equal("dd", os.GetProperty(UserAgentInfoDto.OsInfo.DetailsJsonKey).GetString());
+
+            if (dto.OS!.Type is null)
+            {
+                Assert.False(os.TryGetProperty(UserAgentInfoDto.OsInfo.TypeJsonKey, out _));
+            }
+            else
+            {
+                Assert.Equal(dto.OS.Type,
+                    os.GetProperty(UserAgentInfoDto.OsInfo.TypeJsonKey).GetString());
+            }
+
+            if (dto.OS!.Details is null)
+            {
+                Assert.False(os.TryGetProperty(UserAgentInfoDto.OsInfo.DetailsJsonKey, out _));
+            }
+            else
+            {
+                Assert.Equal(dto.OS.Details,
+                    os.GetProperty(UserAgentInfoDto.OsInfo.DetailsJsonKey).GetString());
+            }
         }
 
         // 5. End-to-end test that combines truncation, adjustment, and serialization

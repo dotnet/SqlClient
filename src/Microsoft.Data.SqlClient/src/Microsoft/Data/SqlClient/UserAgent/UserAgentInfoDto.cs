@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Data.Common;
 
 #nullable enable
 
@@ -16,13 +17,11 @@ internal class UserAgentInfoDto
     public const string ArchJsonKey = "arch";
     public const string RuntimeJsonKey = "runtime";
 
-
-    // TODO: Does this need to be nullable?
     [JsonPropertyName(DriverJsonKey)]
-    public string? Driver { get; set; }
+    public string Driver { get; set; } = UserAgentInfo.DriverName;
 
     [JsonPropertyName(VersionJsonKey)]
-    public string? Version { get; set; }
+    public string Version { get; set; } = ADP.GetAssemblyVersion().ToString();
 
     [JsonPropertyName(OsJsonKey)]
     public OsInfo? OS { get; set; }
