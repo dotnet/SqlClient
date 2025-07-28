@@ -606,37 +606,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private XmlReader EndExecuteXmlReaderAsync(IAsyncResult asyncResult)
-        {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteXmlReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-            Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
-
-            Exception asyncException = ((Task)asyncResult).Exception;
-            if (asyncException != null)
-            {
-                CachedAsyncState?.ResetAsyncState();
-                ReliablePutStateObject();
-                throw asyncException.InnerException;
-            }
-            else
-            {
-                ThrowIfReconnectionHasBeenCanceled();
-                // lock on _stateObj prevents races with close/cancel.
-                // If we have already initiate the End call internally, we have already done that, so no point doing it again.
-                if (!_internalEndExecuteInitiated)
-                {
-                    lock (_stateObj)
-                    {
-                        return EndExecuteXmlReaderInternal(asyncResult);
-                    }
-                }
-                else
-                {
-                    return EndExecuteXmlReaderInternal(asyncResult);
-                }
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="default"]/*'/>
         [HostProtection(ExternalThreading = true)]
         public IAsyncResult BeginExecuteReader() =>
