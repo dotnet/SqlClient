@@ -52,6 +52,24 @@ namespace Microsoft.Data.SqlClient
                 isRetry: false,
                 asyncWrite: false);
         }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteXmlReader[@name="IAsyncResult"]/*'/>
+        public XmlReader EndExecuteXmlReader(IAsyncResult asyncResult)
+        {
+            try
+            {
+                return EndExecuteXmlReaderInternal(asyncResult);
+            }
+            finally
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                    "SqlCommand.EndExecuteXmlReader | API | Correlation | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Activity Id {ActivityCorrelator.Current}, " +
+                    $"Client Connection Id {_activeConnection.ClientConnectionId}, " +
+                    $"Command Text '{CommandText}'");
+            }
+        }
         
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReader/*'/>
         public XmlReader ExecuteXmlReader()
