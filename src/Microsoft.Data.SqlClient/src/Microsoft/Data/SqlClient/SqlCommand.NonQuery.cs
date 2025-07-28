@@ -704,7 +704,7 @@ namespace Microsoft.Data.SqlClient
                         // @TODO: With C#/net6 add [StackTraceHidden]
                         ExecuteNonQueryAsyncCallContext context = (ExecuteNonQueryAsyncCallContext)task.AsyncState;
                         SqlCommand command = context.Command;
-                        Guid operationId = context.OperationID;
+                        Guid operationId = context.OperationId;
                         TaskCompletionSource<int> source = context.TaskCompletionSource;
 
                         context.Dispose();
@@ -920,6 +920,48 @@ namespace Microsoft.Data.SqlClient
                 });
         }
         
+        private void SetCachedCommandExecuteNonQueryAsyncContext(ExecuteNonQueryAsyncCallContext instance)
+        {
+            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            {
+                // @TODO: Add this to SqlInternalConnection
+                Interlocked.CompareExchange(
+                    ref sqlInternalConnection.CachedCommandExecuteNonQueryAsyncContext,
+                    instance,
+                    comparand: null);
+            }
+        }
+        
         #endregion
+
+        internal sealed class ExecuteNonQueryAsyncCallContext
+            : AAsyncCallContext<SqlCommand, int, CancellationTokenRegistration>
+        {
+            public SqlCommand Command => _owner;
+            
+            public Guid OperationId { get; set; }
+
+            public TaskCompletionSource<int> TaskCompletionSource => _source;
+
+            public void Set(
+                SqlCommand command,
+                TaskCompletionSource<int> source,
+                CancellationTokenRegistration disposable,
+                Guid operationId)
+            {
+                base.Set(command, source, disposable);
+                OperationId = operationId;
+            }
+
+            protected override void AfterCleared(SqlCommand owner)
+            {
+                owner?.SetCachedCommandExecuteNonQueryAsyncContext(this);
+            }
+
+            protected override void Clear()
+            {
+                OperationId = Guid.Empty;
+            }
+        }
     }
 }

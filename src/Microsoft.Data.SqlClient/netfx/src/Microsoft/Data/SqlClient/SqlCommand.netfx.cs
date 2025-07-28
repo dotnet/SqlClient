@@ -61,31 +61,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal sealed class ExecuteNonQueryAsyncCallContext : AAsyncCallContext<SqlCommand, int, CancellationTokenRegistration>
-        {
-            public Guid OperationID;
-
-            public SqlCommand Command => _owner;
-
-            public TaskCompletionSource<int> TaskCompletionSource => _source;
-
-            public void Set(SqlCommand command, TaskCompletionSource<int> source, CancellationTokenRegistration disposable, Guid operationID)
-            {
-                base.Set(command, source, disposable);
-                OperationID = operationID;
-            }
-
-            protected override void Clear()
-            {
-                OperationID = default;
-            }
-
-            protected override void AfterCleared(SqlCommand owner)
-            {
-                owner?.SetCachedCommandExecuteNonQueryAsyncContext(this);
-            }
-        }
-
         internal sealed class ExecuteXmlReaderAsyncCallContext : AAsyncCallContext<SqlCommand, XmlReader, CancellationTokenRegistration>
         {
             public Guid OperationID;
@@ -1582,14 +1557,6 @@ namespace Microsoft.Data.SqlClient
             if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
             {
                 Interlocked.CompareExchange(ref sqlInternalConnection.CachedCommandExecuteReaderAsyncContext, instance, null);
-            }
-        }
-
-        private void SetCachedCommandExecuteNonQueryAsyncContext(ExecuteNonQueryAsyncCallContext instance)
-        {
-            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
-            {
-                Interlocked.CompareExchange(ref sqlInternalConnection.CachedCommandExecuteNonQueryAsyncContext, instance, null);
             }
         }
 
