@@ -613,61 +613,6 @@ namespace Microsoft.Data.SqlClient
             return ExecuteReader(behavior);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="default"]/*'/>
-        new public SqlDataReader ExecuteReader()
-        {
-            SqlStatistics statistics = null;
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteReader | API | Correlation | ObjectID {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-            try
-            {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                return ExecuteReader(CommandBehavior.Default);
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="CommandBehavior"]/*'/>
-        new public SqlDataReader ExecuteReader(CommandBehavior behavior)
-        {
-            SqlConnection.ExecutePermission.Demand();
-
-            // Reset _pendingCancel upon entry into any Execute - used to synchronize state
-            // between entry into Execute* API and the thread obtaining the stateObject.
-            _pendingCancel = false;
-
-            SqlStatistics statistics = null;
-            bool success = false;
-            int? sqlExceptionNumber = null;
-
-            using (TryEventScope.Create("SqlCommand.ExecuteReader | API | Object Id {0}", ObjectID))
-            {
-                try
-                {
-                    WriteBeginExecuteEvent();
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    SqlDataReader result = IsProviderRetriable ?
-                        RunExecuteReaderWithRetry(behavior, RunBehavior.ReturnImmediately, returnStream: true) :
-                        RunExecuteReader(behavior, RunBehavior.ReturnImmediately, true);
-                    success = true;
-                    return result;
-                }
-                catch (SqlException e)
-                {
-                    sqlExceptionNumber = e.Number;
-                    throw;
-                }
-                // @TODO: CER Exception Handling was removed here (see GH#3581)
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                    WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
-                }
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteReader[@name="IAsyncResult2"]/*'/>
         public SqlDataReader EndExecuteReader(IAsyncResult asyncResult)
         {
