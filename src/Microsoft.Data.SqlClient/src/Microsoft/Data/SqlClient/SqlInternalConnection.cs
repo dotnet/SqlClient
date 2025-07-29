@@ -215,14 +215,8 @@ namespace Microsoft.Data.SqlClient
         virtual internal SqlTransaction BeginSqlTransaction(System.Data.IsolationLevel iso, string transactionName, bool shouldReconnect)
         {
             SqlStatistics statistics = null;
-            TdsParser bestEffortCleanupTarget = null;
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
             try
             {
-                bestEffortCleanupTarget = GetBestEffortCleanupTarget(Connection);
-
                 statistics = SqlStatistics.StartTimer(Connection.Statistics);
 
                 #if NETFRAMEWORK
@@ -246,24 +240,6 @@ namespace Microsoft.Data.SqlClient
                 ExecuteTransaction(TransactionRequest.Begin, transactionName, iso, transaction.InternalTransaction, false);
                 transaction.InternalTransaction.RestoreBrokenConnection = false;
                 return transaction;
-            }
-            catch (OutOfMemoryException e)
-            {
-                Connection.Abort(e);
-                throw;
-            }
-            catch (StackOverflowException e)
-            {
-                Connection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                Connection.Abort(e);
-#if NETFRAMEWORK
-                BestEffortCleanup(bestEffortCleanupTarget);
-#endif
-                throw;
             }
             finally
             {
@@ -303,15 +279,9 @@ namespace Microsoft.Data.SqlClient
 
         override protected void Deactivate()
         {
-            TdsParser bestEffortCleanupTarget = null;
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
             try
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.Deactivate | ADV | Object Id {0} deactivating, Client Connection Id {1}", ObjectID, Connection?.ClientConnectionId);
-
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(Connection);
 
                 SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
                 if (referenceCollection != null)
@@ -321,24 +291,6 @@ namespace Microsoft.Data.SqlClient
 
                 // Invoke subclass-specific deactivation logic
                 InternalDeactivate();
-            }
-            catch (OutOfMemoryException)
-            {
-                DoomThisConnection();
-                throw;
-            }
-            catch (StackOverflowException)
-            {
-                DoomThisConnection();
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException)
-            {
-                DoomThisConnection();
-#if NETFRAMEWORK
-                BestEffortCleanup(bestEffortCleanupTarget);
-#endif
-                throw;
             }
             catch (Exception e)
             {
@@ -624,33 +576,7 @@ namespace Microsoft.Data.SqlClient
             // enlist in the user specified distributed transaction.  This
             // behavior matches OLEDB and ODBC.
 
-            TdsParser bestEffortCleanupTarget = null;
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif // NETFRAMEWORK
-           try
-            {
-                bestEffortCleanupTarget = GetBestEffortCleanupTarget(Connection);
-                Enlist(transaction);
-            }
-            catch (OutOfMemoryException e)
-            {
-                Connection.Abort(e);
-                throw;
-            }
-            catch (StackOverflowException e)
-            {
-                Connection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                Connection.Abort(e);
-#if NETFRAMEWORK
-                BestEffortCleanup(bestEffortCleanupTarget);
-#endif
-                throw;
-            }
+            Enlist(transaction);
         }
 
         abstract internal void ExecuteTransaction(TransactionRequest transactionRequest, string name, System.Data.IsolationLevel iso, SqlInternalTransaction internalTransaction, bool isDelegateControlRequest);
