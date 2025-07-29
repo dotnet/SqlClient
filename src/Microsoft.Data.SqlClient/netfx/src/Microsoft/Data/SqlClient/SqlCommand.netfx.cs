@@ -2689,27 +2689,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SqlDataReader RunExecuteReader(
-            CommandBehavior cmdBehavior,
-            RunBehavior runBehavior,
-            bool returnStream,
-            [CallerMemberName] string method = "")
-        {
-            Task unused; // sync execution
-            SqlDataReader reader = RunExecuteReader(
-                cmdBehavior,
-                runBehavior,
-                returnStream,
-                completion: null,
-                timeout: CommandTimeout,
-                task: out unused,
-                usedCache: out _,
-                method: method);
-            
-            Debug.Assert(unused == null, "returned task during synchronous execution");
-            return reader;
-        }
-
         // task is created in case of pending asynchronous write, returned SqlDataReader should not be utilized until that task is complete
         internal SqlDataReader RunExecuteReader(
             CommandBehavior cmdBehavior,

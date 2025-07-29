@@ -4,7 +4,9 @@
 
 using System;
 using System.Data;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using Microsoft.Data.Common;
 
 #if NETFRAMEWORK
@@ -108,9 +110,32 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal SqlDataReader RunExecuteReader(
+            CommandBehavior cmdBehavior,
+            RunBehavior runBehavior,
+            bool returnStream,
+            [CallerMemberName] string method = "")
+        {
+            SqlDataReader reader = RunExecuteReader(
+                cmdBehavior,
+                runBehavior,
+                returnStream,
+                completion: null,
+                timeout: CommandTimeout,
+                task: out Task unused,
+                usedCache: out _,
+                method: method);
+
+            // @TODO: This really isn't necessary...
+            Debug.Assert(unused == null, "returned task during synchronous execution");
+            return reader;
+        }
+
         #endregion
 
         #region Private Methods
+
+
 
         private SqlDataReader RunExecuteReaderWithRetry(
             CommandBehavior cmdBehavior,
