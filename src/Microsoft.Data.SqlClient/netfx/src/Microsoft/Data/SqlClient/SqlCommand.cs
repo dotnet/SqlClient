@@ -1417,7 +1417,6 @@ namespace Microsoft.Data.SqlClient
             // Read SNI does not have catches for async exceptions, handle here.
             try
             {
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
                 // must finish caching information before ReadSni which can activate the callback before returning
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteNonQuery), _activeConnection);
                 _stateObj.ReadSni(completion);

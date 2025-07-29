@@ -2844,7 +2844,6 @@ namespace Microsoft.Data.SqlClient
             bool readFromNetwork = !PartialPacketContainsCompletePacket();
             uint error;
 
-            RuntimeHelpers.PrepareConstrainedRegions();
             bool shouldDecrement = false;
             try
             {
@@ -3062,7 +3061,6 @@ namespace Microsoft.Data.SqlClient
                                 if (!source.Task.IsCompleted)
                                 {
                                     int pendingCallback = IncrementPendingCallbacks();
-                                    RuntimeHelpers.PrepareConstrainedRegions();
                                     try
                                     {
                                         // If pendingCallback is at 3, then ReadAsyncCallback hasn't been called yet
@@ -3137,7 +3135,6 @@ namespace Microsoft.Data.SqlClient
             uint error = 0;
             bool readFromNetwork = true;
 
-            RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
                 Debug.Assert(completion != null, "Async on but null asyncResult passed");
@@ -3173,41 +3170,35 @@ namespace Microsoft.Data.SqlClient
 
                 SessionHandle handle = default;
 
-                RuntimeHelpers.PrepareConstrainedRegions();
+                Interlocked.Increment(ref _readingCount);
                 try
-                { }
-                finally
                 {
-                    Interlocked.Increment(ref _readingCount);
-                    try
+                    handle = SessionHandle;
+
+                    readFromNetwork = !PartialPacketContainsCompletePacket();
+                    if (readFromNetwork)
                     {
-                        handle = SessionHandle;
-
-                        readFromNetwork = !PartialPacketContainsCompletePacket();
-                        if (readFromNetwork)
+                        if (!handle.IsNull)
                         {
-                            if (!handle.IsNull)
+                            IncrementPendingCallbacks();
+
+                            readPacket = ReadAsync(handle, out error);
+
+                            if (!(TdsEnums.SNI_SUCCESS == error || TdsEnums.SNI_SUCCESS_IO_PENDING == error))
                             {
-                                IncrementPendingCallbacks();
-
-                                readPacket = ReadAsync(handle, out error);
-
-                                if (!(TdsEnums.SNI_SUCCESS == error || TdsEnums.SNI_SUCCESS_IO_PENDING == error))
-                                {
-                                    DecrementPendingCallbacks(false); // Failure - we won't receive callback!
-                                }
+                                DecrementPendingCallbacks(false); // Failure - we won't receive callback!
                             }
                         }
-                        else
-                        {
-                            readPacket = default;
-                            error = TdsEnums.SNI_SUCCESS;
-                        }
                     }
-                    finally
+                    else
                     {
-                        Interlocked.Decrement(ref _readingCount);
+                        readPacket = default;
+                        error = TdsEnums.SNI_SUCCESS;
                     }
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref _readingCount);
                 }
 
                 if (handle.IsNull)

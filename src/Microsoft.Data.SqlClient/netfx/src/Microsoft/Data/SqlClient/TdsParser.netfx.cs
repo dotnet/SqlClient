@@ -98,29 +98,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // @TODO: Consider adopting this pattern for all usages of Run and rename to Run.
+        // @TODO: Remove.
         internal bool RunReliably(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj)
         {
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-                return Run(runBehavior, cmdHandler, dataStream, bulkCopyHandler, stateObj);
-            }
-            catch (OutOfMemoryException)
-            {
-                _connHandler.DoomThisConnection();
-                throw;
-            }
-            catch (StackOverflowException)
-            {
-                _connHandler.DoomThisConnection();
-                throw;
-            }
-            catch (ThreadAbortException)
-            {
-                _connHandler.DoomThisConnection();
-                throw;
-            }
+            return Run(runBehavior, cmdHandler, dataStream, bulkCopyHandler, stateObj);
         }
     }
 }

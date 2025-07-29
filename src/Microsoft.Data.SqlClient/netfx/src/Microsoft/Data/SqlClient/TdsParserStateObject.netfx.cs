@@ -173,25 +173,18 @@ namespace Microsoft.Data.SqlClient
                 // here for the callbacks!!!  This only applies to async.  Should be fixed by async fixes for
                 // AD unload/exit.
 
-                // TODO: Make this a BID trace point!
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                { }
-                finally
+                if (packetHandle != null)
                 {
-                    if (packetHandle != null)
-                    {
-                        packetHandle.Dispose();
-                    }
-                    if (asyncAttnPacket != null)
-                    {
-                        asyncAttnPacket.Dispose();
-                    }
-                    if (sessionHandle != null)
-                    {
-                        sessionHandle.Dispose();
-                        DecrementPendingCallbacks(true); // Will dispose of GC handle.
-                    }
+                    packetHandle.Dispose();
+                }
+                if (asyncAttnPacket != null)
+                {
+                    asyncAttnPacket.Dispose();
+                }
+                if (sessionHandle != null)
+                {
+                    sessionHandle.Dispose();
+                    DecrementPendingCallbacks(true); // Will dispose of GC handle.
                 }
             }
 
@@ -260,7 +253,6 @@ namespace Microsoft.Data.SqlClient
 
                             PacketHandle syncReadPacket = default;
                             bool readFromNetwork = true;
-                            RuntimeHelpers.PrepareConstrainedRegions();
                             bool shouldDecrement = false;
                             try
                             {
@@ -371,7 +363,6 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
-            RuntimeHelpers.PrepareConstrainedRegions();
             bool processFinallyBlock = true;
             try
             {
@@ -654,14 +645,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Async operation completion may be delayed (success pending).
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-            }
-            finally
-            {
-                sniError = WritePacket(packet, sync);
-            }
+            sniError = WritePacket(packet, sync);
 
             if (sniError == TdsEnums.SNI_SUCCESS_IO_PENDING)
             {
@@ -769,7 +753,6 @@ namespace Microsoft.Data.SqlClient
 
                 PacketHandle attnPacket = CreateAndSetAttentionPacket();
 
-                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
                     // Dev11 #344723: SqlClient stress test suspends System_Data!Tcp::ReadSync via a call to SqlDataReader::Close
