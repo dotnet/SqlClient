@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using System.Runtime.CompilerServices;
 using Microsoft.Data.Common;
 
 #if NETFRAMEWORK
@@ -110,6 +111,15 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Private Methods
+
+        private SqlDataReader RunExecuteReaderWithRetry(
+            CommandBehavior cmdBehavior,
+            RunBehavior runBehavior,
+            bool returnStream,
+            [CallerMemberName] string method = "") =>
+            RetryLogicProvider.Execute(
+                this,
+                () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method));
 
         #endregion
     }
