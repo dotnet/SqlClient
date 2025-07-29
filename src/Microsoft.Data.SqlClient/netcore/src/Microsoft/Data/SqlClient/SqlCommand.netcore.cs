@@ -479,17 +479,6 @@ namespace Microsoft.Data.SqlClient
             base.Dispose(disposing);
         }
 
-        private SqlDataReader RunExecuteReaderWithRetry(
-            CommandBehavior cmdBehavior,
-            RunBehavior runBehavior,
-            bool returnStream,
-            [CallerMemberName] string method = "")
-        {
-            return RetryLogicProvider.Execute(
-                this,
-                () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method));
-        }
-
         private void VerifyEndExecuteState(Task completionTask, string endMethod, bool fullCheckForColumnEncryption = false)
         {
             Debug.Assert(completionTask != null);
