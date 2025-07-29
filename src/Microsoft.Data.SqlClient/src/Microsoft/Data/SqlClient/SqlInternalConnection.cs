@@ -633,30 +633,5 @@ namespace Microsoft.Data.SqlClient
         abstract protected void PropagateTransactionCookie(byte[] transactionCookie);
 
         abstract internal void ValidateConnectionForExecute(SqlCommand command);
-
-        static internal TdsParser GetBestEffortCleanupTarget(SqlConnection connection)
-        {
-            if (connection != null)
-            {
-                SqlInternalConnectionTds innerConnection = (connection.InnerConnection as SqlInternalConnectionTds);
-                if (innerConnection != null)
-                {
-                    return innerConnection.Parser;
-                }
-            }
-
-            return null;
-        }
-
-#if NETFRAMEWORK
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-        static internal void BestEffortCleanup(TdsParser target)
-        {
-            if (target != null)
-            {
-                target.BestEffortCleanup();
-            }
-        }
-#endif
     }
 }

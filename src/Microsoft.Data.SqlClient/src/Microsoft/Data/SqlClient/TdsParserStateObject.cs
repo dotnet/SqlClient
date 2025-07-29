@@ -923,9 +923,6 @@ namespace Microsoft.Data.SqlClient
             Parser.PutSession(this);
         }
 
-#if NETFRAMEWORK
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-#endif
         internal int IncrementPendingCallbacks()
         {
             int remaining = Interlocked.Increment(ref _pendingCallbacks);

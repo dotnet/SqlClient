@@ -498,7 +498,6 @@ namespace Microsoft.Data.SqlClient
         internal bool AsyncCommandInProgress
         {
             get => _AsyncCommandInProgress;
-            [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
             set => _AsyncCommandInProgress = value;
         }
 

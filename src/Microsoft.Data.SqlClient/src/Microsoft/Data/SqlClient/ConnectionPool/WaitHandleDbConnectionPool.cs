@@ -806,8 +806,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 _resError = e;
 
                 // Make sure the timer starts even if ThreadAbort occurs after setting the ErrorEvent.
-
-                // timer allocation has to be done out of CER block
                 Timer t = new Timer(new TimerCallback(this.ErrorCallback), null, Timeout.Infinite, Timeout.Infinite);
 
                 bool timerIsNotDisposed;
@@ -1619,8 +1617,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // means, is that we're now responsible for this connection:
                 // it won't get reclaimed if it gets lost.
                 obj.PrePush(owningObject);
-
-                // TODO: Consider using a Cer to ensure that we mark the object for reclaimation in the event something bad happens?
             }
 
             DeactivateObject(obj);

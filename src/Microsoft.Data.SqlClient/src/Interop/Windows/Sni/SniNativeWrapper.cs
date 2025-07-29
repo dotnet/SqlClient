@@ -403,7 +403,6 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Make sure that we clear the security sensitive information
-                // data->Initialize() is not safe to call under CER
                 if (mustClearBuffer)
                 {
                     for (int i = 0; i < data.Length; ++i)

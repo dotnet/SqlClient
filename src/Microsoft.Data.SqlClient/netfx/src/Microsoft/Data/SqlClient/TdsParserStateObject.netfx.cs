@@ -136,7 +136,6 @@ namespace Microsoft.Data.SqlClient
 
         internal uint CheckConnection() => SniNativeWrapper.SniCheckConnection(Handle);
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);

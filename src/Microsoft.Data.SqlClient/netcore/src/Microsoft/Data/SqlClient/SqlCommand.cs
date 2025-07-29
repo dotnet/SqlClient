@@ -1411,18 +1411,6 @@ namespace Microsoft.Data.SqlClient
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteNonQuery), _activeConnection);
                 _stateObj.ReadSni(completion);
             }
-            // Cause of a possible unstable runtime situation on facing with `OutOfMemoryException` and `StackOverflowException` exceptions,
-            // trying to call further functions in the catch of either may fail that should be considered on debuging!
-            catch (System.OutOfMemoryException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
             catch (Exception)
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
@@ -1967,20 +1955,6 @@ namespace Microsoft.Data.SqlClient
                 // must finish caching information before ReadSni which can activate the callback before returning
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteXmlReader), _activeConnection);
                 _stateObj.ReadSni(completion);
-            }
-            // Cause of a possible unstable runtime situation on facing with `OutOfMemoryException` and `StackOverflowException` exceptions,
-            // trying to call further functions in the catch of either may fail that should be considered on debuging!
-            catch (System.OutOfMemoryException e)
-            {
-                _activeConnection.Abort(e);
-                completion.TrySetException(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _activeConnection.Abort(e);
-                completion.TrySetException(e);
-                throw;
             }
             catch (Exception e)
             {
@@ -2632,20 +2606,6 @@ namespace Microsoft.Data.SqlClient
                 // must finish caching information before ReadSni which can activate the callback before returning
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteReader), _activeConnection);
                 _stateObj.ReadSni(completion);
-            }
-            // Cause of a possible unstable runtime situation on facing with `OutOfMemoryException` and `StackOverflowException` exceptions,
-            // trying to call further functions in the catch of either may fail that should be considered on debuging!
-            catch (System.OutOfMemoryException e)
-            {
-                _activeConnection.Abort(e);
-                completion.TrySetException(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _activeConnection.Abort(e);
-                completion.TrySetException(e);
-                throw;
             }
             catch (Exception e)
             {

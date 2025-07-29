@@ -613,7 +613,7 @@ namespace Microsoft.Data.SqlClient
                             bool appDomainStart = false;
 
                             try
-                            { // CER to ensure that if Start succeeds we add to hash completing setup.
+                            {
                               // Start using process wide default service/queue & database from connection string.
                                 result = s_processDispatcher.StartWithDefault(
                                     connectionString,
@@ -749,7 +749,7 @@ namespace Microsoft.Data.SqlClient
                                 bool appDomainStop = false;
 
                                 try
-                                { // CER to ensure that if Stop succeeds we remove from hash completing teardown.
+                                {
                                   // Start using process wide default service/queue & database from connection string.
                                     result = s_processDispatcher.Stop(
                                         connectionString,

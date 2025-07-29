@@ -466,7 +466,6 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             }
         }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         private void RemovePerformanceCounters()
         {
             // ExceptionEventHandler with IsTerminating may be called before

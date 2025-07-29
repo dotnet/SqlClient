@@ -307,7 +307,6 @@ namespace Microsoft.Data.SqlClient
                 return (_cachedAsyncConnection == activeConnection && _cachedAsyncCloseCount == activeConnection.CloseCount);
             }
 
-            [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
             internal void ResetAsyncState()
             {
                 SqlClientEventSource.Log.TryTraceEvent("CachedAsyncState.ResetAsyncState | API | ObjectId {0}, Client Connection Id {1}, AsyncCommandInProgress={2}",
