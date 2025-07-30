@@ -38,6 +38,7 @@ variables:
     - name: assemblyFileVersion
       value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}${{ variables.versionPatch }}.$(Build.BuildNumber)'
     - name: nugetPackageVersion
-      value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}.${{ variables.versionPatch }}${{ variables.versionPreview }}'
+      value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}.${{ variables.versionPatch }}'
+      #value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}.${{ variables.versionPatch }}${{ variables.versionPreview }}'
 
 
