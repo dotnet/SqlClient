@@ -59,13 +59,12 @@ namespace Microsoft.Data.SqlClient.Tests
         /// when client enables encryption using Encrypt=true or uses default encryption setting.
         /// </summary>
         [Fact]
-        public async Task PreLoginEncryptionExcludedTest()
+        public async Task RequestEncryption_ServerDoesNotSupportEncryption_ShouldFail()
         {
             using TdsServer server = new TdsServer(new TdsServerArguments() {Encryption = TDSPreLoginTokenEncryptionType.None });
             server.Start();
             var connStr = new SqlConnectionStringBuilder() {
-                DataSource = $"localhost,{server.EndPoint.Port}",
-                Encrypt = SqlConnectionEncryptOption.Optional,
+                DataSource = $"localhost,{server.EndPoint.Port}"
             }.ConnectionString;
             SqlConnectionStringBuilder builder = new(connStr)
             {
@@ -77,11 +76,10 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Contains("The instance of SQL Server you attempted to connect to does not support encryption.", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
-        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
+        [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public async Task TransientFault_RetryEnabled_ShouldSucceed_Async(uint errorCode)
         {
             using TransientFaultTdsServer server = new TransientFaultTdsServer(
@@ -103,12 +101,11 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(ConnectionState.Open, connection.State);
         }
 
-        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
+        [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
-        [PlatformSpecific(TestPlatforms.Windows)]
-        public void TransientFaultTest_RetryEnabled_ShouldSucceed(uint errorCode)
+        public void TransientFault_RetryEnabled_ShouldSucceed(uint errorCode)
         {
             using TransientFaultTdsServer server = new TransientFaultTdsServer(
                 new TransientFaultTdsServerArguments()
@@ -136,11 +133,10 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
-        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
+        [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void TransientFault_RetryDisabled_ShouldFail_Async(uint errorCode)
         {
             using TransientFaultTdsServer server = new TransientFaultTdsServer(
@@ -164,11 +160,10 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(ConnectionState.Closed, connection.State);
         }
 
-        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
+        [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void TransientFault_RetryDisabled_ShouldFail(uint errorCode)
         {
             using TransientFaultTdsServer server = new TransientFaultTdsServer(
@@ -184,6 +179,113 @@ namespace Microsoft.Data.SqlClient.Tests
                 IntegratedSecurity = true,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            SqlException e = Assert.Throws<SqlException>(() => connection.Open());
+            Assert.Equal(20, e.Class);
+            Assert.Equal(ConnectionState.Closed, connection.State);
+        }
+
+        [Fact]
+        public async Task NetworkError_RetryEnabled_ShouldSucceed_Async()
+        {
+            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
+                new TransientTimeoutTdsServerArguments()
+                {
+                    IsEnabledTransientTimeout = true,
+                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                });
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "localhost," + server.EndPoint.Port,
+                IntegratedSecurity = true,
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                ConnectTimeout = 5
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            await connection.OpenAsync();
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal(2, server.PreLoginCount);
+        }
+
+        [Fact]
+        public void NetworkError_RetryEnabled_ShouldSucceed()
+        {
+            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
+                new TransientTimeoutTdsServerArguments()
+                {
+                    IsEnabledTransientTimeout = true,
+                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                });
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "localhost," + server.EndPoint.Port,
+                IntegratedSecurity = true,
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                ConnectTimeout = 5
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            try
+            {
+                connection.Open();
+                Assert.Equal(ConnectionState.Open, connection.State);
+            }
+            catch (Exception e)
+            {
+                Assert.Fail(e.Message);
+            }
+
+            Assert.Equal(2, server.PreLoginCount);
+        }
+
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3527")]
+        [Fact]
+        public void NetworkError_RetryDisabled_ShouldFail_Async()
+        {
+            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
+                new TransientTimeoutTdsServerArguments()
+                {
+                    IsEnabledTransientTimeout = true,
+                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                });
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "localhost," + server.EndPoint.Port,
+                IntegratedSecurity = true,
+                ConnectRetryCount = 0,
+                Encrypt = SqlConnectionEncryptOption.Optional
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            Task<SqlException> e = Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
+            Assert.Equal(20, e.Result.Class);
+            Assert.Equal(ConnectionState.Closed, connection.State);
+        }
+
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3527")]
+        [Fact]
+        public void NetworkError_RetryDisabled_ShouldFail()
+        {
+            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
+                new TransientTimeoutTdsServerArguments()
+                {
+                    IsEnabledTransientTimeout = true,
+                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                });
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "localhost," + server.EndPoint.Port,
+                IntegratedSecurity = true,
+                ConnectRetryCount = 0,
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                ConnectTimeout = 5
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
@@ -311,6 +413,474 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal(1, initialServer.PreLoginCount);
             Assert.Equal(2, failoverServer.PreLoginCount);
+        }
+
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3527")]
+        [Fact]
+        public void NetworkError_WithFailoverPartner_RetryDisabled_ShouldFail()
+        {
+            using TdsServer failoverServer = new TdsServer(
+                new TdsServerArguments
+                {
+                    // Doesn't need to point to a real endpoint, just needs a value specified
+                    FailoverPartner = "localhost,1234",
+                });
+            failoverServer.Start();
+
+            // Arrange
+            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
+                new TransientTimeoutTdsServerArguments()
+                {
+                    IsEnabledTransientTimeout = true,
+                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+                });
+            server.Start();
+
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                    RequireReadOnly = false,
+                });
+            router.Start();
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            {
+                DataSource = "localhost," + router.EndPoint.Port,
+                InitialCatalog = "master",// Required for failover partner to work
+                ConnectTimeout = 5,
+                ConnectRetryInterval = 1,
+                ConnectRetryCount = 0, // Disable retry 
+                Encrypt = false,
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+           
+                // Act
+            Assert.Throws<SqlException>(()=>connection.Open());
+
+            // Assert
+            // On the first connection attempt, no failover partner information is available,
+            // so the connection will retry on the same server.
+            Assert.Equal(ConnectionState.Closed, connection.State);
+            Assert.Equal(1, router.PreLoginCount);
+            Assert.Equal(1, server.PreLoginCount);
+            Assert.Equal(0, failoverServer.PreLoginCount);
+        }
+
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3528")]
+        [Fact]
+        public void NetworkError_WithFailoverPartner_RetryEnabled_ShouldConnectToPrimary()
+        {
+            using TdsServer failoverServer = new TdsServer(
+                new TdsServerArguments
+                {
+                    // Doesn't need to point to a real endpoint, just needs a value specified
+                    FailoverPartner = "localhost,1234",
+                });
+            failoverServer.Start();
+
+            // Arrange
+            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
+                new TransientTimeoutTdsServerArguments()
+                {
+                    IsEnabledTransientTimeout = true,
+                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+                });
+            server.Start();
+
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                    RequireReadOnly = false,
+                });
+            router.Start();
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            {
+                DataSource = "localhost," + router.EndPoint.Port,
+                InitialCatalog = "master",// Required for failover partner to work
+                ConnectTimeout = 5,
+                ConnectRetryInterval = 1,
+                Encrypt = false,
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            try
+            {
+                // Act
+                connection.Open();
+            }
+            catch (Exception e)
+            {
+                Assert.Fail(e.Message);
+            }
+
+            // Assert
+            // On the first connection attempt, no failover partner information is available,
+            // so the connection will retry on the same server.
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal(2, router.PreLoginCount);
+            Assert.Equal(2, server.PreLoginCount);
+            Assert.Equal(0, failoverServer.PreLoginCount);
+        }
+
+        [Fact]
+        public void NetworkError_WithFailoverPartner_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner()
+        {
+            using TdsServer failoverServer = new TdsServer(
+                new TdsServerArguments
+                {
+                    // Doesn't need to point to a real endpoint, just needs a value specified
+                    FailoverPartner = "localhost,1234",
+                });
+            failoverServer.Start();
+
+            // Arrange
+            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
+                new TransientTimeoutTdsServerArguments()
+                {
+                    IsEnabledTransientTimeout = true,
+                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+                });
+            server.Start();
+
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                    RequireReadOnly = false,
+                });
+            router.Start();
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            {
+                DataSource = "localhost," + router.EndPoint.Port,
+                InitialCatalog = "master", // Required for failover partner to work
+                ConnectTimeout = 5,
+                ConnectRetryInterval = 1,
+                ConnectRetryCount = 0, // Disable retry
+                FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}", // User provided failover partner
+                Encrypt = false,
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            try
+            {
+                // Act
+                connection.Open();
+            }
+            catch (Exception e)
+            {
+                Assert.Fail(e.Message);
+            }
+
+            // Assert
+            // On the first connection attempt, failover partner information is available in the connection string,
+            // so the connection will retry on the failover server.
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal(1, router.PreLoginCount);
+            Assert.Equal(1, server.PreLoginCount);
+            Assert.Equal(1, failoverServer.PreLoginCount);
+        }
+
+        [Fact]
+        public void NetworkError_WithFailoverPartner_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner()
+        {
+            using TdsServer failoverServer = new TdsServer(
+                new TdsServerArguments
+                {
+                    // Doesn't need to point to a real endpoint, just needs a value specified
+                    FailoverPartner = "localhost,1234",
+                });
+            failoverServer.Start();
+
+            // Arrange
+            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
+                new TransientTimeoutTdsServerArguments()
+                {
+                    IsEnabledTransientTimeout = true,
+                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+                });
+            server.Start();
+
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                    RequireReadOnly = false,
+                });
+            router.Start();
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            {
+                DataSource = "localhost," + router.EndPoint.Port,
+                InitialCatalog = "master", // Required for failover partner to work
+                ConnectTimeout = 5,
+                ConnectRetryInterval = 1,
+                FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}", // User provided failover partner
+                Encrypt = false,
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            try
+            {
+                // Act
+                connection.Open();
+            }
+            catch (Exception e)
+            {
+                Assert.Fail(e.Message);
+            }
+
+            // Assert
+            // On the first connection attempt, failover partner information is available in the connection string,
+            // so the connection will retry on the failover server.
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal(1, router.PreLoginCount);
+            Assert.Equal(1, server.PreLoginCount);
+            Assert.Equal(1, failoverServer.PreLoginCount);
+        }
+
+        [Theory]
+        [InlineData(40613)]
+        [InlineData(42108)]
+        [InlineData(42109)]
+        public void TransientFault_WithFailoverPartner_ShouldConnectToPrimary(uint errorCode)
+        {
+            // Arrange
+            using TdsServer failoverServer = new TdsServer(
+                new TdsServerArguments
+                {
+                    // Doesn't need to point to a real endpoint, just needs a value specified
+                    FailoverPartner = "localhost:1234",
+                });
+            failoverServer.Start();
+
+            using TransientFaultTdsServer server = new TransientFaultTdsServer(
+                new TransientFaultTdsServerArguments()
+                {
+                    IsEnabledTransientError = true,
+                    Number = errorCode,
+                    FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}",
+                });
+            server.Start();
+
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                    RequireReadOnly = false,
+                });
+            router.Start();
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            {
+                DataSource = $"localhost,{router.EndPoint.Port}",
+                InitialCatalog = "master",
+                ConnectTimeout = 30,
+                ConnectRetryInterval = 1,
+                Encrypt = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            try
+            {
+                // Act
+                connection.Open();
+            }
+            catch (Exception e)
+            {
+                Assert.Fail(e.Message);
+            }
+
+            // Assert
+            Assert.Equal(ConnectionState.Open, connection.State);
+
+            // Failures should prompt the client to return to the original server, resulting in a login count of 2
+            Assert.Equal(2, router.PreLoginCount);
+            Assert.Equal(2, server.PreLoginCount);
+        }
+
+        [Theory]
+        [InlineData(40613)]
+        [InlineData(42108)]
+        [InlineData(42109)]
+        public void TransientFault_WithFailoverPartner_RetryDisabled_ShouldFail(uint errorCode)
+        {
+            // Arrange
+            using TdsServer failoverServer = new TdsServer(
+                new TdsServerArguments
+                {
+                    // Doesn't need to point to a real endpoint, just needs a value specified
+                    FailoverPartner = "localhost:1234",
+                });
+            failoverServer.Start();
+
+            using TransientFaultTdsServer server = new TransientFaultTdsServer(
+                new TransientFaultTdsServerArguments()
+                {
+                    IsEnabledTransientError = true,
+                    Number = errorCode,
+                    FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}",
+                });
+            server.Start();
+
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                    RequireReadOnly = false,
+                });
+            router.Start();
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            {
+                DataSource = $"localhost,{router.EndPoint.Port}",
+                InitialCatalog = "master",
+                ConnectTimeout = 30,
+                ConnectRetryInterval = 1,
+                ConnectRetryCount = 0, // Disable retry
+                Encrypt = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            try
+            {
+                // Act
+                connection.Open();
+            }
+            catch (SqlException e)
+            {
+                Assert.Equal((int)errorCode, e.Number);
+                return;
+            }
+
+            Assert.Fail();
+        }
+
+        [Theory]
+        [InlineData(40613)]
+        [InlineData(42108)]
+        [InlineData(42109)]
+        public void TransientFault_WithFailoverPartner_WithUserProvidedPartner_ShouldConnectToPrimary(uint errorCode)
+        {
+            // Arrange
+            using TdsServer failoverServer = new TdsServer(
+                new TdsServerArguments
+                {
+                    // Doesn't need to point to a real endpoint, just needs a value specified
+                    FailoverPartner = "localhost:1234",
+                });
+            failoverServer.Start();
+
+            using TransientFaultTdsServer server = new TransientFaultTdsServer(
+                new TransientFaultTdsServerArguments()
+                {
+                    IsEnabledTransientError = true,
+                    Number = errorCode,
+                    FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}",
+                });
+            server.Start();
+
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                    RequireReadOnly = false,
+                });
+            router.Start();
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            {
+                DataSource = $"localhost,{router.EndPoint.Port}",
+                InitialCatalog = "master",
+                ConnectTimeout = 30,
+                ConnectRetryInterval = 1,
+                Encrypt = false,
+                FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}", // User provided failover partner
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            try
+            {
+                // Act
+                connection.Open();
+            }
+            catch (Exception e)
+            {
+                Assert.Fail(e.Message);
+            }
+
+            // Assert
+            Assert.Equal(ConnectionState.Open, connection.State);
+
+            // Failures should prompt the client to return to the original server, resulting in a login count of 2
+            Assert.Equal(2, router.PreLoginCount);
+            Assert.Equal(2, server.PreLoginCount);
+        }
+
+        [Theory]
+        [InlineData(40613)]
+        [InlineData(42108)]
+        [InlineData(42109)]
+        public void TransientFault_WithFailoverPartner_WithUserProvidedPartner_RetryDisabled_ShouldFail(uint errorCode)
+        {
+            // Arrange
+            using TdsServer failoverServer = new TdsServer(
+                new TdsServerArguments
+                {
+                    // Doesn't need to point to a real endpoint, just needs a value specified
+                    FailoverPartner = "localhost:1234",
+                });
+            failoverServer.Start();
+
+            using TransientFaultTdsServer server = new TransientFaultTdsServer(
+                new TransientFaultTdsServerArguments()
+                {
+                    IsEnabledTransientError = true,
+                    Number = errorCode,
+                    FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}",
+                });
+            server.Start();
+
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                    RequireReadOnly = false,
+                });
+            router.Start();
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            {
+                DataSource = $"localhost,{router.EndPoint.Port}",
+                InitialCatalog = "master",
+                ConnectTimeout = 30,
+                ConnectRetryInterval = 1,
+                ConnectRetryCount = 0, // Disable retry
+                Encrypt = false,
+                FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}", // User provided failover partner
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            try
+            {
+                // Act
+                connection.Open();
+            }
+            catch (SqlException e)
+            {
+                Assert.Equal((int)errorCode, e.Number);
+                return;
+            }
+
+            Assert.Fail();
         }
 
         [Fact]
