@@ -1997,6 +1997,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (AttemptRetryADAuthWithTimeoutError(sqlex, connectionOptions, timeout))
                     {
+                        // Continue without toggling useFailover or incrementing attemptNumber
                         continue;
                     }
 

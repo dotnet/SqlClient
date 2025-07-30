@@ -82,7 +82,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(42108)]
         [InlineData(42109)]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public async Task TransientFaultTestAsync(uint errorCode)
+        public async Task TransientFault_RetryEnabled_ShouldSucceed_Async(uint errorCode)
         {
             using TransientFaultTdsServer server = new TransientFaultTdsServer(
                 new TransientFaultTdsServerArguments() 
@@ -108,7 +108,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(42108)]
         [InlineData(42109)]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public void TransientFaultTest(uint errorCode)
+        public void TransientFaultTest_RetryEnabled_ShouldSucceed(uint errorCode)
         {
             using TransientFaultTdsServer server = new TransientFaultTdsServer(
                 new TransientFaultTdsServerArguments()
@@ -141,7 +141,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(42108)]
         [InlineData(42109)]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public void TransientFaultDisabledTestAsync(uint errorCode)
+        public void TransientFault_RetryDisabled_ShouldFail_Async(uint errorCode)
         {
             using TransientFaultTdsServer server = new TransientFaultTdsServer(
                 new TransientFaultTdsServerArguments()
@@ -169,7 +169,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(42108)]
         [InlineData(42109)]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public void TransientFaultDisabledTest(uint errorCode)
+        public void TransientFault_RetryDisabled_ShouldFail(uint errorCode)
         {
             using TransientFaultTdsServer server = new TransientFaultTdsServer(
                 new TransientFaultTdsServerArguments()
@@ -196,9 +196,10 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
-        public void PoolClearedOnFailover(uint errorCode)
+        public void TransientFault_NoFailover_DoesNotClearPool(uint errorCode)
         {
-            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
+            // When connecting to a server with a configured failover partner,
+            // transient errors returned during the login ack should not clear the connection pool.
 
             // Arrange
             using TdsServer failoverServer = new TdsServer(new TdsServerArguments
@@ -220,11 +221,9 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 DataSource = "localhost," + initialServer.EndPoint.Port,
                 IntegratedSecurity = true,
-                ConnectRetryCount = 0,
                 ConnectRetryInterval = 1,
                 ConnectTimeout = 30,
                 Encrypt = SqlConnectionEncryptOption.Optional,
-                FailoverPartner = failoverDataSource,
                 InitialCatalog = "test"
             };
 
@@ -233,9 +232,9 @@ namespace Microsoft.Data.SqlClient.Tests
 
             // Act
             initialServer.SetErrorBehavior(true, errorCode);
-            using SqlConnection failoverConnection = new(builder.ConnectionString);
-            // Should fail over to the failover server
-            failoverConnection.Open();
+            using SqlConnection secondConnection = new(builder.ConnectionString);
+            // Should not trigger a failover, will retry against the same server
+            secondConnection.Open();
 
             // Request a new connection, should initiate a fresh connection attempt if the pool was cleared.
             connection.Close();
@@ -243,11 +242,74 @@ namespace Microsoft.Data.SqlClient.Tests
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal(ConnectionState.Open, failoverConnection.State);
+            Assert.Equal(ConnectionState.Open, secondConnection.State);
 
-            // 1 for the initial connection, 1 for the failover connection
-            Assert.Equal(2, initialServer.PreLoginCount);
-            // 1 for the failover connection, 1 for the reconnection after failover
+            // 1 for the initial connection, 2 for the second connection
+            Assert.Equal(3, initialServer.PreLoginCount);
+            // A failover should not be triggered, so prelogin count to the failover server should be 0
+            Assert.Equal(0, failoverServer.PreLoginCount);
+        }
+
+        [Fact]
+        public void NetworkError_TriggersFailover_ClearsPool()
+        {
+            // When connecting to a server with a configured failover partner,
+            // network errors returned during prelogin should clear the connection pool.
+
+            // Arrange
+            using TdsServer failoverServer = new TdsServer(new TdsServerArguments
+            {
+                // Doesn't need to point to a real endpoint, just needs a value specified
+                FailoverPartner = "localhost,1234"
+            });
+            failoverServer.Start();
+            var failoverDataSource = $"localhost,{failoverServer.EndPoint.Port}";
+
+            // Errors are off to start to allow the pool to warm up
+            using TransientFaultTdsServer initialServer = new TransientFaultTdsServer(new TransientFaultTdsServerArguments
+            {
+                FailoverPartner = failoverDataSource
+            });
+            initialServer.Start();
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "localhost," + initialServer.EndPoint.Port,
+                IntegratedSecurity = true,
+                ConnectRetryInterval = 1,
+                ConnectTimeout = 30,
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                InitialCatalog = "test"
+            };
+
+            // Open the initial connection to warm up the pool and populate failover partner information
+            // for the pool group.
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal(1, initialServer.PreLoginCount);
+            Assert.Equal(0, failoverServer.PreLoginCount);
+
+            // Act
+            // Should trigger a failover because the initial server is unavailable
+            initialServer.Dispose();
+            using SqlConnection secondConnection = new(builder.ConnectionString);
+            secondConnection.Open();
+
+            // Assert
+            Assert.Equal(ConnectionState.Open, secondConnection.State);
+            Assert.Equal(1, initialServer.PreLoginCount);
+            Assert.Equal(1, failoverServer.PreLoginCount);
+
+
+            // Act
+            // Request a new connection, should initiate a fresh connection attempt if the pool was cleared.
+            connection.Close();
+            connection.Open();
+
+            // Assert
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal(1, initialServer.PreLoginCount);
             Assert.Equal(2, failoverServer.PreLoginCount);
         }
 

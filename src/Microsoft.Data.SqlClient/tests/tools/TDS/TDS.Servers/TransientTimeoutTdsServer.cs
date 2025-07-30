@@ -26,6 +26,17 @@ namespace Microsoft.SqlServer.TDS.Servers
         {
         }
 
+        public void ResetRequestCounter()
+        {
+            RequestCounter = 0;
+        }
+
+        public void SetTransientTimeoutBehavior(bool isEnabledTransientTimeout, TimeSpan sleepDuration)
+        {
+            Arguments.IsEnabledTransientTimeout = isEnabledTransientTimeout;
+            Arguments.SleepDuration = sleepDuration;
+        }
+
         /// <summary>
         /// Handler for login request
         /// </summary>
