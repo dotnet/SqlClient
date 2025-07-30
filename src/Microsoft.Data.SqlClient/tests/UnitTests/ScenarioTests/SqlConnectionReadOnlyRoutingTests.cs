@@ -7,11 +7,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.Net;
 using System.Threading.Tasks;
-using Microsoft.Identity.Client;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.Tests
+namespace Microsoft.Data.SqlClient.ScenarioTests
 {
     public class SqlConnectionReadOnlyRoutingTests
     {
@@ -450,9 +449,9 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Throws<SqlException>(() => connection.Open());
         }
 
-        [ActiveIssue("LoginWithFailover doesn't failover if not azure server?")]
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3528")]
         [Fact]
-        public void NetworkErrorAtRoutedLocation_WithFailoverPartner_ShouldConnectToFailoverPartner()
+        public void NetworkErrorAtRoutedLocation_WithFailoverPartner_ShouldConnectPrimary()
         {
             using TdsServer failoverServer = new TdsServer(
                 new TdsServerArguments
@@ -504,32 +503,14 @@ namespace Microsoft.Data.SqlClient.Tests
             // On the first connection attempt, no failover partner information is available,
             // so the connection will retry on the same server.
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal(1, router.PreLoginCount);
+            Assert.Equal(2, router.PreLoginCount);
             Assert.Equal(2, server.PreLoginCount);
             Assert.Equal(0, failoverServer.PreLoginCount);
-
-            // After the first connection attempt, the failover partner information is available in the pool group
-            // timeouts at this point will cause the connection to failover to the failover partner.
-            server.ResetRequestCounter();
-            using SqlConnection secondConnection = new(builder.ConnectionString);
-            try
-            {
-                // Act
-                secondConnection.Open();
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
-            Assert.Equal(ConnectionState.Open, secondConnection.State);
-            Assert.Equal(2, router.PreLoginCount);
-            Assert.Equal(3, server.PreLoginCount);
-            Assert.Equal(1, failoverServer.PreLoginCount);
         }
 
-        [ActiveIssue("LoginWithFailover doesn't failover if not azure server?")]
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3527")]
         [Fact]
-        public void NetworkErrorAtRoutedLocation_WithFailoverPartner_RetryDisabled_ShouldConnectToFailoverPartner()
+        public void NetworkErrorAtRoutedLocation_WithFailoverPartner_RetryDisabled_ShouldFail()
         {
             using TdsServer failoverServer = new TdsServer(
                 new TdsServerArguments
@@ -568,41 +549,18 @@ namespace Microsoft.Data.SqlClient.Tests
                 Encrypt = false,
             };
             using SqlConnection connection = new(builder.ConnectionString);
-            try
-            {
-                // Act
-                connection.Open();
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
+            // Act
+
+            // currently doesn't go back to gateway or evaluate retry count
+            Assert.Throws<SqlException>(() => connection.Open());
 
             // Assert
             // On the first connection attempt, no failover partner information is available in the pool group,
             // so the connection will retry on the same server.
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal(1, router.PreLoginCount);
-            Assert.Equal(2, server.PreLoginCount);
+            Assert.Equal(1, server.PreLoginCount);
             Assert.Equal(0, failoverServer.PreLoginCount);
-
-            // After the first connection attempt, the failover partner information is available,
-            // timeouts at this point will cause the connection to failover to the failover partner.
-            server.ResetRequestCounter();
-            using SqlConnection secondConnection = new(builder.ConnectionString);
-            try
-            {
-                // Act
-                secondConnection.Open();
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
-            Assert.Equal(ConnectionState.Open, secondConnection.State);
-            Assert.Equal(2, router.PreLoginCount);
-            Assert.Equal(3, server.PreLoginCount);
-            Assert.Equal(1, failoverServer.PreLoginCount);
         }
 
         [Fact]

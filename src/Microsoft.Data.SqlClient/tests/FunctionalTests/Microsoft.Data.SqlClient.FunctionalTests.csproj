@@ -36,8 +36,6 @@
     <Compile Include="SqlBulkCopyTest.cs" />
     <Compile Include="SqlClientMetaDataCollectionNamesTest.cs" />
     <Compile Include="SqlDataAdapterTest.cs" />
-    <Compile Include="SqlConnectionBasicTests.cs" />
-    <Compile Include="SqlConnectionReadOnlyRoutingTests.cs" />
     <Compile Include="SqlCommandTest.cs" />
     <Compile Include="SqlConnectionTest.cs" />
     <Compile Include="AADAuthenticationTests.cs" />

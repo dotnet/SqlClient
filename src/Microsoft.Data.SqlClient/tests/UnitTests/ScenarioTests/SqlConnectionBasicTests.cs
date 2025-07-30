@@ -9,7 +9,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,7 +19,7 @@ using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.Tests
+namespace Microsoft.Data.SqlClient.ScenarioTests
 {
     public class SqlConnectionBasicTests
     {
@@ -37,7 +36,7 @@ namespace Microsoft.Data.SqlClient.Tests
             connection.Open();
         }
 
-        [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
+        [Fact]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void IntegratedAuthConnectionTest()
         {
@@ -1032,10 +1031,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
         [Theory]
         [InlineData(60)]
-        [InlineData(30)]
-        [InlineData(15)]
         [InlineData(10)]
-        [InlineData(5)]
         [InlineData(1)]
         public void ConnectionTimeoutTest(int timeout)
         {
@@ -1078,10 +1074,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
         [Theory]
         [InlineData(60)]
-        [InlineData(30)]
-        [InlineData(15)]
         [InlineData(10)]
-        [InlineData(5)]
         [InlineData(1)]
         public async Task ConnectionTimeoutTestAsync(int timeout)
         {

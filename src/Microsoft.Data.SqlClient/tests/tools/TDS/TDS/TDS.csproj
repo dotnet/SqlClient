@@ -106,7 +106,4 @@
     <Compile Include="TDSVersion.cs" />
     <Compile Include="TransactionIsolationLevelType.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="microsoft.data.sqlclient\tests\tools\tds\tds\envchange\" />
-  </ItemGroup>
 </Project>
