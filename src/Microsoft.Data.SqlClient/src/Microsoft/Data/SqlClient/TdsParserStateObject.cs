@@ -3764,8 +3764,9 @@ namespace Microsoft.Data.SqlClient
         {
             private sealed partial class PacketData
             {
-                public byte[] Buffer;
-                public int Read;
+                public readonly byte[] Buffer;
+                public readonly int Read;
+
                 public PacketData NextPacket;
                 public PacketData PrevPacket;
 
@@ -3774,6 +3775,12 @@ namespace Microsoft.Data.SqlClient
                 /// to get the offset of the previous packet data in the stored buffer
                 /// </summary>
                 public int RunningDataSize;
+
+                public PacketData(byte[] buffer, int read)
+                {
+                    Buffer = buffer;
+                    Read = read;
+                }
 
                 public int PacketID => Packet.GetIDFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
 
@@ -4172,10 +4179,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 #endif
-                PacketData packetData =  new PacketData();
-
-                packetData.Buffer = buffer;
-                packetData.Read = read;
+                PacketData packetData = new PacketData(buffer, read);
 #if DEBUG
                 packetData.SetDebugStack(_stateObj._lastStack);
                 packetData.SetDebugPacketId(Interlocked.Increment(ref _packetCounter));

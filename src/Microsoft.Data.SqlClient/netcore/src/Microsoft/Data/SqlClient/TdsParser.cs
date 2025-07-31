@@ -13149,7 +13149,7 @@ namespace Microsoft.Data.SqlClient
             if (stateObj._longlen == 0)
             {
                 Debug.Assert(stateObj._longlenleft == 0);
-                totalCharsRead = 0;
+                totalCharsRead = startOffsetByteCount >> 1;
                 return TdsOperationStatus.Done;       // No data
             }
 
@@ -13169,14 +13169,14 @@ namespace Microsoft.Data.SqlClient
             //  later needing to repeatedly allocate new target buffers and copy data as we discover new data
             if (buff == null && stateObj._longlen != TdsEnums.SQL_PLP_UNKNOWNLEN && stateObj._longlen < (int.MaxValue >> 1))
             {
-                if (supportRentedBuff && stateObj._longlen < 1073741824) // 1 Gib
+                if (supportRentedBuff && stateObj._longlen >> 1 < 1073741824) // 1 Gib
                 {
-                    buff = ArrayPool<char>.Shared.Rent((int)Math.Min((int)stateObj._longlen, len));
+                    buff = ArrayPool<char>.Shared.Rent((int)Math.Min((int)stateObj._longlen >> 1, len));
                     rentedBuff = true;
                 }
                 else
                 {
-                    buff = new char[(int)Math.Min((int)stateObj._longlen, len)];
+                    buff = new char[(int)Math.Min((int)stateObj._longlen >> 1, len)];
                     rentedBuff = false;
                 }
             }
