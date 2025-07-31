@@ -2824,30 +2824,7 @@ namespace Microsoft.Data.SqlClient
                     TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
                     _activeConnection.RegisterWaitingForReconnect(completion.Task);
                     _reconnectionCompletionSource = completion;
-                    CancellationTokenSource timeoutCTS = new CancellationTokenSource();
-                    AsyncHelper.SetTimeoutException(completion, timeout, static () => SQL.CR_ReconnectTimeout(), timeoutCTS.Token);
-                    AsyncHelper.ContinueTask(reconnectTask, completion,
-                        () =>
-                        {
-                            if (completion.Task.IsCompleted)
-                            {
-                                return;
-                            }
-                            Interlocked.CompareExchange(ref _reconnectionCompletionSource, null, completion);
-                            timeoutCTS.Cancel();
-                            Task subTask;
-                            RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart), out subTask, asyncWrite, isRetry, ds);
-                            if (subTask == null)
-                            {
-                                completion.SetResult(null);
-                            }
-                            else
-                            {
-                                AsyncHelper.ContinueTaskWithState(subTask, completion, completion, static (object state) => ((TaskCompletionSource<object>)state).SetResult(null));
-                            }
-                        },
-                        connectionToAbort: _activeConnection
-                    );
+                    RunExecuteReaderTdsSetupReconnectContinuation(cmdBehavior, runBehavior, returnStream, isAsync, timeout, asyncWrite, isRetry, ds, reconnectTask, reconnectionStart, completion);
                     task = completion.Task;
                     return ds;
                 }
@@ -3075,6 +3052,37 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(isAsync || _stateObj == null, "non-null state object in RunExecuteReader");
             return ds;
+        }
+
+        // This is in its own method to avoid always allocating the lambda in RunExecuteReaderTds
+        private void RunExecuteReaderTdsSetupReconnectContinuation(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, bool isAsync, int timeout, bool asyncWrite, bool isRetry, SqlDataReader ds, Task reconnectTask, long reconnectionStart, TaskCompletionSource<object> completion)
+        {
+            CancellationTokenSource timeoutCTS = new CancellationTokenSource();
+            AsyncHelper.SetTimeoutException(completion, timeout, static () => SQL.CR_ReconnectTimeout(), timeoutCTS.Token);
+            AsyncHelper.ContinueTask(reconnectTask, completion,
+                () =>
+                {
+                    if (completion.Task.IsCompleted)
+                    {
+                        return;
+                    }
+                    Interlocked.CompareExchange(ref _reconnectionCompletionSource, null, completion);
+                    timeoutCTS.Cancel();
+                    Task subTask;
+                    RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart), out subTask, asyncWrite, isRetry, ds);
+                    if (subTask == null)
+                    {
+                        completion.SetResult(null);
+                    }
+                    else
+                    {
+                        AsyncHelper.ContinueTaskWithState(subTask, completion,
+                            state: completion,
+                            onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
+                        );
+                    }
+                }
+            );
         }
 
         private SqlDataReader CompleteAsyncExecuteReader(bool isInternal = false, bool forDescribeParameterEncryption = false)
