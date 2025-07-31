@@ -54,30 +54,32 @@ steps:
     arguments: 'build.proj -t:restore'
     feedsToUse: 'select'
 
-- powershell: |
-    $Doc = [xml](Get-Content "./Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj")
-    $parent_xpath = '/Project/ItemGroup/ProjectReference'
-    $node = $Doc.SelectSingleNode($parent_xpath)
-    $parentNode = $node.ParentNode
-    while($node -ne $null) {
-        $node.ParentNode.RemoveChild($node)
-        $node = $Doc.SelectSingleNode($parent_xpath)
-    }
+# - powershell: |
+#     $Doc = [xml](Get-Content "./Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj")
+#     $parent_xpath = '/Project/ItemGroup/ProjectReference'
+#     $node = $Doc.SelectSingleNode($parent_xpath)
+#     $parentNode = $node.ParentNode
+#     while($node -ne $null) {
+#         $node.ParentNode.RemoveChild($node)
+#         $node = $Doc.SelectSingleNode($parent_xpath)
+#     }
 
-    $parent_xpath = '/Project/ItemGroup/PackageReference[@Include="Microsoft.Data.SqlClient"]'
-    $node = $Doc.SelectSingleNode($parent_xpath)
-    
-    if($node -eq $null){
-        $packagerefnode = $doc.createelement("packagereference")
-        $value = $doc.selectsinglenode('/project/itemgroup/projectreference')
-        $attrinclude = $doc.createattribute("include")
-        $attrinclude.value = "microsoft.data.sqlclient"
-        $packagerefnode.attributes.append($attrinclude)
-        $parentNode.AppendChild($packageRefNode)
-    }
+#     $parent_xpath = '/Project/ItemGroup/PackageReference[@Include="Microsoft.Data.SqlClient"]'
+#     $node = $Doc.SelectSingleNode($parent_xpath)
+#     if($node -ne $null){
+#         $node.Version="${{parameters.nugetPackageVersion }}"
+#     }
+#     else{
+#         $packagerefnode = $doc.createelement("packagereference")
+#         $value = $doc.selectsinglenode('/project/itemgroup/projectreference')
+#         $attrinclude = $doc.createattribute("include")
+#         $attrinclude.value = "microsoft.data.sqlclient"
+#         $packagerefnode.attributes.append($attrinclude)
+#         $parentNode.AppendChild($packageRefNode)
+#     }
 
-    $currentFolder = Get-Location
-    $filePath = Join-Path $currentFolder "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj"
-    $Doc.Save($filePath)
-  workingDirectory: 'src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider'
-  displayName: 'Update AKV Project Ref to Package Ref (.NET Framework/Core)'
+#     $currentFolder = Get-Location
+#     $filePath = Join-Path $currentFolder "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj"
+#     $Doc.Save($filePath)
+#   workingDirectory: 'src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider'
+#   displayName: 'Update AKV Project Ref to Package Ref (.NET Framework/Core)'
