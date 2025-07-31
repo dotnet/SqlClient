@@ -3796,21 +3796,6 @@ namespace Microsoft.Data.SqlClient
                     return Math.Max(RunningDataSize - previous, 0);
                 }
 
-                internal void Clear()
-                {
-                    Buffer = null;
-                    Read = 0;
-                    NextPacket = null;
-                    if (PrevPacket != null)
-                    {
-                        PrevPacket.NextPacket = null;
-                        PrevPacket = null;
-                    }
-                    SetDebugStackImpl(null);
-                    SetDebugPacketId(0);
-                    SetDebugDataHash();
-                }
-
                 internal void SetDebugStack(string value) => SetDebugStackImpl(value);
                 internal void SetDebugPacketId(int value) => SetDebugPacketIdImpl(value);
                 internal void SetDebugDataHash() => SetDebugDataHashImpl();
@@ -4107,7 +4092,6 @@ namespace Microsoft.Data.SqlClient
             private PacketData _firstPacket;
             private PacketData _current;
             private PacketData _continuePacket;
-            private PacketData _sparePacket;
 
 #if DEBUG
             private int _packetCounter;
@@ -4188,15 +4172,8 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 #endif
-                PacketData packetData = _sparePacket;
-                if (packetData is null)
-                {
-                    packetData = new PacketData();
-                }
-                else
-                {
-                    _sparePacket = null;
-                }
+                PacketData packetData =  new PacketData();
+
                 packetData.Buffer = buffer;
                 packetData.Read = read;
 #if DEBUG
@@ -4380,13 +4357,10 @@ namespace Microsoft.Data.SqlClient
 
             private void ClearPackets()
             {
-                PacketData packet = _firstPacket;
                 _firstPacket = null;
                 _lastPacket = null;
                 _continuePacket = null;
                 _current = null;
-                packet.Clear();
-                _sparePacket = packet;
             }
 
             private void ClearState()
