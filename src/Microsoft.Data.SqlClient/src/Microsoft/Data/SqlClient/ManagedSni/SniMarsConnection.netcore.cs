@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Security.Authentication;
 using System.Threading;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
@@ -32,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         public Guid ConnectionId => _connectionId;
 
-        public int ProtocolVersion => _lowerHandle.ProtocolVersion;
+        public SslProtocols ProtocolVersion => _lowerHandle.ProtocolVersion;
 
         internal object DemuxerSync => _sync;
 
