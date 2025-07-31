@@ -16,34 +16,14 @@ namespace Microsoft.Data.SqlClient.UserAgent;
 internal static class UserAgentInfo
 {
     /// <summary>
-    /// Maximum number of characters allowed for the driver name.
-    /// </summary>
-    private const int DriverNameMaxChars = 16;
-
-    /// <summary>
-    /// Maximum number of characters allowed for the driver version.
-    /// </summary>
-    private const int VersionMaxChars = 16;
-
-    /// <summary>
-    /// Maximum number of characters allowed for the operating system type.
-    /// </summary>
-    private const int OsTypeMaxChars = 16;
-
-    /// <summary>
-    /// Maximum number of characters allowed for the operating system details.
-    /// </summary>  
-    private const int OsDetailsMaxChars = 128;
-
-    /// <summary>
     /// Maximum number of characters allowed for the system architecture.
     /// </summary>
     private const int ArchMaxChars = 16;
 
     /// <summary>
-    /// Maximum number of characters allowed for the driver runtime.
+    /// Maximum number of characters allowed for the driver name.
     /// </summary>
-    private const int RuntimeMaxChars = 128;
+    private const int DriverNameMaxChars = 16;
 
     /// <summary>
     /// Maximum number of bytes allowed for the user agent json payload.
@@ -51,11 +31,34 @@ internal static class UserAgentInfo
     /// </summary>
     internal const int JsonPayloadMaxBytes = 2047;
 
-    private const string DefaultJsonValue = "Unknown";
+    /// <summary>
+    /// Maximum number of characters allowed for the operating system details.
+    /// </summary>  
+    private const int OsDetailsMaxChars = 128;
+
+    /// <summary>
+    /// Maximum number of characters allowed for the operating system type.
+    /// </summary>
+    private const int OsTypeMaxChars = 16;
+
+    /// <summary>
+    /// Maximum number of characters allowed for the driver runtime.
+    /// </summary>
+    private const int RuntimeMaxChars = 128;
+
+    /// <summary>
+    /// Maximum number of characters allowed for the driver version.
+    /// </summary>
+    private const int VersionMaxChars = 16;
+
+
+    internal const string DefaultJsonValue = "Unknown";
     internal const string DriverName = "MS-MDS";
 
-    private static readonly UserAgentInfoDto _dto;
-    public static readonly byte[] _cachedPayload;
+    private static readonly UserAgentInfoDto s_dto;
+    private static readonly byte[] s_cachedPayload;
+
+    public static byte[] CachedPayload => s_cachedPayload;
 
     private enum OsType
     {
@@ -69,8 +72,52 @@ internal static class UserAgentInfo
 
     static UserAgentInfo()
     {
-        _dto = BuildDto();
-        _cachedPayload = AdjustJsonPayloadSize(_dto);
+        s_dto = BuildDto();
+        s_cachedPayload = AdjustJsonPayloadSize(s_dto);
+    }
+
+    /// <summary>
+    /// This function returns the appropriately sized json payload 
+    /// We check the size of encoded json payload, if it is within limits we return the dto to be cached
+    /// other wise we drop some fields to reduce the size of the payload.
+    /// </summary>
+    /// <param name="dto"> Data Transfer Object for the json payload </param>
+    /// <returns>Serialized UTF-8 encoded json payload version of DTO within size limit</returns>
+    internal static byte[] AdjustJsonPayloadSize(UserAgentInfoDto dto)
+    {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = null,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            WriteIndented = false
+        };
+        byte[] payload = JsonSerializer.SerializeToUtf8Bytes(dto, options);
+
+        // We try to send the payload if it is within the limits.
+        // Otherwise we drop some fields to reduce the size of the payload and try one last time
+        // Note: server will reject payloads larger than 2047 bytes
+        // Try if the payload fits the max allowed bytes
+        if (payload.Length <= JsonPayloadMaxBytes)
+        { 
+            return payload;
+        }
+
+        dto.Runtime = null; // drop Runtime
+        dto.Arch = null; // drop Arch
+        if (dto.OS != null)
+        {
+            dto.OS.Details = null; // drop OS.Details
+        }
+
+        payload = JsonSerializer.SerializeToUtf8Bytes(dto, options);
+        if (payload.Length <= JsonPayloadMaxBytes)
+        {
+            return payload;
+        }
+            
+        dto.OS = null; // drop OS entirely
+        // Last attempt to send minimal payload driver + version only
+        return JsonSerializer.SerializeToUtf8Bytes(dto, options);
     }
 
     internal static UserAgentInfoDto BuildDto()
@@ -121,7 +168,7 @@ internal static class UserAgentInfo
             Driver = TruncateOrDefault(DriverName, DriverNameMaxChars),
             Version = TruncateOrDefault(ADP.GetAssemblyVersion().ToString(), VersionMaxChars),
             OS = new UserAgentInfoDto.OsInfo
-            { 
+            {
                 Type = TruncateOrDefault(DetectOsType().ToString(), OsTypeMaxChars),
                 Details = TruncateOrDefault(DetectOsDetails(), OsDetailsMaxChars)
             },
@@ -132,76 +179,35 @@ internal static class UserAgentInfo
     }
 
     /// <summary>
-    /// This function returns the appropriately sized json payload 
-    /// We check the size of encoded json payload, if it is within limits we return the dto to be cached
-    /// other wise we drop some fields to reduce the size of the payload.
+    /// Detects and reports whatever CPU architecture the guest OS exposes
     /// </summary>
-    /// <param name="dto"> Data Transfer Object for the json payload </param>
-    /// <returns>Serialized UTF-8 encoded json payload version of DTO within size limit</returns>
-    internal static byte[] AdjustJsonPayloadSize(UserAgentInfoDto dto)
-    {
-        var options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = null,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            WriteIndented = false
-        };
-        byte[] payload = JsonSerializer.SerializeToUtf8Bytes(dto, options);
-
-        // We try to send the payload if it is within the limits.
-        // Otherwise we drop some fields to reduce the size of the payload and try one last time
-        // Note: server will reject payloads larger than 2047 bytes
-        // Try if the payload fits the max allowed bytes
-        if (payload.Length <= JsonPayloadMaxBytes)
-        { 
-            return payload;
-        }
-
-        dto.Runtime = null; // drop Runtime
-        dto.Arch = null; // drop Arch
-        if (dto.OS != null)
-        {
-            dto.OS.Details = null; // drop OS.Details
-        }
-
-        payload = JsonSerializer.SerializeToUtf8Bytes(dto, options);
-        if (payload.Length <= JsonPayloadMaxBytes)
-        {
-            return payload;
-        }
-            
-        dto.OS = null; // drop OS entirely
-        // Last attempt to send minimal payload driver + version only
-        return JsonSerializer.SerializeToUtf8Bytes(dto, options);
-    }
-
-    /// <summary>
-    /// Truncates a string to the specified maximum length or returns a default value if input is null or empty.
-    /// </summary>
-    /// <param name="jsonStringVal">The string value to truncate</param>
-    /// <param name="maxChars">Maximum number of characters allowed</param>
-    /// <returns>Truncated string or default value if input is invalid</returns>
-    internal static string TruncateOrDefault(string jsonStringVal, int maxChars)
+    private static string DetectArchitecture()
     {
         try
         {
-            if (string.IsNullOrEmpty(jsonStringVal))
-            {
-                return DefaultJsonValue;
-            }
-
-            if (jsonStringVal.Length <= maxChars)
-            {
-                return jsonStringVal;
-            }
-
-            return jsonStringVal.Substring(0, maxChars);
+            // Returns the architecture of the current process (e.g., "X86", "X64", "Arm", "Arm64").
+            // Note: This reflects the architecture of the running process, not the physical host system.
+            return RuntimeInformation.ProcessArchitecture.ToString();
         }
         catch
         {
-            // Silently consume all exceptions
+            // In case RuntimeInformation isn’t available or something unexpected happens
             return DefaultJsonValue;
         }
+    }
+
+    /// <summary>
+    /// Retrieves the operating system details based on RuntimeInformation.
+    /// </summary>
+    private static string DetectOsDetails()
+    {
+        var osDetails = RuntimeInformation.OSDescription;
+        if (!string.IsNullOrWhiteSpace(osDetails))
+        {
+            return osDetails;
+        }
+
+        return DefaultJsonValue;
     }
 
     /// <summary>
@@ -265,54 +271,32 @@ internal static class UserAgentInfo
             // The string values are based on trial and error.
             var desc = RuntimeInformation.OSDescription?.ToLowerInvariant() ?? "";
             if (desc.Contains("android"))
+            {
                 return OsType.Android;
+            }
             if (desc.Contains("freebsd"))
+            {
                 return OsType.FreeBSD;
+            }
             if (desc.Contains("windows"))
+            {
                 return OsType.Windows;
+            }
             if (desc.Contains("linux"))
+            {
                 return OsType.Linux;
+            }
             if (desc.Contains("darwin") || desc.Contains("mac os"))
+            {
                 return OsType.macOS;
+            }
         }
         catch
         {
             // swallow any unexpected errors
+            return OsType.Unknown;
         }
-
         return OsType.Unknown;
-    }
-
-    /// <summary>
-    /// Retrieves the operating system details based on RuntimeInformation.
-    /// </summary>
-    private static string DetectOsDetails()
-    {
-        var osDetails = RuntimeInformation.OSDescription;
-        if (!string.IsNullOrWhiteSpace(osDetails))
-        {
-            return osDetails;
-        }
-        
-        return DefaultJsonValue;
-    }
-
-    /// <summary>
-    /// Detects and reports whatever CPU architecture the guest OS exposes
-    /// </summary>
-    private static string DetectArchitecture()
-    {
-        try
-        {
-            // Returns the architecture of the current process (e.g., "X86", "X64", "Arm", "Arm64").
-            // Note: This reflects the architecture of the running process, not the physical host system.
-            return RuntimeInformation.ProcessArchitecture.ToString();
-        }
-        catch
-        {
-            // In case RuntimeInformation isn’t available or something unexpected happens
-            return DefaultJsonValue;
-        }
     }
 
     /// <summary>
@@ -330,5 +314,35 @@ internal static class UserAgentInfo
         // at this point, desc is non‑null, non‑empty (after trimming)
         return desc.Trim();
     }
+
+    /// <summary>
+    /// Truncates a string to the specified maximum length or returns a default value if input is null or empty.
+    /// </summary>
+    /// <param name="jsonStringVal">The string value to truncate</param>
+    /// <param name="maxChars">Maximum number of characters allowed</param>
+    /// <returns>Truncated string or default value if input is invalid</returns>
+    internal static string TruncateOrDefault(string jsonStringVal, int maxChars)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(jsonStringVal))
+            {
+                return DefaultJsonValue;
+            }
+
+            if (jsonStringVal.Length <= maxChars)
+            {
+                return jsonStringVal;
+            }
+
+            return jsonStringVal.Substring(0, maxChars);
+        }
+        catch
+        {
+            // Silently consume all exceptions
+            return DefaultJsonValue;
+        }
+    }
+
 }
 

@@ -11,6 +11,9 @@ internal class UserAgentInfoDto
     // This allows us to calculate their UTF-8 encoded byte sizes efficiently without instantiating
     // the DTO or relying on JsonProperty attribute resolution at runtime. The small overhead of 
     // maintaining constants is justified by the performance and allocation savings.
+
+    // Note: These values reflect the order of the JSON fields defined in the spec.
+    // The order is maintained to match the JSON payload structure.
     public const string DriverJsonKey = "driver";
     public const string VersionJsonKey = "version";
     public const string OsJsonKey = "os";
@@ -38,7 +41,7 @@ internal class UserAgentInfoDto
         public const string DetailsJsonKey = "details";
 
         [JsonPropertyName(TypeJsonKey)]
-        public string? Type { get; set; }
+        public string Type { get; set; } = UserAgentInfo.DefaultJsonValue;
 
         [JsonPropertyName(DetailsJsonKey)]
         public string? Details { get; set; }
