@@ -842,36 +842,6 @@ namespace Microsoft.Data.SqlClient
             this.IsDirty = true;
         }
 
-        private void InternalPrepare()
-        {
-            if (this.IsDirty)
-            {
-                Debug.Assert(_cachedMetaData == null || !_dirty, "dirty query should not have cached metadata!"); // can have cached metadata if dirty because of parameters
-                //
-                // someone changed the command text or the parameter schema so we must unprepare the command
-                //
-                this.Unprepare();
-                this.IsDirty = false;
-            }
-            Debug.Assert(_execType != EXECTYPE.PREPARED, "Invalid attempt to Prepare already Prepared command!");
-            Debug.Assert(_activeConnection != null, "must have an open connection to Prepare");
-            Debug.Assert(_stateObj != null, "TdsParserStateObject should not be null");
-            Debug.Assert(_stateObj.Parser != null, "TdsParser class should not be null in Command.Execute!");
-            Debug.Assert(_stateObj.Parser == _activeConnection.Parser, "stateobject parser not same as connection parser");
-            Debug.Assert(false == _inPrepare, "Already in Prepare cycle, this.inPrepare should be false!");
-
-            // remember that the user wants to do a prepare but don't actually do an rpc
-            _execType = EXECTYPE.PREPAREPENDING;
-            // Note the current close count of the connection - this will tell us if the connection has been closed between calls to Prepare() and Execute
-            _preparedConnectionCloseCount = _activeConnection.CloseCount;
-            _preparedConnectionReconnectCount = _activeConnection.ReconnectCount;
-
-            if (Statistics != null)
-            {
-                Statistics.SafeIncrement(ref Statistics._prepares);
-            }
-        }
-
         // SqlInternalConnectionTds needs to be able to unprepare a statement
         internal void Unprepare()
         {

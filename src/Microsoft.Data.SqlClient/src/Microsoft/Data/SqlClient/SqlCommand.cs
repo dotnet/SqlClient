@@ -227,5 +227,40 @@ namespace Microsoft.Data.SqlClient
         }
 
         #endregion
+
+        #region Private Methods
+
+        // @TODO: Rename to PrepareInternal
+        private void InternalPrepare()
+        {
+            if (IsDirty)
+            {
+                Debug.Assert(_cachedMetaData == null || !_dirty, "dirty query should not have cached metadata!"); // can have cached metadata if dirty because of parameters
+                //
+                // someone changed the command text or the parameter schema so we must unprepare the command
+                //
+                Unprepare();
+                IsDirty = false;
+            }
+
+            Debug.Assert(_execType is not EXECTYPE.PREPARED, "Invalid attempt to Prepare already Prepared command!");
+            Debug.Assert(_activeConnection is not null, "must have an open connection to Prepare");
+            Debug.Assert(_stateObj is not null, "TdsParserStateObject should not be null");
+            Debug.Assert(_stateObj.Parser is not null, "TdsParser class should not be null in Command.Execute!");
+            Debug.Assert(_stateObj.Parser == _activeConnection.Parser, "stateobject parser not same as connection parser");
+            Debug.Assert(!_inPrepare, "Already in Prepare cycle, this.inPrepare should be false!");
+
+            // Remember that the user wants to prepare but don't actually do an RPC
+            _execType = EXECTYPE.PREPAREPENDING;
+
+            // Note the current close count of the connection - this will tell us if the
+            // connection has been closed between calls to Prepare() and Execute
+            _preparedConnectionCloseCount = _activeConnection.CloseCount;
+            _preparedConnectionReconnectCount = _activeConnection.ReconnectCount;
+
+            Statistics?.SafeIncrement(ref Statistics._prepares);
+        }
+
+        #endregion
     }
 }
