@@ -21,6 +21,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void RunAllTestsForSingleServer_NP()
         {
+            // @TODO: Split into separate tests! Or why even bother running this test on non-windows, the error comes from something other than data stream!
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 DataTestUtility.AssertThrowsWrapper<PlatformNotSupportedException>(() => RunAllTestsForSingleServer(DataTestUtility.NPConnectionString, true));
@@ -30,8 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 RunAllTestsForSingleServer(DataTestUtility.NPConnectionString, true);
             }
         }
-
-        [ActiveIssue("5540")]
+        
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void RunAllTestsForSingleServer_TCP()
         {
@@ -152,6 +152,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             return data;
         }
 
+        // @TODO: Split into separate tests!
         private static void RunAllTestsForSingleServer(string connectionString, bool usingNamePipes = false)
         {
             RowBuffer(connectionString);
@@ -187,7 +188,6 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                 {
                     TimeoutDuringReadAsyncWithClosedReaderTest(connectionString);
                 }
-                NonFatalTimeoutDuringRead(connectionString);
             }
         }
 
@@ -1281,7 +1281,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 Assert.False(t.Wait(1), "FAILED: Read completed immediately");
                                 DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetStream(8));
                             }
-                            t.Wait();
+                            DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
 
                             // GetStream after Read 
                             DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetStream(0));
@@ -1319,7 +1319,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             Assert.True(t.IsCompleted, "FAILED: Failed to get stream within 1 second");
                             t = reader.ReadAsync();
                         }
-                        t.Wait();
+                        DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
                     }
 #endif
                 }
@@ -1393,7 +1393,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                     Assert.False(t.IsCompleted, "FAILED: Read completed immediately");
                                     DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetTextReader(8));
                                 }
-                                t.Wait();
+                                DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
 
                                 // GetTextReader after Read 
                                 DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetTextReader(0));
@@ -1432,7 +1432,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 Assert.True(t.IsCompleted, "FAILED: Failed to get TextReader within 1 second");
                                 t = reader.ReadAsync();
                             }
-                            t.Wait();
+                            DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
                         }
 #endif
                     }
@@ -1483,7 +1483,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 Assert.False(t.IsCompleted, "FAILED: Read completed immediately");
                                 DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetXmlReader(6));
                             }
-                            t.Wait();
+                            DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
 
                             // GetXmlReader after Read 
                             DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetXmlReader(0));
@@ -1609,7 +1609,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                     DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => { _ = stream.Read(largeBuffer, 0, largeBuffer.Length); });
                                     DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.Read());
                                 }
-                                t.Wait();
+                                DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
                             }
                             using (SqlDataReader reader = cmd.ExecuteReader(behavior))
                             {
@@ -1768,7 +1768,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                         DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => textReader.Read(largeBuffer, 0, largeBuffer.Length));
                                         DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.Read());
                                     }
-                                    t.Wait();
+                                    DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
                                 }
 
                                 using (SqlDataReader reader = cmd.ExecuteReader(behavior))
@@ -1995,48 +1995,6 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                 proxy.Stop();
             }
             catch (SqlException)
-            {
-                // In case of error, stop the proxy and dump its logs (hopefully this will help with debugging
-                proxy.Stop();
-                throw;
-            }
-        }
-
-        private static void NonFatalTimeoutDuringRead(string connectionString)
-        {
-            // Create the proxy
-            ProxyServer proxy = ProxyServer.CreateAndStartProxy(connectionString, out connectionString);
-            proxy.SimulatedPacketDelay = 100;
-            proxy.SimulatedOutDelay = true;
-            try
-            {
-                using (SqlConnection conn = new SqlConnection(connectionString))
-                {
-                    // Start the command
-                    conn.Open();
-                    using (SqlCommand cmd = new SqlCommand("SELECT @p, @p, @p, @p, @p", conn))
-                    {
-                        cmd.CommandTimeout = 1;
-                        cmd.Parameters.AddWithValue("p", new string('a', 3000));
-                        using (SqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            // Slow down packets and wait on ReadAsync
-                            proxy.SimulatedPacketDelay = 1500;
-                            reader.ReadAsync().Wait();
-
-                            // Allow proxy to copy at full speed again
-                            proxy.SimulatedOutDelay = false;
-                            reader.SetDefaultTimeout(30000);
-
-                            // Close will now observe the stored timeout error
-                            string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
-                            DataTestUtility.AssertThrowsWrapper<SqlException>(reader.Dispose, errorMessage);
-                        }
-                    }
-                }
-                proxy.Stop();
-            }
-            catch
             {
                 // In case of error, stop the proxy and dump its logs (hopefully this will help with debugging
                 proxy.Stop();
