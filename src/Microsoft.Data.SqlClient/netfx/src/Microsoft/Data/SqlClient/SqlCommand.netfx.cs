@@ -2996,15 +2996,7 @@ namespace Microsoft.Data.SqlClient
                     decrementAsyncCountOnFailure = false;
                     if (writeTask != null)
                     {
-                        task = AsyncHelper.CreateContinuationTask(writeTask, () =>
-                        {
-                            _activeConnection.GetOpenTdsConnection(); // it will throw if connection is closed
-                            CachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
-                        },
-                                 onFailure: (exc) =>
-                                 {
-                                     _activeConnection.GetOpenTdsConnection().DecrementAsyncCount();
-                                 });
+                        task = RunExecuteReaderTdsSetupContinuation(runBehavior, ds, optionSettings, writeTask);
                     }
                     else
                     {
@@ -3073,6 +3065,25 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             );
+        }
+
+        private Task RunExecuteReaderTdsSetupContinuation(RunBehavior runBehavior, SqlDataReader ds, string optionSettings, Task writeTask)
+        {
+            Task task = AsyncHelper.CreateContinuationTaskWithState(
+                task: writeTask,
+                state: _activeConnection,
+                onSuccess: (object state) =>
+                {
+                    SqlConnection sqlConnection = (SqlConnection)state;
+                    sqlConnection.GetOpenTdsConnection(); // it will throw if connection is closed
+                    CachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
+                },
+                onFailure: static (Exception exc, object state) =>
+                {
+                    ((SqlConnection)state).GetOpenTdsConnection().DecrementAsyncCount();
+                }
+            );
+            return task;
         }
 
         private SqlDataReader CompleteAsyncExecuteReader(bool isInternal = false, bool forDescribeParameterEncryption = false)
