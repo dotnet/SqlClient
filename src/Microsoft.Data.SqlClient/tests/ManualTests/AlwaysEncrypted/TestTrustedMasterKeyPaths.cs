@@ -44,7 +44,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.True(rowsFound == 1, "Incorrect number of rows returned in first execution.");
         }
 
-        [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithNullDictionary(string connection)
@@ -83,7 +82,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Clear();
         }
 
-        [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithOneServer(string connection)
@@ -129,7 +127,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Clear();
         }
 
-        [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithMultipleServers(string connection)
@@ -188,7 +185,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Clear();
         }
 
-        [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithInvalidInputs(string connection)
