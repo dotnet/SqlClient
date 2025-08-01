@@ -2795,25 +2795,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private Task RunExecuteReaderTdsSetupContinuation(RunBehavior runBehavior, SqlDataReader ds, string optionSettings, Task writeTask)
-        {
-            Task task = AsyncHelper.CreateContinuationTaskWithState(
-                task: writeTask,
-                state: _activeConnection,
-                onSuccess: (object state) =>
-                {
-                    SqlConnection sqlConnection = (SqlConnection)state;
-                    sqlConnection.GetOpenTdsConnection(); // it will throw if connection is closed
-                    CachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
-                },
-                onFailure: static (Exception exc, object state) =>
-                {
-                    ((SqlConnection)state).GetOpenTdsConnection().DecrementAsyncCount();
-                }
-            );
-            return task;
-        }
-
         private SqlDataReader CompleteAsyncExecuteReader(bool isInternal = false, bool forDescribeParameterEncryption = false)
         {
             SqlDataReader ds = CachedAsyncState.CachedAsyncReader; // should not be null
