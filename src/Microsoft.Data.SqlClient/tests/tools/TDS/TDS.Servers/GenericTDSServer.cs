@@ -73,7 +73,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         private int _sessionCount = 0;
 
         /// <summary>
-        /// Counts unique pre-login requests to the server.
+        /// Counts pre-login requests to the server.
         /// </summary>
         private int _preLoginCount = 0;
 
@@ -92,7 +92,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         protected QueryEngine Engine { get; set; }
 
         /// <summary>
-        /// Counts unique pre-login requests to the server.
+        /// Counts pre-login requests to the server.
         /// </summary>
         public int PreLoginCount => _preLoginCount;
 
@@ -168,6 +168,7 @@ namespace Microsoft.SqlServer.TDS.Servers
 
             // Inflate pre-login request from the message
             TDSPreLoginToken preLoginRequest = request[0] as TDSPreLoginToken;
+            GenericTdsServerSession genericTdsServerSession = session as GenericTdsServerSession;
 
             // Log request
             TDSUtilities.Log(Arguments.Log, "Request", preLoginRequest);
@@ -182,7 +183,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSPreLoginToken preLoginToken = new TDSPreLoginToken(Arguments.ServerVersion, serverResponse, false); // TDS server doesn't support MARS
 
             // Cache the received Nonce into the session
-            (session as GenericTdsServerSession).ClientNonce = preLoginRequest.Nonce;
+            genericTdsServerSession.ClientNonce = preLoginRequest.Nonce;
 
             // Check if the server has been started up as requiring FedAuth when choosing between SSPI and FedAuth
             if (Arguments.FedAuthRequiredPreLoginOption == TdsPreLoginFedAuthRequiredOption.FedAuthRequired)
@@ -194,7 +195,7 @@ namespace Microsoft.SqlServer.TDS.Servers
                 }
 
                 // Keep the federated authentication required flag in the server session
-                (session as GenericTdsServerSession).FedAuthRequiredPreLoginServerResponse = preLoginToken.FedAuthRequired;
+                genericTdsServerSession.FedAuthRequiredPreLoginServerResponse = preLoginToken.FedAuthRequired;
 
                 if (preLoginRequest.Nonce != null)
                 {
@@ -204,7 +205,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             }
 
             // Cache the server Nonce in a session
-            (session as GenericTdsServerSession).ServerNonce = preLoginToken.Nonce;
+            genericTdsServerSession.ServerNonce = preLoginToken.Nonce;
 
             // Log response
             TDSUtilities.Log(Arguments.Log, "Response", preLoginToken);
