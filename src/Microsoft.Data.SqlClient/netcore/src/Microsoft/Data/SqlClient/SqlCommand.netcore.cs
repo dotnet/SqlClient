@@ -2733,51 +2733,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void GenerateEnclavePackage()
-        {
-            if (keysToBeSentToEnclave == null || keysToBeSentToEnclave.Count <= 0)
-            {
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(this._activeConnection.EnclaveAttestationUrl) &&
-                Connection.AttestationProtocol != SqlConnectionAttestationProtocol.None)
-            {
-                throw SQL.NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage(this._activeConnection.Parser.EnclaveType);
-            }
-
-            string enclaveType = this._activeConnection.Parser.EnclaveType;
-            if (string.IsNullOrWhiteSpace(enclaveType))
-                throw SQL.EnclaveTypeNullForEnclaveBasedQuery();
-
-            SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
-            if (attestationProtocol == SqlConnectionAttestationProtocol.NotSpecified)
-            {
-                throw SQL.AttestationProtocolNotSpecifiedForGeneratingEnclavePackage();
-            }
-
-            try
-            {
-#if DEBUG
-                if (_forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage)
-                {
-                    _forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage = false;
-                    throw new EnclaveDelegate.RetryableEnclaveQueryExecutionException("testing", null);
-                }
-#endif
-                this.enclavePackage = EnclaveDelegate.Instance.GenerateEnclavePackage(attestationProtocol, keysToBeSentToEnclave,
-                    this.CommandText, enclaveType, GetEnclaveSessionParameters(), _activeConnection, this);
-            }
-            catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
-            {
-                throw;
-            }
-            catch (Exception e)
-            {
-                throw SQL.ExceptionWhenGeneratingEnclavePackage(e);
-            }
-        }
-
         private SqlDataReader CompleteAsyncExecuteReader(bool isInternal = false, bool forDescribeParameterEncryption = false)
         {
             SqlDataReader ds = CachedAsyncState.CachedAsyncReader; // should not be null

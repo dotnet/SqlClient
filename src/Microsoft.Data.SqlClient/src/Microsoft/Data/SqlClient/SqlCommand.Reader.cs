@@ -110,6 +110,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // @TODO: This is only used for synchronous execution
         internal SqlDataReader RunExecuteReader(
             CommandBehavior cmdBehavior,
             RunBehavior runBehavior,
@@ -134,6 +135,68 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Private Methods
+
+        private void GenerateEnclavePackage()
+        {
+            // Skip processing if there are no keys to send to enclave
+            if (keysToBeSentToEnclave is null || keysToBeSentToEnclave.IsEmpty)
+            {
+                return;
+            }
+
+            // Validate attestation url is provided when necessary
+            if (string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) &&
+                _activeConnection.AttestationProtocol is not SqlConnectionAttestationProtocol.None)
+            {
+                throw SQL.NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage(
+                    _activeConnection.Parser.EnclaveType);
+            }
+
+            // Validate enclave type
+            string enclaveType = _activeConnection.Parser.EnclaveType;
+            if (string.IsNullOrWhiteSpace(enclaveType))
+            {
+                throw SQL.EnclaveTypeNullForEnclaveBasedQuery();
+            }
+
+            // Validate protocol type
+            SqlConnectionAttestationProtocol attestationProtocol = _activeConnection.AttestationProtocol;
+            if (attestationProtocol is SqlConnectionAttestationProtocol.NotSpecified)
+            {
+                throw SQL.AttestationProtocolNotSpecifiedForGeneratingEnclavePackage();
+            }
+
+            // Generate the enclave package
+            try
+            {
+                #if DEBUG
+                // @TODO: These should be wrapped with something other than DEBUG since we don't even run tests in debug mode
+                // Test-only code for forcing a retryable exception to occur
+                if (_forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage)
+                {
+                    _forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage = false;
+                    throw new EnclaveDelegate.RetryableEnclaveQueryExecutionException("testing", null);
+                }
+                #endif
+
+                enclavePackage = EnclaveDelegate.Instance.GenerateEnclavePackage(
+                    attestationProtocol,
+                    keysToBeSentToEnclave,
+                    CommandText,
+                    enclaveType,
+                    GetEnclaveSessionParameters(),
+                    _activeConnection,
+                    command: this);
+            }
+            catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                throw SQL.ExceptionWhenGeneratingEnclavePackage(e);
+            }
+        }
 
         // @TODO: We're passing way too many arguments around here... can we simplify this some?
         private SqlDataReader RunExecuteReader(
