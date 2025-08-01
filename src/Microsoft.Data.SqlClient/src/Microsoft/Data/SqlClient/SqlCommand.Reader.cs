@@ -663,6 +663,29 @@ namespace Microsoft.Data.SqlClient
             return ds;
         }
 
+        private Task RunExecuteReaderTdsSetupContinuation(
+            RunBehavior runBehavior,
+            SqlDataReader ds,
+            string optionSettings,
+            Task writeTask)
+        {
+            // @TODO: Why use the state version if we can't make this a static helper?
+            return AsyncHelper.CreateContinuationTaskWithState(
+                task: writeTask,
+                state: _activeConnection,
+                onSuccess: state =>
+                {
+                    // This will throw if the connection is closed.
+                    // @TODO: So... can we have something that specifically does that?
+                    ((SqlConnection)state).GetOpenTdsConnection();
+                    CachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
+                },
+                onFailure: static (exception, state) =>
+                {
+                    ((SqlConnection)state).GetOpenTdsConnection().DecrementAsyncCount();
+                });
+        }
+
         // @TODO: This is way too many parameters being shoveled back and forth. We can do better.
         private void RunExecuteReaderTdsSetupReconnectContinuation(
             CommandBehavior cmdBehavior,
