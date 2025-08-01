@@ -136,6 +136,143 @@ namespace Microsoft.Data.SqlClient
 
         #region Private Methods
 
+        private void FinishExecuteReader(
+            SqlDataReader ds,
+            RunBehavior runBehavior,
+            string resetOptionsString,
+            bool isInternal,
+            bool forDescribeParameterEncryption,
+            bool shouldCacheForAlwaysEncrypted = true)
+        {
+            // If this is not for internal usage, notify the dependency. If we have already
+            // initiated the end internally, the reader should be ready, so just return.
+            if (!isInternal && !forDescribeParameterEncryption)
+            {
+                NotifyDependency();
+
+                if (_internalEndExecuteInitiated)
+                {
+                    Debug.Assert(_stateObj is null);
+                    return;
+                }
+            }
+
+            if (runBehavior is RunBehavior.UntilDone)
+            {
+                try
+                {
+                    Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
+                    TdsOperationStatus result = _stateObj.Parser.TryRun(
+                        RunBehavior.UntilDone,
+                        cmdHandler: this,
+                        ds,
+                        bulkCopyHandler: null,
+                        _stateObj,
+                        out _);
+
+                    if (result is not TdsOperationStatus.Done)
+                    {
+                        throw SQL.SynchronousCallMayNotPend();
+                    }
+                }
+                catch (Exception e)
+                {
+                    if (ADP.IsCatchableExceptionType(e))
+                    {
+                        if (_inPrepare)
+                        {
+                            // The flag is expected to be reset by OnReturnValue. We should receive
+                            // the handle unless command execution failed. If it fails, move back
+                            // to pending state.
+                            _inPrepare = false;                  // reset the flag
+                            IsDirty = true;                      // mark command as dirty so it will be
+                                                                 // prepared next time we're coming through
+                            _execType = EXECTYPE.PREPAREPENDING; // reset execution type to pending
+                        }
+                    }
+
+                    if (ds is not null)
+                    {
+                        try
+                        {
+                            ds.Close();
+                        }
+                        catch (Exception eClose)
+                        {
+                            Debug.WriteLine($"Received this exception from SqlDataReader.Close() while in another catch block: {eClose}");
+                        }
+                    }
+
+                    throw;
+                }
+            }
+
+            // Bind the parser to the reader if we get this far
+            if (ds is not null)
+            {
+                ds.Bind(_stateObj);
+                _stateObj = null; // The reader now owns this...
+                ds.ResetOptionsString = resetOptionsString;
+
+                // Bind the reader to this connectio now
+                _activeConnection.AddWeakReference(ds, SqlReferenceCollection.DataReaderTag);
+
+                // Force this command to start reading data off the wire.
+                // This will cause an error to be reported at Execute() time instead of Read() time
+                // if the command is not set
+                try
+                {
+                    // This flag indicates if the data reader's metadata should be cached in this
+                    // SqlCommand. Metadata associated with sp_describe_parameter_metadata's data
+                    // reader should not be cached. Ideally, we should be using
+                    // "forDescribeParameterEncryption" flag for this, but this flag's semantics
+                    // are overloaded with async workflow and this flag is always false for sync
+                    // workflow. Since we are very close to a release and changing the semantics
+                    // for "forDescribeParameterEncryption" is risky, we introduced a new parameter
+                    // to determine whether we should cache a data reader's metadata or not.
+                    if (shouldCacheForAlwaysEncrypted)
+                    {
+                        _cachedMetaData = ds.MetaData;
+                    }
+                    else
+                    {
+                        // We need this call to ensure the data reader is properly initialized, the
+                        // getter is initializing state in SqlDataReader.
+                        _ = ds.MetaData;
+                    }
+
+                    // @TODO: Why does the command set whether the reader is initialized??
+                    ds.IsInitialized = true;
+                }
+                catch (Exception e)
+                {
+                    if (ADP.IsCatchableExceptionType(e))
+                    {
+                        if (_inPrepare)
+                        {
+                            // The flag is expected to be reset by OnReturnValue. We should receive
+                            // the handle unless command execution failed. If it fails, move back
+                            // to pending state.
+                            _inPrepare = false;                  // reset the flag
+                            IsDirty = true;                      // mark command as dirty so it will be prepared next time we're coming through
+                            _execType = EXECTYPE.PREPAREPENDING; // reset execution type to pending
+                        }
+
+                        try
+                        {
+                            ds.Close();
+                        }
+                        catch (Exception eClose)
+                        {
+                            Debug.WriteLine($"Received this exception from SqlDataReader.Close() while in another catch block: {eClose}");
+                        }
+                    }
+
+                    throw;
+                }
+            }
+        }
+
         private void GenerateEnclavePackage()
         {
             // Skip processing if there are no keys to send to enclave
