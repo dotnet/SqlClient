@@ -747,6 +747,99 @@ namespace Microsoft.Data.SqlClient
                 });
         }
 
+        private SqlDataReader RunExecuteReaderTdsWithTransparentParameterEncryption(
+            CommandBehavior cmdBehavior,
+            RunBehavior runBehavior,
+            bool returnStream,
+            bool isAsync,
+            int timeout,
+            out Task task,
+            bool asyncWrite,
+            bool isRetry,
+            SqlDataReader ds = null,
+            Task describeParameterEncryptionTask = null) // @TODO: This task should likely come from this method otherwise this is just setting up a continuation
+        {
+            Debug.Assert(!asyncWrite || isAsync, "AsyncWrite should be always accompanied by Async");
+
+            if (ds is null && returnStream)
+            {
+                ds = new SqlDataReader(command: this, cmdBehavior);
+            }
+
+            if (describeParameterEncryptionTask is not null)
+            {
+                // @TODO: I guess this means async execution? Using tasks as the primary means of determining async vs sync is clunky. It would be better to have separate async vs sync pathways.
+                long parameterEncryptionStart = ADP.TimerCurrent();
+
+                // @TODO: This can totally be a non-generic TCS
+                // @TODO: This is a prime candidate for proper async-await execution
+                TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
+                AsyncHelper.ContinueTaskWithState(
+                    task: describeParameterEncryptionTask,
+                    completion: completion,
+                    state: this,
+                    onSuccess: state =>
+                    {
+                        SqlCommand command = (SqlCommand)state;
+                        command.GenerateEnclavePackage();
+                        command.RunExecuteReaderTds(
+                            cmdBehavior,
+                            runBehavior,
+                            returnStream,
+                            isAsync,
+                            TdsParserStaticMethods.GetRemainingTimeout(timeout, parameterEncryptionStart),
+                            out Task subTask,
+                            asyncWrite,
+                            isRetry,
+                            ds);
+
+                        if (subTask is null)
+                        {
+                            // @TODO: Why would this ever be the case? We should structure this so that it doesn't need to be checked.
+                            completion.SetResult(null);
+                        }
+                        else
+                        {
+                            AsyncHelper.ContinueTaskWithState(
+                                task: subTask,
+                                completion: completion,
+                                state: completion,
+                                onSuccess: static state => ((TaskCompletionSource<object>)state).SetResult(null));
+                        }
+                    },
+                    onFailure: static (exception, state) =>
+                    {
+                        ((SqlCommand)state).CachedAsyncState?.ResetAsyncState();
+                        if (exception is not null)
+                        {
+                            throw exception;
+                        }
+                    },
+                    onCancellation: static state =>
+                    {
+                        ((SqlCommand)state).CachedAsyncState?.ResetAsyncState();
+                    });
+
+                task = completion.Task;
+                return ds;
+            }
+            else
+            {
+                // Synchronous execution
+                GenerateEnclavePackage();
+                return RunExecuteReaderTds(
+                    cmdBehavior,
+                    runBehavior,
+                    returnStream,
+                    isAsync,
+                    timeout,
+                    out task,
+                    asyncWrite,
+                    isRetry,
+                    ds);
+            }
+        }
+
         private SqlDataReader RunExecuteReaderWithRetry(
             CommandBehavior cmdBehavior,
             RunBehavior runBehavior,
