@@ -2860,38 +2860,6 @@ namespace Microsoft.Data.SqlClient
             return task;
         }
 
-        // This is in its own method to avoid always allocating the lambda in RunExecuteReaderTds
-        private void RunExecuteReaderTdsSetupReconnectContinuation(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, bool isAsync, int timeout, bool asyncWrite, bool isRetry, SqlDataReader ds, Task reconnectTask, long reconnectionStart, TaskCompletionSource<object> completion)
-        {
-            CancellationTokenSource timeoutCTS = new CancellationTokenSource();
-            AsyncHelper.SetTimeoutException(completion, timeout, static () => SQL.CR_ReconnectTimeout(), timeoutCTS.Token);
-            AsyncHelper.ContinueTask(reconnectTask, completion,
-                () =>
-                {
-                    if (completion.Task.IsCompleted)
-                    {
-                        return;
-                    }
-                    Interlocked.CompareExchange(ref _reconnectionCompletionSource, null, completion);
-                    timeoutCTS.Cancel();
-                    Task subTask;
-                    RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart), out subTask, asyncWrite, isRetry, ds);
-                    if (subTask == null)
-                    {
-                        completion.SetResult(null);
-                    }
-                    else
-                    {
-                        AsyncHelper.ContinueTaskWithState(subTask, completion,
-                             state: completion,
-                             onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
-                         );
-                    }
-                }
-            );
-        }
-
-
         private SqlDataReader CompleteAsyncExecuteReader(bool isInternal = false, bool forDescribeParameterEncryption = false)
         {
             SqlDataReader ds = CachedAsyncState.CachedAsyncReader; // should not be null

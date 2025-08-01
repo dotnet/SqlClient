@@ -663,6 +663,67 @@ namespace Microsoft.Data.SqlClient
             return ds;
         }
 
+        // @TODO: This is way too many parameters being shoveled back and forth. We can do better.
+        private void RunExecuteReaderTdsSetupReconnectContinuation(
+            CommandBehavior cmdBehavior,
+            RunBehavior runBehavior,
+            bool returnStream,
+            bool isAsync,
+            int timeout,
+            bool asyncWrite,
+            bool isRetry,
+            SqlDataReader ds,
+            Task reconnectTask,
+            long reconnectionStart,
+            TaskCompletionSource<object> completion) // @TODO: I think this can be an untyped TCS.
+        {
+            CancellationTokenSource timeoutCts = new CancellationTokenSource();
+            AsyncHelper.SetTimeoutException(
+                completion,
+                timeout,
+                onFailure: static () => SQL.CR_ReconnectTimeout(),
+                timeoutCts.Token);
+
+            // @TODO: With an object to pass around we can use the state-based version
+            AsyncHelper.ContinueTask(
+                reconnectTask,
+                completion,
+                onSuccess: () =>
+                {
+                    if (completion.Task.IsCompleted)
+                    {
+                        return;
+                    }
+
+                    Interlocked.CompareExchange(ref _reconnectionCompletionSource, null, completion);
+                    timeoutCts.Cancel();
+
+                    RunExecuteReaderTds(
+                        cmdBehavior,
+                        runBehavior,
+                        returnStream,
+                        isAsync,
+                        TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart),
+                        out Task subTask,
+                        asyncWrite,
+                        isRetry,
+                        ds);
+
+                    if (subTask is null)
+                    {
+                        completion.SetResult(null);
+                    }
+                    else
+                    {
+                        AsyncHelper.ContinueTaskWithState(
+                            subTask,
+                            completion,
+                            state: completion,
+                            onSuccess: static state => ((TaskCompletionSource<object>)state).SetResult(null));
+                    }
+                });
+        }
+
         private SqlDataReader RunExecuteReaderWithRetry(
             CommandBehavior cmdBehavior,
             RunBehavior runBehavior,
