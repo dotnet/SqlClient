@@ -98,6 +98,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             using SqlConnection connection = new(builder.ConnectionString);
             await connection.OpenAsync();
             Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
         }
 
         [Theory]
@@ -121,15 +122,9 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
-            try
-            {
-                connection.Open();
-                Assert.Equal(ConnectionState.Open, connection.State);
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
+            connection.Open();
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
         }
 
         [Theory]
@@ -207,6 +202,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             using SqlConnection connection = new(builder.ConnectionString);
             await connection.OpenAsync();
             Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
             Assert.Equal(2, server.PreLoginCount);
         }
 
@@ -229,16 +225,10 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
-            try
-            {
-                connection.Open();
-                Assert.Equal(ConnectionState.Open, connection.State);
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
+            connection.Open();
 
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
             Assert.Equal(2, server.PreLoginCount);
         }
 

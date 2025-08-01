@@ -65,10 +65,12 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
-
+            // Routing does not update the connection's data source
+            Assert.Equal($"localhost,{router.EndPoint.Port}", connection.DataSource);
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
             Assert.Equal(2, router.PreLoginCount);
             Assert.Equal(2, server.PreLoginCount);
+            Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
         [Theory]
@@ -182,6 +184,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             // On the first connection attempt, no failover partner information is available,
             // so the connection will retry on the same server.
             Assert.Equal(ConnectionState.Open, connection.State);
+            // Routing does not update the connection's data source
+            Assert.Equal($"localhost,{router.EndPoint.Port}", connection.DataSource);
             Assert.Equal(2, router.PreLoginCount);
             Assert.Equal(2, server.PreLoginCount);
             Assert.Equal(0, failoverServer.PreLoginCount);
@@ -237,6 +241,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             // On the first connection attempt, no failover partner information is available in the pool group,
             // so the connection will retry on the same server.
             Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
             Assert.Equal(1, router.PreLoginCount);
             Assert.Equal(1, server.PreLoginCount);
             Assert.Equal(0, failoverServer.PreLoginCount);
@@ -297,6 +302,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             // On the first connection attempt, failover partner information is available in the connection string,
             // so the connection will retry on the failover server.
             Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
             Assert.Equal(1, router.PreLoginCount);
             Assert.Equal(1, server.PreLoginCount);
             Assert.Equal(1, failoverServer.PreLoginCount);
@@ -356,6 +362,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             // On the first connection attempt, failover partner information is available in the connection string,
             // so the connection will retry on the failover server.
             Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
             Assert.Equal(1, router.PreLoginCount);
             Assert.Equal(1, server.PreLoginCount);
             Assert.Equal(1, failoverServer.PreLoginCount);

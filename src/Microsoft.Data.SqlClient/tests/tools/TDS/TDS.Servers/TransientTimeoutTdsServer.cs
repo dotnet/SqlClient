@@ -4,9 +4,7 @@
 
 using System;
 using System.Threading;
-using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.EndPoint;
-using Microsoft.SqlServer.TDS.Error;
 using Microsoft.SqlServer.TDS.Login7;
 
 namespace Microsoft.SqlServer.TDS.Servers
@@ -31,9 +29,15 @@ namespace Microsoft.SqlServer.TDS.Servers
             RequestCounter = 0;
         }
 
-        public void SetTransientTimeoutBehavior(bool isEnabledTransientTimeout, TimeSpan sleepDuration)
+        public void SetTransientTimeoutBehavior(bool isEnabledTransientTimeout, TimeSpan sleepDuration) 
+        {
+            SetTransientTimeoutBehavior(isEnabledTransientTimeout, false, sleepDuration);
+        }
+
+        public void SetTransientTimeoutBehavior(bool isEnabledTransientTimeout, bool isEnabledPermanentTimeout, TimeSpan sleepDuration)
         {
             Arguments.IsEnabledTransientTimeout = isEnabledTransientTimeout;
+            Arguments.IsEnabledPermanentTimeout = isEnabledPermanentTimeout;
             Arguments.SleepDuration = sleepDuration;
         }
 
@@ -42,12 +46,9 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public override TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
         {
-            // Inflate login7 request from the message
-            TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
-
             // Check if we're still going to raise transient error
-            if (Arguments.IsEnabledTransientTimeout
-                && RequestCounter < 1) // Fail first time, then connect
+            if (Arguments.IsEnabledPermanentTimeout || 
+                (Arguments.IsEnabledTransientTimeout && RequestCounter < 1)) // Fail first time, then connect
             {
                 Thread.Sleep(Arguments.SleepDuration);
 
@@ -56,6 +57,20 @@ namespace Microsoft.SqlServer.TDS.Servers
 
             // Return login response from the base class
             return base.OnLogin7Request(session, request);
+        }
+
+        public override TDSMessageCollection OnSQLBatchRequest(ITDSServerSession session, TDSMessage message)
+        {
+            // Check if we're still going to raise transient error
+            if (Arguments.IsEnabledPermanentTimeout ||
+                (Arguments.IsEnabledTransientTimeout && RequestCounter < 1)) // Fail first time, then connect
+            {
+                Thread.Sleep(Arguments.SleepDuration);
+
+                RequestCounter++;
+            }
+
+            return base.OnSQLBatchRequest(session, message);
         }
 
         public override void Dispose()

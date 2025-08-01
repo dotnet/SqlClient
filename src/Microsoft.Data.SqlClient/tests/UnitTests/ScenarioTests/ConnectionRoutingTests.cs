@@ -57,6 +57,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
+            // Routing does not update the connection's data source
+            Assert.Equal($"localhost,{router.EndPoint.Port}", connection.DataSource);
 
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
             Assert.Equal(2, router.PreLoginCount);
@@ -146,6 +148,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
+            // Routing does not update the connection's data source
+            Assert.Equal($"localhost,{router.EndPoint.Port}", connection.DataSource);
 
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
             Assert.Equal(2, router.PreLoginCount);
@@ -187,6 +191,75 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             using SqlConnection connection = new(builder.ConnectionString);
             //TODO validate exception type
             Assert.Throws<SqlException>(() => connection.Open());
+        }
+
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3528")]
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3527")]
+        [Fact]
+        public void NetworkErrorDuringCommand_ShouldReturnToGateway()
+        {
+            // Arrange
+            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
+                new TransientTimeoutTdsServerArguments()
+                {
+                    IsEnabledTransientTimeout = false,
+                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                });
+
+            server.Start();
+
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                });
+            router.Start();
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            {
+                DataSource = "localhost," + router.EndPoint.Port,
+                ApplicationIntent = ApplicationIntent.ReadOnly,
+                ConnectTimeout = 5,
+                ConnectRetryInterval = 1,
+                Encrypt = false,
+                CommandTimeout = 5,
+                ConnectRetryCount = 1
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            try
+            {
+                // Act
+                connection.Open();
+            }
+            catch (Exception e)
+            {
+                Assert.Fail(e.Message);
+            }
+
+            // Assert
+            Assert.Equal(ConnectionState.Open, connection.State);
+            // Routing does not update the connection's data source
+            Assert.Equal($"localhost,{router.EndPoint.Port}", connection.DataSource);
+
+            Assert.Equal(1, router.PreLoginCount);
+            Assert.Equal(1, server.PreLoginCount);
+
+            // Break the connection to force a reconnect
+            server.KillAllConnections();
+
+            server.SetTransientTimeoutBehavior(true, TimeSpan.FromMilliseconds(1000));
+
+            SqlCommand command = new SqlCommand("Select 1;", connection);
+            command.ExecuteScalar();
+
+            // Assert
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{router.EndPoint.Port}", connection.DataSource);
+
+            // Failures should prompt the client to return to the 
+            Assert.Equal(3, router.PreLoginCount);
+            Assert.Equal(3, server.PreLoginCount);
         }
     }
 }

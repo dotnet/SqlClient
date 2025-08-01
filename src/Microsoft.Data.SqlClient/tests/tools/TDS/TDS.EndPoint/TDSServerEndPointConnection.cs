@@ -140,12 +140,14 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         {
             // Request the listener thread to stop
             StopRequested = true;
+            Connection.Close();
 
             // If connection failed to start there's no processor thread
             if (ProcessorThread != null)
             {
+                ProcessorThread.Abort(); // Abort the thread if it is still running
                 // Wait for termination
-                ProcessorThread.Join();
+                //ProcessorThread.Join();
             }
         }
 

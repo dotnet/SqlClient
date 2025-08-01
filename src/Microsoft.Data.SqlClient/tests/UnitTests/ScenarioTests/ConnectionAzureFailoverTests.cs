@@ -4,13 +4,15 @@
 
 using System;
 using System.Data;
+using Microsoft.Data.Common;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ScenarioTests
 {
-    public class ConnectionFailoverTests
+    public class ConnectionAzureFailoverTests
     {
+
         //TODO parameterize for transient errors
         [Theory]
         [InlineData(40613)]
@@ -160,9 +162,18 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             server.Start();
 
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                    RequireReadOnly = false,
+                });
+            router.Start();
+
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
+                DataSource = "localhost," + router.EndPoint.Port,
                 InitialCatalog = "master",// Required for failover partner to work
                 ConnectTimeout = 5,
                 ConnectRetryInterval = 1,
@@ -178,6 +189,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             // On the first connection attempt, no failover partner information is available,
             // so the connection will retry on the same server.
             Assert.Equal(ConnectionState.Closed, connection.State);
+            Assert.Equal(1, router.PreLoginCount);
             Assert.Equal(1, server.PreLoginCount);
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
@@ -204,9 +216,18 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             server.Start();
 
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                    RequireReadOnly = false,
+                });
+            router.Start();
+
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
+                DataSource = "localhost," + router.EndPoint.Port,
                 InitialCatalog = "master",// Required for failover partner to work
                 ConnectTimeout = 5,
                 ConnectRetryInterval = 1,
@@ -228,6 +249,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             // so the connection will retry on the same server.
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(2, router.PreLoginCount);
             Assert.Equal(2, server.PreLoginCount);
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
@@ -253,9 +275,18 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             server.Start();
 
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                    RequireReadOnly = false,
+                });
+            router.Start();
+
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
+                DataSource = "localhost," + router.EndPoint.Port,
                 InitialCatalog = "master", // Required for failover partner to work
                 ConnectTimeout = 5,
                 ConnectRetryInterval = 1,
@@ -279,6 +310,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             // so the connection will retry on the failover server.
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(1, router.PreLoginCount);
             Assert.Equal(1, server.PreLoginCount);
             Assert.Equal(1, failoverServer.PreLoginCount);
         }
@@ -304,9 +336,18 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             server.Start();
 
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                    RequireReadOnly = false,
+                });
+            router.Start();
+
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
+                DataSource = "localhost," + router.EndPoint.Port,
                 InitialCatalog = "master", // Required for failover partner to work
                 ConnectTimeout = 5,
                 ConnectRetryInterval = 1,
@@ -329,6 +370,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             // so the connection will retry on the failover server.
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(1, router.PreLoginCount);
             Assert.Equal(1, server.PreLoginCount);
             Assert.Equal(1, failoverServer.PreLoginCount);
         }
@@ -357,9 +399,18 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             server.Start();
 
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                    RequireReadOnly = false,
+                });
+            router.Start();
+
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
             {
-                DataSource = $"localhost,{server.EndPoint.Port}",
+                DataSource = $"localhost,{router.EndPoint.Port}",
                 InitialCatalog = "master",
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
@@ -379,9 +430,10 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
-
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
+            Assert.Equal(2, router.PreLoginCount);
             Assert.Equal(2, server.PreLoginCount);
+            Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
         [Theory]
@@ -408,9 +460,18 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             server.Start();
 
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                    RequireReadOnly = false,
+                });
+            router.Start();
+
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
             {
-                DataSource = $"localhost,{server.EndPoint.Port}",
+                DataSource = $"localhost,{router.EndPoint.Port}",
                 InitialCatalog = "master",
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
@@ -456,9 +517,18 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             server.Start();
 
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                    RequireReadOnly = false,
+                });
+            router.Start();
+
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
             {
-                DataSource = $"localhost,{server.EndPoint.Port}",
+                DataSource = $"localhost,{router.EndPoint.Port}",
                 InitialCatalog = "master",
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
@@ -479,9 +549,10 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
-
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
+            Assert.Equal(2, router.PreLoginCount);
             Assert.Equal(2, server.PreLoginCount);
+            Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
         [Theory]
@@ -508,9 +579,18 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             server.Start();
 
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                    RequireReadOnly = false,
+                });
+            router.Start();
+
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
             {
-                DataSource = $"localhost,{server.EndPoint.Port}",
+                DataSource = $"localhost,{router.EndPoint.Port}",
                 InitialCatalog = "master",
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,

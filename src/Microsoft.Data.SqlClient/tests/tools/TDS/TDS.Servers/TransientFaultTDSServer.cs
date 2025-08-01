@@ -15,7 +15,7 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// </summary>
     public class TransientFaultTdsServer : GenericTdsServer<TransientFaultTdsServerArguments>, IDisposable
     {
-        private static int RequestCounter = 0;
+        private int RequestCounter = 0;
 
         public void SetErrorBehavior(bool isEnabledTransientFault, uint errorNumber, string message = null)
         {

@@ -131,25 +131,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             // Request the listener thread to stop
             StopRequested = true;
 
-            // A copy of the list of connections to avoid locking
-            IList<T> unlockedConnections = new List<T>();
-
-            // Synchronize access to connections collection
-            lock (Connections)
-            {
-                // Iterate over all connections and copy into the local list
-                foreach (T connection in Connections)
-                {
-                    unlockedConnections.Add(connection);
-                }
-            }
-
-            // Iterate over all connections and request each one to stop
-            foreach (T connection in unlockedConnections)
-            {
-                // Request to stop
-                connection.Stop();
-            }
+            KillAllConnections();
 
             // If server failed to start there is no thread to join
             if (ListenerThread != null)
@@ -164,6 +146,22 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                 // Stop the server
                 ListenerSocket.Stop();
                 ListenerSocket = null;
+            }
+        }
+
+        public void KillAllConnections()
+        {
+            // Synchronize access to connections collection
+            lock (Connections)
+            {
+                // Iterate over all connections and request each one to stop
+                foreach (T connection in Connections)
+                {
+                    // Request to stop
+                    connection.Stop();
+                }
+                // Clear the connections list
+                Connections.Clear();
             }
         }
 

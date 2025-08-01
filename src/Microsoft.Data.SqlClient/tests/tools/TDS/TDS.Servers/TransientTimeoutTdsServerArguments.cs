@@ -11,9 +11,14 @@ namespace Microsoft.SqlServer.TDS.Servers
         public TimeSpan SleepDuration { get; set; }
 
         /// <summary>
-        /// Flag to consider when raising Transient error.
+        /// Flag to consider when simulating a timeout on the next request.
         /// </summary>
         public bool IsEnabledTransientTimeout { get; set; }
+
+        /// <summary>
+        /// Flag to consider when simulating a timeout on each request.
+        /// </summary>
+        public bool IsEnabledPermanentTimeout { get; set; }
 
         /// <summary>
         /// Constructor to initialize
@@ -22,6 +27,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         {
             SleepDuration = TimeSpan.FromSeconds(0);
             IsEnabledTransientTimeout = false;
+            IsEnabledPermanentTimeout = false;
         }
     }
 }
