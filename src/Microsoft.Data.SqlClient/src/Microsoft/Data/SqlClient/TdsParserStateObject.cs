@@ -1998,7 +1998,8 @@ namespace Microsoft.Data.SqlClient
 
             if (isPlp)
             {
-                TdsOperationStatus result = TryReadPlpBytes(ref buf, 0, int.MaxValue, out length);
+                bool compatibilityMode = LocalAppContextSwitches.UseCompatibilityAsyncBehaviour;
+                TdsOperationStatus result = TryReadPlpBytes(ref buf, 0, int.MaxValue, out length, canContinue && !compatibilityMode, canContinue && !compatibilityMode, compatibilityMode);
                 if (result != TdsOperationStatus.Done)
                 {
                     value = null;
@@ -2160,12 +2161,10 @@ namespace Microsoft.Data.SqlClient
         internal TdsOperationStatus TryReadPlpBytes(ref byte[] buff, int offset, int len, out int totalBytesRead)
         {
             bool canContinue = false;
-            bool isStarting = false;
-            bool isContinuing = false;
             bool compatibilityMode = LocalAppContextSwitches.UseCompatibilityAsyncBehaviour;
             if (!compatibilityMode)
             {
-                (canContinue, isStarting, isContinuing) = GetSnapshotStatuses();
+                (canContinue, _, _) = GetSnapshotStatuses();
             }
             return TryReadPlpBytes(ref buff, offset, len, out totalBytesRead, canContinue, canContinue, compatibilityMode);
         }
@@ -2189,7 +2188,16 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 AssertValidState();
-                totalBytesRead = 0;
+                if (writeDataSizeToSnapshot && canContinue && _snapshot != null)
+                {
+                    // if there is a snapshot which it contains a stored plp buffer take it
+                    // and try to use it if it is the right length
+                    buff = TryTakeSnapshotStorage() as byte[];
+                    if (buff != null)
+                    {
+                        totalBytesRead = _snapshot.GetPacketDataOffset();
+                    }
+                }
                 return TdsOperationStatus.Done;       // No data
             }
 
