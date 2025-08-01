@@ -2689,67 +2689,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private SqlDataReader RunExecuteReaderTdsWithTransparentParameterEncryption(
-            CommandBehavior cmdBehavior,
-            RunBehavior runBehavior,
-            bool returnStream,
-            bool isAsync,
-            int timeout,
-            out Task task,
-            bool asyncWrite,
-            bool isRetry,
-            SqlDataReader ds = null,
-            Task describeParameterEncryptionTask = null)
-        {
-            Debug.Assert(!asyncWrite || isAsync, "AsyncWrite should be always accompanied by Async");
-
-            if (ds == null && returnStream)
-            {
-                ds = new SqlDataReader(this, cmdBehavior);
-            }
-
-            if (describeParameterEncryptionTask != null)
-            {
-                long parameterEncryptionStart = ADP.TimerCurrent();
-                TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
-                AsyncHelper.ContinueTaskWithState(describeParameterEncryptionTask, completion, this,
-                    (object state) =>
-                    {
-                        SqlCommand command = (SqlCommand)state;
-                        Task subTask = null;
-                        command.GenerateEnclavePackage();
-                        command.RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, TdsParserStaticMethods.GetRemainingTimeout(timeout, parameterEncryptionStart), out subTask, asyncWrite, isRetry, ds);
-                        if (subTask == null)
-                        {
-                            completion.SetResult(null);
-                        }
-                        else
-                        {
-                            AsyncHelper.ContinueTaskWithState(subTask, completion, completion, static (object state2) => ((TaskCompletionSource<object>)state2).SetResult(null));
-                        }
-                    },
-                    onFailure: static (Exception exception, object state) =>
-                    {
-                        ((SqlCommand)state).CachedAsyncState?.ResetAsyncState();
-                        if (exception != null)
-                        {
-                            throw exception;
-                        }
-                    },
-                    onCancellation: static (object state) => ((SqlCommand)state).CachedAsyncState?.ResetAsyncState(),
-                    connectionToDoom: null,
-                    connectionToAbort: _activeConnection);
-                task = completion.Task;
-                return ds;
-            }
-            else
-            {
-                // Synchronous execution.
-                GenerateEnclavePackage();
-                return RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, timeout, out task, asyncWrite, isRetry, ds);
-            }
-        }
-
         private void GenerateEnclavePackage()
         {
             if (keysToBeSentToEnclave == null || keysToBeSentToEnclave.Count <= 0)
