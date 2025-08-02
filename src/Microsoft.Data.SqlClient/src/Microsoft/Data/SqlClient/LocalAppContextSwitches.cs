@@ -67,11 +67,11 @@ namespace Microsoft.Data.SqlClient
 #endif
 
         /// <summary>
-        /// In TdsParser the ProcessSni function changed significantly when the packet
+        /// In TdsParser, the ProcessSni function changed significantly when the packet
         /// multiplexing code needed for high speed multi-packet column values was added.
-        /// The switch is enabled by default and retains the old ProcessSni design.
-        /// Use this switch to enable experimental design that uses the new ProcessSni
-        /// behavior using the packet multiplexer.
+        /// When this switch is set to true (the default), the old ProcessSni design is used.
+        /// When this switch is set to false, the new experimental ProcessSni behavior using
+        /// the packet multiplexer is enabled.
         /// </summary>
         public static bool UseCompatibilityProcessSni
         {
@@ -95,12 +95,12 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// In TdsParser the async multi-packet column value fetch behaviour is capable of
-        /// using a continue snapshot state in addition to the original replay from start
-        /// logic.
-        /// This switch disables use of the continue snapshot state and is enabled by default. This switch will always
-        /// return true if <see cref="UseCompatibilityProcessSni"/> is enabled because the 
-        /// continue state is not stable without the multiplexer.
+        /// In TdsParser, the async multi-packet column value fetch behavior can use a continue snapshot state
+        /// for improved efficiency. When this switch is enabled (the default), the driver preserves the legacy
+        /// compatibility behavior, which does not use the continue snapshot state. When disabled, the new behavior
+        /// using the continue snapshot state is enabled. This switch will always return true if
+        /// <see cref="UseCompatibilityProcessSni"/> is enabled, because the continue state is not stable without
+        /// the multiplexer.
         /// </summary>
         public static bool UseCompatibilityAsyncBehaviour
         {
