@@ -23,8 +23,8 @@ public class LocalAppContextSwitchesTest
         Assert.False(LocalAppContextSwitches.MakeReadAsyncBlocking);
         Assert.True(LocalAppContextSwitches.UseMinimumLoginTimeout);
         Assert.True(LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour);
-        Assert.False(LocalAppContextSwitches.UseCompatibilityProcessSni);
-        Assert.False(LocalAppContextSwitches.UseCompatibilityAsyncBehaviour);
+        Assert.True(LocalAppContextSwitches.UseCompatibilityProcessSni);
+        Assert.True(LocalAppContextSwitches.UseCompatibilityAsyncBehaviour);
         Assert.False(LocalAppContextSwitches.UseConnectionPoolV2);
         Assert.False(LocalAppContextSwitches.TruncateScaledDecimal);
 #if NETFRAMEWORK
