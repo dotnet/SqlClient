@@ -69,8 +69,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// In TdsParser the ProcessSni function changed significantly when the packet
         /// multiplexing code needed for high speed multi-packet column values was added.
-        /// In case of compatibility problems this switch will change TdsParser to use
-        /// the previous version of the function.
+        /// The switch is enabled by default and retains the old ProcessSni design.
+        /// Use this switch to enable experimental design that uses the new ProcessSni
+        /// behavior using the packet multiplexer.
         /// </summary>
         public static bool UseCompatibilityProcessSni
         {
@@ -78,7 +79,9 @@ namespace Microsoft.Data.SqlClient
             {
                 if (s_useCompatibilityProcessSni == Tristate.NotInitialized)
                 {
-                    if (AppContext.TryGetSwitch(UseCompatibilityProcessSniString, out bool returnedValue) && returnedValue)
+                    // Check if the switch has been set by the AppContext switch directly
+                    // If it has not been set, we default to true.
+                    if (!AppContext.TryGetSwitch(UseCompatibilityProcessSniString, out bool returnedValue) || returnedValue)
                     {
                         s_useCompatibilityProcessSni = Tristate.True;
                     }
@@ -95,7 +98,7 @@ namespace Microsoft.Data.SqlClient
         /// In TdsParser the async multi-packet column value fetch behaviour is capable of
         /// using a continue snapshot state in addition to the original replay from start
         /// logic.
-        /// This switch disables use of the continue snapshot state. This switch will always
+        /// This switch disables use of the continue snapshot state and is enabled by default. This switch will always
         /// return true if <see cref="UseCompatibilityProcessSni"/> is enabled because the 
         /// continue state is not stable without the multiplexer.
         /// </summary>
@@ -114,7 +117,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (s_useCompatibilityAsyncBehaviour == Tristate.NotInitialized)
                 {
-                    if (AppContext.TryGetSwitch(UseCompatibilityAsyncBehaviourString, out bool returnedValue) && returnedValue)
+                    if (!AppContext.TryGetSwitch(UseCompatibilityAsyncBehaviourString, out bool returnedValue) || returnedValue)
                     {
                         s_useCompatibilityAsyncBehaviour = Tristate.True;
                     }
