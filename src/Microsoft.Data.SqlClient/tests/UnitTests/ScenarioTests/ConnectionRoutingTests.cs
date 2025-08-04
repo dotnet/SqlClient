@@ -257,7 +257,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{router.EndPoint.Port}", connection.DataSource);
 
-            // Failures should prompt the client to return to the 
+            // Failures should prompt the client to return to the gateway
             Assert.Equal(3, router.PreLoginCount);
             Assert.Equal(3, server.PreLoginCount);
         }
