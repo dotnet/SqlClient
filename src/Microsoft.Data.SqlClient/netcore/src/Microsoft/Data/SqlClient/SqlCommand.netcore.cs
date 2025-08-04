@@ -3488,33 +3488,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         //
-        // build the RPC record header for this stored proc and add parameters
-        //
-        private void BuildRPC(bool inSchema, SqlParameterCollection parameters, ref _SqlRPC rpc)
-        {
-            Debug.Assert(this.CommandType == System.Data.CommandType.StoredProcedure, "Command must be a stored proc to execute an RPC");
-            int userParameterCount = CountSendableParameters(parameters);
-            GetRPCObject(0, userParameterCount, ref rpc);
-
-            rpc.ProcID = 0;
-
-            // TDS Protocol allows rpc name with maximum length of 1046 bytes for ProcName
-            // 4-part name 1 + 128 + 1 + 1 + 1 + 128 + 1 + 1 + 1 + 128 + 1 + 1 + 1 + 128 + 1 = 523
-            // each char takes 2 bytes. 523 * 2 = 1046
-            int commandTextLength = ADP.CharSize * CommandText.Length;
-            if (commandTextLength <= MaxRPCNameLength)
-            {
-                rpc.rpcName = CommandText; // just get the raw command text
-            }
-            else
-            {
-                throw ADP.InvalidArgumentLength(nameof(CommandText), MaxRPCNameLength);
-            }
-
-            SetUpRPCParameters(rpc, inSchema, parameters);
-        }
-
-        //
         // build the RPC record header for sp_execute
         //
         // prototype for sp_execute is:

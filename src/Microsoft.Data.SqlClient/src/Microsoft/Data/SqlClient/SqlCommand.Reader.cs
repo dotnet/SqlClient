@@ -136,6 +136,36 @@ namespace Microsoft.Data.SqlClient
 
         #region Private Methods
 
+        /// <summary>
+        /// Build the RPC record header for this stored proc and add parameters.
+        /// </summary>
+        // @TODO: Rename to fit guidelines
+        // @TODO: Does parameters need to be passed in or can _parameters be used?
+        private void BuildRPC(bool inSchema, SqlParameterCollection parameters, ref _SqlRPC rpc)
+        {
+            Debug.Assert(CommandType is CommandType.StoredProcedure, "Command must be a stored proc to execute an RPC");
+
+            int userParameterCount = CountSendableParameters(parameters);
+            GetRPCObject(systemParamCount: 0, userParameterCount, ref rpc);
+            rpc.ProcID = 0;
+
+            // TDS Protocol allows rpc name with maximum length of 1046 bytes for ProcName
+            // 4-part name 1 + 128 + 1 + 1 + 1 + 128 + 1 + 1 + 1 + 128 + 1 + 1 + 1 + 128 + 1 = 523
+            // each char takes 2 bytes. 523 * 2 = 1046
+            int commandTextLength = ADP.CharSize * CommandText.Length;
+            if (commandTextLength <= MaxRPCNameLength)
+            {
+                // Just use the raw command text
+                rpc.rpcName = CommandText;
+            }
+            else
+            {
+                throw ADP.InvalidArgumentLength(nameof(CommandText), MaxRPCNameLength);
+            }
+
+            SetUpRPCParameters(rpc, inSchema, parameters);
+        }
+
         private void FinishExecuteReader(
             SqlDataReader ds,
             RunBehavior runBehavior,
