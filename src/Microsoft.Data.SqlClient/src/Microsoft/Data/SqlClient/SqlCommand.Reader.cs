@@ -759,6 +759,33 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private SqlDataReader InternalEndExecuteReader(IAsyncResult asyncResult, bool isInternal, string endMethod)
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlCommand.InternalEndExecuteReader | INFO | " +
+                $"Object Id {ObjectID}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"MARS={_activeConnection?.Parser?.MARSOn}, " +
+                $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
+
+            VerifyEndExecuteState((Task)asyncResult, endMethod);
+            WaitForAsyncResults(asyncResult, isInternal);
+
+            // If column encryption is enabled, also check the state after waiting for the task.
+            // It would be better to do this for all cases, but avoiding for compatibility reasons.
+            if (IsColumnEncryptionEnabled)
+            {
+                VerifyEndExecuteState((Task)asyncResult, endMethod, fullCheckForColumnEncryption: true);
+            }
+
+            CheckThrowSNIException();
+
+            SqlDataReader reader = CompleteAsyncExecuteReader(isInternal);
+            Debug.Assert(_stateObj is null, "non-null state object in InternalEndExecuteReader");
+            return reader;
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
+        }
+
         // @TODO: We're passing way too many arguments around here... can we simplify this some?
         private SqlDataReader RunExecuteReader(
             CommandBehavior cmdBehavior,
