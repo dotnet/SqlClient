@@ -3399,48 +3399,6 @@ namespace Microsoft.Data.SqlClient
             rpc.userParams = parameters;
         }
 
-        private _SqlRPC BuildPrepExec(CommandBehavior behavior)
-        {
-            Debug.Assert(System.Data.CommandType.Text == this.CommandType, "invalid use of sp_prepexec for stored proc invocation!");
-            SqlParameter sqlParam;
-
-            const int systemParameterCount = 3;
-            int userParameterCount = CountSendableParameters(_parameters);
-
-            _SqlRPC rpc = null;
-            GetRPCObject(systemParameterCount, userParameterCount, ref rpc);
-
-            rpc.ProcID = TdsEnums.RPC_PROCID_PREPEXEC;
-            rpc.rpcName = TdsEnums.SP_PREPEXEC;
-
-            //@handle
-            sqlParam = rpc.systemParams[0];
-            sqlParam.SqlDbType = SqlDbType.Int;
-            sqlParam.Value = _prepareHandle;
-            sqlParam.Size = 4;
-            sqlParam.Direction = ParameterDirection.InputOutput;
-            rpc.systemParamOptions[0] = TdsEnums.RPC_PARAM_BYREF;
-
-            //@batch_params
-            string paramList = BuildParamList(_stateObj.Parser, _parameters);
-            sqlParam = rpc.systemParams[1];
-            sqlParam.SqlDbType = ((paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
-            sqlParam.Value = paramList;
-            sqlParam.Size = paramList.Length;
-            sqlParam.Direction = ParameterDirection.Input;
-
-            //@batch_text
-            string text = GetCommandText(behavior);
-            sqlParam = rpc.systemParams[2];
-            sqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
-            sqlParam.Size = text.Length;
-            sqlParam.Value = text;
-            sqlParam.Direction = ParameterDirection.Input;
-
-            SetUpRPCParameters(rpc, false, _parameters);
-            return rpc;
-        }
-
         //
         // returns true if the parameter is not a return value
         // and it's value is not DBNull (for a nullable parameter)
