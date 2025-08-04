@@ -3459,36 +3459,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         //
-        // build the RPC record header for sp_execute
-        //
-        // prototype for sp_execute is:
-        // sp_execute(@handle int,param1value,param2value...)
-        //
-        private _SqlRPC BuildExecute(bool inSchema)
-        {
-            Debug.Assert(_prepareHandle != s_cachedInvalidPrepareHandle, "Invalid call to sp_execute without a valid handle!");
-
-            const int systemParameterCount = 1;
-            int userParameterCount = CountSendableParameters(_parameters);
-
-            _SqlRPC rpc = null;
-            GetRPCObject(systemParameterCount, userParameterCount, ref rpc);
-
-            rpc.ProcID = TdsEnums.RPC_PROCID_EXECUTE;
-            rpc.rpcName = TdsEnums.SP_EXECUTE;
-
-            //@handle
-            SqlParameter sqlParam = rpc.systemParams[0];
-            sqlParam.SqlDbType = SqlDbType.Int;
-            sqlParam.Size = 4;
-            sqlParam.Value = _prepareHandle;
-            sqlParam.Direction = ParameterDirection.Input;
-
-            SetUpRPCParameters(rpc, inSchema, _parameters);
-            return rpc;
-        }
-
-        //
         // build the RPC record header for sp_executesql and add the parameters
         //
         // prototype for sp_executesql is:
