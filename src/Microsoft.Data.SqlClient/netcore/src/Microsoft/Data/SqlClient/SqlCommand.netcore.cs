@@ -569,25 +569,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="default"]/*'/>
-        public IAsyncResult BeginExecuteReader() =>
-            BeginExecuteReader(callback: null, stateObject: null, CommandBehavior.Default);
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndstateObject"]/*'/>
-        public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject) =>
-            BeginExecuteReader(callback, stateObject, CommandBehavior.Default);
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="CommandBehavior"]/*'/>
-        public IAsyncResult BeginExecuteReader(CommandBehavior behavior) =>
-            BeginExecuteReader(callback: null, stateObject: null, behavior);
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndstateObjectAndCommandBehavior"]/*'/>
-        public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject, CommandBehavior behavior)
-        {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteReader | API | Correlation | Object Id {0}, Behavior {1}, Activity Id {2}, Client Connection Id {3}, Command Text '{4}'", ObjectID, (int)behavior, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-            return BeginExecuteReaderInternal(behavior, callback, stateObject, 0, isRetry: false);
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReader[@name="CommandBehavior"]/*'/>
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {

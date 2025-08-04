@@ -6,6 +6,7 @@ using System;
 using System.Data;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Security.Permissions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
@@ -19,6 +20,41 @@ namespace Microsoft.Data.SqlClient
     public sealed partial class SqlCommand
     {
         #region Public/Internal Methods
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="default"]/*'/>
+        #if NETFRAMEWORK
+        [HostProtection(ExternalThreading = true)]
+        #endif
+        public IAsyncResult BeginExecuteReader() =>
+            BeginExecuteReader(callback: null, stateObject: null, CommandBehavior.Default);
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndstateObject"]/*'/>
+        #if NETFRAMEWORK
+        [HostProtection(ExternalThreading = true)]
+        #endif
+        public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject) =>
+            BeginExecuteReader(callback, stateObject, CommandBehavior.Default);
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndstateObjectAndCommandBehavior"]/*'/>
+        #if NETFRAMEWORK
+        [HostProtection(ExternalThreading = true)]
+        #endif
+        public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject, CommandBehavior behavior)
+        {
+            #if NETFRAMEWORK
+            SqlConnection.ExecutePermission.Demand();
+            #endif
+
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteReader | API | Correlation | Object Id {0}, Behavior {1}, Activity Id {2}, Client Connection Id {3}, Command Text '{4}'", ObjectID, (int)behavior, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
+            return BeginExecuteReaderInternal(behavior, callback, stateObject, 0, isRetry: false);
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="CommandBehavior"]/*'/>
+        #if NETFRAMEWORK
+        [HostProtection(ExternalThreading = true)]
+        #endif
+        public IAsyncResult BeginExecuteReader(CommandBehavior behavior) =>
+            BeginExecuteReader(callback: null, stateObject: null, behavior);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="default"]/*'/>
         public new SqlDataReader ExecuteReader()
