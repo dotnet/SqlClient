@@ -802,29 +802,6 @@ namespace Microsoft.Data.SqlClient
                 this._activeConnection.Database);
         }
 
-        private SqlDataReader InternalEndExecuteReader(IAsyncResult asyncResult, bool isInternal, string endMethod)
-        {
-            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalEndExecuteReader | INFO | ObjectId {0}, Client Connection Id {1}, MARS={2}, AsyncCommandInProgress={3}",
-                                                    _activeConnection?.ObjectID, _activeConnection?.ClientConnectionId,
-                                                    _activeConnection?.Parser?.MARSOn, _activeConnection?.AsyncCommandInProgress);
-            VerifyEndExecuteState((Task)asyncResult, endMethod);
-            WaitForAsyncResults(asyncResult, isInternal);
-
-            // If column encryption is enabled, also check the state after waiting for the task.
-            // It would be better to do this for all cases, but avoiding for compatibility reasons.
-            if (IsColumnEncryptionEnabled)
-            {
-                VerifyEndExecuteState((Task)asyncResult, endMethod, fullCheckForColumnEncryption: true);
-            }
-
-            CheckThrowSNIException();
-
-            SqlDataReader reader = CompleteAsyncExecuteReader(isInternal);
-            Debug.Assert(_stateObj == null, "non-null state object in InternalEndExecuteReader");
-            return reader;
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReaderAsync/*'/>
         protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
