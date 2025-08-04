@@ -137,10 +137,41 @@ namespace Microsoft.Data.SqlClient
         #region Private Methods
 
         /// <summary>
+        /// Build the RPC record header for sp_execute.
+        /// </summary>
+        /// <remarks>
+        /// Prototype for sp_execute is:
+        /// <c>sp_execute(@handle int, param1value, param2value...)</c>
+        /// </remarks>
+        private _SqlRPC BuildExecute(bool inSchema)
+        {
+            Debug.Assert(_prepareHandle != s_cachedInvalidPrepareHandle, "Invalid call to sp_execute without a valid handle!");
+
+            const int systemParameterCount = 1;
+            int userParameterCount = CountSendableParameters(_parameters);
+
+            _SqlRPC rpc = null;
+            GetRPCObject(systemParameterCount, userParameterCount, ref rpc);
+            rpc.ProcID = TdsEnums.RPC_PROCID_EXECUTE;
+            rpc.rpcName = TdsEnums.SP_EXECUTE;
+
+            // @handle
+            SqlParameter sqlParam = rpc.systemParams[0];
+            sqlParam.SqlDbType = SqlDbType.Int;
+            sqlParam.Size = 4;
+            sqlParam.Value = _prepareHandle;
+            sqlParam.Direction = ParameterDirection.Input;
+
+            SetUpRPCParameters(rpc, inSchema, _parameters);
+            return rpc;
+        }
+
+        /// <summary>
         /// Build the RPC record header for this stored proc and add parameters.
         /// </summary>
         // @TODO: Rename to fit guidelines
         // @TODO: Does parameters need to be passed in or can _parameters be used?
+        // @TODO: Can we return the RPC here like BuildExecute does?
         private void BuildRPC(bool inSchema, SqlParameterCollection parameters, ref _SqlRPC rpc)
         {
             Debug.Assert(CommandType is CommandType.StoredProcedure, "Command must be a stored proc to execute an RPC");
