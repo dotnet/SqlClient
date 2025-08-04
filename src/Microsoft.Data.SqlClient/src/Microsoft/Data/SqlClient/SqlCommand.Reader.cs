@@ -298,6 +298,36 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private void BeginExecuteReaderInternalReadStage(TaskCompletionSource<object> completion)
+        {
+            Debug.Assert(completion is not null, "CompletionSource should not be null");
+
+            SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                "SqlCommand.BeginExecuteReaderInternalReadStage | INFO | Correlation | " +
+                $"Object Id {ObjectID}, " +
+                $"Activity Id {ActivityCorrelator.Current}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"Command Text '{CommandText}'");
+
+            // Read SNI does not have catches for async exceptions, handle here.
+            try
+            {
+                // Must finish caching information before ReadSni which can activate the callback
+                // before returning
+                CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteReader), _activeConnection);
+                _stateObj.ReadSni(completion);
+            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            catch (Exception e)
+            {
+                // Similarly, if an exception occurs put the stateObj back into the pool.
+                // and reset async cache information to allow a second async execute
+                CachedAsyncState?.ResetAsyncState();
+                ReliablePutStateObject();
+                completion.TrySetException(e);
+            }
+        }
+
         /// <summary>
         /// Build the RPC record header for sp_execute.
         /// </summary>

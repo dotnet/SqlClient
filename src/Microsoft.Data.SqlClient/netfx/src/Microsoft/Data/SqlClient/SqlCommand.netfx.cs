@@ -864,28 +864,6 @@ namespace Microsoft.Data.SqlClient
                 this._activeConnection.Database);
         }
 
-        private void BeginExecuteReaderInternalReadStage(TaskCompletionSource<object> completion)
-        {
-            Debug.Assert(completion != null, "CompletionSource should not be null");
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteReaderInternalReadStage | INFO | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-            // Read SNI does not have catches for async exceptions, handle here.
-            try
-            {
-                // must finish caching information before ReadSni which can activate the callback before returning
-                CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteReader), _activeConnection);
-                _stateObj.ReadSni(completion);
-            }
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
-            catch (Exception e)
-            {
-                // Similarly, if an exception occurs put the stateObj back into the pool.
-                // and reset async cache information to allow a second async execute
-                CachedAsyncState?.ResetAsyncState();
-                ReliablePutStateObject();
-                completion.TrySetException(e);
-            }
-        }
-
         private SqlDataReader InternalEndExecuteReader(IAsyncResult asyncResult, bool isInternal, string endMethod)
         {
             SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalEndExecuteReader | INFO | ObjectId {0}, Client Connection Id {1}, MARS={2}, AsyncCommandInProgress={3}",
