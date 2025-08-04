@@ -52,7 +52,4 @@
       <TargetPath>xunit.runner.json</TargetPath>
     </ContentWithTargetPath>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="microsoft.data.sqlclient\tests\unittests\scenariotests\" />
-  </ItemGroup>
 </Project>
