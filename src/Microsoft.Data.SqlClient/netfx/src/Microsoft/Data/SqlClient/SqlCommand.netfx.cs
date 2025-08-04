@@ -1679,7 +1679,7 @@ namespace Microsoft.Data.SqlClient
                                 }
 
                                 // Complete executereader.
-                                describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
+                                describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(isInternal: false, forDescribeParameterEncryption: true);
                                 Debug.Assert(_stateObj == null, "non-null state object in PrepareForTransparentEncryption.");
 
                                 // Read the results of describe parameter encryption.
@@ -1754,7 +1754,7 @@ namespace Microsoft.Data.SqlClient
                                     }
 
                                     // Complete executereader.
-                                    describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
+                                    describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(isInternal: false, forDescribeParameterEncryption: true);
                                     Debug.Assert(_stateObj == null, "non-null state object in PrepareForTransparentEncryption.");
 
                                     // Read the results of describe parameter encryption.
@@ -2449,35 +2449,6 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: true);
             }
-        }
-
-        private SqlDataReader CompleteAsyncExecuteReader(bool isInternal = false, bool forDescribeParameterEncryption = false)
-        {
-            SqlDataReader ds = CachedAsyncState.CachedAsyncReader; // should not be null
-            bool processFinallyBlock = true;
-            try
-            {
-                FinishExecuteReader(ds, CachedAsyncState.CachedRunBehavior, CachedAsyncState.CachedSetOptions, isInternal, forDescribeParameterEncryption, shouldCacheForAlwaysEncrypted: !forDescribeParameterEncryption);
-            }
-            catch (Exception e)
-            {
-                processFinallyBlock = ADP.IsCatchableExceptionType(e);
-                throw;
-            }
-            finally
-            {
-                if (processFinallyBlock)
-                {
-                    // Don't reset the state for internal End. The user End will do that eventually.
-                    if (!isInternal)
-                    {
-                        CachedAsyncState.ResetAsyncState();
-                    }
-                    PutStateObject();
-                }
-            }
-
-            return ds;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Clone/*'/>
