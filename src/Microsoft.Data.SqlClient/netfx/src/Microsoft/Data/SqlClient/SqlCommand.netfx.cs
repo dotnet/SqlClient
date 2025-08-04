@@ -3458,58 +3458,6 @@ namespace Microsoft.Data.SqlClient
             return parameters != null ? parameters.Count : 0;
         }
 
-        //
-        // build the RPC record header for sp_executesql and add the parameters
-        //
-        // prototype for sp_executesql is:
-        // sp_executesql(@batch_text nvarchar(4000),@batch_params nvarchar(4000), param1,.. paramN)
-        private void BuildExecuteSql(CommandBehavior behavior, string commandText, SqlParameterCollection parameters, ref _SqlRPC rpc)
-        {
-
-            Debug.Assert(_prepareHandle == s_cachedInvalidPrepareHandle, "This command has an existing handle, use sp_execute!");
-            Debug.Assert(CommandType.Text == this.CommandType, "invalid use of sp_executesql for stored proc invocation!");
-            int systemParamCount;
-            SqlParameter sqlParam;
-
-            int userParamCount = CountSendableParameters(parameters);
-            if (userParamCount > 0)
-            {
-                systemParamCount = 2;
-            }
-            else
-            {
-                systemParamCount = 1;
-            }
-
-            GetRPCObject(systemParamCount, userParamCount, ref rpc);
-            rpc.ProcID = TdsEnums.RPC_PROCID_EXECUTESQL;
-            rpc.rpcName = TdsEnums.SP_EXECUTESQL;
-
-            // @sql
-            if (commandText == null)
-            {
-                commandText = GetCommandText(behavior);
-            }
-            sqlParam = rpc.systemParams[0];
-            sqlParam.SqlDbType = ((commandText.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
-            sqlParam.Size = commandText.Length;
-            sqlParam.Value = commandText;
-            sqlParam.Direction = ParameterDirection.Input;
-
-            if (userParamCount > 0)
-            {
-                string paramList = BuildParamList(_stateObj.Parser, _batchRPCMode ? parameters : _parameters);
-                sqlParam = rpc.systemParams[1];
-                sqlParam.SqlDbType = ((paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
-                sqlParam.Size = paramList.Length;
-                sqlParam.Value = paramList;
-                sqlParam.Direction = ParameterDirection.Input;
-
-                bool inSchema = (0 != (behavior & CommandBehavior.SchemaOnly));
-                SetUpRPCParameters(rpc, inSchema, parameters);
-            }
-        }
-
         /// <summary>
         /// This function constructs a string parameter containing the exec statement in the following format
         /// N'EXEC sp_name @param1=@param1, @param1=@param2, ..., @paramN=@paramN'
