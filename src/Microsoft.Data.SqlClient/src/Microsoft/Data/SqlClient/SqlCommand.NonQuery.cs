@@ -503,7 +503,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // Otherwise, use a full-fledged execute that can handle params and stored sprocs
-                    SqlDataReader reader = CompleteAsyncExecuteReader(isInternal);
+                    SqlDataReader reader = CompleteAsyncExecuteReader(isInternal, forDescribeParameterEncryption: false);
                     reader?.Close();
                 }
             }
