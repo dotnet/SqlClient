@@ -30,7 +30,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
     /// <summary>
     /// General server handler
     /// </summary>
-    public abstract class ServerEndPointHandler<T> where T : ServerEndPointConnection
+    public abstract class ServerEndPointHandler<T> : IDisposable
+        where T : ServerEndPointConnection
     {
         /// <summary>
         /// Gets/Sets the event log for the proxy server
@@ -158,11 +159,17 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                 foreach (T connection in Connections)
                 {
                     // Request to stop
-                    connection.Stop();
+                    connection.Dispose();
                 }
                 // Clear the connections list
                 Connections.Clear();
             }
+        }
+
+        public void Dispose()
+        {
+            // Stop the listener
+            Stop();
         }
 
         /// <summary>

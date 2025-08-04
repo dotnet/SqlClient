@@ -8,6 +8,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.SqlServer.TDS.EndPoint
 {
@@ -44,12 +45,12 @@ namespace Microsoft.SqlServer.TDS.EndPoint
     /// <summary>
     /// Connection to a single client
     /// </summary>
-    public abstract class ServerEndPointConnection
+    public abstract class ServerEndPointConnection : IDisposable
     {
         /// <summary>
         /// Worker thread
         /// </summary>
-        protected Thread ProcessorThread { get; set; }
+        protected Task ProcessorTask { get; set; }
 
         /// <summary>
         /// Gets/Sets the event log for the proxy server
@@ -79,7 +80,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// <summary>
         /// The flag indicates whether server is being stopped
         /// </summary>
-        protected bool StopRequested { get; set; }
+        protected CancellationTokenSource CancellationTokenSource { get; set; }
 
         /// <summary>
         /// Initialization constructor
@@ -117,6 +118,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                 // Update server context
                 Session.ClientEndPointInfo = new TDSEndPointInfo(endPoint.Address, endPoint.Port, TDSEndPointTransportType.TCP);
             }
+
+            CancellationTokenSource = new CancellationTokenSource();
         }
 
         /// <summary>
@@ -124,13 +127,9 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// </summary>
         internal void Start()
         {
-            // Start with active connection
-            StopRequested = false;
-
             // Prepare and start a thread
-            ProcessorThread = new Thread(new ThreadStart(_ConnectionHandler)) { IsBackground = true };
-            ProcessorThread.Name = string.Format("TDS Server Connection {0} Thread", Connection.Client.RemoteEndPoint);
-            ProcessorThread.Start();
+            ProcessorTask = RunConnectionHandler(CancellationTokenSource.Token);
+            //ProcessorTask.Name = string.Format("TDS Server Connection {0} Thread", Connection.Client.RemoteEndPoint);
         }
 
         /// <summary>
@@ -138,17 +137,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// </summary>
         internal void Stop()
         {
-            // Request the listener thread to stop
-            StopRequested = true;
-            Connection.Close();
-
-            // If connection failed to start there's no processor thread
-            if (ProcessorThread != null)
-            {
-                ProcessorThread.Abort(); // Abort the thread if it is still running
-                // Wait for termination
-                //ProcessorThread.Join();
-            }
+            CancellationTokenSource.Cancel();
         }
 
         /// <summary>
@@ -161,10 +150,22 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// </summary>
         public abstract void ProcessData(Stream rawStream);
 
+        public void Dispose()
+        {
+            Stop();
+
+            if (Connection != null)
+            {
+                Connection.Dispose();
+            }
+
+            CancellationTokenSource.Dispose();
+        }
+
         /// <summary>
         /// Worker thread
         /// </summary>
-        private void _ConnectionHandler()
+        private async Task RunConnectionHandler(CancellationToken cancellationToken)
         {
             try
             {
@@ -173,7 +174,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                 PrepareForProcessingData(rawStream);
 
                 // Process the packet sequence
-                while (Connection.Connected && !StopRequested)
+                while (Connection.Connected && !cancellationToken.IsCancellationRequested)
                 {
                     // Check incoming buffer
                     if (rawStream.DataAvailable)
@@ -189,7 +190,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                         }
 
                         // Sleep a bit to reduce load on CPU
-                        Thread.Sleep(10);
+                        await Task.Delay(10);
                     }
                 }
             }
@@ -214,6 +215,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             {
                 OnConnectionClosed(this, null);
             }
+
+            return;
         }
 
         /// <summary>

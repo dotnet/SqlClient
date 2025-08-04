@@ -916,6 +916,6 @@ namespace Microsoft.SqlServer.TDS.Servers
             return left.SequenceEqual<byte>(right);
         }
 
-        public virtual void Dispose() => _endpoint?.Stop();
+        public virtual void Dispose() => _endpoint?.Dispose();
     }
 }
