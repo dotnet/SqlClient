@@ -606,45 +606,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private SqlDataReader EndExecuteReaderInternal(IAsyncResult asyncResult)
-        {
-            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.EndExecuteReaderInternal | API | ObjectId {0}, Client Connection Id {1}, MARS={2}, AsyncCommandInProgress={3}",
-                                                    _activeConnection?.ObjectID, _activeConnection?.ClientConnectionId,
-                                                    _activeConnection?.Parser?.MARSOn, _activeConnection?.AsyncCommandInProgress);
-            SqlStatistics statistics = null;
-            bool success = false;
-            int? sqlExceptionNumber = null;
-            try
-            {
-                success = true;
-                statistics = SqlStatistics.StartTimer(Statistics);
-                return InternalEndExecuteReader(asyncResult, false, nameof(EndExecuteReader));
-            }
-            catch (Exception e)
-            {
-                if (e is SqlException)
-                {
-                    SqlException exception = (SqlException)e;
-                    sqlExceptionNumber = exception.Number;
-                }
-
-                if (CachedAsyncState != null)
-                {
-                    CachedAsyncState.ResetAsyncState();
-                };
-                if (ADP.IsCatchableExceptionType(e))
-                {
-                    ReliablePutStateObject();
-                };
-                throw;
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: false);
-            }
-        }
-
         private void CleanupExecuteReaderAsync(Task<SqlDataReader> task, TaskCompletionSource<SqlDataReader> source, Guid operationId)
         {
             if (task.IsFaulted)
