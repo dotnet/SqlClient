@@ -510,6 +510,44 @@ namespace Microsoft.Data.SqlClient
             SetUpRPCParameters(rpc, inSchema, parameters);
         }
 
+        private SqlDataReader CompleteAsyncExecuteReader(bool isInternal, bool forDescribeParameterEncryption)
+        {
+            SqlDataReader reader = CachedAsyncState.CachedAsyncReader;
+            Debug.Assert(reader is not null);
+
+            bool processFinallyBlock = true;
+            try
+            {
+                // @TODO: Evaluate if forDescribeParameterEncryption/shouldCacheForAlwaysEncrypted are always opposites
+                FinishExecuteReader(
+                    reader,
+                    CachedAsyncState.CachedRunBehavior,
+                    CachedAsyncState.CachedSetOptions,
+                    isInternal,
+                    forDescribeParameterEncryption,
+                    shouldCacheForAlwaysEncrypted: !forDescribeParameterEncryption);
+                return reader;
+            }
+            catch (Exception e)
+            {
+                processFinallyBlock = ADP.IsCatchableExceptionType(e);
+                throw;
+            }
+            finally
+            {
+                if (processFinallyBlock)
+                {
+                    // Don't reset the state for internal End. The user End will do that eventually.
+                    if (!isInternal)
+                    {
+                        CachedAsyncState.ResetAsyncState();
+                    }
+
+                    PutStateObject();
+                }
+            }
+        }
+
         private void FinishExecuteReader(
             SqlDataReader ds,
             RunBehavior runBehavior,
@@ -780,7 +818,7 @@ namespace Microsoft.Data.SqlClient
 
             CheckThrowSNIException();
 
-            SqlDataReader reader = CompleteAsyncExecuteReader(isInternal);
+            SqlDataReader reader = CompleteAsyncExecuteReader(isInternal, forDescribeParameterEncryption: false);
             Debug.Assert(_stateObj is null, "non-null state object in InternalEndExecuteReader");
             return reader;
             // @TODO: CER Exception Handling was removed here (see GH#3581)
