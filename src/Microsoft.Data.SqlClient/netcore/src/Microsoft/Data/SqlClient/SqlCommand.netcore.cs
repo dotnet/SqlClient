@@ -576,19 +576,6 @@ namespace Microsoft.Data.SqlClient
             return ExecuteReader(behavior);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteReader[@name="IAsyncResult2"]/*'/>
-        public SqlDataReader EndExecuteReader(IAsyncResult asyncResult)
-        {
-            try
-            {
-                return EndExecuteReaderInternal(asyncResult);
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteReader | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-            }
-        }
-
         private SqlDataReader EndExecuteReaderAsync(IAsyncResult asyncResult)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
