@@ -1005,7 +1005,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         ExecuteReaderAsyncCallContext context = (ExecuteReaderAsyncCallContext)task.AsyncState;
                         SqlCommand command = context.Command;
-                        Guid operationId = context.OperationID;
+                        Guid operationId = context.OperationId;
                         TaskCompletionSource<SqlDataReader> source = context.TaskCompletionSource;
 
                         context.Dispose();
@@ -1787,6 +1787,39 @@ namespace Microsoft.Data.SqlClient
 
         #endregion
 
+        internal sealed class ExecuteReaderAsyncCallContext
+            : AAsyncCallContext<SqlCommand, SqlDataReader, CancellationTokenRegistration>
+        {
+            public SqlCommand Command => _owner;
 
+            public CommandBehavior CommandBehavior { get; set; }
+
+            public Guid OperationId { get; set; }
+
+            public TaskCompletionSource<SqlDataReader> TaskCompletionSource => _source;
+
+            public void Set(
+                SqlCommand command,
+                TaskCompletionSource<SqlDataReader> source,
+                CancellationTokenRegistration disposable,
+                CommandBehavior behavior,
+                Guid operationId)
+            {
+                base.Set(command, source, disposable);
+                CommandBehavior = behavior;
+                OperationId = operationId;
+            }
+
+            protected override void AfterCleared(SqlCommand owner)
+            {
+                owner?.SetCachedCommandExecuteReaderAsyncContext(this);
+            }
+
+            protected override void Clear()
+            {
+                OperationId = Guid.Empty;
+                CommandBehavior = CommandBehavior.Default;
+            }
+        }
     }
 }
