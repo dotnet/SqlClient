@@ -13266,10 +13266,11 @@ namespace Microsoft.Data.SqlClient
 
             if (canContinue)
             {
-                temp = stateObj.TryTakeSnapshotStorage() as char[];
-                Debug.Assert(temp != null || !isContinuing, "if continuing stored buffer must be present to contain previous data to continue from");
-                Debug.Assert(temp == null || length == int.MaxValue || temp.Length == length, "stored buffer length must be null or must have been created with the correct length");
-
+                if (isContinuing || isStarting)
+                {
+                    temp = stateObj.TryTakeSnapshotStorage() as char[];
+                    Debug.Assert(temp == null || length == int.MaxValue || temp.Length == length, "stored buffer length must be null or must have been created with the correct length");
+                }
                 if (temp != null)
                 {
                     startOffset = stateObj.GetSnapshotTotalSize();
@@ -13284,8 +13285,8 @@ namespace Microsoft.Data.SqlClient
                 out length, 
                 supportRentedBuff: !canContinue, // do not use the arraypool if we are going to keep the buffer in the snapshot
                 rentedBuff: ref buffIsRented, 
-                startOffset,
-                canContinue
+                startOffset, 
+                isStarting || isContinuing
             );
 
             if (result == TdsOperationStatus.Done)
@@ -13312,7 +13313,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (result == TdsOperationStatus.NeedMoreData)
             {
-                if (canContinue)
+                if (isStarting || isContinuing)
                 {
                     stateObj.SetSnapshotStorage(temp);
                 }
