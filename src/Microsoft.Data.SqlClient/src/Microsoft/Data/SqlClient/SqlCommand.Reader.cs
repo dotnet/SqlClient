@@ -1773,6 +1773,18 @@ namespace Microsoft.Data.SqlClient
                 this,
                 () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method));
 
+        private void SetCachedCommandExecuteReaderAsyncContext(ExecuteReaderAsyncCallContext instance)
+        {
+            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            {
+                // @TODO: This should be part of the sql internal connection class.
+                Interlocked.CompareExchange(
+                    ref sqlInternalConnection.CachedCommandExecuteReaderAsyncContext,
+                    instance,
+                    null);
+            }
+        }
+
         #endregion
 
 

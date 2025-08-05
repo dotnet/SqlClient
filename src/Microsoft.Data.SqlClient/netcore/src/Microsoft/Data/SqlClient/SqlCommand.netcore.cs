@@ -774,14 +774,6 @@ namespace Microsoft.Data.SqlClient
                 this._activeConnection.Database);
         }
 
-        private void SetCachedCommandExecuteReaderAsyncContext(ExecuteReaderAsyncCallContext instance)
-        {
-            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
-            {
-                Interlocked.CompareExchange(ref sqlInternalConnection.CachedCommandExecuteReaderAsyncContext, instance, null);
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RegisterColumnEncryptionKeyStoreProvidersOnCommand/*' />
         public void RegisterColumnEncryptionKeyStoreProvidersOnCommand(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
         {
