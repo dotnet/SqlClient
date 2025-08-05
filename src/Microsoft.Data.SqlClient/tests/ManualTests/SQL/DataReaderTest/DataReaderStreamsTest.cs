@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         )]
         public static async Task GetFieldValueAsync_OfStream(CommandBehavior behavior, bool isExecuteAsync)
         {
-            const int PacketSize = 512; // force minimum packet size so that the test data spans multiple packets to test sequential access spanning
+            const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
             byte[] originalData = CreateBinaryData(PacketSize, forcedPacketCount: 4);
             string query = CreateBinaryDataQuery(originalData);
