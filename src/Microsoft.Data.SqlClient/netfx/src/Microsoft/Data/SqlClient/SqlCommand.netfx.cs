@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
@@ -17,12 +16,7 @@ using System.Security.Permissions;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
-using System.Buffers;
 using Microsoft.Data.Common;
-using Microsoft.Data.Sql;
-using Microsoft.Data.SqlClient.Server;
-using System.Transactions;
 using System.Collections.Concurrent;
 
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
@@ -244,42 +238,6 @@ namespace Microsoft.Data.SqlClient
         /// A flag to indicate whether we postponed caching the query metadata for this command.
         /// </summary>
         internal bool CachingQueryMetadataPostponed { get; set; }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="default"]/*'/>
-        public SqlCommand() : base()
-        {
-            GC.SuppressFinalize(this);
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextString"]/*'/>
-        public SqlCommand(string cmdText) : this()
-        {
-            CommandText = cmdText;
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnection"]/*'/>
-        public SqlCommand(string cmdText, SqlConnection connection) : this()
-        {
-            CommandText = cmdText;
-            Connection = connection;
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnectionAndSqlTransaction"]/*'/>
-        public SqlCommand(string cmdText, SqlConnection connection, SqlTransaction transaction) : this()
-        {
-            CommandText = cmdText;
-            Connection = connection;
-            Transaction = transaction;
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnectionAndSqlTransactionAndSqlCommandColumnEncryptionSetting"]/*'/>
-        public SqlCommand(string cmdText, SqlConnection connection, SqlTransaction transaction, SqlCommandColumnEncryptionSetting columnEncryptionSetting) : this()
-        {
-            CommandText = cmdText;
-            Connection = connection;
-            Transaction = transaction;
-            _columnEncryptionSetting = columnEncryptionSetting;
-        }
 
         private SqlCommand(SqlCommand from) : this()
         {
