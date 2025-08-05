@@ -223,6 +223,27 @@ namespace Microsoft.Data.SqlClient
             return ExecuteReader(behavior);
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReaderAsync/*'/>
+        protected override Task<DbDataReader> ExecuteDbDataReaderAsync(
+            CommandBehavior behavior,
+            CancellationToken cancellationToken)
+        {
+            return ExecuteReaderAsync(behavior, cancellationToken)
+                .ContinueWith<DbDataReader>(
+                    static result =>
+                    {
+                        if (result.IsFaulted)
+                        {
+                            throw result.Exception.InnerException;
+                        }
+
+                        return result.Result;
+                    },
+                    CancellationToken.None,
+                    TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled,
+                    TaskScheduler.Default);
+        }
+
         private IAsyncResult BeginExecuteReaderInternal(
             CommandBehavior behavior,
             AsyncCallback callback,
@@ -1753,5 +1774,7 @@ namespace Microsoft.Data.SqlClient
                 () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method));
 
         #endregion
+
+
     }
 }
