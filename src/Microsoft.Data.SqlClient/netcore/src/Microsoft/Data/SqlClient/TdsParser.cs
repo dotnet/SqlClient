@@ -13228,17 +13228,17 @@ namespace Microsoft.Data.SqlClient
                 ||
                 (buff.Length >= offst + len)
                 ||
-                (buff.Length >= (startOffsetByteCount >> 1) + 1),
+                (buff.Length == (startOffsetByteCount >> 1) + 1),
                 "Invalid length sent to ReadPlpUnicodeChars()!"
             );
             charsLeft = len;
 
-            // If total data length is known up front from the plp header by being not SQL_PLP_UNKNOWNLEN
-            //  and the number of chars required is less than int.max/2 allocate the entire buffer now to avoid
-            //  later needing to repeatedly allocate new target buffers and copy data as we discover new data
-            if (buff == null && stateObj._longlen != TdsEnums.SQL_PLP_UNKNOWNLEN && stateObj._longlen < (int.MaxValue >> 1))
+            // If total length is known up front, the length isn't specified as unknown 
+            // and the caller doesn't pass int.max/2 indicating that it doesn't know the length
+            // allocate the whole buffer in one shot instead of realloc'ing and copying over each time
+            if (buff == null && stateObj._longlen != TdsEnums.SQL_PLP_UNKNOWNLEN && len < (int.MaxValue >> 1))
             {
-                if (supportRentedBuff && stateObj._longlen < 1073741824) // 1 Gib
+                if (supportRentedBuff && len < 1073741824) // 1 Gib
                 {
                     buff = ArrayPool<char>.Shared.Rent((int)Math.Min((int)stateObj._longlen, len));
                     rentedBuff = true;
@@ -13273,7 +13273,8 @@ namespace Microsoft.Data.SqlClient
 
             totalCharsRead = (startOffsetByteCount >> 1);
             charsLeft -= totalCharsRead;
-            offst += totalCharsRead;
+            offst = totalCharsRead;
+
 
             while (charsLeft > 0)
             {
@@ -13291,10 +13292,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
-                            // grow by an arbitrary number of packets to avoid needing to reallocate
-                            //  the newbuf on each loop iteration of long packet sequences which causes
-                            //  a performance problem as we spend large amounts of time copying and in gc
-                            newbuf = new char[offst + charsRead + (stateObj.GetPacketSize() * 8)];
+                            newbuf = new char[offst + charsRead];
                             rentedBuff = false;
                         }
 
