@@ -6595,7 +6595,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        result = stateObj.TryReadByteArrayWithContinue(length, out b);
+                        result = TryReadByteArrayWithContinue(stateObj, length, out b);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
@@ -6735,6 +6735,48 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert((stateObj._longlen == 0) && (stateObj._longlenleft == 0), "ReadSqlValue did not read plp field completely, longlen =" + stateObj._longlen.ToString((IFormatProvider)null) + ",longlenleft=" + stateObj._longlenleft.ToString((IFormatProvider)null));
             return TdsOperationStatus.Done;
+        }
+
+        private TdsOperationStatus TryReadByteArrayWithContinue(TdsParserStateObject stateObj, int length, out byte[] bytes)
+        {
+            bytes = null;
+            int offset = 0;
+            byte[] temp = null;
+            (bool canContinue, bool isStarting, bool isContinuing) = stateObj.GetSnapshotStatuses();
+            if (canContinue)
+            {
+                if (isContinuing || isStarting)
+                {
+                    temp = stateObj.TryTakeSnapshotStorage() as byte[];
+                    Debug.Assert(bytes == null || bytes.Length == length, "stored buffer length must be null or must have been created with the correct length");
+                }
+                if (temp != null)
+                {
+                    offset = stateObj.GetSnapshotTotalSize();
+                }
+            }
+
+            
+            if (temp == null)
+            {
+                temp = new byte[length];
+            }
+
+            TdsOperationStatus result = stateObj.TryReadByteArray(temp, length, out _, offset, isStarting || isContinuing);
+
+            if (result == TdsOperationStatus.Done)
+            {
+                bytes = temp;
+            }
+            else if (result == TdsOperationStatus.NeedMoreData)
+            {
+                if (isStarting || isContinuing)
+                {
+                    stateObj.SetSnapshotStorage(temp);
+                }
+            }
+
+            return result;
         }
 
         private TdsOperationStatus TryReadSqlDateTime(SqlBuffer value, byte tdsType, int length, byte scale, TdsParserStateObject stateObj)
