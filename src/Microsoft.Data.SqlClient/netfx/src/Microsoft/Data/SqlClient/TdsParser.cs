@@ -13541,13 +13541,6 @@ namespace Microsoft.Data.SqlClient
                     break;
                 }
             }
-
-            if (writeDataSizeToSnapshot)
-            {
-                stateObj.SetSnapshotStorage(null);
-                stateObj.ClearSnapshotDataSize();
-            }
-
             return TdsOperationStatus.Done;
 
             static int IncrementSnapshotDataSize(TdsParserStateObject stateObj, bool resetting, int previousPacketId, int value)
@@ -13567,7 +13560,7 @@ namespace Microsoft.Data.SqlClient
                         current = 0;
                     }
 
-                    stateObj.AddSnapshotDataSize(current + value);
+                    stateObj.SetSnapshotDataSize(current + value);
 
                     // return new packetid so next time we see this packet we know it isn't new
                     return currentPacketId;
@@ -13575,7 +13568,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     current = stateObj.GetSnapshotDataSize();
-                    stateObj.AddSnapshotDataSize(current + value);
+                    stateObj.SetSnapshotDataSize(current + value);
                     return previousPacketId;
                 }
             }
