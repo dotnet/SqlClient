@@ -6,12 +6,12 @@ using System;
 using System.Data;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Security.Permissions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 
 #if NETFRAMEWORK
+using System.Security.Permissions;
 using Microsoft.Data.SqlClient.Utilities;
 #endif
 
@@ -163,6 +163,24 @@ namespace Microsoft.Data.SqlClient
                 #endif
             }
         }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="default"]/*'/>
+        public new Task<SqlDataReader> ExecuteReaderAsync() =>
+            ExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None);
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
+        public new Task<SqlDataReader> ExecuteReaderAsync(CancellationToken cancellationToken) =>
+            ExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CommandBehavior"]/*'/>
+        public new Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior) =>
+            ExecuteReaderAsync(behavior, CancellationToken.None);
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
+        public new Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken) =>
+            IsProviderRetriable
+                ? InternalExecuteReaderWithRetryAsync(behavior, cancellationToken)
+                : InternalExecuteReaderAsync(behavior, cancellationToken);
 
         // @TODO: This is only used for synchronous execution
         internal SqlDataReader RunExecuteReader(
