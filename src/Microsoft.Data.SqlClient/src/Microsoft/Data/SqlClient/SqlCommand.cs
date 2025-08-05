@@ -195,6 +195,54 @@ namespace Microsoft.Data.SqlClient
         
         #endregion
 
+        #region Constructors
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="default"]/*'/>
+        public SqlCommand()
+        {
+            GC.SuppressFinalize(this);
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextString"]/*'/>
+        public SqlCommand(string cmdText)
+            : this()
+        {
+            CommandText = cmdText;
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnection"]/*'/>
+        public SqlCommand(string cmdText, SqlConnection connection)
+            : this()
+        {
+            CommandText = cmdText;
+            Connection = connection;
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnectionAndSqlTransaction"]/*'/>
+        public SqlCommand(string cmdText, SqlConnection connection, SqlTransaction transaction)
+            : this()
+        {
+            CommandText = cmdText;
+            Connection = connection;
+            Transaction = transaction;
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnectionAndSqlTransactionAndSqlCommandColumnEncryptionSetting"]/*'/>
+        public SqlCommand(
+            string cmdText,
+            SqlConnection connection,
+            SqlTransaction transaction,
+            SqlCommandColumnEncryptionSetting columnEncryptionSetting)
+            : this()
+        {
+            CommandText = cmdText;
+            Connection = connection;
+            Transaction = transaction;
+            _columnEncryptionSetting = columnEncryptionSetting;
+        }
+
+        #endregion
+
         #region Events
         
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/StatementCompleted/*'/>
@@ -236,7 +284,7 @@ namespace Microsoft.Data.SqlClient
         }
         
         #endregion
-        
+
         #region Public Properties
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ColumnEncryptionSetting/*'/>
