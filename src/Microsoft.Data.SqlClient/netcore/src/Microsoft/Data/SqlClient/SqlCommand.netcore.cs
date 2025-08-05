@@ -31,33 +31,6 @@ namespace Microsoft.Data.SqlClient
     {
         private const int MaxRPCNameLength = 1046;
 
-        internal sealed class ExecuteReaderAsyncCallContext : AAsyncCallContext<SqlCommand, SqlDataReader, CancellationTokenRegistration>
-        {
-            public Guid OperationID;
-            public CommandBehavior CommandBehavior;
-
-            public SqlCommand Command => _owner;
-            public TaskCompletionSource<SqlDataReader> TaskCompletionSource => _source;
-
-            public void Set(SqlCommand command, TaskCompletionSource<SqlDataReader> source, CancellationTokenRegistration disposable, CommandBehavior behavior, Guid operationID)
-            {
-                base.Set(command, source, disposable);
-                CommandBehavior = behavior;
-                OperationID = operationID;
-            }
-
-            protected override void Clear()
-            {
-                OperationID = default;
-                CommandBehavior = default;
-            }
-
-            protected override void AfterCleared(SqlCommand owner)
-            {
-                owner?.SetCachedCommandExecuteReaderAsyncContext(this);
-            }
-        }
-
         /// <summary>
         /// Indicates if the column encryption setting was set at-least once in the batch rpc mode, when using AddBatchCommand.
         /// </summary>
