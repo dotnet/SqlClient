@@ -1922,7 +1922,7 @@ namespace Microsoft.Data.SqlClient
             }
             byte[] buf = null;
             int offset = 0;
-            (bool canContinue, bool isStarting, bool isContinuing) = GetSnapshotStatuses();
+            (bool isAvailable, bool isStarting, bool isContinuing) = GetSnapshotStatuses();
 
             if (isPlp)
             {
@@ -1940,7 +1940,7 @@ namespace Microsoft.Data.SqlClient
                 if (((_inBytesUsed + length) > _inBytesRead) || (_inBytesPacket < length))
                 {
                     int startOffset = 0;
-                    if (canContinue)
+                    if (isAvailable)
                     {
                         if (isContinuing || isStarting)
                         {
@@ -1958,7 +1958,7 @@ namespace Microsoft.Data.SqlClient
                         buf = new byte[length];
                     }
 
-                    TdsOperationStatus result = TryReadByteArray(buf, length, out _, startOffset, canContinue);
+                    TdsOperationStatus result = TryReadByteArray(buf, length, out _, startOffset, isAvailable);
                     
                     if (result != TdsOperationStatus.Done)
                     {
@@ -2088,15 +2088,14 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsOperationStatus TryReadPlpBytes(ref byte[] buff, int offset, int len, out int totalBytesRead)
         {
-            bool canContinue = false;
             bool isStarting = false;
             bool isContinuing = false;
             bool compatibilityMode = LocalAppContextSwitches.UseCompatibilityAsyncBehaviour;
             if (!compatibilityMode)
             {
-                (canContinue, isStarting, isContinuing) = GetSnapshotStatuses();
+                (_, isStarting, isContinuing) = GetSnapshotStatuses();
             }
-            return TryReadPlpBytes(ref buff, offset, len, out totalBytesRead, canContinue, canContinue, compatibilityMode);
+            return TryReadPlpBytes(ref buff, offset, len, out totalBytesRead, isStarting || isContinuing, compatibilityMode);
         }
         // Reads the requested number of bytes from a plp data stream, or the entire data if
         // requested length is -1 or larger than the actual length of data. First call to this method
@@ -2104,7 +2103,7 @@ namespace Microsoft.Data.SqlClient
         // Returns the actual bytes read.
         // NOTE: This method must be retriable WITHOUT replaying a snapshot
         // Every time you call this method increment the offset and decrease len by the value of totalBytesRead
-        internal TdsOperationStatus TryReadPlpBytes(ref byte[] buff, int offset, int len, out int totalBytesRead, bool canContinue, bool writeDataSizeToSnapshot, bool compatibilityMode)
+        internal TdsOperationStatus TryReadPlpBytes(ref byte[] buff, int offset, int len, out int totalBytesRead, bool writeDataSizeToSnapshot, bool compatibilityMode)
         {
             totalBytesRead = 0;
 
@@ -2129,16 +2128,9 @@ namespace Microsoft.Data.SqlClient
             // If total length is known up front, allocate the whole buffer in one shot instead of realloc'ing and copying over each time
             if (buff == null && _longlen != TdsEnums.SQL_PLP_UNKNOWNLEN)
             {
-                if (compatibilityMode && _snapshot != null && _snapshotStatus != SnapshotStatus.NotActive)
+                if (writeDataSizeToSnapshot)
                 {
-                    // legacy replay path perf optimization
-                    // if there is a snapshot which contains a stored plp buffer take it
-                    // and try to use it if it is the right length
-                    buff = TryTakeSnapshotStorage() as byte[];
-                }
-                else if (writeDataSizeToSnapshot && canContinue && _snapshot != null)
-                {
-                    // if there is a snapshot which it contains a stored plp buffer take it
+                    // if there is a snapshot and it contains a stored plp buffer take it
                     // and try to use it if it is the right length
                     buff = TryTakeSnapshotStorage() as byte[];
                     if (buff != null)
@@ -2147,7 +2139,13 @@ namespace Microsoft.Data.SqlClient
                         totalBytesRead = offset;
                     }
                 }
-
+                else if (compatibilityMode && _snapshot != null && _snapshotStatus != SnapshotStatus.NotActive)
+                {
+                    // legacy replay path perf optimization
+                    // if there is a snapshot and it contains a stored plp buffer take it
+                    // and try to use it if it is the right length
+                    buff = TryTakeSnapshotStorage() as byte[];
+                }
 
                 if ((ulong)(buff?.Length ?? 0) != _longlen)
                 {
@@ -2199,28 +2197,22 @@ namespace Microsoft.Data.SqlClient
                 _longlenleft -= (ulong)bytesRead;
                 if (result != TdsOperationStatus.Done)
                 {
-                    if (compatibilityMode && _snapshot != null)
+                    if (writeDataSizeToSnapshot)
+                    {
+                        // a partial read has happened so store the target buffer in the snapshot
+                        // so it can be re-used when another packet arrives and we read again
+                        SetSnapshotStorage(buff);
+                        SetSnapshotDataSize(bytesRead);
+
+                    }
+                    else if (compatibilityMode && _snapshot != null)
                     {
                         // legacy replay path perf optimization
                         // a partial read has happened so store the target buffer in the snapshot
                         // so it can be re-used when another packet arrives and we read again
                         SetSnapshotStorage(buff);
                     }
-                    else if (canContinue)
-                    {
-                        // a partial read has happened so store the target buffer in the snapshot
-                        // so it can be re-used when another packet arrives and we read again
-                        SetSnapshotStorage(buff);
-                        if (writeDataSizeToSnapshot)
-                        {
-                            SetSnapshotDataSize(bytesRead);
-                        }
-                    }
                     return result;
-                }
-                if (writeDataSizeToSnapshot && canContinue)
-                {
-                    SetSnapshotDataSize(bytesRead);
                 }
 
                 if (_longlenleft == 0)
@@ -2229,19 +2221,19 @@ namespace Microsoft.Data.SqlClient
                     result = TryReadPlpLength(false, out _);
                     if (result != TdsOperationStatus.Done)
                     {
-                        if (compatibilityMode && _snapshot != null)
+                        if (writeDataSizeToSnapshot)
+                        {
+                            if (result == TdsOperationStatus.NeedMoreData)
+                            {
+                                SetSnapshotStorage(buff);
+                                SetSnapshotDataSize(bytesRead);
+                            }
+                        } 
+                        else if (compatibilityMode && _snapshot != null)
                         {
                             // a partial read has happened so store the target buffer in the snapshot
                             // so it can be re-used when another packet arrives and we read again
                             SetSnapshotStorage(buff);
-                        }
-                        else if (canContinue && result == TdsOperationStatus.NeedMoreData)
-                        {
-                            SetSnapshotStorage(buff);
-                            if (writeDataSizeToSnapshot)
-                            {
-                                SetSnapshotDataSize(bytesRead);
-                            }
                         }
                         return result;
                     }
@@ -3516,17 +3508,17 @@ namespace Microsoft.Data.SqlClient
                 _snapshotStatus == TdsParserStateObject.SnapshotStatus.ContinueRunning;
         }
 
-        internal (bool CanContinue, bool IsStarting, bool IsContinuing) GetSnapshotStatuses()
+        internal (bool IsAvailable, bool IsStarting, bool IsContinuing) GetSnapshotStatuses()
         {
-            bool canContinue = _snapshot != null && _snapshot.ContinueEnabled && _snapshotStatus != SnapshotStatus.NotActive;
+            bool isAvailable = _snapshot != null && _snapshot.ContinueEnabled;
             bool isStarting = false;
             bool isContinuing = false;
-            if (canContinue)
+            if (isAvailable)
             {
                 isStarting = _snapshotStatus == SnapshotStatus.ReplayStarting;
                 isContinuing = _snapshotStatus == SnapshotStatus.ContinueRunning;
             }
-            return (canContinue, isStarting, isContinuing);
+            return (isAvailable, isStarting, isContinuing);
         }
 
         internal int GetSnapshotStorageLength<T>()
