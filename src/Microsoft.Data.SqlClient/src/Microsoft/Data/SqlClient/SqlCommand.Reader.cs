@@ -604,6 +604,40 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private SqlDataReader EndExecuteReaderAsync(IAsyncResult asyncResult)
+        {
+            Debug.Assert(!_internalEndExecuteInitiated || _stateObj is null);
+
+            SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                "SqlCommand.EndExecuteReaderAsync | API | Correlation | " +
+                $"Object Id {ObjectID}, " +
+                $"Activity Id {ActivityCorrelator.Current}, " +
+                $"Client Connection Id {_activeConnection.ClientConnectionId}, " +
+                $"Command Text '{CommandText}'");
+
+            Exception asyncException = ((Task)asyncResult).Exception;
+            if (asyncException is not null)
+            {
+                CachedAsyncState?.ResetAsyncState();
+                ReliablePutStateObject();
+
+                throw asyncException.InnerException;
+            }
+
+            ThrowIfReconnectionHasBeenCanceled();
+
+            // Lock on _stateObj prevents race with close/cancel
+            if (!_internalEndExecuteInitiated)
+            {
+                lock (_stateObj)
+                {
+                    return EndExecuteReaderInternal(asyncResult);
+                }
+            }
+
+            return EndExecuteReaderInternal(asyncResult);
+        }
+
         private SqlDataReader EndExecuteReaderInternal(IAsyncResult asyncResult)
         {
             SqlClientEventSource.Log.TryTraceEvent(
