@@ -39,15 +39,15 @@ namespace Microsoft.Data.SqlClient
         {
             buffer = null;
 
-            (bool isAvailable, bool isStarting, _) = stateObj.GetSnapshotStatuses();
+            (bool isAvailable, bool isStarting, bool isContinuing) = stateObj.GetSnapshotStatuses();
 
             List<byte[]> cachedBytes = null;
             if (isAvailable)
             {
                 cachedBytes = stateObj.TryTakeSnapshotStorage() as List<byte[]>;
-                if (isStarting)
+                if (cachedBytes != null && !isStarting && !isContinuing) 
                 {
-                    cachedBytes = null;
+                    stateObj.SetSnapshotStorage(null);
                 }
             }
  
@@ -56,12 +56,14 @@ namespace Microsoft.Data.SqlClient
                 cachedBytes = new List<byte[]>();
             }
 
+
             // the very first length is already read.
             TdsOperationStatus result = parser.TryPlpBytesLeft(stateObj, out ulong plplength);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
             }
+
 
             // For now we  only handle Plp data from the parser directly.
             Debug.Assert(metadata.metaType.IsPlp, "SqlCachedBuffer call on a non-plp data");
@@ -103,7 +105,10 @@ namespace Microsoft.Data.SqlClient
 
                     if (returnAfterAdd)
                     {
-                        stateObj.SetSnapshotStorage(cachedBytes);
+                        if (isStarting || isContinuing)
+                        {
+                            stateObj.SetSnapshotStorage(cachedBytes);
+                        }
                         return result;
                     }
 
