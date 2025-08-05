@@ -6666,7 +6666,10 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLVECTOR:
                     // Vector data is read as non-plp binary value.
                     // This is same as reading varbinary(8000).
-                    result = stateObj.TryReadByteArrayWithContinue(length, out b);
+                    // Note: Updating this as a part of reverting multiplexer changes.
+                    // We reverted 44762d90913ac93ffd78f58a0d87e59cf3d65a43,
+                    // hence the change in function call here.
+                    result = TryReadByteArrayWithContinue(stateObj, length, out b);
                     if (result != TdsOperationStatus.Done)
                     {
                         return result;
