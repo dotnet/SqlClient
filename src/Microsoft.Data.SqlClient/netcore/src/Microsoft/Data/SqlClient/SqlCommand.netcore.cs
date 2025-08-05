@@ -857,24 +857,6 @@ namespace Microsoft.Data.SqlClient
             );
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="default"]/*'/>
-        public new Task<SqlDataReader> ExecuteReaderAsync() =>
-            ExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None);
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CommandBehavior"]/*'/>
-        public new Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior) =>
-            ExecuteReaderAsync(behavior, CancellationToken.None);
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
-        public new Task<SqlDataReader> ExecuteReaderAsync(CancellationToken cancellationToken) =>
-            ExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
-        public new Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken) =>
-            IsProviderRetriable
-                ? InternalExecuteReaderWithRetryAsync(behavior, cancellationToken)
-                : InternalExecuteReaderAsync(behavior, cancellationToken);
-
         private Task<SqlDataReader> InternalExecuteReaderWithRetryAsync(CommandBehavior behavior, CancellationToken cancellationToken) =>
             RetryLogicProvider.ExecuteAsync(
                 sender: this,
