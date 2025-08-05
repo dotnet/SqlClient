@@ -774,24 +774,6 @@ namespace Microsoft.Data.SqlClient
                 this._activeConnection.Database);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReaderAsync/*'/>
-        protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
-        {
-            return ExecuteReaderAsync(behavior, cancellationToken).ContinueWith<DbDataReader>(
-                static (Task<SqlDataReader> result) =>
-                {
-                    if (result.IsFaulted)
-                    {
-                        throw result.Exception.InnerException;
-                    }
-                    return result.Result;
-                },
-                CancellationToken.None,
-                TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled,
-                TaskScheduler.Default
-            );
-        }
-
         private void SetCachedCommandExecuteReaderAsyncContext(ExecuteReaderAsyncCallContext instance)
         {
             if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
