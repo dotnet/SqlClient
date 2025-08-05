@@ -815,6 +815,105 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private Task<SqlDataReader> InternalExecuteReaderAsync(
+            CommandBehavior commandBehavior,
+            CancellationToken cancellationToken)
+        {
+            SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                "SqlCommand.InternalExecuteReaderAsync | API | Correlation | " +
+                $"Object Id {ObjectID}, " +
+                $"Behavior {(int)commandBehavior}, " +
+                $"Activity Id {ActivityCorrelator.Current}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"Command Text '{CommandText}'");
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlCommand.InternalExecuteReaderAsync | INFO | " +
+                $"Object Id {ObjectID}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"Command Text '{CommandText}'");
+
+            Guid operationId = Guid.Empty;
+            #if NET
+            if (!_parentOperationStarted)
+            {
+                operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
+            }
+            #endif
+
+            // Connection can be used as state in RegisterForConnectionCloseNotification
+            // continuation to avoid an allocation so use it as the state value if possible, but it
+            // can be changed if you need it for a more important piece of data that justifies the
+            // tuple allocation later.
+            TaskCompletionSource<SqlDataReader> source = new TaskCompletionSource<SqlDataReader>(_activeConnection);
+
+            CancellationTokenRegistration registration = new CancellationTokenRegistration();
+            if (cancellationToken.CanBeCanceled)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    source.SetCanceled();
+                    return source.Task;
+                }
+
+                registration = cancellationToken.Register(s_cancelIgnoreFailure, state: this);
+            }
+
+            Task<SqlDataReader> returnedTask = source.Task;
+            ExecuteReaderAsyncCallContext context = null;
+            try
+            {
+                returnedTask = RegisterForConnectionCloseNotification(returnedTask);
+
+                if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+                {
+                    context = Interlocked.Exchange(
+                        ref sqlInternalConnection.CachedCommandExecuteReaderAsyncContext,
+                        null);
+                }
+
+                context ??= new ExecuteReaderAsyncCallContext();
+                context.Set(this, source, registration, commandBehavior, operationId);
+
+                Task<SqlDataReader>.Factory.FromAsync(
+                    beginMethod: static (callback, state) =>
+                    {
+                        ExecuteReaderAsyncCallContext args = (ExecuteReaderAsyncCallContext)state;
+                        return args.Command.BeginExecuteReaderInternal(
+                            args.CommandBehavior,
+                            callback,
+                            state,
+                            args.Command.CommandTimeout,
+                            isRetry: false, // @TODO: Wait, this *is* a retry if the we're on the retry part of the reliability helper!
+                            asyncWrite: true);
+                    },
+                    endMethod: static asyncResult =>
+                    {
+                        ExecuteReaderAsyncCallContext args = (ExecuteReaderAsyncCallContext)asyncResult.AsyncState;
+                        return args.Command.EndExecuteReaderAsync(asyncResult);
+                    },
+                    state: context
+                ).ContinueWith(
+                    static task =>
+                    {
+                        ExecuteReaderAsyncCallContext context = (ExecuteReaderAsyncCallContext)task.AsyncState;
+                        SqlCommand command = context.Command;
+                        Guid operationId = context.OperationID;
+                        TaskCompletionSource<SqlDataReader> source = context.TaskCompletionSource;
+
+                        context.Dispose();
+                        command.CleanupExecuteReaderAsync(task, source, operationId);
+                    },
+                    scheduler: TaskScheduler.Default);
+            }
+            catch (Exception e)
+            {
+                source.SetException(e);
+                context?.Dispose();
+            }
+
+            return returnedTask;
+        }
+
         private Task<SqlDataReader> InternalExecuteReaderWithRetryAsync(
             CommandBehavior commandBehavior,
             CancellationToken cancellationToken)
