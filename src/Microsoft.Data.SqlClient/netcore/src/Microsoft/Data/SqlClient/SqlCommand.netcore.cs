@@ -606,34 +606,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void CleanupExecuteReaderAsync(Task<SqlDataReader> task, TaskCompletionSource<SqlDataReader> source, Guid operationId)
-        {
-            if (task.IsFaulted)
-            {
-                Exception e = task.Exception.InnerException;
-                if (!_parentOperationStarted)
-                {
-                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                }
-                source.SetException(e);
-            }
-            else
-            {
-                if (!_parentOperationStarted)
-                {
-                    s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                }
-                if (task.IsCanceled)
-                {
-                    source.SetCanceled();
-                }
-                else
-                {
-                    source.SetResult(task.Result);
-                }
-            }
-        }
-
         private bool TriggerInternalEndAndRetryIfNecessary(
             CommandBehavior behavior,
             object stateObject,
