@@ -528,6 +528,44 @@ namespace Microsoft.Data.SqlClient
             SetUpRPCParameters(rpc, inSchema, parameters);
         }
 
+        private void CleanupExecuteReaderAsync(
+            Task<SqlDataReader> task,
+            TaskCompletionSource<SqlDataReader> source,
+            Guid operationId)
+        {
+            if (task.IsFaulted)
+            {
+                Exception e = task.Exception.InnerException;
+
+                #if NET
+                if (!_parentOperationStarted)
+                {
+                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                }
+                #endif
+
+                source.SetException(e);
+            }
+            else
+            {
+                #if NET
+                if (!_parentOperationStarted)
+                {
+                    s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                }
+                #endif
+
+                if (task.IsCanceled)
+                {
+                    source.SetCanceled();
+                }
+                else
+                {
+                    source.SetResult(task.Result);
+                }
+            }
+        }
+
         private SqlDataReader CompleteAsyncExecuteReader(bool isInternal, bool forDescribeParameterEncryption)
         {
             SqlDataReader reader = CachedAsyncState.CachedAsyncReader;
