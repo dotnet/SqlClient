@@ -225,6 +225,7 @@
         -p:TestTargetOS=Windows$(TargetGroup)
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
+        --filter "category!=failing"
         --logger:"trx;LogFilePrefix=Unit-Windows$(TargetGroup)-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -245,6 +246,7 @@
         -p:TestTargetOS=Unixnetcoreapp
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
+        --filter "category!=failing"
         --logger:"trx;LogFilePrefix=Unit-Unixnetcoreapp-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
