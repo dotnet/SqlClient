@@ -604,6 +604,56 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private SqlDataReader EndExecuteReaderInternal(IAsyncResult asyncResult)
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlCommand.EndExecuteReaderInternal | API | " +
+                $"Object Id {ObjectID}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"MARS={_activeConnection?.Parser?.MARSOn}, " +
+                $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
+
+            SqlStatistics statistics = null;
+            bool success = false;
+            int? sqlExceptionNumber = null;
+            try
+            {
+                statistics = SqlStatistics.StartTimer(Statistics);
+
+                SqlDataReader result = InternalEndExecuteReader(
+                    asyncResult,
+                    isInternal: false,
+                    nameof(EndExecuteReader));
+
+                success = true;
+                return result;
+            }
+            catch (Exception e)
+            {
+                if (e is SqlException sqlException)
+                {
+                    sqlExceptionNumber = sqlException.Number;
+                }
+
+                if (CachedAsyncState is not null)
+                {
+                    CachedAsyncState.ResetAsyncState();
+                }
+
+                if (ADP.IsCatchableExceptionType(e))
+                {
+                    ReliablePutStateObject();
+                }
+
+                throw;
+            }
+            finally
+            {
+                SqlStatistics.StopTimer(statistics);
+                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: false);
+            }
+        }
+
         private void FinishExecuteReader(
             SqlDataReader ds,
             RunBehavior runBehavior,
@@ -738,56 +788,6 @@ namespace Microsoft.Data.SqlClient
 
                     throw;
                 }
-            }
-        }
-
-        private SqlDataReader EndExecuteReaderInternal(IAsyncResult asyncResult)
-        {
-            SqlClientEventSource.Log.TryTraceEvent(
-                "SqlCommand.EndExecuteReaderInternal | API | " +
-                $"Object Id {ObjectID}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"MARS={_activeConnection?.Parser?.MARSOn}, " +
-                $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
-
-            SqlStatistics statistics = null;
-            bool success = false;
-            int? sqlExceptionNumber = null;
-            try
-            {
-                statistics = SqlStatistics.StartTimer(Statistics);
-
-                SqlDataReader result = InternalEndExecuteReader(
-                    asyncResult,
-                    isInternal: false,
-                    nameof(EndExecuteReader));
-
-                success = true;
-                return result;
-            }
-            catch (Exception e)
-            {
-                if (e is SqlException sqlException)
-                {
-                    sqlExceptionNumber = sqlException.Number;
-                }
-
-                if (CachedAsyncState is not null)
-                {
-                    CachedAsyncState.ResetAsyncState();
-                }
-
-                if (ADP.IsCatchableExceptionType(e))
-                {
-                    ReliablePutStateObject();
-                }
-
-                throw;
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: false);
             }
         }
 
