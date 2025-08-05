@@ -576,36 +576,6 @@ namespace Microsoft.Data.SqlClient
             return ExecuteReader(behavior);
         }
 
-        private SqlDataReader EndExecuteReaderAsync(IAsyncResult asyncResult)
-        {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-            Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
-
-            Exception asyncException = ((Task)asyncResult).Exception;
-            if (asyncException != null)
-            {
-                CachedAsyncState?.ResetAsyncState();
-                ReliablePutStateObject();
-                throw asyncException.InnerException;
-            }
-            else
-            {
-                ThrowIfReconnectionHasBeenCanceled();
-                // lock on _stateObj prevents races with close/cancel.
-                if (!_internalEndExecuteInitiated)
-                {
-                    lock (_stateObj)
-                    {
-                        return EndExecuteReaderInternal(asyncResult);
-                    }
-                }
-                else
-                {
-                    return EndExecuteReaderInternal(asyncResult);
-                }
-            }
-        }
-
         private bool TriggerInternalEndAndRetryIfNecessary(
             CommandBehavior behavior,
             object stateObject,
