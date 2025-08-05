@@ -859,6 +859,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        #if NET
+        // @TODO: Why not just expose this for netfx?
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
+        public void ResetCommandTimeout()
+        {
+            if (CommandTimeout != ADP.DefaultCommandTimeout)
+            {
+                PropertyChanging();
+                _commandTimeout = DefaultCommandTimeout;
+            }
+        }
+        #endif
+
         #endregion
 
         #region Private Methods
