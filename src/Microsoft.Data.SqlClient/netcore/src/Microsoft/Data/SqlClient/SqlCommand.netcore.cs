@@ -857,12 +857,6 @@ namespace Microsoft.Data.SqlClient
             );
         }
 
-        private Task<SqlDataReader> InternalExecuteReaderWithRetryAsync(CommandBehavior behavior, CancellationToken cancellationToken) =>
-            RetryLogicProvider.ExecuteAsync(
-                sender: this,
-                () => InternalExecuteReaderAsync(behavior, cancellationToken),
-                cancellationToken);
-
         private Task<SqlDataReader> InternalExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteReaderAsync | API | Correlation | Object Id {0}, Behavior {1}, Activity Id {2}, Client Connection Id {3}, Command Text '{4}'", ObjectID, (int)behavior, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);

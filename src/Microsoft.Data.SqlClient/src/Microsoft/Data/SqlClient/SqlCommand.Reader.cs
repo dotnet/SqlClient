@@ -815,6 +815,16 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private Task<SqlDataReader> InternalExecuteReaderWithRetryAsync(
+            CommandBehavior commandBehavior,
+            CancellationToken cancellationToken)
+        {
+            return RetryLogicProvider.ExecuteAsync(
+                sender: this,
+                () => InternalExecuteReaderAsync(commandBehavior, cancellationToken),
+                cancellationToken);
+        }
+
         private SqlDataReader InternalEndExecuteReader(IAsyncResult asyncResult, bool isInternal, string endMethod)
         {
             SqlClientEventSource.Log.TryTraceEvent(
