@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
@@ -263,7 +262,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void CheckNullRowVersionIsDBNull()
+        public static void CheckNullRowVersionIsBDNull()
         {
             lock (s_rowVersionLock)
             {
