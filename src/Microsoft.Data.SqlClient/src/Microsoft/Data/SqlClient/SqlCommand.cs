@@ -241,6 +241,27 @@ namespace Microsoft.Data.SqlClient
             _columnEncryptionSetting = columnEncryptionSetting;
         }
 
+        private SqlCommand(SqlCommand from)
+        {
+            CommandText = from.CommandText;
+            CommandTimeout = from.CommandTimeout;
+            CommandType = from.CommandType;
+            Connection = from.Connection;
+            DesignTimeVisible = from.DesignTimeVisible;
+            Transaction = from.Transaction;
+            UpdatedRowSource = from.UpdatedRowSource;
+            _columnEncryptionSetting = from.ColumnEncryptionSetting;
+
+            SqlParameterCollection parameters = Parameters;
+            foreach (object parameter in from.Parameters)
+            {
+                object parameterToAdd = parameter is ICloneable cloneableParameter
+                    ? cloneableParameter.Clone()
+                    : parameter;
+                parameters.Add(parameterToAdd);
+            }
+        }
+
         #endregion
 
         #region Events
@@ -742,6 +763,22 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Public/Internal Methods
+
+        object ICloneable.Clone() =>
+            Clone();
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Clone/*'/>
+        public SqlCommand Clone()
+        {
+            SqlCommand clone = new SqlCommand(this);
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlCommand.Clone | API | " +
+                $"Object Id {ObjectID}, " +
+                $"Clone Object Id {clone.ObjectID}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}");
+
+            return clone;
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Prepare/*'/>
         public override void Prepare()

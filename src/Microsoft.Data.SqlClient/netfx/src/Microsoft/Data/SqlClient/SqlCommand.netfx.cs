@@ -239,24 +239,6 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal bool CachingQueryMetadataPostponed { get; set; }
 
-        private SqlCommand(SqlCommand from) : this()
-        {
-            CommandText = from.CommandText;
-            CommandTimeout = from.CommandTimeout;
-            CommandType = from.CommandType;
-            Connection = from.Connection;
-            DesignTimeVisible = from.DesignTimeVisible;
-            Transaction = from.Transaction;
-            UpdatedRowSource = from.UpdatedRowSource;
-            _columnEncryptionSetting = from.ColumnEncryptionSetting;
-
-            SqlParameterCollection parameters = Parameters;
-            foreach (object parameter in from.Parameters)
-            {
-                parameters.Add((parameter is ICloneable) ? (parameter as ICloneable).Clone() : parameter);
-            }
-        }
-
         private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
@@ -2202,17 +2184,6 @@ namespace Microsoft.Data.SqlClient
                 SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: true);
             }
         }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Clone/*'/>
-        public SqlCommand Clone()
-        {
-            SqlCommand clone = new SqlCommand(this);
-            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Clone | API | Object Id {0}, Clone Object Id {1}, Client Connection Id {2}", ObjectID, clone.ObjectID, Connection?.ClientConnectionId);
-            return clone;
-        }
-
-        object ICloneable.Clone() =>
-            Clone();
 
         private Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outterTask)
         {
