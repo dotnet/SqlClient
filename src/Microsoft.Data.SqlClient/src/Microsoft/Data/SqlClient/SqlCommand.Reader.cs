@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -207,6 +208,20 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Private Methods
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReader[@name="CommandBehavior"]/*'/>
+        protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
+        {
+            // @TODO: Yknow, we use this all over the place. It could be factored out.
+            SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                "SqlCommand.ExecuteDbDataReader | API | Correlation | " +
+                $"Object Id {ObjectID}, " +
+                $"Activity Id {ActivityCorrelator.Current}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"Command Text '{CommandText}'");
+
+            return ExecuteReader(behavior);
+        }
 
         private IAsyncResult BeginExecuteReaderInternal(
             CommandBehavior behavior,
