@@ -974,6 +974,14 @@ namespace Microsoft.Data.SqlClient
 
         #endregion
 
+        #region Protected Methods
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CreateDbParameter/*'/>
+        protected override DbParameter CreateDbParameter() =>
+            CreateParameter();
+
+        #endregion
+
         #region Private Methods
 
         // @TODO: Rename to PrepareInternal
