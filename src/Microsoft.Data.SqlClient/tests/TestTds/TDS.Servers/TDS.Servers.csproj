@@ -28,10 +28,10 @@
     <Compile Include="TransientFaultTDSServerArguments.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj">
+    <ProjectReference Include="$(TestsPath)TestTds\TDS.EndPoint\TDS.EndPoint.csproj">
       <Name>TDS.EndPoint</Name>
     </ProjectReference>
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj">
+    <ProjectReference Include="$(TestsPath)TestTds\TDS\TDS.csproj">
       <Name>TDS</Name>
     </ProjectReference>
   </ItemGroup>

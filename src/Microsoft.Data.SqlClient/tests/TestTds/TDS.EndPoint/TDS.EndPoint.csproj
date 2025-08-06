@@ -48,7 +48,7 @@
     <Compile Include="SSPI\SSPIContext.Unix.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj">
+    <ProjectReference Include="$(TestsPath)TestTds\TDS\TDS.csproj">
       <Name>TDS</Name>
     </ProjectReference>
   </ItemGroup>

@@ -307,21 +307,22 @@
     <ProjectReference Include="$(TestsPath)Common\Common.csproj">
       <Name>Common</Name>
     </ProjectReference>
-    <ProjectReference Include="$(TestsPath)\TestClr\Address\Address.csproj">
+    <ProjectReference Include="$(TestsPath)TestClr\Address\Address.csproj">
       <Name>Address</Name>
     </ProjectReference>
-    <ProjectReference Include="$(TestsPath)\TestClr\Circle\Circle.csproj">
+    <ProjectReference Include="$(TestsPath)TestClr\Circle\Circle.csproj">
       <Name>Circle</Name>
     </ProjectReference>
-    <ProjectReference Include="$(TestsPath)\TestClr\Shapes\Shapes.csproj">
+    <ProjectReference Include="$(TestsPath)TestClr\Shapes\Shapes.csproj">
       <Name>Shapes</Name>
     </ProjectReference>
-    <ProjectReference Include="$(TestsPath)\TestClr\Utf8String\Utf8String.csproj">
+    <ProjectReference Include="$(TestsPath)TestClr\Utf8String\Utf8String.csproj">
       <Name>Utf8String</Name>
     </ProjectReference>
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
+    <ProjectReference Include="$(TestsPath)TestTds\TDS\TDS.csproj" />
+    <ProjectReference Include="$(TestsPath)TestTds\TDS.EndPoint\TDS.EndPoint.csproj" />
+    <ProjectReference Include="$(TestsPath)TestTds\TDS.Servers\TDS.Servers.csproj" />
+    
     <ProjectReference Include="$(TestsPath)Microsoft.Data.SqlClient.TestUtilities\Microsoft.Data.SqlClient.TestUtilities.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
