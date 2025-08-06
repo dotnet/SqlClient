@@ -767,6 +767,102 @@ namespace Microsoft.Data.SqlClient
         object ICloneable.Clone() =>
             Clone();
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Cancel/*'/>
+        public override void Cancel()
+        {
+            // Cancel is supposed to be multi-thread safe.
+            // It doesn't make sense to verify the connection exists or that it is open during
+            // cancel because immediately after checking the connection can be closed or removed
+            // via another thread.
+
+            using var eventScope = TryEventScope.Create($"SqlCommand.Cancel | API | Object Id {ObjectID}");
+            SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                "SqlCommand.Cancel | API | Correlation | " +
+                $"Object Id {ObjectID}, " +
+                $"Activity Id {ActivityCorrelator.Current}, " +
+                $"Client Connection Id {_activeConnection.ClientConnectionId}, " +
+                $"Command Text '{CommandText}'");
+
+            SqlStatistics statistics = null;
+            try
+            {
+                statistics = SqlStatistics.StartTimer(Statistics);
+
+                // If we are in reconnect phase simply cancel the waiting task
+                var reconnectCompletionSource = _reconnectionCompletionSource;
+                if (reconnectCompletionSource is not null && reconnectCompletionSource.TrySetCanceled())
+                {
+                    return;
+                }
+
+                // The pending data flag means that we are awaiting a response or are in the middle
+                // of processing a response.
+                // * If we have no pending data, then there is nothing to cancel.
+                // * If we have pending data, but it is not a result of this command, then we don't
+                //   cancel either.
+                // Note that this model is implementable because we only allow one active command
+                // at any one time. This code will have to change we allow multiple outstanding
+                // batches.
+                if (_activeConnection?.InnerConnection is not SqlInternalConnectionTds connection)
+                {
+                    // @TODO: Really this case only applies if the connection is null.
+                    // Fail without locking
+                    return;
+                }
+
+                // The lock here is to protect against the command.cancel / connection.close race
+                // condition. The SqlInternalConnectionTds is set to OpenBusy during close, once
+                // this happens the cast below will fail and the command will no longer be
+                // cancelable. It might be desirable to be able to cancel the close operation, but
+                // this is outside the scope of Whidbey RTM. See (SqlConnection::Close) for other lock.
+                lock (connection)
+                {
+                    // Make sure the connection did not get changed getting the connection and
+                    // taking the lock. If it has, the connection has been closed.
+                    if (connection != _activeConnection.InnerConnection as SqlInternalConnectionTds)
+                    {
+                        return;
+                    }
+
+                    TdsParser parser = connection.Parser;
+                    if (parser is null)
+                    {
+                        return;
+                    }
+
+                    if (!_pendingCancel)
+                    {
+                        // Do nothing if already pending.
+                        // Before attempting actual cancel, set the _pendingCancel flag to false.
+                        // This denotes to other thread before obtaining stateObject from the
+                        // session pool that there is another thread wishing to cancel.
+                        // The period in question is between entering the ExecuteAPI and obtaining
+                        // a stateObject.
+                        _pendingCancel = true;
+
+                        TdsParserStateObject stateObj = _stateObj;
+                        if (stateObj is not null)
+                        {
+                            stateObj.Cancel(this);
+                        }
+                        else
+                        {
+                            SqlDataReader reader = connection.FindLiveReader(this);
+                            if (reader is not null)
+                            {
+                                reader.Cancel(this);
+                            }
+                        }
+                    }
+                }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
+            }
+            finally
+            {
+                SqlStatistics.StopTimer(statistics);
+            }
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Clone/*'/>
         public SqlCommand Clone()
         {
