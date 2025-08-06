@@ -93,15 +93,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         internal static object GetSessionHandle(object stateObject)
         {
             if (stateObject == null)
+            {
                 throw new ArgumentNullException(nameof(stateObject));
             }
+
             if (s_tdsParserStateObjectManaged is null)
             {
                 throw new ArgumentException("Library being tested does not implement TdsParserStateObjectManaged", nameof(stateObject));
             }
+
             if (!s_tdsParserStateObjectManaged.IsInstanceOfType(stateObject))
+            {
                 throw new ArgumentException("Object provided was not a TdsParserStateObjectManaged", nameof(stateObject));
             }
+
             return s_tdsParserStateObjectManagedSessionHandle.GetValue(stateObject);
         }
     }
