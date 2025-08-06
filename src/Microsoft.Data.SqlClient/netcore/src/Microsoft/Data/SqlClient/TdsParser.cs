@@ -6474,7 +6474,8 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLVECTOR:
                     // Vector data is read as non-plp binary value.
                     // This is same as reading varbinary(8000).
-                    result = stateObj.TryReadByteArrayWithContinue(length, out b);
+                    byte[] buff = new byte[length];
+                    result = stateObj.TryReadByteArray(buff, length);
                     if (result != TdsOperationStatus.Done)
                     {
                         return result;
@@ -6482,13 +6483,13 @@ namespace Microsoft.Data.SqlClient
 
                     // Internally, we use Sqlbinary to deal with varbinary data and store it in 
                     // SqlBuffer as SqlBinary value.
-                    value.SqlBinary = SqlBinary.WrapBytes(b);
+                    value.SqlBinary = SqlBinary.WrapBytes(buff);
 
                     // Extract the metadata from the payload and set it as the vector attributes
                     // in the SqlBuffer. This metadata is further used when constructing a SqlVector
                     // object from binary payload.
-                    int elementCount = BinaryPrimitives.ReadUInt16LittleEndian(b.AsSpan(2));
-                    byte elementType = b[4];
+                    int elementCount = BinaryPrimitives.ReadUInt16LittleEndian(buff.AsSpan(2));
+                    byte elementType = buff[4];
                     value.SetVectorInfo(elementCount, elementType, false);
                     break;
 
