@@ -167,22 +167,14 @@ namespace Microsoft.Data.SqlClient
                             stateObj.SendAttention(mustTakeWriteLock: true);
 
                             PacketHandle syncReadPacket = default;
-                            bool readFromNetwork = true;
                             RuntimeHelpers.PrepareConstrainedRegions();
                             bool shouldDecrement = false;
                             try
                             {
                                 Interlocked.Increment(ref _readingCount);
                                 shouldDecrement = true;
-                                readFromNetwork = !PartialPacketContainsCompletePacket();
-                                if (readFromNetwork)
-                                {
-                                    syncReadPacket = ReadSyncOverAsync(stateObj.GetTimeoutRemaining(), out error);
-                                }
-                                else
-                                {
-                                    error = TdsEnums.SNI_SUCCESS;
-                                }
+
+                                syncReadPacket = ReadSyncOverAsync(stateObj.GetTimeoutRemaining(), out error);
 
                                 Interlocked.Decrement(ref _readingCount);
                                 shouldDecrement = false;
@@ -195,7 +187,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 else
                                 {
-                                    Debug.Assert(!readFromNetwork || !IsValidPacket(syncReadPacket), "unexpected syncReadPacket without corresponding SNIPacketRelease");
+                                    Debug.Assert(!IsValidPacket(syncReadPacket), "unexpected syncReadPacket without corresponding SNIPacketRelease");
                                     fail = true; // Subsequent read failed, time to give up.
                                 }
                             }
@@ -206,7 +198,7 @@ namespace Microsoft.Data.SqlClient
                                     Interlocked.Decrement(ref _readingCount);
                                 }
 
-                                if (readFromNetwork && !IsPacketEmpty(syncReadPacket))
+                                if (!IsPacketEmpty(syncReadPacket))
                                 {
                                     // Be sure to release packet, otherwise it will be leaked by native.
                                     ReleasePacket(syncReadPacket);
@@ -247,9 +239,77 @@ namespace Microsoft.Data.SqlClient
             AssertValidState();
         }
 
-        private uint GetSniPacket(PacketHandle packet, ref uint dataSize)
+        public void ProcessSniPacket(PacketHandle packet, uint error)
         {
-            return SniPacketGetData(packet, _inBuff, ref dataSize);
+            if (error != 0)
+            {
+                if ((_parser.State == TdsParserState.Closed) || (_parser.State == TdsParserState.Broken))
+                {
+                    // Do nothing with callback if closed or broken and error not 0 - callback can occur
+                    // after connection has been closed.  PROBLEM IN NETLIB - DESIGN FLAW.
+                    return;
+                }
+
+                AddError(_parser.ProcessSNIError(this));
+                AssertValidState();
+            }
+            else
+            {
+                uint dataSize = 0;
+
+                uint getDataError = SNIPacketGetData(packet, _inBuff, ref dataSize);
+
+                if (getDataError == TdsEnums.SNI_SUCCESS)
+                {
+                    if (_inBuff.Length < dataSize)
+                    {
+                        Debug.Assert(true, "Unexpected dataSize on Read");
+                        throw SQL.InvalidInternalPacketSize(StringsHelper.GetString(Strings.SqlMisc_InvalidArraySizeMessage));
+                    }
+
+                    _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
+                    _inBytesRead = (int)dataSize;
+                    _inBytesUsed = 0;
+
+                    if (_snapshot != null)
+                    {
+                        _snapshot.AppendPacketData(_inBuff, _inBytesRead);
+                        if (_snapshotReplay)
+                        {
+                            _snapshot.MoveNext();
+#if DEBUG
+                            _snapshot.AssertCurrent();
+#endif
+                        }
+                    }
+
+                    SniReadStatisticsAndTracing();
+                    SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParser.ReadNetworkPacketAsyncCallback | INFO | ADV | State Object Id {0}, Packet read. In Buffer: {1}, In Bytes Read: {2}", ObjectID, _inBuff, _inBytesRead);
+
+                    AssertValidState();
+                }
+                else
+                {
+                    throw SQL.ParsingError(ParsingErrorState.ProcessSniPacketFailed);
+                }
+            }
+        }
+
+        private void ChangeNetworkPacketTimeout(int dueTime, int period)
+        {
+            Timer networkPacketTimeout = _networkPacketTimeout;
+            if (networkPacketTimeout != null)
+            {
+                try
+                {
+                    networkPacketTimeout.Change(dueTime, period);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // _networkPacketTimeout is set to null before Disposing, but there is still a slight chance
+                    // that object was disposed after we took a copy
+                }
+            }
         }
 
         private void SetBufferSecureStrings()
@@ -321,7 +381,7 @@ namespace Microsoft.Data.SqlClient
             bool processFinallyBlock = true;
             try
             {
-                Debug.Assert((packet.Type == 0 && PartialPacketContainsCompletePacket()) || (CheckPacket(packet, source) && source != null), "AsyncResult null on callback");
+                Debug.Assert(CheckPacket(packet, source) && source != null, "AsyncResult null on callback");
 
                 if (_parser.MARSOn)
                 {
@@ -842,6 +902,351 @@ namespace Microsoft.Data.SqlClient
                 statistics.SafeIncrement(ref statistics._buffersSent);
                 statistics.SafeAdd(ref statistics._bytesSent, _outBytesUsed);
                 statistics.RequestNetworkServerTimer();
+            }
+        }
+
+        [Conditional("DEBUG")]
+        private void AssertValidState()
+        {
+            if (_inBytesUsed < 0 || _inBytesRead < 0)
+            {
+                Debug.Fail($"Invalid TDS Parser State: either _inBytesUsed or _inBytesRead is negative: {_inBytesUsed}, {_inBytesRead}");
+            }
+            else if (_inBytesUsed > _inBytesRead)
+            {
+                Debug.Fail($"Invalid TDS Parser State: _inBytesUsed > _inBytesRead: {_inBytesUsed} > {_inBytesRead}");
+            }
+
+            Debug.Assert(_inBytesPacket >= 0, "Packet must not be negative");
+        }
+
+
+        //////////////////////////////////////////////
+        // Errors and Warnings                      //
+        //////////////////////////////////////////////
+
+        /// <summary>
+        /// True if there is at least one error or warning (not counting the pre-attention errors\warnings)
+        /// </summary>
+        internal bool HasErrorOrWarning
+        {
+            get
+            {
+                return _hasErrorOrWarning;
+            }
+        }
+
+        /// <summary>
+        /// Adds an error to the error collection
+        /// </summary>
+        /// <param name="error"></param>
+        internal void AddError(SqlError error)
+        {
+            Debug.Assert(error != null, "Trying to add a null error");
+
+            // Switch to sync once we see an error
+            _syncOverAsync = true;
+
+            lock (_errorAndWarningsLock)
+            {
+                _hasErrorOrWarning = true;
+                if (_errors == null)
+                {
+                    _errors = new SqlErrorCollection();
+                }
+                _errors.Add(error);
+            }
+        }
+
+        /// <summary>
+        /// Gets the number of errors currently in the error collection
+        /// </summary>
+        internal int ErrorCount
+        {
+            get
+            {
+                int count = 0;
+                lock (_errorAndWarningsLock)
+                {
+                    if (_errors != null)
+                    {
+                        count = _errors.Count;
+                    }
+                }
+                return count;
+            }
+        }
+
+        /// <summary>
+        /// Adds an warning to the warning collection
+        /// </summary>
+        /// <param name="error"></param>
+        internal void AddWarning(SqlError error)
+        {
+            Debug.Assert(error != null, "Trying to add a null error");
+
+            // Switch to sync once we see a warning
+            _syncOverAsync = true;
+
+            lock (_errorAndWarningsLock)
+            {
+                _hasErrorOrWarning = true;
+                if (_warnings == null)
+                {
+                    _warnings = new SqlErrorCollection();
+                }
+                _warnings.Add(error);
+            }
+        }
+
+        /// <summary>
+        /// Gets the number of warnings currently in the warning collection
+        /// </summary>
+        internal int WarningCount
+        {
+            get
+            {
+                int count = 0;
+                lock (_errorAndWarningsLock)
+                {
+                    if (_warnings != null)
+                    {
+                        count = _warnings.Count;
+                    }
+                }
+                return count;
+            }
+        }
+
+        protected abstract PacketHandle EmptyReadPacket { get; }
+
+        internal int PreAttentionErrorCount
+        {
+            get
+            {
+                int count = 0;
+                lock (_errorAndWarningsLock)
+                {
+                    if (_preAttentionErrors != null)
+                    {
+                        count = _preAttentionErrors.Count;
+                    }
+                }
+                return count;
+            }
+        }
+
+        /// <summary>
+        /// Gets the number of errors currently in the pre-attention warning collection
+        /// </summary>
+        internal int PreAttentionWarningCount
+        {
+            get
+            {
+                int count = 0;
+                lock (_errorAndWarningsLock)
+                {
+                    if (_preAttentionWarnings != null)
+                    {
+                        count = _preAttentionWarnings.Count;
+                    }
+                }
+                return count;
+            }
+        }
+
+        /// <summary>
+        /// Gets the full list of errors and warnings (including the pre-attention ones), then wipes all error and warning lists
+        /// </summary>
+        /// <param name="broken">If true, the connection should be broken</param>
+        /// <returns>An array containing all of the errors and warnings</returns>
+        internal SqlErrorCollection GetFullErrorAndWarningCollection(out bool broken)
+        {
+            SqlErrorCollection allErrors = new SqlErrorCollection();
+            broken = false;
+
+            lock (_errorAndWarningsLock)
+            {
+                _hasErrorOrWarning = false;
+
+                // Merge all error lists, then reset them
+                AddErrorsToCollection(_errors, ref allErrors, ref broken);
+                AddErrorsToCollection(_warnings, ref allErrors, ref broken);
+                _errors = null;
+                _warnings = null;
+
+                // We also process the pre-attention error lists here since, if we are here and they are populated, then an error occurred while sending attention so we should show the errors now (otherwise they'd be lost)
+                AddErrorsToCollection(_preAttentionErrors, ref allErrors, ref broken);
+                AddErrorsToCollection(_preAttentionWarnings, ref allErrors, ref broken);
+                _preAttentionErrors = null;
+                _preAttentionWarnings = null;
+            }
+
+            return allErrors;
+        }
+
+        private void AddErrorsToCollection(SqlErrorCollection inCollection, ref SqlErrorCollection collectionToAddTo, ref bool broken)
+        {
+            if (inCollection != null)
+            {
+                foreach (SqlError error in inCollection)
+                {
+                    collectionToAddTo.Add(error);
+                    broken |= (error.Class >= TdsEnums.FATAL_ERROR_CLASS);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Stores away current errors and warnings so that an attention can be processed
+        /// </summary>
+        internal void StoreErrorAndWarningForAttention()
+        {
+            lock (_errorAndWarningsLock)
+            {
+                Debug.Assert(_preAttentionErrors == null && _preAttentionWarnings == null, "Can't store errors for attention because there are already errors stored");
+
+                _hasErrorOrWarning = false;
+
+                _preAttentionErrors = _errors;
+                _preAttentionWarnings = _warnings;
+
+                _errors = null;
+                _warnings = null;
+            }
+        }
+
+        /// <summary>
+        /// Restores errors and warnings that were stored in order to process an attention
+        /// </summary>
+        internal void RestoreErrorAndWarningAfterAttention()
+        {
+            lock (_errorAndWarningsLock)
+            {
+                Debug.Assert(_errors == null && _warnings == null, "Can't restore errors after attention because there are already other errors");
+
+                _hasErrorOrWarning = (((_preAttentionErrors != null) && (_preAttentionErrors.Count > 0)) || ((_preAttentionWarnings != null) && (_preAttentionWarnings.Count > 0)));
+
+                _errors = _preAttentionErrors;
+                _warnings = _preAttentionWarnings;
+
+                _preAttentionErrors = null;
+                _preAttentionWarnings = null;
+            }
+        }
+
+        /// <summary>
+        /// Checks if an error is stored in _error and, if so, throws an error
+        /// </summary>
+        internal void CheckThrowSNIException()
+        {
+            if (HasErrorOrWarning)
+            {
+                ThrowExceptionAndWarning();
+            }
+        }
+
+        /// <summary>
+        /// Debug Only: Ensures that the TdsParserStateObject has no lingering state and can safely be re-used
+        /// </summary>
+        [Conditional("DEBUG")]
+        internal void AssertStateIsClean()
+        {
+            // If our TdsParser is closed or broken, then we don't really care about our state
+            TdsParser parser = _parser;
+            if ((parser != null) && (parser.State != TdsParserState.Closed) && (parser.State != TdsParserState.Broken))
+            {
+                // Async reads
+                Debug.Assert(_snapshot == null && _snapshotStatus == SnapshotStatus.NotActive, "StateObj has leftover snapshot state");
+                Debug.Assert(!_asyncReadWithoutSnapshot, "StateObj has AsyncReadWithoutSnapshot still enabled");
+                Debug.Assert(_executionContext == null, "StateObj has a stored execution context from an async read");
+                // Async writes
+                Debug.Assert(_asyncWriteCount == 0, "StateObj still has outstanding async writes");
+                Debug.Assert(_delayedWriteAsyncCallbackException == null, "StateObj has an unobserved exceptions from an async write");
+                // Attention\Cancellation\Timeouts
+                Debug.Assert(!HasReceivedAttention && !_attentionSent && !_attentionSending, $"StateObj is still dealing with attention: Sent: {_attentionSent}, Received: {HasReceivedAttention}, Sending: {_attentionSending}");
+                Debug.Assert(!_cancelled, "StateObj still has cancellation set");
+                Debug.Assert(_timeoutState == TimeoutState.Stopped, "StateObj still has internal timeout set");
+                // Errors and Warnings
+                Debug.Assert(!_hasErrorOrWarning, "StateObj still has stored errors or warnings");
+            }
+        }
+
+#if DEBUG
+        internal void CompletePendingReadWithSuccess(bool resetForcePendingReadsToWait)
+        {
+            TaskCompletionSource<object> realNetworkPacketTaskSource = _realNetworkPacketTaskSource;
+            TaskCompletionSource<object> networkPacketTaskSource = _networkPacketTaskSource;
+
+            Debug.Assert(s_forcePendingReadsToWaitForUser, "Not forcing pends to wait for user - can't force complete");
+            Debug.Assert(networkPacketTaskSource != null, "No pending read to complete");
+
+            try
+            {
+                if (realNetworkPacketTaskSource != null)
+                {
+                    // Wait for the real read to complete
+                    realNetworkPacketTaskSource.Task.Wait();
+                }
+            }
+            finally
+            {
+                if (networkPacketTaskSource != null)
+                {
+                    if (resetForcePendingReadsToWait)
+                    {
+                        s_forcePendingReadsToWaitForUser = false;
+                    }
+
+                    networkPacketTaskSource.TrySetResult(null);
+                }
+            }
+        }
+
+        internal void CompletePendingReadWithFailure(int errorCode, bool resetForcePendingReadsToWait)
+        {
+            TaskCompletionSource<object> realNetworkPacketTaskSource = _realNetworkPacketTaskSource;
+            TaskCompletionSource<object> networkPacketTaskSource = _networkPacketTaskSource;
+
+            Debug.Assert(s_forcePendingReadsToWaitForUser, "Not forcing pends to wait for user - can't force complete");
+            Debug.Assert(networkPacketTaskSource != null, "No pending read to complete");
+
+            try
+            {
+                if (realNetworkPacketTaskSource != null)
+                {
+                    // Wait for the real read to complete
+                    realNetworkPacketTaskSource.Task.Wait();
+                }
+            }
+            finally
+            {
+                if (networkPacketTaskSource != null)
+                {
+                    if (resetForcePendingReadsToWait)
+                    {
+                        s_forcePendingReadsToWaitForUser = false;
+                    }
+
+                    AddError(new SqlError(errorCode, 0x00, TdsEnums.FATAL_ERROR_CLASS, _parser.Server, string.Empty, string.Empty, 0));
+                    try
+                    {
+                        ThrowExceptionAndWarning();
+                    }
+                    catch (Exception ex)
+                    {
+                        networkPacketTaskSource.TrySetException(ex);
+                    }
+                }
+            }
+        }
+#endif
+
+        internal void CloneCleanupAltMetaDataSetArray()
+        {
+            if (_snapshot != null)
+            {
+                _snapshot.CloneCleanupAltMetaDataSetArray();
             }
         }
     }

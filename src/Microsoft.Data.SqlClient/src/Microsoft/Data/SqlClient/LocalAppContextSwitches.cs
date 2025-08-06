@@ -20,7 +20,6 @@ namespace Microsoft.Data.SqlClient
         internal const string SuppressInsecureTlsWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
         internal const string UseMinimumLoginTimeoutString = @"Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin";
         internal const string LegacyVarTimeZeroScaleBehaviourString = @"Switch.Microsoft.Data.SqlClient.LegacyVarTimeZeroScaleBehaviour";
-        internal const string UseCompatibilityProcessSniString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni";
         internal const string UseConnectionPoolV2String = @"Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
 
         // this field is accessed through reflection in tests and should not be renamed or have the type changed without refactoring NullRow related tests
@@ -30,7 +29,6 @@ namespace Microsoft.Data.SqlClient
         private static Tristate s_useMinimumLoginTimeout;
         // this field is accessed through reflection in Microsoft.Data.SqlClient.Tests.SqlParameterTests and should not be renamed or have the type changed without refactoring related tests
         private static Tristate s_legacyVarTimeZeroScaleBehaviour;
-        private static Tristate s_useCompatProcessSni;
         private static Tristate s_useConnectionPoolV2;
 
 
@@ -88,24 +86,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 #endif
-        public static bool UseCompatibilityProcessSni
-        {
-            get
-            {
-                if (s_useCompatProcessSni == Tristate.NotInitialized)
-                {
-                    if (AppContext.TryGetSwitch(UseCompatibilityProcessSniString, out bool returnedValue) && returnedValue)
-                    {
-                        s_useCompatProcessSni = Tristate.True;
-                    }
-                    else
-                    {
-                        s_useCompatProcessSni = Tristate.False;
-                    }
-                }
-                return s_useCompatProcessSni == Tristate.True;
-            }
-        }
 
         /// <summary>
         /// When using Encrypt=false in the connection string, a security warning is output to the console if the TLS version is 1.2 or lower.
