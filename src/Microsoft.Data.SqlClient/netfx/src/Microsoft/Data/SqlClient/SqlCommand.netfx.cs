@@ -2206,16 +2206,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void OnDoneDescribeParameterEncryptionProc(TdsParserStateObject stateObj)
-        {
-            // called per rpc batch complete
-            if (_batchRPCMode)
-            {
-                OnDone(stateObj, _currentlyExecutingDescribeParameterEncryptionRPC, _sqlRPCParameterEncryptionReqArray, _rowsAffected);
-                _currentlyExecutingDescribeParameterEncryptionRPC++;
-            }
-        }
-
         internal void OnDoneProc(TdsParserStateObject stateObject)
         {
             // called per rpc batch complete
