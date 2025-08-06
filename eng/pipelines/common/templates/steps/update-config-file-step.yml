@@ -182,7 +182,7 @@ steps:
         $p.EnclaveEnabled=[System.Convert]::ToBoolean("${{parameters.EnclaveEnabled }}")
     }
     $jdata | ConvertTo-Json | Set-Content "config.json"
-  workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
+  workingDirectory: src/Microsoft.Data.SqlClient/tests/Microsoft.Data.SqlClient.TestUtilities
   displayName: 'Update config.json'
 
 - ${{ if eq(parameters.debug, true) }}:
@@ -195,5 +195,5 @@ steps:
               Write-Host "Property: $($prop.Name) Value: $($prop.Value)"
           }
       }
-    workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
+    workingDirectory: src/Microsoft.Data.SqlClient/tests/Microsoft.Data.SqlClient.TestUtilities
     displayName: 'Read config.json [debug]'
