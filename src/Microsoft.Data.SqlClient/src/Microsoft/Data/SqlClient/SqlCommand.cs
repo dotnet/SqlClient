@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
+using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
@@ -1018,6 +1019,64 @@ namespace Microsoft.Data.SqlClient
                 _currentlyExecutingBatch++; // @TODO: Should be interlocked?
 
                 Debug.Assert(_RPCList.Count >= _currentlyExecutingBatch, "OnDoneProc: Too many DONEPROC events");
+            }
+        }
+
+        internal void OnReturnStatus(int status)
+        {
+            // Don't set the return status if this is the status for sp_describe_parameter_encryption
+            if (_inPrepare || IsDescribeParameterEncryptionRPCCurrentlyInProgress)
+            {
+                return;
+            }
+
+            SqlParameterCollection parameters = _parameters;
+            if (_batchRPCMode)
+            {
+                if (_RPCList.Count > _currentlyExecutingBatch)
+                {
+                    parameters = _RPCList[_currentlyExecutingBatch].userParams;
+                }
+                else
+                {
+                    Debug.Fail("OnReturnStatus: SqlCommand got too many DONEPROC events");
+                }
+            }
+
+            // See if a return value is bound
+            int count = GetParameterCount(parameters);
+            for (int i = 0; i < count; i++)
+            {
+                SqlParameter parameter = parameters[i];
+
+                // @TODO: Invert to reduce nesting :)
+                if (parameter.Direction is ParameterDirection.ReturnValue)
+                {
+                    object value = parameter.Value;
+
+                    // if the user bound a SqlInt32 (the only valid one for status) use it
+                    // @TODO: Not sure if this can be converted to a ternary since that forces implicit conversion of status to SqlInt32
+                    if (value is SqlInt32)
+                    {
+                        parameter.Value = new SqlInt32(status);
+                    }
+                    else
+                    {
+                        parameter.Value = status;
+                    }
+
+                    // If we are not in batch RPC mode, update the query cache with the encryption
+                    // metadata. We can do this now if we have distinguished between ReturnValue
+                    // and ReturnStatus.
+                    // See comments in AddQueryMetadata() for more details.
+                    if (!_batchRPCMode && CachingQueryMetadataPostponed && ShouldCacheEncryptionMetadata &&
+                        _parameters?.Count > 0)
+                    {
+                        SqlQueryMetadataCache.GetInstance().AddQueryMetadata(
+                            this,
+                            ignoreQueriesWithReturnValueParams: false);
+                    }
+                }
             }
         }
 

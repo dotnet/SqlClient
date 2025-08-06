@@ -2232,60 +2232,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void OnReturnStatus(int status)
-        {
-            // Don't set the return status if this is the status for sp_describe_parameter_encryption.
-            if (_inPrepare || IsDescribeParameterEncryptionRPCCurrentlyInProgress)
-            {
-                return;
-            }
-
-            SqlParameterCollection parameters = _parameters;
-            if (_batchRPCMode)
-            {
-                if (_RPCList.Count > _currentlyExecutingBatch)
-                {
-                    parameters = _RPCList[_currentlyExecutingBatch].userParams;
-                }
-                else
-                {
-                    Debug.Fail("OnReturnStatus: SqlCommand got too many DONEPROC events");
-                    parameters = null;
-                }
-            }
-            // see if a return value is bound
-            int count = GetParameterCount(parameters);
-            for (int i = 0; i < count; i++)
-            {
-                SqlParameter parameter = parameters[i];
-                if (parameter.Direction == ParameterDirection.ReturnValue)
-                {
-                    object v = parameter.Value;
-
-                    // if the user bound a sqlint32 (the only valid one for status, use it)
-                    if (v != null && (v.GetType() == typeof(SqlInt32)))
-                    {
-                        parameter.Value = new SqlInt32(status); // value type
-                    }
-                    else
-                    {
-                        parameter.Value = status;
-                    }
-
-                    // If we are not in Batch RPC mode, update the query cache with the encryption MD.
-                    // We can do this now that we have distinguished between ReturnValue and ReturnStatus.
-                    // Read comment in AddQueryMetadata() for more details.
-                    if (!_batchRPCMode && CachingQueryMetadataPostponed &&
-                        ShouldCacheEncryptionMetadata && (_parameters is not null && _parameters.Count > 0))
-                    {
-                        SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: false);
-                    }
-
-                    break;
-                }
-            }
-        }
-
         //
         // Move the return value to the corresponding output parameter.
         // Return parameters are sent in the order in which they were defined in the procedure.
