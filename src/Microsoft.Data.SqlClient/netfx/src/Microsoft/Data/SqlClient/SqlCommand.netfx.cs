@@ -540,20 +540,6 @@ namespace Microsoft.Data.SqlClient
                 this._activeConnection.Database);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RegisterColumnEncryptionKeyStoreProvidersOnCommand/*' />
-        public void RegisterColumnEncryptionKeyStoreProvidersOnCommand(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
-        {
-            ValidateCustomProviders(customProviders);
-
-            // Create a temporary dictionary and then add items from the provided dictionary.
-            // Dictionary constructor does shallow copying by simply copying the provider name and provider reference pairs
-            // in the provided customerProviders dictionary.
-            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customColumnEncryptionKeyStoreProviders =
-                new(customProviders, StringComparer.OrdinalIgnoreCase);
-
-            _customColumnEncryptionKeyStoreProviders = customColumnEncryptionKeyStoreProviders;
-        }
-
         private void ValidateCustomProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
         {
             // Throw when the provided dictionary is null.
