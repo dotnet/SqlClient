@@ -104,7 +104,7 @@ steps:
   displayName: 'Build Ext Utilities'
   inputs:
     arguments: '-f ${{parameters.netcoreVersionTestUtils }}'
-    workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.ExtUtilities
+    workingDirectory: src/Microsoft.Data.SqlClient/tests/Microsoft.Data.SqlClient.ExtUtilities
   retryCountOnTaskFailure: 1
 
 - task: DotNetCoreCLI@2
@@ -112,4 +112,4 @@ steps:
   inputs:
     command: run
     arguments: '-f ${{parameters.netcoreVersionTestUtils }} -- "CreateDatabase" ${{parameters.databaseName }} '
-    workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.ExtUtilities
+    workingDirectory: src/Microsoft.Data.SqlClient/tests/Microsoft.Data.SqlClient.ExtUtilities

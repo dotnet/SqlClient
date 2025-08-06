@@ -177,7 +177,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlTypes", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.TestUtilities", "Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.TestUtilities\Microsoft.Data.SqlClient.TestUtilities.csproj", "{89D6D382-9B36-43C9-A912-03802FDA8E36}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.ExtUtilities", "Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.ExtUtilities\Microsoft.Data.SqlClient.ExtUtilities.csproj", "{E4C08DCE-DC29-4FEB-B655-1E7287DB5A2B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.ExtUtilities", "Microsoft.Data.SqlClient\tests\Microsoft.Data.SqlClient.ExtUtilities\Microsoft.Data.SqlClient.ExtUtilities.csproj", "{E4C08DCE-DC29-4FEB-B655-1E7287DB5A2B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomRetryLogicProvider", "Microsoft.Data.SqlClient\tests\CustomConfigurableRetryLogic\CustomRetryLogicProvider.csproj", "{B499E477-C9B1-4087-A5CF-5C762D90E433}"
 	ProjectSection(ProjectDependencies) = postProject

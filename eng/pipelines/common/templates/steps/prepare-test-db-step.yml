@@ -18,10 +18,10 @@ steps:
   inputs:
     command: build
     arguments: '-f ${{parameters.targetFramework }}'
-    workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.ExtUtilities
+    workingDirectory: src/Microsoft.Data.SqlClient/tests/Microsoft.Data.SqlClient.ExtUtilities
 - task: DotNetCoreCLI@2
   displayName: 'Create Test Database'
   inputs:
     command: run
     arguments: '-f ${{parameters.targetFramework }} -- "CreateDatabase" ${{parameters.databaseName }} '
-    workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.ExtUtilities
+    workingDirectory: src/Microsoft.Data.SqlClient/tests/Microsoft.Data.SqlClient.ExtUtilities
