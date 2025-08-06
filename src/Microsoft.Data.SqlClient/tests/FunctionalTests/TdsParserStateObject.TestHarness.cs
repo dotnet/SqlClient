@@ -155,7 +155,18 @@ namespace Microsoft.Data.SqlClient
         [DebuggerStepThrough]
         private void AddError(object value) => throw new Exception(value as string ?? "AddError");
 
-        private SwitchesHelper LocalAppContextSwitches = new();
+        internal static class LocalAppContextSwitches
+        {
+            public static bool UseCompatibilityProcessSni
+            {
+                get
+                {
+                    var switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+
+                    return (bool)switchesType.GetProperty(nameof(UseCompatibilityProcessSni), BindingFlags.Public | BindingFlags.Static).GetValue(null);
+                }
+            }
+        }
 
 #if NETFRAMEWORK
         private SniNativeWrapperImpl _native;
