@@ -989,6 +989,26 @@ namespace Microsoft.Data.SqlClient
 
         #endregion
 
+        #region Internal Methods
+
+        internal void OnDoneDescribeParameterEncryptionProc(TdsParserStateObject stateObj)
+        {
+            // @TODO: Is this not the same stateObj as the currently stored one?
+
+            // Called on RPC batch complete
+            if (_batchRPCMode)
+            {
+                OnDone(
+                    stateObj,
+                    index: _currentlyExecutingDescribeParameterEncryptionRPC,
+                    rpcList: _sqlRPCParameterEncryptionReqArray,
+                    _rowsAffected);
+                _currentlyExecutingDescribeParameterEncryptionRPC++; // @TODO: Should be interlocked?
+            }
+        }
+
+        #endregion
+
         #region Protected Methods
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CreateDbParameter/*'/>
