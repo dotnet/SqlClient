@@ -656,6 +656,7 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed class SqlReturnValue : SqlMetaDataPriv
     {
+        // @TODO: Make auto properties (and rename to match)
         internal string parameter;
         internal readonly SqlBuffer value;
 #if NETFRAMEWORK
