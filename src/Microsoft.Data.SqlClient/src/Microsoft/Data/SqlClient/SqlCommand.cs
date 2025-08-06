@@ -980,6 +980,22 @@ namespace Microsoft.Data.SqlClient
         protected override DbParameter CreateDbParameter() =>
             CreateParameter();
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Dispose/*'/>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // Release managed objects
+                _cachedMetaData = null;
+
+                // Reset async cache information to allow a second async execute
+                CachedAsyncState?.ResetAsyncState();
+            }
+
+            // Release unmanaged objects
+            base.Dispose(disposing);
+        }
+
         #endregion
 
         #region Private Methods

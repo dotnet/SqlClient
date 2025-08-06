@@ -267,21 +267,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Dispose/*'/>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                // release managed objects
-                _cachedMetaData = null;
-
-                // reset async cache information to allow a second async execute
-                CachedAsyncState?.ResetAsyncState();
-            }
-            // release unmanaged objects
-            base.Dispose(disposing);
-        }
-
         private void VerifyEndExecuteState(Task completionTask, string endMethod, bool fullCheckForColumnEncryption = false)
         {
             Debug.Assert(completionTask != null);
