@@ -1049,8 +1049,36 @@ namespace Microsoft.Data.SqlClient
 
         #region Private Methods
 
-        // @TODO: Rename to PrepareInternal
-        private void InternalPrepare()
+        private static void OnDone(TdsParserStateObject stateObj, int index, IList<_SqlRPC> rpcList, int rowsAffected)
+        {
+            // @TODO: Is the state object not the same as the currently stored one?
+
+            _SqlRPC current = rpcList[index];
+            _SqlRPC previous = index > 0 ? rpcList[index - 1] : null;
+
+            // Track the records affected for the just-completed RPC batch.
+            // _rowsAffected is cumulative for ExecuteNonQuery across all RPC batches
+            current.cumulativeRecordsAffected = rowsAffected;
+            current.recordsAffected = previous is not null && rowsAffected >= 0
+                ? rowsAffected - Math.Max(previous.cumulativeRecordsAffected, 0)
+                : rowsAffected;
+
+            current.batchCommand?.SetRecordAffected(current.recordsAffected.GetValueOrDefault());
+
+            // Track the error collection (not available from TdsParser after ExecuteNonQuery)
+            // and which errors are associated with the just-completed RPC batch.
+            current.errorsIndexStart = previous?.errorsIndexEnd ?? 0;
+            current.errorsIndexEnd = stateObj.ErrorCount;
+            current.errors = stateObj._errors;
+
+            // Track the warning collection (not available from TdsParser after ExecuteNonQuery)
+            // and which warnings are associated with the just-completed RPC batch.
+            current.warningsIndexStart = previous?.warningsIndexEnd ?? 0;
+            current.warningsIndexEnd = stateObj.WarningCount;
+            current.warnings = stateObj._warnings;
+        }
+
+        private void PrepareInternal()
         {
             if (IsDirty)
             {

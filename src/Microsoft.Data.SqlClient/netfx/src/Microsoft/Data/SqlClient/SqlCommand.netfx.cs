@@ -2206,38 +2206,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static void OnDone(TdsParserStateObject stateObj, int index, IList<_SqlRPC> rpcList, int rowsAffected)
-        {
-            _SqlRPC current = rpcList[index];
-            _SqlRPC previous = (index > 0) ? rpcList[index - 1] : null;
-
-            // track the records affected for the just completed rpc batch
-            // _rowsAffected is cumulative for ExecuteNonQuery across all rpc batches
-            current.cumulativeRecordsAffected = rowsAffected;
-
-            current.recordsAffected =
-                (((previous != null) && (0 <= rowsAffected))
-                    ? (rowsAffected - Math.Max(previous.cumulativeRecordsAffected, 0))
-                    : rowsAffected);
-
-            if (current.batchCommand != null)
-            {
-                current.batchCommand.SetRecordAffected(current.recordsAffected.GetValueOrDefault());
-            }
-
-            // track the error collection (not available from TdsParser after ExecuteNonQuery)
-            // and the which errors are associated with the just completed rpc batch
-            current.errorsIndexStart = previous?.errorsIndexEnd ?? 0;
-            current.errorsIndexEnd = stateObj.ErrorCount;
-            current.errors = stateObj._errors;
-
-            // track the warning collection (not available from TdsParser after ExecuteNonQuery)
-            // and the which warnings are associated with the just completed rpc batch
-            current.warningsIndexStart = previous?.warningsIndexEnd ?? 0;
-            current.warningsIndexEnd = stateObj.WarningCount;
-            current.warnings = stateObj._warnings;
-        }
-
         internal void OnReturnStatus(int status)
         {
             if (_inPrepare)
