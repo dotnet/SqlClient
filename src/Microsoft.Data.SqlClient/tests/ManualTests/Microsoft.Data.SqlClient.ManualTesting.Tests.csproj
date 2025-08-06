@@ -142,7 +142,6 @@
     <Compile Include="SQL\SqlBulkCopyTest\InvalidAccessFromEvent.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\CopyWithEventAsync.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\FireTrigger.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Helpers.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\MissingTargetColumn.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\MissingTargetTable.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\SqlBulkCopyTest.cs" />
@@ -285,6 +284,7 @@
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserStateObjectHelper.cs" />
     <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTest.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\Helpers.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\TestBulkCopyWithUTF8.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
     <Compile Include="TracingTests\TestTdsServer.cs" />
