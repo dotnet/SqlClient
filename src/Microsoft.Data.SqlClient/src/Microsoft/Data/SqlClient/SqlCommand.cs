@@ -876,6 +876,10 @@ namespace Microsoft.Data.SqlClient
             return clone;
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CreateParameter/*'/>
+        public new SqlParameter CreateParameter() =>
+            new SqlParameter();
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Prepare/*'/>
         public override void Prepare()
         {
