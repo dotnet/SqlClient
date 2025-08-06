@@ -20,7 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "netcore", "netcore", "{28E5
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "netfx", "netfx", "{3FDD425C-FE01-4B56-863E-1FCDD0677CF5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Address", "Microsoft.Data.SqlClient\tests\ManualTests\SQL\UdtTest\UDTs\Address\Address.csproj", "{D1392B54-998A-4F27-BC17-4CE149117BCC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Address", "Microsoft.Data.SqlClient\tests\TestClr\Address\Address.csproj", "{D1392B54-998A-4F27-BC17-4CE149117BCC}"
 	ProjectSection(ProjectDependencies) = postProject
 		{37431336-5307-4184-9356-C4B7E47DC714} = {37431336-5307-4184-9356-C4B7E47DC714}
 		{407890AC-9876-4FEF-A6F1-F36A876BAADE} = {407890AC-9876-4FEF-A6F1-F36A876BAADE}
@@ -31,17 +31,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.Ma
 		{37431336-5307-4184-9356-C4B7E47DC714} = {37431336-5307-4184-9356-C4B7E47DC714}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Circle", "Microsoft.Data.SqlClient\tests\ManualTests\SQL\UdtTest\UDTs\Circle\Circle.csproj", "{6C88F00F-9597-43AD-9E5F-9B344DA3B16F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Circle", "Microsoft.Data.SqlClient\tests\TestClr\Circle\Circle.csproj", "{6C88F00F-9597-43AD-9E5F-9B344DA3B16F}"
 	ProjectSection(ProjectDependencies) = postProject
 		{37431336-5307-4184-9356-C4B7E47DC714} = {37431336-5307-4184-9356-C4B7E47DC714}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shapes", "Microsoft.Data.SqlClient\tests\ManualTests\SQL\UdtTest\UDTs\Shapes\Shapes.csproj", "{B73A7063-37C3-415D-AD53-BB3DA20ABD6E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shapes", "Microsoft.Data.SqlClient\tests\TestClr\Shapes\Shapes.csproj", "{B73A7063-37C3-415D-AD53-BB3DA20ABD6E}"
 	ProjectSection(ProjectDependencies) = postProject
 		{37431336-5307-4184-9356-C4B7E47DC714} = {37431336-5307-4184-9356-C4B7E47DC714}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utf8String", "Microsoft.Data.SqlClient\tests\ManualTests\SQL\UdtTest\UDTs\Utf8String\Utf8String.csproj", "{E0A6BB21-574B-43D9-890D-6E1144F2EE9E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utf8String", "Microsoft.Data.SqlClient\tests\TestClr\Utf8String\Utf8String.csproj", "{E0A6BB21-574B-43D9-890D-6E1144F2EE9E}"
 	ProjectSection(ProjectDependencies) = postProject
 		{37431336-5307-4184-9356-C4B7E47DC714} = {37431336-5307-4184-9356-C4B7E47DC714}
 	EndProjectSection

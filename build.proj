@@ -67,15 +67,15 @@
     <FunctionalTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
     <FunctionalTests Include="**/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
     <FunctionalTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
-    <FunctionalTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
+    <FunctionalTests Include="**/TestClr/Address/Address.csproj" />
     <FunctionalTests Include="**/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" />
     <FunctionalTestsProj Include="**/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" />
     
     <ManualTests Include="**/Common/Common.csproj" />
-    <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
-    <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj" />
-    <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
-    <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
+    <ManualTests Include="**/TestClr/Address/Address.csproj" />
+    <ManualTests Include="**/TestClr/Circle/Circle.csproj" />
+    <ManualTests Include="**/TestClr/Shapes/Shapes.csproj" />
+    <ManualTests Include="**/TestClr/Utf8String/Utf8String.csproj" />
     <ManualTests Include="**/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
     <ManualTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
     <ManualTests Include="**/CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />

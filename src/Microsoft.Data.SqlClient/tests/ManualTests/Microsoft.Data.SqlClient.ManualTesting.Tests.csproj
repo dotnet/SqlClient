@@ -307,16 +307,16 @@
     <ProjectReference Include="$(TestsPath)Common\Common.csproj">
       <Name>Common</Name>
     </ProjectReference>
-    <ProjectReference Include="SQL\UdtTest\UDTs\Address\Address.csproj">
+    <ProjectReference Include="$(TestsPath)\TestClr\Address\Address.csproj">
       <Name>Address</Name>
     </ProjectReference>
-    <ProjectReference Include="SQL\UdtTest\UDTs\Circle\Circle.csproj">
+    <ProjectReference Include="$(TestsPath)\TestClr\Circle\Circle.csproj">
       <Name>Circle</Name>
     </ProjectReference>
-    <ProjectReference Include="SQL\UdtTest\UDTs\Shapes\Shapes.csproj">
+    <ProjectReference Include="$(TestsPath)\TestClr\Shapes\Shapes.csproj">
       <Name>Shapes</Name>
     </ProjectReference>
-    <ProjectReference Include="SQL\UdtTest\UDTs\Utf8String\Utf8String.csproj">
+    <ProjectReference Include="$(TestsPath)\TestClr\Utf8String\Utf8String.csproj">
       <Name>Utf8String</Name>
     </ProjectReference>
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
