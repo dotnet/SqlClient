@@ -9,6 +9,7 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
@@ -1030,6 +1031,7 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
+            // @TODO: Replace with call to GetCurrentParameterCollection
             SqlParameterCollection parameters = _parameters;
             if (_batchRPCMode)
             {
@@ -1075,6 +1077,180 @@ namespace Microsoft.Data.SqlClient
                         SqlQueryMetadataCache.GetInstance().AddQueryMetadata(
                             this,
                             ignoreQueriesWithReturnValueParams: false);
+                    }
+                }
+            }
+        }
+
+        internal void OnReturnValue(SqlReturnValue returnValue, TdsParserStateObject stateObj)
+        {
+            // Move the return value to the corresponding output parameter.
+            // Return parameters are sent in the order in which they were defined in the procedure.
+            // If named, match the parameter name, otherwise fill in based on ordinal position. If
+            // the parameter is not bound, then ignore the return value.
+
+            // @TODO: Is stateObj supposed to be different than the currently stored state object?
+
+            if (_inPrepare)
+            {
+                // Store the returned prepare handle if we are returning from sp_prepare
+                if (!returnValue.value.IsNull)
+                {
+                    _prepareHandle = returnValue.value.Int32;
+                }
+
+                _inPrepare = false;
+                return;
+            }
+
+            SqlParameterCollection parameters = GetCurrentParameterCollection();
+            int count = GetParameterCount(parameters);
+
+            // @TODO: Rename to "ReturnParam"
+            SqlParameter thisParam = GetParameterForOutputValueExtraction(parameters, returnValue.parameter, count);
+            if (thisParam is not null)
+            {
+                // @TODO: Invert to reduce nesting :)
+
+                // If the parameter's direction is InputOutput, Output, or ReturnValue and it needs
+                // to be transparently encrypted/decrypted, then simply decrypt, deserialize, and
+                // set the value.
+                if (returnValue.cipherMD is not null &&
+                    thisParam.CipherMetadata is not null &&
+                    (thisParam.Direction == ParameterDirection.Output ||
+                     thisParam.Direction == ParameterDirection.InputOutput ||
+                     thisParam.Direction == ParameterDirection.ReturnValue))
+                {
+                    // @TODO: make this a separate method
+                    // Validate type of the return value is valid for encryption
+                    if (returnValue.tdsType != TdsEnums.SQLBIGVARBINARY)
+                    {
+                        throw SQL.InvalidDataTypeForEncryptedParameter(
+                            thisParam.GetPrefixedParameterName(),
+                            returnValue.tdsType,
+                            expectedDataType: TdsEnums.SQLBIGVARBINARY);
+                    }
+
+                    // Decrypt the cipher text
+                    TdsParser parser = _activeConnection.Parser;
+                    if (parser is null || parser.State is TdsParserState.Closed or TdsParserState.Broken)
+                    {
+                        throw ADP.ClosedConnectionError();
+                    }
+
+                    if (!returnValue.value.IsNull)
+                    {
+                        try
+                        {
+                            Debug.Assert(_activeConnection is not null, @"_activeConnection should not be null");
+
+                            // Get the key information from the parameter and decrypt the value.
+                            returnValue.cipherMD.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
+                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(
+                                returnValue.value.ByteArray,
+                                returnValue.cipherMD,
+                                _activeConnection,
+                                this);
+
+                            if (unencryptedBytes is not null)
+                            {
+                                // Denormalize the value and convert it to the parameter type.
+                                SqlBuffer buffer = new SqlBuffer();
+                                parser.DeserializeUnencryptedValue(
+                                    buffer,
+                                    unencryptedBytes,
+                                    returnValue,
+                                    stateObj,
+                                    returnValue.NormalizationRuleVersion);
+                                thisParam.SetSqlBuffer(buffer);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            throw SQL.ParamDecryptionFailed(
+                                thisParam.GetPrefixedParameterName(),
+                                serverName: null,
+                                e);
+                        }
+                    }
+                    else
+                    {
+                        // Create a new SqlBuffer and set it to null
+                        // Note: We can't reuse the SqlBuffer in "returnValue" below since it's
+                        // already been set (to varbinary) in previous call to
+                        // TryProcessReturnValue().
+                        // Note 2: We will be coming down this code path only if the Command
+                        // Setting is set to use TCE. We pass the command setting as TCE enabled in
+                        // the below call for this reason.
+                        SqlBuffer buff = new SqlBuffer();
+                        // @TODO: uhhh what? can't we just, idk, set it null in the buffer?
+                        TdsParser.GetNullSqlValue(
+                            buff,
+                            returnValue,
+                            SqlCommandColumnEncryptionSetting.Enabled,
+                            parser.Connection);
+                        thisParam.SetSqlBuffer(buff);
+                    }
+                }
+                else
+                {
+                    // @TODO: This should be a separate method, too
+                    // Copy over the data
+
+                    // If the value user has supplied a SqlType class, then just copy over the
+                    // SqlType, otherwise convert to the com type.
+                    if (thisParam.SqlDbType is SqlDbType.Udt)
+                    {
+                        try
+                        {
+                            _activeConnection.CheckGetExtendedUDTInfo(returnValue, fThrow: true);
+
+                            // Extract the byte array from the param value
+                            object data = returnValue.value.IsNull
+                                ? DBNull.Value
+                                : returnValue.value.ByteArray;
+
+                            // Call the connection to instantiate the UDT object
+                            thisParam.Value = _activeConnection.GetUdtValue(data, returnValue, returnDBNull: false);
+                        }
+                        catch (Exception e) when (e is FileNotFoundException or FileLoadException)
+                        {
+                            // Assign Assembly.Load failure in case where assembly not on client.
+                            // This allows execution to complete and failure on SqlParameter.Value.
+                            thisParam.SetUdtLoadError(e);
+                        }
+
+                        return;
+                    }
+                    else
+                    {
+                        thisParam.SetSqlBuffer(returnValue.value);
+                    }
+
+                    // @TODO: This seems fishy to me, it seems like it should be part of the SqlReturnValue class
+                    MetaType mt = MetaType.GetMetaTypeFromSqlDbType(returnValue.type, isMultiValued: false);
+
+                    if (returnValue.type is SqlDbType.Decimal)
+                    {
+                        thisParam.ScaleInternal = returnValue.scale;
+                        thisParam.PrecisionInternal = returnValue.precision;
+                    }
+                    else if (mt.IsVarTime)
+                    {
+                        thisParam.ScaleInternal = returnValue.scale;
+                    }
+                    else if (returnValue.type is SqlDbType.Xml)
+                    {
+                        if (thisParam.Value is SqlCachedBuffer cachedBuffer)
+                        {
+                            thisParam.Value = cachedBuffer.ToString();
+                        }
+                    }
+
+                    if (returnValue.collation is not null)
+                    {
+                        Debug.Assert(mt.IsCharType, "Invalid collation structure for non-char type");
+                        thisParam.Collation = returnValue.collation;
                     }
                 }
             }
