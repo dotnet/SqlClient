@@ -27,8 +27,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly PropertyInfo _makeReadAsyncBlockingProperty;
     private readonly PropertyInfo _useMinimumLoginTimeoutProperty;
     private readonly PropertyInfo _legacyVarTimeZeroScaleBehaviourProperty;
-    private readonly PropertyInfo _useCompatibilityProcessSniProperty;
-    private readonly PropertyInfo _useCompatibilityAsyncBehaviourProperty;
     private readonly PropertyInfo _useConnectionPoolV2Property;
     #if NETFRAMEWORK
     private readonly PropertyInfo _disableTnirByDefaultProperty;
@@ -45,10 +43,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly Tristate _useMinimumLoginTimeoutOriginal;
     private readonly FieldInfo _legacyVarTimeZeroScaleBehaviourField;
     private readonly Tristate _legacyVarTimeZeroScaleBehaviourOriginal;
-    private readonly FieldInfo _useCompatibilityProcessSniField;
-    private readonly Tristate _useCompatibilityProcessSniOriginal;
-    private readonly FieldInfo _useCompatibilityAsyncBehaviourField;
-    private readonly Tristate _useCompatibilityAsyncBehaviourOriginal;
     private readonly FieldInfo _useConnectionPoolV2Field;
     private readonly Tristate _useConnectionPoolV2Original;
     #if NETFRAMEWORK
@@ -129,14 +123,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             out _legacyVarTimeZeroScaleBehaviourProperty);
 
         InitProperty(
-            "UseCompatibilityProcessSni",
-            out _useCompatibilityProcessSniProperty);
-
-        InitProperty(
-            "UseCompatibilityAsyncBehaviour",
-            out _useCompatibilityAsyncBehaviourProperty);
-
-        InitProperty(
             "UseConnectionPoolV2",
             out _useConnectionPoolV2Property);
 
@@ -185,16 +171,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             "s_legacyVarTimeZeroScaleBehaviour",
             out _legacyVarTimeZeroScaleBehaviourField,
             out _legacyVarTimeZeroScaleBehaviourOriginal);
-
-        InitField(
-            "s_useCompatibilityProcessSni",
-            out _useCompatibilityProcessSniField,
-            out _useCompatibilityProcessSniOriginal);
-
-        InitField(
-            "s_useCompatibilityAsyncBehaviour",
-            out _useCompatibilityAsyncBehaviourField,
-            out _useCompatibilityAsyncBehaviourOriginal);
 
         InitField(
             "s_useConnectionPoolV2",
@@ -252,14 +228,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         RestoreField(
             _legacyVarTimeZeroScaleBehaviourField,
             _legacyVarTimeZeroScaleBehaviourOriginal);
-
-        RestoreField(
-            _useCompatibilityProcessSniField,
-            _useCompatibilityProcessSniOriginal);
-
-        RestoreField(
-            _useCompatibilityAsyncBehaviourField,
-            _useCompatibilityAsyncBehaviourOriginal);
 
         RestoreField(
             _useConnectionPoolV2Field,
@@ -323,23 +291,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     public bool LegacyVarTimeZeroScaleBehaviour
     {
         get => (bool)_legacyVarTimeZeroScaleBehaviourProperty.GetValue(null);
-    }
-
-    /// <summary>
-    /// Access the LocalAppContextSwitches.UseCompatibilityProcessSni property.
-    /// </summary>
-    public bool UseCompatibilityProcessSni
-    {
-        get => (bool)_useCompatibilityProcessSniProperty.GetValue(null);
-    }
-
-    /// <summary>
-    /// Access the LocalAppContextSwitches.UseCompatibilityAsyncBehaviour
-    /// property.
-    /// </summary>
-    public bool UseCompatibilityAsyncBehaviour
-    {
-        get => (bool)_useCompatibilityAsyncBehaviourProperty.GetValue(null);
     }
 
     /// <summary>
@@ -412,26 +363,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => GetValue(_legacyVarTimeZeroScaleBehaviourField);
         set => SetValue(_legacyVarTimeZeroScaleBehaviourField, value);
-    }
-
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.UseCompatibilityProcessSni switch
-    /// value.
-    /// </summary>
-    public Tristate UseCompatibilityProcessSniField
-    {
-        get => GetValue(_useCompatibilityProcessSniField);
-        set => SetValue(_useCompatibilityProcessSniField, value);
-    }
-
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.UseCompatibilityAsyncBehaviour
-    /// switch value.
-    /// </summary>
-    public Tristate UseCompatibilityAsyncBehaviourField
-    {
-        get => GetValue(_useCompatibilityAsyncBehaviourField);
-        set => SetValue(_useCompatibilityAsyncBehaviourField, value);
     }
 
     /// <summary>
