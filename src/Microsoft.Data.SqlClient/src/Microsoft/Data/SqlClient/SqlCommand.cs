@@ -1007,6 +1007,20 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal void OnDoneProc(TdsParserStateObject stateObject)
+        {
+            // @TODO: Is this not the same stateObj as the currently stored one?
+
+            // Called on RPC batch complete
+            if (_batchRPCMode)
+            {
+                OnDone(stateObject, _currentlyExecutingBatch, _RPCList, _rowsAffected);
+                _currentlyExecutingBatch++; // @TODO: Should be interlocked?
+
+                Debug.Assert(_RPCList.Count >= _currentlyExecutingBatch, "OnDoneProc: Too many DONEPROC events");
+            }
+        }
+
         #endregion
 
         #region Protected Methods

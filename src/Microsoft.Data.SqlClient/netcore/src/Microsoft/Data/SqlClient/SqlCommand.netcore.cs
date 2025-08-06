@@ -2232,17 +2232,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void OnDoneProc(TdsParserStateObject stateObject)
-        {
-            // called per rpc batch complete
-            if (_batchRPCMode)
-            {
-                OnDone(stateObject, _currentlyExecutingBatch, _RPCList, _rowsAffected);
-                _currentlyExecutingBatch++;
-                Debug.Assert(_RPCList.Count >= _currentlyExecutingBatch, "OnDoneProc: Too many DONEPROC events");
-            }
-        }
-
         private static void OnDone(TdsParserStateObject stateObj, int index, IList<_SqlRPC> rpcList, int rowsAffected)
         {
             _SqlRPC current = rpcList[index];
