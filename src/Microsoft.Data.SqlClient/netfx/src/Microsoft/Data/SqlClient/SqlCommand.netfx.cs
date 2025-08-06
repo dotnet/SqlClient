@@ -1576,19 +1576,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Constructs a SqlParameter with a given string value
-        /// </summary>
-        /// <param name="queryText"></param>
-        /// <returns></returns>
-        private SqlParameter GetSqlParameterWithQueryText(string queryText)
-        {
-            SqlParameter sqlParam = new SqlParameter(null, ((queryText.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText, queryText.Length);
-            sqlParam.Value = queryText;
-
-            return sqlParam;
-        }
-
-        /// <summary>
         /// Constructs the sp_describe_parameter_encryption request with the values from the original RPC call.	
         /// Prototype for &lt;sp_describe_parameter_encryption&gt; is 	
         /// exec sp_describe_parameter_encryption @tsql=N'[SQL Statement]', @params=N'@p1 varbinary(256)'
