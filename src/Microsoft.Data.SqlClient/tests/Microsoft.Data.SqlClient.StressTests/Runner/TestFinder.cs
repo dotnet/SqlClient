@@ -124,11 +124,11 @@ namespace Microsoft.Data.SqlClient.StressTests.Runner
                     }
 
                     // add multi-threaded (non thread pool) tests to the list
-                    MultiThreadedTestAttribute[] multiThreadedTestAttrs = (MultiThreadedTestAttribute[])m.GetCustomAttributes(typeof(MultiThreadedTestAttribute), true);
-                    foreach (MultiThreadedTestAttribute attr in multiThreadedTestAttrs)
+                    MultithreadedTestAttribute[] multiThreadedTestAttrs = (MultithreadedTestAttribute[])m.GetCustomAttributes(typeof(MultithreadedTestAttribute), true);
+                    foreach (MultithreadedTestAttribute attr in multiThreadedTestAttrs)
                     {
                         if (TestMetrics.IncludeTest(attr))
-                            tests.Add(new MultiThreadedTest(attr, m, t, setupMethods, cleanupMethods));
+                            tests.Add(new MultithreadedTest(attr, m, t, setupMethods, cleanupMethods));
                     }
 
                     // add multi-threaded (with thread pool) tests to the list

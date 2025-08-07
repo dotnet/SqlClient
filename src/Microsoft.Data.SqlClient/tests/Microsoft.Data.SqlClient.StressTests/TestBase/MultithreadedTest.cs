@@ -11,7 +11,7 @@ using Microsoft.Data.SqlClient.StressTests.Runner;
 
 namespace Microsoft.Data.SqlClient.StressTests.TestBase
 {
-    internal class MultiThreadedTest : TestBase
+    internal class MultithreadedTest : TestBase
     {
         #region Constants
 
@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.StressTests.TestBase
 
         #endregion
 
-        private MultiThreadedTestAttribute _attr;
+        private MultithreadedTestAttribute _attr;
         public static bool _continue;
         public static int _threadsRunning;
         public static int _rps;
@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient.StressTests.TestBase
             public TestMethodDelegate _delegateTest;
         }
 
-        public MultiThreadedTest(MultiThreadedTestAttribute attr,
+        public MultithreadedTest(MultithreadedTestAttribute attr,
                                  MethodInfo testMethodInfo,
                                  Type type,
                                  List<MethodInfo> setupMethods,
@@ -71,7 +71,7 @@ namespace Microsoft.Data.SqlClient.StressTests.TestBase
                 for (int i = 0; i < threads; i++)
                 {
                     Interlocked.Increment(ref _threadsRunning);
-                    Thread t = new Thread(new ParameterizedThreadStart(MultiThreadedTest.RunThread));
+                    Thread t = new Thread(new ParameterizedThreadStart(MultithreadedTest.RunThread));
                     t.Start(info[i]);
                 }
 
