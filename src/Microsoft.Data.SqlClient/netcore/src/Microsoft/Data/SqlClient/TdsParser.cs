@@ -11,9 +11,8 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-#if NET
 using System.Security.Authentication;
-#else
+#if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 #endif
 using System.Text;
@@ -636,7 +635,13 @@ namespace Microsoft.Data.SqlClient
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
 
-                PostReadAsyncForMars();
+                error = _pMarsPhysicalConObj.PostReadAsyncForMars(_physicalStateObj);
+                if (error != TdsEnums.SNI_SUCCESS_IO_PENDING)
+                {
+                    Debug.Assert(error != TdsEnums.SNI_SUCCESS, "Unexpected successful read async on physical connection before enabling MARS!");
+                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
 
                 _physicalStateObj = CreateSession(); // Create and open default MARS stateObj and connection.
             }
@@ -892,10 +897,24 @@ namespace Microsoft.Data.SqlClient
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
 
-            int protocolVersion = 0;
-            WaitForSSLHandShakeToComplete(ref error, ref protocolVersion);
+            SslProtocols protocol = 0;
 
-            SslProtocols protocol = (SslProtocols)protocolVersion;
+            // in the case where an async connection is made, encryption is used and Windows Authentication is used, 
+            // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its 
+            // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete 
+            // before calling SNISecGenClientContext).
+#if NET
+            if (OperatingSystem.IsWindows())
+#endif
+            {
+                error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocol);
+                if (error != TdsEnums.SNI_SUCCESS)
+                {
+                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
+            }
+
             string warningMessage = protocol.GetProtocolWarning();
             if (!string.IsNullOrEmpty(warningMessage))
             {

@@ -958,7 +958,6 @@
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
     
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
 
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\ILLink.Substitutions.Windows.xml">
@@ -1005,8 +1004,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs</Link>
     </Compile>
-
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
 
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\ILLink.Substitutions.Unix.xml">
       <LogicalName>ILLink.Substitutions.xml</LogicalName>
