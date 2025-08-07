@@ -87,10 +87,6 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
                         TestMetrics.ExceptionThreshold = int.Parse(args[++i]);
                         break;
 
-                    case "-monitorenabled":
-                        TestMetrics.MonitorEnabled = bool.Parse(args[++i]);
-                        break;
-
                     case "-randomSeed":
                         TestMetrics.RandomSeed = int.Parse(args[++i]);
                         break;
@@ -184,8 +180,6 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
             Console.WriteLine("   -debug                      Print process ID in the beginning and wait for Enter (to give your time to attach the debugger).");
             Console.WriteLine();
             Console.WriteLine("   -exceptionThreshold <n>     An optional limit on exceptions which will be caught. When reached, test will halt.");
-            Console.WriteLine();
-            Console.WriteLine("   -monitorenabled             True or False to enable monitoring. Default is false");
             Console.WriteLine();
             Console.WriteLine("   -randomSeed                 Enables setting of the random number generator used internally.  This serves both the purpose");
             Console.WriteLine("                               of helping to improve reproducibility and making it deterministic from Chess's perspective");

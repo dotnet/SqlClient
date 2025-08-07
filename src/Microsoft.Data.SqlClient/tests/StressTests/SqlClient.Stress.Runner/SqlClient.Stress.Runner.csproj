@@ -8,7 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\IMonitorLoader\IMonitorLoader.csproj" />
     <ProjectReference Include="..\SqlClient.Stress.Common\SqlClient.Stress.Common.csproj" />
     <ProjectReference Include="..\SqlClient.Stress.Tests\SqlClient.Stress.Tests.csproj" />
   </ItemGroup>

@@ -34,8 +34,6 @@ namespace DPStressHarness
         private static int s_stressThreads = 16;
         private static int s_stressDuration = 1;
         private static int? s_exceptionThreshold = null;
-        private static bool s_monitorenabled = false;
-        private static string s_monitormachinename = "localhost";
         private static int s_randomSeed = 0;
         private static string s_filter = null;
         private static bool s_printMethodName = false;
@@ -147,8 +145,6 @@ namespace DPStressHarness
             s_stressThreads = 16;
             s_stressDuration = 1;
             s_exceptionThreshold = null;
-            s_monitorenabled = false;
-            s_monitormachinename = "localhost";
             s_randomSeed = 0;
             s_filter = null;
             s_printMethodName = false;
@@ -325,26 +321,6 @@ namespace DPStressHarness
         {
             get { return s_exceptionThreshold; }
             set { s_exceptionThreshold = value; }
-        }
-
-        public static bool MonitorEnabled
-        {
-            get { return s_monitorenabled; }
-            set 
-            { 
-                if(value)
-                {
-                    throw new NotImplementedException($"The '{nameof(MonitorEnabled)}' isn't fully implemented!");
-                }
-                s_monitorenabled = value; 
-            }
-        }
-
-
-        public static string MonitorMachineName
-        {
-            get { return s_monitormachinename; }
-            set { s_monitormachinename = value; }
         }
 
         public static int RandomSeed

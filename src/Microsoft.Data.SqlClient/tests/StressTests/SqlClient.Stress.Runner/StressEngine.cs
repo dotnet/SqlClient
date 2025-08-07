@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics;
-using Monitoring;
 
 namespace DPStressHarness
 {
@@ -87,20 +86,6 @@ namespace DPStressHarness
                 firstStressTest.RunGlobalSetup();
             }
 
-            //Monitoring Start
-            IMonitorLoader _monitorloader = null;
-            if (TestMetrics.MonitorEnabled)
-            {
-                _monitorloader = MonitorLoader.LoadMonitorLoaderAssembly();
-                if (_monitorloader != null)
-                {
-                    _monitorloader.Enabled = TestMetrics.MonitorEnabled;
-                    _monitorloader.HostMachine = TestMetrics.MonitorMachineName;
-                    _monitorloader.TestName = firstStressTest.Title;
-                    _monitorloader.Action(MonitorLoaderUtils.MonitorAction.Start);
-                }
-            }
-
             for (int i = 0; i < _threads; i++)
             {
                 Interlocked.Increment(ref _threadsRunning);
@@ -111,13 +96,6 @@ namespace DPStressHarness
             while (_threadsRunning > 0)
             {
                 Thread.Sleep(1000);
-            }
-
-            //Monitoring Stop
-            if (TestMetrics.MonitorEnabled)
-            {
-                if (_monitorloader != null)
-                    _monitorloader.Action(MonitorLoaderUtils.MonitorAction.Stop);
             }
 
             // Run any global cleanup
