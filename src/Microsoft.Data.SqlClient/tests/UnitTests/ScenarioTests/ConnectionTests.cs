@@ -9,7 +9,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,24 +19,34 @@ using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.Tests
+namespace Microsoft.Data.SqlClient.ScenarioTests
 {
-    public class SqlConnectionBasicTests
+    public class ConnectionTests
     {
         [Fact]
         public void ConnectionTest()
         {
-            using TestTdsServer server = TestTdsServer.StartTestServer();
-            using SqlConnection connection = new SqlConnection(server.ConnectionString);
+            using TdsServer server = new TdsServer(new TdsServerArguments() { });
+            server.Start();
+            var connStr = new SqlConnectionStringBuilder() {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+            }.ConnectionString;
+            using SqlConnection connection = new SqlConnection(connStr);
             connection.Open();
         }
 
-        [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
+        [Fact]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void IntegratedAuthConnectionTest()
         {
-            using TestTdsServer server = TestTdsServer.StartTestServer();
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(server.ConnectionString);
+            using TdsServer server = new TdsServer(new TdsServerArguments() { });
+            server.Start();
+            var connStr = new SqlConnectionStringBuilder() {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+            }.ConnectionString;
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connStr);
             builder.IntegratedSecurity = true;
             using SqlConnection connection = new SqlConnection(builder.ConnectionString);
             connection.Open();
@@ -49,10 +58,14 @@ namespace Microsoft.Data.SqlClient.Tests
         /// when client enables encryption using Encrypt=true or uses default encryption setting.
         /// </summary>
         [Fact]
-        public async Task PreLoginEncryptionExcludedTest()
+        public async Task RequestEncryption_ServerDoesNotSupportEncryption_ShouldFail()
         {
-            using TestTdsServer server = TestTdsServer.StartTestServer(false, false, 5, excludeEncryption: true);
-            SqlConnectionStringBuilder builder = new(server.ConnectionString)
+            using TdsServer server = new TdsServer(new TdsServerArguments() {Encryption = TDSPreLoginTokenEncryptionType.None });
+            server.Start();
+            var connStr = new SqlConnectionStringBuilder() {
+                DataSource = $"localhost,{server.EndPoint.Port}"
+            }.ConnectionString;
+            SqlConnectionStringBuilder builder = new(connStr)
             {
                 IntegratedSecurity = true
             };
@@ -62,17 +75,22 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Contains("The instance of SQL Server you attempted to connect to does not support encryption.", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
-        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
+        [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
-        [PlatformSpecific(TestPlatforms.Windows)]
-        public async Task TransientFaultTestAsync(uint errorCode)
+        public async Task TransientFault_RetryEnabled_ShouldSucceed_Async(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, false, errorCode);
+            using TransientFaultTdsServer server = new TransientFaultTdsServer(
+                new TransientFaultTdsServerArguments() 
+                {
+                  IsEnabledTransientError = true,
+                  Number = errorCode,
+                });
+            server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.Port,
+                DataSource = "localhost," + server.EndPoint.Port,
                 IntegratedSecurity = true,
                 Encrypt = SqlConnectionEncryptOption.Optional
             };
@@ -80,46 +98,51 @@ namespace Microsoft.Data.SqlClient.Tests
             using SqlConnection connection = new(builder.ConnectionString);
             await connection.OpenAsync();
             Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
         }
 
-        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
+        [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
-        [PlatformSpecific(TestPlatforms.Windows)]
-        public void TransientFaultTest(uint errorCode)
+        public void TransientFault_RetryEnabled_ShouldSucceed(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, false, errorCode);
+            using TransientFaultTdsServer server = new TransientFaultTdsServer(
+                new TransientFaultTdsServerArguments()
+                {
+                    IsEnabledTransientError = true,
+                    Number = errorCode,
+                });
+            server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.Port,
+                DataSource = "localhost," + server.EndPoint.Port,
                 IntegratedSecurity = true,
                 Encrypt = SqlConnectionEncryptOption.Optional
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
-            try
-            {
-                connection.Open();
-                Assert.Equal(ConnectionState.Open, connection.State);
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
+            connection.Open();
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
         }
 
-        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
+        [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
-        [PlatformSpecific(TestPlatforms.Windows)]
-        public void TransientFaultDisabledTestAsync(uint errorCode)
+        public void TransientFault_RetryDisabled_ShouldFail_Async(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, false, errorCode);
+            using TransientFaultTdsServer server = new TransientFaultTdsServer(
+                new TransientFaultTdsServerArguments()
+                {
+                    IsEnabledTransientError = true,
+                    Number = errorCode,
+                });
+            server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.Port,
+                DataSource = "localhost," + server.EndPoint.Port,
                 IntegratedSecurity = true,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional
@@ -131,20 +154,127 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(ConnectionState.Closed, connection.State);
         }
 
-        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
+        [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
-        [PlatformSpecific(TestPlatforms.Windows)]
-        public void TransientFaultDisabledTest(uint errorCode)
+        public void TransientFault_RetryDisabled_ShouldFail(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, false, errorCode);
+            using TransientFaultTdsServer server = new TransientFaultTdsServer(
+                new TransientFaultTdsServerArguments()
+                {
+                    IsEnabledTransientError = true,
+                    Number = errorCode,
+                });
+            server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.Port,
+                DataSource = "localhost," + server.EndPoint.Port,
                 IntegratedSecurity = true,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            SqlException e = Assert.Throws<SqlException>(() => connection.Open());
+            Assert.Equal(20, e.Class);
+            Assert.Equal(ConnectionState.Closed, connection.State);
+        }
+
+        [Fact]
+        public async Task NetworkError_RetryEnabled_ShouldSucceed_Async()
+        {
+            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
+                new TransientTimeoutTdsServerArguments()
+                {
+                    IsEnabledTransientTimeout = true,
+                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                });
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "localhost," + server.EndPoint.Port,
+                IntegratedSecurity = true,
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                ConnectTimeout = 5
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            await connection.OpenAsync();
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(2, server.PreLoginCount);
+        }
+
+        [Fact]
+        public void NetworkError_RetryEnabled_ShouldSucceed()
+        {
+            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
+                new TransientTimeoutTdsServerArguments()
+                {
+                    IsEnabledTransientTimeout = true,
+                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                });
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "localhost," + server.EndPoint.Port,
+                IntegratedSecurity = true,
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                ConnectTimeout = 5
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(2, server.PreLoginCount);
+        }
+
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3527")]
+        [Fact]
+        public void NetworkError_RetryDisabled_ShouldFail_Async()
+        {
+            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
+                new TransientTimeoutTdsServerArguments()
+                {
+                    IsEnabledTransientTimeout = true,
+                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                });
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "localhost," + server.EndPoint.Port,
+                IntegratedSecurity = true,
+                ConnectRetryCount = 0,
+                Encrypt = SqlConnectionEncryptOption.Optional
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            Task<SqlException> e = Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
+            Assert.Equal(20, e.Result.Class);
+            Assert.Equal(ConnectionState.Closed, connection.State);
+        }
+
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3527")]
+        [Fact]
+        public void NetworkError_RetryDisabled_ShouldFail()
+        {
+            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
+                new TransientTimeoutTdsServerArguments()
+                {
+                    IsEnabledTransientTimeout = true,
+                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                });
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "localhost," + server.EndPoint.Port,
+                IntegratedSecurity = true,
+                ConnectRetryCount = 0,
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                ConnectTimeout = 5
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
@@ -302,16 +432,20 @@ namespace Microsoft.Data.SqlClient.Tests
 
         [Theory]
         [InlineData(60)]
-        [InlineData(30)]
-        [InlineData(15)]
         [InlineData(10)]
-        [InlineData(5)]
         [InlineData(1)]
         public void ConnectionTimeoutTest(int timeout)
         {
             // Start a server with connection timeout from the inline data.
-            using TestTdsServer server = TestTdsServer.StartTestServer(false, false, timeout);
-            using SqlConnection connection = new SqlConnection(server.ConnectionString);
+            //TODO: do we even need a server for this test?
+            using TdsServer server = new TdsServer();
+            server.Start();
+            var connStr = new SqlConnectionStringBuilder() {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                ConnectTimeout = timeout,
+                Encrypt = SqlConnectionEncryptOption.Optional
+            }.ConnectionString;
+            using SqlConnection connection = new SqlConnection(connStr);
 
             // Dispose the server to force connection timeout 
             server.Dispose();
@@ -341,16 +475,21 @@ namespace Microsoft.Data.SqlClient.Tests
 
         [Theory]
         [InlineData(60)]
-        [InlineData(30)]
-        [InlineData(15)]
         [InlineData(10)]
-        [InlineData(5)]
         [InlineData(1)]
         public async Task ConnectionTimeoutTestAsync(int timeout)
         {
             // Start a server with connection timeout from the inline data.
-            using TestTdsServer server = TestTdsServer.StartTestServer(false, false, timeout);
-            using SqlConnection connection = new SqlConnection(server.ConnectionString);
+            //TODO: do we even need a server for this test?
+            using TdsServer server = new TdsServer();
+            server.Start();
+            var connStr = new SqlConnectionStringBuilder()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                ConnectTimeout = timeout,
+                Encrypt = SqlConnectionEncryptOption.Optional
+            }.ConnectionString;
+            using SqlConnection connection = new SqlConnection(connStr);
 
             // Dispose the server to force connection timeout 
             server.Dispose();
@@ -385,7 +524,11 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             Assert.Throws<ArgumentException>(() =>
             {
-                using TestTdsServer server = TestTdsServer.StartTestServer(false, false, -5);
+                var connectionString = new SqlConnectionStringBuilder()
+                {
+                    DataSource = "localhost",
+                    ConnectTimeout = -5 // Invalid timeout
+                }.ConnectionString;
             });
 
         }
@@ -401,8 +544,15 @@ namespace Microsoft.Data.SqlClient.Tests
                 Thread.CurrentThread.CurrentCulture = new CultureInfo("th-TH");
                 Thread.CurrentThread.CurrentUICulture = new CultureInfo("th-TH");
 
-                using TestTdsServer server = TestTdsServer.StartTestServer();
-                using SqlConnection connection = new SqlConnection(server.ConnectionString);
+                //TODO: do we even need a server for this test?
+                using TdsServer server = new TdsServer();
+                server.Start();
+                var connStr = new SqlConnectionStringBuilder()
+                {
+                    DataSource = $"localhost,{server.EndPoint.Port}",
+                    Encrypt = SqlConnectionEncryptOption.Optional
+                }.ConnectionString;
+                using SqlConnection connection = new SqlConnection(connStr);
                 connection.Open();
                 Assert.Equal(ConnectionState.Open, connection.State);
             }
@@ -505,8 +655,19 @@ namespace Microsoft.Data.SqlClient.Tests
         public void ConnectionTestPermittedVersion(int major, int minor, int build)
         {
             Version simulatedServerVersion = new Version(major, minor, build);
-            using TestTdsServer server = TestTdsServer.StartTestServer(serverVersion: simulatedServerVersion);
-            using SqlConnection conn = new SqlConnection(server.ConnectionString);
+
+            using TdsServer server = new TdsServer(
+                new TdsServerArguments
+                {
+                    ServerVersion = simulatedServerVersion,
+                });
+            server.Start();
+            var connStr = new SqlConnectionStringBuilder()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+            }.ConnectionString;
+            using SqlConnection conn = new SqlConnection(connStr);
 
             conn.Open();
             Assert.Equal(ConnectionState.Open, conn.State);
@@ -523,8 +684,18 @@ namespace Microsoft.Data.SqlClient.Tests
         public void ConnectionTestDeniedVersion(int major, int minor, int build)
         {
             Version simulatedServerVersion = new Version(major, minor, build);
-            using TestTdsServer server = TestTdsServer.StartTestServer(serverVersion: simulatedServerVersion);
-            using SqlConnection conn = new SqlConnection(server.ConnectionString);
+            using TdsServer server = new TdsServer(
+                new TdsServerArguments
+                {
+                    ServerVersion = simulatedServerVersion,
+                });
+            server.Start();
+            var connStr = new SqlConnectionStringBuilder()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+            }.ConnectionString;
+            using SqlConnection conn = new SqlConnection(connStr);
 
             Assert.Throws<InvalidOperationException>(() => conn.Open());
         }
@@ -542,7 +713,8 @@ namespace Microsoft.Data.SqlClient.Tests
         public void TestConnWithVectorFeatExtVersionNegotiation(bool expectedConnectionResult, byte serverVersion, byte expectedNegotiatedVersion)
         {
             // Start the test TDS server.
-            using var server = TestTdsServer.StartTestServer();
+            using var server = new TdsServer();
+            server.Start();
             server.ServerSupportedVectorFeatureExtVersion = serverVersion;
             server.EnableVectorFeatureExt = serverVersion == 0xFF ? false : true;
 
@@ -594,7 +766,12 @@ namespace Microsoft.Data.SqlClient.Tests
             };
 
             // Connect to the test TDS server.
-            using var connection = new SqlConnection(server.ConnectionString);
+            var connStr = new SqlConnectionStringBuilder
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+            }.ConnectionString;
+            using var connection = new SqlConnection(connStr);
             if (expectedConnectionResult)
             {
                 connection.Open();
