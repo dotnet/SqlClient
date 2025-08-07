@@ -22,4 +22,9 @@
     <PackageReference Include="Microsoft.Data.SqlClient"
                       Condition="$(ReferenceType.Contains('Package'))" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="Tests\StressTest.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

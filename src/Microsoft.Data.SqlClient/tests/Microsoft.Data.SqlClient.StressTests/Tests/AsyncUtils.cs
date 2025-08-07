@@ -159,6 +159,7 @@ namespace Stress.Data
             }
             finally
             {
+                // @TODO: Disable, then disable????!
                 DeadlockDetection.DisableThreadAbort();
             }
         }
