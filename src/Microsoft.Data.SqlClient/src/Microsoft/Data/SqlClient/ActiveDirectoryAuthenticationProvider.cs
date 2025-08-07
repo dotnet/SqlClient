@@ -599,7 +599,28 @@ namespace Microsoft.Data.SqlClient
                     defaultAzureCredentialOptions.WorkloadIdentityClientId = tokenCredentialKey._clientId;
                 }
 
-                return new TokenCredentialData(new DefaultAzureCredential(defaultAzureCredentialOptions), GetHash(secret));
+                // SqlClient is a library and provides support to acquire access
+                // token using 'DefaultAzureCredential' on user demand when they
+                // specify 'Authentication = Active Directory Default' in
+                // connection string.
+                //
+                // Default Azure Credential is instantiated by the calling
+                // application when using "Active Directory Default"
+                // authentication code to connect to Azure SQL instance.
+                // SqlClient is a library, doesn't instantiate the credential
+                // without running application instructions.
+                //
+                // Note that CodeQL suppression support can only detect
+                // suppression comments that appear immediately above the
+                // flagged statement, or appended to the end of the statement.
+                // Multi-line justifications are not supported.
+                //
+                // https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/codeql/codeql-semmle#guidance-on-suppressions
+                //
+                // CodeQL [SM05137] See above for justification.
+                DefaultAzureCredential cred = new(defaultAzureCredentialOptions);
+
+                return new TokenCredentialData(cred, GetHash(secret));
             }
 
             TokenCredentialOptions tokenCredentialOptions = new() { AuthorityHost = new Uri(tokenCredentialKey._authority) };
