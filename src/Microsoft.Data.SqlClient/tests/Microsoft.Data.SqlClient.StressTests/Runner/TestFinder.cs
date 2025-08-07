@@ -108,35 +108,12 @@ namespace Microsoft.Data.SqlClient.StressTests.Runner
 
                 foreach (MethodInfo m in methods)
                 {
-                    // add single-threaded tests to the list
-                    TestAttribute[] testAttrs = (TestAttribute[])m.GetCustomAttributes(typeof(TestAttribute), true);
-                    foreach (TestAttribute attr in testAttrs)
-                    {
-                        tests.Add(new Test(attr, m, t, setupMethods, cleanupMethods));
-                    }
-
                     // add any declared stress tests.
                     StressTestAttribute[] stressTestAttrs = (StressTestAttribute[])m.GetCustomAttributes(typeof(StressTestAttribute), true);
                     foreach (StressTestAttribute attr in stressTestAttrs)
                     {
                         if (TestMetrics.IncludeTest(attr) && MatchFilter(attr))
                             tests.Add(new StressTest(attr, m, globalSetupMethod, globalCleanupMethod, t, setupMethods, cleanupMethods, globalExceptionHandlerMethod));
-                    }
-
-                    // add multi-threaded (non thread pool) tests to the list
-                    MultithreadedTestAttribute[] multiThreadedTestAttrs = (MultithreadedTestAttribute[])m.GetCustomAttributes(typeof(MultithreadedTestAttribute), true);
-                    foreach (MultithreadedTestAttribute attr in multiThreadedTestAttrs)
-                    {
-                        if (TestMetrics.IncludeTest(attr))
-                            tests.Add(new MultithreadedTest(attr, m, t, setupMethods, cleanupMethods));
-                    }
-
-                    // add multi-threaded (with thread pool) tests to the list
-                    ThreadPoolTestAttribute[] threadPoolTestAttrs = (ThreadPoolTestAttribute[])m.GetCustomAttributes(typeof(ThreadPoolTestAttribute), true);
-                    foreach (ThreadPoolTestAttribute attr in threadPoolTestAttrs)
-                    {
-                        if (TestMetrics.IncludeTest(attr))
-                            tests.Add(new ThreadPoolTest(attr, m, t, setupMethods, cleanupMethods));
                     }
                 }
             }
