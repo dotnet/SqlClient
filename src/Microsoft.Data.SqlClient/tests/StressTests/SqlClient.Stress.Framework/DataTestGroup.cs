@@ -158,10 +158,8 @@ namespace Stress.Data
                     // MultiSubnetFailover=true only works with TCP/IP protocol and will result in exception when using with named pipes.
                     return false;
                 }
-                else
-                {
-                    throw e;
-                }
+
+                throw;
             }
         }
 
