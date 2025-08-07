@@ -10,7 +10,7 @@
     <TargetGroup Condition="'$(TargetGroup)' == ''">netcoreapp</TargetGroup>
   </PropertyGroup>
 
-  <!-- Special Files ======================================================= -->
+  <!-- Special Files ====================================================== -->
   <ItemGroup>
     <None Update="StressTest.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
