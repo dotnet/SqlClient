@@ -861,9 +861,6 @@ namespace Microsoft.Data.ProviderBase
         /// <summary>
         /// Ensure that this connection cannot be put back into the pool.
         /// </summary>
-        #if NETFRAMEWORK
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-        #endif
         protected internal void DoomThisConnection()
         {
             IsConnectionDoomed = true;

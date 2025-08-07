@@ -539,9 +539,6 @@ namespace Microsoft.Data.SqlClient
             _parserLock.Wait(canReleaseFromAnyThread: false);
             ThreadHasParserLockForClose = true;   // In case of error, let ourselves know that we already own the parser lock
 
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
             try
             {
                 _timeout = TimeoutTimer.StartSecondsTimeout(connectionOptions.ConnectTimeout);
@@ -572,21 +569,6 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                 }
-            }
-            catch (System.OutOfMemoryException)
-            {
-                DoomThisConnection();
-                throw;
-            }
-            catch (System.StackOverflowException)
-            {
-                DoomThisConnection();
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException)
-            {
-                DoomThisConnection();
-                throw;
             }
             finally
             {
@@ -2136,39 +2118,18 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-#if NETFRAMEWORK
-                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                try
+                Task reconnectTask = parent.ValidateAndReconnect(() =>
                 {
-                    Task reconnectTask = parent.ValidateAndReconnect(() =>
-                    {
-                        ThreadHasParserLockForClose = false;
-                        _parserLock.Release();
-                        releaseConnectionLock = false;
-                    }, timeout);
-                    if (reconnectTask != null)
-                    {
-                        AsyncHelper.WaitForCompletion(reconnectTask, timeout);
-                        return true;
-                    }
-                    return false;
-                }
-                catch (System.OutOfMemoryException)
+                    ThreadHasParserLockForClose = false;
+                    _parserLock.Release();
+                    releaseConnectionLock = false;
+                }, timeout);
+                if (reconnectTask != null)
                 {
-                    DoomThisConnection();
-                    throw;
+                    AsyncHelper.WaitForCompletion(reconnectTask, timeout);
+                    return true;
                 }
-                catch (System.StackOverflowException)
-                {
-                    DoomThisConnection();
-                    throw;
-                }
-                catch (System.Threading.ThreadAbortException)
-                {
-                    DoomThisConnection();
-                    throw;
-                }
+                return false;
             }
             finally
             {
@@ -2475,10 +2436,6 @@ namespace Microsoft.Data.SqlClient
             // Variable which indicates if we did indeed manage to acquire the lock on the authentication context, to try update it.
             bool authenticationContextLocked = false;
 
-            // Prepare CER to ensure the lock on authentication context is released.
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
             try
             {
                 // Try to obtain a lock on the context. If acquired, this thread got the opportunity to update.

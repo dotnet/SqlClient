@@ -180,49 +180,9 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
                         if (connectionToDoom != null || connectionToAbort != null)
                         {
-                            RuntimeHelpers.PrepareConstrainedRegions();
                             try
                             {
                                 onSuccess();
-                            }
-                            catch (System.OutOfMemoryException e)
-                            {
-                                if (connectionToDoom != null)
-                                {
-                                    connectionToDoom.DoomThisConnection();
-                                }
-                                else
-                                {
-                                    connectionToAbort.Abort(e);
-                                }
-                                completion.SetException(e);
-                                throw;
-                            }
-                            catch (System.StackOverflowException e)
-                            {
-                                if (connectionToDoom != null)
-                                {
-                                    connectionToDoom.DoomThisConnection();
-                                }
-                                else
-                                {
-                                    connectionToAbort.Abort(e);
-                                }
-                                completion.SetException(e);
-                                throw;
-                            }
-                            catch (System.Threading.ThreadAbortException e)
-                            {
-                                if (connectionToDoom != null)
-                                {
-                                    connectionToDoom.DoomThisConnection();
-                                }
-                                else
-                                {
-                                    connectionToAbort.Abort(e);
-                                }
-                                completion.SetException(e);
-                                throw;
                             }
                             catch (Exception e)
                             {
@@ -312,51 +272,9 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (connectionToDoom != null || connectionToAbort != null)
                     {
-#if NETFRAMEWORK
-                        RuntimeHelpers.PrepareConstrainedRegions();
-#endif
                         try
                         {
                             onSuccess(state2);
-                        }
-                        catch (System.OutOfMemoryException e)
-                        {
-                            if (connectionToDoom != null)
-                            {
-                                connectionToDoom.DoomThisConnection();
-                            }
-                            else
-                            {
-                                connectionToAbort.Abort(e);
-                            }
-                            completion.SetException(e);
-                            throw;
-                        }
-                        catch (System.StackOverflowException e)
-                        {
-                            if (connectionToDoom != null)
-                            {
-                                connectionToDoom.DoomThisConnection();
-                            }
-                            else
-                            {
-                                connectionToAbort.Abort(e);
-                            }
-                            completion.SetException(e);
-                            throw;
-                        }
-                        catch (System.Threading.ThreadAbortException e)
-                        {
-                            if (connectionToDoom != null)
-                            {
-                                connectionToDoom.DoomThisConnection();
-                            }
-                            else
-                            {
-                                connectionToAbort.Abort(e);
-                            }
-                            completion.SetException(e);
-                            throw;
                         }
                         catch (Exception e)
                         {

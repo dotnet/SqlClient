@@ -332,10 +332,7 @@ namespace Microsoft.Data.SqlClient
             bool mustRelease = false;
             bool mustClearBuffer = false;
             IntPtr clearPassword = IntPtr.Zero;
-
-            // provides a guaranteed finally block – without this it isn’t guaranteed – non-
-            // interruptible by fatal exceptions
-            RuntimeHelpers.PrepareConstrainedRegions();
+            
             try
             {
                 unsafe
@@ -348,9 +345,6 @@ namespace Microsoft.Data.SqlClient
                             // SecureString is used
                             if (passwords[i] != null)
                             {
-                                // provides a guaranteed finally block – without this it isn’t
-                                // guaranteed – non-interruptible by fatal exceptions
-                                RuntimeHelpers.PrepareConstrainedRegions();
                                 try
                                 {
                                     // ============================================================
@@ -409,7 +403,6 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Make sure that we clear the security sensitive information
-                // data->Initialize() is not safe to call under CER
                 if (mustClearBuffer)
                 {
                     for (int i = 0; i < data.Length; ++i)
