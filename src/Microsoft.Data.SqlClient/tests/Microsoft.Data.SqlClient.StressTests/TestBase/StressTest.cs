@@ -9,7 +9,7 @@ using System.Reflection.Emit;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.StressTests.TestBase
 {
     internal class StressTest : TestBase
     {

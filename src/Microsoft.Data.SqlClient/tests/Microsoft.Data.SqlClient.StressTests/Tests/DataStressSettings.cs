@@ -5,7 +5,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Stress.Data
+namespace Microsoft.Data.SqlClient.StressTests.Tests
 {
     /// <summary>
     /// Loads dataStressSettings section from Stress.Data.Framework.dll.config (App.config in source tree)

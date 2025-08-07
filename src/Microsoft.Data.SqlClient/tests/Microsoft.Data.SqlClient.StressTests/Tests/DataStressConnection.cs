@@ -7,8 +7,9 @@ using System.Data.Common;
 using Microsoft.Data.SqlClient;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.StressTests.Utilities;
 
-namespace Stress.Data
+namespace Microsoft.Data.SqlClient.StressTests.Tests
 {
     public class DataStressConnection : IDisposable
     {

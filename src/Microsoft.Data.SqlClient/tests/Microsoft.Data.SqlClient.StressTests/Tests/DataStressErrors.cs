@@ -5,7 +5,7 @@
 using System;
 using System.Diagnostics;
 
-namespace Stress.Data
+namespace Microsoft.Data.SqlClient.StressTests.Tests
 {
     public enum ErrorHandlingAction
     {

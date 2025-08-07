@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.StressTests.Runner
 {
     public class DeadlockDetectionTaskScheduler : TaskScheduler
     {

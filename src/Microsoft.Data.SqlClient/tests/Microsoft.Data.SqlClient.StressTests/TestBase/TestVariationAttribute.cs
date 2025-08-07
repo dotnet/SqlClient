@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.StressTests.TestBase
 {
     [AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = true)]
     public class TestVariationAttribute : Attribute

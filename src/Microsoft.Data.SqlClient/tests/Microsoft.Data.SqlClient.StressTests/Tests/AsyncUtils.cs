@@ -3,14 +3,13 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using System.Xml;
-using DPStressHarness;
+using Microsoft.Data.SqlClient.StressTests.Runner;
 
-namespace Stress.Data
+namespace Microsoft.Data.SqlClient.StressTests.Tests
 {
     public enum SyncAsyncMode
     {

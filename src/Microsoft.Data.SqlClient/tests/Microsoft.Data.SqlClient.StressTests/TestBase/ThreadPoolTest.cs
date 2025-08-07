@@ -9,8 +9,9 @@ using System.Reflection.Emit;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Microsoft.Data.SqlClient.StressTests.Runner;
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.StressTests.TestBase
 {
     internal class ThreadPoolTest : TestBase
     {

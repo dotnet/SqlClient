@@ -8,7 +8,7 @@ using System.Diagnostics;
 
 #pragma warning disable 618
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.StressTests.Utilities
 {
     public class VersionUtil
     {

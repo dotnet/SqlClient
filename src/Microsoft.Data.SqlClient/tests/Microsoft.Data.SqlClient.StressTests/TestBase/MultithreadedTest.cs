@@ -7,8 +7,9 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Diagnostics;
 using System.Threading;
+using Microsoft.Data.SqlClient.StressTests.Runner;
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.StressTests.TestBase
 {
     internal class MultiThreadedTest : TestBase
     {

@@ -3,17 +3,16 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Data;
+using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Diagnostics;
-using System.Data;
-using Microsoft.Data.SqlClient;
 using System.Xml;
+using Microsoft.Data.SqlClient.StressTests.TestBase;
+using Microsoft.Data.SqlClient.StressTests.Utilities;
 
-using DPStressHarness;
-using System.IO;
-
-namespace Stress.Data.SqlClient
+namespace Microsoft.Data.SqlClient.StressTests.Tests
 {
     public class SqlClientTestGroup : DataTestGroup
     {

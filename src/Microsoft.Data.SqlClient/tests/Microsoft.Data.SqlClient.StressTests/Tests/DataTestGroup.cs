@@ -6,15 +6,15 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using Microsoft.Data.SqlClient;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.StressTests.Runner;
+using Microsoft.Data.SqlClient.StressTests.TestBase;
+using Microsoft.Data.SqlClient.StressTests.Utilities;
 
-using DPStressHarness;
-
-namespace Stress.Data
+namespace Microsoft.Data.SqlClient.StressTests.Tests
 {
     /// <summary>
     ///  basic set of tests to run on each managed provider

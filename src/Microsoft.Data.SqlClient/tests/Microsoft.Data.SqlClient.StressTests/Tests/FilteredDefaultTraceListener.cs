@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
-namespace Stress.Data.SqlClient
+namespace Microsoft.Data.SqlClient.StressTests.Tests
 {
     /// <summary>
     /// A DefaultTraceListener that can filter out given asserts

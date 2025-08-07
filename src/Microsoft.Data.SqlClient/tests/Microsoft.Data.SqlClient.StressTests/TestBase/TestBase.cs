@@ -5,8 +5,9 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Microsoft.Data.SqlClient.StressTests.Runner;
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.StressTests.TestBase
 {
     public abstract class TestBase
     {

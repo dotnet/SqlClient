@@ -5,8 +5,9 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Microsoft.Data.SqlClient.StressTests.TestBase;
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.StressTests.Runner
 {
     internal class TestFinder
     {
@@ -18,9 +19,9 @@ namespace DPStressHarness
             set { s_assemblyName = value; }
         }
 
-        public static IEnumerable<TestBase> GetTests(Assembly assembly)
+        public static IEnumerable<TestBase.TestBase> GetTests(Assembly assembly)
         {
-            List<TestBase> tests = new List<TestBase>();
+            List<TestBase.TestBase> tests = new List<TestBase.TestBase>();
 
 
             Type[] typesInModule = null;

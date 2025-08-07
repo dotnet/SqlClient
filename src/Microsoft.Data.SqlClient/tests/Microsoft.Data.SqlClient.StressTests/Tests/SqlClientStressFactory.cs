@@ -4,10 +4,8 @@
 
 using System;
 using System.Diagnostics;
-using Microsoft.Data.SqlClient;
-using Microsoft.Test.Data.SqlClient;
 
-namespace Stress.Data.SqlClient
+namespace Microsoft.Data.SqlClient.StressTests.Tests
 {
     public class SqlClientStressFactory : DataStressFactory
     {

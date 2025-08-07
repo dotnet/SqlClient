@@ -12,7 +12,7 @@ using System.Net;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Microsoft.Test.Data.SqlClient
+namespace Microsoft.Data.SqlClient.StressTests.Tests
 {
     /// <summary>
     /// allows user to manipulate %windir%\system32\drivers\etc\hosts

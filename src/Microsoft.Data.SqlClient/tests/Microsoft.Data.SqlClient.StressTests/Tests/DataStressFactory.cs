@@ -10,8 +10,9 @@ using System.Threading;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using Microsoft.Data.SqlClient.StressTests.Utilities;
 
-namespace Stress.Data
+namespace Microsoft.Data.SqlClient.StressTests.Tests
 {
     /// <summary>
     /// Base class to generate utility objects required for stress tests to run. For example: connection strings, command texts, 

@@ -6,8 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.StressTests.Utilities
 {
+    // @TODO: Replace with usages of console streams.
     public static class FakeConsole
     {
         public static void Write(string value)

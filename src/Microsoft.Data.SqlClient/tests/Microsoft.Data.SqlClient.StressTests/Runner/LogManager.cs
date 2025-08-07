@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.StressTests.Runner
 {
     public class LogManager: IDisposable
     {

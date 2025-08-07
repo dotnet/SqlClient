@@ -6,8 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using Microsoft.Data.SqlClient.StressTests.Runner;
 
-namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
+namespace Microsoft.Data.SqlClient.StressTests
 {
     class Program
     {
@@ -27,7 +28,7 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
         };
 
         private static RunMode s_mode = RunMode.RunAll;
-        private static IEnumerable<TestBase> s_tests;
+        private static IEnumerable<TestBase.TestBase> s_tests;
         private static StressEngine s_eng;
         private static string s_error;
 

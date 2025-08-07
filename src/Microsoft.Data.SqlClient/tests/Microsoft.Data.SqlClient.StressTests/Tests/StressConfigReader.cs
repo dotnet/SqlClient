@@ -6,9 +6,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using System.Xml.XPath;
-using static Stress.Data.DataStressSettings;
 
-namespace Stress.Data
+namespace Microsoft.Data.SqlClient.StressTests.Tests
 {
     /// <summary>
     /// Reads the configuration from a configuration file and provides the configuration
@@ -18,7 +17,7 @@ namespace Stress.Data
         private string _configFilePath;
         private const string dataStressSettings = "dataStressSettings";
         private const string sourcePath = "//dataStressSettings/sources/source";
-        internal List<DataSourceElement> Sources
+        internal List<DataStressSettings.DataSourceElement> Sources
         {
             get; private set;
         }
@@ -33,7 +32,7 @@ namespace Stress.Data
             XmlReader reader = null;
             try
             {
-                Sources = new List<DataSourceElement>();
+                Sources = new List<DataStressSettings.DataSourceElement>();
                 reader = CreateReader();
 
                 XPathDocument xpathDocument = new XPathDocument(reader);
@@ -64,7 +63,7 @@ namespace Stress.Data
                     bool encrypt;
                     encrypt = bool.TryParse(sourceNavigator.GetAttribute("encrypt", nsUri), out encrypt) ? encrypt : false;
 
-                    DataSourceElement element = new DataSourceElement(sourceName, sourceType, null, dataSource, database, user, password, ds_isDefault: isDefault, ds_isLocal: isLocal, disableMultiSubnetFailoverSetup: disableMultiSubnetFailover, disableNamedPipes: disableNamedPipes, encrypt: encrypt);
+                    DataStressSettings.DataSourceElement element = new DataStressSettings.DataSourceElement(sourceName, sourceType, null, dataSource, database, user, password, ds_isDefault: isDefault, ds_isLocal: isLocal, disableMultiSubnetFailoverSetup: disableMultiSubnetFailover, disableNamedPipes: disableNamedPipes, encrypt: encrypt);
                     Sources.Add(element);
                 }
             }

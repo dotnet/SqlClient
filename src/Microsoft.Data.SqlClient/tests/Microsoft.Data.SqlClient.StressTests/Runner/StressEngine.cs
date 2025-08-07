@@ -6,8 +6,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics;
+using Microsoft.Data.SqlClient.StressTests.TestBase;
+using Microsoft.Data.SqlClient.StressTests.Utilities;
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.StressTests.Runner
 {
     public class StressEngine
     {
@@ -23,7 +25,7 @@ namespace DPStressHarness
 
         public RecordedExceptions Exceptions => _exceptions;
 
-        public StressEngine(int threads, int duration, IEnumerable<TestBase> allTests, int seed)
+        public StressEngine(int threads, int duration, IEnumerable<TestBase.TestBase> allTests, int seed)
         {
             if (seed != 0)
             {
@@ -47,7 +49,7 @@ namespace DPStressHarness
 
             List<StressTest> tmpWeightedLookup = new List<StressTest>();
 
-            foreach (TestBase t in allTests)
+            foreach (TestBase.TestBase t in allTests)
             {
                 if (t is StressTest)
                 {

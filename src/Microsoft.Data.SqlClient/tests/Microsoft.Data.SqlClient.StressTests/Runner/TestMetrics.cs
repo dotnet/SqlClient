@@ -6,8 +6,10 @@ using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Reflection;
+using Microsoft.Data.SqlClient.StressTests.TestBase;
+using Microsoft.Data.SqlClient.StressTests.Utilities;
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.StressTests.Runner
 {
     public static class TestMetrics
     {
