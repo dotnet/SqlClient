@@ -13,6 +13,12 @@ namespace Microsoft.Data.SqlClient.StressTests.TestBase
 {
     internal class Test : TestBase
     {
+        #region Constants
+
+        private const string MetricNameElapsedSeconds = "Elapsed Seconds";
+
+        #endregion
+
         private TestAttribute _attr;
         private int _overrideIterations = -1;
         private int _overrideWarmup = -1;
@@ -64,7 +70,7 @@ namespace Microsoft.Data.SqlClient.StressTests.TestBase
 
             LogStandardMetrics(logger);
 
-            logger.AddTestMetric(Constants.TEST_METRIC_ELAPSED_SECONDS, string.Format("{0:F2}", TestMetrics.ElapsedSeconds), "sec", false);
+            logger.AddTestMetric(MetricNameElapsedSeconds, string.Format("{0:F2}", TestMetrics.ElapsedSeconds), "sec", false);
 
             logger.Save();
 

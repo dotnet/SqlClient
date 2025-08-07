@@ -15,6 +15,12 @@ namespace Microsoft.Data.SqlClient.StressTests.TestBase
 {
     internal class ThreadPoolTest : TestBase
     {
+        #region Constants
+
+        private const string MetricNameRps = "Requests Per Second";
+
+        #endregion
+
         private ThreadPoolTestAttribute _attr;
         public static bool _continue;
         public static int _threadsRunning;
@@ -160,7 +166,7 @@ namespace Microsoft.Data.SqlClient.StressTests.TestBase
 
             LogStandardMetrics(logger);
 
-            logger.AddTestMetric(Constants.TEST_METRIC_RPS, string.Format("{0:F2}", rps), "rps", true);
+            logger.AddTestMetric(MetricNameRps, string.Format("{0:F2}", rps), "rps", true);
 
             logger.Save();
 

@@ -11,6 +11,21 @@ namespace Microsoft.Data.SqlClient.StressTests.TestBase
 {
     public abstract class TestBase
     {
+        #region Constants
+
+        private const string MetricNameTestAssembly = "Test Assembly";
+        private const string MetricNameTestImprovement = "Improvement";
+        private const string MetricNameTestOwner = "Owner";
+        private const string MetricNameTestCategory = "Category";
+        private const string MetricNameTestPriority = "Priority";
+        private const string MetricNameApplicationName = "Application Name";
+        private const string MetricNameTargetAssemblyName = "Target Assembly Name";
+        private const string MetricNamePeakWorkingSet = "Peak Working Set";
+        private const string MetricNameWorkingSet = "Working Set";
+        private const string MetricNamePrivateBytes = "Private Bytes";
+
+        #endregion
+
         private TestAttributeBase _attr;
         private string _variationSuffix = "";
 
@@ -144,21 +159,21 @@ namespace Microsoft.Data.SqlClient.StressTests.TestBase
 
         protected void LogStandardMetrics(Logger logger)
         {
-            logger.AddTestMetric(Constants.TEST_METRIC_TEST_ASSEMBLY, _testMethod.Module.FullyQualifiedName, null);
-            logger.AddTestMetric(Constants.TEST_METRIC_TEST_IMPROVEMENT, _attr.Improvement, null);
-            logger.AddTestMetric(Constants.TEST_METRIC_TEST_OWNER, _attr.Owner, null);
-            logger.AddTestMetric(Constants.TEST_METRIC_TEST_CATEGORY, _attr.Category, null);
-            logger.AddTestMetric(Constants.TEST_METRIC_TEST_PRIORITY, _attr.Priority.ToString(), null);
-            logger.AddTestMetric(Constants.TEST_METRIC_APPLICATION_NAME, _attr.Improvement, null);
+            logger.AddTestMetric(MetricNameTestAssembly, _testMethod.Module.FullyQualifiedName, null);
+            logger.AddTestMetric(MetricNameTestImprovement, _attr.Improvement, null);
+            logger.AddTestMetric(MetricNameTestOwner, _attr.Owner, null);
+            logger.AddTestMetric(MetricNameTestCategory, _attr.Category, null);
+            logger.AddTestMetric(MetricNameTestPriority, _attr.Priority.ToString(), null);
+            logger.AddTestMetric(MetricNameApplicationName, _attr.Improvement, null);
 
             if (TestMetrics.TargetAssembly != null)
             {
-                logger.AddTestMetric(Constants.TEST_METRIC_TARGET_ASSEMBLY_NAME, (new AssemblyName(TestMetrics.TargetAssembly.FullName)).Name, null);
+                logger.AddTestMetric(MetricNameTargetAssemblyName, (new AssemblyName(TestMetrics.TargetAssembly.FullName)).Name, null);
             }
 
-            logger.AddTestMetric(Constants.TEST_METRIC_PEAK_WORKING_SET, string.Format("{0}", TestMetrics.PeakWorkingSet), "bytes");
-            logger.AddTestMetric(Constants.TEST_METRIC_WORKING_SET, string.Format("{0}", TestMetrics.WorkingSet), "bytes");
-            logger.AddTestMetric(Constants.TEST_METRIC_PRIVATE_BYTES, string.Format("{0}", TestMetrics.PrivateBytes), "bytes");
+            logger.AddTestMetric(MetricNamePeakWorkingSet, string.Format("{0}", TestMetrics.PeakWorkingSet), "bytes");
+            logger.AddTestMetric(MetricNameWorkingSet, string.Format("{0}", TestMetrics.WorkingSet), "bytes");
+            logger.AddTestMetric(MetricNamePrivateBytes, string.Format("{0}", TestMetrics.PrivateBytes), "bytes");
         }
     }
 }

@@ -11,6 +11,30 @@ namespace Microsoft.Data.SqlClient.StressTests.Runner
 {
     public class Logger
     {
+        #region Constants
+
+        private const string MetricNameProcessorCount = "Processor Count";
+        private const string MetricNameDnsHostName = "DNS Host Name";
+        private const string MetricNameIdentityName = "Identity Name";
+        private const string MetricNameProcessMachineName = "Process Machine Name";
+        private const string XmlAttributeRunBranch = "branch";
+        private const string XmlAttributeRunLabel = "label";
+        private const string XmlAttributeRunMetricName = "name";
+        private const string XmlAttributeRunMilestone = "milestone";
+        private const string XmlAttributeRunOfficial = "official";
+        private const string XmlAttributeRunStartTime = "startTime";
+        private const string XmlAttributeTestMetricIsHigherBetter = "isHigherBetter";
+        private const string XmlAttributeTestMetricName = "name";
+        private const string XmlAttributeTestMetricUnits = "units";
+        private const string XmlAttributeTestName = "name";
+        private const string XmlElementException = "Exception";
+        private const string XmlElementRun = "Run";
+        private const string XmlElementRunMetric = "RunMetric";
+        private const string XmlElementTest = "Test";
+        private const string XmlElementTestMetric = "TestMetric";
+
+        #endregion
+
         private const string _resultDocumentName = "perfout.xml";
 
         private XmlDocument _doc;
@@ -24,10 +48,10 @@ namespace Microsoft.Data.SqlClient.StressTests.Runner
             _runElem = GetRunElement(_doc, runLabel, DateTime.Now.ToString(), isOfficial, milestone, branch);
 
             Process currentProcess = Process.GetCurrentProcess();
-            AddRunMetric(Constants.RUN_PROCESS_MACHINE_NAME, currentProcess.MachineName);
-            AddRunMetric(Constants.RUN_DNS_HOST_NAME, System.Net.Dns.GetHostName());
-            AddRunMetric(Constants.RUN_IDENTITY_NAME, Environment.UserName);
-            AddRunMetric(Constants.RUN_METRIC_PROCESSOR_COUNT, Environment.ProcessorCount.ToString());
+            AddRunMetric(MetricNameProcessMachineName, currentProcess.MachineName);
+            AddRunMetric(MetricNameDnsHostName, System.Net.Dns.GetHostName());
+            AddRunMetric(MetricNameIdentityName, Environment.UserName);
+            AddRunMetric(MetricNameProcessorCount, Environment.ProcessorCount.ToString());
         }
 
         public void AddRunMetric(string metricName, string metricValue)
@@ -105,37 +129,37 @@ namespace Microsoft.Data.SqlClient.StressTests.Runner
             foreach (XmlNode node in doc.DocumentElement.ChildNodes)
             {
                 if (node.NodeType == XmlNodeType.Element &&
-                     node.Name.Equals(Constants.XML_ELEM_RUN) &&
-                     ((XmlElement)node).GetAttribute(Constants.XML_ATTR_RUN_LABEL).Equals(label))
+                     node.Name.Equals(XmlElementRun) &&
+                     ((XmlElement)node).GetAttribute(XmlAttributeRunLabel).Equals(label))
                 {
                     return (XmlElement)node;
                 }
             }
 
-            XmlElement runElement = doc.CreateElement(Constants.XML_ELEM_RUN);
+            XmlElement runElement = doc.CreateElement(XmlElementRun);
 
-            XmlAttribute attrLabel = doc.CreateAttribute(Constants.XML_ATTR_RUN_LABEL);
+            XmlAttribute attrLabel = doc.CreateAttribute(XmlAttributeRunLabel);
             attrLabel.Value = label;
             runElement.Attributes.Append(attrLabel);
 
-            XmlAttribute attrStartTime = doc.CreateAttribute(Constants.XML_ATTR_RUN_START_TIME);
+            XmlAttribute attrStartTime = doc.CreateAttribute(XmlAttributeRunStartTime);
             attrStartTime.Value = startTime;
             runElement.Attributes.Append(attrStartTime);
 
-            XmlAttribute attrOfficial = doc.CreateAttribute(Constants.XML_ATTR_RUN_OFFICIAL);
+            XmlAttribute attrOfficial = doc.CreateAttribute(XmlAttributeRunOfficial);
             attrOfficial.Value = isOfficial.ToString();
             runElement.Attributes.Append(attrOfficial);
 
             if (milestone != null)
             {
-                XmlAttribute attrMilestone = doc.CreateAttribute(Constants.XML_ATTR_RUN_MILESTONE);
+                XmlAttribute attrMilestone = doc.CreateAttribute(XmlAttributeRunMilestone);
                 attrMilestone.Value = milestone;
                 runElement.Attributes.Append(attrMilestone);
             }
 
             if (branch != null)
             {
-                XmlAttribute attrBranch = doc.CreateAttribute(Constants.XML_ATTR_RUN_BRANCH);
+                XmlAttribute attrBranch = doc.CreateAttribute(XmlAttributeRunBranch);
                 attrBranch.Value = branch;
                 runElement.Attributes.Append(attrBranch);
             }
@@ -152,16 +176,16 @@ namespace Microsoft.Data.SqlClient.StressTests.Runner
             // If it has, it's from a previous test in the same run, so just return.
             foreach (XmlNode node in runElement.ChildNodes)
             {
-                if (node.NodeType == XmlNodeType.Element && node.Name.Equals(Constants.XML_ELEM_RUN_METRIC))
+                if (node.NodeType == XmlNodeType.Element && node.Name.Equals(XmlElementRunMetric))
                 {
-                    if (node.Attributes[Constants.XML_ATTR_RUN_METRIC_NAME].Value.Equals(name))
+                    if (node.Attributes[XmlAttributeRunMetricName].Value.Equals(name))
                         return;
                 }
             }
 
-            XmlElement runMetricElement = runElement.OwnerDocument.CreateElement(Constants.XML_ELEM_RUN_METRIC);
+            XmlElement runMetricElement = runElement.OwnerDocument.CreateElement(XmlElementRunMetric);
 
-            XmlAttribute attrName = runElement.OwnerDocument.CreateAttribute(Constants.XML_ATTR_RUN_METRIC_NAME);
+            XmlAttribute attrName = runElement.OwnerDocument.CreateAttribute(XmlAttributeRunMetricName);
             attrName.Value = name;
             runMetricElement.Attributes.Append(attrName);
 
@@ -174,9 +198,9 @@ namespace Microsoft.Data.SqlClient.StressTests.Runner
 
         private static XmlElement AddTestElement(XmlElement runElement, string name)
         {
-            XmlElement testElement = runElement.OwnerDocument.CreateElement(Constants.XML_ELEM_TEST);
+            XmlElement testElement = runElement.OwnerDocument.CreateElement(XmlElementTest);
 
-            XmlAttribute attrName = runElement.OwnerDocument.CreateAttribute(Constants.XML_ATTR_TEST_NAME);
+            XmlAttribute attrName = runElement.OwnerDocument.CreateAttribute(XmlAttributeTestName);
             attrName.Value = name;
             testElement.Attributes.Append(attrName);
 
@@ -188,22 +212,22 @@ namespace Microsoft.Data.SqlClient.StressTests.Runner
 
         private static void AddTestMetricElement(XmlElement testElement, string name, string value, string units, bool? isHigherBetter)
         {
-            XmlElement testMetricElement = testElement.OwnerDocument.CreateElement(Constants.XML_ELEM_TEST_METRIC);
+            XmlElement testMetricElement = testElement.OwnerDocument.CreateElement(XmlElementTestMetric);
 
-            XmlAttribute attrName = testElement.OwnerDocument.CreateAttribute(Constants.XML_ATTR_TEST_METRIC_NAME);
+            XmlAttribute attrName = testElement.OwnerDocument.CreateAttribute(XmlAttributeTestMetricName);
             attrName.Value = name;
             testMetricElement.Attributes.Append(attrName);
 
             if (units != null)
             {
-                XmlAttribute attrUnits = testElement.OwnerDocument.CreateAttribute(Constants.XML_ATTR_TEST_METRIC_UNITS);
+                XmlAttribute attrUnits = testElement.OwnerDocument.CreateAttribute(XmlAttributeTestMetricUnits);
                 attrUnits.Value = units;
                 testMetricElement.Attributes.Append(attrUnits);
             }
 
             if (isHigherBetter.HasValue)
             {
-                XmlAttribute attrIsHigherBetter = testElement.OwnerDocument.CreateAttribute(Constants.XML_ATTR_TEST_METRIC_ISHIGHERBETTER);
+                XmlAttribute attrIsHigherBetter = testElement.OwnerDocument.CreateAttribute(XmlAttributeTestMetricIsHigherBetter);
                 attrIsHigherBetter.Value = isHigherBetter.ToString();
                 testMetricElement.Attributes.Append(attrIsHigherBetter);
             }
@@ -216,7 +240,7 @@ namespace Microsoft.Data.SqlClient.StressTests.Runner
 
         private static void AddTestExceptionElement(XmlElement testElement, string exceptionData)
         {
-            XmlElement testFailureElement = testElement.OwnerDocument.CreateElement(Constants.XML_ELEM_EXCEPTION);
+            XmlElement testFailureElement = testElement.OwnerDocument.CreateElement(XmlElementException);
             XmlText txtNode = testFailureElement.OwnerDocument.CreateTextNode(exceptionData);
             testFailureElement.AppendChild(txtNode);
 
