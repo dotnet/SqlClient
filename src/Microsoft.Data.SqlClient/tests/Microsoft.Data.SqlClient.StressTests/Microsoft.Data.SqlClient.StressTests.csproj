@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net9.0;net481</TargetFrameworks>
-    <Nullable>warnings</Nullable>
+    <Nullable>disable</Nullable><!-- @TODO: Temporary! Change back to warnings someday -->
   </PropertyGroup>
   
   <PropertyGroup>
