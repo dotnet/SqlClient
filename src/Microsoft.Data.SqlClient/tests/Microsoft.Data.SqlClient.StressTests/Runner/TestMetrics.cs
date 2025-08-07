@@ -342,5 +342,13 @@ namespace Microsoft.Data.SqlClient.StressTests.Runner
             get { return s_printMethodName; }
             set { s_printMethodName = value; }
         }
+
+        public static T GetOverrideOrFallback<T>(string propName, T fallback)
+            where T : IConvertible
+        {
+            return Overrides.TryGetValue(propName, out string overrideStr)
+                ? (T)Convert.ChangeType(overrideStr, typeof(T))
+                : fallback;
+        }
     }
 }

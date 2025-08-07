@@ -10,67 +10,49 @@ namespace Microsoft.Data.SqlClient.StressTests.TestBase
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     public class MultithreadedTestAttribute : TestAttributeBase
     {
+        #region Constants
+
+        private const string OverridePropertyNameTestDuration = "TestDuration";
+        private const string OverridePropertyNameThreads = "Threads";
+        private const string OverridePropertyNameWarmupDuration = "WarmupDuration";
+
+        #endregion
+
+        #region Member Variables
+
         private int _warmupDuration = 60;
         private int _testDuration = 60;
         private int _threads = 16;
+
+        #endregion
 
         public MultithreadedTestAttribute(string title)
             : base(title)
         {
         }
 
-        public int WarmupDuration
-        {
-            get
-            {
-                string propName = "WarmupDuration";
+        // @TODO: Move override checking to the test itself, that way we can make TestMetrics not static
 
-                if (TestMetrics.Overrides.ContainsKey(propName))
-                {
-                    return int.Parse(TestMetrics.Overrides[propName]);
-                }
-                else
-                {
-                    return _warmupDuration;
-                }
-            }
-            set { _warmupDuration = value; }
-        }
+        #region Properties
 
         public int TestDuration
         {
-            get
-            {
-                string propName = "TestDuration";
-
-                if (TestMetrics.Overrides.ContainsKey(propName))
-                {
-                    return int.Parse(TestMetrics.Overrides[propName]);
-                }
-                else
-                {
-                    return _testDuration;
-                }
-            }
-            set { _testDuration = value; }
+            get => TestMetrics.GetOverrideOrFallback(OverridePropertyNameTestDuration, _testDuration);
+            set => _testDuration = value;
         }
 
         public int Threads
         {
-            get
-            {
-                string propName = "Threads";
-
-                if (TestMetrics.Overrides.ContainsKey(propName))
-                {
-                    return int.Parse(TestMetrics.Overrides[propName]);
-                }
-                else
-                {
-                    return _threads;
-                }
-            }
-            set { _threads = value; }
+            get => TestMetrics.GetOverrideOrFallback(OverridePropertyNameThreads, _threads);
+            set => _threads = value;
         }
+
+        public int WarmupDuration
+        {
+            get => TestMetrics.GetOverrideOrFallback(OverridePropertyNameWarmupDuration, _warmupDuration);
+            set => _warmupDuration = value;
+        }
+
+        #endregion
     }
 }
