@@ -10,47 +10,29 @@ namespace Microsoft.Data.SqlClient.StressTests.TestBase
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     public class TestAttribute : TestAttributeBase
     {
+        private const string OverridePropertyNameTestIterations = "TestIterations";
+        private const string OverridePropertyNameWarmupIterations = "WarmupIterations";
+
         private int _warmupIterations = 0;
         private int _testIterations = 1;
 
-        public TestAttribute(string title) : base(title)
+        public TestAttribute(string title)
+            : base(title)
         {
+        }
+
+        // @TODO: Move override checking to the test itself, that way we can make TestMetrics not static
+
+        public int TestIterations
+        {
+            get => TestMetrics.GetOverrideOrFallback(OverridePropertyNameTestIterations, _testIterations);
+            set => _testIterations = value;
         }
 
         public int WarmupIterations
         {
-            get
-            {
-                string propName = "WarmupIterations";
-
-                if (TestMetrics.Overrides.ContainsKey(propName))
-                {
-                    return int.Parse(TestMetrics.Overrides[propName]);
-                }
-                else
-                {
-                    return _warmupIterations;
-                }
-            }
-            set { _warmupIterations = value; }
-        }
-
-        public int TestIterations
-        {
-            get
-            {
-                string propName = "TestIterations";
-
-                if (TestMetrics.Overrides.ContainsKey(propName))
-                {
-                    return int.Parse(TestMetrics.Overrides[propName]);
-                }
-                else
-                {
-                    return _testIterations;
-                }
-            }
-            set { _testIterations = value; }
+            get => TestMetrics.GetOverrideOrFallback(OverridePropertyNameWarmupIterations, _warmupIterations);
+            set => _warmupIterations = value;
         }
     }
 }
