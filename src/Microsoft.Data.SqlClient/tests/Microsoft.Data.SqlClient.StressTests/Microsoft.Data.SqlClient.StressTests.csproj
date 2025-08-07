@@ -9,6 +9,13 @@
     <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
     <TargetGroup Condition="'$(TargetGroup)' == ''">netcoreapp</TargetGroup>
   </PropertyGroup>
+
+  <!-- Special Files ======================================================= -->
+  <ItemGroup>
+    <None Update="StressTest.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
   
   <!-- References ========================================================= -->
   <ItemGroup>
@@ -21,10 +28,5 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient"
                       Condition="$(ReferenceType.Contains('Package'))" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="Tests\StressTest.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 </Project>
