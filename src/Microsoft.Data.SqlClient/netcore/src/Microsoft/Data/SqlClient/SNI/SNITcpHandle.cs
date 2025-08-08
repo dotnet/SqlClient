@@ -911,7 +911,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         // on macOS. There's isn't much we can do about it
                         // though, so just log and move on.
                         SqlClientEventSource.Log.TrySNITraceEvent(
-                            nameof(SniTcpHandle),
+                            nameof(SNITCPHandle),
                             EventType.ERR,
                             "Connection Id {0}, Failed to reset socket " +
                             "receive timeout to {1}: {2}",
