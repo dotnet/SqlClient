@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>stresstest</AssemblyName>
-    <TargetFrameworks>net9.0;net48</TargetFrameworks>
+    <TargetFrameworks>net481;net9.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 

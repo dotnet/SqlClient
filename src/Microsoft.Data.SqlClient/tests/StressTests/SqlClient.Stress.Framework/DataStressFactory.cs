@@ -789,7 +789,7 @@ namespace Stress.Data
                         }
                         else
                         {
-                            throw de;
+                            throw;
                         }
                     }
 
@@ -808,7 +808,7 @@ namespace Stress.Data
                         }
                         else
                         {
-                            throw de;
+                            throw;
                         }
                     }
 
