@@ -223,7 +223,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (!string.IsNullOrEmpty(parameters.UserId))
                     {
+                        // The AcquireTokenByIntegratedWindowsAuth method is marked as obsolete in MSAL.NET
+                        // but it is still a supported way to acquire tokens for Active Directory Integrated authentication.
+#pragma warning disable CS0618 // Type or member is obsolete
                         result = await app.AcquireTokenByIntegratedWindowsAuth(scopes)
+#pragma warning restore CS0618 // Type or member is obsolete
                             .WithCorrelationId(parameters.ConnectionId)
                             .WithUsername(parameters.UserId)
                             .ExecuteAsync(cancellationToken: cts.Token)
@@ -231,7 +235,9 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
+#pragma warning disable CS0618 // Type or member is obsolete
                         result = await app.AcquireTokenByIntegratedWindowsAuth(scopes)
+#pragma warning restore CS0618 // Type or member is obsolete
                             .WithCorrelationId(parameters.ConnectionId)
                             .ExecuteAsync(cancellationToken: cts.Token)
                             .ConfigureAwait(false);
