@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 {
                     return foundValue;
                 }
-                return false;
+                return true; // Default to true if the switch is not set
             }
         }
 

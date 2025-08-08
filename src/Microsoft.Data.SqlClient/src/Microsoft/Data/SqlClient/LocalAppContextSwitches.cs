@@ -67,10 +67,11 @@ namespace Microsoft.Data.SqlClient
 #endif
 
         /// <summary>
-        /// In TdsParser the ProcessSni function changed significantly when the packet
+        /// In TdsParser, the ProcessSni function changed significantly when the packet
         /// multiplexing code needed for high speed multi-packet column values was added.
-        /// In case of compatibility problems this switch will change TdsParser to use
-        /// the previous version of the function.
+        /// When this switch is set to true (the default), the old ProcessSni design is used.
+        /// When this switch is set to false, the new experimental ProcessSni behavior using
+        /// the packet multiplexer is enabled.
         /// </summary>
         public static bool UseCompatibilityProcessSni
         {
@@ -78,7 +79,9 @@ namespace Microsoft.Data.SqlClient
             {
                 if (s_useCompatibilityProcessSni == Tristate.NotInitialized)
                 {
-                    if (AppContext.TryGetSwitch(UseCompatibilityProcessSniString, out bool returnedValue) && returnedValue)
+                    // Check if the switch has been set by the AppContext switch directly
+                    // If it has not been set, we default to true.
+                    if (!AppContext.TryGetSwitch(UseCompatibilityProcessSniString, out bool returnedValue) || returnedValue)
                     {
                         s_useCompatibilityProcessSni = Tristate.True;
                     }
@@ -92,12 +95,12 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// In TdsParser the async multi-packet column value fetch behaviour is capable of
-        /// using a continue snapshot state in addition to the original replay from start
-        /// logic.
-        /// This switch disables use of the continue snapshot state. This switch will always
-        /// return true if <see cref="UseCompatibilityProcessSni"/> is enabled because the 
-        /// continue state is not stable without the multiplexer.
+        /// In TdsParser, the async multi-packet column value fetch behavior can use a continue snapshot state
+        /// for improved efficiency. When this switch is enabled (the default), the driver preserves the legacy
+        /// compatibility behavior, which does not use the continue snapshot state. When disabled, the new behavior
+        /// using the continue snapshot state is enabled. This switch will always return true if
+        /// <see cref="UseCompatibilityProcessSni"/> is enabled, because the continue state is not stable without
+        /// the multiplexer.
         /// </summary>
         public static bool UseCompatibilityAsyncBehaviour
         {
@@ -114,7 +117,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (s_useCompatibilityAsyncBehaviour == Tristate.NotInitialized)
                 {
-                    if (AppContext.TryGetSwitch(UseCompatibilityAsyncBehaviourString, out bool returnedValue) && returnedValue)
+                    if (!AppContext.TryGetSwitch(UseCompatibilityAsyncBehaviourString, out bool returnedValue) || returnedValue)
                     {
                         s_useCompatibilityAsyncBehaviour = Tristate.True;
                     }
