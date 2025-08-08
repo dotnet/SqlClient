@@ -8,6 +8,7 @@ using System.Text;
 using Xunit;
 
 #nullable enable
+#pragma warning disable CS1591 // Test classes do not require XML documentation comments
 
 namespace Microsoft.Data.SqlClient.UnitTests
 {
@@ -92,7 +93,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 bufferAfter[start + 5]);
 
             // slice into the existing buffer
-            ReadOnlySpan<byte> writtenSpan = new ReadOnlySpan<byte>(
+            ReadOnlySpan<byte> writtenSpan = new(
                 bufferAfter,
                 start + 6,
                 appended - 6);
@@ -105,3 +106,5 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
     }
 }
+
+#pragma warning restore CS1591
