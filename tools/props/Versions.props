@@ -26,8 +26,8 @@
     <MicrosoftDataSqlClientSniVersion>6.0.2</MicrosoftDataSqlClientSniVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
     <SystemMemoryVersion>4.5.5</SystemMemoryVersion>
-    <SystemTextEncodingsWebVersion>6.0.0</SystemTextEncodingsWebVersion>
-    <SystemTextJsonVersion>6.0.10</SystemTextJsonVersion>
+    <SystemTextEncodingsWebVersion>8.0.0</SystemTextEncodingsWebVersion>
+    <SystemTextJsonVersion>8.0.5</SystemTextJsonVersion>
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
