@@ -280,7 +280,7 @@ namespace Microsoft.Data.SqlClient.StressTests.Runner
             }
         }
 
-        public static bool IncludeTest(TestAttributeBase test)
+        public static bool IncludeTest(StressTestAttribute test)
         {
             if (s_selectedTests == null || s_selectedTests.Count == 0)
                 return true; // user has no selection - run all

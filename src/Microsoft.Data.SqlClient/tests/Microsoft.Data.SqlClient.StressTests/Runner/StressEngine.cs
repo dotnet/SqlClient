@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.StressTests.Runner
 
         public RecordedExceptions Exceptions => _exceptions;
 
-        public StressEngine(int threads, int duration, IEnumerable<TestBase.TestBase> allTests, int seed)
+        public StressEngine(int threads, int duration, IEnumerable<StressTest> allTests, int seed)
         {
             if (seed != 0)
             {
@@ -49,11 +49,11 @@ namespace Microsoft.Data.SqlClient.StressTests.Runner
 
             List<StressTest> tmpWeightedLookup = new List<StressTest>();
 
-            foreach (TestBase.TestBase t in allTests)
+            foreach (StressTest t in allTests)
             {
-                if (t is StressTest)
+                if (t is not null)
                 {
-                    _allTests.Add(t as StressTest);
+                    _allTests.Add(t);
                 }
             }
 

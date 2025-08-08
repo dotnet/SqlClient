@@ -19,9 +19,9 @@ namespace Microsoft.Data.SqlClient.StressTests.Runner
             set { s_assemblyName = value; }
         }
 
-        public static IEnumerable<TestBase.TestBase> GetTests(Assembly assembly)
+        public static IEnumerable<StressTest> GetTests(Assembly assembly)
         {
-            List<TestBase.TestBase> tests = new List<TestBase.TestBase>();
+            List<StressTest> tests = new List<StressTest>();
 
 
             Type[] typesInModule = null;
