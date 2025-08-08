@@ -1971,7 +1971,8 @@ namespace Microsoft.Data.SqlClient
 
             if (isPlp)
             {
-                TdsOperationStatus result = TryReadPlpBytes(ref buf, 0, int.MaxValue, out length);
+                bool compatibilityMode = LocalAppContextSwitches.UseCompatibilityAsyncBehaviour;
+                TdsOperationStatus result = TryReadPlpBytes(ref buf, 0, int.MaxValue, out length, canContinue && !compatibilityMode, canContinue && !compatibilityMode, compatibilityMode);
                 if (result != TdsOperationStatus.Done)
                 {
                     value = null;
@@ -2133,12 +2134,10 @@ namespace Microsoft.Data.SqlClient
         internal TdsOperationStatus TryReadPlpBytes(ref byte[] buff, int offset, int len, out int totalBytesRead)
         {
             bool canContinue = false;
-            bool isStarting = false;
-            bool isContinuing = false;
             bool compatibilityMode = LocalAppContextSwitches.UseCompatibilityAsyncBehaviour;
             if (!compatibilityMode)
             {
-                (canContinue, isStarting, isContinuing) = GetSnapshotStatuses();
+                (canContinue, _, _) = GetSnapshotStatuses();
             }
             return TryReadPlpBytes(ref buff, offset, len, out totalBytesRead, canContinue, canContinue, compatibilityMode);
         }
@@ -2162,7 +2161,16 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 AssertValidState();
-                totalBytesRead = 0;
+                if (writeDataSizeToSnapshot && canContinue && _snapshot != null)
+                {
+                    // if there is a snapshot which it contains a stored plp buffer take it
+                    // and try to use it if it is the right length
+                    buff = TryTakeSnapshotStorage() as byte[];
+                    if (buff != null)
+                    {
+                        totalBytesRead = _snapshot.GetPacketDataOffset();
+                    }
+                }
                 return TdsOperationStatus.Done;       // No data
             }
 
@@ -3746,8 +3754,9 @@ namespace Microsoft.Data.SqlClient
         {
             private sealed partial class PacketData
             {
-                public byte[] Buffer;
-                public int Read;
+                public readonly byte[] Buffer;
+                public readonly int Read;
+
                 public PacketData NextPacket;
                 public PacketData PrevPacket;
 
@@ -3756,6 +3765,12 @@ namespace Microsoft.Data.SqlClient
                 /// to get the offset of the previous packet data in the stored buffer
                 /// </summary>
                 public int RunningDataSize;
+
+                public PacketData(byte[] buffer, int read)
+                {
+                    Buffer = buffer;
+                    Read = read;
+                }
 
                 public int PacketID => Packet.GetIDFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
 
@@ -3776,21 +3791,6 @@ namespace Microsoft.Data.SqlClient
                         previous = PrevPacket.RunningDataSize;
                     }
                     return Math.Max(RunningDataSize - previous, 0);
-                }
-
-                internal void Clear()
-                {
-                    Buffer = null;
-                    Read = 0;
-                    NextPacket = null;
-                    if (PrevPacket != null)
-                    {
-                        PrevPacket.NextPacket = null;
-                        PrevPacket = null;
-                    }
-                    SetDebugStackImpl(null);
-                    SetDebugPacketId(0);
-                    SetDebugDataHash();
                 }
 
                 internal void SetDebugStack(string value) => SetDebugStackImpl(value);
@@ -4089,7 +4089,6 @@ namespace Microsoft.Data.SqlClient
             private PacketData _firstPacket;
             private PacketData _current;
             private PacketData _continuePacket;
-            private PacketData _sparePacket;
 
 #if DEBUG
             private int _packetCounter;
@@ -4170,17 +4169,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 #endif
-                PacketData packetData = _sparePacket;
-                if (packetData is null)
-                {
-                    packetData = new PacketData();
-                }
-                else
-                {
-                    _sparePacket = null;
-                }
-                packetData.Buffer = buffer;
-                packetData.Read = read;
+                PacketData packetData = new PacketData(buffer, read);
 #if DEBUG
                 packetData.SetDebugStack(_stateObj._lastStack);
                 packetData.SetDebugPacketId(Interlocked.Increment(ref _packetCounter));
@@ -4362,13 +4351,10 @@ namespace Microsoft.Data.SqlClient
 
             private void ClearPackets()
             {
-                PacketData packet = _firstPacket;
                 _firstPacket = null;
                 _lastPacket = null;
                 _continuePacket = null;
                 _current = null;
-                packet.Clear();
-                _sparePacket = packet;
             }
 
             private void ClearState()
