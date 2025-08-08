@@ -2,14 +2,16 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET
-
 using System;
 using System.Data;
 using System.Diagnostics;
-using System.Reflection;
 using System.Runtime.CompilerServices;
+#if NET
+using System.Reflection;
 using System.Runtime.Loader;
+#else
+using System.Runtime.ConstrainedExecution;
+#endif
 
 namespace Microsoft.Data.SqlClient.Diagnostics
 {
@@ -17,7 +19,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
     {
         public SqlDiagnosticListener() : base("SqlClientDiagnosticListener")
         {
-            AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Unloading += SqlDiagnosticListener_Unloading;
+#if NET
+            AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Unloading += SqlDiagnosticListener_UnloadingAssemblyLoadContext;
+#else
+            AppDomain.CurrentDomain.DomainUnload += SqlDiagnosticListener_UnloadingAppDomain;
+#endif
         }
 
         public DiagnosticScope CreateCommandScope(
@@ -477,11 +483,13 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             );
         }
 
-        private void SqlDiagnosticListener_Unloading(AssemblyLoadContext obj)
-        {
+#if NET
+        private void SqlDiagnosticListener_UnloadingAssemblyLoadContext(AssemblyLoadContext obj) =>
             Dispose();
-        }
+#else
+        [PrePrepareMethod]
+        private void SqlDiagnosticListener_UnloadingAppDomain(object sender, EventArgs e) =>
+            Dispose();
+#endif
     }
 }
-
-#endif
