@@ -9,10 +9,15 @@ variables:
   - group: 'ADO CI Packaging'
   - group: 'ADO Test Configuration Properties'
   
+  # Explicitly unset the TF variable inherited from the 'ADO Build properties'
+  # library.  It is not necessary for CI builds any more.
+  #
+  # TODO: Remove TF from the 'ADO Build properties' library.
+  - name: TF
+    value: ''
+
   - name: buildNumber
     value: '$(Build.BuildNumber)'
-  - name: TFNetCore
-    value: 'net8.0'
   - name: SQLTarget
     value: 'localhost'
   - name: NugetPackageVersion
