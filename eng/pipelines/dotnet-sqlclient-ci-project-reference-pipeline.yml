@@ -54,6 +54,11 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: object
   default: [1, 2, 3]
 
+- name: extensionsPackageVersion
+  displayName: Extensions Package Version Override
+  type: string
+  default: 7.0.0
+
 - name: useManagedSNI
   displayName: |
     Use Managed/Native SNI on Windows,
@@ -66,13 +71,6 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: object
   default: [net462, net8.0]
 
-- name: buildType
-  displayName: 'Build Type'
-  default: Project
-  values:
-    - Project
-    - Package
-
 extends:
   template: dotnet-sqlclient-ci-core.yml@self
   parameters:
@@ -81,6 +79,7 @@ extends:
     targetFrameworksLinux: ${{ parameters.targetFrameworksLinux }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
     testSets: ${{ parameters.testSets }}
+    extensionsPackageVersion: ${{ parameters.extensionsPackageVersion }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
-    buildType: ${{ parameters.buildType }}
+    buildType: Project

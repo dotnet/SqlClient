@@ -20,6 +20,21 @@
       > msbuild -p:configuration=Release
     -->
     <ReferenceType Condition="$(ReferenceType) == ''">Project</ReferenceType>
+
+    <!--
+      We embed debug symbols in some of our application (i.e. non-symbol) NuGet
+      packages.
+
+      TODO: Why are we doing this?
+
+      Capture the default list of extensions so the projects that _don't_ want
+      this behaviour can revert it.
+    -->
+    <OriginalAllowedOutputExtensions>$(AllowedOutputExtensionsInPackageBuildOutputFolder)</OriginalAllowedOutputExtensions>
+    <!--
+      And now append the '.pdb' extension.  This property is used by NuGet to
+      decide which types of files will appear in the application package.
+    -->
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
   <PropertyGroup Condition="$(BuildForRelease) == 'true'">
