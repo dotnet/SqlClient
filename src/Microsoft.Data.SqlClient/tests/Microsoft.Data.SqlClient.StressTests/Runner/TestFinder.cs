@@ -112,33 +112,13 @@ namespace Microsoft.Data.SqlClient.StressTests.Runner
                     StressTestAttribute[] stressTestAttrs = (StressTestAttribute[])m.GetCustomAttributes(typeof(StressTestAttribute), true);
                     foreach (StressTestAttribute attr in stressTestAttrs)
                     {
-                        if (TestMetrics.IncludeTest(attr) && MatchFilter(attr))
+                        if (TestMetrics.IncludeTest(attr))
                             tests.Add(new StressTest(attr, m, globalSetupMethod, globalCleanupMethod, t, setupMethods, cleanupMethods, globalExceptionHandlerMethod));
                     }
                 }
             }
 
             return tests;
-        }
-
-        private static bool MatchFilter(StressTestAttribute attr)
-        {
-            // This change should not have impacts on any existing tests. 
-            //    1. If filter is not provided in command line, we do not apply filter and select all the tests.
-            //    2. If current test attribute (such as StressTestAttribute) does not implement ITestAttriuteFilter, it is not affected and still selected.
-
-            if (string.IsNullOrEmpty(TestMetrics.Filter))
-            {
-                return true;
-            }
-
-            var filter = attr as ITestAttributeFilter;
-            if (filter == null)
-            {
-                return true;
-            }
-
-            return filter.MatchFilter(TestMetrics.Filter);
         }
     }
 }
