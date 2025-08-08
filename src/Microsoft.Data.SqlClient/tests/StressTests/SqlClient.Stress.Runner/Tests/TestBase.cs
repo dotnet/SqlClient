@@ -13,15 +13,12 @@ namespace DPStressHarness
         private TestAttributeBase _attr;
         private string _variationSuffix = "";
 
-        [System.CLSCompliantAttribute(false)]
         protected MethodInfo _testMethod;
-        [System.CLSCompliantAttribute(false)]
+
         protected Type _type;
 
-        [System.CLSCompliantAttribute(false)]
         protected List<MethodInfo> _setupMethods;
 
-        [System.CLSCompliantAttribute(false)]
         protected List<MethodInfo> _cleanupMethods;
 
         protected delegate void TestMethodDelegate(object t);
