@@ -17,6 +17,16 @@ namespace Microsoft.Data.SqlClient
         public const string ProviderName = @"MSSQL_CERTIFICATE_STORE";
 
         /// <summary>
+        /// This encryption keystore uses a certificate as the column master key.
+        /// </summary>
+        internal const string MasterKeyType = @"certificate";
+
+        /// <summary>
+        /// This encryption keystore uses the master key path to reference a specific certificate.
+        /// </summary>
+        internal const string KeyPathReference = @"certificate";
+
+        /// <summary>
         /// This function uses a certificate specified by the key path
         /// and decrypts an encrypted CEK with RSA encryption algorithm.
         /// </summary>
