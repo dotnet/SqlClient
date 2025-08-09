@@ -1748,16 +1748,17 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(sizeof(int) == stateObj._bIntBytes.Length);
             }
 
-            WriteInt(stateObj._bIntBytes.AsSpan(), v);
+            BinaryPrimitives.WriteInt32LittleEndian(stateObj._bIntBytes, v);
             return stateObj._bIntBytes;
         }
 
         internal void WriteInt(int v, TdsParserStateObject stateObj)
         {
-            Span<byte> buffer = stackalloc byte[sizeof(int)];
-            WriteInt(buffer, v);
             if ((stateObj._outBytesUsed + 4) > stateObj._outBuff.Length)
             {
+                Span<byte> buffer = stackalloc byte[sizeof(int)];
+
+                BinaryPrimitives.WriteInt32LittleEndian(buffer, v);
                 // if all of the int doesn't fit into the buffer
                 for (int index = 0; index < sizeof(int); index++)
                 {
@@ -1767,14 +1768,9 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // all of the int fits into the buffer
-                buffer.CopyTo(stateObj._outBuff.AsSpan(stateObj._outBytesUsed, sizeof(int)));
+                BinaryPrimitives.WriteInt32LittleEndian(stateObj._outBuff.AsSpan(stateObj._outBytesUsed, sizeof(int)), v);
                 stateObj._outBytesUsed += 4;
             }
-        }
-
-        internal static void WriteInt(Span<byte> buffer, int value)
-        {
-            BinaryPrimitives.TryWriteInt32LittleEndian(buffer, value);
         }
 
         //
