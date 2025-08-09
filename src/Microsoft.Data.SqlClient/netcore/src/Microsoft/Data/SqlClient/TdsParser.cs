@@ -5324,6 +5324,85 @@ namespace Microsoft.Data.SqlClient
             return TdsOperationStatus.Done;
         }
 
+        private TdsOperationStatus TryProcessUDTMetaData(SqlMetaDataPriv metaData, TdsParserStateObject stateObj)
+        {
+            ushort shortLength;
+            byte byteLength;
+
+            // max byte size
+            TdsOperationStatus result = stateObj.TryReadUInt16(out shortLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            metaData.length = shortLength;
+
+            // database name
+            result = stateObj.TryReadByte(out byteLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            if (metaData.udt is null)
+            {
+                metaData.udt = new SqlMetaDataUdt();
+            }
+            if (byteLength != 0)
+            {
+                result = stateObj.TryReadString(byteLength, out metaData.udt.DatabaseName);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+            }
+
+            // schema name
+            result = stateObj.TryReadByte(out byteLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            if (byteLength != 0)
+            {
+                result = stateObj.TryReadString(byteLength, out metaData.udt.SchemaName);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+            }
+
+            // type name
+            result = stateObj.TryReadByte(out byteLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            if (byteLength != 0)
+            {
+                result = stateObj.TryReadString(byteLength, out metaData.udt.TypeName);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+            }
+
+            result = stateObj.TryReadUInt16(out shortLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            if (shortLength != 0)
+            {
+                result = stateObj.TryReadString(shortLength, out metaData.udt.AssemblyQualifiedName);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+            }
+
+            return TdsOperationStatus.Done;
+        }
+
         private void WriteUDTMetaData(object value, string database, string schema, string type,
             TdsParserStateObject stateObj)
         {
@@ -13614,86 +13693,6 @@ namespace Microsoft.Data.SqlClient
                 return 0;
 
             return stateObj._longlen;
-        }
-
-        private TdsOperationStatus TryProcessUDTMetaData(SqlMetaDataPriv metaData, TdsParserStateObject stateObj)
-        {
-
-            ushort shortLength;
-            byte byteLength;
-            // max byte size
-
-            TdsOperationStatus result = stateObj.TryReadUInt16(out shortLength);
-            if (result != TdsOperationStatus.Done)
-            {
-                return result;
-            }
-            metaData.length = shortLength;
-
-            // database name
-            result = stateObj.TryReadByte(out byteLength);
-            if (result != TdsOperationStatus.Done)
-            {
-                return result;
-            }
-            if (metaData.udt is null)
-            {
-                metaData.udt = new SqlMetaDataUdt();
-            }
-            if (byteLength != 0)
-            {
-                result = stateObj.TryReadString(byteLength, out metaData.udt.DatabaseName);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
-                }
-            }
-
-            // schema name
-            result = stateObj.TryReadByte(out byteLength);
-            if (result != TdsOperationStatus.Done)
-            {
-                return result;
-            }
-            if (byteLength != 0)
-            {
-                result = stateObj.TryReadString(byteLength, out metaData.udt.SchemaName);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
-                }
-            }
-
-            // type name
-            result = stateObj.TryReadByte(out byteLength);
-            if (result != TdsOperationStatus.Done)
-            {
-                return result;
-            }
-            if (byteLength != 0)
-            {
-                result = stateObj.TryReadString(byteLength, out metaData.udt.TypeName);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
-                }
-            }
-
-            result = stateObj.TryReadUInt16(out shortLength);
-            if (result != TdsOperationStatus.Done)
-            {
-                return result;
-            }
-            if (shortLength != 0)
-            {
-                result = stateObj.TryReadString(shortLength, out metaData.udt.AssemblyQualifiedName);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
-                }
-            }
-
-            return TdsOperationStatus.Done;
         }
 
         const string StateTraceFormatString = "\n\t"
