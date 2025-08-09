@@ -2724,14 +2724,13 @@ namespace Microsoft.Data.SqlClient
             int processedLength = 0;
             SqlEnvChange head = null;
             SqlEnvChange tail = null;
-            TdsOperationStatus result;
 
             sqlEnvChange = null;
 
             while (tokenLength > processedLength)
             {
                 SqlEnvChange env = new SqlEnvChange();
-                result = stateObj.TryReadByte(out env._type);
+                TdsOperationStatus result = stateObj.TryReadByte(out env._type);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
@@ -4671,9 +4670,11 @@ namespace Microsoft.Data.SqlClient
                     if (sharedState != null && sharedState._dataReady)
                     {
                         _SqlMetaDataSet metadata = stateObj._cleanupMetaData;
+                        TdsOperationStatus result;
                         if (stateObj._partialHeaderBytesRead > 0)
                         {
-                            if (stateObj.TryProcessHeader() != TdsOperationStatus.Done)
+                            result = stateObj.TryProcessHeader();
+                            if (result != TdsOperationStatus.Done)
                             {
                                 throw SQL.SynchronousCallMayNotPend();
                             }
@@ -4681,7 +4682,8 @@ namespace Microsoft.Data.SqlClient
                         if (0 == sharedState._nextColumnHeaderToRead)
                         {
                             // i. user called read but didn't fetch anything
-                            if (stateObj.Parser.TrySkipRow(stateObj._cleanupMetaData, stateObj) != TdsOperationStatus.Done)
+                            result = stateObj.Parser.TrySkipRow(stateObj._cleanupMetaData, stateObj);
+                            if (result != TdsOperationStatus.Done)
                             {
                                 throw SQL.SynchronousCallMayNotPend();
                             }
@@ -4695,7 +4697,8 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     if (stateObj._longlen != 0)
                                     {
-                                        if (TrySkipPlpValue(ulong.MaxValue, stateObj, out _) != TdsOperationStatus.Done)
+                                        result = TrySkipPlpValue(ulong.MaxValue, stateObj, out _);
+                                        if (result != TdsOperationStatus.Done)
                                         {
                                             throw SQL.SynchronousCallMayNotPend();
                                         }
@@ -4704,7 +4707,8 @@ namespace Microsoft.Data.SqlClient
 
                                 else if (0 < sharedState._columnDataBytesRemaining)
                                 {
-                                    if (stateObj.TrySkipLongBytes(sharedState._columnDataBytesRemaining) != TdsOperationStatus.Done)
+                                    result = stateObj.TrySkipLongBytes(sharedState._columnDataBytesRemaining);
+                                    if (result != TdsOperationStatus.Done)
                                     {
                                         throw SQL.SynchronousCallMayNotPend();
                                     }
@@ -4713,7 +4717,8 @@ namespace Microsoft.Data.SqlClient
 
 
                             // Read the remaining values off the wire for this row
-                            if (stateObj.Parser.TrySkipRow(metadata, sharedState._nextColumnHeaderToRead, stateObj) != TdsOperationStatus.Done)
+                            result = stateObj.Parser.TrySkipRow(metadata, sharedState._nextColumnHeaderToRead, stateObj);
+                            if (result != TdsOperationStatus.Done)
                             {
                                 throw SQL.SynchronousCallMayNotPend();
                             }
@@ -6552,9 +6557,8 @@ namespace Microsoft.Data.SqlClient
         private TdsOperationStatus TryReadSqlDateTime(SqlBuffer value, byte tdsType, int length, byte scale, TdsParserStateObject stateObj)
         {
             Span<byte> datetimeBuffer = ((uint)length <= 16) ? stackalloc byte[16] : new byte[length];
-            TdsOperationStatus result;
 
-            result = stateObj.TryReadByteArray(datetimeBuffer, length);
+            TdsOperationStatus result = stateObj.TryReadByteArray(datetimeBuffer, length);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
@@ -8076,47 +8080,45 @@ namespace Microsoft.Data.SqlClient
                     return stateObj.TryReadInt32(out tokenLength);
             }
 
+            if (token == TdsEnums.SQLUDT)
+            { // special case for UDTs
+                tokenLength = -1; // Should we return -1 or not call GetTokenLength for UDTs?
+                return TdsOperationStatus.Done;
+            }
+            else if (token == TdsEnums.SQLRETURNVALUE)
             {
-                if (token == TdsEnums.SQLUDT)
-                { // special case for UDTs
-                    tokenLength = -1; // Should we return -1 or not call GetTokenLength for UDTs?
-                    return TdsOperationStatus.Done;
-                }
-                else if (token == TdsEnums.SQLRETURNVALUE)
+                tokenLength = -1; // In 2005, the RETURNVALUE token stream no longer has length
+                return TdsOperationStatus.Done;
+            }
+            else if (token == TdsEnums.SQLXMLTYPE)
+            {
+                ushort value;
+                result = stateObj.TryReadUInt16(out value);
+                if (result != TdsOperationStatus.Done)
                 {
-                    tokenLength = -1; // In 2005, the RETURNVALUE token stream no longer has length
-                    return TdsOperationStatus.Done;
+                    tokenLength = 0;
+                    return result;
                 }
-                else if (token == TdsEnums.SQLXMLTYPE)
+                tokenLength = (int)value;
+                Debug.Assert(tokenLength == TdsEnums.SQL_USHORTVARMAXLEN, "Invalid token stream for xml datatype");
+                return TdsOperationStatus.Done;
+            }
+            else if (token == TdsEnums.SQLJSON)
+            {
+                tokenLength = -1;
+                return TdsOperationStatus.Done;
+            }
+            else if (token == TdsEnums.SQLVECTOR)
+            {
+                ushort value;
+                result = stateObj.TryReadUInt16(out value);
+                if (result != TdsOperationStatus.Done)
                 {
-                    ushort value;
-                    result = stateObj.TryReadUInt16(out value);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        tokenLength = 0;
-                        return result;
-                    }
-                    tokenLength = (int)value;
-                    Debug.Assert(tokenLength == TdsEnums.SQL_USHORTVARMAXLEN, "Invalid token stream for xml datatype");
-                    return TdsOperationStatus.Done;
+                    tokenLength = 0;
+                    return result;
                 }
-                else if (token == TdsEnums.SQLJSON)
-                {
-                    tokenLength = -1;
-                    return TdsOperationStatus.Done;
-                }
-                else if (token == TdsEnums.SQLVECTOR)
-                {
-                    ushort value;
-                    result = stateObj.TryReadUInt16(out value);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        tokenLength = 0;
-                        return result;
-                    }
-                    tokenLength = value;
-                    return TdsOperationStatus.Done;
-                }
+                tokenLength = value;
+                return TdsOperationStatus.Done;
             }
 
             switch (token & TdsEnums.SQLLenMask)
