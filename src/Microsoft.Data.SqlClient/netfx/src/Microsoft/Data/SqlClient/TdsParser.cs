@@ -8616,6 +8616,24 @@ namespace Microsoft.Data.SqlClient
             return len; // size of data written
         }
 
+        internal int WriteAzureSQLSupportFeatureRequest(bool write /* if false just calculates the length */)
+        {
+            int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = featureData
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_AZURESQLSUPPORT);
+
+                // Feature Data length
+                WriteInt(s_featureExtDataAzureSQLSupportFeatureRequest.Length, _physicalStateObj);
+
+                _physicalStateObj.WriteByteArray(s_featureExtDataAzureSQLSupportFeatureRequest, s_featureExtDataAzureSQLSupportFeatureRequest.Length, 0);
+            }
+
+            return len;
+        }
+
         internal int WriteDataClassificationFeatureRequest(bool write /* if false just calculates the length */)
         {
             int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = Version
@@ -8640,24 +8658,6 @@ namespace Microsoft.Data.SqlClient
                 // Write Feature ID
                 _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS);
                 WriteInt(0, _physicalStateObj); // we don't send any data
-            }
-
-            return len;
-        }
-
-        internal int WriteAzureSQLSupportFeatureRequest(bool write /* if false just calculates the length */)
-        {
-            int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = featureData
-
-            if (write)
-            {
-                // Write Feature ID
-                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_AZURESQLSUPPORT);
-
-                // Feature Data length
-                WriteInt(s_featureExtDataAzureSQLSupportFeatureRequest.Length, _physicalStateObj);
-
-                _physicalStateObj.WriteByteArray(s_featureExtDataAzureSQLSupportFeatureRequest, s_featureExtDataAzureSQLSupportFeatureRequest.Length, 0);
             }
 
             return len;
