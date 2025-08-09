@@ -6871,7 +6871,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             return result;
                         }
-                        value.Guid = ConstructGuid(b);
+                        value.Guid = new Guid(b);
                         break;
                     }
 
