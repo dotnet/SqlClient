@@ -13841,8 +13841,7 @@ namespace Microsoft.Data.SqlClient
                             _statistics == null ? bool.TrueString : bool.FalseString,
                             _statisticsIsInTransaction ? bool.TrueString : bool.FalseString,
                             _fPreserveTransaction ? bool.TrueString : bool.FalseString,
-                            _connHandler == null ? "(null)" : _connHandler.ConnectionOptions.MultiSubnetFailover.ToString((IFormatProvider)null),
-                            _connHandler == null ? "(null)" : _connHandler.ConnectionOptions.TransparentNetworkIPResolution.ToString((IFormatProvider)null));
+                            _connHandler == null ? "(null)" : _connHandler.ConnectionOptions.MultiSubnetFailover.ToString((IFormatProvider)null));
         }
 
         private string TraceObjectClass(object instance)
