@@ -1013,7 +1013,7 @@ namespace Microsoft.Data.SqlClient
                         payloadOffset = payload[offset++] << 8 | payload[offset++];
                         payloadLength = payload[offset++] << 8 | payload[offset++];
 
-                        EncryptionOptions serverOption = (EncryptionOptions)payload[payloadOffset];
+                        EncryptionOptions serverOption = ((EncryptionOptions)payload[payloadOffset]) & EncryptionOptions.OPTIONS_MASK;
 
                         /* internal enum EncryptionOptions {
                             OFF,
