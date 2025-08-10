@@ -964,7 +964,7 @@ namespace Microsoft.Data.SqlClient
 
             if (_physicalStateObj._inBytesPacket > TdsEnums.MAX_PACKET_SIZE || _physicalStateObj._inBytesPacket <= 0)
             {
-                throw SQL.ParsingError();
+                throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
             }
             byte[] payload = new byte[_physicalStateObj._inBytesPacket];
 
@@ -2105,7 +2105,7 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                     throw new InvalidOperationException(message);
 #else
-                    throw SQL.ParsingError();
+                    throw SQL.ParsingErrorToken(ParsingErrorState.InvalidTdsTokenReceived, token); // MDAC 82443
 #endif
 
                 }
@@ -3674,7 +3674,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (length < 5)
             {
-                throw SQL.ParsingError();
+                throw SQL.ParsingErrorLength(ParsingErrorState.SessionStateLengthTooShort, length);
             }
             uint seqNum;
             TdsOperationStatus result = stateObj.TryReadUInt32(out seqNum);
@@ -3694,7 +3694,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (status > 1)
             {
-                throw SQL.ParsingError();
+                throw SQL.ParsingErrorStatus(ParsingErrorState.SessionStateInvalidStatus, status);
             }
             bool recoverable = status != 0;
             length -= 5;
