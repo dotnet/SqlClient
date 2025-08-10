@@ -829,13 +829,13 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case (int)PreLoginOptions.TRACEID:
-                        FillGuidBytes(_connHandler._clientConnectionId, payload.AsSpan(payloadLength, GUID_SIZE));
+                        SerializeGuid(_connHandler._clientConnectionId, payload.AsSpan(payloadLength, GUID_SIZE));
                         payloadLength += GUID_SIZE;
                         offset += GUID_SIZE;
                         optionDataSize = GUID_SIZE;
 
                         ActivityCorrelator.ActivityId actId = ActivityCorrelator.Next();
-                        FillGuidBytes(actId.Id, payload.AsSpan(payloadLength, GUID_SIZE));
+                        SerializeGuid(actId.Id, payload.AsSpan(payloadLength, GUID_SIZE));
                         payloadLength += GUID_SIZE;
                         payload[payloadLength++] = (byte)(0x000000ff & actId.Sequence);
                         payload[payloadLength++] = (byte)((0x0000ff00 & actId.Sequence) >> 8);
@@ -1719,6 +1719,48 @@ namespace Microsoft.Data.SqlClient
         internal void WriteUnsignedShort(ushort us, TdsParserStateObject stateObj)
         {
             WriteShort((short)us, stateObj);
+        }
+
+        //
+        // Writes a guid, either to a specific buffer or to the wire.
+        //
+        private static void SerializeGuid(in Guid v, Span<byte> buffer)
+        {
+            Debug.Assert(buffer.Length >= GUID_SIZE);
+#if NET
+            v.TryWriteBytes(buffer, bigEndian: false, out _);
+#else
+            byte[] guidBytes = v.ToByteArray();
+            guidBytes.AsSpan().CopyTo(buffer);
+#endif
+        }
+
+        private static void WriteGuid(in SqlGuid v, TdsParserStateObject stateObj)
+        {
+            Guid innerValue = v.IsNull ? Guid.Empty : v.Value;
+
+            WriteGuid(in innerValue, stateObj);
+        }
+
+        private static void WriteGuid(in Guid v, TdsParserStateObject stateObj)
+        {
+            if ((stateObj._outBytesUsed + GUID_SIZE) > stateObj._outBuff.Length)
+            {
+                Span<byte> buffer = stackalloc byte[GUID_SIZE];
+
+                SerializeGuid(in v, buffer);
+                // if all of the guid doesn't fit into the buffer
+                for (int index = 0; index < buffer.Length; index++)
+                {
+                    stateObj.WriteByte(buffer[index]);
+                }
+            }
+            else
+            {
+                // all of the guid fits into the buffer
+                SerializeGuid(in v, stateObj._outBuff.AsSpan(stateObj._outBytesUsed, GUID_SIZE));
+                stateObj._outBytesUsed += GUID_SIZE;
+            }
         }
 
         //
@@ -6865,13 +6907,24 @@ namespace Microsoft.Data.SqlClient
                     {
                         Debug.Assert(length == GUID_SIZE, "invalid length for SqlGuid type!");
 
+#if NET
                         Span<byte> b = stackalloc byte[GUID_SIZE];
+#else
+                        byte[] b = _tempGuidBytes;
+                        if (b is null)
+                        {
+                            b = new byte[GUID_SIZE];
+                        }
+#endif
                         result = stateObj.TryReadByteArray(b, length);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
                         }
                         value.Guid = new Guid(b);
+#if NETFRAMEWORK
+                        _tempGuidBytes = b;
+#endif
                         break;
                     }
 
@@ -7217,12 +7270,8 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLUNIQUEID:
                     {
-                        System.Guid guid = (System.Guid)value;
-                        Span<byte> b = stackalloc byte[16];
-                        TdsParser.FillGuidBytes(guid, b);
-
-                        Debug.Assert((length == b.Length) && (length == 16), "Invalid length for guid type in com+ object");
-                        stateObj.WriteByteSpan(b);
+                        WriteGuid((Guid)value, stateObj);
+                        Debug.Assert(length == 16, "Invalid length for guid type in com+ object");
                         break;
                     }
 
@@ -7375,14 +7424,8 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLUNIQUEID:
                     {
-                        System.Guid guid = (System.Guid)value;
-                        Span<byte> b = stackalloc byte[16];
-                        FillGuidBytes(guid, b);
-
-                        length = b.Length;
-                        Debug.Assert(length == 16, "Invalid length for guid type in com+ object");
                         WriteSqlVariantHeader(18, metatype.TDSType, metatype.PropBytes, stateObj);
-                        stateObj.WriteByteSpan(b);
+                        WriteGuid((Guid)value, stateObj);
                         break;
                     }
 
@@ -11797,26 +11840,8 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLUNIQUEID:
                     {
                         Debug.Assert(actualLength == 16, "Invalid length for guid type in com+ object");
-                        Span<byte> b = stackalloc byte[16];
-                        if (value is Guid guid)
-                        {
-                            FillGuidBytes(guid, b);
-                        }
-                        else
-                        {
-                            SqlGuid sqlGuid = (SqlGuid)value;
-                            if (sqlGuid.IsNull)
-                            {
-                                b.Clear(); // this is needed because initlocals may be supressed in framework assemblies meaning the memory is not automaticaly zeroed
-                            }
-                            else
-                            {
-                                FillGuidBytes(sqlGuid.Value, b);
-                            }
-                        }
-                        stateObj.WriteByteSpan(b);
+                        WriteGuid((SqlGuid)value, stateObj);
                         break;
-
                     }
 
                 case TdsEnums.SQLBITN:
@@ -12493,9 +12518,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLUNIQUEID:
                     {
                         Debug.Assert(actualLength == 16, "Invalid length for guid type in com+ object");
-                        Span<byte> b = stackalloc byte[16];
-                        FillGuidBytes((System.Guid)value, b);
-                        stateObj.WriteByteSpan(b);
+                        WriteGuid((Guid)value, stateObj);
                         break;
                     }
 
