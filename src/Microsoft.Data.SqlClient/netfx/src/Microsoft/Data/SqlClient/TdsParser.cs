@@ -11191,7 +11191,7 @@ namespace Microsoft.Data.SqlClient
                             stateObj.WriteByte(md.scale);
                             break;
                         case SqlDbTypeExtensions.Json:
-                            stateObj.WriteByteArray(s_jsonMetadataSubstituteSequence, s_xmlMetadataSubstituteSequence.Length, 0);
+                            stateObj.WriteByteArray(s_jsonMetadataSubstituteSequence, s_jsonMetadataSubstituteSequence.Length, 0);
                             break;
                         case SqlDbTypeExtensions.Vector:
                             stateObj.WriteByte(md.tdsType);
