@@ -1833,7 +1833,7 @@ namespace Microsoft.Data.SqlClient
         internal void WriteFloat(float v, TdsParserStateObject stateObj)
         {
             Span<byte> bytes = stackalloc byte[sizeof(float)];
-            FillFloatBytes(v, bytes);
+            BinaryPrimitives.WriteInt32LittleEndian(bytes, BitConverterCompatible.SingleToInt32Bits(v));
             stateObj.WriteByteSpan(bytes);
         }
 
@@ -1958,7 +1958,7 @@ namespace Microsoft.Data.SqlClient
         internal void WriteDouble(double v, TdsParserStateObject stateObj)
         {
             Span<byte> bytes = stackalloc byte[sizeof(double)];
-            FillDoubleBytes(v, bytes);
+            BinaryPrimitives.WriteInt64LittleEndian(bytes, BitConverter.DoubleToInt64Bits(v));
             stateObj.WriteByteSpan(bytes);
         }
 
