@@ -65,6 +65,13 @@ parameters:
     - Project
     - Package
 
+- name: buildConfiguration
+  displayName: 'Build Configuration'
+  default: Release
+  values:
+    - Release
+    - Debug
+
 - name: defaultPoolName
   type: string
   default: $(ci_var_defaultPoolName)
@@ -84,6 +91,7 @@ stages:
     jobs:
     - template: common/templates/jobs/ci-build-nugets-job.yml@self
       parameters:
+        configuration: ${{ parameters.buildConfiguration }}
         artifactName: $(artifactName)
         ${{if ne(parameters.SNIVersion, '')}}:
           prebuildSteps:
@@ -92,6 +100,15 @@ stages:
                 SNIVersion: ${{parameters.SNIVersion}}
                 SNIValidationFeed: ${{parameters.SNIValidationFeed}}
 
+  - template: stages/stress-tests-ci-stage.yml@self
+    parameters:
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      dependsOn: [build_nugets]
+      pipelineArtifactName: $(artifactName)
+      mdsPackageVersion: $(NugetPackageVersion)
+      ${{ if eq(parameters.debug, 'true') }}:
+        verbosity: 'detailed'
+    
   - template: common/templates/stages/ci-run-tests-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
@@ -139,7 +156,6 @@ stages:
       testConfigurations:
         windows_sql_19_x64: # configuration name
           pool: ${{parameters.defaultPoolName }} # pool name
-          hostedPool: false # whether the pool is hosted or not
           images: # list of images to run tests on
             Win22_Sql19: ADO-MMS22-SQL19 # stage display name: image name from the pool
           TargetFrameworks: ${{parameters.targetFrameworks }} #[net462, net8.0] # list of target frameworks to run
@@ -181,7 +197,6 @@ stages:
 
         windows_sql_19_x86: # configuration name
           pool: ${{parameters.defaultPoolName }} # pool name
-          hostedPool: false # whether the pool is hosted or not
           images: # list of images to run tests on
             Win22_Sql19_x86: ADO-MMS22-SQL19 # stage display name: image name from the pool
           TargetFrameworks: [net8.0] #[net462, net8.0] # list of target frameworks to run
