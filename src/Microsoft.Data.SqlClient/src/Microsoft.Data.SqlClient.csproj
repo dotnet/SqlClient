@@ -26,4 +26,5 @@
     <!-- References that only apply to netcore -->
     <PackageReference Include="System.Configuration.ConfigurationManager" />
   </ItemGroup>
+
 </Project>

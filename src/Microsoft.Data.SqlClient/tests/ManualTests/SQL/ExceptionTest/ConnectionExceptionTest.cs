@@ -35,21 +35,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(System.Data.ConnectionState.Open, conn.State);
 
             server.Dispose();
-            try
-            {
-                int result2 = cmd.ExecuteNonQuery();
-            }
-            catch (SqlException ex)
-            {
-                Assert.Equal(11, ex.Class);
-                Assert.NotNull(ex.InnerException);
-                SqlException innerEx = Assert.IsType<SqlException>(ex.InnerException);
-                Assert.Equal(20, innerEx.Class);
-                Assert.StartsWith("A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible.", innerEx.Message);
-                // Since the server is not accessible driver can close the close the connection
-                // It is user responsibilty to maintain the connection.
-                Assert.Equal(System.Data.ConnectionState.Closed, conn.State);
-            }
+
+            var exception = Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
+            Assert.Equal(11, exception.Class);
+            Assert.NotNull(exception.InnerException);
+            SqlException innerEx = Assert.IsType<SqlException>(exception.InnerException);
+            Assert.Equal(20, innerEx.Class);
+            Assert.StartsWith("A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible.", innerEx.Message);
+            // Since the server is not accessible, the driver can close the connection.
+            // It is the user's responsibility to maintain the connection.
+            Assert.Equal(System.Data.ConnectionState.Closed, conn.State);
         }
 
         [Fact]
