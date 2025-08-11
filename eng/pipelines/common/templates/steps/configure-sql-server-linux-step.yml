@@ -3,6 +3,11 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
+
+# This step configures an existing SQL Server running on the local Linux host.
+# For example, our 1ES Hosted Pool has images like ADO-UB20-SQL22 that come with
+# SQL Server 2022 pre-installed and running.
+
 parameters:
   - name: password
     type: string

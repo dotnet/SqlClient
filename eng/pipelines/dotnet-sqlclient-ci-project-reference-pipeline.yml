@@ -73,6 +73,13 @@ parameters: # parameters are shown up in ADO UI in a build queue time
     - Project
     - Package
 
+- name: buildConfiguration
+  displayName: 'Build Configuration'
+  default: Release
+  values:
+    - Release
+    - Debug
+
 extends:
   template: dotnet-sqlclient-ci-core.yml@self
   parameters:
@@ -84,3 +91,4 @@ extends:
     useManagedSNI: ${{ parameters.useManagedSNI }}
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
     buildType: ${{ parameters.buildType }}
+    buildConfiguration: ${{ parameters.buildConfiguration }}
