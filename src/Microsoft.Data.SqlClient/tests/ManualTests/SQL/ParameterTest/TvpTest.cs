@@ -144,6 +144,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void QueryHintsTestShouldSucceed()
+        {
+            // These expected results were gathered from SqlParameterText_X.bsl
+            StringBuilder expectedResult = new();
+            expectedResult.AppendLine("0  Z-value  3/1/2000 12:00:00 AM  5  ");
+            expectedResult.AppendLine("1  X-value  1/1/2000 12:00:00 AM  7  ");
+            expectedResult.AppendLine("4  X-value  1/1/2000 12:00:00 AM  3  ");
+            expectedResult.AppendLine("5  X-value  3/1/2000 12:00:00 AM  3  ");
+            expectedResult.AppendLine("-1  Y-value  1/1/2000 12:00:00 AM  -1  ");
+            expectedResult.AppendLine("-1  Z-value  1/1/2000 12:00:00 AM  -1  ");
+            expectedResult.AppendLine("4  DEFUALT  1/1/2006 12:00:00 AM  3  ");
+            expectedResult.AppendLine("5  DEFUALT  1/1/2006 12:00:00 AM  3  ");
+            expectedResult.AppendLine("-1  DEFUALT  1/1/2006 12:00:00 AM  -1  ");
+            expectedResult.AppendLine("-1  DEFUALT  1/1/2006 12:00:00 AM  -1  ");
+
+            StringBuilder actualResult = new();
+
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+
+            QueryHintsTest(actualResult);
+
+            Assert.Equal(expectedResult.ToString().Trim(), actualResult.ToString().Trim());
+        }
+
         private class Item
         {
             public Item(int? v)
@@ -450,7 +475,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private void QueryHintsTest()
+        private void QueryHintsTest(StringBuilder actualResult = null)
         {
             using SqlConnection conn = new(_connStr);
             conn.Open();
@@ -516,7 +541,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 param.Value = rows;
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
-                    WriteReader(rdr);
+                    WriteReader(rdr, actualResult);
                 }
                 rows.Clear();
 
@@ -555,7 +580,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 param.Value = rows;
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
-                    WriteReader(rdr);
+                    WriteReader(rdr, actualResult);
                 }
                 rows.Clear();
 
@@ -594,7 +619,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 param.Value = rows;
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
-                    WriteReader(rdr);
+                    WriteReader(rdr, actualResult);
                 }
                 rows.Clear();
 
@@ -633,7 +658,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 param.Value = rows;
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
-                    WriteReader(rdr);
+                    WriteReader(rdr, actualResult);
                 }
                 rows.Clear();
 
@@ -672,7 +697,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 param.Value = rows;
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
-                    WriteReader(rdr);
+                    WriteReader(rdr, actualResult);
                 }
                 rows.Clear();
 
@@ -1474,7 +1499,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Console.WriteLine("Matches = {0}", matches);
         }
 
-        private void WriteReader(SqlDataReader rdr)
+        private void WriteReader(SqlDataReader rdr, StringBuilder actualResult = null)
         {
             int colCount = rdr.FieldCount;
 
@@ -1485,8 +1510,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     for (int i = 0; i < colCount; i++)
                     {
-                        Console.Write("{0}  ", DataTestUtility.GetValueString(rdr.GetValue(i)));
+                        string value = DataTestUtility.GetValueString(rdr.GetValue(i));
+                        Console.Write("{0}  ", value);
+                        if (actualResult != null) actualResult.Append($"{value}  ");
                     }
+                    if (actualResult != null) actualResult.AppendLine(string.Empty);
                     Console.WriteLine();
                 }
                 Console.WriteLine();
