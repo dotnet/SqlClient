@@ -148,7 +148,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
-        [MemberData(nameof(VectorFloat32TestData.GetVectorFloat32TestData), MemberType = typeof(VectorFloat32TestData))]
+        [MemberData(nameof(VectorFloat32TestData.GetVectorFloat32TestData), MemberType = typeof(VectorFloat32TestData), DisableDiscoveryEnumeration = true)]
         public void TestSqlVectorFloat32ParameterInsertionAndReads(
         int pattern,
         object value,
@@ -214,7 +214,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
-        [MemberData(nameof(VectorFloat32TestData.GetVectorFloat32TestData), MemberType = typeof(VectorFloat32TestData))]
+        [MemberData(nameof(VectorFloat32TestData.GetVectorFloat32TestData), MemberType = typeof(VectorFloat32TestData), DisableDiscoveryEnumeration = true)]
         public async Task TestSqlVectorFloat32ParameterInsertionAndReadsAsync(
         int pattern,
         object value,
@@ -248,7 +248,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
-        [MemberData(nameof(VectorFloat32TestData.GetVectorFloat32TestData), MemberType = typeof(VectorFloat32TestData))]
+        [MemberData(nameof(VectorFloat32TestData.GetVectorFloat32TestData), MemberType = typeof(VectorFloat32TestData), DisableDiscoveryEnumeration = true)]
         public void TestStoredProcParamsForVectorFloat32(
         int pattern,
         object value,
@@ -305,7 +305,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
-        [MemberData(nameof(VectorFloat32TestData.GetVectorFloat32TestData), MemberType = typeof(VectorFloat32TestData))]
+        [MemberData(nameof(VectorFloat32TestData.GetVectorFloat32TestData), MemberType = typeof(VectorFloat32TestData), DisableDiscoveryEnumeration = true)]
         public async Task TestStoredProcParamsForVectorFloat32Async(
         int pattern,
         object value,
@@ -585,6 +585,41 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 rowcnt++;
             }
             Assert.Equal(10, rowcnt);
+        }
+
+
+        // We need this testcase to validate ref assembly for vector APIs
+        // Unit tests are covered under SqlVectorTest.cs
+        [Fact]
+        public void VectorAPITest()
+        {
+            // Validate that SqlVector<float> is a valid type and has valid SqlDbType
+            Assert.True(typeof(SqlVector<float>).IsValueType, "SqlVector<float> should be a value type.");
+            Assert.Equal(36, (int)SqlDbTypeExtensions.Vector);
+
+            // Validate ctor1 with float[] : public SqlVector(System.ReadOnlyMemory<T> memory) { }
+            var vector = new SqlVector<float>(VectorFloat32TestData.testData);
+            Assert.Equal(VectorFloat32TestData.testData, vector.Memory.ToArray());
+            Assert.Equal(3, vector.Length);
+
+            // Validate ctor2 with ReadOnlyMemory<T> : public SqlVector(ReadOnlyMemory<T> memory) { }
+            vector = new SqlVector<float>(new ReadOnlyMemory<float>(VectorFloat32TestData.testData));
+            Assert.Equal(VectorFloat32TestData.testData, vector.Memory.ToArray());
+            Assert.Equal(3, vector.Length);
+
+            //Validate IsNull property
+            Assert.False(vector.IsNull, "IsNull should be false for non-null vector.");
+
+            // Validate Null property returns null
+            Assert.Null(SqlVector<float>.Null);
+
+            //Validate length property
+            Assert.Equal(3, vector.Length);
+
+            // Validate CreateNull method
+            vector = SqlVector<float>.CreateNull(5);
+            Assert.True(vector.IsNull);
+            Assert.Equal(5, vector.Length);
         }
     }
 }
