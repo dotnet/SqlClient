@@ -78,13 +78,13 @@ namespace Microsoft.Data.SqlClient
             {
                 if (s_useCompatibilityProcessSni == Tristate.NotInitialized)
                 {
-                    if (AppContext.TryGetSwitch(UseCompatibilityProcessSniString, out bool returnedValue) && returnedValue)
+                    if (AppContext.TryGetSwitch(UseCompatibilityProcessSniString, out bool returnedValue) && !returnedValue)
                     {
-                        s_useCompatibilityProcessSni = Tristate.True;
+                        s_useCompatibilityProcessSni = Tristate.False;
                     }
                     else
                     {
-                        s_useCompatibilityProcessSni = Tristate.False;
+                        s_useCompatibilityProcessSni = Tristate.True;
                     }
                 }
                 return s_useCompatibilityProcessSni == Tristate.True;

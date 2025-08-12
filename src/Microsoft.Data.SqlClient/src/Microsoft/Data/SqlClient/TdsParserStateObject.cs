@@ -3207,7 +3207,13 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
                         else
-                        {
+                        {   
+                            // this call to IncrementPendingCallbacks is required for balance
+                            // the _pendingCallbacks counter will be unconditionally decremented in ReadAsyncCallback
+                            //  so we must make sure that even though we are not making a network call that we do
+                            //  not cause an incorrect decrement which will cause disconnection from the native
+                            //  component
+                            IncrementPendingCallbacks();
                             readPacket = default;
                             error = TdsEnums.SNI_SUCCESS;
                         }
