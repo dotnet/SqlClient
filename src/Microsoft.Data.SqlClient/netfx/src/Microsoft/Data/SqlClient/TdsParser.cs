@@ -7341,8 +7341,8 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLUNIQUEID:
                     {
-                        WriteGuid((Guid)value, stateObj);
                         Debug.Assert(length == 16, "Invalid length for guid type in com+ object");
+                        WriteGuid((Guid)value, stateObj);
                         break;
                     }
 
