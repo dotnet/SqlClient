@@ -13312,7 +13312,7 @@ namespace Microsoft.Data.SqlClient
             if (stateObj._longlen == 0)
             {
                 Debug.Assert(stateObj._longlenleft == 0);
-                totalCharsRead = startOffsetByteCount >> 1;
+                totalCharsRead = startOffsetByteCount / 2;
                 return TdsOperationStatus.Done;       // No data
             }
 
