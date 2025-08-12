@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         public static float[] testData = new float[] { 1.1f, 2.2f, 3.3f };
         public static int vectorColumnLength = testData.Length;
         // Incorrect size for SqlParameter.Size
-        public static int IncorrectParamSize = 3234; 
+        public static int IncorrectParamSize = 3234;
         public static IEnumerable<object[]> GetVectorFloat32TestData()
         {
             // Pattern 1-4 with SqlVector<float>(values: testData)
@@ -43,11 +43,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
             // Pattern 1-4 with SqlVector<float>.Null  
             yield return new object[] { 1, SqlVector<float>.Null, Array.Empty<float>(), vectorColumnLength };
-            
+
             // Following scenario is not supported in SqlClient.
             // This can only be fixed with a behavior change that SqlParameter.Value is internally set to DBNull.Value if it is set to null.
             //yield return new object[] { 2, SqlVector<float>.Null, Array.Empty<float>(), vectorColumnLength };
-            
+
             yield return new object[] { 3, SqlVector<float>.Null, Array.Empty<float>(), vectorColumnLength };
             yield return new object[] { 4, SqlVector<float>.Null, Array.Empty<float>(), vectorColumnLength };
         }
@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             ValidateSqlVectorFloat32Object(reader.IsDBNull(0), (SqlVector<float>)reader.GetSqlValue(0), expectedData, expectedLength);
 
             if (!reader.IsDBNull(0))
-            {                
+            {
                 ValidateSqlVectorFloat32Object(reader.IsDBNull(0), (SqlVector<float>)reader.GetValue(0), expectedData, expectedLength);
                 ValidateSqlVectorFloat32Object(reader.IsDBNull(0), (SqlVector<float>)reader[0], expectedData, expectedLength);
                 ValidateSqlVectorFloat32Object(reader.IsDBNull(0), (SqlVector<float>)reader["VectorData"], expectedData, expectedLength);
@@ -374,8 +374,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             DataTable table = null;
             switch (bulkCopySourceMode)
             {
-            
-            case 1:
+
+                case 1:
                     // Use SqlServer table as source
                     var insertCmd = new SqlCommand($"insert into {s_bulkCopySrcTableName} values (@VectorData)", sourceConnection);
                     var vectorParam = new SqlParameter(s_vectorParamName, new SqlVector<float>(VectorFloat32TestData.testData));
@@ -400,8 +400,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                     throw new ArgumentOutOfRangeException(nameof(bulkCopySourceMode), $"Unsupported bulk copy source mode: {bulkCopySourceMode}");
             }
 
-            
-            
+
+
             //Bulkcopy from sql server table to destination table
             using SqlCommand sourceDataCommand = new SqlCommand($"SELECT Id, VectorData FROM {s_bulkCopySrcTableName}", sourceConnection);
             using SqlDataReader reader = sourceDataCommand.ExecuteReader();
@@ -585,41 +585,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 rowcnt++;
             }
             Assert.Equal(10, rowcnt);
-        }
-
-
-        // We need this testcase to validate ref assembly for vector APIs
-        // Unit tests are covered under SqlVectorTest.cs
-        [Fact]
-        public void VectorAPITest()
-        {
-            // Validate that SqlVector<float> is a valid type and has valid SqlDbType
-            Assert.True(typeof(SqlVector<float>).IsValueType, "SqlVector<float> should be a value type.");
-            Assert.Equal(36, (int)SqlDbTypeExtensions.Vector);
-
-            // Validate ctor1 with float[] : public SqlVector(System.ReadOnlyMemory<T> memory) { }
-            var vector = new SqlVector<float>(VectorFloat32TestData.testData);
-            Assert.Equal(VectorFloat32TestData.testData, vector.Memory.ToArray());
-            Assert.Equal(3, vector.Length);
-
-            // Validate ctor2 with ReadOnlyMemory<T> : public SqlVector(ReadOnlyMemory<T> memory) { }
-            vector = new SqlVector<float>(new ReadOnlyMemory<float>(VectorFloat32TestData.testData));
-            Assert.Equal(VectorFloat32TestData.testData, vector.Memory.ToArray());
-            Assert.Equal(3, vector.Length);
-
-            //Validate IsNull property
-            Assert.False(vector.IsNull, "IsNull should be false for non-null vector.");
-
-            // Validate Null property returns null
-            Assert.Null(SqlVector<float>.Null);
-
-            //Validate length property
-            Assert.Equal(3, vector.Length);
-
-            // Validate CreateNull method
-            vector = SqlVector<float>.CreateNull(5);
-            Assert.True(vector.IsNull);
-            Assert.Equal(5, vector.Length);
         }
     }
 }
