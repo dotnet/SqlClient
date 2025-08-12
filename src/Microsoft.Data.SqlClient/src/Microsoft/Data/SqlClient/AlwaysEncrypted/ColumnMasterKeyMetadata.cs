@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -55,11 +56,17 @@ internal readonly ref struct ColumnMasterKeyMetadata // : IDisposable
         // .NET Core supports Spans in more places, allowing us to allocate on the stack for better performance. It also supports the
         // SHA256.HashData method, which saves allocations compared to instantiating a SHA256 object and calling TransformFinalBlock.
 
-        // By this point, we know that we have a valid certificate, so the path is valid. The longest valid masterKeyPath is in the format:
-        // [LocalMachine|CurrentUser]/My/[40 character SHA1 thumbprint]
+        // By this point, we know that we have a valid certificate, so the path is valid. The longest valid masterKeyPath is in one of the formats:
+        // * [LocalMachine|CurrentUser]/My/[40 character SHA1 thumbprint]
+        // * My/[40 character SHA1 thumbprint]
+        // * [40 character SHA1 thumbprint]
         // ProviderName is a constant string of length 23 characters, and allowEnclaveComputations' longest value is 5 characters long. This
         // implies a maximum length of 84 characters for the masterKeyMetadata string - and by extension, 168 bytes for the Unicode-encoded
         // byte array. This is small enough to allocate on the stack, but we fall back to allocating a new char/byte array in case those assumptions fail.
+        // It also implies that when masterKeyPath is converted to its invariant lowercase value, it will be the same length (because it's
+        // an ASCII string.)
+        Debug.Assert(masterKeyPath.Length == masterKeyPath.ToLowerInvariant().Length);
+
         ReadOnlySpan<char> enclaveComputationSpan = (allowEnclaveComputations ? bool.TrueString : bool.FalseString).AsSpan();
         int masterKeyMetadataLength = providerName.Length + masterKeyPath.Length + enclaveComputationSpan.Length;
         int byteCount;
