@@ -32,13 +32,13 @@ variables:
   - name: Minor
     value: '1'
   - name: Patch
-    value: '0'
+    value: '1'
 
     # Update this for preview releases.
   - name: Preview
     value: '-preview'
   - name: Revision
-    value: '2'
+    value: '3'
 
   - name: NugetPackageVersion
     value: $(Major).$(Minor).$(Patch)
