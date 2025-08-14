@@ -12,12 +12,14 @@ This update includes the following changes since the [6.1.0](6.1.0.md) release:
 ### Fixed
 - Reverted the packet multiplexing design changes that caused several regressions in 6.1.0, to bring back stability in the driver.
   ([#3556](https://github.com/dotnet/SqlClient/pull/3556))
-- Applied reference assembly corrections supporting vector, fixed JSON tests, and ensured related tests are enabled.
+- Fixed Vector API signature in Reference assembly.
   ([#3521](https://github.com/dotnet/SqlClient/pull/3521))
+
+### Changed
 - Upgraded `Azure.Identity` and other dependencies to newer versions.
  ([#3538](https://github.com/dotnet/SqlClient/pull/3538))
- ([#3552](https://github.com/dotnet/SqlClient/pull/3552))s
-
+ ([#3552](https://github.com/dotnet/SqlClient/pull/3552))
+ 
 ## [Stable Release 6.1.0] - 2025-07-25
 
 This update brings the following changes since the
