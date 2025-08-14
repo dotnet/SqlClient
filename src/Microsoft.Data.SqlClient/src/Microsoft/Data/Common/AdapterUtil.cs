@@ -130,7 +130,18 @@ namespace Microsoft.Data.Common
             }
         }
 
-        internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, int dueTime, int period)
+        internal static Timer UnsafeCreateTimer(
+            TimerCallback callback,
+            object state,
+            int dueTimeMilliseconds,
+            int periodMilliseconds) =>
+            UnsafeCreateTimer(
+                callback,
+                state,
+                TimeSpan.FromMilliseconds(dueTimeMilliseconds),
+                TimeSpan.FromMilliseconds(periodMilliseconds));
+        
+        internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, TimeSpan dueTime, TimeSpan period)
         {
             // Don't capture the current ExecutionContext and its AsyncLocals onto 
             // a global timer causing them to live forever
@@ -154,6 +165,7 @@ namespace Microsoft.Data.Common
                 }
             }
         }
+            
 
 #region COM+ exceptions
         internal static ArgumentException Argument(string error)
