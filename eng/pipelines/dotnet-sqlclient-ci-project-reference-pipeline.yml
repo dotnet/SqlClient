@@ -80,6 +80,11 @@ parameters: # parameters are shown up in ADO UI in a build queue time
     - Release
     - Debug
 
+- name: enableStressTests
+  displayName: Enable Stress Tests
+  type: boolean
+  default: false
+
 extends:
   template: dotnet-sqlclient-ci-core.yml@self
   parameters:
@@ -92,3 +97,4 @@ extends:
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
     buildType: ${{ parameters.buildType }}
     buildConfiguration: ${{ parameters.buildConfiguration }}
+    enableStressTests: ${{ parameters.enableStressTests }}
