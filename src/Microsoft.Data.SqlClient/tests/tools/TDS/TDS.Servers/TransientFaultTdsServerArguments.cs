@@ -9,26 +9,21 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Transient error number to be raised by server.
         /// </summary>
-        public uint Number { get; set; }
+        public uint Number = 0;
 
         /// <summary>
         /// Transient error message to be raised by server.
         /// </summary>
-        public string Message { get; set; }
+        public string Message = string.Empty;
 
         /// <summary>
         /// Flag to consider when raising Transient error.
         /// </summary>
-        public bool IsEnabledTransientError { get; set; }
+        public bool IsEnabledTransientError = false;
 
         /// <summary>
-        /// Constructor to initialize
+        /// The number of times the transient error should be raised.
         /// </summary>
-        public TransientFaultTdsServerArguments()
-        {
-            Number = 0;
-            Message = string.Empty;
-            IsEnabledTransientError = false;
-        }
+        public int RepeatCount = 1;
     }
 }

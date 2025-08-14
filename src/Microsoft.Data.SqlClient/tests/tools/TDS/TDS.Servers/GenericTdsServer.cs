@@ -99,7 +99,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        protected GenericTdsServer(T arguments) :
+        public GenericTdsServer(T arguments) :
             this(arguments, new QueryEngine(arguments))
         {
         }
@@ -107,7 +107,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        protected GenericTdsServer(T arguments, QueryEngine queryEngine)
+        public GenericTdsServer(T arguments, QueryEngine queryEngine)
         {
             // Save arguments
             Arguments = arguments;

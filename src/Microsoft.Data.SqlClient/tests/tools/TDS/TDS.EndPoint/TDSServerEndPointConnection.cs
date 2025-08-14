@@ -78,9 +78,9 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         protected TcpClient Connection { get; set; }
 
         /// <summary>
-        /// The flag indicates whether server is being stopped
+        /// Cancellation token source for managing cancellation of the processing thread
         /// </summary>
-        protected CancellationTokenSource CancellationTokenSource { get; set; }
+        private CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
 
         /// <summary>
         /// Initialization constructor
@@ -118,8 +118,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                 // Update server context
                 Session.ClientEndPointInfo = new TDSEndPointInfo(endPoint.Address, endPoint.Port, TDSEndPointTransportType.TCP);
             }
-
-            CancellationTokenSource = new CancellationTokenSource();
         }
 
         /// <summary>
@@ -129,7 +127,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         {
             // Prepare and start a thread
             ProcessorTask = RunConnectionHandler(CancellationTokenSource.Token);
-            //ProcessorTask.Name = string.Format("TDS Server Connection {0} Thread", Connection.Client.RemoteEndPoint);
         }
 
         /// <summary>

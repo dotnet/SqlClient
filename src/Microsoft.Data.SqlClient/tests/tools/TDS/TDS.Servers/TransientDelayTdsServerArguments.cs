@@ -6,28 +6,26 @@ using System;
 
 namespace Microsoft.SqlServer.TDS.Servers
 {
-    public class TransientTimeoutTdsServerArguments : TdsServerArguments
+    public class TransientDelayTdsServerArguments : TdsServerArguments
     {
-        public TimeSpan SleepDuration { get; set; }
+        /// <summary>
+        /// The duration for which the server should sleep before responding to a request.
+        /// </summary>
+        public TimeSpan SleepDuration = TimeSpan.FromSeconds(0);
 
         /// <summary>
         /// Flag to consider when simulating a timeout on the next request.
         /// </summary>
-        public bool IsEnabledTransientTimeout { get; set; }
+        public bool IsEnabledTransientTimeout = false;
 
         /// <summary>
         /// Flag to consider when simulating a timeout on each request.
         /// </summary>
-        public bool IsEnabledPermanentTimeout { get; set; }
+        public bool IsEnabledPermanentTimeout = false;
 
         /// <summary>
-        /// Constructor to initialize
+        /// The number of times the transient error should be raised.
         /// </summary>
-        public TransientTimeoutTdsServerArguments()
-        {
-            SleepDuration = TimeSpan.FromSeconds(0);
-            IsEnabledTransientTimeout = false;
-            IsEnabledPermanentTimeout = false;
-        }
+        public int RepeatCount = 1;
     }
 }

@@ -5,22 +5,21 @@
 using System;
 using System.Threading;
 using Microsoft.SqlServer.TDS.EndPoint;
-using Microsoft.SqlServer.TDS.Login7;
 
 namespace Microsoft.SqlServer.TDS.Servers
 {
     /// <summary>
     /// TDS Server that authenticates clients according to the requested parameters
     /// </summary>
-    public class TransientTimeoutTdsServer : GenericTdsServer<TransientTimeoutTdsServerArguments>, IDisposable
+    public class TransientDelayTdsServer : GenericTdsServer<TransientDelayTdsServerArguments>, IDisposable
     {
         private static int RequestCounter = 0;
 
-        public TransientTimeoutTdsServer(TransientTimeoutTdsServerArguments arguments) : base(arguments)
+        public TransientDelayTdsServer(TransientDelayTdsServerArguments arguments) : base(arguments)
         {
         }
 
-        public TransientTimeoutTdsServer(TransientTimeoutTdsServerArguments arguments, QueryEngine queryEngine) : base(arguments, queryEngine)
+        public TransientDelayTdsServer(TransientDelayTdsServerArguments arguments, QueryEngine queryEngine) : base(arguments, queryEngine)
         {
         }
 
@@ -48,7 +47,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         {
             // Check if we're still going to raise transient error
             if (Arguments.IsEnabledPermanentTimeout || 
-                (Arguments.IsEnabledTransientTimeout && RequestCounter < 1)) // Fail first time, then connect
+                (Arguments.IsEnabledTransientTimeout && RequestCounter < Arguments.RepeatCount))
             {
                 Thread.Sleep(Arguments.SleepDuration);
 
@@ -59,11 +58,11 @@ namespace Microsoft.SqlServer.TDS.Servers
             return base.OnLogin7Request(session, request);
         }
 
+        /// <inheritdoc/>
         public override TDSMessageCollection OnSQLBatchRequest(ITDSServerSession session, TDSMessage message)
         {
-            // Check if we're still going to raise transient error
             if (Arguments.IsEnabledPermanentTimeout ||
-                (Arguments.IsEnabledTransientTimeout && RequestCounter < 1)) // Fail first time, then connect
+                (Arguments.IsEnabledTransientTimeout && RequestCounter < 1))
             {
                 Thread.Sleep(Arguments.SleepDuration);
 
@@ -73,6 +72,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             return base.OnSQLBatchRequest(session, message);
         }
 
+        /// <inheritdoc/>
         public override void Dispose()
         {
             base.Dispose();

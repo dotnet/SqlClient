@@ -12,38 +12,26 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Type of the application intent filter
         /// </summary>
-        public ApplicationIntentFilterType ApplicationIntentFilter { get; set; }
+        public ApplicationIntentFilterType ApplicationIntentFilter = ApplicationIntentFilterType.All;
 
         /// <summary>
         /// Filter for server name
         /// </summary>
-        public string ServerNameFilter { get; set; }
+        public string ServerNameFilter = string.Empty;
 
         /// <summary>
         /// Type of the filtering algorithm to use
         /// </summary>
-        public ServerNameFilterType ServerNameFilterType { get; set; }
+        public ServerNameFilterType ServerNameFilterType = ServerNameFilterType.None;
 
         /// <summary>
         /// TDS packet size filtering
         /// </summary>
-        public ushort? PacketSizeFilter { get; set; }
+        public ushort? PacketSizeFilter = null;
 
         /// <summary>
         /// Filter for application name
         /// </summary>
-        public string ApplicationNameFilter { get; set; }
-
-        /// <summary>
-        /// Initialization constructor
-        /// </summary>
-        public AuthenticatingTdsServerArguments()
-        {
-            // Allow everyone to connect
-            ApplicationIntentFilter = ApplicationIntentFilterType.All;
-
-            // By default we don't turn on server name filter
-            ServerNameFilterType = Servers.ServerNameFilterType.None;
-        }
+        public string ApplicationNameFilter = string.Empty;
     }
 }

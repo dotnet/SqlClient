@@ -10,40 +10,28 @@ namespace Microsoft.SqlServer.TDS.Servers
     public class RoutingTdsServerArguments : TdsServerArguments
     {
         /// <summary>
-        /// Routing destination protocol
+        /// Routing destination protocol.
         /// </summary>
-        public int RoutingProtocol { get; set; }
+        public int RoutingProtocol = 0;
 
         /// <summary>
         /// Routing TCP port
         /// </summary>
-        public ushort RoutingTCPPort { get; set; }
+        public ushort RoutingTCPPort = 0;
 
         /// <summary>
         /// Routing TCP host name
         /// </summary>
-        public string RoutingTCPHost { get; set; }
+        public string RoutingTCPHost = string.Empty;
 
         /// <summary>
         /// Packet on which routing should occur
         /// </summary>
-        public TDSMessageType RouteOnPacket { get; set; }
+        public TDSMessageType RouteOnPacket = TDSMessageType.TDS7Login;
 
         /// <summary>
         /// Indicates that routing should only occur on read-only connections
         /// </summary>
-        public bool RequireReadOnly { get; set; }
-
-        /// <summary>
-        /// Initialization constructor
-        /// </summary>
-        public RoutingTdsServerArguments()
-        {
-            // By default we route on login
-            RouteOnPacket = TDSMessageType.TDS7Login;
-
-            // By default we reject non-read-only connections
-            RequireReadOnly = true;
-        }
+        public bool RequireReadOnly = true;
     }
 }

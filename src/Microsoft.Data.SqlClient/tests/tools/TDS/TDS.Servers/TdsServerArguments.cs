@@ -28,82 +28,56 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Log to which send TDS conversation
         /// </summary>
-        public TextWriter Log { get; set; }
+        public TextWriter Log = null;
 
         /// <summary>
         /// Server name
         /// </summary>
-        public string ServerName { get; set; }
+        public string ServerName = Environment.MachineName;
 
         /// <summary>
         /// Server version
         /// </summary>
-        public Version ServerVersion { get; set; }
+        public Version ServerVersion = new Version(11, 0, 1083);
 
         /// <summary>
         /// Server principal name
         /// </summary>
-        public string ServerPrincipalName { get; set; }
+        public string ServerPrincipalName = AzureADServicePrincipalName;
 
         /// <summary>
         /// Sts Url
         /// </summary>
-        public string StsUrl { get; set; }
+        public string StsUrl = AzureADProductionTokenEndpoint;
 
         /// <summary>
         /// Size of the TDS packet server should operate with
         /// </summary>
-        public int PacketSize { get; set; }
+        public int PacketSize = 4096;
 
         /// <summary>
         /// Transport encryption
         /// </summary>
-        public TDSPreLoginTokenEncryptionType Encryption { get; set; }
+        public TDSPreLoginTokenEncryptionType Encryption = TDSPreLoginTokenEncryptionType.NotSupported;
 
         /// <summary>
         /// Specifies the FedAuthRequired option
         /// </summary>
-        public TdsPreLoginFedAuthRequiredOption FedAuthRequiredPreLoginOption { get; set; }
+        public TdsPreLoginFedAuthRequiredOption FedAuthRequiredPreLoginOption = TdsPreLoginFedAuthRequiredOption.FedAuthNotRequired;
 
         /// <summary>
         /// Certificate to use for transport encryption
         /// </summary>
-        public X509Certificate EncryptionCertificate { get; set; }
+        public X509Certificate EncryptionCertificate = null;
 
         /// <summary>
         /// SSL/TLS protocols to use for transport encryption
         /// </summary>
-        public SslProtocols EncryptionProtocols { get; set; }
+        public SslProtocols EncryptionProtocols = SslProtocols.Tls12;
 
         /// <summary>
         /// Routing destination protocol
         /// </summary>
-        public string FailoverPartner { get; set; }
-
-        /// <summary>
-        /// Initialization constructor
-        /// </summary>
-        public TdsServerArguments()
-        {
-            // Assign default server version
-            ServerName = Environment.MachineName;
-            ServerVersion = new Version(11, 0, 1083);
-
-            // Default packet size
-            PacketSize = 4096;
-
-            // By default we don't support encryption
-            Encryption = TDSPreLoginTokenEncryptionType.NotSupported;
-
-            // By Default SQL authentication will be used.
-            FedAuthRequiredPreLoginOption = TdsPreLoginFedAuthRequiredOption.FedAuthNotRequired;
-
-            EncryptionCertificate = null;
-            EncryptionProtocols = SslProtocols.Tls12;
-
-            ServerPrincipalName = AzureADServicePrincipalName;
-            StsUrl = AzureADProductionTokenEndpoint;
-            FailoverPartner = string.Empty;
-        }
+        public string FailoverPartner = string.Empty;
     }
 }

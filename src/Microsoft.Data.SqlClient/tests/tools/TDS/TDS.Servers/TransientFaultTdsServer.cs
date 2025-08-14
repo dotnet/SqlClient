@@ -17,11 +17,12 @@ namespace Microsoft.SqlServer.TDS.Servers
     {
         private int RequestCounter = 0;
 
-        public void SetErrorBehavior(bool isEnabledTransientFault, uint errorNumber, string message = null)
+        public void SetErrorBehavior(bool isEnabledTransientFault, uint errorNumber, int repeatCount = 1, string message = null)
         {
             Arguments.IsEnabledTransientError = isEnabledTransientFault;
             Arguments.Number = errorNumber;
             Arguments.Message = message;
+            Arguments.RepeatCount = repeatCount;
         }
 
         public TransientFaultTdsServer(TransientFaultTdsServerArguments arguments) : base(arguments)
@@ -56,7 +57,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
 
             // Check if we're still going to raise transient error
-            if (Arguments.IsEnabledTransientError && RequestCounter < 1) // Fail first time, then connect
+            if (Arguments.IsEnabledTransientError && RequestCounter < Arguments.RepeatCount)
             {
                 uint errorNumber = Arguments.Number;
                 string errorMessage = Arguments.Message ?? GetErrorMessage(errorNumber);
