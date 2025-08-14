@@ -26,12 +26,12 @@
     <MicrosoftDataSqlClientSniVersion>6.0.2</MicrosoftDataSqlClientSniVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
     <SystemMemoryVersion>4.5.5</SystemMemoryVersion>
-    <SystemTextEncodingsWebVersion>6.0.0</SystemTextEncodingsWebVersion>
-    <SystemTextJsonVersion>6.0.10</SystemTextJsonVersion>
+    <SystemTextEncodingsWebVersion>8.0.0</SystemTextEncodingsWebVersion>
+    <SystemTextJsonVersion>8.0.5</SystemTextJsonVersion>
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
-    <AzureIdentityVersion>1.11.4</AzureIdentityVersion>
+    <AzureIdentityVersion>1.14.2</AzureIdentityVersion>
     <MicrosoftBclCryptographyVersion>8.0.0</MicrosoftBclCryptographyVersion>
     <MicrosoftExtensionsCachingMemoryVersion>8.0.1</MicrosoftExtensionsCachingMemoryVersion>
     <MicrosoftIdentityModelJsonWebTokensVersion>7.5.0</MicrosoftIdentityModelJsonWebTokensVersion>
@@ -47,8 +47,8 @@
   </PropertyGroup>
   <!-- AKV Provider project dependencies -->
   <PropertyGroup>
-    <AzureCoreVersion>[1.38.0,2.0.0)</AzureCoreVersion>
-    <AzureSecurityKeyVaultKeysVersion>[4.5.0,5.0.0)</AzureSecurityKeyVaultKeysVersion>
+    <AzureCoreVersion>[1.47.1,2.0.0)</AzureCoreVersion>
+    <AzureSecurityKeyVaultKeysVersion>[4.7.0,5.0.0)</AzureSecurityKeyVaultKeysVersion>
   </PropertyGroup>
   <!-- Test Project Dependencies -->
   <PropertyGroup>

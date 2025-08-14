@@ -501,7 +501,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             SqlException e = Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStrWithNoCred));
 
-            string expectedMessage = "ManagedIdentityCredential authentication unavailable";
+            string expectedMessage = "[Managed Identity] Authentication";
             Assert.Contains(expectedMessage, e.GetBaseException().Message);
         }
 
