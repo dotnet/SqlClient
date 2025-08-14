@@ -459,9 +459,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\OnChangedEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\OnChangedEventHandler.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Packet.cs">
-      <Link>Microsoft\Data\SqlClient\Packet.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\PacketHandle.Windows.cs">
       <Link>Microsoft\Data\SqlClient\PacketHandle.Windows.cs</Link>
     </Compile>
@@ -854,9 +851,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObject.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStateObject.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObject.Multiplexer.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserStateObject.Multiplexer.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs</Link>

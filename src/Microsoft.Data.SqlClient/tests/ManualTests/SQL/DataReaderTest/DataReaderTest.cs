@@ -7,7 +7,6 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -263,7 +262,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void CheckNullRowVersionIsDBNull()
+        public static void CheckNullRowVersionIsBDNull()
         {
             lock (s_rowVersionLock)
             {

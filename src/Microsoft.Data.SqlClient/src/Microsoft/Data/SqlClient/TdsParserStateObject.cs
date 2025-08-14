@@ -7,7 +7,6 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Security;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -89,14 +88,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             public int IdentityValue => _value;
-        }
-
-        private enum SnapshotStatus
-        {
-            NotActive,
-            ReplayStarting,
-            ReplayRunning,
-            ContinueRunning
         }
 
         private const int AttentionTimeoutSeconds = 5;
@@ -251,7 +242,7 @@ namespace Microsoft.Data.SqlClient
         internal TaskCompletionSource<object> _networkPacketTaskSource;
         private Timer _networkPacketTimeout;
         internal bool _syncOverAsync = true;
-        private SnapshotStatus _snapshotStatus;
+        private bool _snapshotReplay;
         private StateSnapshot _snapshot;
         private StateSnapshot _cachedSnapshot;
         internal ExecutionContext _executionContext;
@@ -1187,11 +1178,13 @@ namespace Microsoft.Data.SqlClient
                     if (_partialHeaderBytesRead == _inputHeaderLen)
                     {
                         // All read
-                        ReadOnlySpan<byte> header = _partialHeaderBuffer.AsSpan(0, TdsEnums.HEADER_LEN);
                         _partialHeaderBytesRead = 0;
-                        _messageStatus = Packet.GetStatusFromHeader(header);
-                        _inBytesPacket = Packet.GetDataLengthFromHeader(header);
-                        _spid = Packet.GetSpidFromHeader(header);
+                        _inBytesPacket = ((int)_partialHeaderBuffer[TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 |
+                                  (int)_partialHeaderBuffer[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
+
+                        _messageStatus = _partialHeaderBuffer[1];
+                        _spid = _partialHeaderBuffer[TdsEnums.SPID_OFFSET] << 8 |
+                                  _partialHeaderBuffer[TdsEnums.SPID_OFFSET + 1];
 
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
                     }
@@ -1227,10 +1220,11 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // normal header processing...
-                ReadOnlySpan<byte> header = _inBuff.AsSpan(_inBytesUsed, TdsEnums.HEADER_LEN);
-                _messageStatus = Packet.GetStatusFromHeader(header);
-                _inBytesPacket = Packet.GetDataLengthFromHeader(header);
-                _spid = Packet.GetSpidFromHeader(header);
+                _messageStatus = _inBuff[_inBytesUsed + 1];
+                _inBytesPacket = (_inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 |
+                                              _inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
+                _spid = _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET] << 8 |
+                                              _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET + 1];
 #if NET
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
 #endif
@@ -1370,7 +1364,9 @@ namespace Microsoft.Data.SqlClient
                 // Allocate or re-allocate _inBuff.
                 if (_inBuff == null)
                 {
-                    SetBuffer(new byte[size], 0, 0);
+                    _inBuff = new byte[size];
+                    _inBytesRead = 0;
+                    _inBytesUsed = 0;
                 }
                 else if (size != _inBuff.Length)
                 {
@@ -1380,24 +1376,28 @@ namespace Microsoft.Data.SqlClient
                         // if we still have data left in the buffer we must keep that array reference and then copy into new one
                         byte[] temp = _inBuff;
 
+                        _inBuff = new byte[size];
+
                         // copy remainder of unused data
                         int remainingData = _inBytesRead - _inBytesUsed;
-                        if ((temp.Length < _inBytesUsed + remainingData) || (size < remainingData))
+                        if ((temp.Length < _inBytesUsed + remainingData) || (_inBuff.Length < remainingData))
                         {
-                            string errormessage = StringsHelper.GetString(Strings.SQL_InvalidInternalPacketSize) + ' ' + temp.Length + ", " + _inBytesUsed + ", " + remainingData + ", " + size;
+                            string errormessage = StringsHelper.GetString(Strings.SQL_InvalidInternalPacketSize) + ' ' + temp.Length + ", " + _inBytesUsed + ", " + remainingData + ", " + _inBuff.Length;
                             throw SQL.InvalidInternalPacketSize(errormessage);
                         }
+                        Buffer.BlockCopy(temp, _inBytesUsed, _inBuff, 0, remainingData);
 
-                        byte[] inBuff = new byte[size];
-                        Buffer.BlockCopy(temp, _inBytesUsed, inBuff, 0, remainingData);
-                        SetBuffer(inBuff, 0, remainingData);
+                        _inBytesRead = _inBytesRead - _inBytesUsed;
+                        _inBytesUsed = 0;
 
                         AssertValidState();
                     }
                     else
                     {
                         // buffer is empty - just create the new one that is double the size of the old one
-                        SetBuffer(new byte[size], 0, 0);
+                        _inBuff = new byte[size];
+                        _inBytesRead = 0;
+                        _inBytesUsed = 0;
                     }
                 }
 
@@ -1410,11 +1410,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             return false;
-        }
-
-        internal int GetPacketSize()
-        {
-            return _inBuff.Length;
         }
 
         ///////////////////////////////////////
@@ -1443,17 +1438,12 @@ namespace Microsoft.Data.SqlClient
         // bytes from the in buffer.
         public TdsOperationStatus TryReadByteArray(Span<byte> buff, int len)
         {
-            return TryReadByteArray(buff, len, out _, 0, false);
-        }
-
-        public TdsOperationStatus TryReadByteArray(Span<byte> buff, int len, out int totalRead)
-        {
-            return TryReadByteArray(buff, len, out totalRead, 0, false);
+            return TryReadByteArray(buff, len, out _);
         }
 
         // NOTE: This method must be retriable WITHOUT replaying a snapshot
         // Every time you call this method increment the offset and decrease len by the value of totalRead
-        public TdsOperationStatus TryReadByteArray(Span<byte> buff, int len, out int totalRead, int startOffset, bool writeDataSizeToSnapshot)
+        public TdsOperationStatus TryReadByteArray(Span<byte> buff, int len, out int totalRead)
         {
             totalRead = 0;
 
@@ -1477,10 +1467,6 @@ namespace Microsoft.Data.SqlClient
 #endif
 
             Debug.Assert(buff.IsEmpty || buff.Length >= len, "Invalid length sent to ReadByteArray()!");
-
-
-            totalRead += startOffset;
-            len -= startOffset;
 
             // loop through and read up to array length
             while (len > 0)
@@ -1508,56 +1494,10 @@ namespace Microsoft.Data.SqlClient
                 _inBytesPacket -= bytesToRead;
                 len -= bytesToRead;
 
-                if (writeDataSizeToSnapshot)
-                {
-                    AddSnapshotDataSize(bytesToRead);
-                }
-
                 AssertValidState();
             }
 
             return TdsOperationStatus.Done;
-        }
-
-        public TdsOperationStatus TryReadByteArrayWithContinue(int length, out byte[] bytes)
-        {
-            bytes = null;
-            int offset = 0;
-            byte[] temp = null;
-            (bool canContinue, bool isStarting, bool isContinuing) = GetSnapshotStatuses();
-            if (canContinue)
-            {
-                temp = TryTakeSnapshotStorage() as byte[];
-                Debug.Assert(temp != null || !isContinuing, "if continuing stored buffer must be present to contain previous data to continue from");
-                Debug.Assert(bytes == null || bytes.Length == length, "stored buffer length must be null or must have been created with the correct length");
-                
-                if (temp != null)
-                {
-                    offset = GetSnapshotTotalSize();
-                }
-            }
-
-
-            if (temp == null)
-            {
-                temp = new byte[length];
-            }
-
-            TdsOperationStatus result = TryReadByteArray(temp, length, out _, offset, isStarting || isContinuing);
-
-            if (result == TdsOperationStatus.Done)
-            {
-                bytes = temp;
-            }
-            else if (result == TdsOperationStatus.NeedMoreData)
-            {
-                if (canContinue)
-                {
-                    SetSnapshotStorage(temp);
-                }
-            }
-
-            return result;
         }
 
         // Takes no arguments and returns a byte from the buffer.  If the buffer is empty, it is filled
@@ -1679,7 +1619,7 @@ namespace Microsoft.Data.SqlClient
                 TdsOperationStatus result = TryReadByteArray(buffer, 4);
                 if (result != TdsOperationStatus.Done)
                 {
-                    value = 0;
+                    value = default;
                     return result;
                 }
             }
@@ -1906,12 +1846,20 @@ namespace Microsoft.Data.SqlClient
 
             if (((_inBytesUsed + cBytes) > _inBytesRead) || (_inBytesPacket < cBytes))
             {
-                TdsOperationStatus result = TryReadByteArrayWithContinue(cBytes, out buf);
+                if (_bTmp == null || _bTmp.Length < cBytes)
+                {
+                    _bTmp = new byte[cBytes];
+                }
+
+                TdsOperationStatus result = TryReadByteArray(_bTmp, cBytes);
                 if (result != TdsOperationStatus.Done)
                 {
                     value = null;
                     return result;
                 }
+
+                // assign local to point to parser scratch buffer
+                buf = _bTmp;
 
                 AssertValidState();
             }
@@ -1960,7 +1908,6 @@ namespace Microsoft.Data.SqlClient
             }
             byte[] buf = null;
             int offset = 0;
-            (bool canContinue, bool isStarting, bool isContinuing) = GetSnapshotStatuses();
 
             if (isPlp)
             {
@@ -1977,38 +1924,20 @@ namespace Microsoft.Data.SqlClient
             {
                 if (((_inBytesUsed + length) > _inBytesRead) || (_inBytesPacket < length))
                 {
-                    int startOffset = 0;
-                    if (canContinue)
+                    if (_bTmp == null || _bTmp.Length < length)
                     {
-                        buf = TryTakeSnapshotStorage() as byte[];
-                        Debug.Assert(buf != null || !isContinuing, "if continuing stored buffer must be present to contain previous data to continue from");
-                        Debug.Assert(buf == null || buf.Length == length, "stored buffer length must be null or must have been created with the correct length");
-                        
-                        if (buf != null)
-                        {
-                            startOffset = GetSnapshotTotalSize();
-                        }
+                        _bTmp = new byte[length];
                     }
 
-                    if (buf == null || buf.Length < length)
-                    {
-                        buf = new byte[length];
-                    }
-
-                    TdsOperationStatus result = TryReadByteArray(buf, length, out _, startOffset, canContinue);
-                    
+                    TdsOperationStatus result = TryReadByteArray(_bTmp, length);
                     if (result != TdsOperationStatus.Done)
                     {
-                        if (result == TdsOperationStatus.NeedMoreData)
-                        {
-                            if (canContinue)
-                            {
-                                SetSnapshotStorage(buf);
-                            }
-                        }
                         value = null;
                         return result;
                     }
+
+                    // assign local to point to parser scratch buffer
+                    buf = _bTmp;
 
                     AssertValidState();
                 }
@@ -2054,7 +1983,7 @@ namespace Microsoft.Data.SqlClient
             // bool firstchunk = false;
             bool isNull = false;
 
-            Debug.Assert(_longlenleft == 0, "Out of sync length read request");
+            Debug.Assert(_longlenleft == 0, "Out of synch length read request");
             if (_longlen == 0)
             {
                 // First chunk is being read. Find out what type of chunk it is
@@ -2123,28 +2052,17 @@ namespace Microsoft.Data.SqlClient
             return value;
         }
 
-        internal TdsOperationStatus TryReadPlpBytes(ref byte[] buff, int offset, int len, out int totalBytesRead)
-        {
-            bool canContinue = false;
-            bool isStarting = false;
-            bool isContinuing = false;
-            bool compatibilityMode = LocalAppContextSwitches.UseCompatibilityAsyncBehaviour;
-            if (!compatibilityMode)
-            {
-                (canContinue, isStarting, isContinuing) = GetSnapshotStatuses();
-            }
-            return TryReadPlpBytes(ref buff, offset, len, out totalBytesRead, canContinue, canContinue, compatibilityMode);
-        }
-
         // Reads the requested number of bytes from a plp data stream, or the entire data if
         // requested length is -1 or larger than the actual length of data. First call to this method
         //  should be preceeded by a call to ReadPlpLength or ReadDataLength.
         // Returns the actual bytes read.
         // NOTE: This method must be retriable WITHOUT replaying a snapshot
         // Every time you call this method increment the offset and decrease len by the value of totalBytesRead
-        internal TdsOperationStatus TryReadPlpBytes(ref byte[] buff, int offset, int len, out int totalBytesRead, bool canContinue, bool writeDataSizeToSnapshot, bool compatibilityMode)
+        internal TdsOperationStatus TryReadPlpBytes(ref byte[] buff, int offset, int len, out int totalBytesRead)
         {
-            totalBytesRead = 0;
+            int bytesRead;
+            int bytesLeft;
+            byte[] newbuf;
 
             if (_longlen == 0)
             {
@@ -2162,30 +2080,18 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_longlen != TdsEnums.SQL_PLP_NULL, "Out of sync plp read request");
             Debug.Assert((buff == null && offset == 0) || (buff.Length >= offset + len), "Invalid length sent to ReadPlpBytes()!");
 
-            int bytesLeft = len;
+            bytesLeft = len;
 
             // If total length is known up front, allocate the whole buffer in one shot instead of realloc'ing and copying over each time
             if (buff == null && _longlen != TdsEnums.SQL_PLP_UNKNOWNLEN)
             {
-                if (compatibilityMode && _snapshot != null && _snapshotStatus != SnapshotStatus.NotActive)
+                if (_snapshot != null)
                 {
-                    // legacy replay path perf optimization
-                    // if there is a snapshot which contains a stored plp buffer take it
+                    // if there is a snapshot and it contains a stored plp buffer take it
                     // and try to use it if it is the right length
-                    buff = TryTakeSnapshotStorage() as byte[];
+                    buff = _snapshot._plpBuffer;
+                    _snapshot._plpBuffer = null;
                 }
-                else if (writeDataSizeToSnapshot && canContinue && _snapshot != null)
-                {
-                    // if there is a snapshot which it contains a stored plp buffer take it
-                    // and try to use it if it is the right length
-                    buff = TryTakeSnapshotStorage() as byte[];
-                    if (buff != null)
-                    {
-                        offset = _snapshot.GetPacketDataOffset();
-                        totalBytesRead = offset;
-                    }
-                }
-
 
                 if ((ulong)(buff?.Length ?? 0) != _longlen)
                 {
@@ -2215,19 +2121,20 @@ namespace Microsoft.Data.SqlClient
                 buff = new byte[_longlenleft];
             }
 
+            totalBytesRead = 0;
+
             while (bytesLeft > 0)
             {
                 int bytesToRead = (int)Math.Min(_longlenleft, (ulong)bytesLeft);
                 if (buff.Length < (offset + bytesToRead))
                 {
                     // Grow the array
-                    byte[] newbuf = new byte[offset + bytesToRead];
+                    newbuf = new byte[offset + bytesToRead];
                     Buffer.BlockCopy(buff, 0, newbuf, 0, offset);
                     buff = newbuf;
-                    newbuf = null;
                 }
 
-                TdsOperationStatus result = TryReadByteArray(buff.AsSpan(offset), bytesToRead, out int bytesRead);
+                TdsOperationStatus result = TryReadByteArray(buff.AsSpan(offset), bytesToRead, out bytesRead);
                 Debug.Assert(bytesRead <= bytesLeft, "Read more bytes than we needed");
                 Debug.Assert((ulong)bytesRead <= _longlenleft, "Read more bytes than is available");
 
@@ -2237,28 +2144,13 @@ namespace Microsoft.Data.SqlClient
                 _longlenleft -= (ulong)bytesRead;
                 if (result != TdsOperationStatus.Done)
                 {
-                    if (compatibilityMode && _snapshot != null)
-                    {
-                        // legacy replay path perf optimization
-                        // a partial read has happened so store the target buffer in the snapshot
-                        // so it can be re-used when another packet arrives and we read again
-                        SetSnapshotStorage(buff);
-                    }
-                    else if (canContinue)
+                    if (_snapshot != null)
                     {
                         // a partial read has happened so store the target buffer in the snapshot
                         // so it can be re-used when another packet arrives and we read again
-                        SetSnapshotStorage(buff);
-                        if (writeDataSizeToSnapshot)
-                        {
-                            AddSnapshotDataSize(bytesRead);
-                        }
+                        _snapshot._plpBuffer = buff;
                     }
                     return result;
-                }
-                if (writeDataSizeToSnapshot && canContinue)
-                {
-                    AddSnapshotDataSize(bytesRead);
                 }
 
                 if (_longlenleft == 0)
@@ -2267,16 +2159,11 @@ namespace Microsoft.Data.SqlClient
                     result = TryReadPlpLength(false, out _);
                     if (result != TdsOperationStatus.Done)
                     {
-                        if (compatibilityMode && _snapshot != null)
+                        if (_snapshot != null)
                         {
                             // a partial read has happened so store the target buffer in the snapshot
                             // so it can be re-used when another packet arrives and we read again
-                            SetSnapshotStorage(buff);
-                        }
-                        else if (canContinue && result == TdsOperationStatus.NeedMoreData)
-                        {
-                            SetSnapshotStorage(buff);
-                            // data bytes read from the current packet must be 0 here so do not save the snapshot data size
+                            _snapshot._plpBuffer = buff;
                         }
                         return result;
                     }
@@ -2286,15 +2173,7 @@ namespace Microsoft.Data.SqlClient
 
                 // Catch the point where we read the entire plp data stream and clean up state
                 if (_longlenleft == 0)   // Data read complete
-                {
                     break;
-                }
-            }
-
-            if (canContinue)
-            {
-                SetSnapshotStorage(null);
-                ClearSnapshotDataSize();
             }
             return TdsOperationStatus.Done;
         }
@@ -2728,30 +2607,14 @@ namespace Microsoft.Data.SqlClient
             TdsOperationStatus result = TdsOperationStatus.InvalidData;
             if (_snapshot != null)
             {
-                if (_snapshotStatus != SnapshotStatus.NotActive)
+                if (_snapshotReplay)
                 {
 #if DEBUG
-                    string stackTrace = null;
-                    if (s_checkNetworkPacketRetryStacks)
-                    {
-                        // in debug builds stack traces contain line numbers so if we want to be
-                        // able to compare the stack traces they must all be created in the same
-                        // location in the code
-                        stackTrace = Environment.StackTrace;
-                    }
+                    // in debug builds stack traces contain line numbers so if we want to be
+                    // able to compare the stack traces they must all be created in the same
+                    // location in the code
+                    string stackTrace = Environment.StackTrace;
 #endif
-                    bool capturedAsContinue = false;
-                    if (_snapshotStatus == SnapshotStatus.ReplayRunning || _snapshotStatus == SnapshotStatus.ReplayStarting)
-                    {
-                        if (_bTmpRead == 0 && _partialHeaderBytesRead == 0 && _longlenleft == 0 && _snapshot.ContinueEnabled)
-                        {
-                            // no temp between packets
-                            // mark this point as continue-able
-                            _snapshot.CaptureAsContinue(this);
-                            capturedAsContinue = true;
-                        }
-                    }
-
                     if (_snapshot.MoveNext())
                     {
 #if DEBUG
@@ -2762,46 +2625,24 @@ namespace Microsoft.Data.SqlClient
 #endif
                         return TdsOperationStatus.Done;
                     }
+#if DEBUG
                     else
                     {
-#if DEBUG
                         if (s_checkNetworkPacketRetryStacks)
                         {
                             _lastStack = stackTrace;
                         }
-#endif
-                        if (_bTmpRead == 0 && _partialHeaderBytesRead == 0 && _longlenleft == 0 && _snapshot.ContinueEnabled && !capturedAsContinue)
-                        {
-                            // no temp between packets
-                            // mark this point as continue-able
-                            _snapshot.CaptureAsContinue(this);
-                            capturedAsContinue = true;
-                        }
                     }
+#endif
                 }
 
                 // previous buffer is in snapshot
                 _inBuff = new byte[_inBuff.Length];
-                result = TdsOperationStatus.NeedMoreData;
-            }
-
-            if (result == TdsOperationStatus.InvalidData && PartialPacket != null && !PartialPacket.ContainsCompletePacket)
-            {
-                result = TdsOperationStatus.NeedMoreData;
             }
 
             if (_syncOverAsync)
             {
                 ReadSniSyncOverAsync();
-                while (_inBytesRead == 0)
-                {
-                    // a partial packet must have taken the packet data so we
-                    // need to read more data to complete the packet, but we 
-                    // can't return NeedMoreData in sync mode so we have to
-                    // spin fetching more data here until we have something
-                    // that the caller can read
-                    ReadSniSyncOverAsync();
-                }
                 return TdsOperationStatus.Done;
             }
 
@@ -2825,10 +2666,7 @@ namespace Microsoft.Data.SqlClient
         internal void PrepareReplaySnapshot()
         {
             _networkPacketTaskSource = null;
-            if (!_snapshot.MoveToContinue())
-            {
-                _snapshot.MoveToStart();
-            }
+            _snapshot.MoveToStart();
         }
 
         internal void ReadSniSyncOverAsync()
@@ -2839,7 +2677,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             PacketHandle readPacket = default;
-            bool readFromNetwork = !PartialPacketContainsCompletePacket();
+
             uint error;
 
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -2849,14 +2687,7 @@ namespace Microsoft.Data.SqlClient
                 Interlocked.Increment(ref _readingCount);
                 shouldDecrement = true;
 
-                if (readFromNetwork)
-                {
-                    readPacket = ReadSyncOverAsync(GetTimeoutRemaining(), out error);
-                }
-                else
-                {
-                    error = TdsEnums.SNI_SUCCESS;
-                }
+                readPacket = ReadSyncOverAsync(GetTimeoutRemaining(), out error);
 
                 Interlocked.Decrement(ref _readingCount);
                 shouldDecrement = false;
@@ -2870,12 +2701,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     // Success - process results!
 
-                    if (readFromNetwork)
-                    {
-                        Debug.Assert(!IsPacketEmpty(readPacket), "ReadNetworkPacket cannot be null in synchronous operation!");
-                    }
+                    Debug.Assert(!IsPacketEmpty(readPacket), "ReadNetworkPacket cannot be null in synchronous operation!");
 
-                    ProcessSniPacket(readPacket, TdsEnums.SNI_SUCCESS);
+                    ProcessSniPacket(readPacket, 0);
 #if DEBUG
                     if (s_forcePendingReadsToWaitForUser)
                     {
@@ -2887,12 +2715,9 @@ namespace Microsoft.Data.SqlClient
 #endif
                 }
                 else
-                {
+                { 
                     // Failure!
-                    if (readFromNetwork)
-                    {
-                        Debug.Assert(!IsValidPacket(readPacket), "unexpected readPacket without corresponding SNIPacketRelease");
-                    }
+                    Debug.Assert(!IsValidPacket(readPacket), "unexpected readPacket without corresponding SNIPacketRelease");
 
                     ReadSniError(this, error);
                 }
@@ -2904,12 +2729,9 @@ namespace Microsoft.Data.SqlClient
                     Interlocked.Decrement(ref _readingCount);
                 }
 
-                if (readFromNetwork)
+                if (!IsPacketEmpty(readPacket))
                 {
-                    if (!IsPacketEmpty(readPacket))
-                    {
-                        ReleasePacket(readPacket);
-                    }
+                    ReleasePacket(readPacket);
                 }
 
                 AssertValidState();
@@ -3133,7 +2955,6 @@ namespace Microsoft.Data.SqlClient
             PacketHandle readPacket = default;
 
             uint error = 0;
-            bool readFromNetwork = true;
 
             RuntimeHelpers.PrepareConstrainedRegions();
             try
@@ -3177,35 +2998,21 @@ namespace Microsoft.Data.SqlClient
                 finally
                 {
                     Interlocked.Increment(ref _readingCount);
-                    try
+
+                    handle = SessionHandle;
+                    if (!handle.IsNull)
                     {
-                        handle = SessionHandle;
+                        IncrementPendingCallbacks();
 
-                        readFromNetwork = !PartialPacketContainsCompletePacket();
-                        if (readFromNetwork)
+                        readPacket = ReadAsync(handle, out error);
+
+                        if (!(TdsEnums.SNI_SUCCESS == error || TdsEnums.SNI_SUCCESS_IO_PENDING == error))
                         {
-                            if (!handle.IsNull)
-                            {
-                                IncrementPendingCallbacks();
-
-                                readPacket = ReadAsync(handle, out error);
-
-                                if (!(TdsEnums.SNI_SUCCESS == error || TdsEnums.SNI_SUCCESS_IO_PENDING == error))
-                                {
-                                    DecrementPendingCallbacks(false); // Failure - we won't receive callback!
-                                }
-                            }
-                        }
-                        else
-                        {
-                            readPacket = default;
-                            error = TdsEnums.SNI_SUCCESS;
+                            DecrementPendingCallbacks(false); // Failure - we won't receive callback!
                         }
                     }
-                    finally
-                    {
-                        Interlocked.Decrement(ref _readingCount);
-                    }
+
+                    Interlocked.Decrement(ref _readingCount);
                 }
 
                 if (handle.IsNull)
@@ -3215,12 +3022,12 @@ namespace Microsoft.Data.SqlClient
 
                 if (TdsEnums.SNI_SUCCESS == error)
                 { // Success - process results!
-                    Debug.Assert(!readFromNetwork || IsValidPacket(readPacket) , "ReadNetworkPacket should not have been null on this async operation!");
+                    Debug.Assert(IsValidPacket(readPacket), "ReadNetworkPacket should not have been null on this async operation!");
                     // Evaluate this condition for MANAGED_SNI. This may not be needed because the network call is happening Async and only the callback can receive a success.
                     ReadAsyncCallback(IntPtr.Zero, readPacket, 0);
 
                     // Only release packet for Managed SNI as for Native SNI packet is released in finally block.
-                    if (TdsParserStateObjectFactory.UseManagedSNI && readFromNetwork && !IsPacketEmpty(readPacket))
+                    if (TdsParserStateObjectFactory.UseManagedSNI && !IsPacketEmpty(readPacket))
                     {
                         ReleasePacket(readPacket);
                     }
@@ -3258,7 +3065,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (!TdsParserStateObjectFactory.UseManagedSNI)
                 {
-                    if (readFromNetwork && !IsPacketEmpty(readPacket))
+                    if (!IsPacketEmpty(readPacket))
                     {
                         // Be sure to release packet, otherwise it will be leaked by native.
                         ReleasePacket(readPacket);
@@ -3520,9 +3327,8 @@ namespace Microsoft.Data.SqlClient
                 snapshot.Clear();
             }
             _snapshot = snapshot;
-            Debug.Assert(_snapshot._storage == null);
             _snapshot.CaptureAsStart(this);
-            _snapshotStatus = SnapshotStatus.NotActive;
+            _snapshotReplay = false;
         }
 
         internal void ResetSnapshot()
@@ -3534,102 +3340,9 @@ namespace Microsoft.Data.SqlClient
                 snapshot.Clear();
                 Interlocked.CompareExchange(ref _cachedSnapshot, snapshot, null);
             }
-            _snapshotStatus = SnapshotStatus.NotActive;
+            _snapshotReplay = false;
         }
 
-        internal bool IsSnapshotAvailable()
-        {
-            return _snapshot != null && _snapshot.ContinueEnabled;
-        }
-        /// <summary>
-        /// Returns true if the state object is in the state of continuing from a previously stored snapshot packet 
-        /// meaning that consumers should resume from the point where they last needed more data instead of beginning
-        /// to process packets in the snapshot from the beginning again
-        /// </summary>
-        /// <returns></returns>
-        internal bool IsSnapshotContinuing()
-        {
-            return _snapshot != null &&
-                _snapshot.ContinueEnabled &&
-                _snapshotStatus == TdsParserStateObject.SnapshotStatus.ContinueRunning;
-        }
-
-        internal (bool CanContinue, bool IsStarting, bool IsContinuing) GetSnapshotStatuses()
-        {
-            bool canContinue = _snapshot != null && _snapshot.ContinueEnabled && _snapshotStatus != SnapshotStatus.NotActive;
-            bool isStarting = false;
-            bool isContinuing = false;
-            if (canContinue)
-            {
-                isStarting = _snapshotStatus == SnapshotStatus.ReplayStarting;
-                isContinuing = _snapshotStatus == SnapshotStatus.ContinueRunning;
-            }
-            return (canContinue, isStarting, isContinuing);
-        }
-
-        internal int GetSnapshotStorageLength<T>()
-        {
-            Debug.Assert(_snapshot != null && _snapshot.ContinueEnabled, "should not access snapshot accessor functions without first checking that the snapshot is available");
-            return (_snapshot?._storage as IList<T>)?.Count ?? 0;
-        }
-
-        internal object TryTakeSnapshotStorage()
-        {
-            Debug.Assert(_snapshot != null, "should not access snapshot accessor functions without first checking that the snapshot is present");
-            object buffer = null;
-            if (_snapshot != null)
-            {
-                buffer = _snapshot._storage;
-                _snapshot._storage = null;
-            }
-            return buffer;
-        }
-
-        internal void SetSnapshotStorage(object buffer)
-        {
-            Debug.Assert(_snapshot != null, "should not access snapshot accessor functions without first checking that the snapshot is available");
-            if (_snapshot != null)
-            {
-                _snapshot._storage = buffer;
-            }
-        }
-
-        /// <summary>
-        /// stores the countOfBytesCopiedFromCurrentPacket of bytes copied from the current packet in the snapshot allowing the total
-        /// countOfBytesCopiedFromCurrentPacket to be calculated
-        /// </summary>
-        /// <param name="countOfBytesCopiedFromCurrentPacket"></param>
-        internal void AddSnapshotDataSize(int countOfBytesCopiedFromCurrentPacket)
-        {
-            Debug.Assert(_snapshot != null && _snapshot.ContinueEnabled, "_snapshot must exist to store packet data size");
-            _snapshot.SetPacketDataSize(countOfBytesCopiedFromCurrentPacket);
-        }
-
-        internal void ClearSnapshotDataSize()
-        {
-            Debug.Assert(_snapshot != null, "_snapshot must exist to store packet data size");
-            _snapshot?.ClearPacketDataSize();
-        }
-
-        internal int GetSnapshotTotalSize()
-        {
-            Debug.Assert(_snapshot != null && _snapshot.ContinueEnabled, "_snapshot must exist to read total size");
-            Debug.Assert(_snapshotStatus != SnapshotStatus.NotActive, "_snapshot must be active read total size");
-            return _snapshot.GetPacketDataOffset();
-        }
-
-        internal int GetSnapshotDataSize()
-        {
-            Debug.Assert(_snapshot != null && _snapshot.ContinueEnabled, "_snapshot must exist to read packet data size");
-            Debug.Assert(_snapshotStatus != SnapshotStatus.NotActive, "_snapshot must be active read packet data size");
-            return _snapshot.GetPacketDataSize();
-        }
-
-        internal int GetSnapshotPacketID()
-        {
-            Debug.Assert(_snapshot != null && _snapshot.ContinueEnabled, "_snapshot must exist to read packet data size");
-            return _snapshot.GetPacketID();
-        }
 
         /// <summary>
         /// Debug Only: Ensures that the TdsParserStateObject has no lingering state and can safely be re-used
@@ -3642,7 +3355,7 @@ namespace Microsoft.Data.SqlClient
             if ((parser != null) && (parser.State != TdsParserState.Closed) && (parser.State != TdsParserState.Broken))
             {
                 // Async reads
-                Debug.Assert(_snapshot == null && _snapshotStatus == SnapshotStatus.NotActive, "StateObj has leftover snapshot state");
+                Debug.Assert(_snapshot == null && !_snapshotReplay, "StateObj has leftover snapshot state");
                 Debug.Assert(!_asyncReadWithoutSnapshot, "StateObj has AsyncReadWithoutSnapshot still enabled");
                 Debug.Assert(_executionContext == null, "StateObj has a stored execution context from an async read");
                 // Async writes
@@ -3735,7 +3448,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal sealed partial class StateSnapshot
+        sealed partial class StateSnapshot
         {
             private sealed partial class PacketData
             {
@@ -3743,33 +3456,6 @@ namespace Microsoft.Data.SqlClient
                 public int Read;
                 public PacketData NextPacket;
                 public PacketData PrevPacket;
-
-                /// <summary>
-                /// Stores the data size of the total snapshot so far so that enumeration is not needed
-                /// to get the offset of the previous packet data in the stored buffer
-                /// </summary>
-                public int RunningDataSize;
-
-                public int PacketID => Packet.GetIDFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
-
-                internal int GetPacketDataOffset()
-                {
-                    int previous = 0;
-                    if (PrevPacket != null)
-                    {
-                        previous = PrevPacket.RunningDataSize;
-                    }
-                    return previous;
-                }
-                internal int GetPacketDataSize()
-                {
-                    int previous = 0;
-                    if (PrevPacket != null)
-                    {
-                        previous = PrevPacket.RunningDataSize;
-                    }
-                    return Math.Max(RunningDataSize - previous, 0);
-                }
 
                 internal void Clear()
                 {
@@ -3781,21 +3467,15 @@ namespace Microsoft.Data.SqlClient
                         PrevPacket.NextPacket = null;
                         PrevPacket = null;
                     }
-                    SetDebugStackImpl(null);
-                    SetDebugPacketId(0);
-                    SetDebugDataHash();
+                    SetDebugStackInternal(null);
+                    SetDebugPacketIdInternal(0);
                 }
 
-                internal void SetDebugStack(string value) => SetDebugStackImpl(value);
-                internal void SetDebugPacketId(int value) => SetDebugPacketIdImpl(value);
-                internal void SetDebugDataHash() => SetDebugDataHashImpl();
+                internal void SetDebugStack(string value) => SetDebugStackInternal(value);
+                internal void SetDebugPacketId(int value) => SetDebugPacketIdInternal(value);
 
-                internal void CheckDebugDataHash() => CheckDebugDataHashImpl();
-
-                partial void SetDebugStackImpl(string value);
-                partial void SetDebugPacketIdImpl(int value);
-                partial void SetDebugDataHashImpl();
-                partial void CheckDebugDataHashImpl();
+                partial void SetDebugStackInternal(string value);
+                partial void SetDebugPacketIdInternal(int value);
             }
 
 #if DEBUG
@@ -3817,189 +3497,84 @@ namespace Microsoft.Data.SqlClient
                         _data = data;
                     }
 
-                    public string Type {
-
-                        get
-                        {
-                            if (_data != null && _data.Buffer!=null)
-                            {
-                                switch (_data.Buffer[0])
-                                {
-                                    case 1: return nameof(TdsEnums.MT_SQL);
-                                    case 2: return nameof(TdsEnums.MT_LOGIN);
-                                    case 3: return nameof(TdsEnums.MT_RPC);
-                                    case 4: return nameof(TdsEnums.MT_TOKENS);
-                                    case 5: return nameof(TdsEnums.MT_BINARY);
-                                    case 6: return nameof(TdsEnums.MT_ATTN);
-                                    case 7: return nameof(TdsEnums.MT_BULK);
-                                    case 8: return nameof(TdsEnums.MT_FEDAUTH);
-                                    case 9: return nameof(TdsEnums.MT_CLOSE);
-                                    case 10: return nameof(TdsEnums.MT_ERROR);
-                                    case 11: return nameof(TdsEnums.MT_ACK);
-                                    case 12: return nameof(TdsEnums.MT_ECHO);
-                                    case 13: return nameof(TdsEnums.MT_LOGOUT);
-                                    case 14: return nameof(TdsEnums.MT_TRANS);
-                                    case 15: return nameof(TdsEnums.MT_OLEDB);
-                                    case 16: return nameof(TdsEnums.MT_LOGIN7);
-                                    case 17: return nameof(TdsEnums.MT_SSPI);
-                                    case 18: return nameof(TdsEnums.MT_PRELOGIN);
-                                    default: return _data.Buffer[0].ToString("X2");
-                                }
-                            }
-                            return "";
-                        }
-                    }
-
-                    public string Status
+                    [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+                    public PacketData[] Items
                     {
                         get
                         {
-                            if (_data != null && _data.Buffer != null && _data.Buffer.Length > 1)
+                            PacketData[] items = Array.Empty<PacketData>();
+                            if (_data != null)
                             {
-                                int status = Packet.GetStatusFromHeader(_data.Buffer);
-                                StringBuilder buffer = new StringBuilder(10);
-
-                                if ((status & TdsEnums.ST_EOM) == TdsEnums.ST_EOM)
+                                int count = 0;
+                                for (PacketData current = _data; current != null; current = current?.NextPacket)
                                 {
-                                    if (buffer.Length > 0)
-                                    {
-                                        buffer.Append(',');
-                                    }
-                                    buffer.Append(nameof(TdsEnums.ST_EOM));
+                                    count++;
                                 }
-                                if ((status & TdsEnums.ST_AACK) == TdsEnums.ST_AACK)
+                                items = new PacketData[count];
+                                int index = 0;
+                                for (PacketData current = _data; current != null; current = current?.NextPacket, index++)
                                 {
-                                    if (buffer.Length > 0)
-                                    {
-                                        buffer.Append(',');
-                                    }
-                                    buffer.Append(nameof(TdsEnums.ST_AACK));
+                                    items[index] = current;
                                 }
-                                if ((status & TdsEnums.ST_BATCH) == TdsEnums.ST_BATCH)
-                                {
-                                    if (buffer.Length > 0)
-                                    {
-                                        buffer.Append(',');
-                                    }
-                                    buffer.Append(nameof(TdsEnums.ST_BATCH));
-                                }
-                                if ((status & TdsEnums.ST_RESET_CONNECTION) == TdsEnums.ST_RESET_CONNECTION)
-                                {
-                                    if (buffer.Length > 0)
-                                    {
-                                        buffer.Append(',');
-                                    }
-                                    buffer.Append(nameof(TdsEnums.ST_RESET_CONNECTION));
-                                }
-                                if ((status & TdsEnums.ST_RESET_CONNECTION_PRESERVE_TRANSACTION) == TdsEnums.ST_RESET_CONNECTION_PRESERVE_TRANSACTION)
-                                {
-                                    if (buffer.Length > 0)
-                                    {
-                                        buffer.Append(',');
-                                    }
-                                    buffer.Append(nameof(TdsEnums.ST_RESET_CONNECTION_PRESERVE_TRANSACTION));
-                                }
-
-                                return buffer.ToString();
                             }
-
-                            return "";
+                            return items;
                         }
                     }
-
-                    public int Length => _data.DataLength;
-
-                    public int Spid => _data.SPID;
-
-                    public int PacketID => _data.PacketID;
-
-                    public ReadOnlySpan<byte> HeaderBytes => _data.GetHeaderSpan();
-
-                    public ReadOnlySpan<byte> Data => _data.Buffer.AsSpan(TdsEnums.HEADER_LEN);
-
-                    public int RunningDataSize => _data.RunningDataSize;
-
-                    public PacketData NextPacket => _data.NextPacket;
-                    public PacketData PrevPacket => _data.PrevPacket;
                 }
 
-                public int DebugPacketId;
+                public int PacketId;
                 public string Stack;
-                public byte[] Hash;
 
-                public int SPID => Packet.GetSpidFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
+                partial void SetDebugStackInternal(string value) => Stack = value;
 
-                public bool IsEOM => Packet.GetIsEOMFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
+                partial void SetDebugPacketIdInternal(int value) => PacketId = value;
 
-                public int DataLength => Packet.GetDataLengthFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
-
-                public ReadOnlySpan<byte> GetHeaderSpan() => Buffer.AsSpan(0, TdsEnums.HEADER_LEN);
-
-                partial void SetDebugStackImpl(string value) => Stack = value;
-
-                partial void SetDebugPacketIdImpl(int value) => DebugPacketId = value;
-
-                partial void SetDebugDataHashImpl()
-                {
-                    if (Buffer != null)
-                    {
-                        using (MD5 hasher = MD5.Create())
-                        {
-                            Hash = hasher.ComputeHash(Buffer, 0, Read);
-                        }
-                    }
-                    else
-                    {
-                        Hash = null;
-                    }
-                    
-                }
-
-                partial void CheckDebugDataHashImpl()
-                {
-                    if (Hash == null)
-                    {
-                        if (Buffer != null && Read > 0)
-                        {
-                            throw new InvalidOperationException("Packet modification detected. Hash is null but packet contains non-null buffer");
-                        }
-                    }
-                    else
-                    {
-                        byte[] checkHash = null;
-                        using (MD5 hasher = MD5.Create())
-                        {
-                            checkHash = hasher.ComputeHash(Buffer, 0, Read);
-                        }
-
-                        for (int index = 0; index < Hash.Length; index++)
-                        {
-                            if (Hash[index] != checkHash[index])
-                            {
-                                throw new InvalidOperationException("Packet modification detected. Hash from packet creation does not match hash from packet check");
-                            }
-                        }
-                    }
-                }
 
                 public override string ToString()
                 {
-                    return $"{PacketID}({GetPacketDataOffset()},{GetPacketDataSize()})";
+                    //return $"{PacketId}: [{Buffer.Length}] ( {GetPacketDataOffset():D4}, {GetPacketTotalSize():D4} ) {(NextPacket != null ? @"->" : string.Empty)}";
+                    string byteString = null;
+                    if (Buffer != null && Buffer.Length >= 12)
+                    {
+                        ReadOnlySpan<byte> bytes = Buffer.AsSpan(0, 12);
+                        StringBuilder buffer = new StringBuilder(12 * 3 + 10);
+                        buffer.Append('{');
+                        for (int index = 0; index < bytes.Length; index++)
+                        {
+                            buffer.AppendFormat("{0:X2}", bytes[index]);
+                            buffer.Append(", ");
+                        }
+                        buffer.Append("...");
+                        buffer.Append('}');
+                        byteString = buffer.ToString();
+                    }
+                    return $"{PacketId}: [{Read}] {byteString} {(NextPacket != null ? @"->" : string.Empty)}";
                 }
             }
 #endif
+
+            private sealed class PLPData
+            {
+                public readonly ulong SnapshotLongLen;
+                public readonly ulong SnapshotLongLenLeft;
+
+                public PLPData(ulong snapshotLongLen, ulong snapshotLongLenLeft)
+                {
+                    SnapshotLongLen = snapshotLongLen;
+                    SnapshotLongLenLeft = snapshotLongLenLeft;
+                }
+            }
 
             private sealed class StateObjectData
             {
                 private int _inBytesUsed;
                 private int _inBytesPacket;
+                private PLPData _plpData;
                 private byte _messageStatus;
                 internal NullBitmap _nullBitmapInfo;
                 private _SqlMetaDataSet _cleanupMetaData;
                 internal _SqlMetaDataSetCollection _cleanupAltMetaDataSetArray;
                 private SnapshottedStateFlags _state;
-                private ulong _longLen;
-                private ulong _longLenLeft;
 
                 internal void Capture(TdsParserStateObject stateObj, bool trackStack = true)
                 {
@@ -4007,8 +3582,10 @@ namespace Microsoft.Data.SqlClient
                     _inBytesPacket = stateObj._inBytesPacket;
                     _messageStatus = stateObj._messageStatus;
                     _nullBitmapInfo = stateObj._nullBitmapInfo; // _nullBitmapInfo must be cloned before it is updated
-                    _longLen = stateObj._longlen;
-                    _longLenLeft = stateObj._longlenleft;
+                    if (stateObj._longlen != 0 || stateObj._longlenleft != 0)
+                    {
+                        _plpData = new PLPData(stateObj._longlen, stateObj._longlenleft);
+                    }
                     _cleanupMetaData = stateObj._cleanupMetaData;
                     _cleanupAltMetaDataSetArray = stateObj._cleanupAltMetaDataSetArray; // _cleanupAltMetaDataSetArray must be cloned before it is updated
                     _state = stateObj._snapshottedState;
@@ -4028,8 +3605,7 @@ namespace Microsoft.Data.SqlClient
                     _inBytesPacket = 0;
                     _messageStatus = 0;
                     _nullBitmapInfo = default;
-                    _longLen = 0;
-                    _longLenLeft = 0;
+                    _plpData = null;
                     _cleanupMetaData = null;
                     _cleanupAltMetaDataSetArray = null;
                     _state = SnapshottedStateFlags.None;
@@ -4062,26 +3638,24 @@ namespace Microsoft.Data.SqlClient
                     //else _stateObj._hasOpenResult is already == _snapshotHasOpenResult
                     stateObj._snapshottedState = _state;
 
-                    // reset plp state
-                    stateObj._longlen = _longLen;
-                    stateObj._longlenleft = _longLenLeft;
-
                     // Reset partially read state (these only need to be maintained if doing async without snapshot)
                     stateObj._bTmpRead = 0;
                     stateObj._partialHeaderBytesRead = 0;
+
+                    // reset plp state
+                    stateObj._longlen = _plpData?.SnapshotLongLen ?? 0;
+                    stateObj._longlenleft = _plpData?.SnapshotLongLenLeft ?? 0;
                 }
             }
 
             private TdsParserStateObject _stateObj;
             private StateObjectData _replayStateData;
-            private StateObjectData _continueStateData;
 
-            internal object _storage;
+            internal byte[] _plpBuffer;
 
             private PacketData _lastPacket;
             private PacketData _firstPacket;
             private PacketData _current;
-            private PacketData _continuePacket;
             private PacketData _sparePacket;
 
 #if DEBUG
@@ -4124,10 +3698,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(_stateObj._permitReplayStackTraceToDiffer || prev.Stack == trace, "The stack trace on subsequent replays should be the same");
                 }
             }
-
 #endif
-            public bool ContinueEnabled => !LocalAppContextSwitches.UseCompatibilityAsyncBehaviour;
-
             internal void CloneNullBitmapInfo()
             {
                 if (_stateObj._nullBitmapInfo.ReferenceEquals(_replayStateData?._nullBitmapInfo ?? default))
@@ -4148,19 +3719,10 @@ namespace Microsoft.Data.SqlClient
             {
                 Debug.Assert(buffer != null, "packet data cannot be null");
                 Debug.Assert(read >= TdsEnums.HEADER_LEN, "minimum packet length is TdsEnums.HEADER_LEN");
-                Debug.Assert(TdsEnums.HEADER_LEN + Packet.GetDataLengthFromHeader(buffer) == read, "partially read packets cannot be appended to the snapshot");
 #if DEBUG
                 for (PacketData current = _firstPacket; current != null; current = current.NextPacket)
                 {
-                    if (ReferenceEquals(current.Buffer, buffer))
-                    {
-                        // multiple packets are permitted to be in the same buffer because of partial packets
-                        // but their contents cannot overlap
-                        if ((current.Read + current.DataLength) > read)
-                        {
-                            Debug.Fail("duplicate or overlapping packet appended to snapshot");
-                        }
-                    }
+                    Debug.Assert(!ReferenceEquals(current.Buffer, buffer));
                 }
 #endif
                 PacketData packetData = _sparePacket;
@@ -4177,7 +3739,6 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                 packetData.SetDebugStack(_stateObj._lastStack);
                 packetData.SetDebugPacketId(Interlocked.Increment(ref _packetCounter));
-                packetData.SetDebugDataHash();
 #endif
                 if (_firstPacket is null)
                 {
@@ -4194,28 +3755,24 @@ namespace Microsoft.Data.SqlClient
             internal bool MoveNext()
             {
                 bool retval = false;
-                SnapshotStatus moveToMode = SnapshotStatus.ReplayRunning;
                 bool moved = false;
                 if (_current == null)
                 {
                     _current = _firstPacket;
-                    moveToMode = SnapshotStatus.ReplayStarting;
                     moved = true;
                 }
                 else if (_current.NextPacket != null)
                 {
-                    if (_stateObj._snapshotStatus == SnapshotStatus.ContinueRunning)
-                    {
-                        moveToMode = SnapshotStatus.ContinueRunning;
-                    }
                     _current = _current.NextPacket;
                     moved = true;
                 }
 
                 if (moved)
                 {
-                    _stateObj.SetBuffer(_current.Buffer, 0, _current.Read);
-                    _stateObj._snapshotStatus = moveToMode;
+                    _stateObj._inBuff = _current.Buffer;
+                    _stateObj._inBytesUsed = 0;
+                    _stateObj._inBytesRead = _current.Read;
+                    _stateObj._snapshotReplay = true;
                     retval = true;
                 }
 
@@ -4231,22 +3788,6 @@ namespace Microsoft.Data.SqlClient
                 _stateObj.AssertValidState();
             }
 
-            internal bool MoveToContinue()
-            {
-                if (ContinueEnabled)
-                {
-                    if (_continuePacket != null && _continuePacket != _current)
-                    {
-                        _continueStateData.Restore(_stateObj);
-                        _stateObj.SetBuffer(_current.Buffer, 0, _current.Read);
-                        _stateObj._snapshotStatus = SnapshotStatus.ContinueRunning;
-                        _stateObj.AssertValidState();
-                        return true;
-                    }
-                }
-                return false;
-            }
-
             internal void CaptureAsStart(TdsParserStateObject stateObj)
             {
                 _firstPacket = null;
@@ -4256,6 +3797,7 @@ namespace Microsoft.Data.SqlClient
                 _stateObj = stateObj;
                 _replayStateData ??= new StateObjectData();
                 _replayStateData.Capture(stateObj);
+
 #if DEBUG
                 _rollingPend = 0;
                 _rollingPendCount = 0;
@@ -4265,86 +3807,6 @@ namespace Microsoft.Data.SqlClient
 #endif
 
                 AppendPacketData(stateObj._inBuff, stateObj._inBytesRead);
-            }
-
-            internal void CaptureAsContinue(TdsParserStateObject stateObj)
-            {
-                if (ContinueEnabled)
-                {
-                    Debug.Assert(_stateObj == stateObj);
-                    if (_current is not null)
-                    {
-                        _continueStateData ??= new StateObjectData();
-                        _continueStateData.Capture(stateObj, trackStack: false);
-                        _continuePacket = _current;
-                    }
-                }
-            }
-
-            internal void SetPacketDataSize(int size)
-            {
-                PacketData target = _current;
-                // special case for the start of a snapshot when we expect to have only a single packet
-                // but have no current packet because we haven't started to replay yet.
-                if (
-                    target == null &&
-                    _firstPacket != null &&
-                    _firstPacket == _lastPacket
-                )
-                {
-                    target = _firstPacket;
-                }
-
-                if (target == null)
-                {
-                    throw new InvalidOperationException();
-                }
-                int total = 0;
-                if (target.PrevPacket != null)
-                {
-                    total = target.PrevPacket.RunningDataSize;
-                }
-                target.RunningDataSize = total + size;
-            }
-
-            internal void ClearPacketDataSize()
-            {
-                PacketData current = _firstPacket;
-                while (current != null)
-                {
-                    current.RunningDataSize = 0;
-                    current = current.NextPacket;
-                }
-            }
-
-            internal int GetPacketDataOffset()
-            {
-                int offset = 0;
-                if (_current != null)
-                {
-                    offset = _current.GetPacketDataOffset();
-                }
-                return offset;
-            }
-
-            internal int GetPacketDataSize()
-            {
-                int offset = 0;
-                if (_current != null)
-                {
-                    offset = _current.GetPacketDataSize();
-                }
-                return offset;
-            }
-
-            internal int GetPacketID()
-            {
-                int id = 0;
-                if (_current != null)
-                {
-                    id = _current.PacketID;
-                }
-                return id;
             }
 
             internal void Clear()
@@ -4358,7 +3820,6 @@ namespace Microsoft.Data.SqlClient
                 PacketData packet = _firstPacket;
                 _firstPacket = null;
                 _lastPacket = null;
-                _continuePacket = null;
                 _current = null;
                 packet.Clear();
                 _sparePacket = packet;
@@ -4366,14 +3827,11 @@ namespace Microsoft.Data.SqlClient
 
             private void ClearState()
             {
-                _storage = null;
                 _replayStateData.Clear(_stateObj);
-                _continueStateData?.Clear(_stateObj, trackStack: false);
 #if DEBUG
                 _rollingPend = 0;
                 _rollingPendCount = 0;
                 _stateObj._lastStack = null;
-                _packetCounter = 0;
 #endif
                 _stateObj = null;
             }

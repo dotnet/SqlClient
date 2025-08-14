@@ -16,8 +16,6 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("MakeReadAsyncBlocking", false)]
         [InlineData("UseMinimumLoginTimeout", true)]
         [InlineData("LegacyVarTimeZeroScaleBehaviour", true)]
-        [InlineData("UseCompatibilityProcessSni", false)]
-        [InlineData("UseCompatibilityAsyncBehaviour", false)]
         [InlineData("UseConnectionPoolV2", false)]
         #if NETFRAMEWORK
         [InlineData("DisableTnirByDefault", false)]

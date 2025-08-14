@@ -167,22 +167,14 @@ namespace Microsoft.Data.SqlClient
                             stateObj.SendAttention(mustTakeWriteLock: true);
 
                             PacketHandle syncReadPacket = default;
-                            bool readFromNetwork = true;
                             RuntimeHelpers.PrepareConstrainedRegions();
                             bool shouldDecrement = false;
                             try
                             {
                                 Interlocked.Increment(ref _readingCount);
                                 shouldDecrement = true;
-                                readFromNetwork = !PartialPacketContainsCompletePacket();
-                                if (readFromNetwork)
-                                {
-                                    syncReadPacket = ReadSyncOverAsync(stateObj.GetTimeoutRemaining(), out error);
-                                }
-                                else
-                                {
-                                    error = TdsEnums.SNI_SUCCESS;
-                                }
+
+                                syncReadPacket = ReadSyncOverAsync(stateObj.GetTimeoutRemaining(), out error);
 
                                 Interlocked.Decrement(ref _readingCount);
                                 shouldDecrement = false;
@@ -195,7 +187,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 else
                                 {
-                                    Debug.Assert(!readFromNetwork || !IsValidPacket(syncReadPacket), "unexpected syncReadPacket without corresponding SNIPacketRelease");
+                                    Debug.Assert(!IsValidPacket(syncReadPacket), "unexpected syncReadPacket without corresponding SNIPacketRelease");
                                     fail = true; // Subsequent read failed, time to give up.
                                 }
                             }
@@ -206,7 +198,7 @@ namespace Microsoft.Data.SqlClient
                                     Interlocked.Decrement(ref _readingCount);
                                 }
 
-                                if (readFromNetwork && !IsPacketEmpty(syncReadPacket))
+                                if (!IsPacketEmpty(syncReadPacket))
                                 {
                                     // Be sure to release packet, otherwise it will be leaked by native.
                                     ReleasePacket(syncReadPacket);
@@ -247,9 +239,60 @@ namespace Microsoft.Data.SqlClient
             AssertValidState();
         }
 
-        private uint GetSniPacket(PacketHandle packet, ref uint dataSize)
+        public void ProcessSniPacket(PacketHandle packet, uint error)
         {
-            return SniPacketGetData(packet, _inBuff, ref dataSize);
+            if (error != 0)
+            {
+                if ((_parser.State == TdsParserState.Closed) || (_parser.State == TdsParserState.Broken))
+                {
+                    // Do nothing with callback if closed or broken and error not 0 - callback can occur
+                    // after connection has been closed.  PROBLEM IN NETLIB - DESIGN FLAW.
+                    return;
+                }
+
+                AddError(_parser.ProcessSNIError(this));
+                AssertValidState();
+            }
+            else
+            {
+                uint dataSize = 0;
+
+                uint getDataError = SniPacketGetData(packet, _inBuff, ref dataSize);
+
+                if (getDataError == TdsEnums.SNI_SUCCESS)
+                {
+                    if (_inBuff.Length < dataSize)
+                    {
+                        Debug.Assert(true, "Unexpected dataSize on Read");
+                        throw SQL.InvalidInternalPacketSize(StringsHelper.GetString(Strings.SqlMisc_InvalidArraySizeMessage));
+                    }
+
+                    _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
+                    _inBytesRead = (int)dataSize;
+                    _inBytesUsed = 0;
+
+                    if (_snapshot != null)
+                    {
+                        _snapshot.AppendPacketData(_inBuff, _inBytesRead);
+                        if (_snapshotReplay)
+                        {
+                            _snapshot.MoveNext();
+#if DEBUG
+                            _snapshot.AssertCurrent();
+#endif
+                        }
+                    }
+
+                    SniReadStatisticsAndTracing();
+                    SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParser.ReadNetworkPacketAsyncCallback | INFO | ADV | State Object Id {0}, Packet read. In Buffer: {1}, In Bytes Read: {2}", ObjectID, _inBuff, _inBytesRead);
+
+                    AssertValidState();
+                }
+                else
+                {
+                    throw SQL.ParsingError(ParsingErrorState.ProcessSniPacketFailed);
+                }
+            }
         }
 
         private void SetBufferSecureStrings()
@@ -321,7 +364,7 @@ namespace Microsoft.Data.SqlClient
             bool processFinallyBlock = true;
             try
             {
-                Debug.Assert((packet.Type == 0 && PartialPacketContainsCompletePacket()) || (CheckPacket(packet, source) && source != null), "AsyncResult null on callback");
+                Debug.Assert(CheckPacket(packet, source) && source != null, "AsyncResult null on callback");
 
                 if (_parser.MARSOn)
                 {
