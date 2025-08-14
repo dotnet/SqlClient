@@ -60,7 +60,7 @@ This update brings the following changes since the
 
 *Who Benefits:*
 
--  Users gain compatibility with recent identity and auth packages, including security and performance patches in dependencies.
+- Users gain compatibility with recent identity and auth packages, including security and performance patches in dependencies.
 
 *Impact:*
 
