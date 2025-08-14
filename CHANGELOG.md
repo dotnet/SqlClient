@@ -6,6 +6,76 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 # Release Notes
 
+## [ Stable Release 6.1.1] - 2025-08-14
+
+This update brings the following changes since the
+[6.1.0](6.1.0.md) release:
+
+### Fixed
+
+- Reverted several large changes made to improve partial packet detection, fixup, and replay functionality to address regressions introduced in 6.1.0.
+  ([#3556](https://github.com/dotnet/SqlClient/pull/3556))
+- Corrected reference assemblies for vector support and re-enabled vector and JSON tests to prevent API surface mismatches.
+  ([#3562](https://github.com/dotnet/SqlClient/pull/3562))
+
+### Changed
+
+#### Revert partial-packet logic and replay fixes
+
+*What Changed:*
+
+- Reverted several changes related to partial packet detection, fixup, and replay functionality to address regressions introduced in 6.1.0.
+  ([#3556](https://github.com/dotnet/SqlClient/pull/3556))
+
+*Who Benefits:*
+
+- Applications affected by regressions in async read or packet handling will have restored behavior and improved stability.
+
+*Impact:*
+
+- Restores compatibility and resolves reliability issues introduced in v6.1.0.
+
+#### Enable vector and JSON tests, fix reference assemblies
+
+*What Changed:*
+
+- Applied reference assembly corrections supporting vector, fixed JSON tests, and ensured related tests are enabled.
+ ([#3562](https://github.com/dotnet/SqlClient/pull/3562))
+
+*Who Benefits:*
+
+- Developers relying on updated vector support or testing frameworks benefit from consistent builds.
+
+*Impact:*
+
+- No end-user behavior change; improves CI and test reliability.
+
+#### Upgraded `Azure.Identity` and other dependencies to newer versions.
+
+*What Changed:*
+
+- Upgraded `Azure.Identity` and other dependencies to newer versions.
+ ([#3538](https://github.com/dotnet/SqlClient/pull/3538))
+ ([#3552](https://github.com/dotnet/SqlClient/pull/3552))
+
+*Who Benefits:*
+
+-  Users gain compatibility with recent identity and auth packages, including security and performance patches in dependencies.
+
+*Impact:*
+
+- Slight potential for behavior differences tied to third-party dependency updates.
+
+#### Other Changes
+
+- Fix API documentation.
+  ([#3533](https://github.com/dotnet/SqlClient/pull/3533))
+- Add CodeQL suppressions for DefaultAzureCredential.
+  ([#3542](https://github.com/dotnet/SqlClient/pull/3542),
+   [#3550](https://github.com/dotnet/SqlClient/pull/3550))
+- Fix project dependencies.
+  ([#3561](https://github.com/dotnet/SqlClient/pull/3561))
+
 ## [Stable Release 6.1.0] - 2025-07-25
 
 This update brings the following changes since the
