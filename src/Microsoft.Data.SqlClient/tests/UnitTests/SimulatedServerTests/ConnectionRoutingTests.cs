@@ -110,8 +110,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         public void NetworkErrorAtRoutedLocation_ShouldReturnToGateway()
         {
             // Arrange
-            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
-                new TransientTimeoutTdsServerArguments()
+            using TransientDelayTdsServer server = new TransientDelayTdsServer(
+                new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientTimeout = true,
                     SleepDuration = TimeSpan.FromMilliseconds(1000),
@@ -162,8 +162,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         public void NetworkErrorAtRoutedLocation_RetryDisabled_ShouldFail()
         {
             // Arrange
-            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
-                new TransientTimeoutTdsServerArguments()
+            using TransientDelayTdsServer server = new TransientDelayTdsServer(
+                new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientTimeout = true,
                     SleepDuration = TimeSpan.FromMilliseconds(1000),
@@ -199,8 +199,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         public void NetworkErrorDuringCommand_ShouldReturnToGateway()
         {
             // Arrange
-            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
-                new TransientTimeoutTdsServerArguments()
+            using TransientDelayTdsServer server = new TransientDelayTdsServer(
+                new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientTimeout = false,
                     SleepDuration = TimeSpan.FromMilliseconds(1000),

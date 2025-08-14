@@ -151,8 +151,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             failoverServer.Start();
 
             // Arrange
-            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
-                new TransientTimeoutTdsServerArguments()
+            using TransientDelayTdsServer server = new TransientDelayTdsServer(
+                new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientTimeout = true,
                     SleepDuration = TimeSpan.FromMilliseconds(1000),
@@ -195,8 +195,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             failoverServer.Start();
 
             // Arrange
-            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
-                new TransientTimeoutTdsServerArguments()
+            using TransientDelayTdsServer server = new TransientDelayTdsServer(
+                new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientTimeout = true,
                     SleepDuration = TimeSpan.FromMilliseconds(1000),
@@ -244,8 +244,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             failoverServer.Start();
 
             // Arrange
-            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
-                new TransientTimeoutTdsServerArguments()
+            using TransientDelayTdsServer server = new TransientDelayTdsServer(
+                new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientTimeout = true,
                     SleepDuration = TimeSpan.FromMilliseconds(1000),
@@ -295,8 +295,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             failoverServer.Start();
 
             // Arrange
-            using TransientTimeoutTdsServer server = new TransientTimeoutTdsServer(
-                new TransientTimeoutTdsServerArguments()
+            using TransientDelayTdsServer server = new TransientDelayTdsServer(
+                new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientTimeout = true,
                     SleepDuration = TimeSpan.FromMilliseconds(1000),
