@@ -9,7 +9,7 @@ This is a console application targeting all frameworks supported by MDS,
 currently:
 
 - .NET 8.0
-- .NET T9.0
+- .NET 9.0
 - .NET Framework 4.6.2
 - .NET Framework 4.7
 - .NET Framework 4.7.1

@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Data.SqlClient;
 using Microsoft.Test.Data.SqlClient;
@@ -272,10 +273,18 @@ namespace Stress.Data.SqlClient
                 using SqlCommand command = connection.CreateCommand();
                 command.CommandText =
                     $"select session_id from sys.dm_exec_sessions where database_id = DB_ID('{database}')";
-                using var reader = command.ExecuteReader();
-                while (reader.Read())
+
+                List<short> sessionIds = new();
                 {
-                    var sessionId = reader.GetInt16(0);
+                    using var reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        sessionIds.Add(reader.GetInt16(0));
+                    }
+                }
+
+                foreach (var sessionId in sessionIds)
+                {
                     using var killCommand = connection.CreateCommand();
                     killCommand.CommandText = $"kill {sessionId}";
                     Console.WriteLine($"  Killing session {sessionId}...");
