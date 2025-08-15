@@ -151,6 +151,15 @@ namespace Microsoft.Data.SqlClient
                         if (remainderPacketProduced)
                         {
                             SetPartialPacket(remainderPacket);
+                            if (appended && recurse)
+                            {
+                                // if we've appended to the snapshot already we can't recurse and append to it again because the
+                                //   snapshot might be cleared by the async cleanup functions
+                                // the only way to get a recurse output from the multiplexer is if it has produced a remainder packet so
+                                //  assert that this is the case and the put the remainder packet in the partial packet so that it
+                                //  can be picked up in another call.
+                                recurse = false;
+                            }
                             if (!bufferIsPartialCompleted)
                             {
                                 // we are keeping the partial packet buffer so replace it with a new one
