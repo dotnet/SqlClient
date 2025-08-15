@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -1065,13 +1066,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         if (!_pendingCancel)
-                        { 
                             // Do nothing if already pending.
-                          // Before attempting actual cancel, set the _pendingCancel flag to false.
-                          // This denotes to other thread before obtaining stateObject from the
-                          // session pool that there is another thread wishing to cancel.
-                          // The period in question is between entering the ExecuteAPI and obtaining
-                          // a stateObject.
                             _pendingCancel = true;
 
                             TdsParserStateObject stateObj = _stateObj;
@@ -1763,7 +1758,6 @@ namespace Microsoft.Data.SqlClient
                     asyncWrite,
                     isRetry,
                     methodName);
-                
                 if (reader != null)
                 {
                     if (task != null)
@@ -2587,7 +2581,6 @@ namespace Microsoft.Data.SqlClient
                                         {
                                             completion.TrySetResult(retryTask.Result);
                                         }
-                                    }, 
                                     state: globalCompletion,
                                     TaskScheduler.Default
                                 );
@@ -3105,7 +3098,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="default"]/*'/>
-        public Task<XmlReader> ExecuteXmlReaderAsync() => 
             ExecuteXmlReaderAsync(CancellationToken.None);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
@@ -4871,7 +4863,6 @@ namespace Microsoft.Data.SqlClient
                 task: out unused,
                 usedCache: out _,
                 method: method);
-            
             Debug.Assert(unused == null, "returned task during synchronous execution");
             return reader;
         }
@@ -6192,7 +6183,8 @@ namespace Microsoft.Data.SqlClient
                         // Don't assume a default value exists for parameters in the case when
                         // the user is simply requesting schema.
                         // TVPs use DEFAULT and do not allow NULL, even for schema only.
-                        if (parameter.Value == null && (!inSchema || SqlDbType.Structured == parameter.SqlDbType))
+                        if ((parameter.Value == null || (parameter.Value is ICollection collection && collection.Count == 0)) &&
+                                                        (!inSchema || parameter.SqlDbType == SqlDbType.Structured))
                         {
                             options |= TdsEnums.RPC_PARAM_DEFAULT;
                         }
