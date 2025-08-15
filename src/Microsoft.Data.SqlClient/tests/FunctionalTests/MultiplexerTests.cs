@@ -23,9 +23,9 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 if (AppContext.TryGetSwitch(@"Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni", out bool foundValue))
                 {
-                    return foundValue;
+                    return !foundValue;
                 }
-                return false;
+                return true;
             }
         }
 

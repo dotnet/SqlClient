@@ -95,16 +95,18 @@ namespace Microsoft.Data.SqlClient
                         // if a partial packet was reconstructed it must be handled first
                         if (consumePartialPacket)
                         {
+                            // the partial packet has been processed by the multiplexer and should now have 
+                            //  only data from a single packet in it so we should use RequiredLength which
+                            //  is defined by the packet header here not CurrentLength
                             if (_snapshot != null)
                             {
-                                _snapshot.AppendPacketData(PartialPacket.Buffer, PartialPacket.CurrentLength);
+                                _snapshot.AppendPacketData(PartialPacket.Buffer, PartialPacket.RequiredLength);
                                 SetBuffer(new byte[_inBuff.Length], 0, 0);
                                 appended = true;
                             }
                             else
                             {
-                                SetBuffer(PartialPacket.Buffer, 0, PartialPacket.CurrentLength);
-                                
+                                SetBuffer(PartialPacket.Buffer, 0, PartialPacket.RequiredLength);
                             }
                             bufferIsPartialCompleted = true;
                             ClearPartialPacket();
@@ -149,6 +151,15 @@ namespace Microsoft.Data.SqlClient
                         if (remainderPacketProduced)
                         {
                             SetPartialPacket(remainderPacket);
+                            if (appended && recurse)
+                            {
+                                // if we've appended to the snapshot already we can't recurse and append to it again because the
+                                //   snapshot might be cleared by the async cleanup functions
+                                // the only way to get a recurse output from the multiplexer is if it has produced a remainder packet so
+                                //  assert that this is the case and the put the remainder packet in the partial packet so that it
+                                //  can be picked up in another call.
+                                recurse = false;
+                            }
                             if (!bufferIsPartialCompleted)
                             {
                                 // we are keeping the partial packet buffer so replace it with a new one
