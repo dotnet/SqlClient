@@ -21,7 +21,7 @@ The following build targets are defined in `build.proj`:
 |Target|Description|
 |-|-|
 |`BuildAllConfigurations`|Default target. Builds the .NET Framework and .NET drivers for all target frameworks and operating systems.|
-|`BuildExtensionsPackage`|Restore, build, and pack the Extensions package, publishing the resulting NuGet into `packages/`.|
+|`BuildAbstractionsPackage`|Restore, build, and pack the Abstractions package, publishing the resulting NuGet into `packages/`.|
 |`BuildNetCore`|Builds the .NET driver for all target frameworks.|
 |`BuildNetCoreAllOS`|Builds the .NET driver for all target frameworks and operating systems.|
 |`BuildNetFx`|Builds the .NET Framework driver for all target frameworks.|
@@ -56,7 +56,7 @@ build:
 Using the default configuration and running all tests:
 
 ```bash
-msbuild -t:BuildExtensionsPackage
+msbuild -t:BuildAbstractionsPackage
 msbuild
 msbuild -t:BuildTestsNetFx -p:TF=net462
 msbuild -t:BuildTestsNetCore
@@ -66,7 +66,7 @@ msbuild -t:RunTests
 Using the Release configuration:
 
 ```bash
-msbuild -t:BuildExtensionsPackage -p:Configuration=Release
+msbuild -t:BuildAbstractionsPackage -p:Configuration=Release
 msbuild -p:Configuration=Release
 msbuild -t:BuildTestsNetFx -p:TF=net462 -p:Configuration=Release
 msbuild -t:BuildTestsNetCore -p:Configuration=Release
@@ -76,7 +76,7 @@ msbuild -t:RunTests -p:Configuration=Release
 Running only the unit tests:
 
 ```bash
-msbuild -t:BuildExtensionsPackage
+msbuild -t:BuildAbstractionsPackage
 msbuild
 msbuild -t:BuildTestsNetFx -p:TF=net462
 msbuild -t:BuildTestsNetCore
@@ -86,7 +86,7 @@ msbuild -t:RunUnitTests
 Using a specific .NET runtime to run tests:
 
 ```bash
-msbuild -t:BuildExtensionsPackage
+msbuild -t:BuildAbstractionsPackage
 msbuild
 msbuild -t:BuildTestsNetFx -p:TF=net462
 msbuild -t:BuildTestsNetCore
@@ -210,7 +210,7 @@ Tests can be built and run with custom "Reference Type" property that enables di
 > CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION
 >
 > ```bash
-> msbuild -t:BuildExtensionsPackage -p:Configuration=Release
+> msbuild -t:BuildAbstractionsPackage -p:Configuration=Release
 > msbuild -p:Configuration=Release
 > ```
 

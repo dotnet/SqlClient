@@ -65,7 +65,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 - name: abstractionsPackageVersion
   displayName: Abstractions Package Version Override
   type: string
-  default: 7.0.0
+  default: 1.0.0
 
 - name: useManagedSNI
   displayName: |
