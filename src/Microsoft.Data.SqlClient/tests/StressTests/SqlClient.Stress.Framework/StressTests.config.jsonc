@@ -1,0 +1,19 @@
+// Sample config file for the Stress Tests app.
+[
+  // Each array element is a "data source" object.
+  {
+    "name": "My Favourite SQL Server",
+    "type": "SqlServer",
+    "isDefault": true,
+    "dataSource": "127.0.0.1,1433",
+    "entraIdUser": "",
+    "entraIdPassword": "",
+    "user": "sa",
+    "password": "",
+    "supportsWindowsAuthentication": false,
+    "isLocal": false,
+    "disableMultiSubnetFailover": true,
+    "disableNamedPipes": true,
+    "encrypt": false
+  }
+]

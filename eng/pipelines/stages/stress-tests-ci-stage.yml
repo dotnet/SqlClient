@@ -1,0 +1,191 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This stage builds and runs stress tests against an MDS NuGet package available
+# as a pipeline artifact.
+#
+# The stress tests are located here:
+#
+#   src/Microsoft.Data.SqlClient/tests/StressTests
+#
+# All tests use a localhost SQL Server configured for SQL auth via the 'sa' user
+# and password of '$(Password)'.  The $(Password) variable is defined in the ADO
+# Library "ADO Test Configuration properties", brought in by
+# common/templates/libraries/ci-build-variables.yml.
+#
+# This template defines a stage named 'run_stress_tests_stage' that can be
+# depended on by downstream stages.
+
+parameters:
+  # The type of build to produce (Release or Debug)
+  - name: buildConfiguration
+    displayName: Build Configuration
+    type: string
+    default: Release
+    values:
+    - Release
+    - Debug
+
+  # The names of any stages this stage depends on, for example the stages
+  # that publish the MDS package artifacts we will test.
+  - name: dependsOn
+    displayName: Depends On Stages
+    type: object
+    default: []
+
+  # The name of the pipeline artifact to download that contains the MDS package
+  # to stress test.
+  - name: pipelineArtifactName
+    displayName: Pipeline Artifact Name
+    type: string
+    default: Artifacts
+
+  # The MDS package version to stress test.  This version must be available in
+  # one of the configured NuGet sources.
+  - name: mdsPackageVersion
+    displayName: MDS Package Version
+    type: string
+    default: ''
+
+  # The list of .NET runtimes to test against.
+  - name: netTestRuntimes
+    displayName: .NET Test Runtimes
+    type: object
+    default: [net8.0, net9.0]
+
+  # The list of .NET Framework runtimes to test against.
+  - name: netFrameworkTestRuntimes
+    displayName: .NET Framework Test Runtimes
+    type: object
+    default: [net462, net47, net471, net472, net48, net481]
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: verbosity
+    displayName: Dotnet CLI verbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+stages:
+  - stage: run_stress_tests_stage
+    displayName: Run Stress Tests
+    dependsOn: ${{ parameters.dependsOn }}
+
+    variables:
+      # The directory where dotnet artifacts will be staged.  Not to be
+      # confused with pipeline artifact.
+      - name: dotnetArtifactsDir
+        value: $(Build.StagingDirectory)/dotnetArtifacts
+
+      # The solution file to use for all dotnet CLI commands.
+      - name: solution
+        value: src/Microsoft.Data.SqlClient/tests/StressTests/StressTests.slnx
+
+      # The stress test project to run.
+      - name: testProject
+        value: src/Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Runner/SqlClient.Stress.Runner.csproj
+
+      # dotnet CLI arguments common to all commands.
+      - name: commonArguments
+        value: >-
+          --verbosity ${{parameters.verbosity}}
+          --artifacts-path $(dotnetArtifactsDir)
+          -p:MdsPackageVersion=${{parameters.mdsPackageVersion}}
+
+      # dotnet CLI arguments for build/run commands.
+      - name: buildArguments
+        value: >-
+          $(commonArguments)
+          --configuration ${{parameters.buildConfiguration}}
+
+      # The contents of the config file to use for all tests.  We will write
+      # this to a JSON file for each test job, and then point to it via the
+      # STRESS_CONFIG_FILE environment variable.
+      - name: ConfigContent
+        value: |
+          [
+            {
+              "name": "Azure SQL",
+              "type": "SqlServer",
+              "isDefault": true,
+              "dataSource": "localhost",
+              "user": "sa",
+              "password": "$(Password)",
+              "supportsWindowsAuthentication": false,
+              "isLocal": false,
+              "disableMultiSubnetFailover": true,
+              "disableNamedPipes": true,
+              "encrypt": false
+            }
+          ]
+
+    jobs:
+
+    # --------------------------------------------------------------------------
+    # Build and test on Linux.
+
+    - template: ../jobs/stress-tests-ci-job.yml@self
+      parameters:
+        jobNameSuffix: linux
+        displayNamePrefix: Linux
+        poolName: $(ci_var_defaultPoolName)
+        vmImage: ADO-UB20-SQL22
+        sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml
+        pipelineArtifactName: ${{ parameters.pipelineArtifactName }}
+        solution: $(solution)
+        testProject: $(testProject)
+        restoreArguments: $(commonArguments)
+        buildArguments: $(buildArguments)
+        netTestRuntimes: ${{ parameters.netTestRuntimes }}
+        configContent: $(ConfigContent)
+
+    # --------------------------------------------------------------------------
+    # Build and test on Windows
+
+    - template: ../jobs/stress-tests-ci-job.yml
+      parameters:
+        jobNameSuffix: windows
+        displayNamePrefix: Win
+        poolName: $(ci_var_defaultPoolName)
+        # The Windows images include a suitable .NET Framework runtime, so we
+        # don't have to install one explicitly.
+        vmImage: ADO-MMS22-SQL22
+        sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml
+        pipelineArtifactName: ${{ parameters.pipelineArtifactName }}
+        solution: $(solution)
+        testProject: $(testProject)
+        restoreArguments: $(commonArguments)
+        buildArguments: $(buildArguments)
+        netTestRuntimes: ${{ parameters.netTestRuntimes }}
+        # Note that we include the .NET Framework runtimes for test runs on
+        # Windows.
+        netFrameworkTestRuntimes: ${{ parameters.netFrameworkTestRuntimes }}
+        configContent: $(ConfigContent)
+
+    # --------------------------------------------------------------------------
+    # Build and test on macOS.
+
+    - template: ../jobs/stress-tests-ci-job.yml
+      parameters:
+        jobNameSuffix: macos
+        displayNamePrefix: macOS
+        # We don't have any 1ES Hosted Pool images for macOS, so we use a
+        # generic one from Azure Pipelines.
+        poolName: Azure Pipelines
+        vmImage: macos-latest
+        sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml
+        pipelineArtifactName: ${{ parameters.pipelineArtifactName }}
+        solution: $(solution)
+        testProject: $(testProject)
+        restoreArguments: $(commonArguments)
+        buildArguments: $(buildArguments)
+        netTestRuntimes: ${{ parameters.netTestRuntimes }}
+        configContent: $(ConfigContent)

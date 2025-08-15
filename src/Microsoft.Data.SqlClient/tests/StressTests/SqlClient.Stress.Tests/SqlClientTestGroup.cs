@@ -76,19 +76,27 @@ namespace Stress.Data.SqlClient
 
         public override void GlobalTestSetup()
         {
+            Console.WriteLine("SqlClientTestGroup.GlobalTestSetup(): Starting...");
+
             base.GlobalTestSetup();
 
             s_clearAllPoolsThread = new Thread(ClearAllPoolsThreadFunc);
             s_clearAllPoolsThread.Start();
 
             // set the notification options for SqlNotificationRequest tests
-            s_notificationOptions = "service=StressNotifications;local database=" + ((SqlServerDataSource)Source).Database;
+            var source = Source as SqlServerDataSource;
+            s_notificationOptions = "service=StressNotifications;local database=" + source.Database;
 
-            s_sqlDependencyConnString = Factory.CreateBaseConnectionString(null, DataStressFactory.ConnectionStringOptions.DisableMultiSubnetFailover);
+            s_sqlDependencyConnString = Factory.CreateBaseConnectionString(
+                null, DataStressFactory.ConnectionStringOptions.DisableMultiSubnetFailover);
+
+            Console.WriteLine("SqlClientTestGroup.GlobalTestSetup(): Finished");
         }
 
         public override void GlobalTestCleanup()
         {
+            Console.WriteLine("SqlClientTestGroup.GlobalTestCleanup(): Starting...");
+
             s_clearAllPoolsThreadStop.Set();
             s_clearAllPoolsThread.Join();
 
@@ -99,6 +107,8 @@ namespace Stress.Data.SqlClient
             }
 
             base.GlobalTestCleanup();
+
+            Console.WriteLine("SqlClientTestGroup.GlobalTestCleanup(): Finished");
         }
 
         public override void GlobalExceptionHandler(Exception e)
