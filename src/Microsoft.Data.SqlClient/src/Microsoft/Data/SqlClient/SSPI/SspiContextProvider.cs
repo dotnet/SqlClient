@@ -6,7 +6,8 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal abstract class SspiContextProvider
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/SspiContextProvider/*'/>
+    public abstract class SspiContextProvider
     {
         private TdsParser _parser = null!;
         private ServerInfo _serverInfo = null!;
@@ -16,6 +17,7 @@ namespace Microsoft.Data.SqlClient
 
         private protected TdsParserStateObject _physicalStateObj = null!;
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/SspiContextProvider/*'/>
         protected SspiContextProvider()
         {
         }
@@ -62,6 +64,7 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/SspiContextProvider/GenerateContext'/>
         protected abstract bool GenerateContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams);
 
         internal void WriteSSPIContext(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter)
