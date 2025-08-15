@@ -181,8 +181,10 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             Assert.Equal(ConnectionState.Closed, connection.State);
         }
 
-        [Fact]
-        public async Task NetworkError_RetryEnabled_ShouldSucceed_Async()
+        [Theory]
+        [InlineData(false, 1)]
+        [InlineData(true, 2)]
+        public async Task NetworkError_RetryEnabled_ShouldSucceed_Async(bool multiSubnetFailoverEnabled, int expectedRetryCount)
         {
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
@@ -196,18 +198,24 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 DataSource = "localhost," + server.EndPoint.Port,
                 IntegratedSecurity = true,
                 Encrypt = SqlConnectionEncryptOption.Optional,
-                ConnectTimeout = 5
+                ConnectTimeout = 5,
+                MultiSubnetFailover = multiSubnetFailoverEnabled,
+#if NETFRAMEWORK
+                TransparentNetworkIPResolution = multiSubnetFailoverEnabled
+#endif
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
             await connection.OpenAsync();
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
-            Assert.Equal(2, server.PreLoginCount);
+            Assert.Equal(expectedRetryCount, server.PreLoginCount);
         }
 
-        [Fact]
-        public void NetworkError_RetryEnabled_ShouldSucceed()
+        [Theory]
+        [InlineData(false, 1)]
+        [InlineData(true, 2)]
+        public void NetworkError_RetryEnabled_ShouldSucceed(bool multiSubnetFailoverEnabled, int expectedRetryCount)
         {
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
@@ -221,7 +229,11 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 DataSource = "localhost," + server.EndPoint.Port,
                 IntegratedSecurity = true,
                 Encrypt = SqlConnectionEncryptOption.Optional,
-                ConnectTimeout = 5
+                ConnectTimeout = 5,
+                MultiSubnetFailover = multiSubnetFailoverEnabled,
+#if NETFRAMEWORK
+                TransparentNetworkIPResolution = multiSubnetFailoverEnabled
+#endif
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
@@ -229,7 +241,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
 
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
-            Assert.Equal(2, server.PreLoginCount);
+            Assert.Equal(expectedRetryCount, server.PreLoginCount);
         }
 
         [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3527")]
