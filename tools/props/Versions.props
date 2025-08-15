@@ -18,7 +18,7 @@
       and introduces breaking changes.  Only ever update the major version
       number.  All other version parts must be set to 0.
     -->
-    <AssemblyVersion>6.0.0.0</AssemblyVersion>
+    <AssemblyVersion>7.0.0.0</AssemblyVersion>
 
     <FileVersion>$(AssemblyFileVersion)</FileVersion>
     <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">$(MdsVersionDefault)-dev</NugetPackageVersion>
