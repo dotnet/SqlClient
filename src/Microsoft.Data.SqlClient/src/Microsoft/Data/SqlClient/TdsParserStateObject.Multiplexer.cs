@@ -95,16 +95,18 @@ namespace Microsoft.Data.SqlClient
                         // if a partial packet was reconstructed it must be handled first
                         if (consumePartialPacket)
                         {
+                            // the partial packet has been processed by the multiplexer and should now have 
+                            //  only data from a single packet in it so we should use RequiredLength which
+                            //  is defined by the packet header here not CurrentLength
                             if (_snapshot != null)
                             {
-                                _snapshot.AppendPacketData(PartialPacket.Buffer, PartialPacket.CurrentLength);
+                                _snapshot.AppendPacketData(PartialPacket.Buffer, PartialPacket.RequiredLength);
                                 SetBuffer(new byte[_inBuff.Length], 0, 0);
                                 appended = true;
                             }
                             else
                             {
-                                SetBuffer(PartialPacket.Buffer, 0, PartialPacket.CurrentLength);
-                                
+                                SetBuffer(PartialPacket.Buffer, 0, PartialPacket.RequiredLength);
                             }
                             bufferIsPartialCompleted = true;
                             ClearPartialPacket();
