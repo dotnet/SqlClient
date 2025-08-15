@@ -22,7 +22,7 @@ variables:
 
     # Base Variables -------------------------------------------------------
     - name: mdsPackageVersion
-      value: '6.1.0'
+      value: '6.1.1'
 
     # @TODO: Version should ideally be pulled from one location (versions.props?)
     - name: versionMajor
@@ -30,7 +30,7 @@ variables:
     - name: versionMinor
       value: '1'
     - name: versionPatch
-      value: '0'
+      value: '1'
     - name: versionPreview
       value: '-preview1'
 
