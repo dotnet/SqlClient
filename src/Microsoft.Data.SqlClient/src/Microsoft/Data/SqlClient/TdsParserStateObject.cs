@@ -4178,8 +4178,8 @@ namespace Microsoft.Data.SqlClient
             internal void AppendPacketData(byte[] buffer, int read)
             {
                 Debug.Assert(buffer != null, "packet data cannot be null");
-                Debug.Assert(read >= TdsEnums.HEADER_LEN, "minimum packet length is TdsEnums.HEADER_LEN");
-                Debug.Assert(TdsEnums.HEADER_LEN + Packet.GetDataLengthFromHeader(buffer) == read, "partially read packets cannot be appended to the snapshot");
+                Debug.Assert(LocalAppContextSwitches.UseCompatibilityProcessSni || read >= TdsEnums.HEADER_LEN, "minimum packet length is TdsEnums.HEADER_LEN");
+                Debug.Assert(LocalAppContextSwitches.UseCompatibilityProcessSni || TdsEnums.HEADER_LEN + Packet.GetDataLengthFromHeader(buffer) == read, "partially read packets cannot be appended to the snapshot");
 #if DEBUG
                 for (PacketData current = _firstPacket; current != null; current = current.NextPacket)
                 {
