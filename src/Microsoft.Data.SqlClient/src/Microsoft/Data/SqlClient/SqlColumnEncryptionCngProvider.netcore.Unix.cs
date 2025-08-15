@@ -29,6 +29,16 @@ namespace Microsoft.Data.SqlClient
         public const string ProviderName = @"MSSQL_CNG_STORE";
 
         /// <summary>
+        /// This encryption keystore uses an asymmetric key as the column master key.
+        /// </summary>
+        internal const string MasterKeyType = @"asymmetric key";
+
+        /// <summary>
+        /// This encryption keystore uses the master key path to reference a CNG provider.
+        /// </summary>
+        internal const string KeyPathReference = @"Microsoft Cryptography API: Next Generation (CNG) provider";
+
+        /// <summary>
         /// This function uses the asymmetric key specified by the key path
         /// and decrypts an encrypted CEK with RSA encryption algorithm.
         /// </summary>
