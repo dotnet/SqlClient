@@ -2,7 +2,7 @@
 <Project ToolsVersion="Current" DefaultTargets="Build"
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <MdsVersionDefault>6.1.0</MdsVersionDefault>
+    <MdsVersionDefault>7.0.0</MdsVersionDefault>
     <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
 
     <!--
