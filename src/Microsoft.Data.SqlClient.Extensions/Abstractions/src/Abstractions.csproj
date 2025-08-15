@@ -9,10 +9,10 @@
   <!-- Configurable Properties -->
   <PropertyGroup>
     <!--
-      We use the ExtensionsPackageVersion from Versions.props.  It may be
+      We use the AbstractionsPackageVersion from Versions.props.  It may be
       specified on the command-line, or a default value is used.
     -->
-    <PackageVersion>$(ExtensionsPackageVersion)</PackageVersion>
+    <PackageVersion>$(AbstractionsPackageVersion)</PackageVersion>
     <!--
       If the BuildNumber (also from Versions.props) isn't 0, then append it to
       the PackageVersion.
@@ -22,7 +22,7 @@
 
   <!-- Target Config -->
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net462;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Compiler Config -->
@@ -33,16 +33,16 @@
 
   <!-- Build Config -->
   <PropertyGroup>
-    <AssemblyName>Microsoft.Data.SqlClient.Extensions</AssemblyName>
+    <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions</AssemblyName>
     <!--
       Apply the AssemblyVersion from Version.props, regardless of how we
       determined the PackageVersion above.
     -->
-    <AssemblyVersion>$(ExtensionsPackageAssemblyVersion)</AssemblyVersion>
+    <AssemblyVersion>$(AbstractionsPackageAssemblyVersion)</AssemblyVersion>
     <AssemblyFileVersion>$(PackageVersion)</AssemblyFileVersion>
     <FileVersion>$(AssemblyFileVersion)</FileVersion>
 
-    <RootNamespace>Microsoft.Data.SqlClient.Extensions</RootNamespace>
+    <RootNamespace>Microsoft.Data.SqlClient.Extensions.Abstractions</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <!-- Our API is CLS Compliant. -->
@@ -51,7 +51,7 @@
     </AssemblyAttribute>
 
     <!-- Our unit tests have access to our internal types. -->
-    <InternalsVisibleTo Include="Microsoft.Data.SqlClient.Extensions.Test" />
+    <InternalsVisibleTo Include="Microsoft.Data.SqlClient.Extensions.Abstractions.Test" />
   </ItemGroup>
 
   <!--
@@ -83,7 +83,7 @@
     
     <Authors>Microsoft Corporation</Authors>
     <Company>Microsoft Corporation</Company>
-    <Description>Microsoft.Data.SqlClient Extensions</Description>
+    <Description>Microsoft.Data.SqlClient Extensions Abstractions</Description>
     <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>dotnet.png</PackageIcon>

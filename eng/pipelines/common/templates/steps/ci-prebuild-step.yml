@@ -19,8 +19,8 @@ parameters:
       - Project
       - Package
 
-  - name: extensionsPackageVersion
-    displayName: Extensions Package Version Override
+  - name: abstractionsPackageVersion
+    displayName: Abstractions Package Version Override
     type: string
     default: ''
 
@@ -55,10 +55,10 @@ steps:
     parameters:
       downloadedNugetPath: $(Pipeline.Workspace)\${{parameters.artifactName }}
       debug: ${{ parameters.debug }}
-      extensionsPackageVersion: ${{ parameters.extensionsPackageVersion }}
+      abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
 
 - ${{ else }}: # project
   - template: ci-project-build-step.yml@self
     parameters:
       build: allNoDocs
-      extensionsPackageVersion: ${{parameters.extensionsPackageVersion}}
+      abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}

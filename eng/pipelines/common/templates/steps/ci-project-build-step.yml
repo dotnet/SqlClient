@@ -34,8 +34,8 @@ parameters:
       - all
       - allNoDocs
 
-  - name: extensionsPackageVersion
-    displayName: Extensions Package Version Override
+  - name: abstractionsPackageVersion
+    displayName: Abstractions Package Version Override
     type: string
     default: ''
 
@@ -58,7 +58,7 @@ steps:
       inputs:
         solution: build.proj
         msbuildArchitecture: x64
-        msbuildArguments: '-t:restore -p:ExtensionsPackageVersion=${{parameters.extensionsPackageVersion}}.${{parameters.buildNumber}}'
+        msbuildArguments: '-t:restore -p:AbstractionsPackageVersion=${{parameters.abstractionsPackageVersion}}.${{parameters.buildNumber}}'
       retryCountOnTaskFailure: 1
 
     - ${{ if eq(parameters.build, 'allNoDocs') }}:
@@ -70,7 +70,7 @@ steps:
           msbuildArchitecture: x64
           platform: '${{ parameters.platform }}'
           configuration: '${{ parameters.configuration }}'
-          msbuildArguments: '-t:BuildAllConfigurations -p:GenerateDocumentationFile=false -p:GenerateNuGet=false -p:BuildNumber=${{ parameters.buildNumber }} -p:ExtensionsPackageVersion=${{parameters.extensionsPackageVersion}}.${{parameters.buildNumber}}'
+          msbuildArguments: '-t:BuildAllConfigurations -p:GenerateDocumentationFile=false -p:GenerateNuGet=false -p:BuildNumber=${{ parameters.buildNumber }} -p:AbstractionsPackageVersion=${{parameters.abstractionsPackageVersion}}.${{parameters.buildNumber}}'
           clean: true
 
     - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
@@ -82,7 +82,7 @@ steps:
           msbuildArchitecture: x64
           platform: '${{ parameters.platform }}'
           configuration: '${{ parameters.configuration }}'
-          msbuildArguments: '-t:BuildAllConfigurations -p:GenerateNuGet=false -p:BuildNumber=${{ parameters.buildNumber }} -p:ExtensionsPackageVersion=${{parameters.extensionsPackageVersion}}.${{parameters.buildNumber}}'
+          msbuildArguments: '-t:BuildAllConfigurations -p:GenerateNuGet=false -p:BuildNumber=${{ parameters.buildNumber }} -p:AbstractionsPackageVersion=${{parameters.abstractionsPackageVersion}}.${{parameters.buildNumber}}'
           clean: true
 
   - ${{ if or(eq(parameters.build, 'AKV'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
@@ -94,7 +94,7 @@ steps:
         msbuildArchitecture: x64
         platform: '${{ parameters.platform }}'
         configuration: '${{ parameters.configuration }}'
-        msbuildArguments: '-t:BuildAKVNetFx -p:BuildNumber=${{ parameters.buildNumber }} -p:ExtensionsPackageVersion=${{parameters.extensionsPackageVersion}}.${{parameters.buildNumber}}'
+        msbuildArguments: '-t:BuildAKVNetFx -p:BuildNumber=${{ parameters.buildNumber }} -p:AbstractionsPackageVersion=${{parameters.abstractionsPackageVersion}}.${{parameters.buildNumber}}'
 
     - task: MSBuild@1
       displayName: 'Build AKV Provider NetCore All OS [Win]'
@@ -104,7 +104,7 @@ steps:
         msbuildArchitecture: x64
         platform: '${{ parameters.platform }}'
         configuration: '${{ parameters.configuration }}'
-        msbuildArguments: '-t:BuildAKVNetCoreAllOS -p:BuildNumber=${{ parameters.buildNumber }} -p:ExtensionsPackageVersion=${{parameters.extensionsPackageVersion}}.${{parameters.buildNumber}}'
+        msbuildArguments: '-t:BuildAKVNetCoreAllOS -p:BuildNumber=${{ parameters.buildNumber }} -p:AbstractionsPackageVersion=${{parameters.abstractionsPackageVersion}}.${{parameters.buildNumber}}'
 
 - ${{ if or(eq(parameters.operatingSystem, 'Linux'), eq(parameters.operatingSystem, 'MacOS'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - task: DotNetCoreCLI@2
@@ -114,7 +114,7 @@ steps:
       command: custom
       projects: build.proj
       custom: msbuild
-      arguments: '-t:BuildAll -p:TestEnabled=true -p:GenerateDocumentationFile=false -p:configuration=${{ parameters.configuration }} -p:ExtensionsPackageVersion=${{parameters.extensionsPackageVersion}}.${{parameters.buildNumber}}'
+      arguments: '-t:BuildAll -p:TestEnabled=true -p:GenerateDocumentationFile=false -p:configuration=${{ parameters.configuration }} -p:AbstractionsPackageVersion=${{parameters.abstractionsPackageVersion}}.${{parameters.buildNumber}}'
       verbosityRestore: Detailed
       verbosityPack: Detailed
     retryCountOnTaskFailure: 1

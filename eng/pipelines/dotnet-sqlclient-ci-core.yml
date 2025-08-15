@@ -34,8 +34,8 @@ parameters:
   type: object
   default: [1, 2, 3]
 
-- name: extensionsPackageVersion
-  displayName: Extensions Package Version Override
+- name: abstractionsPackageVersion
+  displayName: Abstractions Package Version Override
   type: string
   default: ''
 
@@ -77,8 +77,8 @@ parameters:
 variables:
   - template: libraries/ci-build-variables.yml@self
   
-  - name: extensionsArtifactName
-    value: Extensions.Artifact
+  - name: abstractionsArtifactName
+    value: Abstractions.Artifact
 
   - name: mdsArtifactName
     value: MDS.Artifact
@@ -88,26 +88,26 @@ variables:
 
 stages:
 
-  # Build the Extensions package, and publish it to the pipeline artifacts
-  # under the name specified by the 'extensionsArtifactName' variable.
-  - template: stages/ci-build-extensions-package-stage.yml@self
+  # Build the Abstractions package, and publish it to the pipeline artifacts
+  # under the name specified by the 'abstractionsArtifactName' variable.
+  - template: stages/build-abstractions-package-ci-stage.yml@self
     parameters:
       buildConfiguration: Release
-      packageVersion: ${{parameters.extensionsPackageVersion}}
+      packageVersion: ${{parameters.abstractionsPackageVersion}}
       buildNumber: $(buildNumber)
-      artifactName: $(extensionsArtifactName)
+      artifactName: $(abstractionsArtifactName)
       ${{if eq(parameters.debug, 'true')}}:
         verbosity: diagnostic
 
   # Build MDS and its NuGet packages.
   - stage: build_nugets
     displayName: 'Build NuGet Packages'
-    dependsOn: build_extensions_package_stage
+    dependsOn: build_abstractions_package_stage
     jobs:
     - template: common/templates/jobs/ci-build-nugets-job.yml@self
       parameters:
-        extensionsPackageVersion: ${{parameters.extensionsPackageVersion}}
-        extensionsArtifactName: $(extensionsArtifactName)
+        abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
+        abstractionsArtifactName: $(abstractionsArtifactName)
         mdsArtifactName: $(mdsArtifactName)
         ${{if ne(parameters.SNIVersion, '')}}:
           prebuildSteps:
@@ -120,18 +120,19 @@ stages:
     parameters:
       debug: ${{ parameters.debug }}
       buildType: ${{ parameters.buildType }}
-      extensionsPackageVersion: ${{parameters.extensionsPackageVersion}}
+      abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
 
-      # When testing MDS via packages, we must depend on the Extensions _and_
+      # When testing MDS via packages, we must depend on the Abstractions _and_
       # MDS packages.
       ${{ if eq(parameters.buildType, 'Package') }}:
         dependsOn:
-          - build_extensions_package_stage
+          - build_abstractions_package_stage
           - build_nugets
-      # When testing MDS via projects, we only depend on the Extensions package.
+      # When testing MDS via projects, we only depend on the Abstrations
+      # package.
       ${{ else }}:
         dependsOn:
-          - build_extensions_package_stage
+          - build_abstractions_package_stage
 
       ${{if ne(parameters.SNIVersion, '')}}:
         prebuildSteps: # steps to run prior to building and running tests on each job
@@ -144,7 +145,7 @@ stages:
               debug: ${{ parameters.debug }}
               artifactName: $(mdsArtifactName)
               buildType: ${{ parameters.buildType }}
-              extensionsPackageVersion: ${{parameters.extensionsPackageVersion}}
+              abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
       ${{else}}:
         prebuildSteps: # steps to run prior to building and running tests on each job
           - template: common/templates/steps/ci-prebuild-step.yml@self
@@ -152,7 +153,7 @@ stages:
               debug: ${{ parameters.debug }}
               artifactName: $(mdsArtifactName)
               buildType: ${{ parameters.buildType }}
-              extensionsPackageVersion: ${{parameters.extensionsPackageVersion}}
+              abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
 
       ${{ if eq(parameters.buildType, 'Project') }}: # only run the code coverage job if the build type is project
         postTestJobs: # jobs to run after the tests are done

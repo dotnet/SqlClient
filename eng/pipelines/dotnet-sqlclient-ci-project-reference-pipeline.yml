@@ -54,8 +54,8 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: object
   default: [1, 2, 3]
 
-- name: extensionsPackageVersion
-  displayName: Extensions Package Version Override
+- name: abstractionsPackageVersion
+  displayName: Abstractions Package Version Override
   type: string
   default: 7.0.0
 
@@ -79,7 +79,7 @@ extends:
     targetFrameworksLinux: ${{ parameters.targetFrameworksLinux }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
     testSets: ${{ parameters.testSets }}
-    extensionsPackageVersion: ${{ parameters.extensionsPackageVersion }}
+    abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
     buildType: Project

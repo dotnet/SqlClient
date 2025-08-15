@@ -6,11 +6,11 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <AssemblyName>Microsoft.Data.SqlClient.Extensions.Test</AssemblyName>
+    <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions.Test</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../src/Extensions.csproj" />
+    <ProjectReference Include="../src/Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

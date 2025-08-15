@@ -1,4 +1,4 @@
-﻿namespace Microsoft.Data.SqlClient.Extensions.Test;
+﻿namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 public class SampleTest
 {

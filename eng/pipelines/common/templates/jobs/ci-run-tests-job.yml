@@ -29,8 +29,8 @@ parameters:
     type: object
     default: {} # - key: 'value'
 
-  - name: extensionsPackageVersion
-    displayName: Extensions Package Version Override
+  - name: abstractionsPackageVersion
+    displayName: Abstractions Package Version Override
     type: string
     default: ''
 
@@ -38,9 +38,9 @@ parameters:
     type: stepList
     default: []
 
-  - name: extensionsArtifactName
+  - name: abstractionsArtifactName
     type: string
-    default: Extensions.Artifact
+    default: Abstractions.Artifact
 
   - name: targetFramework
     type: string
@@ -95,13 +95,13 @@ jobs:
 
   steps:
 
-  # Download the Extensions package artifacts and put them in the packages/
+  # Download the Abstractions package artifacts and put them in the packages/
   # directory in the repo root.  This is where the MDS NuGet.config file will
   # look for local packages.
   - task: DownloadPipelineArtifact@2
-    displayName: Download Extensions Package Artifact
+    displayName: Download Abstractions Package Artifact
     inputs:
-      artifactName: ${{ parameters.extensionsArtifactName }}
+      artifactName: ${{ parameters.abstractionsArtifactName }}
       targetPath: $(Build.SourcesDirectory)/packages
 
   - ${{ if ne(parameters.prebuildSteps, '') }}:
@@ -235,7 +235,7 @@ jobs:
         targetFramework: ${{ parameters.targetFramework }}
         referenceType: ${{ parameters.buildType }}
         testSet: ${{ parameters.testSet }}
-        extensionsPackageVersion: ${{ parameters.extensionsPackageVersion }}
+        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
         ${{ if ne(parameters.operatingSystem, 'Windows') }}:
           OSGroup: Unix
 

@@ -1,4 +1,4 @@
-namespace Microsoft.Data.SqlClient.Extensions;
+namespace Microsoft.Data.SqlClient.Extensions.Abstractions;
 
 /// <include file='../doc/Sample.xml' path='docs/members[@name="Sample"]/Sample/*'/>
 public class Sample
