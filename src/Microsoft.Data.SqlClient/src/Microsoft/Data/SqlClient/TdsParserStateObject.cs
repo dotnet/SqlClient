@@ -3680,8 +3680,10 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal void RequestContinue(bool value)
         {
-            Debug.Assert(_snapshot != null);
-            _snapshot.RequestContinue(value);
+            if (_snapshot != null)
+            {
+                _snapshot.RequestContinue(value);
+            }
         }
 
         /// <summary>
