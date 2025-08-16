@@ -18,12 +18,12 @@ parameters:
   
   - name: operatingSystem
     type: string
-    default: deferedToRuntime
+    default: deferredToRuntime
     values:
       - Windows
       - Linux
       - MacOS
-      - deferedToRuntime
+      - deferredToRuntime
     
   - name: build
     type: string
@@ -45,7 +45,7 @@ steps:
       packageType: 'runtime'
       version: '8.0'
 
-- ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
+- ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferredToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
     - task: MSBuild@1
       displayName: 'Restore nugets [Win]'
@@ -91,6 +91,14 @@ steps:
         configuration: '${{ parameters.configuration }}'
         msbuildArguments: '-t:BuildAKVNetFx -p:BuildNumber=${{ parameters.buildNumber }}'
 
+    # - task: DotNetCoreCLI@2
+    #   displayName: 'Build AKV Provider NetFx (dotnet) [Win]'
+    #   condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
+    #   inputs:
+    #     command: build
+    #     projects: build.proj
+    #     arguments: '-t:BuildAKVNetFx -p:Platform=${{ parameters.platform }} -p:Configuration=${{ parameters.configuration }} -p:BuildNumber=${{ parameters.buildNumber }} -v detailed --no-restore'
+
     - task: MSBuild@1
       displayName: 'Build AKV Provider NetCore All OS [Win]'
       condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
@@ -101,7 +109,7 @@ steps:
         configuration: '${{ parameters.configuration }}'
         msbuildArguments: '-t:BuildAKVNetCoreAllOS -p:BuildNumber=${{ parameters.buildNumber }}'
 
-- ${{ if or(eq(parameters.operatingSystem, 'Linux'), eq(parameters.operatingSystem, 'MacOS'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
+- ${{ if or(eq(parameters.operatingSystem, 'Linux'), eq(parameters.operatingSystem, 'MacOS'), eq(parameters.operatingSystem, 'deferredToRuntime')) }}:
   - task: DotNetCoreCLI@2
     displayName: 'Build Driver [non-Win]'
     condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
