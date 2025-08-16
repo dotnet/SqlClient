@@ -829,13 +829,13 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case (int)PreLoginOptions.TRACEID:
-                        FillGuidBytes(_connHandler._clientConnectionId, payload.AsSpan(payloadLength, GUID_SIZE));
+                        SerializeGuid(_connHandler._clientConnectionId, payload.AsSpan(payloadLength, GUID_SIZE));
                         payloadLength += GUID_SIZE;
                         offset += GUID_SIZE;
                         optionDataSize = GUID_SIZE;
 
                         ActivityCorrelator.ActivityId actId = ActivityCorrelator.Next();
-                        FillGuidBytes(actId.Id, payload.AsSpan(payloadLength, GUID_SIZE));
+                        SerializeGuid(actId.Id, payload.AsSpan(payloadLength, GUID_SIZE));
                         payloadLength += GUID_SIZE;
                         payload[payloadLength++] = (byte)(0x000000ff & actId.Sequence);
                         payload[payloadLength++] = (byte)((0x0000ff00 & actId.Sequence) >> 8);
@@ -964,7 +964,7 @@ namespace Microsoft.Data.SqlClient
 
             if (_physicalStateObj._inBytesPacket > TdsEnums.MAX_PACKET_SIZE || _physicalStateObj._inBytesPacket <= 0)
             {
-                throw SQL.ParsingError();
+                throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
             }
             byte[] payload = new byte[_physicalStateObj._inBytesPacket];
 
@@ -1013,7 +1013,7 @@ namespace Microsoft.Data.SqlClient
                         payloadOffset = payload[offset++] << 8 | payload[offset++];
                         payloadLength = payload[offset++] << 8 | payload[offset++];
 
-                        EncryptionOptions serverOption = (EncryptionOptions)payload[payloadOffset];
+                        EncryptionOptions serverOption = ((EncryptionOptions)payload[payloadOffset]) & EncryptionOptions.OPTIONS_MASK;
 
                         /* internal enum EncryptionOptions {
                             OFF,
@@ -1156,7 +1156,8 @@ namespace Microsoft.Data.SqlClient
 
                 // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
                 bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) ||
-                    (_connHandler._accessTokenInBytes != null && !trustServerCert);
+                    ((_connHandler._accessTokenInBytes != null || _connHandler._accessTokenCallback != null) && !trustServerCert);
+
                 uint info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
                     | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE;
 
@@ -1722,6 +1723,48 @@ namespace Microsoft.Data.SqlClient
         }
 
         //
+        // Writes a guid, either to a specific buffer or to the wire.
+        //
+        private static void SerializeGuid(in Guid v, Span<byte> buffer)
+        {
+            Debug.Assert(buffer.Length >= GUID_SIZE);
+#if NET
+            v.TryWriteBytes(buffer, bigEndian: false, out _);
+#else
+            byte[] guidBytes = v.ToByteArray();
+            guidBytes.AsSpan().CopyTo(buffer);
+#endif
+        }
+
+        private static void WriteGuid(in SqlGuid v, TdsParserStateObject stateObj)
+        {
+            Guid innerValue = v.IsNull ? Guid.Empty : v.Value;
+
+            WriteGuid(in innerValue, stateObj);
+        }
+
+        private static void WriteGuid(in Guid v, TdsParserStateObject stateObj)
+        {
+            if ((stateObj._outBytesUsed + GUID_SIZE) > stateObj._outBuff.Length)
+            {
+                Span<byte> buffer = stackalloc byte[GUID_SIZE];
+
+                SerializeGuid(in v, buffer);
+                // if all of the guid doesn't fit into the buffer
+                for (int index = 0; index < buffer.Length; index++)
+                {
+                    stateObj.WriteByte(buffer[index]);
+                }
+            }
+            else
+            {
+                // all of the guid fits into the buffer
+                SerializeGuid(in v, stateObj._outBuff.AsSpan(stateObj._outBytesUsed, GUID_SIZE));
+                stateObj._outBytesUsed += GUID_SIZE;
+            }
+        }
+
+        //
         // Takes a long and writes out an unsigned int
         //
         internal byte[] SerializeUnsignedInt(uint i, TdsParserStateObject stateObj)
@@ -1748,16 +1791,17 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(sizeof(int) == stateObj._bIntBytes.Length);
             }
 
-            WriteInt(stateObj._bIntBytes.AsSpan(), v);
+            BinaryPrimitives.WriteInt32LittleEndian(stateObj._bIntBytes, v);
             return stateObj._bIntBytes;
         }
 
         internal void WriteInt(int v, TdsParserStateObject stateObj)
         {
-            Span<byte> buffer = stackalloc byte[sizeof(int)];
-            WriteInt(buffer, v);
             if ((stateObj._outBytesUsed + 4) > stateObj._outBuff.Length)
             {
+                Span<byte> buffer = stackalloc byte[sizeof(int)];
+
+                BinaryPrimitives.WriteInt32LittleEndian(buffer, v);
                 // if all of the int doesn't fit into the buffer
                 for (int index = 0; index < sizeof(int); index++)
                 {
@@ -1767,14 +1811,9 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // all of the int fits into the buffer
-                buffer.CopyTo(stateObj._outBuff.AsSpan(stateObj._outBytesUsed, sizeof(int)));
+                BinaryPrimitives.WriteInt32LittleEndian(stateObj._outBuff.AsSpan(stateObj._outBytesUsed, sizeof(int)), v);
                 stateObj._outBytesUsed += 4;
             }
-        }
-
-        internal static void WriteInt(Span<byte> buffer, int value)
-        {
-            BinaryPrimitives.TryWriteInt32LittleEndian(buffer, value);
         }
 
         //
@@ -1795,7 +1834,7 @@ namespace Microsoft.Data.SqlClient
         internal void WriteFloat(float v, TdsParserStateObject stateObj)
         {
             Span<byte> bytes = stackalloc byte[sizeof(float)];
-            FillFloatBytes(v, bytes);
+            BinaryPrimitives.WriteInt32LittleEndian(bytes, BitConverterCompatible.SingleToInt32Bits(v));
             stateObj.WriteByteSpan(bytes);
         }
 
@@ -1920,7 +1959,7 @@ namespace Microsoft.Data.SqlClient
         internal void WriteDouble(double v, TdsParserStateObject stateObj)
         {
             Span<byte> bytes = stackalloc byte[sizeof(double)];
-            FillDoubleBytes(v, bytes);
+            BinaryPrimitives.WriteInt64LittleEndian(bytes, BitConverter.DoubleToInt64Bits(v));
             stateObj.WriteByteSpan(bytes);
         }
 
@@ -2067,7 +2106,7 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                     throw new InvalidOperationException(message);
 #else
-                    throw SQL.ParsingError();
+                    throw SQL.ParsingErrorToken(ParsingErrorState.InvalidTdsTokenReceived, token); // MDAC 82443
 #endif
 
                 }
@@ -2724,14 +2763,13 @@ namespace Microsoft.Data.SqlClient
             int processedLength = 0;
             SqlEnvChange head = null;
             SqlEnvChange tail = null;
-            TdsOperationStatus result;
 
             sqlEnvChange = null;
 
             while (tokenLength > processedLength)
             {
                 SqlEnvChange env = new SqlEnvChange();
-                result = stateObj.TryReadByte(out env._type);
+                TdsOperationStatus result = stateObj.TryReadByte(out env._type);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
@@ -3637,7 +3675,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (length < 5)
             {
-                throw SQL.ParsingError();
+                throw SQL.ParsingErrorLength(ParsingErrorState.SessionStateLengthTooShort, length);
             }
             uint seqNum;
             TdsOperationStatus result = stateObj.TryReadUInt32(out seqNum);
@@ -3657,7 +3695,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (status > 1)
             {
-                throw SQL.ParsingError();
+                throw SQL.ParsingErrorStatus(ParsingErrorState.SessionStateInvalidStatus, status);
             }
             bool recoverable = status != 0;
             length -= 5;
@@ -4671,9 +4709,11 @@ namespace Microsoft.Data.SqlClient
                     if (sharedState != null && sharedState._dataReady)
                     {
                         _SqlMetaDataSet metadata = stateObj._cleanupMetaData;
+                        TdsOperationStatus result;
                         if (stateObj._partialHeaderBytesRead > 0)
                         {
-                            if (stateObj.TryProcessHeader() != TdsOperationStatus.Done)
+                            result = stateObj.TryProcessHeader();
+                            if (result != TdsOperationStatus.Done)
                             {
                                 throw SQL.SynchronousCallMayNotPend();
                             }
@@ -4681,7 +4721,8 @@ namespace Microsoft.Data.SqlClient
                         if (0 == sharedState._nextColumnHeaderToRead)
                         {
                             // i. user called read but didn't fetch anything
-                            if (stateObj.Parser.TrySkipRow(stateObj._cleanupMetaData, stateObj) != TdsOperationStatus.Done)
+                            result = stateObj.Parser.TrySkipRow(stateObj._cleanupMetaData, stateObj);
+                            if (result != TdsOperationStatus.Done)
                             {
                                 throw SQL.SynchronousCallMayNotPend();
                             }
@@ -4695,7 +4736,8 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     if (stateObj._longlen != 0)
                                     {
-                                        if (TrySkipPlpValue(ulong.MaxValue, stateObj, out _) != TdsOperationStatus.Done)
+                                        result = TrySkipPlpValue(ulong.MaxValue, stateObj, out _);
+                                        if (result != TdsOperationStatus.Done)
                                         {
                                             throw SQL.SynchronousCallMayNotPend();
                                         }
@@ -4704,7 +4746,8 @@ namespace Microsoft.Data.SqlClient
 
                                 else if (0 < sharedState._columnDataBytesRemaining)
                                 {
-                                    if (stateObj.TrySkipLongBytes(sharedState._columnDataBytesRemaining) != TdsOperationStatus.Done)
+                                    result = stateObj.TrySkipLongBytes(sharedState._columnDataBytesRemaining);
+                                    if (result != TdsOperationStatus.Done)
                                     {
                                         throw SQL.SynchronousCallMayNotPend();
                                     }
@@ -4713,7 +4756,8 @@ namespace Microsoft.Data.SqlClient
 
 
                             // Read the remaining values off the wire for this row
-                            if (stateObj.Parser.TrySkipRow(metadata, sharedState._nextColumnHeaderToRead, stateObj) != TdsOperationStatus.Done)
+                            result = stateObj.Parser.TrySkipRow(metadata, sharedState._nextColumnHeaderToRead, stateObj);
+                            if (result != TdsOperationStatus.Done)
                             {
                                 throw SQL.SynchronousCallMayNotPend();
                             }
@@ -5316,6 +5360,85 @@ namespace Microsoft.Data.SqlClient
             // We get too many DONE COUNTs from the server, causing too many StatementCompleted event firings.
             // We only need to fire this event when we actually have a meta data stream with 0 or more rows.
             stateObj.HasReceivedColumnMetadata = true;
+            return TdsOperationStatus.Done;
+        }
+
+        private TdsOperationStatus TryProcessUDTMetaData(SqlMetaDataPriv metaData, TdsParserStateObject stateObj)
+        {
+            ushort shortLength;
+            byte byteLength;
+
+            // max byte size
+            TdsOperationStatus result = stateObj.TryReadUInt16(out shortLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            metaData.length = shortLength;
+
+            // database name
+            result = stateObj.TryReadByte(out byteLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            if (metaData.udt is null)
+            {
+                metaData.udt = new SqlMetaDataUdt();
+            }
+            if (byteLength != 0)
+            {
+                result = stateObj.TryReadString(byteLength, out metaData.udt.DatabaseName);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+            }
+
+            // schema name
+            result = stateObj.TryReadByte(out byteLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            if (byteLength != 0)
+            {
+                result = stateObj.TryReadString(byteLength, out metaData.udt.SchemaName);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+            }
+
+            // type name
+            result = stateObj.TryReadByte(out byteLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            if (byteLength != 0)
+            {
+                result = stateObj.TryReadString(byteLength, out metaData.udt.TypeName);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+            }
+
+            result = stateObj.TryReadUInt16(out shortLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            if (shortLength != 0)
+            {
+                result = stateObj.TryReadString(shortLength, out metaData.udt.AssemblyQualifiedName);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+            }
+
             return TdsOperationStatus.Done;
         }
 
@@ -6552,9 +6675,8 @@ namespace Microsoft.Data.SqlClient
         private TdsOperationStatus TryReadSqlDateTime(SqlBuffer value, byte tdsType, int length, byte scale, TdsParserStateObject stateObj)
         {
             Span<byte> datetimeBuffer = ((uint)length <= 16) ? stackalloc byte[16] : new byte[length];
-            TdsOperationStatus result;
 
-            result = stateObj.TryReadByteArray(datetimeBuffer, length);
+            TdsOperationStatus result = stateObj.TryReadByteArray(datetimeBuffer, length);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
@@ -6786,13 +6908,24 @@ namespace Microsoft.Data.SqlClient
                     {
                         Debug.Assert(length == GUID_SIZE, "invalid length for SqlGuid type!");
 
+#if NET
                         Span<byte> b = stackalloc byte[GUID_SIZE];
+#else
+                        byte[] b = _tempGuidBytes;
+                        if (b is null)
+                        {
+                            b = new byte[GUID_SIZE];
+                        }
+#endif
                         result = stateObj.TryReadByteArray(b, length);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
                         }
-                        value.Guid = ConstructGuid(b);
+                        value.Guid = new Guid(b);
+#if NETFRAMEWORK
+                        _tempGuidBytes = b;
+#endif
                         break;
                     }
 
@@ -7138,12 +7271,8 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLUNIQUEID:
                     {
-                        System.Guid guid = (System.Guid)value;
-                        Span<byte> b = stackalloc byte[16];
-                        TdsParser.FillGuidBytes(guid, b);
-
-                        Debug.Assert((length == b.Length) && (length == 16), "Invalid length for guid type in com+ object");
-                        stateObj.WriteByteSpan(b);
+                        Debug.Assert(length == 16, "Invalid length for guid type in com+ object");
+                        WriteGuid((Guid)value, stateObj);
                         break;
                     }
 
@@ -7296,14 +7425,8 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLUNIQUEID:
                     {
-                        System.Guid guid = (System.Guid)value;
-                        Span<byte> b = stackalloc byte[16];
-                        FillGuidBytes(guid, b);
-
-                        length = b.Length;
-                        Debug.Assert(length == 16, "Invalid length for guid type in com+ object");
                         WriteSqlVariantHeader(18, metatype.TDSType, metatype.PropBytes, stateObj);
-                        stateObj.WriteByteSpan(b);
+                        WriteGuid((Guid)value, stateObj);
                         break;
                     }
 
@@ -8076,47 +8199,45 @@ namespace Microsoft.Data.SqlClient
                     return stateObj.TryReadInt32(out tokenLength);
             }
 
+            if (token == TdsEnums.SQLUDT)
+            { // special case for UDTs
+                tokenLength = -1; // Should we return -1 or not call GetTokenLength for UDTs?
+                return TdsOperationStatus.Done;
+            }
+            else if (token == TdsEnums.SQLRETURNVALUE)
             {
-                if (token == TdsEnums.SQLUDT)
-                { // special case for UDTs
-                    tokenLength = -1; // Should we return -1 or not call GetTokenLength for UDTs?
-                    return TdsOperationStatus.Done;
-                }
-                else if (token == TdsEnums.SQLRETURNVALUE)
+                tokenLength = -1; // In 2005, the RETURNVALUE token stream no longer has length
+                return TdsOperationStatus.Done;
+            }
+            else if (token == TdsEnums.SQLXMLTYPE)
+            {
+                ushort value;
+                result = stateObj.TryReadUInt16(out value);
+                if (result != TdsOperationStatus.Done)
                 {
-                    tokenLength = -1; // In 2005, the RETURNVALUE token stream no longer has length
-                    return TdsOperationStatus.Done;
+                    tokenLength = 0;
+                    return result;
                 }
-                else if (token == TdsEnums.SQLXMLTYPE)
+                tokenLength = (int)value;
+                Debug.Assert(tokenLength == TdsEnums.SQL_USHORTVARMAXLEN, "Invalid token stream for xml datatype");
+                return TdsOperationStatus.Done;
+            }
+            else if (token == TdsEnums.SQLJSON)
+            {
+                tokenLength = -1;
+                return TdsOperationStatus.Done;
+            }
+            else if (token == TdsEnums.SQLVECTOR)
+            {
+                ushort value;
+                result = stateObj.TryReadUInt16(out value);
+                if (result != TdsOperationStatus.Done)
                 {
-                    ushort value;
-                    result = stateObj.TryReadUInt16(out value);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        tokenLength = 0;
-                        return result;
-                    }
-                    tokenLength = (int)value;
-                    Debug.Assert(tokenLength == TdsEnums.SQL_USHORTVARMAXLEN, "Invalid token stream for xml datatype");
-                    return TdsOperationStatus.Done;
+                    tokenLength = 0;
+                    return result;
                 }
-                else if (token == TdsEnums.SQLJSON)
-                {
-                    tokenLength = -1;
-                    return TdsOperationStatus.Done;
-                }
-                else if (token == TdsEnums.SQLVECTOR)
-                {
-                    ushort value;
-                    result = stateObj.TryReadUInt16(out value);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        tokenLength = 0;
-                        return result;
-                    }
-                    tokenLength = value;
-                    return TdsOperationStatus.Done;
-                }
+                tokenLength = value;
+                return TdsOperationStatus.Done;
             }
 
             switch (token & TdsEnums.SQLLenMask)
@@ -11720,26 +11841,8 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLUNIQUEID:
                     {
                         Debug.Assert(actualLength == 16, "Invalid length for guid type in com+ object");
-                        Span<byte> b = stackalloc byte[16];
-                        if (value is Guid guid)
-                        {
-                            FillGuidBytes(guid, b);
-                        }
-                        else
-                        {
-                            SqlGuid sqlGuid = (SqlGuid)value;
-                            if (sqlGuid.IsNull)
-                            {
-                                b.Clear(); // this is needed because initlocals may be supressed in framework assemblies meaning the memory is not automaticaly zeroed
-                            }
-                            else
-                            {
-                                FillGuidBytes(sqlGuid.Value, b);
-                            }
-                        }
-                        stateObj.WriteByteSpan(b);
+                        WriteGuid((SqlGuid)value, stateObj);
                         break;
-
                     }
 
                 case TdsEnums.SQLBITN:
@@ -12416,9 +12519,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLUNIQUEID:
                     {
                         Debug.Assert(actualLength == 16, "Invalid length for guid type in com+ object");
-                        Span<byte> b = stackalloc byte[16];
-                        FillGuidBytes((System.Guid)value, b);
-                        stateObj.WriteByteSpan(b);
+                        WriteGuid((Guid)value, stateObj);
                         break;
                     }
 
@@ -13612,86 +13713,6 @@ namespace Microsoft.Data.SqlClient
                 return 0;
 
             return stateObj._longlen;
-        }
-
-        private TdsOperationStatus TryProcessUDTMetaData(SqlMetaDataPriv metaData, TdsParserStateObject stateObj)
-        {
-
-            ushort shortLength;
-            byte byteLength;
-            // max byte size
-
-            TdsOperationStatus result = stateObj.TryReadUInt16(out shortLength);
-            if (result != TdsOperationStatus.Done)
-            {
-                return result;
-            }
-            metaData.length = shortLength;
-
-            // database name
-            result = stateObj.TryReadByte(out byteLength);
-            if (result != TdsOperationStatus.Done)
-            {
-                return result;
-            }
-            if (metaData.udt is null)
-            {
-                metaData.udt = new SqlMetaDataUdt();
-            }
-            if (byteLength != 0)
-            {
-                result = stateObj.TryReadString(byteLength, out metaData.udt.DatabaseName);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
-                }
-            }
-
-            // schema name
-            result = stateObj.TryReadByte(out byteLength);
-            if (result != TdsOperationStatus.Done)
-            {
-                return result;
-            }
-            if (byteLength != 0)
-            {
-                result = stateObj.TryReadString(byteLength, out metaData.udt.SchemaName);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
-                }
-            }
-
-            // type name
-            result = stateObj.TryReadByte(out byteLength);
-            if (result != TdsOperationStatus.Done)
-            {
-                return result;
-            }
-            if (byteLength != 0)
-            {
-                result = stateObj.TryReadString(byteLength, out metaData.udt.TypeName);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
-                }
-            }
-
-            result = stateObj.TryReadUInt16(out shortLength);
-            if (result != TdsOperationStatus.Done)
-            {
-                return result;
-            }
-            if (shortLength != 0)
-            {
-                result = stateObj.TryReadString(shortLength, out metaData.udt.AssemblyQualifiedName);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
-                }
-            }
-
-            return TdsOperationStatus.Done;
         }
 
         const string StateTraceFormatString = "\n\t"
