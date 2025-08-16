@@ -1263,6 +1263,13 @@ namespace Microsoft.Data.SqlClient
             _inBytesRead = inBytesRead;
         }
 
+        internal void NewBuffer(int size)
+        {
+            _inBuff = new byte[size];
+            _inBytesUsed = 0;
+            _inBytesRead = 0;
+        }
+
         // This ensure that there is data available to be read in the buffer and that the header has been processed
         // NOTE: This method (and all it calls) should be retryable without replaying a snapshot
         internal TdsOperationStatus TryPrepareBuffer()
@@ -1374,7 +1381,7 @@ namespace Microsoft.Data.SqlClient
                 // Allocate or re-allocate _inBuff.
                 if (_inBuff == null)
                 {
-                    SetBuffer(new byte[size], 0, 0);
+                    NewBuffer(size);
                 }
                 else if (size != _inBuff.Length)
                 {
@@ -1401,7 +1408,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         // buffer is empty - just create the new one that is double the size of the old one
-                        SetBuffer(new byte[size], 0, 0);
+                        NewBuffer(size);
                     }
                 }
 
@@ -1964,6 +1971,7 @@ namespace Microsoft.Data.SqlClient
             }
             byte[] buf = null;
             int offset = 0;
+            RequestContinue(true);
             (bool canContinue, bool isStarting, bool isContinuing) = GetSnapshotStatuses();
 
             if (isPlp)
@@ -3615,6 +3623,9 @@ namespace Microsoft.Data.SqlClient
             _snapshot.SetPacketDataSize(countOfBytesCopiedFromCurrentPacket);
         }
 
+        /// <summary>
+        /// clears the stored count of bytes to be copied from the all packets in the snapshot
+        /// </summary>
         internal void ClearSnapshotDataSize()
         {
             Debug.Assert(_snapshot != null, "_snapshot must exist to store packet data size");
@@ -3639,6 +3650,17 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(_snapshot != null && _snapshot.ContinueEnabled, "_snapshot must exist to read packet data size");
             return _snapshot.GetPacketID();
+        }
+
+        /// <summary>
+        /// sets a value on the snapshot to allow the ContinueEnabled property to return true. <br />
+        /// this function should be called only by functions that explicitly support the snapshot status
+        /// <see cref="SnapshotStatus.ContinueRunning"/> status 
+        /// </summary>
+        internal void RequestContinue(bool value)
+        {
+            Debug.Assert(_snapshot != null);
+            _snapshot.RequestContinue(value);
         }
 
         /// <summary>
@@ -4079,6 +4101,7 @@ namespace Microsoft.Data.SqlClient
             private StateObjectData _continueStateData;
 
             internal object _storage;
+            internal bool _continueRequested;
 
             private PacketData _lastPacket;
             private PacketData _firstPacket;
@@ -4127,7 +4150,7 @@ namespace Microsoft.Data.SqlClient
             }
 
 #endif
-            public bool ContinueEnabled => !LocalAppContextSwitches.UseCompatibilityAsyncBehaviour;
+            public bool ContinueEnabled => _continueRequested && !LocalAppContextSwitches.UseCompatibilityAsyncBehaviour;
 
             internal void CloneNullBitmapInfo()
             {
@@ -4263,6 +4286,7 @@ namespace Microsoft.Data.SqlClient
                 if (ContinueEnabled)
                 {
                     Debug.Assert(_stateObj == stateObj);
+                    Debug.Assert(_stateObj._bTmpRead == 0);
                     if (_current is not null)
                     {
                         _continueStateData ??= new StateObjectData();
@@ -4270,6 +4294,11 @@ namespace Microsoft.Data.SqlClient
                         _continuePacket = _current;
                     }
                 }
+            }
+
+            internal void RequestContinue(bool value)
+            {
+                _continueRequested = value;
             }
 
             internal void SetPacketDataSize(int size)
@@ -4355,6 +4384,7 @@ namespace Microsoft.Data.SqlClient
             private void ClearState()
             {
                 _storage = null;
+                _continueRequested = false;
                 _replayStateData.Clear(_stateObj);
                 _continueStateData?.Clear(_stateObj, trackStack: false);
 #if DEBUG
