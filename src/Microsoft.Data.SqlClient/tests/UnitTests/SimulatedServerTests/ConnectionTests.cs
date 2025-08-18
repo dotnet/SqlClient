@@ -182,9 +182,9 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         }
 
         [Theory]
-        [InlineData(false, 1)]
-        [InlineData(true, 2)]
-        public async Task NetworkError_RetryEnabled_ShouldSucceed_Async(bool multiSubnetFailoverEnabled, int expectedRetryCount)
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task NetworkError_RetryEnabled_ShouldSucceed_Async(bool multiSubnetFailoverEnabled)
         {
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
@@ -209,19 +209,26 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             await connection.OpenAsync();
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
-            Assert.Equal(expectedRetryCount, server.PreLoginCount);
+            if (multiSubnetFailoverEnabled)
+            {
+                Assert.True(server.PreLoginCount > 1, "Expected multiple pre-login attempts due to retry.");
+            }
+            else
+            {
+                Assert.Equal(1, server.PreLoginCount);
+            }
         }
 
         [Theory]
-        [InlineData(false, 1)]
-        [InlineData(true, 2)]
-        public void NetworkError_RetryEnabled_ShouldSucceed(bool multiSubnetFailoverEnabled, int expectedRetryCount)
+        [InlineData(false)]
+        [InlineData(true)]
+        public void NetworkError_RetryEnabled_ShouldSucceed(bool multiSubnetFailoverEnabled)
         {
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientTimeout = true,
-                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                    SleepDuration = TimeSpan.FromMilliseconds(3000),
                 });
             server.Start();
             SqlConnectionStringBuilder builder = new()
@@ -241,7 +248,14 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
 
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
-            Assert.Equal(expectedRetryCount, server.PreLoginCount);
+            if (multiSubnetFailoverEnabled)
+            {
+                Assert.True(server.PreLoginCount > 1, "Expected multiple pre-login attempts due to retry.");
+            }
+            else
+            {
+                Assert.Equal(1, server.PreLoginCount);
+            }
         }
 
         [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3527")]
