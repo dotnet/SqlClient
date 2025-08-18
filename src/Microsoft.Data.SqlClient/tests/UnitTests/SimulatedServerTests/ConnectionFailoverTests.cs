@@ -248,7 +248,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientTimeout = true,
-                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                    SleepDuration = TimeSpan.FromMilliseconds(5000),
                     FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 });
             server.Start();
