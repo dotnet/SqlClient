@@ -65,12 +65,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             var connStr = new SqlConnectionStringBuilder() {
                 DataSource = $"localhost,{server.EndPoint.Port}"
             }.ConnectionString;
-            SqlConnectionStringBuilder builder = new(connStr)
-            {
-                IntegratedSecurity = true
-            };
 
-            using SqlConnection connection = new(builder.ConnectionString);
+            using SqlConnection connection = new(connStr);
             Exception ex = await Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
             Assert.Contains("The instance of SQL Server you attempted to connect to does not support encryption.", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
@@ -91,7 +87,6 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
-                IntegratedSecurity = true,
                 Encrypt = SqlConnectionEncryptOption.Optional
             };
 
@@ -117,7 +112,6 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
-                IntegratedSecurity = true,
                 Encrypt = SqlConnectionEncryptOption.Optional
             };
 
@@ -131,7 +125,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
-        public void TransientFault_RetryDisabled_ShouldFail_Async(uint errorCode)
+        public async Task TransientFault_RetryDisabled_ShouldFail_Async(uint errorCode)
         {
             using TransientFaultTdsServer server = new TransientFaultTdsServer(
                 new TransientFaultTdsServerArguments()
@@ -143,14 +137,13 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
-                IntegratedSecurity = true,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
-            Task<SqlException> e = Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
-            Assert.Equal(20, e.Result.Class);
+            SqlException e = await Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
+            Assert.Equal((int)errorCode, e.Number);
             Assert.Equal(ConnectionState.Closed, connection.State);
         }
 
@@ -170,14 +163,13 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
-                IntegratedSecurity = true,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
             SqlException e = Assert.Throws<SqlException>(() => connection.Open());
-            Assert.Equal(20, e.Class);
+            Assert.Equal((int)errorCode, e.Number);
             Assert.Equal(ConnectionState.Closed, connection.State);
         }
 
@@ -196,7 +188,6 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
-                IntegratedSecurity = true,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 ConnectTimeout = 5,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
@@ -234,7 +225,6 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
-                IntegratedSecurity = true,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 ConnectTimeout = 5,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
@@ -260,7 +250,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
 
         [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3527")]
         [Fact]
-        public void NetworkError_RetryDisabled_ShouldFail_Async()
+        public async Task NetworkError_RetryDisabled_ShouldFail_Async()
         {
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
@@ -272,14 +262,13 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
-                IntegratedSecurity = true,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
-            Task<SqlException> e = Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
-            Assert.Equal(20, e.Result.Class);
+            SqlException e = await Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
+            Assert.Contains("Connection Timeout Expired", e.Message);
             Assert.Equal(ConnectionState.Closed, connection.State);
         }
 
@@ -297,7 +286,6 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
-                IntegratedSecurity = true,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 ConnectTimeout = 5
@@ -305,7 +293,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
 
             using SqlConnection connection = new(builder.ConnectionString);
             SqlException e = Assert.Throws<SqlException>(() => connection.Open());
-            Assert.Equal(20, e.Class);
+            Assert.Contains("Connection Timeout Expired", e.Message);
             Assert.Equal(ConnectionState.Closed, connection.State);
         }
 

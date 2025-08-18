@@ -40,7 +40,6 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + initialServer.EndPoint.Port,
-                IntegratedSecurity = true,
                 ConnectRetryInterval = 1,
                 ConnectTimeout = 30,
                 Encrypt = SqlConnectionEncryptOption.Optional,
@@ -97,7 +96,6 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + initialServer.EndPoint.Port,
-                IntegratedSecurity = true,
                 ConnectRetryInterval = 1,
                 ConnectTimeout = 30,
                 Encrypt = SqlConnectionEncryptOption.Optional,
