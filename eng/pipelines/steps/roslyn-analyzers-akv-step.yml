@@ -20,6 +20,7 @@ parameters:
       type: string
 
     - name: signingKeyPath
+      type: string
 
 steps:
     - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
