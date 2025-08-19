@@ -41,14 +41,6 @@ steps:
           packageType: 'runtime'
           version: '8.x'
 
-    # @TODO: TEMPORARY DIAGNOSTICS
-    - task: CopyFiles@2
-      displayName: 'DIAG: Copy SNK'
-      inputs:
-        contents: '*.snk'
-        sourceFolder: '$(Agent.TempDirectory)'
-        targetFolder: '$(ARTIFACT_PATH)/diag'
-
     - task: MSBuild@1
       displayName: 'Build.proj - BuildAkv'
       inputs:
