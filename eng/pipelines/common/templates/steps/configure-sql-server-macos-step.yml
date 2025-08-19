@@ -3,6 +3,10 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
+
+# This step installs the latest SQL Server 2022 onto the macOS host and
+# configures it for use.
+
 parameters:
   - name: password
     type: string
@@ -13,7 +17,7 @@ parameters:
     default: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
 
 steps:
-# Linux only steps
+# macOS only steps
 - bash: |
     # The "user" pipeline variable conflicts with homebrew, causing errors during install. Set it back to the pipeline user.
     USER=`whoami`

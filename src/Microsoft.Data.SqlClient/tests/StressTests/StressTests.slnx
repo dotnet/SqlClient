@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="IMonitorLoader/IMonitorLoader.csproj" />
+  <Project Path="SqlClient.Stress.Common/SqlClient.Stress.Common.csproj" />
+  <Project Path="SqlClient.Stress.Framework/SqlClient.Stress.Framework.csproj" />
+  <Project Path="SqlClient.Stress.Runner/SqlClient.Stress.Runner.csproj" />
+  <Project Path="SqlClient.Stress.Tests/SqlClient.Stress.Tests.csproj" />
+</Solution>
