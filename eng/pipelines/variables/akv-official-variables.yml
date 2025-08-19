@@ -30,7 +30,7 @@ variables:
     - name: versionMinor
       value: '1'
     - name: versionPatch
-      value: '1'
+      value: '2'
     - name: versionPreview
       value: '-preview1'
 
