@@ -4,15 +4,22 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# @TODO: This can probably be made generic and pass in the command lines for msbuild
-#        BUT, they should be kept separate by now as we rebuild build.proj in parallel, we won't
-#        affect >1 project at a time.
+# NOTE: Because Roslyn analyzers run with the build process, this step must happen within our
+#   build in order to generate logs that Guardian/SDL can consume. HOWEVER - this step will rebuild
+#   the project and overwrite any previously build output! Therefore, the command line params in
+#   this step and the build step must be the same to avoid packaging invalid binaries!
+#   There is a way to avoid using this task and have analyzers run during the main build, but this
+#   task will ensure we are using the latest analyzers as per SDL.
+#   For more info, please see: https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-mohanb/security-integration/guardian-wiki/sdl-azdo-extension/roslyn-analyzers-build-task
 
 parameters:
     - name: buildConfiguration
       type: string
 
     - name: mdsPackageVersion
+      type: string
+
+    - name: signingKeyPath
       type: string
 
 steps:
@@ -27,5 +34,6 @@ steps:
               -p:Configuration=${{ parameters.buildConfiguration }}
               -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }}
               -p:ReferenceType=Package
+              -p:SigningKeyPath=${{ parameters.signingKeyPath }}
           msBuildVersion: 17.0
           setupCommandLinePicker: vs2022
