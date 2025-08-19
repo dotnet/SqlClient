@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>stresstest</AssemblyName>
+    <TargetFrameworks>net481;net9.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IMonitorLoader\IMonitorLoader.csproj" />
+    <ProjectReference Include="..\SqlClient.Stress.Common\SqlClient.Stress.Common.csproj" />
+    <ProjectReference Include="..\SqlClient.Stress.Tests\SqlClient.Stress.Tests.csproj" />
+  </ItemGroup>
+
+</Project>
