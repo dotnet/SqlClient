@@ -19,6 +19,9 @@ parameters:
     - name: mdsPackageVersion
       type: string
 
+    - name: signingKeyPath
+      type: string
+
 steps:
     - task: DownloadSecureFile@1
       displayName: 'Download Signing Key'
@@ -38,6 +41,14 @@ steps:
           packageType: 'runtime'
           version: '8.x'
 
+    # @TODO: TEMPORARY DIAGNOSTICS
+    - task: CopyFiles@2
+      displayName: 'DIAG: Copy SNK'
+      inputs:
+        contents: '*.snk'
+        sourceFolder: '$(Agent.TempDirectory)'
+        targetFolder: '$(ARTIFACT_PATH)/diag'
+
     - task: MSBuild@1
       displayName: 'Build.proj - BuildAkv'
       inputs:
@@ -48,7 +59,7 @@ steps:
               -p:AssemblyFileVersion=${{ parameters.assemblyFileVersion }}
               -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }}
               -p:ReferenceType=Package
-              -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
+              -p:SigningKeyPath=${{ parameters.signingKeyPath }}
               
     - script: tree /a /f $(BUILD_OUTPUT)
       displayName: Output Build Output Tree

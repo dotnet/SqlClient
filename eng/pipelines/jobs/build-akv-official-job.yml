@@ -91,6 +91,7 @@ jobs:
                 assemblyFileVersion: '${{ parameters.assemblyFileVersion }}'
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
+                signingKeyPath: '$(Agent.TempDirectory)/netfxKeypair.snk'
                 
           - ${{ each targetFramework in parameters.targetFrameworks }}:  
               - template: ../steps/compound-extract-akv-apiscan-files-step.yml
@@ -105,6 +106,7 @@ jobs:
             parameters:
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
+                signingKeyPath: '$(Agent.TempDirectory)/netfxKeypair.snk'
 
           - template: ../steps/compound-esrp-code-signing-step.yml@self
             parameters:
