@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -23,7 +27,7 @@ internal static class UserAgentInfo
     /// <summary>
     /// Maximum number of characters allowed for the driver name.
     /// </summary>
-    private const int DriverNameMaxChars = 16;
+    internal const int DriverNameMaxChars = 16;
 
     /// <summary>
     /// Maximum number of bytes allowed for the user agent json payload.
@@ -39,7 +43,7 @@ internal static class UserAgentInfo
     /// <summary>
     /// Maximum number of characters allowed for the operating system type.
     /// </summary>
-    private const int OsTypeMaxChars = 16;
+    internal const int OsTypeMaxChars = 16;
 
     /// <summary>
     /// Maximum number of characters allowed for the driver runtime.
@@ -49,16 +53,21 @@ internal static class UserAgentInfo
     /// <summary>
     /// Maximum number of characters allowed for the driver version.
     /// </summary>
-    private const int VersionMaxChars = 16;
+    internal const int VersionMaxChars = 16;
 
 
     internal const string DefaultJsonValue = "Unknown";
     internal const string DriverName = "MS-MDS";
 
     private static readonly UserAgentInfoDto s_dto;
-    private static readonly byte[] s_cachedPayload;
+    private static readonly byte[] s_userAgentCachedPayload;
 
-    public static byte[] CachedPayload => s_cachedPayload;
+    /// <summary>
+    /// Provides the UTF-8 encoded UserAgent JSON payload as a cached read-only memory buffer.
+    /// The value is computed once during process initialization and reused across all calls.
+    /// No re-encoding or recalculation occurs at access time, and the same memory is safely shared across all threads.
+    /// </summary>
+    public static ReadOnlyMemory<byte> UserAgentCachedJsonPayload => s_userAgentCachedPayload;
 
     private enum OsType
     {
@@ -73,7 +82,7 @@ internal static class UserAgentInfo
     static UserAgentInfo()
     {
         s_dto = BuildDto();
-        s_cachedPayload = AdjustJsonPayloadSize(s_dto);
+        s_userAgentCachedPayload = AdjustJsonPayloadSize(s_dto);
     }
 
     /// <summary>
@@ -84,43 +93,6 @@ internal static class UserAgentInfo
     /// <param name="dto"> Data Transfer Object for the json payload </param>
     /// <returns>Serialized UTF-8 encoded json payload version of DTO within size limit</returns>
     internal static byte[] AdjustJsonPayloadSize(UserAgentInfoDto dto)
-    {
-        var options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = null,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            WriteIndented = false
-        };
-        byte[] payload = JsonSerializer.SerializeToUtf8Bytes(dto, options);
-
-        // We try to send the payload if it is within the limits.
-        // Otherwise we drop some fields to reduce the size of the payload and try one last time
-        // Note: server will reject payloads larger than 2047 bytes
-        // Try if the payload fits the max allowed bytes
-        if (payload.Length <= JsonPayloadMaxBytes)
-        { 
-            return payload;
-        }
-
-        dto.Runtime = null; // drop Runtime
-        dto.Arch = null; // drop Arch
-        if (dto.OS != null)
-        {
-            dto.OS.Details = null; // drop OS.Details
-        }
-
-        payload = JsonSerializer.SerializeToUtf8Bytes(dto, options);
-        if (payload.Length <= JsonPayloadMaxBytes)
-        {
-            return payload;
-        }
-            
-        dto.OS = null; // drop OS entirely
-        // Last attempt to send minimal payload driver + version only
-        return JsonSerializer.SerializeToUtf8Bytes(dto, options);
-    }
-
-    internal static UserAgentInfoDto BuildDto()
     {
         // Note: We serialize 6 fields in total:
         // - 4 fields with up to 16 characters each
@@ -161,7 +133,44 @@ internal static class UserAgentInfo
         // - If the payload exceeds 2,047 bytes but remains within sensible limits, we still send it, but note that
         //   some servers may silently drop or reject such packets — behavior we may use for future probing or diagnostics.
         // - If payload exceeds 10KB even after dropping fields , we send an empty payload.
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = null,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            WriteIndented = false
+        };
+        byte[] payload = JsonSerializer.SerializeToUtf8Bytes(dto, options);
 
+        // We try to send the payload if it is within the limits.
+        // Otherwise we drop some fields to reduce the size of the payload and try one last time
+        // Note: server will reject payloads larger than 2047 bytes
+        // Try if the payload fits the max allowed bytes
+        if (payload.Length <= JsonPayloadMaxBytes)
+        { 
+            return payload;
+        }
+
+        dto.Runtime = null; // drop Runtime
+        dto.Arch = null; // drop Arch
+        if (dto.OS != null)
+        {
+            dto.OS.Details = null; // drop OS.Details
+        }
+
+        payload = JsonSerializer.SerializeToUtf8Bytes(dto, options);
+        if (payload.Length <= JsonPayloadMaxBytes)
+        {
+            return payload;
+        }
+            
+        dto.OS = null; // drop OS entirely
+        // Last attempt to send minimal payload driver + version only
+        // As per the comment in AdjustJsonPayloadSize, we know driver + version cannot be larger than the max
+        return JsonSerializer.SerializeToUtf8Bytes(dto, options);
+    }
+
+    internal static UserAgentInfoDto BuildDto()
+    {
         // Instantiate DTO before serializing
         return new UserAgentInfoDto
         {

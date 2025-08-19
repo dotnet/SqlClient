@@ -1,4 +1,9 @@
-﻿using System.Text;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Data.Common;
@@ -14,36 +19,36 @@ namespace Microsoft.Data.SqlClient.UnitTests
     /// Focus areas:
     ///   1. Cached payload size and non-nullability
     ///   2. Default expected value check for payload fields
-    ///   3. Payload size adjustment and field dropping
-    ///   4. DTO JSON contract (key names and values)
-    ///   5. Combined truncation, adjustment, and serialization
+    ///   3. Payload size adjustment and field dropping(all low priority fields)
+    ///   4. Payload size adjustment and field dropping(drop particular low priority fields: arch, runtime and os.description)
+    ///   5. DTO JSON contract (key names and values)
+    ///   6. Combined truncation, adjustment, and serialization
     /// </summary>
     public class UserAgentInfoTests
     {
-        // 1. Cached payload is within the 2,047‑byte spec and never null
+        // Cached payload is within the 2,047‑byte spec and never null
         [Fact]
         public void CachedPayload_IsNotNull_And_WithinSpecLimit()
         {
-            byte[] payload = UserAgentInfo.CachedPayload;
-            Assert.NotNull(payload);
+            ReadOnlyMemory<byte> payload = UserAgentInfo.UserAgentCachedJsonPayload;
+            Assert.False(payload.IsEmpty);
             Assert.InRange(payload.Length, 1, UserAgentInfo.JsonPayloadMaxBytes);
         }
 
-        // 2. Cached payload contains the expected values for driver name and version
+        // Cached payload contains the expected values for driver name and version
         [Fact]
         public void CachedPayload_Contains_Correct_DriverName_And_Version()
         {
             // Arrange: retrieve the raw JSON payload bytes and determine what we expect
-            byte[] payload = UserAgentInfo.CachedPayload;
-            Assert.NotNull(payload); // guard against null payload
+            ReadOnlyMemory<byte> payload = UserAgentInfo.UserAgentCachedJsonPayload;
+            Assert.False(payload.IsEmpty); // guard against empty payload
 
             // compute the expected driver and version
             string expectedDriver = UserAgentInfo.DriverName;
             string expectedVersion = ADP.GetAssemblyVersion().ToString();
 
             // Act: turn the bytes back into JSON and pull out the fields
-            string json = Encoding.UTF8.GetString(payload);
-            using JsonDocument document = JsonDocument.Parse(json);
+            using JsonDocument document = JsonDocument.Parse(payload);
             JsonElement root = document.RootElement;
             string actualDriver = root.GetProperty(UserAgentInfoDto.DriverJsonKey).GetString()!;
             string actualVersion = root.GetProperty(UserAgentInfoDto.VersionJsonKey).GetString()!;
@@ -53,7 +58,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(expectedVersion, actualVersion);
         }
 
-        // 2. TruncateOrDefault respects null, empty, fit, and overflow cases
+        // TruncateOrDefault respects null, empty, fit, and overflow cases
         [Theory]
         [InlineData(null, 5, "Unknown")]        // null returns default
         [InlineData("", 5, "Unknown")]          // empty returns default
@@ -66,22 +71,21 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(expected, actual);
         }
 
-        // 3. AdjustJsonPayloadSize drops low‑priority fields when required
+        // AdjustJsonPayloadSize drops all low‑priority fields when required
 
         /// <summary>
         /// Verifies that AdjustJsonPayloadSize truncates the DTO’s JSON when it exceeds the maximum size.
-        /// High-priority fields (Driver, Version) must remain, low-priority fields (Arch, Runtime) are removed,
-        /// and within OS only the Type sub-field survives if the OS block remains.
+        /// High-priority fields (Driver, Version) must remain, low-priority fields (Arch, Runtime and OS) are removed
         /// </summary>
         [Fact]
-        public void AdjustJsonPayloadSize_StripsLowPriorityFields_When_PayloadTooLarge()
+        public void AdjustJsonPayloadSize_DropAllLowPriorityFields_When_PayloadTooLarge()
         {
             // Arrange: create a DTO whose serialized JSON is guaranteed to exceed the max size
             string huge = new string('x', 20_000);
             var dto = new UserAgentInfoDto
             {
-                Driver = huge,
-                Version = huge,
+                Driver = UserAgentInfo.TruncateOrDefault(huge, UserAgentInfo.DriverNameMaxChars),
+                Version = UserAgentInfo.TruncateOrDefault(huge, UserAgentInfo.VersionMaxChars),
                 OS = new UserAgentInfoDto.OsInfo
                 {
                     Type = huge,
@@ -97,6 +101,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                 WriteIndented = false
             };
+
+            string expectedDriverName = UserAgentInfo.TruncateOrDefault(huge, UserAgentInfo.DriverNameMaxChars);
+            string expectedVersion = UserAgentInfo.TruncateOrDefault(huge, UserAgentInfo.VersionMaxChars);
 
             // Capture the size before the helper mutates the DTO
             byte[] original = JsonSerializer.SerializeToUtf8Bytes(dto, options);
@@ -114,22 +121,85 @@ namespace Microsoft.Data.SqlClient.UnitTests
             JsonElement root = doc.RootElement;
 
             // High-priority fields must still be present(driver name and version)
-            Assert.True(root.TryGetProperty(UserAgentInfoDto.DriverJsonKey, out _));
-            Assert.True(root.TryGetProperty(UserAgentInfoDto.VersionJsonKey, out _));
+            Assert.Equal(expectedDriverName, root.GetProperty(UserAgentInfoDto.DriverJsonKey).GetString());
+            Assert.Equal(expectedVersion, root.GetProperty(UserAgentInfoDto.VersionJsonKey).GetString());
 
             // Low-priority fields should have been removed(arch and runtime)
             Assert.False(root.TryGetProperty(UserAgentInfoDto.ArchJsonKey, out _));
             Assert.False(root.TryGetProperty(UserAgentInfoDto.RuntimeJsonKey, out _));
 
-            // if OS block remains, only its Type sub-field may survive
-            if (root.TryGetProperty(UserAgentInfoDto.OsJsonKey, out JsonElement os))
-            {
-                Assert.True(os.TryGetProperty(UserAgentInfoDto.OsInfo.TypeJsonKey, out _));
-                Assert.False(os.TryGetProperty(UserAgentInfoDto.OsInfo.DetailsJsonKey, out _));
-            }
+            // OS block should have been removed entirely
+            Assert.False(root.TryGetProperty(UserAgentInfoDto.OsJsonKey, out _));
         }
 
-        // 4. DTO JSON contract - verify names and values(parameterized)
+        /// <summary>
+        /// Verifies that AdjustJsonPayloadSize truncates the DTO’s JSON when it exceeds the maximum size.
+        /// High-priority fields (Driver, Version) must remain, low-priority fields (Arch, Runtime and OS.details) are removed
+        /// Note that OS subfield(Type) is preserved, but OS.Details is dropped.
+        /// </summary>
+        [Fact]
+        public void AdjustJsonPayloadSize_DropSpecificPriorityFields_Excluding_OsType_When_PayloadTooLarge()
+        {
+            // Arrange: create a DTO whose serialized JSON is guaranteed to exceed the max size
+            string huge = new string('x', 20_000);
+            var dto = new UserAgentInfoDto
+            {
+                Driver = UserAgentInfo.TruncateOrDefault(huge, UserAgentInfo.DriverNameMaxChars),
+                Version = UserAgentInfo.TruncateOrDefault(huge, UserAgentInfo.VersionMaxChars),
+                OS = new UserAgentInfoDto.OsInfo
+                {
+                    Type = UserAgentInfo.TruncateOrDefault(huge, UserAgentInfo.OsTypeMaxChars),
+                    Details = huge
+                },
+                Arch = huge,
+                Runtime = huge
+            };
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = null,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                WriteIndented = false
+            };
+
+            string expectedDriverName = UserAgentInfo.TruncateOrDefault(huge, UserAgentInfo.DriverNameMaxChars);
+            string expectedVersion = UserAgentInfo.TruncateOrDefault(huge, UserAgentInfo.VersionMaxChars);
+            string expectedOsType = UserAgentInfo.TruncateOrDefault(huge, UserAgentInfo.OsTypeMaxChars);
+
+            // Capture the size before the helper mutates the DTO
+            byte[] original = JsonSerializer.SerializeToUtf8Bytes(dto, options);
+            Assert.True(original.Length > UserAgentInfo.JsonPayloadMaxBytes);
+
+            // Act: apply the size-adjustment helper
+            byte[] payload = UserAgentInfo.AdjustJsonPayloadSize(dto);
+
+            // Assert: payload is smaller and not empty
+            Assert.NotEmpty(payload);
+            Assert.True(payload.Length < original.Length);
+
+            // Structural checks using JsonDocument
+            using JsonDocument doc = JsonDocument.Parse(payload);
+            JsonElement root = doc.RootElement;
+
+            // High-priority fields must still be present(driver name and version) and truncated to expected length
+            //Assert.True(root.TryGetProperty(UserAgentInfoDto.DriverJsonKey, out _));
+            Assert.Equal(expectedDriverName, root.GetProperty(UserAgentInfoDto.DriverJsonKey).GetString());
+            Assert.Equal(expectedVersion, root.GetProperty(UserAgentInfoDto.VersionJsonKey).GetString());
+            //Assert.True(root.TryGetProperty(UserAgentInfoDto.VersionJsonKey, out _));
+
+            // Low-priority fields should have been removed(arch and runtime)
+            Assert.False(root.TryGetProperty(UserAgentInfoDto.ArchJsonKey, out _));
+            Assert.False(root.TryGetProperty(UserAgentInfoDto.RuntimeJsonKey, out _));
+
+            Assert.True(root.TryGetProperty(UserAgentInfoDto.OsJsonKey, out JsonElement os));
+            Assert.True(os.TryGetProperty(UserAgentInfoDto.OsInfo.TypeJsonKey, out JsonElement type));
+
+            Assert.Equal(expectedOsType, type.GetString());
+            Assert.False(os.TryGetProperty(UserAgentInfoDto.OsInfo.DetailsJsonKey, out _));
+
+        }
+
+        // DTO JSON contract - verify names and values(parameterized)
 
         /// <summary>
         /// Verifies that UserAgentInfoDto serializes according to its JSON contract:
@@ -227,7 +297,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             }
         }
 
-        // 5. End-to-end test that combines truncation, adjustment, and serialization
+        // End-to-end test that combines truncation, adjustment, and serialization
         [Fact]
         public void EndToEnd_Truncate_Adjust_Serialize_Works()
         {

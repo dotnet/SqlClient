@@ -1,4 +1,8 @@
-﻿using System.Text.Json;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Data.Common;
 
@@ -21,10 +25,10 @@ internal class UserAgentInfoDto
     public const string RuntimeJsonKey = "runtime";
 
     [JsonPropertyName(DriverJsonKey)]
-    public string Driver { get; set; } = UserAgentInfo.DriverName;
+    public string Driver { get; set; } = string.Empty;
 
     [JsonPropertyName(VersionJsonKey)]
-    public string Version { get; set; } = ADP.GetAssemblyVersion().ToString();
+    public string Version { get; set; } = string.Empty;
 
     [JsonPropertyName(OsJsonKey)]
     public OsInfo? OS { get; set; }
@@ -41,7 +45,7 @@ internal class UserAgentInfoDto
         public const string DetailsJsonKey = "details";
 
         [JsonPropertyName(TypeJsonKey)]
-        public string Type { get; set; } = UserAgentInfo.DefaultJsonValue;
+        public string Type { get; set; } = string.Empty;
 
         [JsonPropertyName(DetailsJsonKey)]
         public string? Details { get; set; }
