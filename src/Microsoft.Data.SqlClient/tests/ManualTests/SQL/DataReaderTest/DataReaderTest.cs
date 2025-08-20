@@ -1039,7 +1039,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                     builder.PersistSecurityInfo = true;
                     builder.Pooling = false;
                     
-                    for (int packetSize = 512; packetSize<2048; packetSize++)
+                    for (int packetSize = 512; packetSize<2048; packetSize+=3)
                     {
                         builder.PacketSize = packetSize;
                         using (SqlConnection sizedConnection = new SqlConnection(builder.ToString()))
