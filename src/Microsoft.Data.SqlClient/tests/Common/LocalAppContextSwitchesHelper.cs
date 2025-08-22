@@ -30,7 +30,11 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly PropertyInfo _useCompatibilityProcessSniProperty;
     private readonly PropertyInfo _useCompatibilityAsyncBehaviourProperty;
     private readonly PropertyInfo _useConnectionPoolV2Property;
-    #if NETFRAMEWORK
+    private readonly PropertyInfo _truncateScaledDecimalProperty;
+    #if NET
+    private readonly PropertyInfo _globalizationInvariantModeProperty;
+    private readonly PropertyInfo _useManagedNetworkingProperty;
+    #else
     private readonly PropertyInfo _disableTnirByDefaultProperty;
     #endif
 
@@ -51,7 +55,14 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly Tristate _useCompatibilityAsyncBehaviourOriginal;
     private readonly FieldInfo _useConnectionPoolV2Field;
     private readonly Tristate _useConnectionPoolV2Original;
-    #if NETFRAMEWORK
+    private readonly FieldInfo _truncateScaledDecimalField;
+    private readonly Tristate _truncateScaledDecimalOriginal;
+    #if NET
+    private readonly FieldInfo _globalizationInvariantModeField;
+    private readonly Tristate _globalizationInvariantModeOriginal;
+    private readonly FieldInfo _useManagedNetworkingField;
+    private readonly Tristate _useManagedNetworkingOriginal;
+    #else
     private readonly FieldInfo _disableTnirByDefaultField;
     private readonly Tristate _disableTnirByDefaultOriginal;
     #endif
@@ -140,7 +151,19 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             "UseConnectionPoolV2",
             out _useConnectionPoolV2Property);
 
-        #if NETFRAMEWORK
+        InitProperty(
+            "TruncateScaledDecimal",
+            out _truncateScaledDecimalProperty);
+
+        #if NET
+        InitProperty(
+            "GlobalizationInvariantMode",
+            out _globalizationInvariantModeProperty);
+
+        InitProperty(
+            "UseManagedNetworking",
+            out _useManagedNetworkingProperty);
+        #else
         InitProperty(
             "DisableTnirByDefault",
             out _disableTnirByDefaultProperty);
@@ -201,7 +224,22 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             out _useConnectionPoolV2Field,
             out _useConnectionPoolV2Original);
 
-        #if NETFRAMEWORK
+        InitField(
+            "s_truncateScaledDecimal",
+            out _truncateScaledDecimalField,
+            out _truncateScaledDecimalOriginal);
+
+        #if NET
+        InitField(
+            "s_globalizationInvariantMode",
+            out _globalizationInvariantModeField,
+            out _globalizationInvariantModeOriginal);
+
+        InitField(
+            "s_useManagedNetworking",
+            out _useManagedNetworkingField,
+            out _useManagedNetworkingOriginal);
+        #else
         InitField(
             "s_disableTnirByDefault",
             out _disableTnirByDefaultField,
@@ -265,7 +303,19 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             _useConnectionPoolV2Field,
             _useConnectionPoolV2Original);
 
-        #if NETFRAMEWORK
+        RestoreField(
+            _truncateScaledDecimalField,
+            _truncateScaledDecimalOriginal);
+
+        #if NET
+        RestoreField(
+            _globalizationInvariantModeField,
+            _globalizationInvariantModeOriginal);
+
+        RestoreField(
+            _useManagedNetworkingField,
+            _useManagedNetworkingOriginal);
+        #else
         RestoreField(
             _disableTnirByDefaultField,
             _disableTnirByDefaultOriginal);
@@ -350,7 +400,31 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         get => (bool)_useConnectionPoolV2Property.GetValue(null);
     }
 
-    #if NETFRAMEWORK
+    /// <summary>
+    /// Access the LocalAppContextSwitches.TruncateScaledDecimal property.
+    /// </summary>
+    public bool TruncateScaledDecimal
+    {
+        get => (bool)_truncateScaledDecimalProperty.GetValue(null);
+    }
+
+    #if NET
+    /// <summary>
+    /// Access the LocalAppContextSwitches.GlobalizationInvariantMode property.
+    /// </summary>
+    public bool GlobalizationInvariantMode
+    {
+        get => (bool)_globalizationInvariantModeProperty.GetValue(null);
+    }
+
+    /// <summary>
+    /// Access the LocalAppContextSwitches.UseManagedNetworking property.
+    /// </summary>
+    public bool UseManagedNetworking
+    {
+        get => (bool)_useManagedNetworkingProperty.GetValue(null);
+    }
+    #else
     /// <summary>
     /// Access the LocalAppContextSwitches.DisableTnirByDefault property.
     /// </summary>
@@ -443,7 +517,34 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         set => SetValue(_useConnectionPoolV2Field, value);
     }
 
-    #if NETFRAMEWORK
+    /// <summary>
+    /// Get or set the LocalAppContextSwitches.TruncateScaledDecimal switch value.
+    /// </summary>
+    public Tristate TruncateScaledDecimalField
+    {
+        get => GetValue(_truncateScaledDecimalField);
+        set => SetValue(_truncateScaledDecimalField, value);
+    }
+
+    #if NET
+    /// <summary>
+    /// Get or set the LocalAppContextSwitches.GlobalizationInvariantMode switch value.
+    /// </summary>
+    public Tristate GlobalizationInvariantModeField
+    {
+        get => GetValue(_globalizationInvariantModeField);
+        set => SetValue(_globalizationInvariantModeField, value);
+    }
+
+    /// <summary>
+    /// Get or set the LocalAppContextSwitches.UseManagedNetworking switch value.
+    /// </summary>
+    public Tristate UseManagedNetworkingField
+    {
+        get => GetValue(_useManagedNetworkingField);
+        set => SetValue(_useManagedNetworkingField, value);
+    }
+    #else
     /// <summary>
     /// Get or set the LocalAppContextSwitches.DisableTnirByDefault switch
     /// value.

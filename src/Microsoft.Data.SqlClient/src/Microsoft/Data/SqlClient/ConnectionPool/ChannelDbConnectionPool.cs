@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> AuthenticationContexts => throw new NotImplementedException();
 
         /// <inheritdoc />
-        public DbConnectionFactory ConnectionFactory => throw new NotImplementedException();
+        public SqlConnectionFactory ConnectionFactory => throw new NotImplementedException();
 
         /// <inheritdoc />
         public int Count => throw new NotImplementedException();

@@ -231,17 +231,11 @@
   <data name="ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity" xml:space="preserve">
     <value>無法將 Credential 與 Integrated Security 連接字串關鍵字搭配使用。</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection" xml:space="preserve">
-    <value>無法將 Credential 與 Context Connection 關鍵字搭配使用。</value>
-  </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword" xml:space="preserve">
     <value>如果連接字串中指定了 'UserID'、'UID'、'Password' 或 'PWD'，就無法設定 AccessToken 屬性。</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity" xml:space="preserve">
     <value>如果 'Integrated Security' 連接字串關鍵字已設為 'true' 或 'SSPI'，就無法設定 AccessToken 屬性。</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndContextConnection" xml:space="preserve">
-    <value>無法使用 'Context Connection' 關鍵字設定 AccessToken 屬性。</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndCredential" xml:space="preserve">
     <value>如果已設定 Credential 屬性，就無法設定 AccessToken 屬性。</value>
@@ -2073,9 +2067,6 @@
   <data name="ADP_InvalidDestinationBufferIndex" xml:space="preserve">
     <value>無效的目的緩衝區 ({0} 的大小) 位移: {1}</value>
   </data>
-  <data name="ADP_DataReaderNoData" xml:space="preserve">
-    <value>資料列/資料行沒有資料。</value>
-  </data>
   <data name="ADP_NumericToDecimalOverflow" xml:space="preserve">
     <value>數值太大，超過 96 位元小數。</value>
   </data>
@@ -2529,6 +2520,9 @@
   <data name="SQL_AsyncConnectionRequired" xml:space="preserve">
     <value>此命令需要非同步連接。請在連接字串中設定 "Asynchronous Processing=true"。</value>
   </data>
+  <data name="SQL_ConnectTimeout" xml:space="preserve">
+    <value>連接嘗試逾時。</value>
+  </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>等候逾時已過時。結果為已連接中斷。</value>
   </data>
@@ -2778,30 +2772,6 @@
   <data name="SQL_InvalidDataLength" xml:space="preserve">
     <value>資料長度 '{0}' 小於 0。</value>
   </data>
-  <data name="SQL_SqlResultSetClosed" xml:space="preserve">
-    <value>當 SqlResultSet 已關閉時，嘗試呼叫方法 {0} 失敗。</value>
-  </data>
-  <data name="SQL_SqlResultSetClosed2" xml:space="preserve">
-    <value>無法完成操作，因為 SqlResultSet 已關閉。</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly" xml:space="preserve">
-    <value>當記錄為唯讀時無法呼叫 '{0}'。</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly2" xml:space="preserve">
-    <value>無法完成操作，因為記錄為唯讀。</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted" xml:space="preserve">
-    <value>當目前的資料列已刪除時，嘗試呼叫方法 {0} 無效</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted2" xml:space="preserve">
-    <value>無法完成操作，因為目前的資料列已刪除。</value>
-  </data>
-  <data name="SQL_SqlResultSetCommandNotInSameConnection" xml:space="preserve">
-    <value>無法完成操作，因為已經從原始的連接中解除建立 SqlResultSet 命令的關聯。SqlResultSet 已關閉。</value>
-  </data>
-  <data name="SQL_SqlResultSetNoAcceptableCursor" xml:space="preserve">
-    <value>無法建立包含欲查選項指定查詢的 SqlResultSet。</value>
-  </data>
   <data name="SQL_SqlUpdatableRecordReadOnly" xml:space="preserve">
     <value>當 SqlDataRecord 為唯讀時，無法呼叫 '{0}'。</value>
   </data>
@@ -2871,50 +2841,20 @@
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
     <value>目前載入的 System.Transactions.dll 不支援全域交易。請升級為 .NET Framework 4.6.2 或更新版本。</value>
   </data>
-  <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
-    <value>內容連接上並不支援批次更新。</value>
-  </data>
-  <data name="SQL_ContextAllowsLimitedKeywords" xml:space="preserve">
-    <value>Type System Version 關鍵字是唯一在要求內容連接時可能需要使用的其他連接字串關鍵字。</value>
-  </data>
-  <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
-    <value>此內容連接不支援 Type System Version=SQL Server 2000。</value>
-  </data>
   <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
     <value>不支援使用 Microsoft.Data.SqlClient 連線至內容連線。</value>
-  </data>
-  <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
-    <value>此內容連接已在使用中。</value>
-  </data>
-  <data name="SQL_ContextUnavailableOutOfProc" xml:space="preserve">
-    <value>要求的操作需要 SqlClr 內容，這是在 Sql Server 程序中執行時唯一可用的內容。</value>
-  </data>
-  <data name="SQL_ContextUnavailableWhileInProc" xml:space="preserve">
-    <value>要求的操作需要 Sql Server 執行緒。目前的執行緒是由使用者編碼或其他非 Sql Server 引擎碼所啟動的。</value>
   </data>
   <data name="SQL_NestedTransactionScopesNotSupported" xml:space="preserve">
     <value>不支援巢狀 TransactionScopes。</value>
   </data>
-  <data name="SQL_NotAvailableOnContextConnection" xml:space="preserve">
-    <value>在此內容連接上無法使用要求的操作。</value>
-  </data>
-  <data name="SQL_NotificationsNotAvailableOnContextConnection" xml:space="preserve">
-    <value>在此內容連接尚無法使用通知。</value>
-  </data>
   <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
     <value>未預期的伺服器事件: {0}。</value>
-  </data>
-  <data name="SQL_UserInstanceNotAvailableInProc" xml:space="preserve">
-    <value>在 Sql Server 程序中執行時並不允許使用者執行個體。</value>
   </data>
   <data name="SQL_ArgumentLengthMismatch" xml:space="preserve">
     <value>'{0}' 的長度必須和 '{1}' 的長度相符。</value>
   </data>
   <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
     <value>SqlDbType '{0}' 對 {1} 是無效的。只支援 {2}。</value>
-  </data>
-  <data name="SQL_PipeErrorRequiresSendEnd" xml:space="preserve">
-    <value>發生錯誤，已傳送優先資料列至 SqlPipe。在進行其他傳送之前，必須先呼叫 SendResultsEnd。</value>
   </data>
   <data name="SQL_TooManyValues" xml:space="preserve">
     <value>太多數值。</value>
@@ -3663,9 +3603,6 @@
   <data name="SQLNotify_AlreadyHasCommand" xml:space="preserve">
     <value>SqlCommand 物件已與其他 SqlDependency 物件關聯。</value>
   </data>
-  <data name="SqlNotify_SqlDepCannotBeCreatedInProc" xml:space="preserve">
-    <value>在 SQL Server 程序中執行時，SqlDependency 物件就不能建立。</value>
-  </data>
   <data name="SqlDependency_DatabaseBrokerDisabled" xml:space="preserve">
     <value>尚未啟用目前資料庫的 SQL Server Service Broker，因此不支援查詢通知。如果您想要使用通知，請啟用這個資料庫的 Service Broker。</value>
   </data>
@@ -3725,21 +3662,6 @@
   </data>
   <data name="IEnumerableOfSqlDataRecordHasNoRows" xml:space="preserve">
     <value>SqlDataRecord 列舉之中沒有記錄。若要傳送沒有資料列的 table-valued parameter，請使用該值的 null 參考來代替。</value>
-  </data>
-  <data name="SqlPipe_CommandHookedUpToNonContextConnection" xml:space="preserve">
-    <value>當某命令的連接不是內容連接時，SqlPipe 不支援該命令的執行。</value>
-  </data>
-  <data name="SqlPipe_MessageTooLong" xml:space="preserve">
-    <value>訊息長度 {0} 超過支援的最大長度 4000。</value>
-  </data>
-  <data name="SqlPipe_IsBusy" xml:space="preserve">
-    <value>當管線忙碌於其他操作時便無法使用。</value>
-  </data>
-  <data name="SqlPipe_AlreadyHasAnOpenResultSet" xml:space="preserve">
-    <value>正傳送結果集至管線中。在呼叫 {0} 前請先結束目前的結果集。</value>
-  </data>
-  <data name="SqlPipe_DoesNotHaveAnOpenResultSet" xml:space="preserve">
-    <value>結果集尚未初始化。在呼叫 {0} 前請先呼叫 SendResultSetStart。</value>
   </data>
   <data name="SNI_PN0" xml:space="preserve">
     <value>HTTP 提供者</value>
@@ -4742,5 +4664,20 @@
   </data>
   <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
     <value>SqlBatchCommand 列表尚未初始化。</value>
+  </data>
+  <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
+    <value>從資料行 '{0}' 取得向量資料的嘗試無效。向量僅支援向量類型的資料行。</value>
+  </data>
+  <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
+    <value>不支援的向量類型 '{0}'。</value>
+  </data>
+  <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
+    <value>SqlDbType 向量的輸出參數 '{0}' 不支援 'null' 值。</value>
+  </data>
+  <data name="ADP_InvalidVectorHeader" xml:space="preserve">
+    <value>收到的向量標頭無效。</value>
+  </data>
+  <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
+    <value>{0} 向量的 JSON 字串無效。</value>
   </data>
 </root>

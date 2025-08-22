@@ -4,11 +4,89 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-# Release Notes
+## [Stable Release 6.1.1] - 2025-08-14
+
+This update includes the following changes since the [6.1.0](6.1.0.md) release:
+
+### Fixed
+
+- Reverted changes related to improving partial packet detection, fixup, and replay functionality. This revert addresses regressions introduced in 6.1.0. ([#3556](https://github.com/dotnet/SqlClient/pull/3556))
+- Applied reference assembly corrections supporting vector, fixed JSON tests, and ensured related tests are enabled. [#3562](https://github.com/dotnet/SqlClient/pull/3562)
+- Fixed `SqlVector<T>.Null` API signature in Reference assembly. [#3521](https://github.com/dotnet/SqlClient/pull/3521)
+
+### Changed
+
+- Upgraded `Azure.Identity` and other dependencies to newer versions. ([#3538](https://github.com/dotnet/SqlClient/pull/3538)) ([#3552](https://github.com/dotnet/SqlClient/pull/3552))
+
+## [Stable Release 6.1.0] - 2025-07-25
+
+This update brings the following changes since the
+[6.1.0-preview2](release-notes/6.1/6.1.0-preview2.md) release:
+
+### Added
+
+No new features were added.
+
+### Fixed
+
+- Fixed missing socket error codes on non-Windows platforms.
+  ([#3475](https://github.com/dotnet/SqlClient/pull/3475))
+- Fixed primary/secondary server SPN handling during SSPI negotiation.
+  ([#3478](https://github.com/dotnet/SqlClient/pull/3478))
+- Fixed AzureKeyVaultProvider package key caching to serialize Azure key fetch
+  operations.
+  ([#3477](https://github.com/dotnet/SqlClient/pull/3477))
+- Fixed a rare error related to multi-packet async text reads.
+  ([#3474](https://github.com/dotnet/SqlClient/pull/3474))
+- Fixed some spelling errors in the API docs.
+  ([#3500](https://github.com/dotnet/SqlClient/pull/3500))
+- Fixed a rare multi-packet string corruption bug.
+  ([#3513](https://github.com/dotnet/SqlClient/pull/3513))
+
+### Changed
+
+#### SqlDecimal type workarounds conversions
+
+*What Changed:*
+
+- Changed how SqlDecimal type workarounds perform conversions to meet
+  compliance policies.
+  ([#3467](https://github.com/dotnet/SqlClient/pull/3467))
+
+*Who Benefits:*
+
+- Microsoft products must not use undocumented APIs on other Microsoft products.
+  This change removes calls to undocumented APIs and replaces them with
+  compliant API use.
+
+*Impact:*
+
+- These changes impose an observed 5% decrease in performance on .NET Framework.
+
+#### SqlVector API improvements
+
+*What Changed:*
+
+- Several changes were made to the SqlVector API published in the
+  [6.1.0-preview2](release-notes/6.1/6.1.0-preview2.md) release
+  ([#3472](https://github.com/dotnet/SqlClient/pull/3472)):
+  - The SqlVector class was changed to a readonly struct.
+  - The null value constructor was changed to a static `CreateNull()` method.
+  - The `Size` property was removed.
+
+*Who Benefits:*
+
+- SqlVector instances gain the efficiencies of struct handling.
+
+*Impact:*
+
+- Early-adopter applications may require updates if they rely on the old APIs
+  and any class-specific behaviour.
 
 ## [Preview Release 6.1.0-preview2.25178.5] - 2025-06-27
 
-This update brings the following changes since the [6.1.0-preview1](release-notes/6.1/6.1.0-preview1.md) release:
+This update brings the following changes since the
+[6.1.0-preview1](release-notes/6.1/6.1.0-preview1.md) release:
 
 ### Added
 

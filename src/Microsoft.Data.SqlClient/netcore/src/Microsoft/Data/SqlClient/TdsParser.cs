@@ -11,9 +11,8 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-#if NET
 using System.Security.Authentication;
-#else
+#if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 #endif
 using System.Text;
@@ -69,7 +68,6 @@ namespace Microsoft.Data.SqlClient
         // Constants
         private const int constBinBufferSize = 4096; // Size of the buffer used to read input parameter of type Stream
         private const int constTextBufferSize = 4096; // Size of the buffer (in chars) user to read input parameter of type TextReader
-        private const string enableTruncateSwitch = "Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal"; // for applications that need to maintain backwards compatibility with the previous behavior
 
         // State variables
         internal TdsParserState _state = TdsParserState.Closed; // status flag for connection
@@ -201,16 +199,6 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 return _connHandler;
-            }
-        }
-
-        private static bool EnableTruncateSwitch
-        {
-            get
-            {
-                bool value;
-                value = AppContext.TryGetSwitch(enableTruncateSwitch, out value) ? value : false;
-                return value;
             }
         }
 
@@ -409,7 +397,7 @@ namespace Microsoft.Data.SqlClient
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
-                _authenticationProvider = _physicalStateObj.CreateSspiContextProvider();
+                _authenticationProvider = Connection._sspiContextProvider ?? _physicalStateObj.CreateSspiContextProvider();
                 SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | SSPI or Active Directory Authentication Library loaded for SQL Server based integrated authentication");
             }
 
@@ -631,7 +619,7 @@ namespace Microsoft.Data.SqlClient
                 // Cache physical stateObj and connection.
                 _pMarsPhysicalConObj = _physicalStateObj;
 
-                if (TdsParserStateObjectFactory.UseManagedSNI)
+                if (LocalAppContextSwitches.UseManagedNetworking)
                     _pMarsPhysicalConObj.IncrementPendingCallbacks();
 
                 uint info = 0;
@@ -643,7 +631,13 @@ namespace Microsoft.Data.SqlClient
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
 
-                PostReadAsyncForMars();
+                error = _pMarsPhysicalConObj.PostReadAsyncForMars(_physicalStateObj);
+                if (error != TdsEnums.SNI_SUCCESS_IO_PENDING)
+                {
+                    Debug.Assert(error != TdsEnums.SNI_SUCCESS, "Unexpected successful read async on physical connection before enabling MARS!");
+                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
 
                 _physicalStateObj = CreateSession(); // Create and open default MARS stateObj and connection.
             }
@@ -899,10 +893,24 @@ namespace Microsoft.Data.SqlClient
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
 
-            int protocolVersion = 0;
-            WaitForSSLHandShakeToComplete(ref error, ref protocolVersion);
+            SslProtocols protocol = 0;
 
-            SslProtocols protocol = (SslProtocols)protocolVersion;
+            // in the case where an async connection is made, encryption is used and Windows Authentication is used, 
+            // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its 
+            // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete 
+            // before calling SNISecGenClientContext).
+#if NET
+            if (OperatingSystem.IsWindows())
+#endif
+            {
+                error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocol);
+                if (error != TdsEnums.SNI_SUCCESS)
+                {
+                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
+            }
+
             string warningMessage = protocol.GetProtocolWarning();
             if (!string.IsNullOrEmpty(warningMessage))
             {
@@ -1489,7 +1497,7 @@ namespace Microsoft.Data.SqlClient
                  * !=null       | == 0     | replace text left of errorMessage
                  */
 
-                if (TdsParserStateObjectFactory.UseManagedSNI)
+                if (LocalAppContextSwitches.UseManagedNetworking)
                 {
                     Debug.Assert(!string.IsNullOrEmpty(details.ErrorMessage) || details.SniErrorNumber != 0, "Empty error message received from SNI");
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Empty error message received from SNI. Error Message = {0}, SNI Error Number ={1}", details.ErrorMessage, details.SniErrorNumber);
@@ -1538,7 +1546,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    if (TdsParserStateObjectFactory.UseManagedSNI)
+                    if (LocalAppContextSwitches.UseManagedNetworking)
                     {
                         // SNI error. Append additional error message info if available and hasn't been included.
                         string sniLookupMessage = SQL.GetSNIErrorMessage(details.SniErrorNumber);
@@ -7653,7 +7661,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (d.Scale != newScale)
             {
-                bool round = !EnableTruncateSwitch;
+                bool round = !LocalAppContextSwitches.TruncateScaledDecimal;
                 return SqlDecimal.AdjustScale(d, newScale - d.Scale, round);
             }
 
@@ -7666,7 +7674,7 @@ namespace Microsoft.Data.SqlClient
 
             if (newScale != oldScale)
             {
-                bool round = !EnableTruncateSwitch;
+                bool round = !LocalAppContextSwitches.TruncateScaledDecimal;
                 SqlDecimal num = new SqlDecimal(value);
                 num = SqlDecimal.AdjustScale(num, newScale - oldScale, round);
                 return num.Value;
@@ -9943,7 +9951,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     int maxSupportedSize = Is2008OrNewer ? int.MaxValue : short.MaxValue;
                     byte[] udtVal = null;
-                    Format format = Format.Native;
 
                     if (string.IsNullOrEmpty(param.UdtTypeName))
                     {
@@ -9977,7 +9984,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
-                            udtVal = _connHandler.Connection.GetBytes(value, out format, out maxsize);
+                            udtVal = _connHandler.Connection.GetBytes(value, out maxsize);
                         }
 
                         Debug.Assert(udtVal != null, "GetBytes returned null instance. Make sure that it always returns non-null value");
@@ -13128,11 +13135,10 @@ namespace Microsoft.Data.SqlClient
 
             if (canContinue)
             {
-                if (isContinuing || isStarting)
-                {
-                    temp = stateObj.TryTakeSnapshotStorage() as char[];
-                    Debug.Assert(temp == null || length == int.MaxValue || temp.Length == length, "stored buffer length must be null or must have been created with the correct length");
-                }
+                temp = stateObj.TryTakeSnapshotStorage() as char[];
+                Debug.Assert(temp != null || !isContinuing, "if continuing stored buffer must be present to contain previous data to continue from");
+                Debug.Assert(temp == null || length == int.MaxValue || temp.Length == length, "stored buffer length must be null or must have been created with the correct length");
+                
                 if (temp != null)
                 {
                     startOffset = stateObj.GetSnapshotTotalSize();
@@ -13148,7 +13154,7 @@ namespace Microsoft.Data.SqlClient
                 supportRentedBuff: !canContinue, // do not use the arraypool if we are going to keep the buffer in the snapshot
                 rentedBuff: ref buffIsRented,
                 startOffset,
-                isStarting || isContinuing
+                canContinue
             );
 
             if (result == TdsOperationStatus.Done)
@@ -13175,7 +13181,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (result == TdsOperationStatus.NeedMoreData)
             {
-                if (isStarting || isContinuing)
+                if (canContinue)
                 {
                     stateObj.SetSnapshotStorage(temp);
                 }
