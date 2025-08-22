@@ -3,9 +3,11 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>stresstest</AssemblyName>
-    <TargetFrameworks>net481;net9.0</TargetFrameworks>
-    <LangVersion>latest</LangVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\IMonitorLoader\IMonitorLoader.csproj" />

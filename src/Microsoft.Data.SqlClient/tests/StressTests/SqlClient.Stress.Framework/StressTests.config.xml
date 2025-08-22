@@ -7,7 +7,6 @@
         type="SqlServer"
         isDefault="true"
         dataSource="127.0.0.1,1433"
-        database="master"
         user="sa"
         password=""
         supportsWindowsAuthentication="false"

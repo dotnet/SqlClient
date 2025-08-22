@@ -96,6 +96,8 @@ namespace Stress.Data
         [GlobalTestSetup]
         public virtual void GlobalTestSetup()
         {
+            Console.WriteLine("DataTestGroup.GlobalTestSetup(): Starting...");
+
             // Preconditions - ensure this setup is only called once
             DataStressErrors.Assert(string.IsNullOrEmpty(s_scenario), "Scenario was already set");
             DataStressErrors.Assert(s_source == null, "Source was already set");
@@ -118,12 +120,22 @@ namespace Stress.Data
 
             // Set m_factory
             s_factory = CreateFactory(ref s_scenario, ref s_source);
+
+            Console.WriteLine($"GlobalTestSetup factory created:");
+            Console.WriteLine($"  Scenario: {s_scenario}");
+            Console.WriteLine($"  Factory:  {s_factory.GetType().Name}");
+            Console.WriteLine($"  Source:");
+            s_source.Emit(4);
+
+            s_factory.CreateDatabase(s_source);
             s_factory.InitializeSharedData(s_source);
 
             // Postconditions
             DataStressErrors.Assert(!string.IsNullOrEmpty(s_scenario), "Scenario was not set");
             DataStressErrors.Assert(s_source != null, "Source was not set");
             DataStressErrors.Assert(s_factory != null, "Factory was not set");
+
+            Console.WriteLine("DataTestGroup.GlobalTestSetup(): Finished");
         }
 
         /// <summary>
@@ -134,11 +146,16 @@ namespace Stress.Data
         [GlobalTestCleanup]
         public virtual void GlobalTestCleanup()
         {
+            Console.WriteLine("DataTestGroup.GlobalTestCleanup(): Starting...");
+
             s_factory.CleanupSharedData();
+            s_factory.DropDatabase(s_source);
             s_source = null;
             s_scenario = null;
             s_factory.Dispose();
             s_factory = null;
+
+            Console.WriteLine("DataTestGroup.GlobalTestCleanup(): Finished");
         }
 
 
