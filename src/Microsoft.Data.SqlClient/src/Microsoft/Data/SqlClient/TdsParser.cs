@@ -2,6 +2,7 @@ using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.Text;
+using Microsoft.Data.SqlClient.UserAgent;
 using Microsoft.Data.SqlClient.Utilities;
 
 #nullable enable
@@ -191,8 +192,17 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 int feOffset = length;
+                // TODO: User Agent Json Payload will go here
+                byte[] emptyBytes = new byte[0];
                 // calculate and reserve the required bytes for the featureEx
-                length = ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, useFeatureExt, length);
+                length = ApplyFeatureExData(
+                    requestedFeatures, 
+                    recoverySessionData, 
+                    fedAuthFeatureExtensionData, 
+                    UserAgentInfo.GetCachedPayload(), 
+                    useFeatureExt, 
+                    length
+                );
 
                 WriteLoginData(rec,
                                requestedFeatures,

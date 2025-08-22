@@ -93,5 +93,11 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// Indicates whether the client supports Vector column type
         /// </summary>
         bool IsVectorSupportEnabled { get; set; }
+
+        /// <summary>
+        /// Indicates whether the client supports Vector column type
+        /// </summary>
+        bool IsUserAgentSupportEnabled { get; set; }
+
     }
 }

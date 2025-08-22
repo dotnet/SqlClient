@@ -620,5 +620,62 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Throws<InvalidOperationException>(() => connection.Open());
             }
         }
+
+        // Test to verify client sends a UserAgent version 
+        // We do not receive any Ack for it from the server
+        [Fact]
+        public void TestConnWithUnackedUserAgentFeatureExtension()
+        {
+            using var server = TestTdsServer.StartTestServer();
+
+            // Configure the server to support UserAgent version 0x01
+            server.ServerSupportedUserAgentFeatureExtVersion = 0x01;
+            server.EnableUserAgentFeatureExt = true;
+            // By design its response logic never emits an ACK
+            bool loginFound = false;
+            bool responseFound = false;
+
+            // Inspect what the client sends in the LOGIN7 packet
+            server.OnLogin7Validated = loginToken =>
+            {
+                var token = loginToken.FeatureExt
+                               .OfType<TDSLogin7GenericOptionToken>()
+                               .FirstOrDefault(t => t.FeatureID == TDSFeatureID.UserAgentSupport);
+                if (token != null)
+                {
+                    Assert.Equal((byte)TDSFeatureID.UserAgentSupport, (byte)token.FeatureID);
+                    Assert.Equal(0x1, token.Data[0]);
+                    loginFound = true;
+                }
+            };
+
+            // Inspect whether the server ever sends back an ACK
+            server.OnAuthenticationResponseCompleted = response =>
+            {
+                var ack = response
+                    .OfType<TDSFeatureExtAckToken>()
+                    .SelectMany(t => t.Options)
+                    .OfType<TDSFeatureExtAckGenericOption>()
+                    .FirstOrDefault(o => o.FeatureID == TDSFeatureID.UserAgentSupport);
+                if (ack != null)
+                {
+                    responseFound = true;
+                }
+            };
+
+            // Open the connection (this triggers the LOGIN7 exchange)
+            using var connection = new SqlConnection(server.ConnectionString);
+            connection.Open();
+
+            // Verify client did offer UserAgent
+            Assert.True(loginFound, "Expected UserAgent extension in LOGIN7");
+
+            // Verify server never acknowledged it
+            Assert.False(responseFound, "Server should not acknowledge UserAgent");
+
+            // Verify the connection itself succeeded
+            Assert.Equal(ConnectionState.Open, connection.State);
+        }
+
     }
 }

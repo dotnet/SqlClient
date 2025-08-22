@@ -50,14 +50,30 @@ namespace Microsoft.SqlServer.TDS.Servers
         public const byte DefaultSupportedVectorFeatureExtVersion = 0x01;
 
         /// <summary>
+        /// Default feature extension version supported on the server for user agent.
+        /// </summary>
+        public const byte DefaultSupportedUserAgentFeatureExtVersion = 0x0F;
+
+        /// <summary>
         /// Property for setting server version for vector feature extension.
         /// </summary>
         public bool EnableVectorFeatureExt { get; set; } = false;
 
         /// <summary>
+        /// Property for setting server version for user agent feature extension.
+        /// </summary>
+        public bool EnableUserAgentFeatureExt { get; set; } = true;
+
+        /// <summary>
         /// Property for setting server version for vector feature extension.
         /// </summary>
         public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
+
+        /// <summary>
+        /// Property for setting server version for user agent feature extension.
+        /// </summary>
+        public byte ServerSupportedUserAgentFeatureExtVersion { get; set; } = DefaultSupportedUserAgentFeatureExtVersion;
+
 
         /// <summary>
         /// Client version for vector FeatureExtension.
@@ -284,6 +300,15 @@ namespace Microsoft.SqlServer.TDS.Servers
                                     // Enable Vector Support
                                     session.IsVectorSupportEnabled = true;
                                     _clientSupportedVectorFeatureExtVersion = ((TDSLogin7GenericOptionToken)option).Data[0];
+                                }
+                                break;
+                            }
+                        case TDSFeatureID.UserAgentSupport:
+                            {
+                                if (EnableUserAgentFeatureExt)
+                                {
+                                    // Enable User Agent Support
+                                    session.IsUserAgentSupportEnabled = true;
                                 }
                                 break;
                             }
@@ -653,6 +678,9 @@ namespace Microsoft.SqlServer.TDS.Servers
                     featureExtAckToken.Options.Add(vectorSupportOption);
                 }
             }
+
+            // Note: there can be a case here handling User Agent support, but since server
+            // should not actually ack this feature extension, we don't handle it here.
 
             // Create DONE token
             TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final);
