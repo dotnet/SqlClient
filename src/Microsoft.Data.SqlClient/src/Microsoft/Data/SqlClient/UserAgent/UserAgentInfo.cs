@@ -330,7 +330,7 @@ internal static class UserAgentInfo
     /// <param name="jsonStringVal">The string value to truncate</param>
     /// <param name="maxChars">Maximum number of characters allowed</param>
     /// <returns>Truncated string or default value if input is invalid</returns>
-    internal static string TruncateOrDefault(string jsonStringVal, int maxChars)
+    internal static string TruncateOrDefault(string? jsonStringVal, int maxChars)
     {
         try
         {
@@ -339,7 +339,12 @@ internal static class UserAgentInfo
                 return DefaultJsonValue;
             }
 
-            if (jsonStringVal.Length <= maxChars)
+            if (maxChars <= 0)
+            {
+                return DefaultJsonValue;
+            }
+
+            if (jsonStringVal!.Length <= maxChars)
             {
                 return jsonStringVal;
             }

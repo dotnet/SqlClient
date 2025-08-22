@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData("abcdef", 5, "abcde")]      // overflow truncated
         public void TruncateOrDefault_Behaviour(string? input, int max, string expected)
         {
-            string actual = UserAgentInfo.TruncateOrDefault(input!, max);
+            string actual = UserAgentInfo.TruncateOrDefault(input, max);
             Assert.Equal(expected, actual);
         }
 
@@ -182,10 +182,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             JsonElement root = doc.RootElement;
 
             // High-priority fields must still be present(driver name and version) and truncated to expected length
-            //Assert.True(root.TryGetProperty(UserAgentInfoDto.DriverJsonKey, out _));
             Assert.Equal(expectedDriverName, root.GetProperty(UserAgentInfoDto.DriverJsonKey).GetString());
             Assert.Equal(expectedVersion, root.GetProperty(UserAgentInfoDto.VersionJsonKey).GetString());
-            //Assert.True(root.TryGetProperty(UserAgentInfoDto.VersionJsonKey, out _));
 
             // Low-priority fields should have been removed(arch and runtime)
             Assert.False(root.TryGetProperty(UserAgentInfoDto.ArchJsonKey, out _));
