@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using Microsoft.Data.SqlClient.TestUtilities;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -179,7 +180,15 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             ReadTextReader(connectionString);
             StreamingBlobDataTypes(connectionString);
             OutOfOrderGetChars(connectionString);
-            TestXEventsStreaming(connectionString);
+
+            // These tests fail on Azure or Named Instances, so skip them for
+            // those contexts.
+            var dataSource = new SqlConnectionStringBuilder(connectionString).DataSource;
+            if (!Utils.IsAzureSqlServer(dataSource)
+                && !dataSource.Contains(@"\"))
+            {
+                TestXEventsStreaming(connectionString);
+            }
 
             // These tests fail with named pipes, since they try to do DNS lookups on named pipe paths.
             if (!usingNamePipes)
