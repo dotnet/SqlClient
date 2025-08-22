@@ -1072,6 +1072,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 next.UserOptions,
                                 out connection);
                         }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
                         catch (Exception e)
                         {
                             caughtException = e;

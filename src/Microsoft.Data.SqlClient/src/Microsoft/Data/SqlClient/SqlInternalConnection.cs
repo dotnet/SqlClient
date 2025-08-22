@@ -241,6 +241,7 @@ namespace Microsoft.Data.SqlClient
                 transaction.InternalTransaction.RestoreBrokenConnection = false;
                 return transaction;
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             finally
             {
                 SqlStatistics.StopTimer(statistics);
@@ -292,6 +293,7 @@ namespace Microsoft.Data.SqlClient
                 // Invoke subclass-specific deactivation logic
                 InternalDeactivate();
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception e)
             {
                 if (!ADP.IsCatchableExceptionType(e))
@@ -577,6 +579,7 @@ namespace Microsoft.Data.SqlClient
             // behavior matches OLEDB and ODBC.
 
             Enlist(transaction);
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         abstract internal void ExecuteTransaction(TransactionRequest transactionRequest, string name, System.Data.IsolationLevel iso, SqlInternalTransaction internalTransaction, bool isDelegateControlRequest);

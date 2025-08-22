@@ -115,6 +115,7 @@ namespace Microsoft.Data.SqlClient
 
                     InternalTransaction.Commit();
                 }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
                 catch (SqlException ex)
                 {
                     #if NET
@@ -154,6 +155,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     InternalTransaction.Dispose();
                 }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
             }
 
             base.Dispose(disposing);
@@ -200,6 +202,7 @@ namespace Microsoft.Data.SqlClient
                         _isFromApi = true;
                         InternalTransaction.Rollback();
                     }
+                    // @TODO: CER Exception Handling was removed here (see GH#3581)
                     #if NET
                     catch (Exception ex)
                     {
@@ -253,6 +256,7 @@ namespace Microsoft.Data.SqlClient
                     _isFromApi = true;
                     InternalTransaction.Rollback(transactionName);
                 }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
                 #if NET
                 catch (Exception ex)
                 {
@@ -290,6 +294,7 @@ namespace Microsoft.Data.SqlClient
 
                     InternalTransaction.Save(savePointName);
                 }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);

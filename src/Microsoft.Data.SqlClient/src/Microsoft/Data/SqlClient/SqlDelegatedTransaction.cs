@@ -102,6 +102,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _active = true;
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         internal bool IsActive
@@ -173,6 +174,7 @@ namespace Microsoft.Data.SqlClient
                         connection.DoomThisConnection();
                     }
                 }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
 
                 //Throw exception only if Transaction is still active and not yet aborted.
                 if (promoteException != null)
@@ -264,6 +266,7 @@ namespace Microsoft.Data.SqlClient
                 // that the transaction is aborted, because it will be eventually.
                 connection.CleanupConnectionOnTransactionCompletion(_atomicTransaction);
                 enlistment.Aborted();
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
             }
             else
             {
@@ -366,6 +369,7 @@ namespace Microsoft.Data.SqlClient
                         enlistment.Committed();
                     }
                 }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
             }
             else
             {

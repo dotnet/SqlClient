@@ -515,6 +515,7 @@ namespace Microsoft.Data.SqlClient
                             // cleanup
                             Unprepare();
                         }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
                         catch (Exception)
                         {
                             // we do not really care about errors in unprepare (may be the old connection went bad)
@@ -952,6 +953,7 @@ namespace Microsoft.Data.SqlClient
 
                         InternalPrepare();
                     }
+                    // @TODO: CER Exception Handling was removed here (see GH#3581)
                     catch (Exception e)
                     {
                         processFinallyBlock = ADP.IsCatchableExceptionType(e);
@@ -1107,6 +1109,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                             }
                         }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
                     }
                 }
                 finally
@@ -1420,6 +1423,7 @@ namespace Microsoft.Data.SqlClient
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteNonQuery), _activeConnection);
                 _stateObj.ReadSni(completion);
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception)
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
@@ -1693,6 +1697,7 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(_stateObj == null, "non-null state object in EndExecuteNonQuery");
             return _rowsAffected;
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         private Task InternalExecuteNonQuery(
@@ -1776,6 +1781,7 @@ namespace Microsoft.Data.SqlClient
             }
             Debug.Assert(isAsync || _stateObj == null, "non-null state object in InternalExecuteNonQuery");
             return task;
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReader/*'/>
@@ -1954,6 +1960,7 @@ namespace Microsoft.Data.SqlClient
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteXmlReader), _activeConnection);
                 _stateObj.ReadSni(completion);
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception e)
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
@@ -2160,6 +2167,7 @@ namespace Microsoft.Data.SqlClient
                     sqlExceptionNumber = e.Number;
                     throw;
                 }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
@@ -2572,6 +2580,7 @@ namespace Microsoft.Data.SqlClient
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteReader), _activeConnection);
                 _stateObj.ReadSni(completion);
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception e)
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
@@ -2602,6 +2611,7 @@ namespace Microsoft.Data.SqlClient
             SqlDataReader reader = CompleteAsyncExecuteReader(isInternal);
             Debug.Assert(_stateObj == null, "non-null state object in InternalEndExecuteReader");
             return reader;
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
@@ -4017,6 +4027,7 @@ namespace Microsoft.Data.SqlClient
                                            describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
                 }
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception e)
             {
                 if (CachedAsyncState != null)
@@ -4827,6 +4838,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, timeout, out task, asyncWrite && isAsync, isRetry: isRetry);
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
 
@@ -5422,6 +5434,7 @@ namespace Microsoft.Data.SqlClient
             // close any non MARS dead readers, if applicable, and then throw if still busy.
             // Throw if we have a live reader on this command
             _activeConnection.ValidateConnectionForExecute(method, this);
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
 
             // Check to see if the currently set transaction has completed.  If so,
             // null out our local reference.
@@ -5515,6 +5528,7 @@ namespace Microsoft.Data.SqlClient
         private void ReliablePutStateObject()
         {
             PutStateObject();
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         private void PutStateObject()

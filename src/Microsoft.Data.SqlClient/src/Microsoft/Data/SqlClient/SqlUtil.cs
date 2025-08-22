@@ -184,6 +184,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 onSuccess();
                             }
+                            // @TODO: CER Exception Handling was removed here (see GH#3581)
                             catch (Exception e)
                             {
                                 completion.SetException(e);
@@ -276,6 +277,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             onSuccess(state2);
                         }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
                         catch (Exception e)
                         {
                             completion.SetException(e);

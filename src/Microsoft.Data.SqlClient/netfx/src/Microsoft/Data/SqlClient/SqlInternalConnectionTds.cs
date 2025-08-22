@@ -580,6 +580,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             finally
             {
                 ThreadHasParserLockForClose = false;
@@ -2183,6 +2184,7 @@ namespace Microsoft.Data.SqlClient
                     return true;
                 }
                 return false;
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
             }
             finally
             {

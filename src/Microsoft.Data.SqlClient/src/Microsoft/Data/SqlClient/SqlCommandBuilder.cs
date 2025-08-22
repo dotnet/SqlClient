@@ -255,6 +255,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ArgumentNull(nameof(command));
             }
 
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             command.DeriveParameters();
         }
 

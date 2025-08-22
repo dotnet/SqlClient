@@ -1411,6 +1411,7 @@ namespace Microsoft.Data.SqlClient
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteNonQuery), _activeConnection);
                 _stateObj.ReadSni(completion);
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception)
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
@@ -1956,6 +1957,7 @@ namespace Microsoft.Data.SqlClient
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteXmlReader), _activeConnection);
                 _stateObj.ReadSni(completion);
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception e)
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
@@ -2607,6 +2609,7 @@ namespace Microsoft.Data.SqlClient
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteReader), _activeConnection);
                 _stateObj.ReadSni(completion);
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception e)
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.

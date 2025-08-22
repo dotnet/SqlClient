@@ -4750,6 +4750,7 @@ namespace Microsoft.Data.SqlClient
                 _connHandler.DoomThisConnection();
                 throw;
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
 
@@ -10382,6 +10383,7 @@ namespace Microsoft.Data.SqlClient
         private void TdsExecuteRPC_OnFailure(Exception exc, TdsParserStateObject stateObj)
         {
             FailureCleanup(stateObj, exc);
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         private void ExecuteFlushTaskCallback(Task tsk, TdsParserStateObject stateObj, TaskCompletionSource<object> completion, bool releaseConnectionLock)
@@ -10396,6 +10398,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         FailureCleanup(stateObj, tsk.Exception);
                     }
+                    // @TODO: CER Exception Handling was removed here (see GH#3581)
                     catch (Exception e)
                     {
                         exc = e;
@@ -12085,6 +12088,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 return task ?? Task.CompletedTask;
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
             }
 
             internal static void ValidateWriteParameters(byte[] buffer, int offset, int count)

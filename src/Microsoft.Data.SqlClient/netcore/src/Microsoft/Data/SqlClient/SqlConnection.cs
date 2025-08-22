@@ -1243,6 +1243,7 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
                 InnerConnection.ChangeDatabase(database);
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             finally
             {
                 SqlStatistics.StopTimer(statistics);
@@ -1334,6 +1335,7 @@ namespace Microsoft.Data.SqlClient
                         _statistics._closeTimestamp = ADP.TimerCurrent();
                     }
                 }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
                 catch (Exception ex)
                 {
                     e = ex;

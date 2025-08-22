@@ -2101,6 +2101,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 return null;
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             finally
             {
                 _columnMappings.ReadOnly = false;
@@ -2777,6 +2778,7 @@ namespace Microsoft.Data.SqlClient
             {
                 CleanUpStateObject();
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
 
             AbortTransaction();
         }

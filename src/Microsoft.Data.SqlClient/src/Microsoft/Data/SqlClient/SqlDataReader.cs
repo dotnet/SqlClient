@@ -263,12 +263,13 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw SQL.PendingBeginXXXExists();
                     }
-                    
+
                     Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
                     if (TryConsumeMetaData() != TdsOperationStatus.Done)
                     {
                         throw SQL.SynchronousCallMayNotPend();
                     }
+                    // @TODO: CER Exception Handling was removed here (see GH#3581)
                 }
 
                 return _metaData;
@@ -846,6 +847,7 @@ namespace Microsoft.Data.SqlClient
             TdsOperationStatus result = TryCleanPartialRead();
             Debug.Assert(result == TdsOperationStatus.Done, "Should not pend on sync call");
             Debug.Assert(!_sharedState._dataReady, "_dataReady should be cleared");
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Dispose/*' />
@@ -1021,6 +1023,7 @@ namespace Microsoft.Data.SqlClient
                 RestoreServerSettings(parser, stateObj);
                 return TdsOperationStatus.Done;
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             finally
             {
                 if (closeReader)
@@ -1067,6 +1070,7 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
                     }
+                    // @TODO: CER Exception Handling was removed here (see GH#3581)
                     
                     // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
 
@@ -1878,6 +1882,7 @@ namespace Microsoft.Data.SqlClient
 
             remaining = cbytes;
             return TdsOperationStatus.Done;
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         internal int GetBytesInternalSequential(int i, byte[] buffer, int index, int length, long? timeoutMilliseconds = null)
@@ -1970,6 +1975,7 @@ namespace Microsoft.Data.SqlClient
                     return result;
                 }
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetTextReader/*' />
@@ -2328,6 +2334,7 @@ namespace Microsoft.Data.SqlClient
             _columnDataCharsRead += cch;
             _sharedState._columnDataBytesRemaining = (long)_parser.PlpBytesLeft(_stateObj);
             return cch;
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         internal long GetStreamingXmlChars(int i, long dataIndex, char[] buffer, int bufferIndex, int length)
@@ -3621,6 +3628,7 @@ namespace Microsoft.Data.SqlClient
                     more = success;
                     return TdsOperationStatus.Done;
                 }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
@@ -3814,6 +3822,7 @@ namespace Microsoft.Data.SqlClient
 
                     return TdsOperationStatus.Done;
                 }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
@@ -3855,6 +3864,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             Debug.Assert(_data[i] != null, " data buffer is null?");
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
 
             return TdsOperationStatus.Done;
         }
@@ -3899,6 +3909,7 @@ namespace Microsoft.Data.SqlClient
             }
             
             return TryReadColumnInternal(i, readHeaderOnly: true);
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         internal TdsOperationStatus TryReadColumnInternal(int i, bool readHeaderOnly = false, bool forStreaming = false)

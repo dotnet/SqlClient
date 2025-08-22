@@ -67,6 +67,7 @@ namespace Microsoft.Data.SqlClient
         internal bool RunReliably(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj)
         {
             return Run(runBehavior, cmdHandler, dataStream, bulkCopyHandler, stateObj);
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
     }
 }
