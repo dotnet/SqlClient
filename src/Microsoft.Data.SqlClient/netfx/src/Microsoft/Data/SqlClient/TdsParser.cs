@@ -11,9 +11,8 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-#if NET
 using System.Security.Authentication;
-#else
+#if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 #endif
 using System.Text;
@@ -683,31 +682,10 @@ namespace Microsoft.Data.SqlClient
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
 
-                // HACK HACK HACK - for Async only
-                // Have to post read to intialize MARS - will get callback on this when connection goes
-                // down or is closed.
-
-                IntPtr temp = IntPtr.Zero;
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                { }
-                finally
+                error = _pMarsPhysicalConObj.PostReadAsyncForMars(_physicalStateObj);
+                if (error != TdsEnums.SNI_SUCCESS_IO_PENDING)
                 {
-                    _pMarsPhysicalConObj.IncrementPendingCallbacks();
-
-                    error = SniNativeWrapper.SniReadAsync(_pMarsPhysicalConObj.Handle, ref temp);
-
-                    if (temp != IntPtr.Zero)
-                    {
-                        // Be sure to release packet, otherwise it will be leaked by native.
-                        SniNativeWrapper.SniPacketRelease(temp);
-                    }
-                }
-                Debug.Assert(IntPtr.Zero == temp, "unexpected syncReadPacket without corresponding SNIPacketRelease");
-                if (TdsEnums.SNI_SUCCESS_IO_PENDING != error)
-                {
-                    Debug.Assert(TdsEnums.SNI_SUCCESS != error, "Unexpected successful read async on physical connection before enabling MARS!");
+                    Debug.Assert(error != TdsEnums.SNI_SUCCESS, "Unexpected successful read async on physical connection before enabling MARS!");
                     _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
@@ -982,19 +960,25 @@ namespace Microsoft.Data.SqlClient
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
 
+            SslProtocols protocol = 0;
+
             // in the case where an async connection is made, encryption is used and Windows Authentication is used,
             // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its
             // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete
             // before calling SNISecGenClientContext).
-            error = SniNativeWrapper.SniWaitForSslHandshakeToComplete(_physicalStateObj.Handle, _physicalStateObj.GetTimeoutRemaining(), out uint protocolVersion);
-
-            if (error != TdsEnums.SNI_SUCCESS)
+#if NET
+            if (OperatingSystem.IsWindows())
+#endif
             {
-                _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                ThrowExceptionAndWarning(_physicalStateObj);
+                error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocol);
+                if (error != TdsEnums.SNI_SUCCESS)
+                {
+                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
             }
 
-            string warningMessage = ((System.Security.Authentication.SslProtocols)protocolVersion).GetProtocolWarning();
+            string warningMessage = protocol.GetProtocolWarning();
             if (!string.IsNullOrEmpty(warningMessage))
             {
                 if (!encrypt && LocalAppContextSwitches.SuppressInsecureTlsWarning)
