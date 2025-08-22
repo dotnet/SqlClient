@@ -498,7 +498,6 @@ namespace Microsoft.Data.SqlClient
         internal bool AsyncCommandInProgress
         {
             get => _AsyncCommandInProgress;
-            [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
             set => _AsyncCommandInProgress = value;
         }
 
@@ -1245,31 +1244,13 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             RepairInnerConnection();
             SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.ChangeDatabase|API|Correlation> ObjectID{0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
-            TdsParser bestEffortCleanupTarget = null;
-            RuntimeHelpers.PrepareConstrainedRegions();
 
             try
             {
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
                 statistics = SqlStatistics.StartTimer(Statistics);
                 InnerConnection.ChangeDatabase(database);
             }
-            catch (System.OutOfMemoryException e)
-            {
-                Abort(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                Abort(e);
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             finally
             {
                 SqlStatistics.StopTimer(statistics);
@@ -1315,12 +1296,9 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.Close|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
 
                 SqlStatistics statistics = null;
-                TdsParser bestEffortCleanupTarget = null;
 
-                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
                     statistics = SqlStatistics.StartTimer(Statistics);
 
                     Task reconnectTask = _currentReconnectionTask;
@@ -1346,22 +1324,7 @@ namespace Microsoft.Data.SqlClient
                         _statistics._closeTimestamp = ADP.TimerCurrent();
                     }
                 }
-                catch (System.OutOfMemoryException ex)
-                {
-                    Abort(ex);
-                    throw;
-                }
-                catch (System.StackOverflowException ex)
-                {
-                    Abort(ex);
-                    throw;
-                }
-                catch (System.Threading.ThreadAbortException ex)
-                {
-                    Abort(ex);
-                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                    throw;
-                }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
@@ -1436,7 +1399,6 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 SqlStatistics statistics = null;
-                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
@@ -1709,7 +1671,6 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 SqlStatistics statistics = null;
-                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
@@ -1791,7 +1752,6 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     SqlStatistics statistics = null;
-                    RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
                         statistics = SqlStatistics.StartTimer(_parent.Statistics);
@@ -1897,65 +1857,42 @@ namespace Microsoft.Data.SqlClient
 
         private bool TryOpenInner(TaskCompletionSource<DbConnectionInternal> retry)
         {
-            TdsParser bestEffortCleanupTarget = null;
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
+            if (ForceNewConnection)
             {
-                if (ForceNewConnection)
+                if (!InnerConnection.TryReplaceConnection(this, ConnectionFactory, retry, UserConnectionOptions))
                 {
-                    if (!InnerConnection.TryReplaceConnection(this, ConnectionFactory, retry, UserConnectionOptions))
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    if (!InnerConnection.TryOpenConnection(this, ConnectionFactory, retry, UserConnectionOptions))
-                    {
-                        return false;
-                    }
-                }
-                // does not require GC.KeepAlive(this) because of OnStateChange
-
-                // GetBestEffortCleanup must happen AFTER OpenConnection to get the correct target.
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
-
-                var tdsInnerConnection = (SqlInternalConnectionTds)InnerConnection;
-                Debug.Assert(tdsInnerConnection.Parser != null, "Where's the parser?");
-
-                if (!tdsInnerConnection.ConnectionOptions.Pooling)
-                {
-                    // For non-pooled connections, we need to make sure that the finalizer does actually run to avoid leaking SNI handles
-                    GC.ReRegisterForFinalize(this);
-                }
-
-                if (StatisticsEnabled)
-                {
-                    _statistics._openTimestamp = ADP.TimerCurrent();
-                    tdsInnerConnection.Parser.Statistics = _statistics;
-                }
-                else
-                {
-                    tdsInnerConnection.Parser.Statistics = null;
-                    _statistics = null; // in case of previous Open/Close/reset_CollectStats sequence
+                    return false;
                 }
             }
-            catch (System.OutOfMemoryException e)
+            else
             {
-                Abort(e);
-                throw;
+                if (!InnerConnection.TryOpenConnection(this, ConnectionFactory, retry, UserConnectionOptions))
+                {
+                    return false;
+                }
             }
-            catch (System.StackOverflowException e)
+            // does not require GC.KeepAlive(this) because of OnStateChange
+
+            var tdsInnerConnection = (SqlInternalConnectionTds)InnerConnection;
+            Debug.Assert(tdsInnerConnection.Parser != null, "Where's the parser?");
+
+            if (!tdsInnerConnection.ConnectionOptions.Pooling)
             {
-                Abort(e);
-                throw;
+                // For non-pooled connections, we need to make sure that the finalizer does actually run to avoid leaking SNI handles
+                GC.ReRegisterForFinalize(this);
             }
-            catch (System.Threading.ThreadAbortException e)
+
+            if (StatisticsEnabled)
             {
-                Abort(e);
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                throw;
+                _statistics._openTimestamp = ADP.TimerCurrent();
+                tdsInnerConnection.Parser.Statistics = _statistics;
             }
+            else
+            {
+                tdsInnerConnection.Parser.Statistics = null;
+                _statistics = null; // in case of previous Open/Close/reset_CollectStats sequence
+            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
 
             return true;
         }

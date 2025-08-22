@@ -307,7 +307,6 @@ namespace Microsoft.Data.SqlClient
                 return (_cachedAsyncConnection == activeConnection && _cachedAsyncCloseCount == activeConnection.CloseCount);
             }
 
-            [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
             internal void ResetAsyncState()
             {
                 SqlClientEventSource.Log.TryTraceEvent("CachedAsyncState.ResetAsyncState | API | ObjectId {0}, Client Connection Id {1}, AsyncCommandInProgress={2}",
@@ -511,27 +510,12 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_activeConnection != value && _activeConnection != null)
                     {
-                        RuntimeHelpers.PrepareConstrainedRegions();
                         try
                         {
                             // cleanup
                             Unprepare();
                         }
-                        catch (System.OutOfMemoryException)
-                        {
-                            _activeConnection.InnerConnection.DoomThisConnection();
-                            throw;
-                        }
-                        catch (System.StackOverflowException)
-                        {
-                            _activeConnection.InnerConnection.DoomThisConnection();
-                            throw;
-                        }
-                        catch (System.Threading.ThreadAbortException)
-                        {
-                            _activeConnection.InnerConnection.DoomThisConnection();
-                            throw;
-                        }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
                         catch (Exception)
                         {
                             // we do not really care about errors in unprepare (may be the old connection went bad)
@@ -952,12 +936,8 @@ namespace Microsoft.Data.SqlClient
                     ValidateCommand(isAsync: false);
 
                     bool processFinallyBlock = true;
-                    TdsParser bestEffortCleanupTarget = null;
-                    RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
-                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
-
                         // NOTE: The state object isn't actually needed for this, but it is still here for back-compat (since it does a bunch of checks)
                         GetStateObject();
 
@@ -973,26 +953,7 @@ namespace Microsoft.Data.SqlClient
 
                         InternalPrepare();
                     }
-                    catch (System.OutOfMemoryException e)
-                    {
-                        processFinallyBlock = false;
-                        _activeConnection.Abort(e);
-                        throw;
-                    }
-                    catch (System.StackOverflowException e)
-                    {
-                        processFinallyBlock = false;
-                        _activeConnection.Abort(e);
-                        throw;
-                    }
-                    catch (System.Threading.ThreadAbortException e)
-                    {
-                        processFinallyBlock = false;
-                        _activeConnection.Abort(e);
-
-                        SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                        throw;
-                    }
+                    // @TODO: CER Exception Handling was removed here (see GH#3581)
                     catch (Exception e)
                     {
                         processFinallyBlock = ADP.IsCatchableExceptionType(e);
@@ -1124,53 +1085,31 @@ namespace Microsoft.Data.SqlClient
                             return;
                         }
 
-                        TdsParser bestEffortCleanupTarget = null;
-                        RuntimeHelpers.PrepareConstrainedRegions();
-                        try
+                        if (!_pendingCancel)
                         {
-                            bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
+                            // Do nothing if aleady pending.
+                          // Before attempting actual cancel, set the _pendingCancel flag to false.
+                          // This denotes to other thread before obtaining stateObject from the
+                          // session pool that there is another thread wishing to cancel.
+                          // The period in question is between entering the ExecuteAPI and obtaining
+                          // a stateObject.
+                            _pendingCancel = true;
 
-                            if (!_pendingCancel)
+                            TdsParserStateObject stateObj = _stateObj;
+                            if (stateObj != null)
                             {
-                                // Do nothing if aleady pending.
-                              // Before attempting actual cancel, set the _pendingCancel flag to false.
-                              // This denotes to other thread before obtaining stateObject from the
-                              // session pool that there is another thread wishing to cancel.
-                              // The period in question is between entering the ExecuteAPI and obtaining
-                              // a stateObject.
-                                _pendingCancel = true;
-
-                                TdsParserStateObject stateObj = _stateObj;
-                                if (stateObj != null)
+                                stateObj.Cancel(this);
+                            }
+                            else
+                            {
+                                SqlDataReader reader = connection.FindLiveReader(this);
+                                if (reader != null)
                                 {
-                                    stateObj.Cancel(this);
-                                }
-                                else
-                                {
-                                    SqlDataReader reader = connection.FindLiveReader(this);
-                                    if (reader != null)
-                                    {
-                                        reader.Cancel(this);
-                                    }
+                                    reader.Cancel(this);
                                 }
                             }
                         }
-                        catch (System.OutOfMemoryException e)
-                        {
-                            _activeConnection.Abort(e);
-                            throw;
-                        }
-                        catch (System.StackOverflowException e)
-                        {
-                            _activeConnection.Abort(e);
-                            throw;
-                        }
-                        catch (System.Threading.ThreadAbortException e)
-                        {
-                            _activeConnection.Abort(e);
-                            SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                            throw;
-                        }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
                     }
                 }
                 finally
@@ -1478,31 +1417,13 @@ namespace Microsoft.Data.SqlClient
         private void BeginExecuteNonQueryInternalReadStage(TaskCompletionSource<object> completion)
         {
             // Read SNI does not have catches for async exceptions, handle here.
-            TdsParser bestEffortCleanupTarget = null;
-            RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
                 // must finish caching information before ReadSni which can activate the callback before returning
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteNonQuery), _activeConnection);
                 _stateObj.ReadSni(completion);
             }
-            catch (System.OutOfMemoryException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _activeConnection.Abort(e);
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception)
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
@@ -1697,107 +1618,86 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalEndExecuteNonQuery | INFO | ObjectId {0}, Client Connection Id {1}, MARS={2}, AsyncCommandInProgress={3}",
                                                     _activeConnection?.ObjectID, _activeConnection?.ClientConnectionId,
                                                     _activeConnection?.Parser?.MARSOn, _activeConnection?.AsyncCommandInProgress);
-            TdsParser bestEffortCleanupTarget = null;
-            RuntimeHelpers.PrepareConstrainedRegions();
 
+            VerifyEndExecuteState((Task)asyncResult, endMethod);
+            WaitForAsyncResults(asyncResult, isInternal);
+
+            // If column encryption is enabled, also check the state after waiting for the task.
+            // It would be better to do this for all cases, but avoiding for compatibility reasons.
+            if (IsColumnEncryptionEnabled)
+            {
+                VerifyEndExecuteState((Task)asyncResult, endMethod, fullCheckForColumnEncryption: true);
+            }
+
+            bool processFinallyBlock = true;
             try
             {
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
-                VerifyEndExecuteState((Task)asyncResult, endMethod);
-                WaitForAsyncResults(asyncResult, isInternal);
-
-                // If column encryption is enabled, also check the state after waiting for the task.
-                // It would be better to do this for all cases, but avoiding for compatibility reasons.
-                if (IsColumnEncryptionEnabled)
+                // If this is not for internal usage, notify the dependency.
+                // If we have already initiated the end internally, the reader should be ready, so just return the rows affected.
+                if (!isInternal)
                 {
-                    VerifyEndExecuteState((Task)asyncResult, endMethod, fullCheckForColumnEncryption: true);
+                    NotifyDependency();
+
+                    if (_internalEndExecuteInitiated)
+                    {
+                        Debug.Assert(_stateObj == null);
+
+                        // Reset the state since we exit early.
+                        CachedAsyncState.ResetAsyncState();
+
+                        return _rowsAffected;
+                    }
                 }
 
-                bool processFinallyBlock = true;
-                try
+                CheckThrowSNIException();
+
+                // only send over SQL Batch command if we are not a stored proc and have no parameters
+                if ((System.Data.CommandType.Text == this.CommandType) && (0 == GetParameterCount(_parameters)))
                 {
-                    // If this is not for internal usage, notify the dependency.
-                    // If we have already initiated the end internally, the reader should be ready, so just return the rows affected.
-                    if (!isInternal)
+                    try
                     {
-                        NotifyDependency();
-
-                        if (_internalEndExecuteInitiated)
+                        Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
+                        TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out _);
+                        if (result != TdsOperationStatus.Done)
                         {
-                            Debug.Assert(_stateObj == null);
-
-                            // Reset the state since we exit early.
+                            throw SQL.SynchronousCallMayNotPend();
+                        }
+                    }
+                    finally
+                    {
+                        // Don't reset the state for internal End. The user End will do that eventually.
+                        if (!isInternal)
+                        {
                             CachedAsyncState.ResetAsyncState();
-
-                            return _rowsAffected;
-                        }
-                    }
-
-                    CheckThrowSNIException();
-
-                    // only send over SQL Batch command if we are not a stored proc and have no parameters
-                    if ((System.Data.CommandType.Text == this.CommandType) && (0 == GetParameterCount(_parameters)))
-                    {
-                        try
-                        {
-                            Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                            TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out _);
-                            if (result != TdsOperationStatus.Done)
-                            {
-                                throw SQL.SynchronousCallMayNotPend();
-                            }
-                        }
-                        finally
-                        {
-                            // Don't reset the state for internal End. The user End will do that eventually.
-                            if (!isInternal)
-                            {
-                                CachedAsyncState.ResetAsyncState();
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // otherwise, use a full-fledged execute that can handle params and stored procs
-                        SqlDataReader reader = CompleteAsyncExecuteReader(isInternal);
-                        if (reader != null)
-                        {
-                            reader.Close();
                         }
                     }
                 }
-                catch (Exception e)
+                else
                 {
-                    processFinallyBlock = ADP.IsCatchableExceptionType(e);
-                    throw;
-                }
-                finally
-                {
-                    if (processFinallyBlock)
+                    // otherwise, use a full-fledged execute that can handle params and stored procs
+                    SqlDataReader reader = CompleteAsyncExecuteReader(isInternal);
+                    if (reader != null)
                     {
-                        PutStateObject();
+                        reader.Close();
                     }
                 }
+            }
+            catch (Exception e)
+            {
+                processFinallyBlock = ADP.IsCatchableExceptionType(e);
+                throw;
+            }
+            finally
+            {
+                if (processFinallyBlock)
+                {
+                    PutStateObject();
+                }
+            }
 
-                Debug.Assert(_stateObj == null, "non-null state object in EndExecuteNonQuery");
-                return _rowsAffected;
-            }
-            catch (System.OutOfMemoryException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _activeConnection.Abort(e);
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                throw;
-            }
+            Debug.Assert(_stateObj == null, "non-null state object in EndExecuteNonQuery");
+            return _rowsAffected;
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         private Task InternalExecuteNonQuery(
@@ -1817,92 +1717,71 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = Statistics;
             _rowsAffected = -1;
 
-            TdsParser bestEffortCleanupTarget = null;
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
+            // @devnote: this function may throw for an invalid connection
+            // @devnote: returns false for empty command text
+            if (!isRetry)
             {
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
-                // @devnote: this function may throw for an invalid connection
-                // @devnote: returns false for empty command text
-                if (!isRetry)
-                {
-                    ValidateCommand(isAsync, methodName);
-                }
-                CheckNotificationStateAndAutoEnlist(); // Only call after validate - requires non null connection!
+                ValidateCommand(isAsync, methodName);
+            }
+            CheckNotificationStateAndAutoEnlist(); // Only call after validate - requires non null connection!
 
-                Task task = null;
+            Task task = null;
 
-                // Always Encrypted generally operates only on parameterized queries. However enclave based Always encrypted also supports unparameterized queries
-                // We skip this block for enclave based always encrypted so that we can make a call to SQL Server to get the encryption information
-                if (!ShouldUseEnclaveBasedWorkflow && !_batchRPCMode && CommandType == CommandType.Text && GetParameterCount(_parameters) == 0)
+            // Always Encrypted generally operates only on parameterized queries. However enclave based Always encrypted also supports unparameterized queries
+            // We skip this block for enclave based always encrypted so that we can make a call to SQL Server to get the encryption information
+            if (!ShouldUseEnclaveBasedWorkflow && !_batchRPCMode && CommandType == CommandType.Text && GetParameterCount(_parameters) == 0)
+            {
+                Debug.Assert(!sendToPipe, "trying to send non-context command to pipe");
+                if (statistics != null)
                 {
-                    Debug.Assert(!sendToPipe, "trying to send non-context command to pipe");
-                    if (statistics != null)
+                    if (!IsDirty && IsPrepared)
                     {
-                        if (!IsDirty && IsPrepared)
-                        {
-                            statistics.SafeIncrement(ref statistics._preparedExecs);
-                        }
-                        else
-                        {
-                            statistics.SafeIncrement(ref statistics._unpreparedExecs);
-                        }
+                        statistics.SafeIncrement(ref statistics._preparedExecs);
                     }
-
-                    // We should never get here for a retry since we only have retries for parameters.
-                    Debug.Assert(!isRetry);
-
-                    task = RunExecuteNonQueryTds(methodName, isAsync, timeout, asyncWrite);
-                }
-                else
-                {
-                    // otherwise, use a full-fledged execute that can handle params and stored procs
-                    Debug.Assert(!sendToPipe, "Trying to send non-context command to pipe");
-                    SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteNonQuery | INFO | Object Id {0}, RPC execute method name {1}, isAsync {2}, isRetry {3}", ObjectID, methodName, isAsync, isRetry);
-
-                    SqlDataReader reader = RunExecuteReader(
-                        CommandBehavior.Default,
-                        RunBehavior.UntilDone,
-                        returnStream: false,
-                        completion,
-                        timeout,
-                        out task,
-                        out usedCache,
-                        asyncWrite,
-                        isRetry,
-                        methodName);
-                    
-                    if (reader != null)
+                    else
                     {
-                        if (task != null)
-                        {
-                            task = AsyncHelper.CreateContinuationTask(task, () => reader.Close());
-                        }
-                        else
-                        {
-                            reader.Close();
-                        }
+                        statistics.SafeIncrement(ref statistics._unpreparedExecs);
                     }
                 }
-                Debug.Assert(isAsync || _stateObj == null, "non-null state object in InternalExecuteNonQuery");
-                return task;
+
+                // We should never get here for a retry since we only have retries for parameters.
+                Debug.Assert(!isRetry);
+
+                task = RunExecuteNonQueryTds(methodName, isAsync, timeout, asyncWrite);
             }
-            catch (System.OutOfMemoryException e)
+            else
             {
-                _activeConnection.Abort(e);
-                throw;
+                // otherwise, use a full-fledged execute that can handle params and stored procs
+                Debug.Assert(!sendToPipe, "Trying to send non-context command to pipe");
+                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteNonQuery | INFO | Object Id {0}, RPC execute method name {1}, isAsync {2}, isRetry {3}", ObjectID, methodName, isAsync, isRetry);
+
+                SqlDataReader reader = RunExecuteReader(
+                    CommandBehavior.Default,
+                    RunBehavior.UntilDone,
+                    returnStream: false,
+                    completion,
+                    timeout,
+                    out task,
+                    out usedCache,
+                    asyncWrite,
+                    isRetry,
+                    methodName);
+
+                if (reader != null)
+                {
+                    if (task != null)
+                    {
+                        task = AsyncHelper.CreateContinuationTask(task, () => reader.Close());
+                    }
+                    else
+                    {
+                        reader.Close();
+                    }
+                }
             }
-            catch (System.StackOverflowException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _activeConnection.Abort(e);
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                throw;
-            }
+            Debug.Assert(isAsync || _stateObj == null, "non-null state object in InternalExecuteNonQuery");
+            return task;
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReader/*'/>
@@ -2075,34 +1954,13 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(completion != null, "Completion source should not be null");
             // Read SNI does not have catches for async exceptions, handle here.
-            TdsParser bestEffortCleanupTarget = null;
-            RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
                 // must finish caching information before ReadSni which can activate the callback before returning
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteXmlReader), _activeConnection);
                 _stateObj.ReadSni(completion);
             }
-            catch (System.OutOfMemoryException e)
-            {
-                _activeConnection.Abort(e);
-                completion.TrySetException(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _activeConnection.Abort(e);
-                completion.TrySetException(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _activeConnection.Abort(e);
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                completion.TrySetException(e);
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception e)
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
@@ -2289,8 +2147,6 @@ namespace Microsoft.Data.SqlClient
             _pendingCancel = false;
 
             SqlStatistics statistics = null;
-            TdsParser bestEffortCleanupTarget = null;
-            RuntimeHelpers.PrepareConstrainedRegions();
             bool success = false;
             int? sqlExceptionNumber = null;
 
@@ -2299,7 +2155,6 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     WriteBeginExecuteEvent();
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
                     statistics = SqlStatistics.StartTimer(Statistics);
                     SqlDataReader result = IsProviderRetriable ?
                         RunExecuteReaderWithRetry(behavior, RunBehavior.ReturnImmediately, returnStream: true) :
@@ -2312,22 +2167,7 @@ namespace Microsoft.Data.SqlClient
                     sqlExceptionNumber = e.Number;
                     throw;
                 }
-                catch (System.OutOfMemoryException e)
-                {
-                    _activeConnection.Abort(e);
-                    throw;
-                }
-                catch (System.StackOverflowException e)
-                {
-                    _activeConnection.Abort(e);
-                    throw;
-                }
-                catch (System.Threading.ThreadAbortException e)
-                {
-                    _activeConnection.Abort(e);
-                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                    throw;
-                }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
@@ -2734,34 +2574,13 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(completion != null, "CompletionSource should not be null");
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteReaderInternalReadStage | INFO | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             // Read SNI does not have catches for async exceptions, handle here.
-            TdsParser bestEffortCleanupTarget = null;
-            RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
                 // must finish caching information before ReadSni which can activate the callback before returning
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteReader), _activeConnection);
                 _stateObj.ReadSni(completion);
             }
-            catch (System.OutOfMemoryException e)
-            {
-                _activeConnection.Abort(e);
-                completion.TrySetException(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _activeConnection.Abort(e);
-                completion.TrySetException(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _activeConnection.Abort(e);
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                completion.TrySetException(e);
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception e)
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
@@ -2789,31 +2608,10 @@ namespace Microsoft.Data.SqlClient
 
             CheckThrowSNIException();
 
-            TdsParser bestEffortCleanupTarget = null;
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
-                SqlDataReader reader = CompleteAsyncExecuteReader(isInternal);
-                Debug.Assert(_stateObj == null, "non-null state object in InternalEndExecuteReader");
-                return reader;
-            }
-            catch (System.OutOfMemoryException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _activeConnection.Abort(e);
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                throw;
-            }
+            SqlDataReader reader = CompleteAsyncExecuteReader(isInternal);
+            Debug.Assert(_stateObj == null, "non-null state object in InternalEndExecuteReader");
+            return reader;
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
@@ -4025,11 +3823,8 @@ namespace Microsoft.Data.SqlClient
             // Used in _batchRPCMode to maintain a map of describe parameter encryption RPC requests (Keys) and their corresponding original RPC requests (Values).
             ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap = null;
 
-            TdsParser bestEffortCleanupTarget = null;
-            RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
                 try
                 {
                     // Fetch the encryption information that applies to any of the input parameters.
@@ -4079,7 +3874,6 @@ namespace Microsoft.Data.SqlClient
                             bool processFinallyBlockAsync = true;
                             bool decrementAsyncCountInFinallyBlockAsync = true;
 
-                            RuntimeHelpers.PrepareConstrainedRegions();
                             try
                             {
                                 // Check for any exceptions on network write, before reading.
@@ -4154,7 +3948,6 @@ namespace Microsoft.Data.SqlClient
                                 bool processFinallyBlockAsync = true;
                                 bool decrementAsyncCountInFinallyBlockAsync = true;
 
-                                RuntimeHelpers.PrepareConstrainedRegions();
                                 try
                                 {
 
@@ -4234,22 +4027,7 @@ namespace Microsoft.Data.SqlClient
                                            describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
                 }
             }
-            catch (System.OutOfMemoryException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _activeConnection.Abort(e);
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception e)
             {
                 if (CachedAsyncState != null)
@@ -4940,59 +4718,102 @@ namespace Microsoft.Data.SqlClient
 
             CheckNotificationStateAndAutoEnlist(); // Only call after validate - requires non null connection!
 
-            TdsParser bestEffortCleanupTarget = null;
             // This section needs to occur AFTER ValidateCommand - otherwise it will AV without a connection.
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
+            SqlStatistics statistics = Statistics;
+            if (statistics != null)
             {
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
-                SqlStatistics statistics = Statistics;
-                if (statistics != null)
+                if ((!this.IsDirty && this.IsPrepared && !_hiddenPrepare)
+                    || (this.IsPrepared && _execType == EXECTYPE.PREPAREPENDING))
                 {
-                    if ((!this.IsDirty && this.IsPrepared && !_hiddenPrepare)
-                        || (this.IsPrepared && _execType == EXECTYPE.PREPAREPENDING))
+                    statistics.SafeIncrement(ref statistics._preparedExecs);
+                }
+                else
+                {
+                    statistics.SafeIncrement(ref statistics._unpreparedExecs);
+                }
+            }
+
+            // Reset the encryption related state of the command and its parameters.
+            ResetEncryptionState();
+
+            if (IsColumnEncryptionEnabled)
+            {
+                Task returnTask = null;
+                PrepareForTransparentEncryption(isAsync, timeout, completion, out returnTask, asyncWrite && isAsync, out usedCache, isRetry);
+                Debug.Assert(usedCache || (isAsync == (returnTask != null)), @"if we didn't use the cache, returnTask should be null if and only if async is false.");
+
+                long firstAttemptStart = ADP.TimerCurrent();
+
+                try
+                {
+                    return RunExecuteReaderTdsWithTransparentParameterEncryption(
+                        cmdBehavior,
+                        runBehavior,
+                        returnStream,
+                        isAsync,
+                        timeout,
+                        out task,
+                        asyncWrite && isAsync,
+                        isRetry: isRetry,
+                        ds: null,
+                        describeParameterEncryptionTask: returnTask);
+                }
+
+                catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
+                {
+                    if (isRetry)
                     {
-                        statistics.SafeIncrement(ref statistics._preparedExecs);
+                        throw;
+                    }
+
+                    // Retry if the command failed with appropriate error.
+                    // First invalidate the entry from the cache, so that we refresh our encryption MD.
+                    SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
+
+                    InvalidateEnclaveSession();
+
+                    return RunExecuteReader(
+                        cmdBehavior,
+                        runBehavior,
+                        returnStream,
+                        completion,
+                        TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart),
+                        out task,
+                        out usedCache,
+                        isAsync,
+                        isRetry: true,
+                        method: method);
+                }
+
+                catch (SqlException ex)
+                {
+                    // We only want to retry once, so don't retry if we are already in retry.
+                    // If we didn't use the cache, we don't want to retry.
+                    if (isRetry || (!usedCache && !ShouldUseEnclaveBasedWorkflow))
+                    {
+                        throw;
+                    }
+
+                    bool shouldRetry = false;
+
+                    // Check if we have an error indicating that we can retry.
+                    for (int i = 0; i < ex.Errors.Count; i++)
+                    {
+
+                        if ((usedCache && (ex.Errors[i].Number == TdsEnums.TCE_CONVERSION_ERROR_CLIENT_RETRY)) ||
+                                (ShouldUseEnclaveBasedWorkflow && (ex.Errors[i].Number == TdsEnums.TCE_ENCLAVE_INVALID_SESSION_HANDLE)))
+                        {
+                            shouldRetry = true;
+                            break;
+                        }
+                    }
+
+                    if (!shouldRetry)
+                    {
+                        throw;
                     }
                     else
                     {
-                        statistics.SafeIncrement(ref statistics._unpreparedExecs);
-                    }
-                }
-
-                // Reset the encryption related state of the command and its parameters.
-                ResetEncryptionState();
-
-                if (IsColumnEncryptionEnabled)
-                {
-                    Task returnTask = null;
-                    PrepareForTransparentEncryption(isAsync, timeout, completion, out returnTask, asyncWrite && isAsync, out usedCache, isRetry);
-                    Debug.Assert(usedCache || (isAsync == (returnTask != null)), @"if we didn't use the cache, returnTask should be null if and only if async is false.");
-
-                    long firstAttemptStart = ADP.TimerCurrent();
-
-                    try
-                    {
-                        return RunExecuteReaderTdsWithTransparentParameterEncryption(
-                            cmdBehavior,
-                            runBehavior,
-                            returnStream,
-                            isAsync,
-                            timeout,
-                            out task,
-                            asyncWrite && isAsync,
-                            isRetry: isRetry,
-                            ds: null,
-                            describeParameterEncryptionTask: returnTask);
-                    }
-
-                    catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
-                    {
-                        if (isRetry)
-                        {
-                            throw;
-                        }
-
                         // Retry if the command failed with appropriate error.
                         // First invalidate the entry from the cache, so that we refresh our encryption MD.
                         SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
@@ -5011,77 +4832,13 @@ namespace Microsoft.Data.SqlClient
                             isRetry: true,
                             method: method);
                     }
-
-                    catch (SqlException ex)
-                    {
-                        // We only want to retry once, so don't retry if we are already in retry.
-                        // If we didn't use the cache, we don't want to retry.
-                        if (isRetry || (!usedCache && !ShouldUseEnclaveBasedWorkflow))
-                        {
-                            throw;
-                        }
-
-                        bool shouldRetry = false;
-
-                        // Check if we have an error indicating that we can retry.
-                        for (int i = 0; i < ex.Errors.Count; i++)
-                        {
-
-                            if ((usedCache && (ex.Errors[i].Number == TdsEnums.TCE_CONVERSION_ERROR_CLIENT_RETRY)) ||
-                                    (ShouldUseEnclaveBasedWorkflow && (ex.Errors[i].Number == TdsEnums.TCE_ENCLAVE_INVALID_SESSION_HANDLE)))
-                            {
-                                shouldRetry = true;
-                                break;
-                            }
-                        }
-
-                        if (!shouldRetry)
-                        {
-                            throw;
-                        }
-                        else
-                        {
-                            // Retry if the command failed with appropriate error.
-                            // First invalidate the entry from the cache, so that we refresh our encryption MD.
-                            SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
-
-                            InvalidateEnclaveSession();
-
-                            return RunExecuteReader(
-                                cmdBehavior,
-                                runBehavior,
-                                returnStream,
-                                completion,
-                                TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart),
-                                out task,
-                                out usedCache,
-                                isAsync,
-                                isRetry: true,
-                                method: method);
-                        }
-                    }
-                }
-                else
-                {
-                    return RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, timeout, out task, asyncWrite && isAsync, isRetry: isRetry);
                 }
             }
-            catch (System.OutOfMemoryException e)
+            else
             {
-                _activeConnection.Abort(e);
-                throw;
+                return RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, timeout, out task, asyncWrite && isAsync, isRetry: isRetry);
             }
-            catch (System.StackOverflowException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _activeConnection.Abort(e);
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
 
@@ -5674,31 +5431,11 @@ namespace Microsoft.Data.SqlClient
 
             ValidateAsyncCommand();
 
-            TdsParser bestEffortCleanupTarget = null;
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
-                // close any non MARS dead readers, if applicable, and then throw if still busy.
-                // Throw if we have a live reader on this command
-                _activeConnection.ValidateConnectionForExecute(method, this);
-            }
-            catch (System.OutOfMemoryException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _activeConnection.Abort(e);
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                throw;
-            }
+            // close any non MARS dead readers, if applicable, and then throw if still busy.
+            // Throw if we have a live reader on this command
+            _activeConnection.ValidateConnectionForExecute(method, this);
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
+
             // Check to see if the currently set transaction has completed.  If so,
             // null out our local reference.
             if (_transaction != null && _transaction.Connection == null)
@@ -5790,29 +5527,8 @@ namespace Microsoft.Data.SqlClient
 
         private void ReliablePutStateObject()
         {
-            TdsParser bestEffortCleanupTarget = null;
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
-                PutStateObject();
-            }
-            catch (System.OutOfMemoryException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _activeConnection.Abort(e);
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                throw;
-            }
+            PutStateObject();
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         private void PutStateObject()

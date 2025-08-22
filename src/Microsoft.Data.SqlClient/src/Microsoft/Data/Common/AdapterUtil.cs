@@ -1575,7 +1575,6 @@ namespace Microsoft.Data.Common
             return value;
         }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         internal static IntPtr IntPtrOffset(IntPtr pbase, int offset)
         {
             if (4 == ADP.s_ptrSize)

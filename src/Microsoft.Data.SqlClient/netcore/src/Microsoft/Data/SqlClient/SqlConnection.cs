@@ -1237,35 +1237,13 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             RepairInnerConnection();
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.ChangeDatabase | API | Correlation | Object Id {0}, Activity Id {1}, Database {2}", ObjectID, ActivityCorrelator.Current, database);
-            TdsParser bestEffortCleanupTarget = null;
-
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
+            
             try
             {
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
                 statistics = SqlStatistics.StartTimer(Statistics);
                 InnerConnection.ChangeDatabase(database);
             }
-            catch (System.OutOfMemoryException e)
-            {
-                Abort(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                Abort(e);
-#if NETFRAMEWORK
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-#endif
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             finally
             {
                 SqlStatistics.StopTimer(statistics);
@@ -1328,15 +1306,10 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 SqlStatistics statistics = null;
-                TdsParser bestEffortCleanupTarget = null;
                 Exception e = null;
-
-#if NETFRAMEWORK
-                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
+                
                 try
                 {
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
                     statistics = SqlStatistics.StartTimer(Statistics);
 
                     Task reconnectTask = _currentReconnectionTask;
@@ -1362,27 +1335,7 @@ namespace Microsoft.Data.SqlClient
                         _statistics._closeTimestamp = ADP.TimerCurrent();
                     }
                 }
-                catch (System.OutOfMemoryException ex)
-                {
-                    e = ex;
-                    Abort(ex);
-                    throw;
-                }
-                catch (System.StackOverflowException ex)
-                {
-                    e = ex;
-                    Abort(ex);
-                    throw;
-                }
-                catch (System.Threading.ThreadAbortException ex)
-                {
-                    e = ex;
-                    Abort(ex);
-#if NETFRAMEWORK
-                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-#endif
-                    throw;
-                }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
                 catch (Exception ex)
                 {
                     e = ex;

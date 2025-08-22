@@ -37,25 +37,15 @@ namespace Microsoft.Data.Sql
             bool more = true;
             bool failure = false;
             IntPtr handle = ADP.s_ptrZero;
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
             try
             {
                 long s_timeoutTime = TdsParserStaticMethods.GetTimeoutSeconds(ADP.DefaultCommandTimeout);
-#if NETFRAMEWORK
-                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                try
-                { }
-                finally
-                {
-                    handle = SniNativeWrapper.SniServerEnumOpen();
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> {2} returned handle = {3}.",
-                                                           nameof(SqlDataSourceEnumeratorNativeHelper),
-                                                           nameof(GetDataSources),
-                                                           nameof(SniNativeWrapper.SniServerEnumOpen), handle);
-                }
+
+                handle = SniNativeWrapper.SniServerEnumOpen();
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> {2} returned handle = {3}.",
+                                                       nameof(SqlDataSourceEnumeratorNativeHelper),
+                                                       nameof(GetDataSources),
+                                                       nameof(SniNativeWrapper.SniServerEnumOpen), handle);
 
                 if (handle != ADP.s_ptrZero)
                 {

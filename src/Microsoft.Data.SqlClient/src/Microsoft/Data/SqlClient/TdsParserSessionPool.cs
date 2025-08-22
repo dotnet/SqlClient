@@ -217,7 +217,6 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if NETFRAMEWORK
-        // This is called from a ThreadAbort - ensure that it can be run from a CER Catch
         internal void BestEffortCleanup()
         {
             for (int i = 0; i < _cache.Count; i++)

@@ -215,14 +215,8 @@ namespace Microsoft.Data.SqlClient
         virtual internal SqlTransaction BeginSqlTransaction(System.Data.IsolationLevel iso, string transactionName, bool shouldReconnect)
         {
             SqlStatistics statistics = null;
-            TdsParser bestEffortCleanupTarget = null;
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
             try
             {
-                bestEffortCleanupTarget = GetBestEffortCleanupTarget(Connection);
-
                 statistics = SqlStatistics.StartTimer(Connection.Statistics);
 
                 #if NETFRAMEWORK
@@ -247,24 +241,7 @@ namespace Microsoft.Data.SqlClient
                 transaction.InternalTransaction.RestoreBrokenConnection = false;
                 return transaction;
             }
-            catch (OutOfMemoryException e)
-            {
-                Connection.Abort(e);
-                throw;
-            }
-            catch (StackOverflowException e)
-            {
-                Connection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                Connection.Abort(e);
-#if NETFRAMEWORK
-                BestEffortCleanup(bestEffortCleanupTarget);
-#endif
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             finally
             {
                 SqlStatistics.StopTimer(statistics);
@@ -303,15 +280,9 @@ namespace Microsoft.Data.SqlClient
 
         override protected void Deactivate()
         {
-            TdsParser bestEffortCleanupTarget = null;
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
             try
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.Deactivate | ADV | Object Id {0} deactivating, Client Connection Id {1}", ObjectID, Connection?.ClientConnectionId);
-
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(Connection);
 
                 SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
                 if (referenceCollection != null)
@@ -322,24 +293,7 @@ namespace Microsoft.Data.SqlClient
                 // Invoke subclass-specific deactivation logic
                 InternalDeactivate();
             }
-            catch (OutOfMemoryException)
-            {
-                DoomThisConnection();
-                throw;
-            }
-            catch (StackOverflowException)
-            {
-                DoomThisConnection();
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException)
-            {
-                DoomThisConnection();
-#if NETFRAMEWORK
-                BestEffortCleanup(bestEffortCleanupTarget);
-#endif
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception e)
             {
                 if (!ADP.IsCatchableExceptionType(e))
@@ -624,33 +578,8 @@ namespace Microsoft.Data.SqlClient
             // enlist in the user specified distributed transaction.  This
             // behavior matches OLEDB and ODBC.
 
-            TdsParser bestEffortCleanupTarget = null;
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif // NETFRAMEWORK
-           try
-            {
-                bestEffortCleanupTarget = GetBestEffortCleanupTarget(Connection);
-                Enlist(transaction);
-            }
-            catch (OutOfMemoryException e)
-            {
-                Connection.Abort(e);
-                throw;
-            }
-            catch (StackOverflowException e)
-            {
-                Connection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                Connection.Abort(e);
-#if NETFRAMEWORK
-                BestEffortCleanup(bestEffortCleanupTarget);
-#endif
-                throw;
-            }
+            Enlist(transaction);
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         abstract internal void ExecuteTransaction(TransactionRequest transactionRequest, string name, System.Data.IsolationLevel iso, SqlInternalTransaction internalTransaction, bool isDelegateControlRequest);
@@ -707,30 +636,5 @@ namespace Microsoft.Data.SqlClient
         abstract protected void PropagateTransactionCookie(byte[] transactionCookie);
 
         abstract internal void ValidateConnectionForExecute(SqlCommand command);
-
-        static internal TdsParser GetBestEffortCleanupTarget(SqlConnection connection)
-        {
-            if (connection != null)
-            {
-                SqlInternalConnectionTds innerConnection = (connection.InnerConnection as SqlInternalConnectionTds);
-                if (innerConnection != null)
-                {
-                    return innerConnection.Parser;
-                }
-            }
-
-            return null;
-        }
-
-#if NETFRAMEWORK
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-        static internal void BestEffortCleanup(TdsParser target)
-        {
-            if (target != null)
-            {
-                target.BestEffortCleanup();
-            }
-        }
-#endif
     }
 }
