@@ -188,12 +188,12 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                 && !dataSource.Contains(@"\"))
             {
                 TestXEventsStreaming(connectionString);
-            }
 
-            // These tests fail with named pipes, since they try to do DNS lookups on named pipe paths.
-            if (!usingNamePipes)
-            {
-                if (DataTestUtility.IsUsingNativeSNI())
+                // These tests also fail with named pipes, since they try to do
+                // DNS lookups on named pipe paths.
+                //
+                // They also are only meant to run for native SNI.
+                if (!usingNamePipes && DataTestUtility.IsUsingNativeSNI())
                 {
                     TimeoutDuringReadAsyncWithClosedReaderTest(connectionString);
                 }
