@@ -12585,7 +12585,18 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCertificateLocation", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid certificate location &apos;{0}&apos; in certificate path &apos;{1}&apos;. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is &apos;{2}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidCertificateLocation_Unix
+        {
+            get
+            {
+                return ResourceManager.GetString("TCE_InvalidCertificateLocation_Unix", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Invalid certificate location &apos;{0}&apos; in certificate path &apos;{1}&apos;. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{2}&apos; or &apos;{3}&apos;..
         /// </summary>
@@ -12594,7 +12605,18 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCertificateLocationSysErr", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Invalid certificate location &apos;{0}&apos; in certificate path &apos;{1}&apos;. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is &apos;{2}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidCertificateLocationSysErr_Unix
+        {
+            get
+            {
+                return ResourceManager.GetString("TCE_InvalidCertificateLocationSysErr_Unix", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid certificate path: &apos;{0}&apos;. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{1}&apos; or &apos;{2}&apos;..
         /// </summary>
@@ -12603,7 +12625,18 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCertificatePath", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid certificate path: &apos;{0}&apos;. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidCertificatePath_Unix
+        {
+            get
+            {
+                return ResourceManager.GetString("TCE_InvalidCertificatePath_Unix", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Invalid certificate path: &apos;{0}&apos;. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{1}&apos; or &apos;{2}&apos;..
         /// </summary>
@@ -12612,7 +12645,18 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCertificatePathSysErr", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Invalid certificate path: &apos;{0}&apos;. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidCertificatePathSysErr_Unix
+        {
+            get
+            {
+                return ResourceManager.GetString("TCE_InvalidCertificatePathSysErr_Unix", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to The specified encrypted column encryption key signature does not match the signature computed with the column master key (certificate) in &apos;{0}&apos;. The encrypted column encryption key may be corrupt, or the specified path may be incorrect..
         /// </summary>
@@ -12990,7 +13034,18 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullCertificatePath", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is &apos;{0}&apos;..
+        /// </summary>
+        internal static string TCE_NullCertificatePath_Unix
+        {
+            get
+            {
+                return ResourceManager.GetString("TCE_NullCertificatePath_Unix", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{0}&apos; or &apos;{1}&apos;..
         /// </summary>
@@ -12999,7 +13054,18 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullCertificatePathSysErr", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is &apos;{0}&apos;..
+        /// </summary>
+        internal static string TCE_NullCertificatePathSysErr_Unix
+        {
+            get
+            {
+                return ResourceManager.GetString("TCE_NullCertificatePathSysErr_Unix", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Ciphertext value cannot be null..
         /// </summary>
