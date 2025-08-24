@@ -3,15 +3,32 @@
     <RootNamespace>Utf8String</RootNamespace>
     <AssemblyName>Utf8String</AssemblyName>
     <ProjectGuid>{E0A6BB21-574B-43D9-890D-6E1144F2EE9E}</ProjectGuid>
-    <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
-    <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>  
     <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
   </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Condition="!$(ReferenceType.Contains('Package'))" Include="$(SqlServerSource)Microsoft.SqlServer.Server.csproj" />
-    <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Data.SqlClient" />
-  </ItemGroup>
+
+  <Choose>
+    <When Condition="'$(ReferenceType)' == 'Package'">
+      <ItemGroup>
+        <PackageReference Include="Microsoft.Data.SqlClient" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <Choose>
+        <When Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETFramework'">
+          <ItemGroup>
+            <ProjectReference Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+          </ItemGroup>
+        </When>
+        <Otherwise>
+          <ItemGroup>
+            <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+          </ItemGroup>
+        </Otherwise>
+      </Choose>
+      <ItemGroup>
+        <ProjectReference Include="$(SqlServerSource)Microsoft.SqlServer.Server.csproj" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
 </Project>
