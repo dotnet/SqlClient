@@ -24,7 +24,6 @@ using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.Server;
 using System.Transactions;
 using System.Collections.Concurrent;
-using System.Collections;
 
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
@@ -6266,9 +6265,7 @@ namespace Microsoft.Data.SqlClient
                         // Don't assume a default value exists for parameters in the case when
                         // the user is simply requesting schema.
                         // TVPs use DEFAULT and do not allow NULL, even for schema only.
-                        bool isEmptyValue = parameter.Value is null || (parameter.Value is ICollection collection && collection.Count == 0);
-                        bool allowsDefault = !inSchema || parameter.SqlDbType is SqlDbType.Structured;
-                        if (isEmptyValue && allowsDefault)
+                        if (parameter.Value == null && (!inSchema || SqlDbType.Structured == parameter.SqlDbType))
                         {
                             options |= TdsEnums.RPC_PARAM_DEFAULT;
                         }
