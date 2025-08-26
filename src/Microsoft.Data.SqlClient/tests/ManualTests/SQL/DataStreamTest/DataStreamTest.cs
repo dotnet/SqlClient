@@ -707,7 +707,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             "<employees employeeId=\"9\" lastname=\"Dodsworth\" firstname=\"Anne\" />",
                         };
 
-                        xr.Read();
+                        Assert.True(xr.Read());
                         for (int i = 0; !xr.EOF; i++)
                         {
                             Assert.True(i < expectedResults.Length, "ERROR: Received more XML results than expected");
@@ -722,7 +722,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     string errorMessage;
                     using (xr = cmd.ExecuteXmlReader())
                     {
-                        xr.Read();
+                        Assert.True(xr.Read());
 
                         // make sure we get an exception if we try to get another reader
                         errorMessage = SystemDataResourceManager.Instance.ADP_OpenReaderExists("Connection");
@@ -733,7 +733,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     cmd.CommandText = "select * from orders for xml auto";
                     using (xr = cmd.ExecuteXmlReader())
                     {
-                        xr.Read();
+                        Assert.True(xr.Read());
                         conn.Close();
                         conn.Open();
                     }
@@ -742,7 +742,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     cmd.CommandText = "select * from orders for xml auto";
                     using (xr = cmd.ExecuteXmlReader())
                     {
-                        xr.Read();
+                        Assert.True(xr.Read());
                         while (!xr.EOF)
                         {
                             xr.ReadOuterXml();
@@ -753,7 +753,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     cmd.CommandText = "select * from orders where 0 = 1 for xml auto";
                     using (xr = cmd.ExecuteXmlReader())
                     {
-                        xr.Read();
+                        Assert.True(xr.Read());
                         while (!xr.EOF)
                         {
                             xr.ReadOuterXml();
@@ -783,8 +783,10 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             "<employees employeeId=\"2\" />"
                         };
 
+                        Assert.True(xr.Read());
+
                         // Read all of the rows.
-                        while (xr.Read())
+                        while (! xr.EOF)
                         {
                             // We have a row, so we must have at least one
                             // expected element to check.
