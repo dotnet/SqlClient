@@ -29,6 +29,7 @@
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
+    <ProjectReference Include="$(TestsPath)Common\Common.csproj" />
   </ItemGroup>
   <!-- .NET Framework references -->
   <ItemGroup Condition="$(TargetGroup) == 'netfx'">
