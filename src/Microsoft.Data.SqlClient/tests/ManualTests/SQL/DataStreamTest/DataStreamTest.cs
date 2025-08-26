@@ -4,6 +4,7 @@
 
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using System.IO;
@@ -766,7 +767,10 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                         "select employeeId from employees where employeeid < 3 for xml auto;";
                     using (xr = cmd.ExecuteXmlReader())
                     {
-                        string[] expectedResults =
+                        // The XML elements may be returned in any order, so we
+                        // must use a set to track which expected elements we've
+                        // seen.
+                        var expectedResults = new HashSet<string>
                         {
                             "<orders orderid=\"10248\" />",
                             "<orders orderid=\"10249\" />",
@@ -778,14 +782,23 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             "<employees employeeId=\"1\" />",
                             "<employees employeeId=\"2\" />"
                         };
-                        xr.Read();
-                        for (int i = 0; !xr.EOF; i++)
-                        {
-                            Assert.True(i < expectedResults.Length, "ERROR: Received more XML results than expected");
 
+                        // Read all of the rows.
+                        while (xr.Read())
+                        {
+                            // We have a row, so we must have at least one
+                            // expected element to check.
+                            Assert.NotEmpty(expectedResults);
+
+                            // Obtain the current row's XML element.
                             string actualResult = xr.ReadOuterXml();
-                            DataTestUtility.AssertEqualsWithDescription(expectedResults[i], actualResult, "FAILED: Actual XML results differed from expected value.");
+
+                            // We must find the current row in our expected set.
+                            Assert.True(expectedResults.Remove(actualResult));
                         }
+
+                        // We must have seen all expected elements.
+                        Assert.Empty(expectedResults);
                     }
 
                     // multiple columns
