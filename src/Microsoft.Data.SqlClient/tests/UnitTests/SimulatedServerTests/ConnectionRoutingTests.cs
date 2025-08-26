@@ -104,10 +104,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             Assert.Throws<SqlException>(() => connection.Open());
         }
 
-        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3528")]
-        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3527")]
         [Fact]
-        public void NetworkErrorAtRoutedLocation_ShouldReturnToGateway()
+        public void NetworkDelayAtRoutedLocation_RetryDisabled_ShouldSucceed()
         {
             // Arrange
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
@@ -132,41 +130,33 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 DataSource = "localhost," + router.EndPoint.Port,
                 ApplicationIntent = ApplicationIntent.ReadOnly,
                 ConnectTimeout = 5,
-                ConnectRetryInterval = 1,
+                ConnectRetryCount = 0, // disable retry
                 Encrypt = false,
+                MultiSubnetFailover = false,
+#if NETFRAMEWORK
+                TransparentNetworkIPResolution = false
+#endif
             };
             using SqlConnection connection = new(builder.ConnectionString);
-            try
-            {
-                // Act
-                connection.Open();
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
+
+            // Act
+            connection.Open();
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
-            // Routing does not update the connection's data source
-            Assert.Equal($"localhost,{router.EndPoint.Port}", connection.DataSource);
-
-            // Failures should prompt the client to return to the original server, resulting in a login count of 2
-            Assert.Equal(2, router.PreLoginCount);
-            Assert.Equal(2, server.PreLoginCount);
+            Assert.Equal(1, router.PreLoginCount);
+            Assert.Equal(1, server.PreLoginCount);
         }
 
-        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3528")]
-        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3527")]
         [Fact]
-        public void NetworkErrorAtRoutedLocation_RetryDisabled_ShouldFail()
+        public void NetworkTimeoutAtRoutedLocation_RetryDisabled_ShouldFail()
         {
             // Arrange
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientTimeout = true,
-                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                    SleepDuration = TimeSpan.FromMilliseconds(2000),
                 });
 
             server.Start();
@@ -183,18 +173,24 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             {
                 DataSource = "localhost," + router.EndPoint.Port,
                 ApplicationIntent = ApplicationIntent.ReadOnly,
-                ConnectTimeout = 5,
-                ConnectRetryInterval = 1,
+                ConnectTimeout = 1,
                 ConnectRetryCount = 0, // disable retry
                 Encrypt = false,
+                MultiSubnetFailover = false,
+#if NETFRAMEWORK
+                TransparentNetworkIPResolution = false
+#endif
             };
             using SqlConnection connection = new(builder.ConnectionString);
-            //TODO validate exception type
-            Assert.Throws<SqlException>(() => connection.Open());
+
+            // Act
+            var e = Assert.Throws<SqlException>(connection.Open);
+
+            // Assert 
+            Assert.Equal(ConnectionState.Closed, connection.State);
+            Assert.Contains("Connection Timeout Expired", e.Message);
         }
 
-        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3528")]
-        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3527")]
         [Fact]
         public void NetworkErrorDuringCommand_ShouldReturnToGateway()
         {
@@ -221,10 +217,13 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 DataSource = "localhost," + router.EndPoint.Port,
                 ApplicationIntent = ApplicationIntent.ReadOnly,
                 ConnectTimeout = 5,
-                ConnectRetryInterval = 1,
                 Encrypt = false,
                 CommandTimeout = 5,
-                ConnectRetryCount = 1
+                ConnectRetryCount = 5,
+                MultiSubnetFailover = false,
+#if NETFRAMEWORK
+                TransparentNetworkIPResolution = false,
+#endif
             };
             using SqlConnection connection = new(builder.ConnectionString);
             try
@@ -248,8 +247,6 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             // Break the connection to force a reconnect
             server.KillAllConnections();
 
-            server.SetTransientTimeoutBehavior(true, TimeSpan.FromMilliseconds(1000));
-
             SqlCommand command = new SqlCommand("Select 1;", connection);
             command.ExecuteScalar();
 
@@ -258,8 +255,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             Assert.Equal($"localhost,{router.EndPoint.Port}", connection.DataSource);
 
             // Failures should prompt the client to return to the gateway
-            Assert.Equal(3, router.PreLoginCount);
-            Assert.Equal(3, server.PreLoginCount);
+            Assert.Equal(2, router.PreLoginCount);
+            Assert.Equal(2, server.PreLoginCount);
         }
     }
 }

@@ -99,7 +99,11 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 ConnectRetryInterval = 1,
                 ConnectTimeout = 30,
                 Encrypt = SqlConnectionEncryptOption.Optional,
-                InitialCatalog = "test"
+                InitialCatalog = "test",
+                MultiSubnetFailover = false,
+#if NETFRAMEWORK
+                TransparentNetworkIPResolution = false,
+#endif
             };
 
             // Open the initial connection to warm up the pool and populate failover partner information
@@ -136,9 +140,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             Assert.Equal(2, failoverServer.PreLoginCount);
         }
 
-        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3527")]
         [Fact]
-        public void NetworkError_RetryDisabled_ShouldFail()
+        public void NetworkTimeout_ShouldFail()
         {
             using TdsServer failoverServer = new TdsServer(
                 new TdsServerArguments
@@ -153,7 +156,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientTimeout = true,
-                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                    SleepDuration = TimeSpan.FromMilliseconds(2000),
                     FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 });
             server.Start();
@@ -162,27 +165,29 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             {
                 DataSource = "localhost," + server.EndPoint.Port,
                 InitialCatalog = "master",// Required for failover partner to work
-                ConnectTimeout = 5,
+                ConnectTimeout = 1,
                 ConnectRetryInterval = 1,
                 ConnectRetryCount = 0, // Disable retry 
                 Encrypt = false,
+                MultiSubnetFailover = false,
+#if NETFRAMEWORK
+                TransparentNetworkIPResolution = false,
+#endif
             };
             using SqlConnection connection = new(builder.ConnectionString);
 
             // Act
-            Assert.Throws<SqlException>(() => connection.Open());
+            var e = Assert.Throws<SqlException>(() => connection.Open());
 
             // Assert
-            // On the first connection attempt, no failover partner information is available,
-            // so the connection will retry on the same server.
+            Assert.Contains("Connection Timeout Expired", e.Message);
             Assert.Equal(ConnectionState.Closed, connection.State);
             Assert.Equal(1, server.PreLoginCount);
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
-        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3528")]
         [Fact]
-        public void NetworkError_RetryEnabled_ShouldConnectToPrimary()
+        public void NetworkDelay_ShouldConnectToPrimary()
         {
             using TdsServer failoverServer = new TdsServer(
                 new TdsServerArguments
@@ -207,8 +212,11 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 DataSource = "localhost," + server.EndPoint.Port,
                 InitialCatalog = "master",// Required for failover partner to work
                 ConnectTimeout = 5,
-                ConnectRetryInterval = 1,
                 Encrypt = false,
+                MultiSubnetFailover = false,
+#if NETFRAMEWORK
+                TransparentNetworkIPResolution = false,
+#endif
             };
             using SqlConnection connection = new(builder.ConnectionString);
             try
@@ -226,7 +234,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             // so the connection will retry on the same server.
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
-            Assert.Equal(2, server.PreLoginCount);
+            Assert.Equal(1, server.PreLoginCount);
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
@@ -246,7 +254,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientTimeout = true,
-                    SleepDuration = TimeSpan.FromMilliseconds(5000),
+                    SleepDuration = TimeSpan.FromMilliseconds(10000),
                     FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 });
             server.Start();
@@ -277,8 +285,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             // so the connection will retry on the failover server.
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
-            Assert.Equal(1, server.PreLoginCount);
             Assert.Equal(1, failoverServer.PreLoginCount);
+            Assert.Equal(1, server.PreLoginCount);
         }
 
         [Fact]
@@ -297,7 +305,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientTimeout = true,
-                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                    SleepDuration = TimeSpan.FromMilliseconds(10000),
                     FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 });
             server.Start();

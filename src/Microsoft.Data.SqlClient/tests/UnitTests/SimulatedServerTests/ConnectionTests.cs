@@ -211,33 +211,38 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         }
 
         [Theory]
-        [InlineData(false)]
         [InlineData(true)]
-        public void NetworkError_RetryEnabled_ShouldSucceed(bool multiSubnetFailoverEnabled)
+        [InlineData(false)]
+        public async Task NetworkDelay_RetryDisabled_Async(bool multiSubnetFailoverEnabled)
         {
+            // Arrange
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientTimeout = true,
-                    SleepDuration = TimeSpan.FromMilliseconds(3000),
+                    SleepDuration = TimeSpan.FromMilliseconds(1000),
                 });
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
-                Encrypt = SqlConnectionEncryptOption.Optional,
                 ConnectTimeout = 5,
+                ConnectRetryCount = 0,
+                Encrypt = SqlConnectionEncryptOption.Optional,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
-                TransparentNetworkIPResolution = multiSubnetFailoverEnabled
+                TransparentNetworkIPResolution = multiSubnetFailoverEnabled,
 #endif
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
-            connection.Open();
 
+            // Act
+            await connection.OpenAsync();
+
+            // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+
             if (multiSubnetFailoverEnabled)
             {
                 Assert.True(server.PreLoginCount > 1, "Expected multiple pre-login attempts due to retry.");
@@ -248,34 +253,12 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             }
         }
 
-        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3527")]
-        [Fact]
-        public async Task NetworkError_RetryDisabled_ShouldFail_Async()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void NetworkDelay_RetryDisabled(bool multiSubnetFailoverEnabled)
         {
-            using TransientDelayTdsServer server = new TransientDelayTdsServer(
-                new TransientDelayTdsServerArguments()
-                {
-                    IsEnabledTransientTimeout = true,
-                    SleepDuration = TimeSpan.FromMilliseconds(1000),
-                });
-            server.Start();
-            SqlConnectionStringBuilder builder = new()
-            {
-                DataSource = "localhost," + server.EndPoint.Port,
-                ConnectRetryCount = 0,
-                Encrypt = SqlConnectionEncryptOption.Optional
-            };
-
-            using SqlConnection connection = new(builder.ConnectionString);
-            SqlException e = await Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
-            Assert.Contains("Connection Timeout Expired", e.Message);
-            Assert.Equal(ConnectionState.Closed, connection.State);
-        }
-
-        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3527")]
-        [Fact]
-        public void NetworkError_RetryDisabled_ShouldFail()
-        {
+            // Arrange
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
                 {
@@ -288,13 +271,29 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 DataSource = "localhost," + server.EndPoint.Port,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional,
-                ConnectTimeout = 5
+                ConnectTimeout = 5,
+                MultiSubnetFailover = multiSubnetFailoverEnabled,
+#if NETFRAMEWORK
+                TransparentNetworkIPResolution = multiSubnetFailoverEnabled,
+#endif
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
-            SqlException e = Assert.Throws<SqlException>(() => connection.Open());
-            Assert.Contains("Connection Timeout Expired", e.Message);
-            Assert.Equal(ConnectionState.Closed, connection.State);
+
+            // Act
+            connection.Open();
+
+            // Assert
+            Assert.Equal(ConnectionState.Open, connection.State);
+
+            if (multiSubnetFailoverEnabled)
+            {
+                Assert.True(server.PreLoginCount > 1, "Expected multiple pre-login attempts due to retry.");
+            }
+            else
+            {
+                Assert.Equal(1, server.PreLoginCount);
+            }
         }
 
         [Fact]
