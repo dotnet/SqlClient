@@ -753,11 +753,8 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     cmd.CommandText = "select * from orders where 0 = 1 for xml auto";
                     using (xr = cmd.ExecuteXmlReader())
                     {
-                        Assert.True(xr.Read());
-                        while (!xr.EOF)
-                        {
-                            xr.ReadOuterXml();
-                        }
+                        Assert.False(xr.Read());
+                        Assert.True(xr.EOF);
                     }
 
                     // multiple results
