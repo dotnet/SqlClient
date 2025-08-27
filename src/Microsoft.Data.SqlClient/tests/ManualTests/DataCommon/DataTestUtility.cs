@@ -293,17 +293,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         /// <summary>
         /// Returns the current test name as:
-        /// 
+        ///
         ///   ClassName.MethodName
-        /// 
+        ///
         /// xUnit v2 doesn't provide access to a test context, so we use
         /// reflection into the ITestOutputHelper to get the test name.
         /// </summary>
-        /// 
+        ///
         /// <param name="outputHelper">
         ///   The output helper instance for the currently running test.
         /// </param>
-        /// 
+        ///
         /// <returns>The current test name.</returns>
         public static string CurrentTestName(ITestOutputHelper outputHelper)
         {
@@ -316,7 +316,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.NotNull(test);
 
             // The DisplayName is in the format:
-            // 
+            //
             //   Namespace.ClassName.MethodName(args)
             //
             // We only want the ClassName.MethodName portion.
@@ -326,7 +326,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // There should be 2 groups: the overall match, and the capture
             // group.
             Assert.Equal(2, match.Groups.Count);
-            
+
             // The portion we want is in the capture group.
             return match.Groups[1].Value;
         }
@@ -337,7 +337,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // the name, or have (args...) appended.
             @"\.((?:[^.]+)\.(?:[^.\(]+))(?:\(.*\))?$",
             RegexOptions.Compiled);
-        
+
         /// <summary>
         /// SQL Server properties we can query.
         ///
@@ -351,7 +351,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ProductMajorVersion,
             EngineEdition
         }
-        
+
         public static string GetSqlServerProperty(string connectionString, ServerProperty property)
         {
             using SqlConnection conn = new(connectionString);
@@ -474,7 +474,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsNotAzureSynapse() => !IsAzureSynapse;
 
         public static bool IsNotManagedInstance() => !IsManagedInstance;
-        
+
         // Synapse: UDT Test Database not compatible with Azure Synapse.
         public static bool IsUdtTestDatabasePresent() => IsDatabasePresent(UdtTestDbName) && IsNotAzureSynapse();
 
@@ -585,7 +585,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsUsingNativeSNI() =>
 #if !NETFRAMEWORK
             IsNotUsingManagedSNIOnWindows();
-#else 
+#else
             true;
 #endif
         // Synapse: UTF8 collations are not supported with Azure Synapse.
@@ -671,7 +671,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// succession.  The 12 characters are concatenated together without any
         /// separators.
         /// </summary>
-        /// 
+        ///
         /// <param name="prefix">
         /// The prefix to use when generating the unique name, truncated to at
         /// most 18 characters when withBracket is false, and 16 characters when
@@ -679,17 +679,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         ///
         /// This should not contain any characters that cannot be used in
         /// database object names.  See:
-        /// 
+        ///
         /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
         /// </param>
-        /// 
+        ///
         /// <param name="withBracket">
         /// When true, the entire generated name will be enclosed in square
         /// brackets, for example:
-        /// 
+        ///
         ///   [MyPrefix_7ff01cb811f0]
         /// </param>
-        /// 
+        ///
         /// <returns>
         /// A unique database object name, no more than 30 characters long.
         /// </returns>
@@ -723,7 +723,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Generate a long unique database object name, whose maximum length is
         /// 96 characters, with the format:
-        /// 
+        ///
         ///   <Prefix>_<GuidParts>_<UserName>_<MachineName>
         ///
         /// The Prefix will be truncated to satisfy the overall maximum length.
@@ -742,24 +742,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// The UserName and MachineName are obtained from the Environment,
         /// and will be truncated to satisfy the maximum overall length.
         /// </summary>
-        /// 
+        ///
         /// <param name="prefix">
         /// The prefix to use when generating the unique name, truncated to at
         /// most 32 characters.
         ///
         /// This should not contain any characters that cannot be used in
         /// database object names.  See:
-        /// 
+        ///
         /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
         /// </param>
-        /// 
+        ///
         /// <param name="withBracket">
         /// When true, the entire generated name will be enclosed in square
         /// brackets, for example:
-        /// 
+        ///
         ///   [MyPrefix_7ff01cb811f0_test_user_ci_agent_machine_name]
         /// </param>
-        /// 
+        ///
         /// <returns>
         /// A unique database object name, no more than 96 characters long.
         /// </returns>
@@ -1332,7 +1332,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             /// <summary>
             /// Construct with the specified parameters.
-            /// 
+            ///
             /// This will use the connection to query the server properties and
             /// setup and start the XEvent session.
             /// </summary>
@@ -1350,7 +1350,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ushort durationInMinutes = 5)
             {
                 SessionName = GenerateRandomCharacters(sessionName);
-                
+
                 _connection = connection;
                 Assert.Equal(ConnectionState.Open, _connection.State);
 
@@ -1373,7 +1373,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 // Setup and start the XEvent session.
                 string sessionLocation = _isAzureSql ? "DATABASE" : "SERVER";
-                
+
                 // Both Azure SQL and SQL Server 2025+ support setting a maximum
                 // duration for the XEvent session.
                 string duration =
@@ -1394,7 +1394,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             MEMORY_PARTITION_MODE=NONE,
                             TRACK_CAUSALITY=ON,
                             STARTUP_STATE=OFF)
-                            
+
                         ALTER EVENT SESSION [{SessionName}] ON {sessionLocation} STATE = START ";
 
                 using SqlCommand createXEventSession = new SqlCommand(xEventCreateAndStartCommandText, _connection);
