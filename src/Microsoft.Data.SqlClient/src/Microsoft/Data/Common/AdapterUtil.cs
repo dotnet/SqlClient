@@ -24,6 +24,7 @@ using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Identity.Client;
 using Microsoft.SqlServer.Server;
 using System.Security.Authentication;
+using System.Collections.Generic;
 
 #if NETFRAMEWORK
 using System.Reflection;
@@ -780,7 +781,7 @@ namespace Microsoft.Data.Common
         /// <remarks>This array includes endpoint URLs for Azure SQL in global, Germany, US Government,
         /// China, and Fabric environments. These endpoints are used to identify and interact with Azure SQL services 
         /// in their respective regions or environments.</remarks>
-        internal static readonly string[] s_azureSqlServerEndpoints = { AZURE_SQL,
+        internal static readonly List<string> s_azureSqlServerEndpoints = new() { AZURE_SQL,
                                                                         AZURE_SQL_GERMANY,
                                                                         AZURE_SQL_USGOV,
                                                                         AZURE_SQL_CHINA,
@@ -816,11 +817,11 @@ namespace Microsoft.Data.Common
         
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
         {
-            return IsEndpoint(dataSource, s_azureSqlServerEndpoints);
+            return IsEndpoint(dataSource, s_azureSqlServerEndpoints.AsReadOnly());
         }
 
         // This method assumes dataSource parameter is in TCP connection string format.
-        private static bool IsEndpoint(string dataSource, string[] endpoints)
+        private static bool IsEndpoint(string dataSource, IReadOnlyList<string> endpoints)
         {
             int length = dataSource.Length;
             // remove server port

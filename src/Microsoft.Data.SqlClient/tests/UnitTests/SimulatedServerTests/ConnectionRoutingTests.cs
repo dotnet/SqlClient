@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using Microsoft.Data.Common;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
@@ -107,6 +108,9 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         [Fact]
         public void NetworkDelayAtRoutedLocation_RetryDisabled_ShouldSucceed()
         {
+            using ADPHelper adpHelper = new ADPHelper();
+            adpHelper.AddAzureSqlServerEndpoint("localhost");
+
             // Arrange
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
@@ -131,11 +135,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 ApplicationIntent = ApplicationIntent.ReadOnly,
                 ConnectTimeout = 5,
                 ConnectRetryCount = 0, // disable retry
-                Encrypt = false,
-                MultiSubnetFailover = false,
-#if NETFRAMEWORK
-                TransparentNetworkIPResolution = false
-#endif
+                Encrypt = false
             };
             using SqlConnection connection = new(builder.ConnectionString);
 
