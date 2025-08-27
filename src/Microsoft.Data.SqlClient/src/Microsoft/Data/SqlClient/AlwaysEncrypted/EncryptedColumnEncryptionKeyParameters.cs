@@ -22,13 +22,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted;
 /// Version: 1 byte, always 0x01
 /// </item>
 /// <item>
-/// Key path length: 2 bytes, length of the key path in bytes
+/// Key path length: 2 bytes, length of the key path in bytes. Written in little-endian byte order.
 /// </item>
 /// <item>
-/// Ciphertext length: 2 bytes, length of the ciphertext in bytes
+/// Ciphertext length: 2 bytes, length of the ciphertext in bytes. Written in little-endian byte order.
 /// </item>
 /// <item>
-/// Key path: variable length, Unicode-encoded string representing the key path
+/// Key path: variable length, string representing the key path. Encoded with UTF-16.
 /// </item>
 /// <item>
 /// Ciphertext: variable length, encrypted data. Length determined by size of the RSA key used for encryption
@@ -65,6 +65,23 @@ internal readonly ref struct EncryptedColumnEncryptionKeyParameters // : IDispos
     private readonly string _keyPathReference;
 
     // @TODO: SqlColumnEncryptionCertificateStoreProvider, SqlColumnEncryptionCngProvider and SqlColumnEncryptionCspProvider should use this type.
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EncryptedColumnEncryptionKeyParameters"/> class with the specified
+    /// RSA key, key path, key type, and key path reference.
+    /// </summary>
+    /// <remarks>
+    /// This constructor is used to initialize the parameters required for encrypting a column encryption key. The
+    /// <paramref name="keyType"/> and <paramref name="keyPathReference"/> must correspond to the supported types and
+    /// references defined by the specific encryption provider being used.
+    /// </remarks>
+    /// <param name="rsa">The <see cref="RSA"/> object representing the RSA key used for encryption.</param>
+    /// <param name="keyPath">The path initially used to locate <paramref name="rsa"/>.</param>
+    /// <param name="keyType">The type of the encryption key. This must be one of the supported key types, such
+    /// as <see cref="SqlColumnEncryptionCertificateStoreProvider.MasterKeyType"/>, <see cref="SqlColumnEncryptionCngProvider.MasterKeyType"/>,
+    /// or <see cref="SqlColumnEncryptionCspProvider.MasterKeyType"/>.</param>
+    /// <param name="keyPathReference">The type of object which contains the RSA key referenced by the <paramref name="rsa"/>
+    /// parameter. This must be one of the supported object types, such as <see cref="SqlColumnEncryptionCertificateStoreProvider.KeyPathReference"/>,
+    /// <see cref="SqlColumnEncryptionCngProvider.KeyPathReference"/>, or <see cref="SqlColumnEncryptionCspProvider.KeyPathReference"/>.</param>
     public EncryptedColumnEncryptionKeyParameters(RSA rsa, string keyPath, string keyType, string keyPathReference)
     {
         _rsa = rsa;
@@ -79,10 +96,20 @@ internal readonly ref struct EncryptedColumnEncryptionKeyParameters // : IDispos
         _keyPathReference = keyPathReference;
     }
 
+    /// <summary>
+    /// Encrypts the specified column encryption key using the RSA key associated with this instance.
+    /// </summary>
+    /// <param name="columnEncryptionKey">The plaintext column encryption key to encrypt.</param>
+    /// <returns>
+    /// The encrypted column encryption key, including metadata such as the key path, ciphertext, and a digital signature
+    /// for integrity verification.
+    /// </returns>
     public byte[] Encrypt(byte[] columnEncryptionKey)
     {
         ushort keyPathSize = (ushort)Encoding.Unicode.GetByteCount(_keyPath);
-        int cekSize = sizeof(byte) + sizeof(ushort) + sizeof(ushort) + keyPathSize + _rsaKeySize + _rsaKeySize;
+        // The signature size is always the same as the RSA key size
+        int signatureSize = _rsaKeySize;
+        int cekSize = sizeof(byte) + sizeof(ushort) + sizeof(ushort) + keyPathSize + _rsaKeySize + signatureSize;
         byte[] encryptedColumnEncryptionKey = new byte[cekSize];
         int bytesWritten;
         int cipherTextOffset = KeyPathOffset + keyPathSize;
@@ -147,12 +174,24 @@ internal readonly ref struct EncryptedColumnEncryptionKeyParameters // : IDispos
         return encryptedColumnEncryptionKey;
     }
 
+    /// <summary>
+    /// Decrypts an encrypted column encryption key (CEK) using the RSA key associated with this instance.
+    /// </summary>
+    /// <remarks>
+    /// This method validates the algorithm version, ciphertext length, and signature length before
+    /// decrypting the CEK.  It also verifies the integrity of the encrypted CEK using the provided signature.
+    /// </remarks>
+    /// <param name="encryptedCek">A byte array containing the encrypted column encryption key. The array must include
+    /// the algorithm version, key path length, ciphertext, and signature.</param>
+    /// <returns>
+    /// The decrypted column encryption key.
+    /// </returns>
     public byte[] Decrypt(byte[] encryptedCek)
     {
         // Validate the version byte
-        if (encryptedCek[0] != AlgorithmVersion)
+        if (encryptedCek[AlgorithmOffset] != AlgorithmVersion)
         {
-            throw SQL.InvalidAlgorithmVersionInEncryptedCEK(encryptedCek[0], AlgorithmVersion);
+            throw SQL.InvalidAlgorithmVersionInEncryptedCEK(encryptedCek[AlgorithmOffset], AlgorithmVersion);
         }
 
         // Get key path length, but skip reading it. It exists only for troubleshooting purposes and doesn't need validation.
@@ -215,6 +254,12 @@ internal readonly ref struct EncryptedColumnEncryptionKeyParameters // : IDispos
         return _rsa.Decrypt(cipherText, RSAEncryptionPadding.OaepSHA1);
     }
 
+    /// <summary>
+    /// Releases all resources used by this <see cref="EncryptedColumnEncryptionKeyParameters"/>.
+    /// </summary>
+    /// <remarks>
+    /// This method disposes the <see cref="RSA"/> instance used to construct this <see cref="EncryptedColumnEncryptionKeyParameters" /> instance.
+    /// </remarks>
     public void Dispose() =>
         _rsa.Dispose();
 }
