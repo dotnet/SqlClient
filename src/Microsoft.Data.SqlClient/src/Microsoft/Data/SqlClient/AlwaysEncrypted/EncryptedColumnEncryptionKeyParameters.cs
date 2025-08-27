@@ -66,7 +66,7 @@ internal readonly ref struct EncryptedColumnEncryptionKeyParameters // : IDispos
 
     // @TODO: SqlColumnEncryptionCertificateStoreProvider, SqlColumnEncryptionCngProvider and SqlColumnEncryptionCspProvider should use this type.
     /// <summary>
-    /// Initializes a new instance of the <see cref="EncryptedColumnEncryptionKeyParameters"/> class with the specified
+    /// Initializes a new instance of the <see cref="EncryptedColumnEncryptionKeyParameters"/> struct with the specified
     /// RSA key, key path, key type, and key path reference.
     /// </summary>
     /// <remarks>

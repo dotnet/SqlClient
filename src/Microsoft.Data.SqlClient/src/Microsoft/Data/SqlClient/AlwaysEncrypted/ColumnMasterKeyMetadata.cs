@@ -55,7 +55,7 @@ internal readonly ref struct ColumnMasterKeyMetadata // : IDisposable
     /// and enclave computation settings.
     /// </summary>
     /// <remarks>
-    /// This class is used to encapsulate the metadata required for signing or verifying a column master key. The metadata includes
+    /// This struct is used to encapsulate the metadata required for signing or verifying a column master key. The metadata includes
     /// the provider name, the master key path, and whether enclave computations are allowed. The metadata is hashed using SHA-256
     /// to ensure integrity.
     /// </remarks>
