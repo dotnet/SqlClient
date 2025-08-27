@@ -11,9 +11,9 @@ using Microsoft.SqlServer.TDS.Login7;
 namespace Microsoft.SqlServer.TDS.Servers
 {
     /// <summary>
-    /// TDS Server that authenticates clients according to the requested parameters
+    /// TDS Server that returns TDS error token on login request for the specified number of times
     /// </summary>
-    public class TransientFaultTdsServer : GenericTdsServer<TransientFaultTdsServerArguments>, IDisposable
+    public class TransientTdsErrorTdsServer : GenericTdsServer<TransientTdsErrorTdsServerArguments>, IDisposable
     {
         private int RequestCounter = 0;
 
@@ -25,11 +25,11 @@ namespace Microsoft.SqlServer.TDS.Servers
             Arguments.RepeatCount = repeatCount;
         }
 
-        public TransientFaultTdsServer(TransientFaultTdsServerArguments arguments) : base(arguments)
+        public TransientTdsErrorTdsServer(TransientTdsErrorTdsServerArguments arguments) : base(arguments)
         {
         }
 
-        public TransientFaultTdsServer(TransientFaultTdsServerArguments arguments, QueryEngine queryEngine) : base(arguments, queryEngine)
+        public TransientTdsErrorTdsServer(TransientTdsErrorTdsServerArguments arguments, QueryEngine queryEngine) : base(arguments, queryEngine)
         {
         }
 

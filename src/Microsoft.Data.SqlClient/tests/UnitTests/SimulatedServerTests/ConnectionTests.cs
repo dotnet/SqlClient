@@ -77,8 +77,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         [InlineData(42109)]
         public async Task TransientFault_RetryEnabled_ShouldSucceed_Async(uint errorCode)
         {
-            using TransientFaultTdsServer server = new TransientFaultTdsServer(
-                new TransientFaultTdsServerArguments() 
+            using TransientTdsErrorTdsServer server = new TransientTdsErrorTdsServer(
+                new TransientTdsErrorTdsServerArguments() 
                 {
                   IsEnabledTransientError = true,
                   Number = errorCode,
@@ -102,8 +102,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         [InlineData(42109)]
         public void TransientFault_RetryEnabled_ShouldSucceed(uint errorCode)
         {
-            using TransientFaultTdsServer server = new TransientFaultTdsServer(
-                new TransientFaultTdsServerArguments()
+            using TransientTdsErrorTdsServer server = new TransientTdsErrorTdsServer(
+                new TransientTdsErrorTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,
@@ -127,8 +127,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         [InlineData(42109)]
         public async Task TransientFault_RetryDisabled_ShouldFail_Async(uint errorCode)
         {
-            using TransientFaultTdsServer server = new TransientFaultTdsServer(
-                new TransientFaultTdsServerArguments()
+            using TransientTdsErrorTdsServer server = new TransientTdsErrorTdsServer(
+                new TransientTdsErrorTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,
@@ -153,8 +153,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         [InlineData(42109)]
         public void TransientFault_RetryDisabled_ShouldFail(uint errorCode)
         {
-            using TransientFaultTdsServer server = new TransientFaultTdsServer(
-                new TransientFaultTdsServerArguments()
+            using TransientTdsErrorTdsServer server = new TransientTdsErrorTdsServer(
+                new TransientTdsErrorTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,
@@ -181,8 +181,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
                 {
-                    IsEnabledTransientTimeout = true,
-                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                    IsEnabledTransientDelay = true,
+                    DelayDuration = TimeSpan.FromMilliseconds(1000),
                 });
             server.Start();
             SqlConnectionStringBuilder builder = new()
@@ -219,8 +219,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
                 {
-                    IsEnabledTransientTimeout = true,
-                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                    IsEnabledTransientDelay = true,
+                    DelayDuration = TimeSpan.FromMilliseconds(1000),
                 });
             server.Start();
             SqlConnectionStringBuilder builder = new()
@@ -262,8 +262,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
                 {
-                    IsEnabledTransientTimeout = true,
-                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                    IsEnabledTransientDelay = true,
+                    DelayDuration = TimeSpan.FromMilliseconds(1000),
                 });
             server.Start();
             SqlConnectionStringBuilder builder = new()

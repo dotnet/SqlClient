@@ -4,7 +4,7 @@
 
 namespace Microsoft.SqlServer.TDS.Servers
 {
-    public class TransientFaultTdsServerArguments : TdsServerArguments
+    public class TransientTdsErrorTdsServerArguments : TdsServerArguments
     {
         /// <summary>
         /// Transient error number to be raised by server.

@@ -11,20 +11,20 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// The duration for which the server should sleep before responding to a request.
         /// </summary>
-        public TimeSpan SleepDuration = TimeSpan.FromSeconds(0);
+        public TimeSpan DelayDuration = TimeSpan.FromSeconds(0);
 
         /// <summary>
-        /// Flag to consider when simulating a timeout on the next request.
+        /// Flag to consider when simulating a delay on the next request.
         /// </summary>
-        public bool IsEnabledTransientTimeout = false;
+        public bool IsEnabledTransientDelay = false;
 
         /// <summary>
-        /// Flag to consider when simulating a timeout on each request.
+        /// Flag to consider when simulating a delay on each request.
         /// </summary>
-        public bool IsEnabledPermanentTimeout = false;
+        public bool IsEnabledPermanentDelay = false;
 
         /// <summary>
-        /// The number of times the transient error should be raised.
+        /// The number of logins during which the delay should be applied.
         /// </summary>
         public int RepeatCount = 1;
     }

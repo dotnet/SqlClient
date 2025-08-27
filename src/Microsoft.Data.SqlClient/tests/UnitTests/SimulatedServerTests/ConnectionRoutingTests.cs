@@ -19,8 +19,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         public void TransientFaultAtRoutedLocation_ShouldReturnToGateway(uint errorCode)
         {
             // Arrange
-            using TransientFaultTdsServer server = new TransientFaultTdsServer(
-                new TransientFaultTdsServerArguments()
+            using TransientTdsErrorTdsServer server = new TransientTdsErrorTdsServer(
+                new TransientTdsErrorTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,
@@ -73,8 +73,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         public void TransientFaultAtRoutedLocation_RetryDisabled_ShouldFail(uint errorCode)
         {
             // Arrange
-            using TransientFaultTdsServer server = new TransientFaultTdsServer(
-                new TransientFaultTdsServerArguments()
+            using TransientTdsErrorTdsServer server = new TransientTdsErrorTdsServer(
+                new TransientTdsErrorTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,
@@ -105,18 +105,17 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             Assert.Throws<SqlException>(() => connection.Open());
         }
 
-        [Fact]
-        public void NetworkDelayAtRoutedLocation_RetryDisabled_ShouldSucceed()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void NetworkDelayAtRoutedLocation_RetryDisabled_ShouldSucceed(bool multiSubnetFailoverEnabled)
         {
-            using ADPHelper adpHelper = new ADPHelper();
-            adpHelper.AddAzureSqlServerEndpoint("localhost");
-
             // Arrange
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
                 {
-                    IsEnabledTransientTimeout = true,
-                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                    IsEnabledTransientDelay = true,
+                    DelayDuration = TimeSpan.FromMilliseconds(1000),
                 });
 
             server.Start();
@@ -135,7 +134,11 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 ApplicationIntent = ApplicationIntent.ReadOnly,
                 ConnectTimeout = 5,
                 ConnectRetryCount = 0, // disable retry
-                Encrypt = false
+                Encrypt = false,
+                MultiSubnetFailover = multiSubnetFailoverEnabled,
+#if NETFRAMEWORK
+                TransparentNetworkIPResolution = multiSubnetFailoverEnabled,
+#endif
             };
             using SqlConnection connection = new(builder.ConnectionString);
 
@@ -145,7 +148,14 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal(1, router.PreLoginCount);
-            Assert.Equal(1, server.PreLoginCount);
+            if (multiSubnetFailoverEnabled)
+            {
+                Assert.True(server.PreLoginCount > 1);
+            }
+            else
+            {
+                Assert.Equal(1, server.PreLoginCount);
+            }
         }
 
         [Fact]
@@ -155,8 +165,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
                 {
-                    IsEnabledTransientTimeout = true,
-                    SleepDuration = TimeSpan.FromMilliseconds(2000),
+                    IsEnabledTransientDelay = true,
+                    DelayDuration = TimeSpan.FromMilliseconds(2000),
                 });
 
             server.Start();
@@ -192,14 +202,13 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         }
 
         [Fact]
-        public void NetworkErrorDuringCommand_ShouldReturnToGateway()
+        public void NetworkErrorAtRoutedLocation_RetryDisabled_ShouldFail()
         {
             // Arrange
-            using TransientDelayTdsServer server = new TransientDelayTdsServer(
-                new TransientDelayTdsServerArguments()
+            using TransientNetworkErrorTdsServer server = new TransientNetworkErrorTdsServer(
+                new TransientNetworkErrorTdsServerArguments()
                 {
-                    IsEnabledTransientTimeout = false,
-                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                    IsEnabledTransientError = true
                 });
 
             server.Start();
@@ -217,12 +226,89 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 DataSource = "localhost," + router.EndPoint.Port,
                 ApplicationIntent = ApplicationIntent.ReadOnly,
                 ConnectTimeout = 5,
+                ConnectRetryCount = 0, // disable retry
+                Encrypt = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+
+            // Act
+            var e = Assert.Throws<SqlException>(connection.Open);
+
+            // Assert 
+            Assert.Equal(ConnectionState.Closed, connection.State);
+            Assert.Contains("An existing connection was forcibly closed by the remote host", e.Message);
+            Assert.Equal(1, router.PreLoginCount);
+            Assert.Equal(1, server.PreLoginCount);
+        }
+
+        [Fact]
+        public void NetworkErrorAtRoutedLocation_ShouldFail()
+        {
+            // Arrange
+            using TransientNetworkErrorTdsServer server = new TransientNetworkErrorTdsServer(
+                new TransientNetworkErrorTdsServerArguments()
+                {
+                    IsEnabledTransientError = true
+                });
+
+            server.Start();
+
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                });
+            router.Start();
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            {
+                DataSource = "localhost," + router.EndPoint.Port,
+                ApplicationIntent = ApplicationIntent.ReadOnly,
+                ConnectTimeout = 5,
+                Encrypt = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+
+            // Act
+            var e = Assert.Throws<SqlException>(connection.Open);
+
+            // Assert 
+            Assert.Equal(ConnectionState.Closed, connection.State);
+            Assert.Contains("An existing connection was forcibly closed by the remote host", e.Message);
+            Assert.Equal(1, router.PreLoginCount);
+            Assert.Equal(1, server.PreLoginCount);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void NetworkErrorDuringCommand_ShouldReturnToGateway(bool multiSubnetFailoverEnabled)
+        {
+            // Arrange
+            using TdsServer server = new TdsServer();
+            server.Start();
+
+            using RoutingTdsServer router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)server.EndPoint.Port,
+                });
+            router.Start();
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            {
+                DataSource = "localhost," + router.EndPoint.Port,
+                ApplicationIntent = ApplicationIntent.ReadOnly,
+                ConnectTimeout = 10,
                 Encrypt = false,
-                CommandTimeout = 5,
-                ConnectRetryCount = 5,
-                MultiSubnetFailover = false,
+                CommandTimeout = 10,
+                ConnectRetryInterval = 1,
+                Pooling = false,
+                MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
-                TransparentNetworkIPResolution = false,
+                TransparentNetworkIPResolution = multiSubnetFailoverEnabled,
 #endif
             };
             using SqlConnection connection = new(builder.ConnectionString);

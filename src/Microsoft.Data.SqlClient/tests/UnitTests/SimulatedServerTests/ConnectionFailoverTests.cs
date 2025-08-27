@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             var failoverDataSource = $"localhost,{failoverServer.EndPoint.Port}";
 
             // Errors are off to start to allow the pool to warm up
-            using TransientFaultTdsServer initialServer = new TransientFaultTdsServer(new TransientFaultTdsServerArguments
+            using TransientTdsErrorTdsServer initialServer = new TransientTdsErrorTdsServer(new TransientTdsErrorTdsServerArguments
             {
                 FailoverPartner = failoverDataSource
             });
@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             var failoverDataSource = $"localhost,{failoverServer.EndPoint.Port}";
 
             // Errors are off to start to allow the pool to warm up
-            using TransientFaultTdsServer initialServer = new TransientFaultTdsServer(new TransientFaultTdsServerArguments
+            using TransientTdsErrorTdsServer initialServer = new TransientTdsErrorTdsServer(new TransientTdsErrorTdsServerArguments
             {
                 FailoverPartner = failoverDataSource
             });
@@ -155,8 +155,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
                 {
-                    IsEnabledTransientTimeout = true,
-                    SleepDuration = TimeSpan.FromMilliseconds(2000),
+                    IsEnabledTransientDelay = true,
+                    DelayDuration = TimeSpan.FromMilliseconds(2000),
                     FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 });
             server.Start();
@@ -201,8 +201,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
                 {
-                    IsEnabledTransientTimeout = true,
-                    SleepDuration = TimeSpan.FromMilliseconds(1000),
+                    IsEnabledTransientDelay = true,
+                    DelayDuration = TimeSpan.FromMilliseconds(1000),
                     FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 });
             server.Start();
@@ -253,8 +253,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
                 {
-                    IsEnabledTransientTimeout = true,
-                    SleepDuration = TimeSpan.FromMilliseconds(10000),
+                    IsEnabledTransientDelay = true,
+                    DelayDuration = TimeSpan.FromMilliseconds(10000),
                     FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 });
             server.Start();
@@ -304,8 +304,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             using TransientDelayTdsServer server = new TransientDelayTdsServer(
                 new TransientDelayTdsServerArguments()
                 {
-                    IsEnabledTransientTimeout = true,
-                    SleepDuration = TimeSpan.FromMilliseconds(10000),
+                    IsEnabledTransientDelay = true,
+                    DelayDuration = TimeSpan.FromMilliseconds(10000),
                     FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 });
             server.Start();
@@ -354,8 +354,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             failoverServer.Start();
 
-            using TransientFaultTdsServer server = new TransientFaultTdsServer(
-                new TransientFaultTdsServerArguments()
+            using TransientTdsErrorTdsServer server = new TransientTdsErrorTdsServer(
+                new TransientTdsErrorTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,
@@ -405,8 +405,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             failoverServer.Start();
 
-            using TransientFaultTdsServer server = new TransientFaultTdsServer(
-                new TransientFaultTdsServerArguments()
+            using TransientTdsErrorTdsServer server = new TransientTdsErrorTdsServer(
+                new TransientTdsErrorTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,
@@ -453,8 +453,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             failoverServer.Start();
 
-            using TransientFaultTdsServer server = new TransientFaultTdsServer(
-                new TransientFaultTdsServerArguments()
+            using TransientTdsErrorTdsServer server = new TransientTdsErrorTdsServer(
+                new TransientTdsErrorTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,
@@ -505,8 +505,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             failoverServer.Start();
 
-            using TransientFaultTdsServer server = new TransientFaultTdsServer(
-                new TransientFaultTdsServerArguments()
+            using TransientTdsErrorTdsServer server = new TransientTdsErrorTdsServer(
+                new TransientTdsErrorTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,

@@ -9,7 +9,7 @@ using Microsoft.SqlServer.TDS.EndPoint;
 namespace Microsoft.SqlServer.TDS.Servers
 {
     /// <summary>
-    /// TDS Server that authenticates clients according to the requested parameters
+    /// TDS Server that delays response to simulate transient network delays
     /// </summary>
     public class TransientDelayTdsServer : GenericTdsServer<TransientDelayTdsServerArguments>, IDisposable
     {
@@ -35,9 +35,9 @@ namespace Microsoft.SqlServer.TDS.Servers
 
         public void SetTransientTimeoutBehavior(bool isEnabledTransientTimeout, bool isEnabledPermanentTimeout, TimeSpan sleepDuration)
         {
-            Arguments.IsEnabledTransientTimeout = isEnabledTransientTimeout;
-            Arguments.IsEnabledPermanentTimeout = isEnabledPermanentTimeout;
-            Arguments.SleepDuration = sleepDuration;
+            Arguments.IsEnabledTransientDelay = isEnabledTransientTimeout;
+            Arguments.IsEnabledPermanentDelay = isEnabledPermanentTimeout;
+            Arguments.DelayDuration = sleepDuration;
         }
 
         /// <summary>
@@ -46,10 +46,10 @@ namespace Microsoft.SqlServer.TDS.Servers
         public override TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
         {
             // Check if we're still going to raise transient error
-            if (Arguments.IsEnabledPermanentTimeout || 
-                (Arguments.IsEnabledTransientTimeout && RequestCounter < Arguments.RepeatCount))
+            if (Arguments.IsEnabledPermanentDelay || 
+                (Arguments.IsEnabledTransientDelay && RequestCounter < Arguments.RepeatCount))
             {
-                Thread.Sleep(Arguments.SleepDuration);
+                Thread.Sleep(Arguments.DelayDuration);
 
                 RequestCounter++;
             }
@@ -61,10 +61,10 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <inheritdoc/>
         public override TDSMessageCollection OnSQLBatchRequest(ITDSServerSession session, TDSMessage message)
         {
-            if (Arguments.IsEnabledPermanentTimeout ||
-                (Arguments.IsEnabledTransientTimeout && RequestCounter < 1))
+            if (Arguments.IsEnabledPermanentDelay ||
+                (Arguments.IsEnabledTransientDelay && RequestCounter < 1))
             {
-                Thread.Sleep(Arguments.SleepDuration);
+                Thread.Sleep(Arguments.DelayDuration);
 
                 RequestCounter++;
             }
