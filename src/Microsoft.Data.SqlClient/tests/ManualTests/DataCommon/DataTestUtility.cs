@@ -598,7 +598,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // Truncate to no more than 128 characters.
             const int maxLen = 128;
-            return name.Length > maxLen ? name.Substring(0, maxLen) : name;
+            if (name.Length > maxLen)
+            {
+                if (withBracket)
+                {
+                    name = name.Substring(0, maxLen - 1) + ']';
+                }
+                else
+                {
+                    name = name.Substring(0, maxLen);
+                }
+            }
+
+            return name;
         }
 
         public static void CreateTable(SqlConnection sqlConnection, string tableName, string createBody)
