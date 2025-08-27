@@ -109,6 +109,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             MissingTargetColumns.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_MissingTargetColumns"));
         }
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void HiddenTargetColumnTest()
+        {
+            HiddenTargetColumn.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_HiddenTargetColumn"));
+        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Bug85007Test()

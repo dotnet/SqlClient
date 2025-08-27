@@ -144,6 +144,7 @@
     <Compile Include="SQL\SqlBulkCopyTest\CopyWithEventAsync.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\FireTrigger.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Helpers.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\HiddenTargetColumn.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\MissingTargetColumn.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\MissingTargetColumns.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\MissingTargetTable.cs" />

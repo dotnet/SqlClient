@@ -420,9 +420,6 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.BulkLoadInvalidDestinationTable(DestinationTableName, null);
             }
-            string TDSCommand;
-
-            TDSCommand = "select @@trancount; SET FMTONLY ON select * from " + ADP.BuildMultiPartName(parts) + " SET FMTONLY OFF ";
 
             string TableCollationsStoredProc;
             if (_connection.Is2008OrNewer)
@@ -456,27 +453,31 @@ namespace Microsoft.Data.SqlClient
             string CatalogName = parts[MultipartIdentifier.CatalogIndex];
             if (isTempTable && string.IsNullOrEmpty(CatalogName))
             {
-                TDSCommand += string.Format("exec tempdb..{0} N'{1}.{2}'",
-                    TableCollationsStoredProc,
-                    SchemaName,
-                    TableName
-                );
+                CatalogName = "tempdb";
             }
-            else
+            else if (!string.IsNullOrEmpty(CatalogName))
             {
-                // Escape the catalog name
-                if (!string.IsNullOrEmpty(CatalogName))
-                {
-                    CatalogName = SqlServerEscapeHelper.EscapeIdentifier(CatalogName);
-                }
-                TDSCommand += string.Format("exec {0}..{1} N'{2}.{3}'",
-                    CatalogName,
-                    TableCollationsStoredProc,
-                    SchemaName,
-                    TableName
-                );
+                CatalogName = SqlServerEscapeHelper.EscapeIdentifier(CatalogName);
             }
-            return TDSCommand;
+
+            string objectName = ADP.BuildMultiPartName(parts);
+            // Specify the column names explicitly. This is to ensure that we can map to hidden columns (e.g. columns in temporal tables.)
+            // If the target table doesn't exist, OBJECT_ID will return NULL and @Column_Names will remain non-null. The subsequent SELECT *
+            // query will then continue to fail with "Invalid object name" rather than with an unusual error because the query being executed
+            // is NULL.
+            return $"""
+SELECT @@TRANCOUNT;
+
+DECLARE @Column_Names NVARCHAR(MAX) = NULL;
+SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME(name) FROM {CatalogName}.sys.all_columns WHERE OBJECT_ID = OBJECT_ID('{objectName}') ORDER BY column_id ASC;
+SELECT @Column_Names = COALESCE(@Column_Names, '*');
+
+SET FMTONLY ON;
+EXEC(N'SELECT ' + @Column_Names + N' FROM {objectName}');
+SET FMTONLY OFF;
+
+EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
+""";
         }
 
         // Creates and then executes initial query to get information about the targettable
