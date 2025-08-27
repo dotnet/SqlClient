@@ -595,14 +595,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Environment.MachineName,
                 DateTime.Now.ToString("yyyy_MM_dd", CultureInfo.InvariantCulture));
             string name = GetUniqueName(extendedPrefix, withBracket);
+
+            // Truncate to no more than 128 characters.
             const int maxLen = 128;
-            if (name.Length > maxLen)
-            {
-                throw new ArgumentOutOfRangeException(
-                    $"GetUniqueNameForSqlServer(): Generated name \"{name}\" " +
-                    $"exceeds SQL Server limit of {maxLen} characters");
-            }
-            return name;
+            return name.Length > maxLen ? name.Substring(0, maxLen) : name;
         }
 
         public static void CreateTable(SqlConnection sqlConnection, string tableName, string createBody)
