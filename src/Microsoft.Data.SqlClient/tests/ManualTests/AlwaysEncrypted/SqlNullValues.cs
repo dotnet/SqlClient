@@ -11,16 +11,16 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public sealed class SqlNullValuesTests : IClassFixture<PlatformSpecificTestContext>, IDisposable
+    public sealed class SqlNullValuesTests : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
         private SQLSetupStrategy fixture;
         private readonly string tableName;
         private string UdfName = DatabaseHelper.GenerateUniqueName("SqlNullValuesRetVal");
         private string UdfNameNotNull = DatabaseHelper.GenerateUniqueName("SqlNullValuesRetValNotNull");
 
-        public SqlNullValuesTests(PlatformSpecificTestContext context)
+        public SqlNullValuesTests(SQLSetupStrategyCertStoreProvider context)
         {
-            fixture = context.Fixture;
+            fixture = context;
             tableName = fixture.SqlNullValuesTable.Name;
             // Disable the cache to avoid false failures.
             SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = false;

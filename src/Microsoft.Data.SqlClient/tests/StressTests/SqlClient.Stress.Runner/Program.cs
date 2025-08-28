@@ -7,15 +7,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 
+using Microsoft.Data.SqlClient;
+
 namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
 {
     class Program
     {
         private static bool s_debugMode = false;
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
             Init(args);
-            Run();
+            return Run();
         }
 
         public enum RunMode
@@ -30,6 +32,7 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
         private static IEnumerable<TestBase> s_tests;
         private static StressEngine s_eng;
         private static string s_error;
+        private static bool s_console = false;
 
         public static void Init(string[] args)
         {
@@ -68,6 +71,10 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
 
                     case "-verify":
                         s_mode = RunMode.RunVerify;
+                        break;
+
+                    case "-console":
+                        s_console = true;
                         break;
 
                     case "-debug":
@@ -135,7 +142,7 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
             }
         }
 
-        public static void Run()
+        public static int Run()
         {
             if (TestFinder.AssemblyName == null)
             {
@@ -144,24 +151,21 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
             switch (s_mode)
             {
                 case RunMode.RunAll:
-                    RunStress();
-                    break;
+                    return RunStress();
 
                 case RunMode.RunVerify:
-                    RunVerify();
-                    break;
+                    return RunVerify();
 
                 case RunMode.ExitWithError:
-                    ExitWithError();
-                    break;
+                    return ExitWithError();
 
                 case RunMode.Help:
-                    PrintHelp();
-                    break;
+                default:
+                    return PrintHelp();
             }
         }
 
-        private static void PrintHelp()
+        private static int PrintHelp()
         {
             Console.WriteLine("stresstest.exe [-a <module name>] <arguments>");
             Console.WriteLine();
@@ -181,6 +185,8 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
             Console.WriteLine();
             Console.WriteLine("   -test <name1;name2>         Run specific test(s).");
             Console.WriteLine();
+            Console.WriteLine("   -console                    Emit all output to the console.");
+            Console.WriteLine();
             Console.WriteLine("   -debug                      Print process ID in the beginning and wait for Enter (to give your time to attach the debugger).");
             Console.WriteLine();
             Console.WriteLine("   -exceptionThreshold <n>     An optional limit on exceptions which will be caught. When reached, test will halt.");
@@ -198,24 +204,35 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
             Console.WriteLine();
             Console.WriteLine("   -deadlockdetection          True or False to enable deadlock detection. Default is false");
             Console.WriteLine();
+
+            return 1;
         }
 
         private static void PrintConfigSummary()
         {
-            const int border = 140;
-            Console.WriteLine(new string('#', border));
-            Console.WriteLine($"\t AssemblyName:\t{TestFinder.AssemblyName}");
-            Console.WriteLine($"\t Run mode:\t{Enum.GetName(typeof(RunMode), s_mode)}");
-            foreach (KeyValuePair<string, string> item in TestMetrics.Overrides) Console.WriteLine($"\t Override:\t{item.Key} = {item.Value}");
-            foreach (string item in TestMetrics.SelectedTests) Console.WriteLine($"\t Test:\t{item}");
-            Console.WriteLine($"\t Duration:\t{TestMetrics.StressDuration} second(s)");
-            Console.WriteLine($"\t Threads No.:\t{TestMetrics.StressThreads}");
-            Console.WriteLine($"\t Debug mode:\t{s_debugMode}");
-            Console.WriteLine($"\t Exception threshold:\t{TestMetrics.ExceptionThreshold}");
-            Console.WriteLine($"\t Random seed:\t{TestMetrics.RandomSeed}");
-            Console.WriteLine($"\t Filter:\t{TestMetrics.Filter}");
-            Console.WriteLine($"\t Deadlock detection enabled:\t{DeadlockDetection.IsEnabled}");
-            Console.WriteLine(new string('#', border));
+            string border = new('#', 80);
+
+            Console.WriteLine(border);
+            Console.WriteLine($"MDS Version:         {GetMdsVersion()}");
+            Console.WriteLine($"Test Assembly Name:  {TestFinder.AssemblyName}");
+            Console.WriteLine($"Run mode:            {Enum.GetName(typeof(RunMode), s_mode)}");
+            foreach (var item in TestMetrics.Overrides)
+            {
+                Console.WriteLine($"Override:            {item.Key} = {item.Value}");
+            }
+            foreach (var item in TestMetrics.SelectedTests)
+            {
+                Console.WriteLine($"Test:                {item}");
+            }
+            Console.WriteLine($"Duration:            {TestMetrics.StressDuration} second(s)");
+            Console.WriteLine($"Threads No.:         {TestMetrics.StressThreads}");
+            Console.WriteLine($"Emit to console:     {s_console}");
+            Console.WriteLine($"Debug mode:          {s_debugMode}");
+            Console.WriteLine($"Exception threshold: {TestMetrics.ExceptionThreshold}");
+            Console.WriteLine($"Random seed:         {TestMetrics.RandomSeed}");
+            Console.WriteLine($"Filter:              {TestMetrics.Filter}");
+            Console.WriteLine($"Deadlock detection:  {DeadlockDetection.IsEnabled}");
+            Console.WriteLine(border);
         }
 
         private static int ExitWithError()
@@ -231,7 +248,7 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
 
         private static int RunStress()
         {
-            if (!s_debugMode)
+            if (!s_console)
             {
                 try
                 {
@@ -248,6 +265,42 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
                 }
             }
             return s_eng.Run();
+        }
+
+        private static string GetMdsVersion()
+        {
+            // MDS captures its NuGet package version at build-time, so pull
+            // it out and return it.
+            //
+            // See:  tools/targets/GenerateThisAssemblyCs.targets
+            //
+            var assembly = typeof(SqlConnection).Assembly;
+            var type = assembly.GetType("System.ThisAssembly");
+            if (type is null)
+            {
+                return "<unknown>";
+            }
+
+            // Look for the NuGetPackageVersion field, which is available in
+            // newer MDS packages.
+            var field = type.GetField(
+                "NuGetPackageVersion",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            // If not present, use the older assembly file version field.
+            if (field is null)
+            {
+                field = type.GetField(
+                    "InformationalVersion",
+                    BindingFlags.NonPublic | BindingFlags.Static);
+            }
+
+            if (field is null)
+            {
+                return "<unknown>";
+            }
+
+            return (string)field.GetValue(null) ?? "<unknown>";
         }
     }
 }

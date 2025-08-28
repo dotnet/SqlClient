@@ -2,8 +2,6 @@
 
   <PropertyGroup>
     <RootNamespace>Stress.Data</RootNamespace>
-    <TargetFrameworks>net481;net9.0</TargetFrameworks>
-    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,12 +10,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SqlClient.Stress.Common\SqlClient.Stress.Common.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="StressTest.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>

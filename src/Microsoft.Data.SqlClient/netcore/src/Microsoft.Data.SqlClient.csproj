@@ -561,6 +561,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCollation.cs">
       <Link>Microsoft\Data\SqlClient\SqlCollation.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs</Link>
     </Compile>
@@ -951,9 +954,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NativeSspiContextProvider.cs">
       <Link>Microsoft\Data\SqlClient\SSPI\NativeSspiContextProvider.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs</Link>
     </Compile>
@@ -994,9 +994,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SessionHandle.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlClient\SessionHandle.netcore.Unix.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.netcore.Unix.cs">
-      <Link>Microsoft\Data\SqlClinet\SqlColumnEncryptionCertificateStoreProvider.netcore.Unix.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlClinet\SqlColumnEncryptionCngProvider.netcore.Unix.cs</Link>
