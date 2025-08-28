@@ -334,7 +334,9 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private string[] GetValidCertificateLocations()
         {
-            return new string[2] { CertLocationLocalMachine, CertLocationCurrentUser };
+            return Environment.OSVersion.Platform == PlatformID.Win32NT
+                ? new string[2] { CertLocationLocalMachine, CertLocationCurrentUser }
+                : new string[1] { CertLocationCurrentUser };
         }
 
         /// <summary>
@@ -382,7 +384,8 @@ namespace Microsoft.Data.SqlClient
             // Extract the store location where the cert is stored
             if (certParts.Length > 2)
             {
-                if (string.Equals(certParts[0], CertLocationLocalMachine, StringComparison.OrdinalIgnoreCase) == true)
+                if (string.Equals(certParts[0], CertLocationLocalMachine, StringComparison.OrdinalIgnoreCase) == true
+                    && Environment.OSVersion.Platform == PlatformID.Win32NT)
                 {
                     storeLocation = StoreLocation.LocalMachine;
                 }

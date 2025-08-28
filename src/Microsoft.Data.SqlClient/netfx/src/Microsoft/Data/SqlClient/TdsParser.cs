@@ -11,9 +11,8 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-#if NET
 using System.Security.Authentication;
-#else
+#if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 #endif
 using System.Text;
@@ -683,31 +682,10 @@ namespace Microsoft.Data.SqlClient
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
 
-                // HACK HACK HACK - for Async only
-                // Have to post read to intialize MARS - will get callback on this when connection goes
-                // down or is closed.
-
-                IntPtr temp = IntPtr.Zero;
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                { }
-                finally
+                error = _pMarsPhysicalConObj.PostReadAsyncForMars(_physicalStateObj);
+                if (error != TdsEnums.SNI_SUCCESS_IO_PENDING)
                 {
-                    _pMarsPhysicalConObj.IncrementPendingCallbacks();
-
-                    error = SniNativeWrapper.SniReadAsync(_pMarsPhysicalConObj.Handle, ref temp);
-
-                    if (temp != IntPtr.Zero)
-                    {
-                        // Be sure to release packet, otherwise it will be leaked by native.
-                        SniNativeWrapper.SniPacketRelease(temp);
-                    }
-                }
-                Debug.Assert(IntPtr.Zero == temp, "unexpected syncReadPacket without corresponding SNIPacketRelease");
-                if (TdsEnums.SNI_SUCCESS_IO_PENDING != error)
-                {
-                    Debug.Assert(TdsEnums.SNI_SUCCESS != error, "Unexpected successful read async on physical connection before enabling MARS!");
+                    Debug.Assert(error != TdsEnums.SNI_SUCCESS, "Unexpected successful read async on physical connection before enabling MARS!");
                     _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
@@ -982,19 +960,25 @@ namespace Microsoft.Data.SqlClient
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
 
+            SslProtocols protocol = 0;
+
             // in the case where an async connection is made, encryption is used and Windows Authentication is used,
             // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its
             // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete
             // before calling SNISecGenClientContext).
-            error = SniNativeWrapper.SniWaitForSslHandshakeToComplete(_physicalStateObj.Handle, _physicalStateObj.GetTimeoutRemaining(), out uint protocolVersion);
-
-            if (error != TdsEnums.SNI_SUCCESS)
+#if NET
+            if (OperatingSystem.IsWindows())
+#endif
             {
-                _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                ThrowExceptionAndWarning(_physicalStateObj);
+                error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocol);
+                if (error != TdsEnums.SNI_SUCCESS)
+                {
+                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
             }
 
-            string warningMessage = ((System.Security.Authentication.SslProtocols)protocolVersion).GetProtocolWarning();
+            string warningMessage = protocol.GetProtocolWarning();
             if (!string.IsNullOrEmpty(warningMessage))
             {
                 if (!encrypt && LocalAppContextSwitches.SuppressInsecureTlsWarning)
@@ -4700,91 +4684,73 @@ namespace Microsoft.Data.SqlClient
 
         internal void DrainData(TdsParserStateObject stateObj)
         {
-            RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-                try
+                SqlDataReader.SharedState sharedState = stateObj._readerState;
+                if (sharedState != null && sharedState._dataReady)
                 {
-                    SqlDataReader.SharedState sharedState = stateObj._readerState;
-                    if (sharedState != null && sharedState._dataReady)
+                    var metadata = stateObj._cleanupMetaData;
+                    if (stateObj._partialHeaderBytesRead > 0)
                     {
-                        var metadata = stateObj._cleanupMetaData;
-                        if (stateObj._partialHeaderBytesRead > 0)
+                        TdsOperationStatus result = stateObj.TryProcessHeader();
+                        if (result != TdsOperationStatus.Done)
                         {
-                            TdsOperationStatus result = stateObj.TryProcessHeader();
-                            if (result != TdsOperationStatus.Done)
-                            {
-                                throw SQL.SynchronousCallMayNotPend();
-                            }
+                            throw SQL.SynchronousCallMayNotPend();
                         }
-                        if (0 == sharedState._nextColumnHeaderToRead)
+                    }
+                    if (0 == sharedState._nextColumnHeaderToRead)
+                    {
+                        // i. user called read but didn't fetch anything
+                        TdsOperationStatus result = stateObj.Parser.TrySkipRow(stateObj._cleanupMetaData, stateObj);
+                        if (result != TdsOperationStatus.Done)
                         {
-                            // i. user called read but didn't fetch anything
-                            TdsOperationStatus result = stateObj.Parser.TrySkipRow(stateObj._cleanupMetaData, stateObj);
-                            if (result != TdsOperationStatus.Done)
-                            {
-                                throw SQL.SynchronousCallMayNotPend();
-                            }
+                            throw SQL.SynchronousCallMayNotPend();
                         }
-                        else
+                    }
+                    else
+                    {
+                        // iia.  if we still have bytes left from a partially read column, skip
+                        if (sharedState._nextColumnDataToRead < sharedState._nextColumnHeaderToRead)
                         {
-                            // iia.  if we still have bytes left from a partially read column, skip
-                            if (sharedState._nextColumnDataToRead < sharedState._nextColumnHeaderToRead)
+                            if ((sharedState._nextColumnHeaderToRead > 0) && (metadata[sharedState._nextColumnHeaderToRead - 1].metaType.IsPlp))
                             {
-                                if ((sharedState._nextColumnHeaderToRead > 0) && (metadata[sharedState._nextColumnHeaderToRead - 1].metaType.IsPlp))
+                                if (stateObj._longlen != 0)
                                 {
-                                    if (stateObj._longlen != 0)
-                                    {
-                                        TdsOperationStatus result = TrySkipPlpValue(UInt64.MaxValue, stateObj, out _);
-                                        if (result != TdsOperationStatus.Done)
-                                        {
-                                            throw SQL.SynchronousCallMayNotPend();
-                                        }
-                                    }
-                                }
-
-                                else if (0 < sharedState._columnDataBytesRemaining)
-                                {
-                                    TdsOperationStatus result = stateObj.TrySkipLongBytes(sharedState._columnDataBytesRemaining);
+                                    TdsOperationStatus result = TrySkipPlpValue(UInt64.MaxValue, stateObj, out _);
                                     if (result != TdsOperationStatus.Done)
                                     {
                                         throw SQL.SynchronousCallMayNotPend();
                                     }
                                 }
-
                             }
 
-
-                            // Read the remaining values off the wire for this row
-                            if (stateObj.Parser.TrySkipRow(metadata, sharedState._nextColumnHeaderToRead, stateObj) != TdsOperationStatus.Done)
+                            else if (0 < sharedState._columnDataBytesRemaining)
                             {
-                                throw SQL.SynchronousCallMayNotPend();
+                                TdsOperationStatus result = stateObj.TrySkipLongBytes(sharedState._columnDataBytesRemaining);
+                                if (result != TdsOperationStatus.Done)
+                                {
+                                    throw SQL.SynchronousCallMayNotPend();
+                                }
                             }
+
+                        }
+
+
+                        // Read the remaining values off the wire for this row
+                        if (stateObj.Parser.TrySkipRow(metadata, sharedState._nextColumnHeaderToRead, stateObj) != TdsOperationStatus.Done)
+                        {
+                            throw SQL.SynchronousCallMayNotPend();
                         }
                     }
-                    Run(RunBehavior.Clean, null, null, null, stateObj);
                 }
-                catch
-                {
-                    _connHandler.DoomThisConnection();
-                    throw;
-                }
+                Run(RunBehavior.Clean, null, null, null, stateObj);
             }
-            catch (OutOfMemoryException)
+            catch
             {
                 _connHandler.DoomThisConnection();
                 throw;
             }
-            catch (StackOverflowException)
-            {
-                _connHandler.DoomThisConnection();
-                throw;
-            }
-            catch (ThreadAbortException)
-            {
-                _connHandler.DoomThisConnection();
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
 
@@ -10416,26 +10382,8 @@ namespace Microsoft.Data.SqlClient
 
         private void TdsExecuteRPC_OnFailure(Exception exc, TdsParserStateObject stateObj)
         {
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-                FailureCleanup(stateObj, exc);
-            }
-            catch (OutOfMemoryException)
-            {
-                _connHandler.DoomThisConnection();
-                throw;
-            }
-            catch (StackOverflowException)
-            {
-                _connHandler.DoomThisConnection();
-                throw;
-            }
-            catch (ThreadAbortException)
-            {
-                _connHandler.DoomThisConnection();
-                throw;
-            }
+            FailureCleanup(stateObj, exc);
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         private void ExecuteFlushTaskCallback(Task tsk, TdsParserStateObject stateObj, TaskCompletionSource<object> completion, bool releaseConnectionLock)
@@ -10446,30 +10394,11 @@ namespace Microsoft.Data.SqlClient
                 if (tsk.Exception != null)
                 {
                     Exception exc = tsk.Exception.InnerException;
-
-                    RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
                         FailureCleanup(stateObj, tsk.Exception);
                     }
-                    catch (OutOfMemoryException e)
-                    {
-                        _connHandler.DoomThisConnection();
-                        completion.SetException(e);
-                        throw;
-                    }
-                    catch (StackOverflowException e)
-                    {
-                        _connHandler.DoomThisConnection();
-                        completion.SetException(e);
-                        throw;
-                    }
-                    catch (ThreadAbortException e)
-                    {
-                        _connHandler.DoomThisConnection();
-                        completion.SetException(e);
-                        throw;
-                    }
+                    // @TODO: CER Exception Handling was removed here (see GH#3581)
                     catch (Exception e)
                     {
                         exc = e;
@@ -12151,33 +12080,15 @@ namespace Microsoft.Data.SqlClient
 
                 StripPreamble(buffer, ref offset, ref count);
 
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
+                Task task = null;
+                if (count > 0)
                 {
-                    Task task = null;
-                    if (count > 0)
-                    {
-                        _parser.WriteInt(count, _stateObj); // write length of chunk
-                        task = _stateObj.WriteByteArray(buffer, count, offset, canAccumulate: false);
-                    }
+                    _parser.WriteInt(count, _stateObj); // write length of chunk
+                    task = _stateObj.WriteByteArray(buffer, count, offset, canAccumulate: false);
+                }
 
-                    return task ?? Task.CompletedTask;
-                }
-                catch (OutOfMemoryException)
-                {
-                    _parser._connHandler.DoomThisConnection();
-                    throw;
-                }
-                catch (StackOverflowException)
-                {
-                    _parser._connHandler.DoomThisConnection();
-                    throw;
-                }
-                catch (ThreadAbortException)
-                {
-                    _parser._connHandler.DoomThisConnection();
-                    throw;
-                }
+                return task ?? Task.CompletedTask;
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
             }
 
             internal static void ValidateWriteParameters(byte[] buffer, int offset, int count)

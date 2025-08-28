@@ -17,17 +17,6 @@ namespace Microsoft.Data.SqlClient
 {
     internal abstract partial class TdsParserStateObject
     {
-        private struct RuntimeHelpers
-        {
-            /// <summary>
-            /// This is a no-op in netcore version. Only needed for merging with netfx codebase.
-            /// </summary>
-            [Conditional("NETFRAMEWORK")]
-            internal static void PrepareConstrainedRegions()
-            {
-            }
-        }
-
         //////////////////
         // Constructors //
         //////////////////
@@ -92,8 +81,6 @@ namespace Microsoft.Data.SqlClient
         protected abstract void FreeGcHandle(int remaining, bool release);
 
         internal abstract uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename);
-
-        internal abstract uint WaitForSSLHandShakeToComplete(out int protocolVersion);
 
         internal abstract void Dispose();
 
@@ -168,7 +155,6 @@ namespace Microsoft.Data.SqlClient
 
                             PacketHandle syncReadPacket = default;
                             bool readFromNetwork = true;
-                            RuntimeHelpers.PrepareConstrainedRegions();
                             bool shouldDecrement = false;
                             try
                             {
@@ -317,7 +303,6 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
-            RuntimeHelpers.PrepareConstrainedRegions();
             bool processFinallyBlock = true;
             try
             {
@@ -711,7 +696,6 @@ namespace Microsoft.Data.SqlClient
 
                 PacketHandle attnPacket = CreateAndSetAttentionPacket();
 
-                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
                     // Dev11 #344723: SqlClient stress test suspends System_Data!Tcp::ReadSync via a call to SqlDataReader::Close

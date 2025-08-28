@@ -2,7 +2,7 @@
 
 General contribution guidance is included in this document. Additional guidance is defined in the documents linked below.
 
-- [Copyright](copyright.md) describes the licensing practices for the project.
+- [Copyright](COPYRIGHT.md) describes the licensing practices for the project.
 - [Contribution Workflow](contributing-workflow.md) describes the workflow that the team uses for considering and accepting changes.
 
 ## Up for Grabs
