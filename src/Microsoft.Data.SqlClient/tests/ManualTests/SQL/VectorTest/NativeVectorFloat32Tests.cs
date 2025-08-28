@@ -147,7 +147,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported), nameof(DataTestUtility.IsAccessTokenSetup), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
         [MemberData(nameof(VectorFloat32TestData.GetVectorFloat32TestData), MemberType = typeof(VectorFloat32TestData), DisableDiscoveryEnumeration = true)]
         public void TestSqlVectorFloat32ParameterInsertionAndReads(
         int pattern,
@@ -213,7 +213,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported), nameof(DataTestUtility.IsAccessTokenSetup), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
         [MemberData(nameof(VectorFloat32TestData.GetVectorFloat32TestData), MemberType = typeof(VectorFloat32TestData), DisableDiscoveryEnumeration = true)]
         public async Task TestSqlVectorFloat32ParameterInsertionAndReadsAsync(
         int pattern,
@@ -304,7 +304,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported), nameof(DataTestUtility.IsAccessTokenSetup), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
         [MemberData(nameof(VectorFloat32TestData.GetVectorFloat32TestData), MemberType = typeof(VectorFloat32TestData), DisableDiscoveryEnumeration = true)]
         public async Task TestStoredProcParamsForVectorFloat32Async(
         int pattern,
@@ -361,7 +361,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await command.ExecuteNonQueryAsync());
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported), nameof(DataTestUtility.IsAccessTokenSetup), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
         [InlineData(1)]
         [InlineData(2)]
         public void TestBulkCopyFromSqlTable(int bulkCopySourceMode)
@@ -460,7 +460,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.Equal(VectorFloat32TestData.testData.Length, ((SqlVector<float>)verifyReader.GetSqlVector<float>(0)).Length);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported), nameof(DataTestUtility.IsAccessTokenSetup), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
         [InlineData(1)]
         [InlineData(2)]
         public async Task TestBulkCopyFromSqlTableAsync(int bulkCopySourceMode)
@@ -560,7 +560,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.Equal(VectorFloat32TestData.testData.Length, vector.Length);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported), nameof(DataTestUtility.IsAccessTokenSetup), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
         public void TestInsertVectorsFloat32WithPrepare()
         {
             SqlConnection conn = new SqlConnection(s_connectionString);
