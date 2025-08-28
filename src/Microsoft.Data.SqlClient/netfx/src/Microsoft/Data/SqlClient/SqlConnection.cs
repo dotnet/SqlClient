@@ -1350,6 +1350,7 @@ namespace Microsoft.Data.SqlClient
                         _statistics._closeTimestamp = ADP.TimerCurrent();
                     }
                 }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
                 catch (Exception ex)
                 {
                     e = ex;

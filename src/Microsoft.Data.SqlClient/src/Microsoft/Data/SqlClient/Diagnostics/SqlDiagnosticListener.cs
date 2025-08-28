@@ -9,8 +9,6 @@ using System.Runtime.CompilerServices;
 #if NET
 using System.Reflection;
 using System.Runtime.Loader;
-#else
-using System.Runtime.ConstrainedExecution;
 #endif
 
 namespace Microsoft.Data.SqlClient.Diagnostics
@@ -487,7 +485,6 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         private void SqlDiagnosticListener_UnloadingAssemblyLoadContext(AssemblyLoadContext obj) =>
             Dispose();
 #else
-        [PrePrepareMethod]
         private void SqlDiagnosticListener_UnloadingAppDomain(object sender, EventArgs e) =>
             Dispose();
 #endif
