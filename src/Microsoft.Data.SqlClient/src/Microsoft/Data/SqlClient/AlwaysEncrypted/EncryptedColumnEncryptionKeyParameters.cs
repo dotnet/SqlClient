@@ -104,6 +104,8 @@ internal readonly ref struct EncryptedColumnEncryptionKeyParameters // : IDispos
     /// The encrypted column encryption key, including metadata such as the key path, ciphertext, and a digital signature
     /// for integrity verification.
     /// </returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="columnEncryptionKey"/> is null.</exception>
+    /// <exception cref="CryptographicException">Thrown when <paramref name="columnEncryptionKey"/> is longer than the RSA key size.</exception>
     public byte[] Encrypt(byte[] columnEncryptionKey)
     {
         ushort keyPathSize = (ushort)Encoding.Unicode.GetByteCount(_keyPath);
@@ -186,6 +188,9 @@ internal readonly ref struct EncryptedColumnEncryptionKeyParameters // : IDispos
     /// <returns>
     /// The decrypted column encryption key.
     /// </returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="encryptedCek"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when the contents of <paramref name="encryptedCek"/> are malformed or its signature fails to verify.</exception>
+    /// <exception cref="CryptographicException">Thrown when decryption fails.</exception>
     public byte[] Decrypt(byte[] encryptedCek)
     {
         // Validate the version byte

@@ -146,6 +146,7 @@ internal readonly ref struct ColumnMasterKeyMetadata // : IDisposable
     /// <returns>
     /// <see langword="true"/> if the signature is valid and matches the computed hash; otherwise, <see langword="false"/>.
     /// </returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="signature"/> is <see langword="null"/>.</exception>"
     public bool Verify(byte[] signature) =>
         _rsa.VerifyHash(_hash, signature, s_hashAlgorithm, RSASignaturePadding.Pkcs1);
 
