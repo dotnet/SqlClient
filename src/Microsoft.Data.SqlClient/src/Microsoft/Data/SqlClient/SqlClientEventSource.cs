@@ -841,6 +841,16 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Correlation Trace
+
+        [NonEvent]
+        internal void TryCorrelationTraceEvent(string message)
+        {
+            if (Log.IsCorrelationEnabled())
+            {
+                CorrelationTrace(message);
+            }
+        } 
+        
         [NonEvent]
         internal void TryCorrelationTraceEvent<T0>(string message, T0 args0)
         {

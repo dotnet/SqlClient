@@ -684,6 +684,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommand.cs">
+      <Link>Microsoft\Data\SqlClient\SqlCommand.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommandBuilder.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommandBuilder.cs</Link>
     </Compile>
@@ -870,6 +873,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\BufferWriterExtensions.netfx.cs">
       <Link>Microsoft\Data\SqlClient\Utilities\BufferWriterExtensions.netfx.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\ConstrainedExecutionHelper.netfx.cs">
+      <Link>Microsoft\Data\SqlClient\Utilities\ConstrainedExecutionHelper.netfx.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\ObjectPool.cs">
       <Link>Microsoft\Data\SqlClient\Utilities\ObjectPool.cs</Link>
     </Compile>
@@ -919,7 +925,7 @@
       <Link>System\Runtime\CompilerServices\IsExternalInit.netfx.cs</Link>
     </Compile>
     
-    <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlCommand.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
