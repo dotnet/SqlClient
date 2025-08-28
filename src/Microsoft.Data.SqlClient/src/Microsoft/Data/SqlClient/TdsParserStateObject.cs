@@ -13,6 +13,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.ManagedSni;
+
 #if NETFRAMEWORK
 using System.Runtime.ConstrainedExecution;
 #endif
@@ -506,11 +509,38 @@ namespace Microsoft.Data.SqlClient
 
         protected abstract PacketHandle EmptyReadPacket { get; }
 
+        protected abstract void CreateSessionHandle(TdsParserStateObject physicalConnection, bool async);
+
+        internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
+
+        internal abstract void CreatePhysicalSNIHandle(
+            string serverName,
+            TimeoutTimer timeout,
+            out byte[] instanceName,
+            out ResolvedServerSpn resolvedSpn,
+            bool flushCache,
+            bool async,
+            bool fParallel,
+            TransparentNetworkResolutionState transparentNetworkResolutionState,
+            int totalTimeout,
+            SqlConnectionIPAddressPreference iPAddressPreference,
+            string cachedFQDN,
+            ref SQLDNSInfo pendingDNSInfo,
+            string serverSPN,
+            bool isIntegratedSecurity = false,
+            bool tlsFirst = false,
+            string hostNameInCertificate = "",
+            string serverCertificateFilename = "");
+
         internal abstract PacketHandle GetResetWritePacket(int dataSize);
 
         protected abstract uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize);
 
         protected abstract bool CheckPacket(PacketHandle packet, TaskCompletionSource<object> source);
+
+        internal abstract void Dispose();
+
+        protected abstract void FreeGcHandle(int remaining, bool release);
 
         internal abstract bool IsFailedHandle();
 
