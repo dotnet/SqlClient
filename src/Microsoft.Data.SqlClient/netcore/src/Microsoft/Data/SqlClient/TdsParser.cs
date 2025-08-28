@@ -1676,9 +1676,12 @@ namespace Microsoft.Data.SqlClient
 #endif
         }
 
-        //
-        // Takes a 16 bit short and writes it to the returned buffer.
-        //
+        /// <summary>
+        /// Serializes a 16 bit short to the returned buffer.
+        /// </summary>
+        /// <param name="v">The value to serialize.</param>
+        /// <param name="stateObj"><see cref="TdsParserStateObject"/> containing the cached buffer bytes.</param>
+        /// <returns>The serialized 16 bit short.</returns>
         internal byte[] SerializeShort(int v, TdsParserStateObject stateObj)
         {
             if (stateObj._bShortBytes == null)
@@ -1697,9 +1700,11 @@ namespace Microsoft.Data.SqlClient
             return bytes;
         }
 
-        //
-        // Takes a 16 bit short and writes it.
-        //
+        /// <summary>
+        /// Writes a 16 bit short to the wire.
+        /// </summary>
+        /// <param name="v">The value to write.</param>
+        /// <param name="stateObj"><see cref="TdsParserStateObject"/> containing the wire buffer.</param>
         internal void WriteShort(int v, TdsParserStateObject stateObj)
         {
             if ((stateObj._outBytesUsed + 2) > stateObj._outBuff.Length)
@@ -1717,14 +1722,21 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Writes a 16 bit unsigned short to the wire.
+        /// </summary>
+        /// <param name="us">The value to write.</param>
+        /// <param name="stateObj"><see cref="TdsParserStateObject"/> containing the wire buffer.</param>
         internal void WriteUnsignedShort(ushort us, TdsParserStateObject stateObj)
         {
             WriteShort((short)us, stateObj);
         }
 
-        //
-        // Writes a guid, either to a specific buffer or to the wire.
-        //
+        /// <summary>
+        /// Serializes a Guid to the specified buffer.
+        /// </summary>
+        /// <param name="v">The value to serialize.</param>
+        /// <param name="buffer">The buffer to serialize to. The size of this buffer must be 16 bytes or larger.</param>
         private static void SerializeGuid(in Guid v, Span<byte> buffer)
         {
             Debug.Assert(buffer.Length >= GUID_SIZE);
@@ -1736,6 +1748,11 @@ namespace Microsoft.Data.SqlClient
 #endif
         }
 
+        /// <summary>
+        /// Writes a SqlGuid to the wire.
+        /// </summary>
+        /// <param name="v">The value to write.</param>
+        /// <param name="stateObj"><see cref="TdsParserStateObject"/> containing the wire buffer.</param>
         private static void WriteGuid(in SqlGuid v, TdsParserStateObject stateObj)
         {
             Guid innerValue = v.IsNull ? Guid.Empty : v.Value;
@@ -1743,6 +1760,11 @@ namespace Microsoft.Data.SqlClient
             WriteGuid(in innerValue, stateObj);
         }
 
+        /// <summary>
+        /// Writes a Guid to the wire.
+        /// </summary>
+        /// <param name="v">The value to write.</param>
+        /// <param name="stateObj"><see cref="TdsParserStateObject"/> containing the wire buffer.</param>
         private static void WriteGuid(in Guid v, TdsParserStateObject stateObj)
         {
             if ((stateObj._outBytesUsed + GUID_SIZE) > stateObj._outBuff.Length)
@@ -1764,22 +1786,33 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        //
-        // Takes a long and writes out an unsigned int
-        //
+        /// <summary>
+        /// Serializes an unsigned 32 bit integer to the returned buffer.
+        /// </summary>
+        /// <param name="i">The value to serialize.</param>
+        /// <param name="stateObj"><see cref="TdsParserStateObject"/> containing the cached buffer bytes.</param>
+        /// <returns>The serialized unsigned 32 bit integer.</returns>
         internal byte[] SerializeUnsignedInt(uint i, TdsParserStateObject stateObj)
         {
             return SerializeInt((int)i, stateObj);
         }
 
+        /// <summary>
+        /// Writes an unsigned 32 bit integer to the wire.
+        /// </summary>
+        /// <param name="i">The value to write.</param>
+        /// <param name="stateObj"><see cref="TdsParserStateObject"/> containing the wire buffer.</param>
         internal void WriteUnsignedInt(uint i, TdsParserStateObject stateObj)
         {
             WriteInt((int)i, stateObj);
         }
 
-        //
-        // Takes an int and writes it as an int.
-        //
+        /// <summary>
+        /// Serializes a signed 32 bit integer to the returned buffer.
+        /// </summary>
+        /// <param name="v">The value to serialize.</param>
+        /// <param name="stateObj"><see cref="TdsParserStateObject"/> containing the cached buffer bytes.</param>
+        /// <returns>The serialized signed 32 bit integer.</returns>
         internal byte[] SerializeInt(int v, TdsParserStateObject stateObj)
         {
             if (stateObj._bIntBytes == null)
@@ -1795,6 +1828,11 @@ namespace Microsoft.Data.SqlClient
             return stateObj._bIntBytes;
         }
 
+        /// <summary>
+        /// Writes a signed 32 bit integer to the wire.
+        /// </summary>
+        /// <param name="v">The value to write.</param>
+        /// <param name="stateObj"><see cref="TdsParserStateObject"/> containing the wire buffer.</param>
         internal void WriteInt(int v, TdsParserStateObject stateObj)
         {
             if ((stateObj._outBytesUsed + 4) > stateObj._outBuff.Length)
@@ -1816,9 +1854,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        //
-        // Takes a float and writes it as a 32 bit float.
-        //
+        /// <summary>
+        /// Serializes a float to the returned buffer.
+        /// </summary>
+        /// <param name="v">The value to serialize.</param>
+        /// <returns>The serialized float.</returns>
         internal byte[] SerializeFloat(float v)
         {
             if (Single.IsInfinity(v) || Single.IsNaN(v))
@@ -1831,6 +1871,11 @@ namespace Microsoft.Data.SqlClient
             return bytes;
         }
 
+        /// <summary>
+        /// Writes a float to the wire.
+        /// </summary>
+        /// <param name="v">The value to write.</param>
+        /// <param name="stateObj"><see cref="TdsParserStateObject"/> containing the wire buffer.</param>
         internal void WriteFloat(float v, TdsParserStateObject stateObj)
         {
             Span<byte> bytes = stackalloc byte[sizeof(float)];
@@ -1838,9 +1883,12 @@ namespace Microsoft.Data.SqlClient
             stateObj.WriteByteSpan(bytes);
         }
 
-        //
-        // Takes a long and writes it as a long.
-        //
+        /// <summary>
+        /// Serializes a signed 64 bit long to the returned buffer.
+        /// </summary>
+        /// <param name="v">The value to serialize.</param>
+        /// <param name="stateObj"><see cref="TdsParserStateObject"/> containing the cached buffer bytes.</param>
+        /// <returns>The serialized signed 64 bit long.</returns>
         internal byte[] SerializeLong(long v, TdsParserStateObject stateObj)
         {
             int current = 0;
@@ -1864,6 +1912,11 @@ namespace Microsoft.Data.SqlClient
             return bytes;
         }
 
+        /// <summary>
+        /// Writes a signed 64 bit long to the wire.
+        /// </summary>
+        /// <param name="v">The value to write.</param>
+        /// <param name="stateObj"><see cref="TdsParserStateObject"/> containing the wire buffer.</param>
         internal void WriteLong(long v, TdsParserStateObject stateObj)
         {
             if ((stateObj._outBytesUsed + 8) > stateObj._outBuff.Length)
@@ -1890,9 +1943,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        //
-        // Takes a long and writes part of it
-        //
+        /// <summary>
+        /// Serializes the first <paramref name="length"/> bytes of a signed 64 bit long to the returned buffer.
+        /// </summary>
+        /// <param name="v">The value to serialize.</param>
+        /// <param name="length">The number of bytes to serialize.</param>
+        /// <returns>The serialized signed 64 bit long.</returns>
         internal byte[] SerializePartialLong(long v, int length)
         {
             Debug.Assert(length <= 8, "Length specified is longer than the size of a long");
@@ -1909,6 +1965,12 @@ namespace Microsoft.Data.SqlClient
             return bytes;
         }
 
+        /// <summary>
+        /// Writes the first <paramref name="length"/> bytes of a signed 64 bit long to the wire.
+        /// </summary>
+        /// <param name="v">The value to write.</param>
+        /// <param name="length">The number of bytes to serialize.</param>
+        /// <param name="stateObj"><see cref="TdsParserStateObject"/> containing the wire buffer.</param>
         internal void WritePartialLong(long v, int length, TdsParserStateObject stateObj)
         {
             Debug.Assert(length <= 8, "Length specified is longer than the size of a long");
@@ -1933,17 +1995,21 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        //
-        // Takes a ulong and writes it as a ulong.
-        //
+        /// <summary>
+        /// Writes an unsigned 64 bit long to the wire.
+        /// </summary>
+        /// <param name="uv">The value to write.</param>
+        /// <param name="stateObj"><see cref="TdsParserStateObject"/> containing the wire buffer.</param>
         internal void WriteUnsignedLong(ulong uv, TdsParserStateObject stateObj)
         {
             WriteLong((long)uv, stateObj);
         }
 
-        //
-        // Takes a double and writes it as a 64 bit double.
-        //
+        /// <summary>
+        /// Serializes a double to the returned buffer.
+        /// </summary>
+        /// <param name="v">The value to serialize.</param>
+        /// <returns>The serialized double.</returns>
         internal byte[] SerializeDouble(double v)
         {
             if (double.IsInfinity(v) || double.IsNaN(v))
@@ -1956,6 +2022,11 @@ namespace Microsoft.Data.SqlClient
             return bytes;
         }
 
+        /// <summary>
+        /// Writes a double to the wire.
+        /// </summary>
+        /// <param name="v">The value to write.</param>
+        /// <param name="stateObj"><see cref="TdsParserStateObject"/> containing the wire buffer.</param>
         internal void WriteDouble(double v, TdsParserStateObject stateObj)
         {
             Span<byte> bytes = stackalloc byte[sizeof(double)];
@@ -6911,11 +6982,7 @@ namespace Microsoft.Data.SqlClient
 #if NET
                         Span<byte> b = stackalloc byte[GUID_SIZE];
 #else
-                        byte[] b = _tempGuidBytes;
-                        if (b is null)
-                        {
-                            b = new byte[GUID_SIZE];
-                        }
+                        byte[] b = (_tempGuidBytes ??= new byte[GUID_SIZE]);
 #endif
                         result = stateObj.TryReadByteArray(b, length);
                         if (result != TdsOperationStatus.Done)
@@ -6923,9 +6990,6 @@ namespace Microsoft.Data.SqlClient
                             return result;
                         }
                         value.Guid = new Guid(b);
-#if NETFRAMEWORK
-                        _tempGuidBytes = b;
-#endif
                         break;
                     }
 
@@ -11841,7 +11905,15 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLUNIQUEID:
                     {
                         Debug.Assert(actualLength == 16, "Invalid length for guid type in com+ object");
-                        WriteGuid((SqlGuid)value, stateObj);
+                        if (value is Guid guid)
+                        {
+                            WriteGuid(in guid, stateObj);
+                        }
+                        else
+                        {
+                            SqlGuid sqlGuid = (SqlGuid)value;
+                            WriteGuid(in sqlGuid, stateObj);
+                        }
                         break;
                     }
 
