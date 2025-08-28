@@ -12,15 +12,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// <summary>
     /// Always Encrypted public API Manual tests.
     /// </summary>
-    public sealed class BulkCopyAE : IClassFixture<PlatformSpecificTestContext>, IDisposable
+    public sealed class BulkCopyAE : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
         private SQLSetupStrategy fixture;
 
         private readonly string tableName;
 
-        public BulkCopyAE(PlatformSpecificTestContext context)
+        public BulkCopyAE(SQLSetupStrategyCertStoreProvider context)
         {
-            fixture = context.Fixture;
+            fixture = context;
             tableName = fixture.BulkCopyAETestTable.Name;
         }
 
