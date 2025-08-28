@@ -136,6 +136,7 @@ internal readonly ref struct ColumnMasterKeyMetadata // : IDisposable
     /// <returns>
     /// A byte array containing the digital signature of the master key metadata.
     /// </returns>
+    /// <exception cref="CryptographicException">Thrown when the signing operation fails.</exception>
     public byte[] Sign() =>
         _rsa.SignHash(_hash, s_hashAlgorithm, RSASignaturePadding.Pkcs1);
 

@@ -105,7 +105,9 @@ internal readonly ref struct EncryptedColumnEncryptionKeyParameters // : IDispos
     /// for integrity verification.
     /// </returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="columnEncryptionKey"/> is null.</exception>
-    /// <exception cref="CryptographicException">Thrown when <paramref name="columnEncryptionKey"/> is longer than the RSA key size.</exception>
+    /// <exception cref="CryptographicException">Thrown when <paramref name="columnEncryptionKey"/> is longer than the RSA
+    /// key size, when an error occurs encrypting the column encryption key, or when signing the encrypted column
+    /// encryption key fails.</exception>
     public byte[] Encrypt(byte[] columnEncryptionKey)
     {
         ushort keyPathSize = (ushort)Encoding.Unicode.GetByteCount(_keyPath);
