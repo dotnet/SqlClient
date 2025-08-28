@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// <summary>
     /// Always Encrypted public API Manual tests.
     /// </summary>
-    public sealed class ApiShould : IClassFixture<PlatformSpecificTestContext>, IDisposable
+    public sealed class ApiShould : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
         private SQLSetupStrategy _fixture;
 
@@ -63,9 +63,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             "Operation cancelled by user."
         };
 
-        public ApiShould(PlatformSpecificTestContext context)
+        public ApiShould(SQLSetupStrategyCertStoreProvider context)
         {
-            _fixture = context.Fixture;
+            _fixture = context;
             _tableName = _fixture.ApiTestTable.Name;
 
             ApiTestTable _customKeyStoreProviderTable = _fixture.CustomKeyStoreProviderTestTable as ApiTestTable;
@@ -2001,7 +2001,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithExecutionMethod))]
         public void TestSqlCommandCancel(string connection, string value)
         {

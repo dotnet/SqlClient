@@ -1,0 +1,214 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This stage builds and runs stress tests against an MDS NuGet package available
+# as a pipeline artifact.
+#
+# The stress tests are located here:
+#
+#   src/Microsoft.Data.SqlClient/tests/StressTests
+#
+# This template defines a job named 'run_stress_tests_job_<suffix>' that can be
+# depended on by downstream jobs.
+
+parameters:
+  # The suffix to append to the job name.
+  - name: jobNameSuffix
+    type: string
+    default: ''
+
+  # The prefix to prepend to the job's display name:
+  #
+  #   [<prefix>] Run Stress Tests
+  #
+  - name: displayNamePrefix
+    type: string
+    default: ''
+
+  # The name of the Azure Pipelines pool to use.
+  - name: poolName
+    type: string
+    default: ''
+
+  # The pool VM image to use.
+  - name: vmImage
+    type: string
+    default: ''
+
+  # The pipeline step to run to configure SQL Server.
+  #
+  # This step is expected to require no parameters.  It must configure a SQL
+  # Server instance listening on localhost for SQL auth via the 'sa' user with
+  # the pipeline variable $(Password) as the password.
+  - name: sqlSetupStep
+    type: string
+    default: ''
+
+  # The name of the pipeline artifact to download that contains the MDS package
+  # to stress test.
+  - name: pipelineArtifactName
+    type: string
+    default: ''
+
+  # The solution file to restore/build.
+  - name: solution
+    type: string
+    default: ''
+
+  # The test project to run.
+  - name: testProject
+    type: string
+    default: ''
+
+  # dotnet CLI arguments for the restore step.
+  - name: restoreArguments
+    type: string
+    default: ''
+
+  # dotnet CLI arguments for the build and run steps.
+  - name: buildArguments
+    type: string
+    default: ''
+
+  # The list of .NET runtimes to test against.
+  - name: netTestRuntimes
+    type: object
+    default: []
+
+  # The list of .NET Framework runtimes to test against.
+  - name: netFrameworkTestRuntimes
+    type: object
+    default: []
+
+  # The stress test config file contents to write to the config file.
+  #
+  # This should point to the SQL Server configured via the sqlSetupStep
+  # parameter, with user 'sa' and password of $(Password).
+  - name: configContent
+    type: string
+    default: ''
+
+jobs:
+- job: run_stress_tests_job_${{ parameters.jobNameSuffix }}
+  displayName: '[${{ parameters.displayNamePrefix }}] Run Stress Tests'
+  pool:
+    name: ${{ parameters.poolName }}
+    ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
+      vmImage: ${{ parameters.vmImage }}
+    ${{ else }}:
+      demands:
+        - imageOverride -equals ${{ parameters.vmImage }}
+
+  variables:
+    # Stress test command-line arguments.
+    - name: testArguments
+      value: -a SqlClient.Stress.Tests -console
+
+    # Explicitly unset the $PLATFORM environment variable that is set by the
+    # 'ADO Build properties' Library in the ADO SqlClientDrivers public project.
+    # This is defined with a non-standard Platform of 'AnyCPU', and will fail
+    # the builds if left defined.  The stress tests solution does not require
+    # any specific Platform, and so its solution file doesn't support any
+    # non-standard platforms.
+    #
+    # Note that Azure Pipelines will inject this variable as PLATFORM into the
+    # environment of all tasks in this job.
+    #
+    # See:
+    #   https://learn.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&tabs=yaml%2Cbatch
+    #
+    - name: Platform
+      value: ''
+
+    # Do the same for $CONFIGURATION since we explicitly set it using our
+    # 'buildConfiguration' parameter, and we don't want the environment to
+    # override us.
+    - name: Configuration
+      value: ''
+
+  steps:
+
+  # Install the .NET 9.0 SDK.
+  - task: UseDotNet@2
+    displayName: Install .NET 9.0 SDK
+    inputs:
+      packageType: sdk
+      version: 9.x
+
+  # Install the .NET 8.0 runtime.
+  - task: UseDotNet@2
+    displayName: Install .NET 8.0 Runtime
+    inputs:
+      packageType: runtime
+      version: 8.x
+
+  # Download the pipeline artifact that contains the MDS package to test.
+  - task: DownloadPipelineArtifact@2
+    displayName: Download Pipeline Artifact
+    inputs:
+      artifactName: ${{ parameters.pipelineArtifactName }}
+      # The stress tests solution has a NuGet.config file that configures
+      # sources to look in this packages/ directory.
+      targetPath: $(Build.SourcesDirectory)/packages
+
+  # Setup the local SQL Server.
+  - template: ${{ parameters.sqlSetupStep }}@self
+
+  # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't support
+  # all of our argument combinations for the different build steps.
+
+  # Restore the solution.
+  - task: DotNetCoreCLI@2
+    displayName: Restore Solution
+    inputs:
+      command: custom
+      custom: restore
+      projects: ${{ parameters.solution }}
+      arguments: ${{ parameters.restoreArguments }}
+
+  # Build the solution.
+  - task: DotNetCoreCLI@2
+    displayName: Build Solution
+    inputs:
+      command: custom
+      custom: build
+      projects: ${{ parameters.solution }}
+      arguments: ${{ parameters.buildArguments }} --no-restore
+
+  # Write the config file.
+  - task: PowerShell@2
+    displayName: Write Config File
+    inputs:
+      pwsh: true
+      targetType: inline
+      script: |
+        # Capture the multi-line JSON content into a variable.
+        $content = @"
+        ${{ parameters.configContent }}
+        "@
+
+        # Write the JSON content to the config file.
+        $content | Out-File -FilePath "config.json"
+
+  # Run the stress tests for each .NET runtime.
+  - ${{ each runtime in parameters.netTestRuntimes }}:
+    - task: DotNetCoreCLI@2
+      displayName: Test [${{runtime}}]
+      inputs:
+        command: custom
+        custom: run
+        projects: ${{ parameters.testProject }}
+        arguments: ${{ parameters.buildArguments }} --no-build -f ${{runtime}} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
+
+  # Run the stress tests for each .NET Framework runtime.
+  - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
+    - task: DotNetCoreCLI@2
+      displayName: Test [${{runtime}}]
+      inputs:
+        command: custom
+        custom: run
+        projects: ${{ parameters.testProject }}
+        arguments: ${{ parameters.buildArguments }} --no-build -f ${{runtime}} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)

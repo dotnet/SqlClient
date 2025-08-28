@@ -80,8 +80,6 @@ namespace Microsoft.Data.SqlClient.LocalDb
             {
                 if (s_localDbCreateInstance is null)
                 {
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    
                     lock (s_dllLock)
                     {
                         if (s_localDbCreateInstance is null)
@@ -110,10 +108,6 @@ namespace Microsoft.Data.SqlClient.LocalDb
             {
                 if (s_localDbFormatMessage is null)
                 {
-                    #if NETFRAMEWORK
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    #endif
-                    
                     lock (s_dllLock)
                     {
                         if (s_localDbFormatMessage is null)
@@ -142,10 +136,6 @@ namespace Microsoft.Data.SqlClient.LocalDb
             {
                 if (s_userInstanceDllHandle == IntPtr.Zero)
                 {
-                    #if NETFRAMEWORK
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    #endif
-                    
                     lock (s_dllLock)
                     {
                         if (s_userInstanceDllHandle == IntPtr.Zero)
@@ -187,8 +177,6 @@ namespace Microsoft.Data.SqlClient.LocalDb
             if (s_configurableInstances is null)
             {
                 // load list of instances from configuration, mark them as not created
-                RuntimeHelpers.PrepareConstrainedRegions();
-
                 lock (s_configLock)
                 {
                     if (s_configurableInstances is null)

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Security.Authentication;
 using System.Threading.Tasks;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
@@ -172,8 +173,53 @@ namespace Microsoft.Data.SqlClient
         internal override uint EnableMars(ref uint info)
             => SniNativeWrapper.SniAddProvider(Handle, Provider.SMUX_PROV, ref info);
 
+        internal override uint PostReadAsyncForMars(TdsParserStateObject physicalStateObject)
+        {
+            // HACK HACK HACK - for Async only
+            // Have to post read to initialize MARS - will get callback on this when connection goes
+            // down or is closed.
+
+            PacketHandle temp = default;
+            uint error = TdsEnums.SNI_SUCCESS;
+
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
+            try
+            { }
+            finally
+            {
+                IncrementPendingCallbacks();
+                SessionHandle handle = SessionHandle;
+                // we do not need to consider partial packets when making this read because we
+                // expect this read to pend. a partial packet should not exist at setup of the
+                // parser
+                Debug.Assert(physicalStateObject.PartialPacket == null);
+                temp = ReadAsync(handle, out error);
+
+                Debug.Assert(temp.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
+
+                if (temp.NativePointer != IntPtr.Zero)
+                {
+                    // Be sure to release packet, otherwise it will be leaked by native.
+                    ReleasePacket(temp);
+                }
+            }
+
+            Debug.Assert(IntPtr.Zero == temp.NativePointer, "unexpected syncReadPacket without corresponding SNIPacketRelease");
+            return error;
+        }
+
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
             => SniNativeWrapper.SniSetInfo(Handle, QueryType.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
+
+        internal override uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion)
+        {
+            uint returnValue = SniNativeWrapper.SniWaitForSslHandshakeToComplete(Handle, GetTimeoutRemaining(), out uint nativeProtocolVersion);
+
+            protocolVersion = (SslProtocols)nativeProtocolVersion;
+            return returnValue;
+        }
 
         internal override SniErrorDetails GetErrorDetails()
         {
@@ -186,16 +232,8 @@ namespace Microsoft.Data.SqlClient
         {
             lock (_writePacketLockObject)
             {
-#if NETFRAMEWORK
-                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                try
-                { }
-                finally
-                {
-                    _writePacketCache.Dispose();
-                    // Do not set _writePacketCache to null, just in case a WriteAsyncCallback completes after this point
-                }
+                _writePacketCache.Dispose();
+                // Do not set _writePacketCache to null, just in case a WriteAsyncCallback completes after this point
             }
         }
 

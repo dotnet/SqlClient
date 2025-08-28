@@ -180,50 +180,11 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
                         if (connectionToDoom != null || connectionToAbort != null)
                         {
-                            RuntimeHelpers.PrepareConstrainedRegions();
                             try
                             {
                                 onSuccess();
                             }
-                            catch (System.OutOfMemoryException e)
-                            {
-                                if (connectionToDoom != null)
-                                {
-                                    connectionToDoom.DoomThisConnection();
-                                }
-                                else
-                                {
-                                    connectionToAbort.Abort(e);
-                                }
-                                completion.SetException(e);
-                                throw;
-                            }
-                            catch (System.StackOverflowException e)
-                            {
-                                if (connectionToDoom != null)
-                                {
-                                    connectionToDoom.DoomThisConnection();
-                                }
-                                else
-                                {
-                                    connectionToAbort.Abort(e);
-                                }
-                                completion.SetException(e);
-                                throw;
-                            }
-                            catch (System.Threading.ThreadAbortException e)
-                            {
-                                if (connectionToDoom != null)
-                                {
-                                    connectionToDoom.DoomThisConnection();
-                                }
-                                else
-                                {
-                                    connectionToAbort.Abort(e);
-                                }
-                                completion.SetException(e);
-                                throw;
-                            }
+                            // @TODO: CER Exception Handling was removed here (see GH#3581)
                             catch (Exception e)
                             {
                                 completion.SetException(e);
@@ -312,52 +273,11 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (connectionToDoom != null || connectionToAbort != null)
                     {
-#if NETFRAMEWORK
-                        RuntimeHelpers.PrepareConstrainedRegions();
-#endif
                         try
                         {
                             onSuccess(state2);
                         }
-                        catch (System.OutOfMemoryException e)
-                        {
-                            if (connectionToDoom != null)
-                            {
-                                connectionToDoom.DoomThisConnection();
-                            }
-                            else
-                            {
-                                connectionToAbort.Abort(e);
-                            }
-                            completion.SetException(e);
-                            throw;
-                        }
-                        catch (System.StackOverflowException e)
-                        {
-                            if (connectionToDoom != null)
-                            {
-                                connectionToDoom.DoomThisConnection();
-                            }
-                            else
-                            {
-                                connectionToAbort.Abort(e);
-                            }
-                            completion.SetException(e);
-                            throw;
-                        }
-                        catch (System.Threading.ThreadAbortException e)
-                        {
-                            if (connectionToDoom != null)
-                            {
-                                connectionToDoom.DoomThisConnection();
-                            }
-                            else
-                            {
-                                connectionToAbort.Abort(e);
-                            }
-                            completion.SetException(e);
-                            throw;
-                        }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
                         catch (Exception e)
                         {
                             completion.SetException(e);
@@ -1603,14 +1523,29 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception NullCertificatePath(string[] validLocations, bool isSystemOp)
         {
-            Debug.Assert(2 == validLocations.Length);
-            if (isSystemOp)
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
-                return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCertificatePathSysErr, validLocations[0], validLocations[1], @"/"));
+                Debug.Assert(validLocations.Length == 2);
+                if (isSystemOp)
+                {
+                    return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCertificatePathSysErr, validLocations[0], validLocations[1], @"/"));
+                }
+                else
+                {
+                    return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCertificatePath, validLocations[0], validLocations[1], @"/"));
+                }
             }
             else
             {
-                return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCertificatePath, validLocations[0], validLocations[1], @"/"));
+                Debug.Assert(validLocations.Length == 1);
+                if (isSystemOp)
+                {
+                    return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCertificatePathSysErr_Unix, validLocations[0], @"/"));
+                }
+                else
+                {
+                    return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCertificatePath_Unix, validLocations[0], @"/"));
+                }
             }
         }
 
@@ -1640,14 +1575,29 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception InvalidCertificatePath(string actualCertificatePath, string[] validLocations, bool isSystemOp)
         {
-            Debug.Assert(2 == validLocations.Length);
-            if (isSystemOp)
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
-                return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificatePathSysErr, actualCertificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                Debug.Assert(validLocations.Length == 2);
+                if (isSystemOp)
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificatePathSysErr, actualCertificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
+                else
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificatePath, actualCertificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
             }
             else
             {
-                return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificatePath, actualCertificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                Debug.Assert(validLocations.Length == 1);
+                if (isSystemOp)
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificatePathSysErr_Unix, actualCertificatePath, validLocations[0], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
+                else
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificatePath_Unix, actualCertificatePath, validLocations[0], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
             }
         }
 
@@ -1761,17 +1711,29 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception InvalidCertificateLocation(string certificateLocation, string certificatePath, string[] validLocations, bool isSystemOp)
         {
-
-#if NETFRAMEWORK
-            Debug.Assert(2 == validLocations.Length);
-#endif
-            if (isSystemOp)
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
-                return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocationSysErr, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                Debug.Assert(validLocations.Length == 2);
+                if (isSystemOp)
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocationSysErr, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
+                else
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocation, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
             }
             else
             {
-                return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocation, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                Debug.Assert(validLocations.Length == 1);
+                if (isSystemOp)
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocationSysErr_Unix, certificateLocation, certificatePath, validLocations[0], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
+                else
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocation_Unix, certificateLocation, certificatePath, validLocations[0], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
             }
         }
 

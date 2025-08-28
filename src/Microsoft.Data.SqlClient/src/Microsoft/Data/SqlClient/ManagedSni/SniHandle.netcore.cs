@@ -121,7 +121,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <summary>
         /// Gets a value that indicates the security protocol used to authenticate this connection.
         /// </summary>
-        public virtual int ProtocolVersion { get; } = 0;
+        public virtual SslProtocols ProtocolVersion { get; } = 0;
 
         #if DEBUG
         /// <summary>

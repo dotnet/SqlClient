@@ -7,6 +7,7 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Security;
+using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -533,11 +534,15 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract uint SniGetConnectionId(ref Guid clientConnectionId);
 
+        internal abstract uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion);
+
         internal abstract uint DisableSsl();
 
         internal abstract SspiContextProvider CreateSspiContextProvider();
 
         internal abstract uint EnableMars(ref uint info);
+
+        internal abstract uint PostReadAsyncForMars(TdsParserStateObject physicalStateObject);
 
         internal abstract uint SetConnectionBufferSize(ref uint unsignedPacketSize);
 
@@ -923,9 +928,6 @@ namespace Microsoft.Data.SqlClient
             Parser.PutSession(this);
         }
 
-#if NETFRAMEWORK
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-#endif
         internal int IncrementPendingCallbacks()
         {
             int remaining = Interlocked.Increment(ref _pendingCallbacks);
@@ -1529,11 +1531,10 @@ namespace Microsoft.Data.SqlClient
             (bool canContinue, bool isStarting, bool isContinuing) = GetSnapshotStatuses();
             if (canContinue)
             {
-                if (isContinuing || isStarting)
-                {
-                    temp = TryTakeSnapshotStorage() as byte[];
-                    Debug.Assert(bytes == null || bytes.Length == length, "stored buffer length must be null or must have been created with the correct length");
-                }
+                temp = TryTakeSnapshotStorage() as byte[];
+                Debug.Assert(temp != null || !isContinuing, "if continuing stored buffer must be present to contain previous data to continue from");
+                Debug.Assert(bytes == null || bytes.Length == length, "stored buffer length must be null or must have been created with the correct length");
+                
                 if (temp != null)
                 {
                     offset = GetSnapshotTotalSize();
@@ -1554,7 +1555,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (result == TdsOperationStatus.NeedMoreData)
             {
-                if (isStarting || isContinuing)
+                if (canContinue)
                 {
                     SetSnapshotStorage(temp);
                 }
@@ -1983,11 +1984,10 @@ namespace Microsoft.Data.SqlClient
                     int startOffset = 0;
                     if (canContinue)
                     {
-                        if (isContinuing || isStarting)
-                        {
-                            buf = TryTakeSnapshotStorage() as byte[];
-                            Debug.Assert(buf == null || buf.Length == length, "stored buffer length must be null or must have been created with the correct length");
-                        }
+                        buf = TryTakeSnapshotStorage() as byte[];
+                        Debug.Assert(buf != null || !isContinuing, "if continuing stored buffer must be present to contain previous data to continue from");
+                        Debug.Assert(buf == null || buf.Length == length, "stored buffer length must be null or must have been created with the correct length");
+                        
                         if (buf != null)
                         {
                             startOffset = GetSnapshotTotalSize();
@@ -2005,7 +2005,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (result == TdsOperationStatus.NeedMoreData)
                         {
-                            if (isStarting || isContinuing)
+                            if (canContinue)
                             {
                                 SetSnapshotStorage(buf);
                             }
@@ -2846,7 +2846,6 @@ namespace Microsoft.Data.SqlClient
             bool readFromNetwork = !PartialPacketContainsCompletePacket();
             uint error;
 
-            RuntimeHelpers.PrepareConstrainedRegions();
             bool shouldDecrement = false;
             try
             {
@@ -3064,7 +3063,6 @@ namespace Microsoft.Data.SqlClient
                                 if (!source.Task.IsCompleted)
                                 {
                                     int pendingCallback = IncrementPendingCallbacks();
-                                    RuntimeHelpers.PrepareConstrainedRegions();
                                     try
                                     {
                                         // If pendingCallback is at 3, then ReadAsyncCallback hasn't been called yet
@@ -3139,7 +3137,6 @@ namespace Microsoft.Data.SqlClient
             uint error = 0;
             bool readFromNetwork = true;
 
-            RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
                 Debug.Assert(completion != null, "Async on but null asyncResult passed");
@@ -3148,7 +3145,7 @@ namespace Microsoft.Data.SqlClient
                 // the identity source. The identity value is used to correlate timer callback events to the currently
                 // running timeout and prevents a late timer callback affecting a result it does not relate to
                 int previousTimeoutState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Running, TimeoutState.Stopped);
-                Debug.Assert(previousTimeoutState == TimeoutState.Stopped, "previous timeout state was not Stopped");
+
                 if (previousTimeoutState == TimeoutState.Stopped)
                 {
                     Debug.Assert(_timeoutIdentityValue == 0, "timer was previously stopped without resetting the _identityValue");
@@ -3175,41 +3172,35 @@ namespace Microsoft.Data.SqlClient
 
                 SessionHandle handle = default;
 
-                RuntimeHelpers.PrepareConstrainedRegions();
+                Interlocked.Increment(ref _readingCount);
                 try
-                { }
-                finally
                 {
-                    Interlocked.Increment(ref _readingCount);
-                    try
+                    handle = SessionHandle;
+
+                    readFromNetwork = !PartialPacketContainsCompletePacket();
+                    if (readFromNetwork)
                     {
-                        handle = SessionHandle;
-
-                        readFromNetwork = !PartialPacketContainsCompletePacket();
-                        if (readFromNetwork)
+                        if (!handle.IsNull)
                         {
-                            if (!handle.IsNull)
+                            IncrementPendingCallbacks();
+
+                            readPacket = ReadAsync(handle, out error);
+
+                            if (!(TdsEnums.SNI_SUCCESS == error || TdsEnums.SNI_SUCCESS_IO_PENDING == error))
                             {
-                                IncrementPendingCallbacks();
-
-                                readPacket = ReadAsync(handle, out error);
-
-                                if (!(TdsEnums.SNI_SUCCESS == error || TdsEnums.SNI_SUCCESS_IO_PENDING == error))
-                                {
-                                    DecrementPendingCallbacks(false); // Failure - we won't receive callback!
-                                }
+                                DecrementPendingCallbacks(false); // Failure - we won't receive callback!
                             }
                         }
-                        else
-                        {
-                            readPacket = default;
-                            error = TdsEnums.SNI_SUCCESS;
-                        }
                     }
-                    finally
+                    else
                     {
-                        Interlocked.Decrement(ref _readingCount);
+                        readPacket = default;
+                        error = TdsEnums.SNI_SUCCESS;
                     }
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref _readingCount);
                 }
 
                 if (handle.IsNull)

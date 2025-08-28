@@ -79,7 +79,6 @@
     <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />
     <Compile Include="SQL\AsyncTest\BeginExecReaderAsyncTest.cs" />
     <Compile Include="SQL\AsyncTest\XmlReaderAsyncTest.cs" />
-    <Compile Include="SQL\AsyncTest\AsyncTest.cs" />
     <Compile Include="SQL\AsyncTest\AsyncCancelledConnectionsTest.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '2'">

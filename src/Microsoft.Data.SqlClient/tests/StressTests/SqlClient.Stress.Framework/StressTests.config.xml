@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+  <dataStressSettings>
+    <sources>
+      <source
+        name="My Favourite SQL Server"
+        type="SqlServer"
+        isDefault="true"
+        dataSource="127.0.0.1,1433"
+        user="sa"
+        password=""
+        supportsWindowsAuthentication="false"
+        isLocal="false"
+        disableMultiSubnetFailover = "true"
+        disableNamedPipes = "true"
+        encrypt ="false"> 
+      </source>
+    </sources>
+  </dataStressSettings>
+</configuration>
