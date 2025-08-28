@@ -461,6 +461,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             string objectName = ADP.BuildMultiPartName(parts);
+            string escapedObjectName = SqlServerEscapeHelper.EscapeStringAsLiteral(objectName);
             // Specify the column names explicitly. This is to ensure that we can map to hidden columns (e.g. columns in temporal tables.)
             // If the target table doesn't exist, OBJECT_ID will return NULL and @Column_Names will remain non-null. The subsequent SELECT *
             // query will then continue to fail with "Invalid object name" rather than with an unusual error because the query being executed
@@ -469,11 +470,11 @@ namespace Microsoft.Data.SqlClient
 SELECT @@TRANCOUNT;
 
 DECLARE @Column_Names NVARCHAR(MAX) = NULL;
-SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME(name) FROM {CatalogName}.sys.all_columns WHERE OBJECT_ID = OBJECT_ID('{objectName}') ORDER BY column_id ASC;
+SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME(name) FROM {CatalogName}.sys.all_columns WHERE OBJECT_ID = OBJECT_ID('{escapedObjectName}') ORDER BY column_id ASC;
 SELECT @Column_Names = COALESCE(@Column_Names, '*');
 
 SET FMTONLY ON;
-EXEC(N'SELECT ' + @Column_Names + N' FROM {objectName}');
+EXEC(N'SELECT ' + @Column_Names + N' FROM {escapedObjectName}');
 SET FMTONLY OFF;
 
 EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
