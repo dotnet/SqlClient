@@ -13171,14 +13171,15 @@ namespace Microsoft.Data.SqlClient
             //  later needing to repeatedly allocate new target buffers and copy data as we discover new data
             if (buff == null && stateObj._longlen != TdsEnums.SQL_PLP_UNKNOWNLEN && stateObj._longlen < (int.MaxValue >> 1))
             {
-                if (supportRentedBuff && stateObj._longlen >> 1 < 1073741824) // 1 Gib
+                int stateLen = (int)stateObj._longlen >> 1;
+                if (supportRentedBuff && stateLen < 1073741824) // 1 Gib
                 {
-                    buff = ArrayPool<char>.Shared.Rent((int)Math.Min((int)stateObj._longlen >> 1, len));
+                    buff = ArrayPool<char>.Shared.Rent(Math.Min(stateLen, len));
                     rentedBuff = true;
                 }
                 else
                 {
-                    buff = new char[(int)Math.Min((int)stateObj._longlen >> 1, len)];
+                    buff = new char[Math.Min(stateLen, len)];
                     rentedBuff = false;
                 }
             }
