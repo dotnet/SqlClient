@@ -92,12 +92,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //SQL Server EngineEdition
         private static string s_sqlServerEngineEdition;
 
-        // Currently, only Azure SQL supports vectors and JSON.
-        // Our CI images with specific SQL Server versions lag
-        // behind with vector and JSON support.
-        // JSON Column type
-        public static readonly bool IsJsonSupported = !IsNotAzureServer();
-        
         // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
         public static bool IsAzureSynapse
@@ -179,7 +173,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ManagedIdentitySupported = c.ManagedIdentitySupported;
             IsManagedInstance = c.IsManagedInstance;
             AliasName = c.AliasName;
-            IsJsonSupported = c.IsJsonSupported;
 
 #if NETFRAMEWORK
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
