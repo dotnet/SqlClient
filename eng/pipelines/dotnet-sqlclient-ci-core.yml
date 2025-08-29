@@ -67,10 +67,11 @@ parameters:
 
 - name: buildConfiguration
   displayName: 'Build Configuration'
-  default: Release
+  type: string
+  default: Debug
   values:
-    - Release
     - Debug
+    - Release
 
 - name: defaultPoolName
   type: string
@@ -82,9 +83,8 @@ parameters:
   default: false
 
 # The timeout, in minutes, for each test job.
-- name: testsTimeout
-  type: string
-  default: 90
+- name: testJobTimeout
+  type: number
 
 variables:
   - template: libraries/ci-build-variables.yml@self
@@ -101,7 +101,7 @@ stages:
     jobs:
     - template: common/templates/jobs/ci-build-nugets-job.yml@self
       parameters:
-        configuration: ${{ parameters.buildConfiguration }}
+        buildConfiguration: ${{ parameters.buildConfiguration }}
         artifactName: $(artifactName)
         ${{if ne(parameters.SNIVersion, '')}}:
           prebuildSteps:
@@ -124,7 +124,7 @@ stages:
     parameters:
       debug: ${{ parameters.debug }}
       buildType: ${{ parameters.buildType }}
-      testsTimeout: ${{ parameters.testsTimeout }}
+      testJobTimeout: ${{ parameters.testJobTimeout }}
       ${{ if eq(parameters.buildType, 'Package') }}:
         dependsOn: build_nugets
 
