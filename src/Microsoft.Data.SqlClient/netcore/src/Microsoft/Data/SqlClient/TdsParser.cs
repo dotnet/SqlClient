@@ -13811,8 +13811,9 @@ namespace Microsoft.Data.SqlClient
                                        + "         _attentionWarnings = {20}\n\t"
                                        + "         _statistics = {21}\n\t"
                                        + "         _statisticsIsInTransaction = {22}\n\t"
-                                       + "         _fPreserveTransaction = {23}"
-                                       + "         _fParallel = {24}"
+                                       + "         _fPreserveTransaction = {23}\n\t"
+                                       + "         _multiSubnetFailover = {24}\n\t"
+                                       + "         _transparentNetworkIPResolution = {25}"
                                        ;
         internal string TraceString()
         {
@@ -13842,7 +13843,8 @@ namespace Microsoft.Data.SqlClient
                            _statistics == null ? bool.TrueString : bool.FalseString,
                            _statisticsIsInTransaction ? bool.TrueString : bool.FalseString,
                            _fPreserveTransaction ? bool.TrueString : bool.FalseString,
-                           _connHandler == null ? "(null)" : _connHandler.ConnectionOptions.MultiSubnetFailover.ToString((IFormatProvider)null));
+                           _connHandler == null ? "(null)" : _connHandler.ConnectionOptions.MultiSubnetFailover.ToString((IFormatProvider)null),
+                           _connHandler == null ? "(null)" : bool.FalseString);
         }
 
         private string TraceObjectClass(object instance)
