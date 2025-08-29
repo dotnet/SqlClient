@@ -35,6 +35,5 @@
     "ManagedIdentitySupported": true,
     "UserManagedIdentityClientId": "",
     "PowerShellPath": "",
-    "AliasName": "",
-    "IsJsonSupported": false
+    "AliasName": ""
 }
