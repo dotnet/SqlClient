@@ -3954,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>证书路径不能为空。使用以下格式: &lt;证书位置&gt;{2}&lt;证书存储库&gt;{2}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{0}”或“{1}”。</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>内部错误。证书路径不能为空。使用以下格式: &lt;证书位置&gt;{2}&lt;证书存储库&gt;{2}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{0}”或“{1}”。</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>列主密钥路径不可为 NULL。请对 Microsoft 加密服务提供程序(CSP)中存储的密钥使用以下格式: &lt;CSP 提供程序名称&gt;{0}&lt;密钥标识符&gt;。</value>
@@ -3972,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>证书路径无效: {0}。使用以下格式: &lt;证书位置&gt;{3}&lt;证书存储库&gt;{3}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{1}”或“{2}”。</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>内部错误。证书路径无效: {0}。使用以下格式: &lt;证书位置&gt;{3}&lt;证书存储库&gt;{3}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{1}”或“{2}”。</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>无效的列主密钥路径:“{0}”。请对 Microsoft 加密服务提供程序(CSP)中存储的密钥使用以下格式: &lt;CSP 提供程序名称&gt;{1}&lt;密钥标识符&gt;。</value>
@@ -3990,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>证书路径“{1}”中的证书位置“{0}”无效。使用以下格式: &lt;证书位置&gt;{4}&lt;证书存储库&gt;{4}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{2}”或“{3}”。</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>内部错误。证书路径“{1}”中的证书位置“{0}”无效。使用以下格式: &lt;证书位置&gt;{4}&lt;证书存储&gt;{4}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{2}”或“{3}”。</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>证书路径“{1}”中指定的证书存储库“{0}”无效。应为: {2}。</value>

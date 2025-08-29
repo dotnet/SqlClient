@@ -3954,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>Путь к сертификату не может иметь значение Null. Используйте следующий формат: &lt;расположение_сертификата&gt;{2}&lt;хранилище_сертификатов&gt;{2}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {0} или {1}.</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>Внутренняя ошибка. Путь к сертификату не может иметь значение Null. Используйте следующий формат: &lt;расположение_сертификата&gt;{2}&lt;хранилище_сертификатов&gt;{2}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {0} или {1}.</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Путь к главному ключу столбца не может иметь значение NULL. Используйте следующий формат для ключа, хранимого в поставщике служб шифрования Microsoft (CSP): &lt;имя поставщика CNG&gt;{0}&lt;идентификатор ключа&gt;.</value>
@@ -3972,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>Недействительный путь к сертификату: "{0}". Используйте следующий формат: &lt;расположение_сертификата&gt;{3}&lt;хранилище_сертификатов&gt;{3}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {1} или {2}.</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>Внутренняя ошибка. Недействительный путь к сертификату: "{0}". Используйте следующий формат: &lt;расположение_сертификата&gt;{3}&lt;хранилище_сертификатов&gt;{3}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {1} или {2}.</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Недопустимый путь к главному ключу столбца: "{0}". Используйте следующий формат для ключа, хранимого в поставщике служб шифрования Microsoft (CSP): &lt;имя поставщика CSP&gt;{1}&lt;идентификатор ключа&gt;.</value>
@@ -3990,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>Недействительное расположение сертификата "{0}" в пути к сертификату "{1}". Используйте следующий формат: &lt;расположение_сертификата&gt;{4}&lt;хранилище_сертификатов&gt;{4}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {2} или {3}.</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>Внутренняя ошибка. Недействительное расположение сертификата "{0}" в пути к сертификату "{1}". Используйте следующий формат: &lt;расположение_сертификата&gt;{4}&lt;хранилище_сертификатов&gt;{4}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {2} или {3}.</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>В пути к сертификату "{1}" указано недействительное хранилище сертификатов "{0}". Ожидается значение "{2}".</value>

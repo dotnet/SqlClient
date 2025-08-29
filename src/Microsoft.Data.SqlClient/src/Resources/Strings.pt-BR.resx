@@ -3954,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>O caminho de certificado não pode ser nulo. Use o seguinte formato: &lt;local do certificado&gt;{2}&lt;repositório de certificados&gt;{2}&lt;impressão digital do certificado&gt;, em que &lt;local do certificado&gt; é '{0}' ou '{1}'.</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>Erro interno. O caminho do certificado não pode ser nulo. Use o formato a seguir: &lt;local do certificado&gt;{2}&lt;repositório de certificados&gt;{2}&lt;impressão digital do certificado&gt;, em que &lt;local do certificado&gt; é '{0}' ou '{1}'.</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>O caminho da chave mestra da coluna não pode ser nulo. Use o formato a seguir para uma chave armazenada em um CSP (Provedor de Serviços de Criptografia) da Microsoft: &lt;Nome do Provedor de CNG&gt;{0}&lt;Identificador de Chave&gt;.</value>
@@ -3972,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>Caminho de certificado inválido: '{0}'. Use o seguinte formato: &lt;local do certificado&gt;{3}&lt;repositório de certificados&gt;{3}&lt;impressão digital do certificado&gt;, em que &lt;local do certificado&gt; é '{1}' ou '{2}'.</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>Erro interno. Caminho de certificado inválido: '{0}'. Use o seguinte formato: &lt;local do certificado&gt;{3}&lt;repositório de certificados&gt;{3}&lt;impressão digital do certificado&gt;, em que &lt;local do certificado&gt; é '{1}' ou '{2}'.</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Caminho de chave mestra da coluna inválido: '{0}'. Use o formato a seguir para uma chave armazenada em um CSP (Provedor de Serviços de Criptografia) da Microsoft: &lt;Nome do Provedor de CSP&gt;{1}&lt;Identificador de Chave&gt;.</value>
@@ -3990,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>Local do certificado inválido '{0}' no caminho do certificado '{1}'. Use o seguinte formato: &lt;local do certificado&gt;{4}&lt;repositório de certificados&gt;{4}&lt;impressão digital do certificado&gt;, em que &lt;local do certificado&gt; é '{2}' ou '{3}'.</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>Erro interno. Local do certificado inválido '{0}' no caminho do certificado '{1}'. Use o seguinte formato: &lt;local do certificado&gt;{4}&lt;repositório de certificados&gt;{4}&lt;impressão digital do certificado&gt;, em que &lt;local do certificado&gt; é '{2}' ou '{3}'.</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>Repositório de certificados inválido '{0}' especificado no caminho do certificado '{1}'. Valor esperado: '{2}'.</value>
