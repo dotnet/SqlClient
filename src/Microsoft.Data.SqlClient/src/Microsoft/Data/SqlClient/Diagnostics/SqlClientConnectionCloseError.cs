@@ -2,37 +2,34 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Data;
 
 namespace Microsoft.Data.SqlClient.Diagnostics
 {
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackAfter"]/SqlClientTransactionRollbackAfter/*'/>
-    public sealed class SqlClientTransactionRollbackAfter : IReadOnlyList<KeyValuePair<string, object>>
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseError"]/SqlClientConnectionCloseError/*'/>
+    public sealed class SqlClientConnectionCloseError : IReadOnlyList<KeyValuePair<string, object>>
     {
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackAfter"]/Name/*'/>
-        public const string Name = "Microsoft.Data.SqlClient.WriteTransactionRollbackAfter";
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseError"]/Name/*'/>
+        public const string Name = "Microsoft.Data.SqlClient.WriteConnectionCloseError";
 
-        internal SqlClientTransactionRollbackAfter(
+        internal SqlClientConnectionCloseError(
             Guid operationId,
             string operation,
             long timestamp,
-            IsolationLevel isolationLevel,
+            Guid? connectionId,
             SqlConnection connection,
-            long? transactionId,
-            string transactionName)
+            IDictionary statistics,
+            Exception ex)
         {
             OperationId = operationId;
             Operation = operation;
             Timestamp = timestamp;
-            IsolationLevel = isolationLevel;
+            ConnectionId = connectionId;
             Connection = connection;
-            TransactionId = transactionId;
-            TransactionName = transactionName;
+            Statistics = statistics;
+            Exception = ex;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
@@ -41,14 +38,16 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         public string Operation { get; }
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
         public long Timestamp { get; }
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackAfter"]/IsolationLevel/*'/>
-        public IsolationLevel IsolationLevel { get; }
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackAfter"]/Connection/*'/>
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseError"]/ConnectionId/*'/>
+        public Guid? ConnectionId { get; }
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseError"]/Connection/*'/>
         public SqlConnection Connection { get; }
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackAfter"]/TransactionId/*'/>
-        public long? TransactionId { get; }
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackAfter"]/TransactionName/*'/>
-        public string TransactionName { get; }
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseError"]/Statistics/*'/>
+        public IDictionary Statistics { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseError"]/Exception/*'/>
+        public Exception Exception { get; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => 3 + 4;
@@ -61,10 +60,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                 0 => new KeyValuePair<string, object>(nameof(OperationId), OperationId),
                 1 => new KeyValuePair<string, object>(nameof(Operation), Operation),
                 2 => new KeyValuePair<string, object>(nameof(Timestamp), Timestamp),
-                3 => new KeyValuePair<string, object>(nameof(IsolationLevel), IsolationLevel),
+                3 => new KeyValuePair<string, object>(nameof(ConnectionId), ConnectionId),
                 4 => new KeyValuePair<string, object>(nameof(Connection), Connection),
-                5 => new KeyValuePair<string, object>(nameof(TransactionId), TransactionId),
-                6 => new KeyValuePair<string, object>(nameof(TransactionName), TransactionName),
+                5 => new KeyValuePair<string, object>(nameof(Statistics), Statistics),
+                6 => new KeyValuePair<string, object>(nameof(Exception), Exception),
                 _ => throw new IndexOutOfRangeException(nameof(index)),
             };
         }
@@ -83,5 +82,3 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         }
     }
 }
-
-#endif

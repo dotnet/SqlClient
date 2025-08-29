@@ -2,37 +2,32 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace Microsoft.Data.SqlClient.Diagnostics
 {
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenError"]/SqlClientConnectionOpenError/*'/>
-    public sealed class SqlClientConnectionOpenError : IReadOnlyList<KeyValuePair<string, object>>
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseAfter"]/SqlClientConnectionCloseAfter/*'/>
+    public sealed class SqlClientConnectionCloseAfter : IReadOnlyList<KeyValuePair<string, object>>
     {
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenError"]/Name/*'/>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseAfter"]/Name/*'/>
+        public const string Name = "Microsoft.Data.SqlClient.WriteConnectionCloseAfter";
 
-        public const string Name = "Microsoft.Data.SqlClient.WriteConnectionOpenError";
-
-        internal SqlClientConnectionOpenError(
+        internal SqlClientConnectionCloseAfter(
             Guid operationId,
             string operation,
             long timestamp,
-            Guid connectionId,
+            Guid? connectionId,
             SqlConnection connection,
-            string clientVersion,
-            Exception exception)
+            IDictionary statistics)
         {
             OperationId = operationId;
             Operation = operation;
             Timestamp = timestamp;
             ConnectionId = connectionId;
             Connection = connection;
-            ClientVersion = clientVersion;
-            Exception = exception;
+            Statistics = statistics;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
@@ -41,18 +36,15 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         public string Operation { get; }
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
         public long Timestamp { get; }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenError"]/ConnectionId/*'/>
-        public Guid ConnectionId { get; }
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenError"]/Connection/*'/>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseAfter"]/ConnectionId/*'/>
+        public Guid? ConnectionId { get; }
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseAfter"]/Connection/*'/>
         public SqlConnection Connection { get; }
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenError"]/ClientVersion/*'/>
-        public string ClientVersion { get; }
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenError"]/Exception/*'/>
-        public Exception Exception { get; }
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseAfter"]/Statistics/*'/>
+        public IDictionary Statistics { get; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
-        public int Count => 3 + 4;
+        public int Count => 3 + 3;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
@@ -64,8 +56,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                 2 => new KeyValuePair<string, object>(nameof(Timestamp), Timestamp),
                 3 => new KeyValuePair<string, object>(nameof(ConnectionId), ConnectionId),
                 4 => new KeyValuePair<string, object>(nameof(Connection), Connection),
-                5 => new KeyValuePair<string, object>(nameof(ClientVersion), ClientVersion),
-                6 => new KeyValuePair<string, object>(nameof(Exception), Exception),
+                5 => new KeyValuePair<string, object>(nameof(Statistics), Statistics),
                 _ => throw new IndexOutOfRangeException(nameof(index)),
             };
         }
@@ -84,5 +75,3 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         }
     }
 }
-
-#endif
