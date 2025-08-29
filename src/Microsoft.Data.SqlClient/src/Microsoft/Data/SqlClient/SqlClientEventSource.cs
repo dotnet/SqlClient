@@ -1139,7 +1139,7 @@ namespace Microsoft.Data.SqlClient
             => new TrySNIEventScope(SqlClientEventSource.Log.TrySNIScopeEnterEvent(className, memberName));
     }
 
-    internal readonly ref struct TryEventScope //: IDisposable
+    internal readonly ref struct TryEventScope : IDisposable
     {
         private readonly long _scopeId;
 

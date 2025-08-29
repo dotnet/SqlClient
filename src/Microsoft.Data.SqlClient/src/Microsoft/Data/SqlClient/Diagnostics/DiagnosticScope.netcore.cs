@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 
 namespace Microsoft.Data.SqlClient.Diagnostics
 {
-    internal ref struct DiagnosticScope //: IDisposable
+    internal ref struct DiagnosticScope : IDisposable
     {
         private const int CommandOperation = 1;
         private const int ConnectionOpenOperation = 2;

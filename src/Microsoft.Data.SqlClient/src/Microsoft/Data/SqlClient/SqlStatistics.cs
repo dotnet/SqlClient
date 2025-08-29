@@ -341,7 +341,7 @@ namespace Microsoft.Data.SqlClient
     // This is a ref struct to prevent it being included in async closures accidentally. 
     // Async functions should manage the timer directly using the Start and Stop method
     // in their invoke and completion functions
-    internal readonly ref struct ValueSqlStatisticsScope // : IDisposable // ref structs cannot implement interfaces but the compiler will use pattern matching to allow use of using on them
+    internal readonly ref struct ValueSqlStatisticsScope : IDisposable
     {
         private readonly SqlStatistics _statistics;
 
