@@ -1,0 +1,86 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This pipeline runs via commit triggers and schedules:
+#
+#   - Commits to GitHub main
+#   - Commits to ADO internal/main
+#   - Weekdays at 01:00 UTC on GitHub main
+#   - Thursdays at 03:00 UTC on ADO internal main
+#
+# Any time it is triggered, this pipeline runs the following stages in parallel:
+#
+#   - Build MDS in Release mode using project references and run the Unit,
+#     Functional, and Manual tests.
+#
+#   - Build MDS in Release mode using package references and run the Functional
+#     and Manual tests.
+#
+# GOTCHA: This pipeline definition is triggered by GitHub _and_ ADO CI.  We are
+# able to define different triggers and schedules using branch filters:
+#
+#   - Only the GitHub repo has a 'main' branch, so its presence indicates that
+#     the pipeline run was triggered via GitHub.
+#
+#   - Only the ADO repo has an 'internal/main' branch.
+
+# Set the pipeline run name to the day-of-year and the daily run counter.
+name: $(DayOfYear)$(Rev:rr)
+
+# Trigger this pipeline on commits to certain branches.
+trigger:
+  
+  # Don't trigger a new run until the previous one completes.
+  batch: true
+  
+  branches:
+    include:
+    # GitHub main branch.
+    - main
+
+    # ADO internal/main branch.
+    - internal/main
+  
+  paths:
+    include:
+    - src\Microsoft.Data.SqlClient\netcore\ref
+    - src\Microsoft.Data.SqlClient\netfx\ref
+    - src\Microsoft.Data.SqlClient\ref
+    - eng
+    - tools
+    - .config
+    - Nuget.config
+
+schedules:
+
+  # GitHub main on weekdays
+  - cron: '0 1 * * Mon-Fri'
+    displayName: Weekday Release Build
+    branches:
+      include:
+      - main
+    always: true
+
+  # ADO internal/main on Thursdays.
+  - cron: '0 3 * * Thu'
+    displayName: Thursday Release Build
+    branches:
+      include:
+      - internal/main
+    always: true
+
+stages:
+  # CI run using project references.
+  - template: dotnet-sqlclient-ci-core.yml@self
+    parameters:
+      buildType: Project
+      buildConfiguration: Release
+
+  # CI run using package references.
+  - template: dotnet-sqlclient-ci-core.yml@self
+    parameters:
+      buildType: Package
+      buildConfiguration: Release
