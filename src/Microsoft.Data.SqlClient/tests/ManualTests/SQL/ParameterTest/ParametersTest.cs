@@ -244,8 +244,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var expectedGuid = Guid.NewGuid();
             var cmd = new SqlCommand("select @input", conn);
             cmd.Parameters.AddWithValue("@input", expectedGuid);
+
             var result = cmd.ExecuteScalar();
             Assert.Equal(expectedGuid, (Guid)result);
+
+            cmd.Parameters[0].Value = new SqlGuid(expectedGuid);
+            result = cmd.ExecuteScalar();
+            Assert.Equal(expectedGuid, (Guid)result);
+
+            cmd.Parameters[0].Value = SqlGuid.Null;
+            result = cmd.ExecuteScalar();
+            Assert.Equal(DBNull.Value, result);
         }
 
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'TYPE'.
