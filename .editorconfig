@@ -163,7 +163,7 @@ indent_size = 2
 indent_size = 2
 
 # Xml files
-[*.{xml,stylecop,resx,ruleset}]
+[*.{xml,stylecop,resx,ruleset,slnx}]
 indent_size = 2
 
 # Xml config files
