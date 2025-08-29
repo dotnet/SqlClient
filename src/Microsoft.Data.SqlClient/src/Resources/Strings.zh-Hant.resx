@@ -3954,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>憑證路徑不得為 Null。請使用下列格式: &lt;憑證位置&gt;{2}&lt;憑證存放區&gt;{2}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{0}' 或 '{1}'。</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>內部錯誤。憑證路徑不得為 Null。請使用下列格式: &lt;憑證位置&gt;{2}&lt;憑證存放區&gt;{2}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{0}' 或 '{1}'。</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>資料行主要金鑰路徑不得為 null。對於儲存在 Microsoft 密碼編譯服務提供者 (CSP) 中的金鑰，請使用下列格式: &lt;CSP 提供者名稱&gt;{0}&lt;金鑰識別碼&gt;。</value>
@@ -3972,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>憑證路徑無效: '{0}'。請使用下列格式: &lt;憑證位置&gt;{3}&lt;憑證存放區&gt;{3}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{1}' 或 '{2}'。</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>內部錯誤。憑證路徑無效: '{0}'。請使用下列格式: &lt;憑證位置&gt;{3}&lt;憑證存放區&gt;{3}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{1}' 或 '{2}'。</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>資料行主要金鑰路徑 '{0}' 無效。對於儲存在 Microsoft 密碼編譯服務提供者 (CSP) 中的金鑰，請使用下列格式: &lt;CSP 提供者名稱&gt;{1}&lt;金鑰識別碼&gt;。</value>
@@ -3990,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>憑證路徑 '{1}' 中的憑證位置 '{0}' 無效。請使用下列格式: &lt;憑證位置&gt;{4}&lt;憑證存放區&gt;{4}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{2}' 或 '{3}'。</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>內部錯誤。憑證路徑 '{1}' 中的憑證位置 '{0}' 無效。請使用下列格式: &lt;憑證位置&gt;{4}&lt;憑證存放區&gt;{4}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{2}' 或 '{3}'。</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>憑證路徑 '{1}' 中指定了的憑證存放區 '{0}' 無效。預期值: '{2}'。</value>

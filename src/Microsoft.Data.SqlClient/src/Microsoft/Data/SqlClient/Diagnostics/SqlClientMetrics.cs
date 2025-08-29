@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         private string? _instanceName;
 #endif
 
-        public SqlClientMetrics(SqlClientEventSource eventSource)
+        public SqlClientMetrics(SqlClientEventSource eventSource, bool enableMetrics)
         {
             _eventSource = eventSource;
 
@@ -100,6 +100,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             // On .NET Framework, metrics are exposed as performance counters and are always enabled.
             // On .NET Core, metrics are exposed as EventCounters, and require explicit enablement.
             EnablePerformanceCounters();
+#else
+            if (enableMetrics)
+            {
+                EnableEventCounters();
+            }
 #endif
         }
 
@@ -466,7 +471,6 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             }
         }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         private void RemovePerformanceCounters()
         {
             // ExceptionEventHandler with IsTerminating may be called before

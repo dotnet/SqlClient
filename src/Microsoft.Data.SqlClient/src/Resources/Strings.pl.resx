@@ -3954,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>Ścieżka certyfikatu nie może mieć wartości null. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{2}&lt;certyfikat magazynu&gt;{2}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{0}” lub „{1}”.</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>Błąd wewnętrzny. Ścieżka certyfikatu nie może mieć wartości null. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{2}&lt;certyfikat magazynu&gt;{2}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{0}” lub „{1}”.</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Ścieżka klucza głównego kolumny nie może mieć wartości null. Użyj następującego formatu dla klucza przechowywanego u dostawcy usług kryptograficznych (CSP) firmy Microsoft: &lt;Nazwa dostawcy CSP&gt;{0}&lt;Identyfikator klucza&gt;.</value>
@@ -3972,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>Nieprawidłowa ścieżka certyfikatu: „{0}”. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{3}&lt;certyfikat magazynu&gt;{3}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{1}” lub „{2}”.</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>Błąd wewnętrzny. Nieprawidłowa ścieżka certyfikatu: „{0}”. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{3}&lt;certyfikat magazynu&gt;{3}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{1}” lub „{2}”.</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Nieprawidłowa ścieżka klucza głównego kolumny: „{0}”. Użyj następującego formatu dla klucza przechowywanego u dostawcy usług kryptograficznych (CSP) firmy Microsoft: &lt;Nazwa dostawcy CSP&gt;{1}&lt;Identyfikator klucza&gt;.</value>
@@ -3990,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>Nieprawidłowa lokalizacja certyfikatu „{0}” w ścieżce certyfikatu „{1}”. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{4}&lt;certyfikat magazynu&gt;{4}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{2}” lub „{3}”.</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>Błąd wewnętrzny. Nieprawidłowa lokalizacja certyfikatu „{0}” w ścieżce certyfikatu „{1}”. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{4}&lt;certyfikat magazynu&gt;{4}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{2}” lub „{3}”.</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>W ścieżce certyfikatu „{1}” określono nieprawidłowy magazyn certyfikatów „{0}”. Oczekiwana wartość: „{2}”.</value>
