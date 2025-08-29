@@ -67,10 +67,11 @@ parameters:
 
 - name: buildConfiguration
   displayName: 'Build Configuration'
-  default: Release
+  type: string
+  default: Debug
   values:
-    - Release
     - Debug
+    - Release
 
 - name: defaultPoolName
   type: string
@@ -96,7 +97,7 @@ stages:
     jobs:
     - template: common/templates/jobs/ci-build-nugets-job.yml@self
       parameters:
-        configuration: ${{ parameters.buildConfiguration }}
+        buildConfiguration: ${{ parameters.buildConfiguration }}
         artifactName: $(artifactName)
         ${{if ne(parameters.SNIVersion, '')}}:
           prebuildSteps:

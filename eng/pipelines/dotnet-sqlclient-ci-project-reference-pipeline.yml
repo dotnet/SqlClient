@@ -75,10 +75,11 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 
 - name: buildConfiguration
   displayName: 'Build Configuration'
-  default: Release
+  type: string
+  default: Debug
   values:
-    - Release
     - Debug
+    - Release
 
 - name: enableStressTests
   displayName: Enable Stress Tests
