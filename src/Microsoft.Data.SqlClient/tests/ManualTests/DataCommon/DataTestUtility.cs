@@ -97,9 +97,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // behind with vector and JSON support.
         // JSON Column type
         public static readonly bool IsJsonSupported = !IsNotAzureServer();
-        // VECTOR column type
-        public static readonly bool IsVectorSupported = Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource);
-
+        
         // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
         public static bool IsAzureSynapse
@@ -456,6 +454,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsNotAzureServer()
         {
             return !AreConnStringsSetup() || !Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource);
+        }
+
+        public static bool IsAzureServer()
+        {
+            return AreConnStringsSetup() && Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource);
         }
 
         public static bool IsNotNamedInstance()
