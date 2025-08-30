@@ -4,31 +4,10 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+# Set the pipeline run name to the day-of-year and the daily run counter.
 name: $(DayOfYear)$(Rev:rr)
-trigger:
-  batch: true
-  branches:
-    include:
-    - main
-    - internal/main
-  paths:
-    include:
-    - src
-    - eng
-    - tools
-    - .config
-    - build.proj
-    - Nuget.config
 
-schedules:
-- cron: '0 5 * * Thu'
-  displayName: Weekly Wednesday 10:00 PM (UTC - 7) Build
-  branches:
-    include:
-    - internal/main
-  always: true
-
-parameters: # parameters are shown up in ADO UI in a build queue time
+parameters:
 - name: 'debug'
   displayName: 'Enable debug output'
   type: boolean
@@ -75,10 +54,11 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 
 - name: buildConfiguration
   displayName: 'Build Configuration'
-  default: Release
+  type: string
+  default: Debug
   values:
-    - Release
     - Debug
+    - Release
 
 - name: enableStressTests
   displayName: Enable Stress Tests
