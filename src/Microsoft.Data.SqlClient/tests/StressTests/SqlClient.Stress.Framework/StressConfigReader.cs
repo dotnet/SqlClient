@@ -2,8 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.Json;
 using System.Xml;
 using System.Xml.XPath;
 using static Stress.Data.DataStressSettings;
@@ -15,7 +17,8 @@ namespace Stress.Data
     /// </summary>
     internal class StressConfigReader
     {
-        private string _configFilePath;
+        private readonly string _configFilePath;
+        private readonly bool _configIsJson;
         private const string dataStressSettings = "dataStressSettings";
         private const string sourcePath = "//dataStressSettings/sources/source";
         internal List<DataSourceElement> Sources
@@ -25,10 +28,92 @@ namespace Stress.Data
 
         public StressConfigReader(string configFilePath)
         {
-            this._configFilePath = configFilePath;
+            _configFilePath = configFilePath;
+
+            // If the config filename extension is 'json' or 'jsonc', we parse
+            // it as JSON.
+            if (configFilePath.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ||
+                configFilePath.EndsWith(".jsonc", StringComparison.OrdinalIgnoreCase))
+            {
+                _configIsJson = true;
+            }
+            // Otherwise, parse it as XML.
+            else
+            {
+                _configIsJson = false;
+
+                // The original code always prepended the Framework project
+                // directory onto whatever path was given, so we do the same if
+                // that isn't already present.
+                if (!_configFilePath.StartsWith("SqlClient.Stress.Framework/"))
+                {
+                    _configFilePath = Path.Combine("SqlClient.Stress.Framework", _configFilePath);
+                }
+            }
         }
 
         internal void Load()
+        {
+            if (_configIsJson)
+            {
+                LoadJson();
+            }
+            else
+            {
+                LoadXml();
+            }
+        }
+
+        private struct JsonDataSource
+        {
+            public string Name { get; set; }
+            public string Type { get; set; }
+            public bool IsDefault { get; set; }
+            public string DataSource { get; set; }
+            public string EntraIdUser { get; set; }
+            public string EntraIdPassword { get; set; }
+            public string User { get; set; }
+            public string Password { get; set; }
+            public bool SupportsWindowsAuthentication { get; set; }
+            public bool IsLocal { get; set; }
+            public bool DisableMultiSubnetFailover { get; set; }
+            public bool DisableNamedPipes { get; set; }
+            public bool Encrypt { get; set; }
+        }
+
+        private void LoadJson()
+        {
+            var sources = JsonSerializer.Deserialize<List<JsonDataSource>>(
+                File.ReadAllText(_configFilePath),
+                new JsonSerializerOptions()
+                {
+                    IncludeFields = true,
+                    PropertyNameCaseInsensitive = true,
+                    ReadCommentHandling = JsonCommentHandling.Skip
+                });
+
+            Sources = new(sources.Count);
+
+            foreach (var source in sources)
+            {
+                Sources.Add(new DataSourceElement(
+                    source.Name,
+                    source.Type,
+                    null,
+                    source.DataSource,
+                    source.EntraIdUser,
+                    source.EntraIdPassword,
+                    source.User,
+                    source.Password,
+                    ds_isDefault: source.IsDefault,
+                    ds_isLocal: source.IsLocal,
+                    disableMultiSubnetFailoverSetup: source.DisableMultiSubnetFailover,
+                    disableNamedPipes: source.DisableNamedPipes,
+                    encrypt: source.Encrypt));
+            }
+        }
+
+        private void LoadXml()
         {
             XmlReader reader = null;
             try
@@ -52,7 +137,6 @@ namespace Stress.Data
                     string dataSource = sourceNavigator.GetAttribute("dataSource", nsUri);
                     string user = sourceNavigator.GetAttribute("user", nsUri);
                     string password = sourceNavigator.GetAttribute("password", nsUri);
-                    string database = sourceNavigator.GetAttribute("database", nsUri);
                     bool supportsWindowsAuthentication;
                     supportsWindowsAuthentication = bool.TryParse(sourceNavigator.GetAttribute("supportsWindowsAuthentication", nsUri), out supportsWindowsAuthentication) ? supportsWindowsAuthentication : false;
                     bool isLocal;
@@ -64,7 +148,20 @@ namespace Stress.Data
                     bool encrypt;
                     encrypt = bool.TryParse(sourceNavigator.GetAttribute("encrypt", nsUri), out encrypt) ? encrypt : false;
 
-                    DataSourceElement element = new DataSourceElement(sourceName, sourceType, null, dataSource, database, user, password, ds_isDefault: isDefault, ds_isLocal: isLocal, disableMultiSubnetFailoverSetup: disableMultiSubnetFailover, disableNamedPipes: disableNamedPipes, encrypt: encrypt);
+                    DataSourceElement element = new(
+                        sourceName,
+                        sourceType,
+                        null,
+                        dataSource,
+                        string.Empty,
+                        string.Empty,
+                        user,
+                        password,
+                        ds_isDefault: isDefault,
+                        ds_isLocal: isLocal,
+                        disableMultiSubnetFailoverSetup: disableMultiSubnetFailover,
+                        disableNamedPipes: disableNamedPipes,
+                        encrypt: encrypt);
                     Sources.Add(element);
                 }
             }
