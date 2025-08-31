@@ -466,11 +466,20 @@ namespace Microsoft.Data.SqlClient
             // If the target table doesn't exist, OBJECT_ID will return NULL and @Column_Names will remain non-null. The subsequent SELECT *
             // query will then continue to fail with "Invalid object name" rather than with an unusual error because the query being executed
             // is NULL.
+            // Some hidden columns (e.g. SQL Graph columns) cannot be selected, so we need to exclude them explicitly.
             return $"""
 SELECT @@TRANCOUNT;
 
 DECLARE @Column_Names NVARCHAR(MAX) = NULL;
-SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME(name) FROM {CatalogName}.sys.all_columns WHERE OBJECT_ID = OBJECT_ID('{escapedObjectName}') ORDER BY column_id ASC;
+IF EXISTS (SELECT TOP 1 * FROM sys.all_columns where object_id = object_id('sys.all_columns') AND [name] = 'graph_type')
+BEGIN
+    SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME(name) FROM {CatalogName}.sys.all_columns WHERE OBJECT_ID = OBJECT_ID('{escapedObjectName}') AND COALESCE(graph_type, 0) NOT IN (1, 3, 4, 6, 7) ORDER BY column_id ASC;
+END
+ELSE
+BEGIN
+    SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME(name) FROM {CatalogName}.sys.all_columns WHERE OBJECT_ID = OBJECT_ID('{escapedObjectName}') ORDER BY column_id ASC;
+END
+
 SELECT @Column_Names = COALESCE(@Column_Names, '*');
 
 SET FMTONLY ON;

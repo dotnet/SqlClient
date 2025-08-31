@@ -148,6 +148,7 @@
     <Compile Include="SQL\SqlBulkCopyTest\MissingTargetColumns.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\MissingTargetTable.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\SqlBulkCopyTest.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\SqlGraphTables.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\TestBulkCopyWithUTF8.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Transaction.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Transaction1.cs" />
