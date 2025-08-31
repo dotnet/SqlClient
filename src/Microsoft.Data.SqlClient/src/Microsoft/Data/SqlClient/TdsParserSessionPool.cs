@@ -215,24 +215,6 @@ namespace Microsoft.Data.SqlClient
                         _cachedCount,
                         _cache.Count);
         }
-
-#if NETFRAMEWORK
-        internal void BestEffortCleanup()
-        {
-            for (int i = 0; i < _cache.Count; i++)
-            {
-                TdsParserStateObject session = _cache[i];
-                if (session != null)
-                {
-                    SNIHandle sessionHandle = session.Handle;
-                    if (sessionHandle != null)
-                    {
-                        sessionHandle.Dispose();
-                    }
-                }
-            }
-        }
-#endif
     }
 }
 
