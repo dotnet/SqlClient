@@ -595,10 +595,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Environment.MachineName,
                 DateTime.Now.ToString("yyyy_MM_dd", CultureInfo.InvariantCulture));
             string name = GetUniqueName(extendedPrefix, withBracket);
-            if (name.Length > 128)
+
+            // Truncate to no more than 128 characters.
+            const int maxLen = 128;
+            if (name.Length > maxLen)
             {
-                throw new ArgumentOutOfRangeException("the name is too long - SQL Server names are limited to 128");
+                if (withBracket)
+                {
+                    name = name.Substring(0, maxLen - 1) + ']';
+                }
+                else
+                {
+                    name = name.Substring(0, maxLen);
+                }
             }
+
             return name;
         }
 

@@ -158,57 +158,49 @@ namespace Microsoft.Data.SqlClient
             string hostNameInCertificate)
             : base(IntPtr.Zero, true)
         {
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-            try
-            { }
-            finally
-            {
-                _fSync = fSync;
-                instanceName = new byte[256]; // Size as specified by netlibs.
-                // Option ignoreSniOpenTimeout is no longer available
-                //if (ignoreSniOpenTimeout)
-                //{
-                //    // UNDONE: ITEM12001110 (DB Mirroring Reconnect) Old behavior of not truly honoring timeout presevered 
-                //    //  for non-failover scenarios to avoid breaking changes as part of a QFE.  Consider fixing timeout
-                //    //  handling in next full release and removing ignoreSniOpenTimeout parameter.
-                //    timeout = Timeout.Infinite; // -1 == native SNIOPEN_TIMEOUT_VALUE / INFINITE
-                //}
+            _fSync = fSync;
+            instanceName = new byte[256]; // Size as specified by netlibs.
+            // Option ignoreSniOpenTimeout is no longer available
+            //if (ignoreSniOpenTimeout)
+            //{
+            //    // UNDONE: ITEM12001110 (DB Mirroring Reconnect) Old behavior of not truly honoring timeout presevered
+            //    //  for non-failover scenarios to avoid breaking changes as part of a QFE.  Consider fixing timeout
+            //    //  handling in next full release and removing ignoreSniOpenTimeout parameter.
+            //    timeout = Timeout.Infinite; // -1 == native SNIOPEN_TIMEOUT_VALUE / INFINITE
+            //}
 
-                #if NETFRAMEWORK
-                int transparentNetworkResolutionStateNo = (int)transparentNetworkResolutionState;
-                _status = SniNativeWrapper.SniOpenSyncEx(
-                    myInfo,
-                    serverName,
-                    ref base.handle,
-                    ref spn,
-                    instanceName,
-                    flushCache,
-                    fSync,
-                    timeout,
-                    fParallel,
-                    transparentNetworkResolutionStateNo,
-                    totalTimeout,
-                    ipPreference,
-                    cachedDNSInfo,
-                    hostNameInCertificate);
-                #else
-                _status = SniNativeWrapper.SniOpenSyncEx(
-                    myInfo,
-                    serverName,
-                    ref base.handle,
-                    ref spn,
-                    instanceName,
-                    flushCache,
-                    fSync,
-                    timeout,
-                    fParallel,
-                    ipPreference,
-                    cachedDNSInfo,
-                    hostNameInCertificate);
-                #endif
-            }
+            #if NETFRAMEWORK
+            int transparentNetworkResolutionStateNo = (int)transparentNetworkResolutionState;
+            _status = SniNativeWrapper.SniOpenSyncEx(
+                myInfo,
+                serverName,
+                ref base.handle,
+                ref spn,
+                instanceName,
+                flushCache,
+                fSync,
+                timeout,
+                fParallel,
+                transparentNetworkResolutionStateNo,
+                totalTimeout,
+                ipPreference,
+                cachedDNSInfo,
+                hostNameInCertificate);
+            #else
+            _status = SniNativeWrapper.SniOpenSyncEx(
+                myInfo,
+                serverName,
+                ref base.handle,
+                ref spn,
+                instanceName,
+                flushCache,
+                fSync,
+                timeout,
+                fParallel,
+                ipPreference,
+                cachedDNSInfo,
+                hostNameInCertificate);
+            #endif
         }
 
         // constructs SNI Handle for MARS session

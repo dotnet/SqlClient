@@ -691,7 +691,6 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                             if (_hashHelper.Identity != null)
                             { // Only impersonate if Integrated Security.
                                 WindowsImpersonationContext context = null;
-                                RuntimeHelpers.PrepareConstrainedRegions(); // CER for context.Undo.
                                 try
                                 {
                                     context = _windowsIdentity.Impersonate();

@@ -211,7 +211,6 @@ namespace Microsoft.Data.SqlClient
 
         internal override void Dispose()
         {
-
             SafeHandle packetHandle = _sniPacket;
             SafeHandle sessionHandle = _sessionHandle;
             SafeHandle asyncAttnPacket = _sniAsyncAttnPacket;
@@ -228,25 +227,18 @@ namespace Microsoft.Data.SqlClient
                 // here for the callbacks!!!  This only applies to async.  Should be fixed by async fixes for
                 // AD unload/exit.
 
-                // TODO: Make this a BID trace point!
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                { }
-                finally
+                if (packetHandle != null)
                 {
-                    if (packetHandle != null)
-                    {
-                        packetHandle.Dispose();
-                    }
-                    if (asyncAttnPacket != null)
-                    {
-                        asyncAttnPacket.Dispose();
-                    }
-                    if (sessionHandle != null)
-                    {
-                        sessionHandle.Dispose();
-                        DecrementPendingCallbacks(true); // Will dispose of GC handle.
-                    }
+                    packetHandle.Dispose();
+                }
+                if (asyncAttnPacket != null)
+                {
+                    asyncAttnPacket.Dispose();
+                }
+                if (sessionHandle != null)
+                {
+                    sessionHandle.Dispose();
+                    DecrementPendingCallbacks(true); // Will dispose of GC handle.
                 }
             }
 
@@ -420,16 +412,8 @@ namespace Microsoft.Data.SqlClient
         {
             lock (_writePacketLockObject)
             {
-#if NETFRAMEWORK
-                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                try
-                { }
-                finally
-                {
-                    _writePacketCache.Dispose();
-                    // Do not set _writePacketCache to null, just in case a WriteAsyncCallback completes after this point
-                }
+                _writePacketCache.Dispose();
+                // Do not set _writePacketCache to null, just in case a WriteAsyncCallback completes after this point
             }
         }
 

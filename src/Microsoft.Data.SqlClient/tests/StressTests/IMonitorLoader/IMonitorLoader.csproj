@@ -2,7 +2,5 @@
   <PropertyGroup>
     <RootNamespace>Monitoring</RootNamespace>
     <AssemblyName>Monitoring</AssemblyName>
-    <TargetFrameworks>net9.0;net48</TargetFrameworks>
-    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 </Project>

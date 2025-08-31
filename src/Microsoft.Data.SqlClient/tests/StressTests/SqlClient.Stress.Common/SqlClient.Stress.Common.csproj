@@ -1,8 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFrameworks>net9.0;net48</TargetFrameworks>
-    <LangVersion>latest</LangVersion>
-  </PropertyGroup>
+  <!-- All properties are inherited from Directory.Build.props. -->
 
 </Project>

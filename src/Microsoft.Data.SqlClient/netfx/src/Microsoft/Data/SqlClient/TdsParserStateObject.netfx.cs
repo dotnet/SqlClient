@@ -85,7 +85,6 @@ namespace Microsoft.Data.SqlClient
 
         internal uint CheckConnection() => SniNativeWrapper.SniCheckConnection(Handle);
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
@@ -161,7 +160,6 @@ namespace Microsoft.Data.SqlClient
 
                             PacketHandle syncReadPacket = default;
                             bool readFromNetwork = true;
-                            RuntimeHelpers.PrepareConstrainedRegions();
                             bool shouldDecrement = false;
                             try
                             {
@@ -272,7 +270,6 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
-            RuntimeHelpers.PrepareConstrainedRegions();
             bool processFinallyBlock = true;
             try
             {
@@ -555,14 +552,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Async operation completion may be delayed (success pending).
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-            }
-            finally
-            {
-                sniError = WritePacket(packet, sync);
-            }
+            sniError = WritePacket(packet, sync);
 
             if (sniError == TdsEnums.SNI_SUCCESS_IO_PENDING)
             {
@@ -670,7 +660,6 @@ namespace Microsoft.Data.SqlClient
 
                 PacketHandle attnPacket = CreateAndSetAttentionPacket();
 
-                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
                     // Dev11 #344723: SqlClient stress test suspends System_Data!Tcp::ReadSync via a call to SqlDataReader::Close

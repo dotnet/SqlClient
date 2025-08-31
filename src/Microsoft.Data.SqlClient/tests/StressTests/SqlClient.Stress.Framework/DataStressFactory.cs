@@ -418,7 +418,7 @@ namespace Stress.Data
                 cmdText.Append(";").Append(GetRandomSessionModificationStatement(rnd));
             }
 
-            com.CommandText = cmdText.ToString(); ;
+            com.CommandText = cmdText.ToString();
             return com;
         }
 
@@ -789,7 +789,7 @@ namespace Stress.Data
                         }
                         else
                         {
-                            throw de;
+                            throw;
                         }
                     }
 
@@ -808,7 +808,7 @@ namespace Stress.Data
                         }
                         else
                         {
-                            throw de;
+                            throw;
                         }
                     }
 
@@ -946,6 +946,9 @@ namespace Stress.Data
             }
             TableMetadataList = null;
         }
+
+        public abstract void CreateDatabase(DataSource source);
+        public abstract void DropDatabase(DataSource source);
 
         #endregion
     }

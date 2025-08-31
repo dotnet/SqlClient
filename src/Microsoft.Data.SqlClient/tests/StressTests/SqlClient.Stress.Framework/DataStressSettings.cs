@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Stress.Data
 {
@@ -12,17 +13,36 @@ namespace Stress.Data
     /// </summary>
     public class DataStressSettings
     {
+        internal static readonly string s_defaultConfigFileName = "StressTests.config.jsonc";
 
-        internal static readonly string s_configFileName = "StressTest.config";
-
-        // use Instance to access the settings
-        private DataStressSettings()
+        public DataStressSettings(string configFileName)
         {
+            _dataStressConfigSection = new(configFileName);
         }
 
-        private bool Initialized { get; set; }
+        private static DataStressSettings s_instance;
 
-        private DataStressConfigurationSection _dataStressSettings = new DataStressConfigurationSection();
+        public static DataStressSettings Instance
+        {
+            get
+            {
+                if (s_instance is null)
+                {
+                    var cfg = Environment.GetEnvironmentVariable("STRESS_CONFIG_FILE");
+                    if (cfg is null)
+                    {
+                        cfg = s_defaultConfigFileName;
+                    }
+                    s_instance = new(cfg);
+                }
+
+                s_instance.Load();
+
+                return s_instance;
+            }
+        }
+
+        private readonly DataStressConfigurationSection _dataStressConfigSection;
 
         // list of sources read from the config file
         private Dictionary<string, DataSource> _sources = new Dictionary<string, DataSource>(StringComparer.CurrentCultureIgnoreCase);
@@ -48,26 +68,6 @@ namespace Stress.Data
             private set;
         }
 
-        // singleton instance, lazy evaluation
-        private static DataStressSettings s_instance = new DataStressSettings();
-        public static DataStressSettings Instance
-        {
-            get
-            {
-                if (!s_instance.Initialized)
-                {
-                    lock (s_instance)
-                    {
-                        if (!s_instance.Initialized)
-                        {
-                            s_instance.Load();
-                        }
-                    }
-                }
-                return s_instance;
-            }
-        }
-
         #region Configuration file handlers
 
         private class DataStressConfigurationSection
@@ -75,8 +75,12 @@ namespace Stress.Data
             private List<DataSourceElement> _sources = new List<DataSourceElement>();
             private ErrorHandlingPolicyElement _errorHandlingPolicy = new ErrorHandlingPolicyElement();
             private ConnectionPoolPolicyElement _connectionPoolPolicy = new ConnectionPoolPolicyElement();
+            private readonly StressConfigReader _reader;
 
-            StressConfigReader reader = new StressConfigReader(s_configFileName);
+            public DataStressConfigurationSection(string configFileName)
+            {
+                _reader = new StressConfigReader(configFileName);
+            }
 
             public List<DataSourceElement> Sources
             {
@@ -84,8 +88,8 @@ namespace Stress.Data
                 {
                     if(_sources.Count == 0)
                     {
-                        reader.Load();
-                        _sources = reader.Sources;
+                        _reader.Load();
+                        _sources = _reader.Sources;
                     }
                     return _sources;
                 }
@@ -122,7 +126,8 @@ namespace Stress.Data
                                     string ds_type,
                                     string ds_server,
                                     string ds_datasource,
-                                    string ds_database,
+                                    string ds_entraIdUser,
+                                    string ds_entraIdPassword,
                                     string ds_user,
                                     string ds_password,
                                     bool ds_isDefault = false,
@@ -145,9 +150,13 @@ namespace Stress.Data
                 {
                     SourceProperties.Add("dataSource", ds_datasource);
                 }
-                if (ds_database != null)
+                if (ds_entraIdUser != null)
                 {
-                    SourceProperties.Add("database", ds_database);
+                    SourceProperties.Add("entraIdUser", ds_entraIdUser);
+                }
+                if (ds_entraIdPassword != null)
+                {
+                    SourceProperties.Add("entraIdPassword", ds_entraIdPassword);
                 }
                 if (ds_user != null)
                 {
@@ -164,7 +173,7 @@ namespace Stress.Data
                 SourceProperties.Add("DisableMultiSubnetFailoverSetup", disableMultiSubnetFailoverSetup.ToString());
 
                 SourceProperties.Add("DisableNamedPipes", disableNamedPipes.ToString());
-                
+
                 SourceProperties.Add("Encrypt", encrypt.ToString());
 
                 if (ds_dbFile != null)
@@ -241,7 +250,7 @@ namespace Stress.Data
         private void Load()
         {
             // Parse <sources>
-            foreach (DataSourceElement sourceElement in _dataStressSettings.Sources)
+            foreach (DataSourceElement sourceElement in _dataStressConfigSection.Sources)
             {
                 // if Parse raises exception, check that the type attribute is set to the relevant the SourceType enumeration value name
                 DataSourceType sourceType = (DataSourceType)Enum.Parse(typeof(DataSourceType), sourceElement.Type, true);
@@ -252,14 +261,12 @@ namespace Stress.Data
 
             // Parse <errorhandlingpolicy>
             // if Parse raises exception, check that the action attribute is set to a valid ActionOnProductBugFound enumeration value name
-            this.ActionOnProductError = (ErrorHandlingAction)Enum.Parse(typeof(ErrorHandlingAction), _dataStressSettings.ErroHandlingPolicy.OnProductError, true);
-            this.ActionOnTestError = (ErrorHandlingAction)Enum.Parse(typeof(ErrorHandlingAction), _dataStressSettings.ErroHandlingPolicy.OnTestError, true);
-            this.ActionOnProgrammingError = (ErrorHandlingAction)Enum.Parse(typeof(ErrorHandlingAction), _dataStressSettings.ErroHandlingPolicy.OnProgrammingError, true);
+            this.ActionOnProductError = (ErrorHandlingAction)Enum.Parse(typeof(ErrorHandlingAction), _dataStressConfigSection.ErroHandlingPolicy.OnProductError, true);
+            this.ActionOnTestError = (ErrorHandlingAction)Enum.Parse(typeof(ErrorHandlingAction), _dataStressConfigSection.ErroHandlingPolicy.OnTestError, true);
+            this.ActionOnProgrammingError = (ErrorHandlingAction)Enum.Parse(typeof(ErrorHandlingAction), _dataStressConfigSection.ErroHandlingPolicy.OnProgrammingError, true);
 
             // Parse <connectionPoolPolicy>
-            this.NumberOfConnectionPools = _dataStressSettings.ConnectionPoolPolicy.NumberOfPools;
-
-            this.Initialized = true;
+            this.NumberOfConnectionPools = _dataStressConfigSection.ConnectionPoolPolicy.NumberOfPools;
         }
 
 
