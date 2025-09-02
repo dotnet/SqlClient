@@ -184,6 +184,9 @@
     <Compile Include="SQL\DataSourceParserTest\DataSourceParserTest.cs" />
     <Compile Include="SQL\InstanceNameTest\InstanceNameTest.cs" />
     <Compile Include="SQL\IntegratedAuthenticationTest\IntegratedAuthenticationTest.cs" />
+    <Compile Include="SQL\JsonTest\JsonBulkCopyTest.cs" />
+    <Compile Include="SQL\JsonTest\JsonStreamTest.cs" />
+    <Compile Include="SQL\JsonTest\JsonTest.cs" />
     <Compile Include="SQL\KerberosTests\KerberosTest.cs" />
     <Compile Include="SQL\KerberosTests\KerberosTicketManager\KerberosTicketManager.cs" />
     <Compile Include="SQL\LocalDBTest\LocalDBTest.cs" />
@@ -212,6 +215,9 @@
     <Compile Include="SQL\UdtTest\UdtTest2.cs" />
     <Compile Include="SQL\UdtTest\UdtTestHelpers.cs" />
     <Compile Include="SQL\Utf8SupportTest\Utf8SupportTest.cs" />
+    <Compile Include="SQL\VectorTest\VectorTypeBackwardCompatibilityTests.cs" />
+    <Compile Include="SQL\VectorTest\NativeVectorFloat32Tests.cs" />
+    <Compile Include="SQL\VectorTest\VectorAPIValidationTest.cs" />
     <Compile Include="SQL\WeakRefTest\WeakRefTest.cs" />
     <Compile Include="SQL\WeakRefTestYukonSpecific\WeakRefTestYukonSpecific.cs" />
     <Compile Include="SQL\ParameterTest\DateTimeVariantTest.cs" />
@@ -293,11 +299,6 @@
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserStateObjectHelper.cs" />
     <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTest.cs" />
     <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTestWithTdsServer.cs" />
-    <Compile Include="SQL\JsonTest\JsonBulkCopyTest.cs" />
-    <Compile Include="SQL\JsonTest\JsonStreamTest.cs" />
-    <Compile Include="SQL\JsonTest\JsonTest.cs" />
-    <Compile Include="SQL\VectorTest\VectorTypeBackwardCompatibilityTests.cs" />
-    <Compile Include="SQL\VectorTest\NativeVectorFloat32Tests.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
     <Compile Include="TracingTests\TestTdsServer.cs" />
     <Compile Include="XUnitAssemblyAttributes.cs" />
