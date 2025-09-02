@@ -585,7 +585,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         /// <param name="prefix">Add the prefix to the generate string.</param>
         /// <param name="withBracket">Database name must be pass with brackets by default.</param>
-        /// <returns>Unique name by considering the Sql Server naming rules.</returns>
+        /// <returns>Unique name by considering the Sql Server naming rules, never longer than 96 characters.</returns>
         public static string GetUniqueNameForSqlServer(string prefix, bool withBracket = true)
         {
             string extendedPrefix = string.Format(
@@ -596,8 +596,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DateTime.Now.ToString("yyyy_MM_dd", CultureInfo.InvariantCulture));
             string name = GetUniqueName(extendedPrefix, withBracket);
 
-            // Truncate to no more than 128 characters.
-            const int maxLen = 128;
+            // Truncate to no more than 96 characters.
+            const int maxLen = 96;
             if (name.Length > maxLen)
             {
                 if (withBracket)
