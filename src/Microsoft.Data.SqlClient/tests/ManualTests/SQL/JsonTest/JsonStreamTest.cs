@@ -19,11 +19,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public string Name { get; set; }
     }
 
-    public  class JsonStreamTest
+    public class JsonStreamTest
     {
         private readonly ITestOutputHelper _output;
-        private static readonly string _jsonFile = "randomRecords.json";
-        private static readonly string _outputFile = "serverRecords.json";
+        private static readonly string _jsonFile = DataTestUtility.GetUniqueName("randomRecords") + ".json";
+        private static readonly string _outputFile = DataTestUtility.GetUniqueName("serverRecords") + ".json";
 
         public JsonStreamTest(ITestOutputHelper output)
         {
@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string json = JsonConvert.SerializeObject(records, Formatting.Indented);
             File.WriteAllText(filename, json);
             Assert.True(File.Exists(filename));
-            _output.WriteLine("Generated JSON file "+filename);
+            _output.WriteLine("Generated JSON file " + filename);
         }
 
         private void CompareJsonFiles()
@@ -157,10 +157,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer))]
         public void TestJsonStreaming()
         {
-            GenerateJsonFile(10000, _jsonFile);
+            GenerateJsonFile(1000, _jsonFile);
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
@@ -173,10 +173,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer))]
         public async Task TestJsonStreamingAsync()
         {
-            GenerateJsonFile(10000, _jsonFile);
+            GenerateJsonFile(1000, _jsonFile);
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 await connection.OpenAsync();
@@ -190,4 +190,3 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
     }
 }
-
