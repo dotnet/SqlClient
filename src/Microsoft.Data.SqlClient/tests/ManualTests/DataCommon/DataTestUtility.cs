@@ -111,7 +111,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             get
             {
-                SqlConnectionStringBuilder builder = new (TCPConnectionString);
+                SqlConnectionStringBuilder builder = new(TCPConnectionString);
                 return builder.Authentication == SqlAuthenticationMethod.SqlPassword || builder.Authentication == SqlAuthenticationMethod.NotSpecified;
             }
         }
@@ -571,7 +571,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var guid = Guid.NewGuid().ToString();
             // GOTCHA: The slice operator is inclusive of the start index and
             // exclusive of the end index!
-            return guid[0..8] + guid[19..23];
+            return guid.Substring(0, 8) + guid.Substring(19, 4);
         }
 
         /// <summary>
@@ -625,7 +625,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int maxSuffixLength = withBracket ? 16 : 18;
             if (suffix.Length > maxSuffixLength)
             {
-                suffix = suffix[0..maxSuffixLength];
+                suffix = suffix.Substring(0, maxSuffixLength);
             }
             name.Append(suffix);
 
@@ -687,7 +687,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             if (suffix.Length > 32)
             {
-                suffix = suffix[0..32];
+                suffix = suffix.Substring(0, 32);
             }
 
             suffix =
@@ -698,7 +698,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int maxSuffixLength = withBracket ? 82 : 84;
             if (suffix.Length > maxSuffixLength)
             {
-                suffix = suffix[0..maxSuffixLength];
+                suffix = suffix.Substring(0, maxSuffixLength);
             }
 
             name.Append(suffix);
