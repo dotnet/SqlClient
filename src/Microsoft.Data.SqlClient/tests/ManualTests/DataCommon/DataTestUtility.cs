@@ -660,7 +660,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// 
         /// <param name="suffix">
         /// The suffix to use when generating the unique name, truncated to at
-        /// most 18 characters.
+        /// most 32 characters.
         /// </param>
         /// 
         /// <param name="withBracket">
@@ -685,9 +685,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             name.Append(GetGuidParts());
             name.Append('-');
 
-            if (suffix.Length > 18)
+            if (suffix.Length > 32)
             {
-                suffix = suffix[0..18];
+                suffix = suffix[0..32];
             }
 
             suffix =
