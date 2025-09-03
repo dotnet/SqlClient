@@ -556,59 +556,159 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        /// <summary>
-        /// Generate a unique name to use in Sql Server; 
-        /// some providers does not support names (Oracle supports up to 30).
-        /// </summary>
-        /// <param name="prefix">The name length will be no more then (16 + prefix.Length + escapeLeft.Length + escapeRight.Length).</param>
-        /// <param name="withBracket">Name without brackets.</param>
-        /// <returns>Unique name by considering the Sql Server naming rules.</returns>
-        public static string GetUniqueName(string prefix, bool withBracket = true)
+        // Generate a new GUID and return the characters from its 1st and 4th
+        // parts, as shown here:
+        //
+        //   7ff01cb8-88c7-11f0-b433-00155d7e531e
+        //   ^^^^^^^^           ^^^^
+        //
+        // These 12 characters are concatenated together without any
+        // separators.  These 2 parts typically comprise a timestamp and clock
+        // sequence, most likely to be unique for tests that generate names in
+        // quick succession.
+        private static string GetGuidParts()
         {
-            string escapeLeft = withBracket ? "[" : string.Empty;
-            string escapeRight = withBracket ? "]" : string.Empty;
-            string uniqueName = string.Format("{0}{1}_{2}_{3}{4}",
-                escapeLeft,
-                prefix,
-                DateTime.Now.Ticks.ToString("X", CultureInfo.InvariantCulture), // up to 8 characters
-                Guid.NewGuid().ToString().Substring(0, 6), // take the first 6 characters only
-                escapeRight);
-            return uniqueName;
+            var guid = Guid.NewGuid().ToString();
+            // GOTCHA: The slice operator is inclusive of the start index and
+            // exclusive of the end index!
+            return guid[0..8] + guid[19..23];
         }
 
         /// <summary>
-        /// Uses environment values `UserName` and `MachineName` in addition to the specified `prefix` and current date
-        /// to generate a unique name to use in Sql Server; 
-        /// SQL Server supports long names (up to 128 characters), add extra info for troubleshooting.
+        /// Generate a short unique database object name, whose maximum length
+        /// is 30 characters, with the format:
+        ///
+        ///   <GUID-Parts>-<Suffix>
+        ///
+        /// The GUID Parts will be the characters from the 1st and 4th blocks
+        /// from a traditional string representation, as shown here:
+        ///
+        ///   7ff01cb8-88c7-11f0-b433-00155d7e531e
+        ///   ^^^^^^^^           ^^^^
+        ///
+        /// These 12 characters are concatenated together without any
+        /// separators.  These 2 parts typically comprise a timestamp and clock
+        /// sequence, most likely to be unique for tests that generate names in
+        /// quick succession.
+        ///
+        /// The Suffix will be truncated to satisfy the overall maximum length.
         /// </summary>
-        /// <param name="prefix">Add the prefix to the generate string.</param>
-        /// <param name="withBracket">Database name must be pass with brackets by default.</param>
-        /// <returns>Unique name by considering the Sql Server naming rules, never longer than 96 characters.</returns>
-        public static string GetUniqueNameForSqlServer(string prefix, bool withBracket = true)
+        /// 
+        /// <param name="suffix">
+        /// The suffix to use when generating the unique name, truncated to at
+        /// most 18 characters when withBracket is false, and 16 characters when
+        /// withBracket is true.
+        /// </param>
+        /// 
+        /// <param name="withBracket">
+        /// When true, the entire generated name will be enclosed in square
+        /// brackets, for example:
+        /// 
+        ///   [7ff01cb811f0-MySuffix]
+        /// </param>
+        /// 
+        /// <returns>
+        /// A unique database object name, no more than 30 characters long.
+        /// </returns>
+        public static string GetShortName(string suffix, bool withBracket = true)
         {
-            string extendedPrefix = string.Format(
-                "{0}_{1}_{2}@{3}",
-                prefix,
-                Environment.UserName,
-                Environment.MachineName,
-                DateTime.Now.ToString("yyyy_MM_dd", CultureInfo.InvariantCulture));
-            string name = GetUniqueName(extendedPrefix, withBracket);
+            StringBuilder name = new(30);
 
-            // Truncate to no more than 96 characters.
-            const int maxLen = 96;
-            if (name.Length > maxLen)
+            if (withBracket)
             {
-                if (withBracket)
-                {
-                    name = name.Substring(0, maxLen - 1) + ']';
-                }
-                else
-                {
-                    name = name.Substring(0, maxLen);
-                }
+                name.Append('[');
             }
 
-            return name;
+            name.Append(GetGuidParts());
+            name.Append('-');
+
+            int maxSuffixLength = withBracket ? 16 : 18;
+            if (suffix.Length > maxSuffixLength)
+            {
+                suffix = suffix[0..maxSuffixLength];
+            }
+            name.Append(suffix);
+
+            if (withBracket)
+            {
+                name.Append(']');
+            }
+
+            return name.ToString();
+        }
+
+        /// <summary>
+        /// Generate a long unique database object name, whose maximum length is
+        /// 96 characters, with the format:
+        /// 
+        ///   <GUID-Parts>-<Suffix>-<UserName>-<MachineName>
+        ///
+        /// The GUID Parts will be the characters from the 1st and 4th blocks
+        /// from a traditional string representation, as shown here:
+        ///
+        ///   7ff01cb8-88c7-11f0-b433-00155d7e531e
+        ///   ^^^^^^^^           ^^^^
+        ///
+        /// These 12 characters are concatenated together without any
+        /// separators.  These 2 parts typically comprise a timestamp and clock
+        /// sequence, most likely to be unique for tests that generate names in
+        /// quick succession.
+        ///
+        /// The UserName and MachineName are obtained from the Environment,
+        /// and will be truncated to satisfy the maximum overall length.
+        /// </summary>
+        /// 
+        /// <param name="suffix">
+        /// The suffix to use when generating the unique name, truncated to at
+        /// most 18 characters.
+        /// </param>
+        /// 
+        /// <param name="withBracket">
+        /// When true, the entire generated name will be enclosed in square
+        /// brackets, for example:
+        /// 
+        ///   [7ff01cb811f0-MySuffix-test_user-ci_agent_machine_name]
+        /// </param>
+        /// 
+        /// <returns>
+        /// A unique database object name, no more than 30 characters long.
+        /// </returns>
+        public static string GetLongName(string suffix, bool withBracket = true)
+        {
+            StringBuilder name = new(96);
+
+            if (withBracket)
+            {
+                name.Append('[');
+            }
+
+            name.Append(GetGuidParts());
+            name.Append('-');
+
+            if (suffix.Length > 18)
+            {
+                suffix = suffix[0..18];
+            }
+
+            suffix =
+              suffix + '-' +
+              Environment.UserName + '-' +
+              Environment.MachineName;
+
+            int maxSuffixLength = withBracket ? 82 : 84;
+            if (suffix.Length > maxSuffixLength)
+            {
+                suffix = suffix[0..maxSuffixLength];
+            }
+
+            name.Append(suffix);
+
+            if (withBracket)
+            {
+                name.Append(']');
+            }
+
+            return name.ToString();
         }
 
         public static void CreateTable(SqlConnection sqlConnection, string tableName, string createBody)
