@@ -11,6 +11,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ScenarioTests
 {
+    [Collection("SimulatedServerTests")]
     public class ConnectionReadOnlyRoutingTests
     {
         [Fact]

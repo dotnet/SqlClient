@@ -127,11 +127,6 @@ namespace Microsoft.SqlServer.TDS.Servers
             _endpoint.Start();
         }
 
-        public void KillAllConnections()
-        {
-            _endpoint.KillAllConnections();
-        }
-
         /// <summary>
         /// Create a new session on the server
         /// </summary>

@@ -78,11 +78,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         protected TcpClient Connection { get; set; }
 
         /// <summary>
-        /// Cancellation token source for managing cancellation of the processing thread
-        /// </summary>
-        private CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
-
-        /// <summary>
         /// Initialization constructor
         /// </summary>
         public ServerEndPointConnection(ITDSServer server, TcpClient connection)
@@ -126,15 +121,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         internal void Start()
         {
             // Prepare and start a thread
-            ProcessorTask = RunConnectionHandler(CancellationTokenSource.Token);
-        }
-
-        /// <summary>
-        /// Stop the connection
-        /// </summary>
-        internal void Stop()
-        {
-            CancellationTokenSource.Cancel();
+            ProcessorTask = RunConnectionHandler();
         }
 
         /// <summary>
@@ -149,20 +136,17 @@ namespace Microsoft.SqlServer.TDS.EndPoint
 
         public void Dispose()
         {
-            Stop();
-
             if (Connection != null)
             {
+                Connection.Close();
                 Connection.Dispose();
             }
-
-            CancellationTokenSource.Dispose();
         }
 
         /// <summary>
         /// Worker thread
         /// </summary>
-        private async Task RunConnectionHandler(CancellationToken cancellationToken)
+        private async Task RunConnectionHandler()
         {
             try
             {
@@ -171,7 +155,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                 PrepareForProcessingData(rawStream);
 
                 // Process the packet sequence
-                while (Connection.Connected && !cancellationToken.IsCancellationRequested)
+                while (Connection.Connected)
                 {
                     // Check incoming buffer
                     if (rawStream.DataAvailable)

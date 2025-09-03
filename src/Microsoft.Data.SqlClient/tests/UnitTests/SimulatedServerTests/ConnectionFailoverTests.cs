@@ -9,6 +9,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ScenarioTests
 {
+    [Collection("SimulatedServerTests")]
     public class ConnectionFailoverTests
     {
         //TODO parameterize for transient errors
@@ -87,7 +88,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             var failoverDataSource = $"localhost,{failoverServer.EndPoint.Port}";
 
             // Errors are off to start to allow the pool to warm up
-            using TransientTdsErrorTdsServer initialServer = new TransientTdsErrorTdsServer(new TransientTdsErrorTdsServerArguments
+            using TdsServer initialServer = new TdsServer(new TdsServerArguments
             {
                 FailoverPartner = failoverDataSource
             });

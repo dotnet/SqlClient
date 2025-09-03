@@ -101,21 +101,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             // Update ServerEndpoint with the actual address/port, e.g. if port=0 was given
             ServerEndPoint = (IPEndPoint)ListenerSocket.LocalEndpoint;
 
-            Log($"{GetType().Name} {EndpointName} Is Server Socket Bound: {ListenerSocket.Server.IsBound} Testing connectivity to the endpoint created for the server.");
-            using (TcpClient client = new TcpClient())
-            {
-                try
-                {
-                    client.Connect("localhost", ServerEndPoint.Port);
-                }
-                catch (Exception e)
-                {
-                    Log($"{GetType().Name} {EndpointName} Error occurred while testing server endpoint {e.Message}");
-                    throw;
-                }
-            }
-            Log($"{GetType().Name} {EndpointName} Endpoint test successful.");
-
             // Initialize the listener
             ListenerThread = new Thread(new ThreadStart(_RequestListener)) { IsBackground = true };
             ListenerThread.Name = "TDS Server EndPoint Listener";
@@ -132,7 +117,25 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             // Request the listener thread to stop
             StopRequested = true;
 
-            KillAllConnections();
+            // A copy of the list of connections to avoid locking
+            IList<T> unlockedConnections = new List<T>();
+
+            // Synchronize access to connections collection
+            lock (Connections)
+            {
+                // Iterate over all connections and copy into the local list
+                foreach (T connection in Connections)
+                {
+                    unlockedConnections.Add(connection);
+                }
+            }
+
+            // Iterate over all connections and request each one to stop
+            foreach (T connection in unlockedConnections)
+            {
+                // Request to stop
+                connection.Dispose();
+            }
 
             // If server failed to start there is no thread to join
             if (ListenerThread != null)
@@ -147,22 +150,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                 // Stop the server
                 ListenerSocket.Stop();
                 ListenerSocket = null;
-            }
-        }
-
-        public void KillAllConnections()
-        {
-            // Synchronize access to connections collection
-            lock (Connections)
-            {
-                // Iterate over all connections and request each one to stop
-                foreach (T connection in Connections)
-                {
-                    // Request to stop
-                    connection.Dispose();
-                }
-                // Clear the connections list
-                Connections.Clear();
             }
         }
 

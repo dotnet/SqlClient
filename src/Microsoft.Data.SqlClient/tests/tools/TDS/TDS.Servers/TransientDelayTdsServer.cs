@@ -13,7 +13,7 @@ namespace Microsoft.SqlServer.TDS.Servers
     /// </summary>
     public class TransientDelayTdsServer : GenericTdsServer<TransientDelayTdsServerArguments>, IDisposable
     {
-        private static int RequestCounter = 0;
+        private int RequestCounter = 0;
 
         public TransientDelayTdsServer(TransientDelayTdsServerArguments arguments) : base(arguments)
         {
