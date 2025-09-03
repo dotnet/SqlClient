@@ -600,7 +600,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// withBracket is true.
         ///
         /// This should not contain any characters that cannot be used in
-        /// database object names.
+        /// database object names.  See:
+        /// 
+        /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
         /// </param>
         /// 
         /// <param name="withBracket">
@@ -637,8 +639,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 name.Append(']');
             }
 
-            System.Console.WriteLine($"Generated short name \"{name.ToString()}\"");
-
             return name.ToString();
         }
 
@@ -670,7 +670,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// most 32 characters.
         ///
         /// This should not contain any characters that cannot be used in
-        /// database object names.
+        /// database object names.  See:
+        /// 
+        /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
         /// </param>
         /// 
         /// <param name="withBracket">
@@ -722,8 +724,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 name.Append(']');
             }
-
-            System.Console.WriteLine($"Generated long name \"{name.ToString()}\"");
 
             return name.ToString();
         }
