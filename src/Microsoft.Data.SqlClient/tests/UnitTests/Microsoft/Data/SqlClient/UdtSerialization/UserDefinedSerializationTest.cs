@@ -34,31 +34,32 @@ public sealed class UserDefinedSerializationTest : IDisposable
     /// <summary>
     /// Attempts to serialize and deserialize an instance of a struct with a user-defined serialization method.
     /// </summary>
-    /// <seealso cref="CanSerializeClass"/>
+    /// <seealso cref="Serialize_Class_Roundtrips"/>
     [Fact]
-    public void CanSerializeStruct()
-        => RoundtripType(new UserDefinedFormattedStruct((IntPtr)0x12345678));
+    public void Serialize_Struct_Roundtrips() =>
+        RoundtripType(new UserDefinedFormattedStruct((IntPtr)0x12345678));
 
     /// <summary>
     /// Attempts to serialize and deserialize an instance of a class with a user-defined serialization method.
     /// </summary>
-    /// <seealso cref="CanSerializeStruct"/>
+    /// <seealso cref="Serialize_Struct_Roundtrips"/>
     [Fact]
-    public void CanSerializeClass()
-        => RoundtripType(new UserDefinedFormattedClass((IntPtr)0x12345678));
+    public void Serialize_Class_Roundtrips() =>
+        RoundtripType(new UserDefinedFormattedClass((IntPtr)0x12345678));
 
     /// <summary>
     /// Attempts to deserialize an instance of a type with a user-defined serialization method but without a public
     /// parameterless constructor. Verifies that this fails.
     /// </summary>
     [Fact]
-    public void RequiresPublicParameterlessConstructor()
+    public void Deserialize_MissingPublicParameterlessConstructor_Throws()
     {
         SerializationHelperSql9.Serialize(_stream, new UserDefinedMissingPublicConstructor(true));
         _stream.Seek(0, SeekOrigin.Begin);
 
-        Assert.Throws<MissingMethodException>(
-            () => SerializationHelperSql9.Deserialize(_stream, typeof(UserDefinedMissingPublicConstructor)));
+        Action deserialize = () => SerializationHelperSql9.Deserialize(_stream, typeof(UserDefinedMissingPublicConstructor));
+
+        Assert.Throws<MissingMethodException>(deserialize);
     }
 
     /// <summary>
@@ -66,10 +67,11 @@ public sealed class UserDefinedSerializationTest : IDisposable
     /// implement IBinarySerialize. Verifies that this fails.
     /// </summary>
     [Fact]
-    public void RequiresIBinarySerializeImplementation()
+    public void Serialize_DoesNotImplementIBinarySerialize_Throws()
     {
-        Assert.Throws<InvalidCastException>(
-            () => SerializationHelperSql9.Serialize(_stream, new UserDefinedDoesNotImplementIBinarySerialize()));
+        Action serialize = () => SerializationHelperSql9.Serialize(_stream, new UserDefinedDoesNotImplementIBinarySerialize());
+
+        Assert.Throws<InvalidCastException>(serialize);
     }
 
     private void RoundtripType<T>(T userObject)

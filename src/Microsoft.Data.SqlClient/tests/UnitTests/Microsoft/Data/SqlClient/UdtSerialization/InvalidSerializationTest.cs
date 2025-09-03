@@ -35,10 +35,10 @@ public sealed class InvalidSerializationTest : IDisposable
     /// Attempts to serialize a class that does not have the SqlUserDefinedType attribute. Verifies that this fails.
     /// </summary>
     [Fact]
-    public void RequiresSqlUserDefinedTypeAttribute()
+    public void Serialize_MissingSqlUserDefinedTypeAttribute_Throws()
     {
-        var exception = Assert.Throws<InvalidUdtException>(
-            () => SerializationHelperSql9.Serialize(_stream, new ClassMissingSqlUserDefinedTypeAttribute()));
+        Action serialize = () => SerializationHelperSql9.Serialize(_stream, new ClassMissingSqlUserDefinedTypeAttribute());
+        var exception = Assert.Throws<InvalidUdtException>(serialize);
 
         Assert.Equal($"'{typeof(ClassMissingSqlUserDefinedTypeAttribute).FullName}' is an invalid user defined type, reason: no UDT attribute.", exception.Message);
     }
@@ -48,10 +48,10 @@ public sealed class InvalidSerializationTest : IDisposable
     /// Unknown. Verifies that this fails.
     /// </summary>
     [Fact]
-    public void CannotSerializeUnknownFormattedType()
+    public void Serialize_UnknownFormattedType_Throws()
     {
-        var exception = Assert.Throws<ArgumentOutOfRangeException>("Format",
-            () => SerializationHelperSql9.Serialize(_stream, new UnknownFormattedClass()));
+        Action serialize = () => SerializationHelperSql9.Serialize(_stream, new UnknownFormattedClass());
+        var exception = Assert.Throws<ArgumentOutOfRangeException>("Format", serialize);
 
 #if NET
         Assert.Equal("The Format enumeration value, 0, is not supported by the format method. (Parameter 'Format')", exception.Message);
