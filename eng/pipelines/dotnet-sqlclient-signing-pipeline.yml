@@ -65,6 +65,12 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   - NonOfficial
   - Official
 
+# The timeout, in minutes, for each test job.
+- name: testsTimeout
+  displayName: 'Tests timeout (in minutes)'
+  type: string
+  default: 90
+
 variables:
   - template: /eng/pipelines/libraries/variables.yml@self
   - name: packageFolderName
@@ -172,6 +178,7 @@ extends:
       - template: eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
         parameters:
           packageFolderName: $(packageFolderName)
+          timeout: ${{ parameters.testsTimeout }}
           downloadPackageStep:
             download: current
             artifact: $(packageFolderName)
