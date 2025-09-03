@@ -578,39 +578,42 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Generate a short unique database object name, whose maximum length
         /// is 30 characters, with the format:
         ///
-        ///   <GUID-Parts>_<Suffix>
+        ///   <Prefix>_<GuidParts>
         ///
-        /// The GUID Parts will be the characters from the 1st and 4th blocks
+        /// The Prefix will be truncated to satisfy the overall maximum length.
+        ///
+        /// The GUID parts will be the characters from the 1st and 4th blocks
         /// from a traditional string representation, as shown here:
         ///
         ///   7ff01cb8-88c7-11f0-b433-00155d7e531e
         ///   ^^^^^^^^           ^^^^
         ///
-        /// These 12 characters are concatenated together without any
-        /// separators.  These 2 parts typically comprise a timestamp and clock
-        /// sequence, most likely to be unique for tests that generate names in
-        /// quick succession.
-        ///
-        /// The Suffix will be truncated to satisfy the overall maximum length.
+        /// These 2 parts typically comprise a timestamp and clock sequence,
+        /// most likely to be unique for tests that generate names in quick
+        /// succession.  The 12 characters are concatenated together without any
+        /// separators.
         /// </summary>
         /// 
-        /// <param name="suffix">
-        /// The suffix to use when generating the unique name, truncated to at
+        /// <param name="prefix">
+        /// The prefix to use when generating the unique name, truncated to at
         /// most 18 characters when withBracket is false, and 16 characters when
         /// withBracket is true.
+        ///
+        /// This should not contain any characters that cannot be used in
+        /// database object names.
         /// </param>
         /// 
         /// <param name="withBracket">
         /// When true, the entire generated name will be enclosed in square
         /// brackets, for example:
         /// 
-        ///   [7ff01cb811f0_MySuffix]
+        ///   [MyPrefix_7ff01cb811f0]
         /// </param>
         /// 
         /// <returns>
         /// A unique database object name, no more than 30 characters long.
         /// </returns>
-        public static string GetShortName(string suffix, bool withBracket = true)
+        public static string GetShortName(string prefix, bool withBracket = true)
         {
             StringBuilder name = new(30);
 
@@ -619,20 +622,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 name.Append('[');
             }
 
-            name.Append(GetGuidParts());
-            name.Append('_');
-
-            int maxSuffixLength = withBracket ? 16 : 18;
-            if (suffix.Length > maxSuffixLength)
+            int maxPrefixLength = withBracket ? 16 : 18;
+            if (prefix.Length > maxPrefixLength)
             {
-                suffix = suffix.Substring(0, maxSuffixLength);
+                prefix = prefix.Substring(0, maxPrefixLength);
             }
-            name.Append(suffix);
+
+            name.Append(prefix);
+            name.Append('_');
+            name.Append(GetGuidParts());
 
             if (withBracket)
             {
                 name.Append(']');
             }
+
+            System.Console.WriteLine($"Generated short name \"{name.ToString()}\"");
 
             return name.ToString();
         }
@@ -641,7 +646,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Generate a long unique database object name, whose maximum length is
         /// 96 characters, with the format:
         /// 
-        ///   <GUID-Parts>_<Suffix>_<UserName>_<MachineName>
+        ///   <Prefix>_<GuidParts>_<UserName>_<MachineName>
+        ///
+        /// The Prefix will be truncated to satisfy the overall maximum length.
         ///
         /// The GUID Parts will be the characters from the 1st and 4th blocks
         /// from a traditional string representation, as shown here:
@@ -649,31 +656,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         ///   7ff01cb8-88c7-11f0-b433-00155d7e531e
         ///   ^^^^^^^^           ^^^^
         ///
-        /// These 12 characters are concatenated together without any
-        /// separators.  These 2 parts typically comprise a timestamp and clock
-        /// sequence, most likely to be unique for tests that generate names in
-        /// quick succession.
+        /// These 2 parts typically comprise a timestamp and clock sequence,
+        /// most likely to be unique for tests that generate names in quick
+        /// succession.  The 12 characters are concatenated together without any
+        /// separators.
         ///
         /// The UserName and MachineName are obtained from the Environment,
         /// and will be truncated to satisfy the maximum overall length.
         /// </summary>
         /// 
-        /// <param name="suffix">
-        /// The suffix to use when generating the unique name, truncated to at
+        /// <param name="prefix">
+        /// The prefix to use when generating the unique name, truncated to at
         /// most 32 characters.
+        ///
+        /// This should not contain any characters that cannot be used in
+        /// database object names.
         /// </param>
         /// 
         /// <param name="withBracket">
         /// When true, the entire generated name will be enclosed in square
         /// brackets, for example:
         /// 
-        ///   [7ff01cb811f0_MySuffix_test_user_ci_agent_machine_name]
+        ///   [MyPrefix_7ff01cb811f0_test_user_ci_agent_machine_name]
         /// </param>
         /// 
         /// <returns>
         /// A unique database object name, no more than 96 characters long.
         /// </returns>
-        public static string GetLongName(string suffix, bool withBracket = true)
+        public static string GetLongName(string prefix, bool withBracket = true)
         {
             StringBuilder name = new(96);
 
@@ -682,20 +692,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 name.Append('[');
             }
 
+            if (prefix.Length > 32)
+            {
+                prefix = prefix.Substring(0, 32);
+            }
+
+            name.Append(prefix);
+            name.Append('_');
             name.Append(GetGuidParts());
             name.Append('_');
 
-            if (suffix.Length > 32)
-            {
-                suffix = suffix.Substring(0, 32);
-            }
-
-            suffix =
-              suffix + '_' +
+            var suffix =
               Environment.UserName + '_' +
               Environment.MachineName;
 
-            int maxSuffixLength = withBracket ? 82 : 84;
+            int maxSuffixLength = 96 - name.Length;
+            if (withBracket)
+            {
+                --maxSuffixLength;
+            }
             if (suffix.Length > maxSuffixLength)
             {
                 suffix = suffix.Substring(0, maxSuffixLength);
@@ -707,6 +722,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 name.Append(']');
             }
+
+            System.Console.WriteLine($"Generated long name \"{name.ToString()}\"");
 
             return name.ToString();
         }
