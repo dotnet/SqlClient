@@ -155,6 +155,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{router.EndPoint.Port}", connection.DataSource);
             Assert.Equal(1, router.PreLoginCount);
             Assert.Equal(1, server.PreLoginCount);
         }

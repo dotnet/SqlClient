@@ -95,6 +95,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             await connection.OpenAsync();
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(2, server.PreLoginCount);
         }
 
         [Theory]
@@ -120,6 +121,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             connection.Open();
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(2, server.PreLoginCount);
         }
 
         [Theory]
@@ -146,6 +148,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             SqlException e = await Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
             Assert.Equal((int)errorCode, e.Number);
             Assert.Equal(ConnectionState.Closed, connection.State);
+            Assert.Equal(1, server.PreLoginCount);
         }
 
         [Theory]
@@ -172,6 +175,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             SqlException e = Assert.Throws<SqlException>(() => connection.Open());
             Assert.Equal((int)errorCode, e.Number);
             Assert.Equal(ConnectionState.Closed, connection.State);
+            Assert.Equal(1, server.PreLoginCount);
         }
 
         [Theory]
@@ -243,6 +247,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
 
             if (multiSubnetFailoverEnabled)
             {
@@ -286,6 +291,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
 
             if (multiSubnetFailoverEnabled)
             {
