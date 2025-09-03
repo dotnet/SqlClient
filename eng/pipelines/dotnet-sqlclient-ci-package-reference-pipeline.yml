@@ -81,6 +81,12 @@ parameters: # parameters are shown up in ADO UI in a build queue time
     - Project
     - Package
 
+# The timeout, in minutes, for each test job.
+- name: testsTimeout
+  displayName: 'Tests timeout (in minutes)'
+  type: string
+  default: 90
+
 extends:
   template: dotnet-sqlclient-ci-core.yml@self
   parameters:
@@ -92,3 +98,4 @@ extends:
     useManagedSNI: ${{ parameters.useManagedSNI }}
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
     buildType: ${{ parameters.buildType }}
+    testsTimeout: ${{ parameters.testsTimeout }}

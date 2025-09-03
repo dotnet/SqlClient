@@ -57,6 +57,11 @@ parameters:
   type: string
   default: $(ci_var_defaultPoolName)
 
+# The timeout, in minutes, for each test job.
+- name: testsTimeout
+  type: string
+  default: 90
+
 variables:
   - template: libraries/ci-build-variables.yml@self
 
@@ -78,6 +83,7 @@ stages:
     parameters:
       debug: ${{ parameters.debug }}
       buildType: ${{ parameters.buildType }}
+      testsTimeout: ${{ parameters.testsTimeout }}
       ${{ if eq(parameters.buildType, 'Package') }}:
         dependsOn: build_nugets
 
