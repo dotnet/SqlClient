@@ -3955,13 +3955,13 @@
     <value>Le chemin d’accès de certificat ne peut pas avoir la valeur null. Utilisez le format suivant : &lt;emplacement de certificat&gt;{2}&lt;magasin de certificats&gt;{2}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; a la valeur « {0} » ou « {1} ».</value>
   </data>
   <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
-    <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+    <value>Le chemin d’accès du certificat ne peut pas être nul. Utilisez le format suivant : &lt;emplacement de certificat&gt;{1}&lt;magasin de certificats&gt;{1}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {0} ».</value>
   </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>Erreur interne. Le chemin d’accès de certificat ne peut pas avoir la valeur null. Utilisez le format suivant : &lt;emplacement de certificat&gt;{2}&lt;magasin de certificats&gt;{2}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; a la valeur « {0} » ou « {1} ».</value>
   </data>
   <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
-    <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+    <value>Erreur interne. Le chemin d’accès du certificat ne peut pas être nul. Utilisez le format suivant : &lt;emplacement de certificat&gt;{1}&lt;magasin de certificats&gt;{1}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {0} ».</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Le chemin d'accès de la clé principale de la colonne ne peut pas être Null. Utilisez le format suivant pour une clé stockée dans un fournisseur de service de chiffrement Microsoft : &lt;Nom du fournisseur de service de chiffrement&gt;{0}&lt;Identificateur de clé&gt;.</value>
@@ -3979,13 +3979,13 @@
     <value>Chemin d’accès de certificat non valide : « {0} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{3}&lt;magasin de certificats&gt;{3}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; a la valeur « {1} » ou « {2} ».</value>
   </data>
   <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
-    <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+    <value>Chemin d’accès du certificat non valide : « {0} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{2}&lt;magasin de certificats&gt;{2}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {1} ».</value>
   </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>Erreur interne. Chemin d’accès de certificat non valide : « {0} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{3}&lt;magasin de certificats&gt;{3}&lt;empreinte de certificat&gt;, où &lt;emplacement du certificat&gt; a la valeur « {1} » ou « {2} ».</value>
   </data>
   <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
-    <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+    <value>Erreur interne. Chemin d’accès du certificat non valide : « {0} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{2}&lt;magasin de certificats&gt;{2}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {1} ».</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Le chemin d'accès de la clé principale de la colonne '{0}' n'est pas valide. Utilisez le format suivant pour une clé stockée dans un fournisseur de service de chiffrement Microsoft : &lt;Nom du fournisseur de service de chiffrement&gt;{1}&lt;Identificateur de clé&gt;.</value>
@@ -4003,13 +4003,13 @@
     <value>L’emplacement de certificat « {0} » dans le chemin d’accès de certificat « {1} » n’est pas valide. Utilisez le format suivant : &lt;emplacement de certificat&gt;{4}&lt;magasin de certificats&gt;{4}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; a la valeur « {2} » ou « {3} ».</value>
   </data>
   <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
-    <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
+    <value>L’emplacement de certificat « {0} » n’est pas valide dans le chemin d’accès du certificat « {1} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{3}&lt;magasin de certificats&gt;{3}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {2} ».</value>
   </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>Erreur interne. L’emplacement de certificat « {0} » dans le chemin d’accès de certificat « {1} » n’est pas valide. Utilisez le format suivant : &lt;emplacement de certificat&gt;{4}&lt;magasin de certificats&gt;{4}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; a la valeur « {2} » ou « {3} ».</value>
   </data>
   <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
-    <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
+    <value>Erreur interne. L’emplacement de certificat « {0} » n’est pas valide dans le chemin d’accès du certificat « {1} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{3}&lt;magasin de certificats&gt;{3}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {2} ».</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>Le magasin de certificats « {0} » spécifié dans le chemin d’accès de certificat « {1} » n’est pas valide. Valeur attendue : « {2} ».</value>

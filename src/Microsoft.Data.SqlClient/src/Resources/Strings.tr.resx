@@ -3955,13 +3955,13 @@
     <value>Sertifika yolu null olamaz. Şu biçimi kullanın: &lt;sertifika konumu&gt;{2}&lt;sertifika deposu&gt;{2}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{0}' veya '{1}' değerindedir.</value>
   </data>
   <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
-    <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+    <value>Sertifika yolu null olamaz. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{1}&lt;sertifika depolama alanı&gt;{1}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{0}'.</value>
   </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>İç hata. Sertifika yolu null olamaz. Şu biçimi kullanın: &lt;sertifika konumu&gt;{2}&lt;sertifika deposu&gt;{2}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{0}' veya '{1}' değerindedir.</value>
   </data>
   <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
-    <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+    <value>İç hata. Sertifika yolu null olamaz. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{1}&lt;sertifika depolama alanı&gt;{1}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{0}'.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Sütun ana anahtar yolu null olamaz. Microsoft şifreleme hizmeti sağlayıcısı (CSP) içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CSP Sağlayıcısı Adı&gt;{0}&lt;Anahtar Tanımlayıcısı&gt;.</value>
@@ -3979,13 +3979,13 @@
     <value>Geçerli sertifika yolu: '{0}'. Şu biçimi kullanın: &lt;sertifika konumu&gt;{3}&lt;sertifika deposu&gt;{3}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{1}' veya '{2}' değerindedir.</value>
   </data>
   <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
-    <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+    <value>Geçerli sertifika yolu: '{0}'. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{2}&lt;sertifika depolama alanı&gt;{2}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{1}'.</value>
   </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>İç hata. Geçerli sertifika yolu: '{0}'. Şu biçimi kullanın: &lt;sertifika konumu&gt;{3}&lt;sertifika deposu&gt;{3}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{1}' veya '{2}' değerindedir.</value>
   </data>
   <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
-    <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+    <value>İç hata. Geçerli sertifika yolu: '{0}'. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{2}&lt;sertifika depolama alanı&gt;{2}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{1}'.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Geçersiz sütun ana anahtar yolu: '{0}'. Microsoft şifreleme hizmeti sağlayıcısı (CSP) içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CSP Sağlayıcısı Adı&gt;{1}&lt;Anahtar Tanımlayıcısı&gt;.</value>
@@ -4003,13 +4003,13 @@
     <value>Sertifika yolu '{1}'de geçersiz sertifika konumu '{0}'. Şu biçimi kullanın: &lt;sertifika konumu&gt;{4}&lt;sertifika deposu&gt;{4}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{2}' veya '{3}' değerindedir.</value>
   </data>
   <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
-    <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
+    <value>Sertifika yolu '{1}'de geçersiz sertifika konumu '{0}'. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{3}&lt;sertifika depolama alanı&gt;{3}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{2}'.</value>
   </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>İç hata. Sertifika yolu '{1}'de geçersiz sertifika konumu '{0}'. Şu biçimi kullanın: &lt;sertifika konumu&gt;{4}&lt;sertifika deposu&gt;{4}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{2}' veya '{3}' değerindedir.</value>
   </data>
   <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
-    <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
+    <value>İç hata. Sertifika yolu '{1}'de geçersiz sertifika konumu '{0}'. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{3}&lt;sertifika depolama alanı&gt;{3}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{2}'.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>Sertifika yolu '{1}'de belirtilen geçersiz sertifika deposu '{0}'. Beklenen değer: '{2}'.</value>

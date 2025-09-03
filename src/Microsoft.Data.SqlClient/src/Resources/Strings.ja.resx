@@ -3955,13 +3955,13 @@
     <value>証明書パスを Null にすることはできません。次の形式を使用してください: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;。ここで &lt;certificate location&gt; は '{0}' または '{1}' のいずれかです。</value>
   </data>
   <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
-    <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+    <value>証明書のパスを null 値にすることはできません。次の形式を使用してください: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;。なお、&lt;certificate location&gt; は '{0}' です。</value>
   </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>内部エラー。証明書パスを Null にすることはできません。次の形式を使用してください: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;。ここで &lt;certificate location&gt; は '{0}' または '{1}' のいずれかです。</value>
   </data>
   <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
-    <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+    <value>内部エラー。証明書のパスを null 値にすることはできません。次の形式を使用してください: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;。なお、&lt;certificate location&gt; は '{0}' です。</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>列マスター キーのパスを null にすることはできません。Microsoft 暗号化サービス プロバイダー (CSP) に保存されるキーには、次の形式を使用してください: &lt;CSP プロバイダー名&gt;{0}&lt;キー識別子&gt;。</value>
@@ -3979,13 +3979,13 @@
     <value>証明書パス '{0}' が無効です。次の形式を使用してください: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;。ここで &lt;certificate location&gt; は '{1}' または '{2}' のいずれかです。</value>
   </data>
   <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
-    <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+    <value>証明書パスが無効です: '{0}'。次の形式を使用してください: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;。なお &lt;certificate location&gt; は '{1}' です。</value>
   </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>内部エラー。証明書パス '{0}' が無効です。次の形式を使用してください: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;。ここで &lt;certificate location&gt; は '{1}' または '{2}' のいずれかです。</value>
   </data>
   <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
-    <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+    <value>内部エラー。証明書パスが無効です: '{0}'。次の形式を使用してください: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;。なお &lt;certificate location&gt; は '{1}' です。</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>列マスター キーのパス: '{0}' が無効です。Microsoft 暗号化サービス プロバイダー (CSP) に保存されるキーには、次の形式を使用してください: &lt;CSP プロバイダー名&gt;{1}&lt;キー識別子&gt;。</value>
@@ -4003,13 +4003,13 @@
     <value>証明書パス '{1}' の証明書の場所 '{0}' が無効です。次の形式を使用してください: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;。ここで &lt;certificate location&gt; は '{2}' または '{3}' のいずれかです。</value>
   </data>
   <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
-    <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
+    <value>証明書パス {1}'' の証明書の場所 '{0}' が無効です。次の形式を使用してください: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;。なお &lt;certificate location&gt; は '{2}' です。</value>
   </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>内部エラー。証明書パス '{1}' の証明書の場所 '{0}' が無効です。次の形式を使用してください: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;。ここで &lt;certificate location&gt; は '{2}' または '{3}' のいずれかです。</value>
   </data>
   <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
-    <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
+    <value>内部エラー。証明書パス {1}'' の証明書の場所 '{0}' が無効です。次の形式を使用してください: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;。なお &lt;certificate location&gt; は '{2}' です。</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>証明書パス '{1}' で指定された証明書ストア '{0}' が無効です。予期されている値は '{2}' です。</value>
