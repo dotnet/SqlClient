@@ -1444,10 +1444,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.NotEnoughColumnsInStructuredType();
                         }
                     }
-                    else
-                    {
-                        throw SQL.IEnumerableOfSqlDataRecordHasNoRows();
-                    }
+
                 }
                 finally
                 {
@@ -2044,7 +2041,7 @@ namespace Microsoft.Data.SqlClient
                 GetCoercedValue();
             }
 
-            if (metaType.SqlDbType == SqlDbTypeExtensions.Vector && 
+            if (metaType.SqlDbType == SqlDbTypeExtensions.Vector &&
                 (_value == null || _value == DBNull.Value) &&
                 (Direction == ParameterDirection.Output || Direction == ParameterDirection.InputOutput))
             {
