@@ -578,7 +578,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Generate a short unique database object name, whose maximum length
         /// is 30 characters, with the format:
         ///
-        ///   <GUID-Parts>-<Suffix>
+        ///   <GUID-Parts>_<Suffix>
         ///
         /// The GUID Parts will be the characters from the 1st and 4th blocks
         /// from a traditional string representation, as shown here:
@@ -604,7 +604,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// When true, the entire generated name will be enclosed in square
         /// brackets, for example:
         /// 
-        ///   [7ff01cb811f0-MySuffix]
+        ///   [7ff01cb811f0_MySuffix]
         /// </param>
         /// 
         /// <returns>
@@ -620,7 +620,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             name.Append(GetGuidParts());
-            name.Append('-');
+            name.Append('_');
 
             int maxSuffixLength = withBracket ? 16 : 18;
             if (suffix.Length > maxSuffixLength)
@@ -641,7 +641,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Generate a long unique database object name, whose maximum length is
         /// 96 characters, with the format:
         /// 
-        ///   <GUID-Parts>-<Suffix>-<UserName>-<MachineName>
+        ///   <GUID-Parts>_<Suffix>_<UserName>_<MachineName>
         ///
         /// The GUID Parts will be the characters from the 1st and 4th blocks
         /// from a traditional string representation, as shown here:
@@ -667,7 +667,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// When true, the entire generated name will be enclosed in square
         /// brackets, for example:
         /// 
-        ///   [7ff01cb811f0-MySuffix-test_user-ci_agent_machine_name]
+        ///   [7ff01cb811f0_MySuffix_test_user_ci_agent_machine_name]
         /// </param>
         /// 
         /// <returns>
@@ -683,7 +683,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             name.Append(GetGuidParts());
-            name.Append('-');
+            name.Append('_');
 
             if (suffix.Length > 32)
             {
@@ -691,8 +691,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             suffix =
-              suffix + '-' +
-              Environment.UserName + '-' +
+              suffix + '_' +
+              Environment.UserName + '_' +
               Environment.MachineName;
 
             int maxSuffixLength = withBracket ? 82 : 84;
