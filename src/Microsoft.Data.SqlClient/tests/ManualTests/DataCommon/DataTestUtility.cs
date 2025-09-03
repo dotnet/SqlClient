@@ -671,7 +671,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </param>
         /// 
         /// <returns>
-        /// A unique database object name, no more than 30 characters long.
+        /// A unique database object name, no more than 96 characters long.
         /// </returns>
         public static string GetLongName(string suffix, bool withBracket = true)
         {
