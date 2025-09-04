@@ -806,27 +806,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 _resError = e;
 
                 // Make sure the timer starts even if ThreadAbort occurs after setting the ErrorEvent.
-
-                // timer allocation has to be done out of CER block
                 Timer t = new Timer(new TimerCallback(this.ErrorCallback), null, Timeout.Infinite, Timeout.Infinite);
 
                 bool timerIsNotDisposed;
-#if NETFRAMEWORK
-                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                try
-                { }
-                finally
-                {
-                    _waitHandles.ErrorEvent.Set();
-                    _errorOccurred = true;
+                
+                _waitHandles.ErrorEvent.Set();
+                _errorOccurred = true;
 
-                    // Enable the timer.
-                    // Note that the timer is created to allow periodic invocation. If ThreadAbort occurs in the middle of ErrorCallback,
-                    // the timer will restart. Otherwise, the timer callback (ErrorCallback) destroys the timer after resetting the error to avoid second callback.
-                    _errorTimer = t;
-                    timerIsNotDisposed = t.Change(_errorWait, _errorWait);
-                }
+                // Enable the timer.
+                // Note that the timer is created to allow periodic invocation. If ThreadAbort occurs in the middle of ErrorCallback,
+                // the timer will restart. Otherwise, the timer callback (ErrorCallback) destroys the timer after resetting the error to avoid second callback.
+                _errorTimer = t;
+                timerIsNotDisposed = t.Change(_errorWait, _errorWait);
 
                 Debug.Assert(timerIsNotDisposed, "ErrorCallback timer has been disposed");
 
@@ -1040,22 +1031,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             do
             {
                 bool started = false;
-
-#if NETFRAMEWORK
-                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
+                
                 try
                 {
-#if NETFRAMEWORK
-                    RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                    try
-                    { }
-                    finally
-                    {
-                        started = Interlocked.CompareExchange(ref _pendingOpensWaiting, 1, 0) == 0;
-                    }
-
+                    started = Interlocked.CompareExchange(ref _pendingOpensWaiting, 1, 0) == 0;
                     if (!started)
                     {
                         return;
@@ -1081,10 +1060,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         DbConnectionInternal connection = null;
                         bool timeout = false;
                         Exception caughtException = null;
-
-#if NETFRAMEWORK
-                        RuntimeHelpers.PrepareConstrainedRegions();
-#endif
+                        
                         try
                         {
                             ADP.SetCurrentTransaction(next.Completion.Task.AsyncState as Transaction);
@@ -1096,24 +1072,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 next.UserOptions,
                                 out connection);
                         }
-                        catch (System.OutOfMemoryException)
-                        {
-                            if (connection != null)
-                            { connection.DoomThisConnection(); }
-                            throw;
-                        }
-                        catch (System.StackOverflowException)
-                        {
-                            if (connection != null)
-                            { connection.DoomThisConnection(); }
-                            throw;
-                        }
-                        catch (System.Threading.ThreadAbortException)
-                        {
-                            if (connection != null)
-                            { connection.DoomThisConnection(); }
-                            throw;
-                        }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
                         catch (Exception e)
                         {
                             caughtException = e;
@@ -1228,23 +1187,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 do
                 {
                     int waitResult = BOGUS_HANDLE;
-#if NETFRAMEWORK
-                    RuntimeHelpers.PrepareConstrainedRegions();
-#endif
                     try
                     {
-#if NETFRAMEWORK
-                        // We absolutely must have the value of waitResult set, 
-                        // or we may leak the mutex in async abort cases.
-                        RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                        try
-                        {
-                        }
-                        finally
-                        {
-                            waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(allowCreate), unchecked((int)waitForMultipleObjectsTimeout));
-                        }
+                        waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(allowCreate), unchecked((int)waitForMultipleObjectsTimeout));
 
                         // From the WaitAny docs: "If more than one object became signaled during
                         // the call, this is the array index of the signaled object with the
@@ -1328,9 +1273,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                     {
                                         if (_waitHandles.CreationSemaphore.WaitOne(unchecked((int)waitForMultipleObjectsTimeout)))
                                         {
-#if NETFRAMEWORK
-                                            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
                                             try
                                             {
                                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Creating new connection.", Id);
@@ -1559,23 +1501,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 return;
                             }
                             int waitResult = BOGUS_HANDLE;
-
-#if NETFRAMEWORK
-                            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
+                            
                             try
                             {
                                 // Obtain creation mutex so we're the only one creating objects
                                 // and we must have the wait result
-#if NETFRAMEWORK
-                                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                                try
-                                { }
-                                finally
-                                {
-                                    waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(withCreate: true), CreationTimeout);
-                                }
+                                waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(withCreate: true), CreationTimeout);
                                 if (CREATION_HANDLE == waitResult)
                                 {
                                     DbConnectionInternal newObj;
@@ -1687,8 +1618,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // means, is that we're now responsible for this connection:
                 // it won't get reclaimed if it gets lost.
                 obj.PrePush(owningObject);
-
-                // TODO: Consider using a Cer to ensure that we mark the object for reclaimation in the event something bad happens?
             }
 
             DeactivateObject(obj);

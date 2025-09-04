@@ -94,6 +94,8 @@ namespace Stress.Data
             }
             return value;
         }
+
+        public abstract void Emit(byte indent);
     }
 
     /// <summary>
@@ -105,7 +107,6 @@ namespace Stress.Data
     ///        type="SqlServer"
     ///        isDefault="false"
     ///        dataSource="mysrv01"
-    ///        database="stress"
     ///        user="stress"
     ///        password=""
     ///        supportsWindowsAuthentication="false">
@@ -114,11 +115,17 @@ namespace Stress.Data
     public class SqlServerDataSource : DataSource
     {
         public readonly string DataSource;
-        public readonly string Database;
+        public readonly string Database = "StressTests-" + Guid.NewGuid().ToString();
         public readonly bool IsLocal;
         public readonly bool Encrypt;
 
-        // if user and password are set, test can create connection strings with SQL auth settings
+        // If EntraIdUser is set, the connection will use EntraID password-based
+        // authentication.
+        public readonly string EntraIdUser;
+        public readonly string EntraIdPassword;
+
+        // If EntraIdUser isn't set, and User is set, the connection will use
+        // classic SQL user/password based authentication.
         public readonly string User;
         public readonly string Password;
 
@@ -133,7 +140,9 @@ namespace Stress.Data
             : base(name, DataSourceType.SqlServer, isDefault)
         {
             this.DataSource = GetOptionalAttributeValue(properties, "dataSource", "localhost");
-            this.Database = GetOptionalAttributeValue(properties, "database", "stress");
+
+            this.EntraIdUser = GetOptionalAttributeValue(properties, "entraIdUser", string.Empty);
+            this.EntraIdPassword = GetOptionalAttributeValue(properties, "entraIdPassword", string.Empty);
 
             this.User = GetOptionalAttributeValue(properties, "user", string.Empty);
             this.Password = GetOptionalAttributeValue(properties, "password", string.Empty);
@@ -151,10 +160,33 @@ namespace Stress.Data
             else
                 SupportsWindowsAuthentication = false;
 
-            if (string.IsNullOrEmpty(User) && !SupportsWindowsAuthentication)
-                throw new ArgumentException("SQL Server settings should include either a valid User name or SupportsWindowsAuthentication=true");
+            if (string.IsNullOrEmpty(EntraIdUser)
+                && string.IsNullOrEmpty(User)
+                && !SupportsWindowsAuthentication)
+            {
+                throw new ArgumentException("SQL Server settings should include either a valid user or SupportsWindowsAuthentication=true");
+            }
+        }
+
+        public override void Emit(byte indent)
+        {
+            string ind = new(' ', indent);
+            Console.WriteLine($"{ind}SqlServerDataSource:");
+            ind = new(' ', indent + 2);
+            Console.WriteLine($"{ind}Name:               {Name}");
+            Console.WriteLine($"{ind}Type:               {Type}");
+            Console.WriteLine($"{ind}IsDefault:          {IsDefault}");
+            Console.WriteLine($"{ind}DataSource:         {DataSource}");
+            Console.WriteLine($"{ind}Database:           {Database}");
+            Console.WriteLine($"{ind}EntraIdUser:        {EntraIdUser}");
+            Console.WriteLine($"{ind}EntraIdPassword:    {new string('*', EntraIdPassword.Length)}");
+            Console.WriteLine($"{ind}User:               {User}");
+            Console.WriteLine($"{ind}Password:           {new string('*', Password.Length)}");
+            Console.WriteLine($"{ind}WinAuth:            {SupportsWindowsAuthentication}");
+            Console.WriteLine($"{ind}IsLocal:            {IsLocal}");
+            Console.WriteLine($"{ind}Encrypt:            {Encrypt}");
+            Console.WriteLine($"{ind}DisableMultiSubnet: {DisableMultiSubnetFailoverSetup}");
+            Console.WriteLine($"{ind}DisableNamedPipes:  {DisableNamedPipes}");
         }
     }
-
-
 }

@@ -10,15 +10,15 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public sealed class DateOnlyReadTests : IClassFixture<PlatformSpecificTestContext>, IDisposable
+    public sealed class DateOnlyReadTests : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
         private SQLSetupStrategy fixture;
 
         private readonly string tableName;
 
-        public DateOnlyReadTests(PlatformSpecificTestContext context)
+        public DateOnlyReadTests(SQLSetupStrategyCertStoreProvider context)
         {
-            fixture = context.Fixture;
+            fixture = context;
             tableName = fixture.DateOnlyTestTable.Name;
         }
 

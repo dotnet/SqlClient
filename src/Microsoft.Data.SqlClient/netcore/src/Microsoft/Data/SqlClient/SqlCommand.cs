@@ -1411,18 +1411,7 @@ namespace Microsoft.Data.SqlClient
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteNonQuery), _activeConnection);
                 _stateObj.ReadSni(completion);
             }
-            // Cause of a possible unstable runtime situation on facing with `OutOfMemoryException` and `StackOverflowException` exceptions,
-            // trying to call further functions in the catch of either may fail that should be considered on debuging!
-            catch (System.OutOfMemoryException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _activeConnection.Abort(e);
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception)
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
@@ -1968,20 +1957,7 @@ namespace Microsoft.Data.SqlClient
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteXmlReader), _activeConnection);
                 _stateObj.ReadSni(completion);
             }
-            // Cause of a possible unstable runtime situation on facing with `OutOfMemoryException` and `StackOverflowException` exceptions,
-            // trying to call further functions in the catch of either may fail that should be considered on debuging!
-            catch (System.OutOfMemoryException e)
-            {
-                _activeConnection.Abort(e);
-                completion.TrySetException(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _activeConnection.Abort(e);
-                completion.TrySetException(e);
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception e)
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
@@ -2633,20 +2609,7 @@ namespace Microsoft.Data.SqlClient
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteReader), _activeConnection);
                 _stateObj.ReadSni(completion);
             }
-            // Cause of a possible unstable runtime situation on facing with `OutOfMemoryException` and `StackOverflowException` exceptions,
-            // trying to call further functions in the catch of either may fail that should be considered on debuging!
-            catch (System.OutOfMemoryException e)
-            {
-                _activeConnection.Abort(e);
-                completion.TrySetException(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _activeConnection.Abort(e);
-                completion.TrySetException(e);
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception e)
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
@@ -4114,9 +4077,7 @@ namespace Microsoft.Data.SqlClient
                     SqlCommand command = (SqlCommand)state;
                     bool processFinallyBlockAsync = true;
                     bool decrementAsyncCountInFinallyBlockAsync = true;
-#if NETFRAMEWORK 
-                    RuntimeHelpers.PrepareConstrainedRegions();
-#endif
+
                     try
                     {
                         // Check for any exceptions on network write, before reading.
@@ -4187,10 +4148,7 @@ namespace Microsoft.Data.SqlClient
             {
                 bool processFinallyBlockAsync = true;
                 bool decrementAsyncCountInFinallyBlockAsync = true;
-
-#if NETFRAMEWORK
-                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
+                
                 try
                 {
                     // Check for any exceptions on network write, before reading.

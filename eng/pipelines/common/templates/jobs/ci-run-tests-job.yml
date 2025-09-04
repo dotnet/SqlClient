@@ -73,8 +73,17 @@ parameters:
       - Project
       - Package
 
+  # The timeout, in minutes, for this job.
+  - name: timeout
+    type: string
+    default: 90
+
 jobs:
 - job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.image, 'unknown_image')) }}
+
+  # Some of our tests take longer than the default 60 minutes to run on some
+  # OSes and configurations.
+  timeoutInMinutes: ${{ parameters.timeout }}
 
   pool:
     name: '${{ parameters.poolName }}'
