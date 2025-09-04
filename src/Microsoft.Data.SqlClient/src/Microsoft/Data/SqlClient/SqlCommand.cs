@@ -1078,7 +1078,8 @@ namespace Microsoft.Data.SqlClient
             current.warnings = stateObj._warnings;
         }
 
-        private void PrepareInternal()
+        // @TODO: Rename PrepareInternal
+        private void InternalPrepare()
         {
             if (IsDirty)
             {
