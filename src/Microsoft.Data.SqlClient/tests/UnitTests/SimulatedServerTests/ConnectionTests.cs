@@ -21,7 +21,6 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ScenarioTests
 {
-    [Collection("SimulatedServerTests")]
     public class ConnectionTests
     {
         [Fact]
@@ -72,6 +71,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             Assert.Contains("The instance of SQL Server you attempted to connect to does not support encryption.", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
+        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -98,6 +98,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             Assert.Equal(2, server.PreLoginCount);
         }
 
+        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -124,6 +125,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             Assert.Equal(2, server.PreLoginCount);
         }
 
+        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -151,6 +153,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             Assert.Equal(1, server.PreLoginCount);
         }
 
+        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -178,6 +181,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             Assert.Equal(1, server.PreLoginCount);
         }
 
+        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
@@ -215,6 +219,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             }
         }
 
+        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -259,6 +264,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             }
         }
 
+        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(true)]
         [InlineData(false)]

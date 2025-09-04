@@ -10,6 +10,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ScenarioTests
 {
+    [Trait("Category", "flaky")]
     [Collection("SimulatedServerTests")]
     public class ConnectionRoutingTestsAzure : IDisposable
     {

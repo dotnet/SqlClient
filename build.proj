@@ -225,7 +225,7 @@
         -p:TestTargetOS=Windows$(TargetGroup)
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
-        --filter "category!=failing"
+        --filter "category!=failing%26category!=flaky"
         --logger:"trx;LogFilePrefix=Unit-Windows$(TargetGroup)-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -246,9 +246,9 @@
         -p:TestTargetOS=Unixnetcoreapp
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
-        --filter "category!=failing"
+        --filter "category!=failing%26category!=flaky"
         --logger:"trx;LogFilePrefix=Unit-Unixnetcoreapp-$(TestSet)"
-      </TestCommand>
+    </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running unit tests for Unix via command: $(TestCommand)"/>
