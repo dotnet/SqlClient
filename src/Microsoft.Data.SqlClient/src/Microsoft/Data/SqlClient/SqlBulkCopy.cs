@@ -471,13 +471,13 @@ namespace Microsoft.Data.SqlClient
 SELECT @@TRANCOUNT;
 
 DECLARE @Column_Names NVARCHAR(MAX) = NULL;
-IF EXISTS (SELECT TOP 1 * FROM sys.all_columns where object_id = object_id('sys.all_columns') AND [name] = 'graph_type')
+IF EXISTS (SELECT TOP 1 * FROM sys.all_columns WHERE [object_id] = OBJECT_ID('sys.all_columns') AND [name] = 'graph_type')
 BEGIN
-    SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME(name) FROM {CatalogName}.sys.all_columns WHERE OBJECT_ID = OBJECT_ID('{escapedObjectName}') AND COALESCE(graph_type, 0) NOT IN (1, 3, 4, 6, 7) ORDER BY column_id ASC;
+    SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME([name]) FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{escapedObjectName}') AND COALESCE([graph_type], 0) NOT IN (1, 3, 4, 6, 7) ORDER BY [column_id] ASC;
 END
 ELSE
 BEGIN
-    SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME(name) FROM {CatalogName}.sys.all_columns WHERE OBJECT_ID = OBJECT_ID('{escapedObjectName}') ORDER BY column_id ASC;
+    SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME([name]) FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{escapedObjectName}') ORDER BY [column_id] ASC;
 END
 
 SELECT @Column_Names = COALESCE(@Column_Names, '*');

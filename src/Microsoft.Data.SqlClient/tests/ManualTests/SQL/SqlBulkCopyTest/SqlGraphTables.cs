@@ -7,13 +7,17 @@ using System.Data;
 using System.Data.Common;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests
+namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SqlBulkCopyTests
 {
     public class SqlGraphTables
     {
-        public static void Test(string dstConnectionString, string dstNodeTable)
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public void WriteToServer_CopyToSqlGraphNodeTable_Succeeds()
         {
-            using SqlConnection dstConn = new SqlConnection(dstConnectionString);
+            string connectionString = DataTestUtility.TCPConnectionString;
+            string destinationTable = DataTestUtility.GetUniqueNameForSqlServer("SqlGraphNodeTable");
+
+            using SqlConnection dstConn = new SqlConnection(connectionString);
             using DataTable nodes = new DataTable()
             {
                 Columns = { new DataColumn("Name", typeof(string)) }
@@ -28,17 +32,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             try
             {
-                DataTestUtility.CreateTable(dstConn, dstNodeTable, "(Id INT PRIMARY KEY IDENTITY(1,1), [Name] VARCHAR(100)) AS NODE");
+                DataTestUtility.CreateTable(dstConn, destinationTable, "(Id INT PRIMARY KEY IDENTITY(1,1), [Name] VARCHAR(100)) AS NODE");
 
                 using SqlBulkCopy nodeCopy = new SqlBulkCopy(dstConn);
 
-                nodeCopy.DestinationTableName = dstNodeTable;
+                nodeCopy.DestinationTableName = destinationTable;
                 nodeCopy.ColumnMappings.Add("Name", "Name");
                 nodeCopy.WriteToServer(nodes);
             }
             finally
             {
-                DataTestUtility.DropTable(dstConn, dstNodeTable);
+                DataTestUtility.DropTable(dstConn, destinationTable);
             }
         }
     }
