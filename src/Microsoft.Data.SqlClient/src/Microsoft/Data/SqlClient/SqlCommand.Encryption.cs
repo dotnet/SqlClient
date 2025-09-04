@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlCommand
     {
+        // @TODO: Isn't this doing things asynchronously? We should just have a purely asynchronous and a purely synchronous pathway instead of this mix of check this check that and flags.
         private SqlDataReader GetParameterEncryptionDataReader(
             out Task returnTask,
             Task fetchInputParameterEncryptionInfoTask,
@@ -93,6 +94,73 @@ namespace Microsoft.Data.SqlClient
                         throw exception;
                     }
                 });
+
+            return describeParameterEncryptionDataReader;
+        }
+
+        private SqlDataReader GetParameterEncryptionDataReaderAsync(
+            out Task returnTask,
+            SqlDataReader describeParameterEncryptionDataReader,
+            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
+            bool describeParameterEncryptionNeeded,
+            bool isRetry)
+        {
+            returnTask = Task.Run(() =>
+            {
+                bool processFinallyBlockAsync = true;
+                bool decrementAsyncCountInFinallyBlockAsync = true;
+
+                try
+                {
+                    // Check for any exception on network write before reading.
+                    CheckThrowSNIException();
+
+                    // If it is async, then TryFetchInputParameterEncryptionInfo ->
+                    // RunExecuteReaderTds would have incremented the async count. Decrement it
+                    // when we are about to complete async execute reader.
+                    SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
+                    if (internalConnectionTds is not null)
+                    {
+                        internalConnectionTds.DecrementAsyncCount();
+                        decrementAsyncCountInFinallyBlockAsync = false;
+                    }
+
+                    // Complete executereader.
+                    describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(
+                        isInternal: false,
+                        forDescribeParameterEncryption: true);
+                    Debug.Assert(_stateObj is null, "non-null state object in PrepareForTransparentEncryption.");
+
+                    // Read the results of describe parameter encryption.
+                    ReadDescribeEncryptionParameterResults(
+                        describeParameterEncryptionDataReader,
+                        describeParameterEncryptionRpcOriginalRpcMap,
+                        isRetry);
+
+                    #if DEBUG
+                    // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
+                    if (_sleepAfterReadDescribeEncryptionParameterResults)
+                    {
+                        Thread.Sleep(TimeSpan.FromSeconds(10));
+                    }
+                    #endif
+                }
+                catch (Exception e)
+                {
+                    processFinallyBlockAsync = ADP.IsCatchableExceptionType(e);
+                    throw;
+                }
+                finally
+                {
+                    PrepareTransparentEncryptionFinallyBlock(
+                        closeDataReader: processFinallyBlockAsync,
+                        decrementAsyncCount: decrementAsyncCountInFinallyBlockAsync,
+                        clearDataStructures: processFinallyBlockAsync,
+                        wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
+                        describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
+                        describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
+                }
+            });
 
             return describeParameterEncryptionDataReader;
         }
