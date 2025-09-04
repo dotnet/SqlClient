@@ -40,7 +40,35 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Fields
-        
+        #region Test-Only Behavior Overrides
+        #if DEBUG
+        /// <summary>
+        /// Force the client to sleep during sp_describe_parameter_encryption in the function TryFetchInputParameterEncryptionInfo.
+        /// </summary>
+        private static bool _sleepDuringTryFetchInputParameterEncryptionInfo = false;
+
+        /// <summary>
+        /// Force the client to sleep during sp_describe_parameter_encryption in the function RunExecuteReaderTds.
+        /// </summary>
+        private static bool _sleepDuringRunExecuteReaderTdsForSpDescribeParameterEncryption = false;
+
+        /// <summary>
+        /// Force the client to sleep during sp_describe_parameter_encryption after ReadDescribeEncryptionParameterResults.
+        /// </summary>
+        private static bool _sleepAfterReadDescribeEncryptionParameterResults = false;
+
+        /// <summary>
+        /// Internal flag for testing purposes that forces all queries to internally end async calls.
+        /// </summary>
+        private static bool _forceInternalEndQuery = false;
+
+        /// <summary>
+        /// Internal flag for testing purposes that forces one RetryableEnclaveQueryExecutionException during GenerateEnclavePackage
+        /// </summary>
+        private static bool _forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage = false;
+        #endif
+        #endregion
+
         // @TODO: Make property - non-private fields are bad
         internal SqlDependency _sqlDep;
 
@@ -204,7 +232,7 @@ namespace Microsoft.Data.SqlClient
         /// DbDataAdapter.
         /// </summary>
         private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
-        
+
         #endregion
 
         #region Constructors
