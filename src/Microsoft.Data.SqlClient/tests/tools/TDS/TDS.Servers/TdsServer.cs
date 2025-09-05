@@ -12,6 +12,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         public TdsServer() : this(new TdsServerArguments())
         {
         }
+
         /// <summary>
         /// Constructor with arguments
         /// </summary>

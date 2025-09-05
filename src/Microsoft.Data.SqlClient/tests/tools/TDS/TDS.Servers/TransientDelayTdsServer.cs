@@ -62,7 +62,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         public override TDSMessageCollection OnSQLBatchRequest(ITDSServerSession session, TDSMessage message)
         {
             if (Arguments.IsEnabledPermanentDelay ||
-                (Arguments.IsEnabledTransientDelay && RequestCounter < 1))
+                (Arguments.IsEnabledTransientDelay && RequestCounter < Arguments.RepeatCount))
             {
                 Thread.Sleep(Arguments.DelayDuration);
 

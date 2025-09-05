@@ -48,9 +48,9 @@ namespace Microsoft.SqlServer.TDS.Servers
             return "Unknown server error occurred";
         }
 
-            /// <summary>
-            /// Handler for login request
-            /// </summary>
+        /// <summary>
+        /// Handler for login request
+        /// </summary>
         public override TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
         {
             // Inflate login7 request from the message
