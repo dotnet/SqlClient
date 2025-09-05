@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -166,6 +167,148 @@ namespace Microsoft.Data.SqlClient
             return describeParameterEncryptionDataReader;
         }
 
+        private bool ReadDescribeEncryptionParameterResults1(
+            SqlDataReader ds,
+            Dictionary<int, SqlTceCipherInfoEntry> columnEncryptionKeyTable)
+        {
+            bool enclaveMetadataExists = true;
+            while (ds.Read())
+            {
+                // @TODO: RowsAffected++;
+
+                // Column encryption key ordinal
+                int currentOrdinal = ds.GetInt32((int)DescribeParameterEncryptionResultSet1.KeyOrdinal);
+                Debug.Assert(currentOrdinal >= 0, "currentOrdinal cannot be negative");
+
+                // See if there was already an entry for the current ordinal, and if not create one.
+                if (!columnEncryptionKeyTable.TryGetValue(currentOrdinal, out SqlTceCipherInfoEntry cipherInfoEntry))
+                {
+                    cipherInfoEntry = new SqlTceCipherInfoEntry(currentOrdinal);
+                    columnEncryptionKeyTable.Add(currentOrdinal, cipherInfoEntry);
+                }
+
+                Debug.Assert(cipherInfoEntry is not null, "cipherInfoEntry should not be un-initialized.");
+
+                // Read the column encryption key
+                // @TODO: This pattern is used quite a bit - can we turn it into a helper or extension of SqlDataReader?
+                int encryptedKeyLength = (int)ds.GetBytes(
+                    (int)DescribeParameterEncryptionResultSet1.EncryptedKey,
+                    dataIndex: 0,
+                    buffer: null,
+                    bufferIndex: 0,
+                    length: 0);
+                byte[] encryptedKey = new byte[encryptedKeyLength];
+                ds.GetBytes(
+                    (int)DescribeParameterEncryptionResultSet1.EncryptedKey,
+                    dataIndex: 0,
+                    buffer: encryptedKey,
+                    bufferIndex: 0,
+                    length: encryptedKeyLength);
+
+                // Read the metadata version of the key. It should always be 8 bytes.
+                // @TODO: We have so many asserts on the structure of this data, should we have one here too??
+                byte[] keyMdVersion = new byte[8];
+                ds.GetBytes(
+                    (int)DescribeParameterEncryptionResultSet1.KeyMdVersion,
+                    dataIndex: 0,
+                    buffer: keyMdVersion,
+                    bufferIndex: 0,
+                    length: keyMdVersion.Length);
+
+                // Read the provider name (key store name)
+                string providerName = ds.GetString((int)DescribeParameterEncryptionResultSet1.ProviderName);
+
+                // Read the key path
+                string keyPath = ds.GetString((int)DescribeParameterEncryptionResultSet1.KeyPath);
+
+                cipherInfoEntry.Add(
+                    encryptedKey: encryptedKey,
+                    databaseId: ds.GetInt32((int)DescribeParameterEncryptionResultSet1.DbId),
+                    cekId: ds.GetInt32((int)DescribeParameterEncryptionResultSet1.KeyId),
+                    cekVersion: ds.GetInt32((int)DescribeParameterEncryptionResultSet1.KeyVersion),
+                    cekMdVersion: keyMdVersion,
+                    keyPath: keyPath,
+                    keyStoreName: providerName,
+                    algorithmName: ds.GetString((int)DescribeParameterEncryptionResultSet1.KeyEncryptionAlgorithm));
+
+                // Servers supporting enclave computations should always return a boolean
+                // indicating whether the key is required by enclave or not.
+                // @TODO: Do we need to make this check for each row? I doubt it.
+                bool isRequestedByEnclave = false;
+                if (_activeConnection.Parser.TceVersionSupported >= TdsEnums.MIN_TCE_VERSION_WITH_ENCLAVE_SUPPORT)
+                {
+                    isRequestedByEnclave = ds.GetBoolean((int)DescribeParameterEncryptionResultSet1.IsRequestedByEnclave);
+                }
+                else
+                {
+                    enclaveMetadataExists = false;
+                }
+
+                if (isRequestedByEnclave)
+                {
+                    if (string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) &&
+                        _activeConnection.AttestationProtocol != SqlConnectionAttestationProtocol.None)
+                    {
+                        throw SQL.NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe(
+                            _activeConnection.Parser.EnclaveType);
+                    }
+
+                    byte[] keySignature = null;
+                    if (!ds.IsDBNull((int)DescribeParameterEncryptionResultSet1.KeySignature))
+                    {
+                        int keySignatureLength = (int)ds.GetBytes(
+                            (int)DescribeParameterEncryptionResultSet1.KeySignature,
+                            dataIndex: 0,
+                            buffer: null,
+                            bufferIndex: 0,
+                            length: 0);
+                        keySignature = new byte[keySignatureLength];
+                        ds.GetBytes(
+                            (int)DescribeParameterEncryptionResultSet1.KeySignature,
+                            dataIndex: 0,
+                            buffer: keySignature,
+                            bufferIndex: 0,
+                            length: keySignatureLength);
+                    }
+
+                    SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                        providerName,
+                        keyPath,
+                        isEnclaveEnabled: true,
+                        keySignature,
+                        _activeConnection,
+                        this);
+
+                    // Lookup the key, failing which throw an exception
+                    // @TODO: Seriously, we *just* did this, why are we looking it up again??
+                    if (!columnEncryptionKeyTable.TryGetValue(currentOrdinal, out SqlTceCipherInfoEntry cipherInfo))
+                    {
+                        throw SQL.InvalidEncryptionKeyOrdinalEnclaveMetadata(
+                            currentOrdinal,
+                            columnEncryptionKeyTable.Count);
+                    }
+
+                    // @TODO: 1) storing this as Command state seems fishy
+                    // @TODO: 2) despite being concurrent, the usage of ContainsKey -> TryAdd is a race condition
+                    // @TODO: 3) we have SqlTceCipherInfoTable, we should use it - or make it usable.
+                    // @TODO: 4) even if we're supposed to store it as state, is the intention to obliterate the list each time? If so, we should probably store it locally and replace the state obj at the end.
+                    if (keysToBeSentToEnclave is null)
+                    {
+                        keysToBeSentToEnclave = new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
+                        keysToBeSentToEnclave.TryAdd(currentOrdinal, cipherInfo);
+                    }
+                    else if (!keysToBeSentToEnclave.ContainsKey(currentOrdinal))
+                    {
+                        keysToBeSentToEnclave.TryAdd(currentOrdinal, cipherInfo);
+                    }
+
+                    requiresEnclaveComputations = true;
+                }
+            }
+
+            return enclaveMetadataExists;
+        }
+
         private int ReadDescribeEncryptionParameterResults2(
             SqlDataReader ds,
             _SqlRPC rpc,
@@ -191,6 +334,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(sqlParameter is not null, "sqlParameter should not be null.");
 
                     // @TODO: And what happens if they're not in the same order?
+                    // @TODO: Invert if statement based on answer to above TODO
                     if (SqlParameter.ParameterNamesEqual(sqlParameter.ParameterName, parameterName))
                     {
                         Debug.Assert(sqlParameter.CipherMetadata is not null, "param.CipherMetaData should not be null.");
@@ -210,10 +354,7 @@ namespace Microsoft.Data.SqlClient
                                 (int)DescribeParameterEncryptionResultSet2.NormalizationRuleVersion);
 
                             // Lookup the key, failing which throw an exception
-                            bool cipherInfoEntryFound = columnEncryptionKeyTable.TryGetValue(
-                                columnEncryptionKeyOrdinal,
-                                out SqlTceCipherInfoEntry cipherInfoEntry);
-                            if (!cipherInfoEntryFound)
+                            if (!columnEncryptionKeyTable.TryGetValue(columnEncryptionKeyOrdinal, out SqlTceCipherInfoEntry cipherInfoEntry))
                             {
                                 throw SQL.InvalidEncryptionKeyOrdinalParameterMetadata(
                                     columnEncryptionKeyOrdinal,
