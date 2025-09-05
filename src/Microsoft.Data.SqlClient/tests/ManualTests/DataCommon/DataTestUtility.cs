@@ -88,7 +88,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             get
             {
-                SqlConnectionStringBuilder builder = new (TCPConnectionString);
+                SqlConnectionStringBuilder builder = new(TCPConnectionString);
                 return builder.Authentication == SqlAuthenticationMethod.SqlPassword || builder.Authentication == SqlAuthenticationMethod.NotSpecified;
             }
         }
@@ -415,48 +415,176 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        /// <summary>
-        /// Generate a unique name to use in Sql Server; 
-        /// some providers does not support names (Oracle supports up to 30).
-        /// </summary>
-        /// <param name="prefix">The name length will be no more then (16 + prefix.Length + escapeLeft.Length + escapeRight.Length).</param>
-        /// <param name="withBracket">Name without brackets.</param>
-        /// <returns>Unique name by considering the Sql Server naming rules.</returns>
-        public static string GetUniqueName(string prefix, bool withBracket = true)
+        // Generate a new GUID and return the characters from its 1st and 4th
+        // parts, as shown here:
+        //
+        //   7ff01cb8-88c7-11f0-b433-00155d7e531e
+        //   ^^^^^^^^           ^^^^
+        //
+        // These 12 characters are concatenated together without any
+        // separators.  These 2 parts typically comprise a timestamp and clock
+        // sequence, most likely to be unique for tests that generate names in
+        // quick succession.
+        private static string GetGuidParts()
         {
-            string escapeLeft = withBracket ? "[" : string.Empty;
-            string escapeRight = withBracket ? "]" : string.Empty;
-            string uniqueName = string.Format("{0}{1}_{2}_{3}{4}",
-                escapeLeft,
-                prefix,
-                DateTime.Now.Ticks.ToString("X", CultureInfo.InvariantCulture), // up to 8 characters
-                Guid.NewGuid().ToString().Substring(0, 6), // take the first 6 characters only
-                escapeRight);
-            return uniqueName;
+            var guid = Guid.NewGuid().ToString();
+            // GOTCHA: The slice operator is inclusive of the start index and
+            // exclusive of the end index!
+            return guid.Substring(0, 8) + guid.Substring(19, 4);
         }
 
         /// <summary>
-        /// Uses environment values `UserName` and `MachineName` in addition to the specified `prefix` and current date
-        /// to generate a unique name to use in Sql Server; 
-        /// SQL Server supports long names (up to 128 characters), add extra info for troubleshooting.
+        /// Generate a short unique database object name, whose maximum length
+        /// is 30 characters, with the format:
+        ///
+        ///   <Prefix>_<GuidParts>
+        ///
+        /// The Prefix will be truncated to satisfy the overall maximum length.
+        ///
+        /// The GUID parts will be the characters from the 1st and 4th blocks
+        /// from a traditional string representation, as shown here:
+        ///
+        ///   7ff01cb8-88c7-11f0-b433-00155d7e531e
+        ///   ^^^^^^^^           ^^^^
+        ///
+        /// These 2 parts typically comprise a timestamp and clock sequence,
+        /// most likely to be unique for tests that generate names in quick
+        /// succession.  The 12 characters are concatenated together without any
+        /// separators.
         /// </summary>
-        /// <param name="prefix">Add the prefix to the generate string.</param>
-        /// <param name="withBracket">Database name must be pass with brackets by default.</param>
-        /// <returns>Unique name by considering the Sql Server naming rules.</returns>
-        public static string GetUniqueNameForSqlServer(string prefix, bool withBracket = true)
+        /// 
+        /// <param name="prefix">
+        /// The prefix to use when generating the unique name, truncated to at
+        /// most 18 characters when withBracket is false, and 16 characters when
+        /// withBracket is true.
+        ///
+        /// This should not contain any characters that cannot be used in
+        /// database object names.  See:
+        /// 
+        /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
+        /// </param>
+        /// 
+        /// <param name="withBracket">
+        /// When true, the entire generated name will be enclosed in square
+        /// brackets, for example:
+        /// 
+        ///   [MyPrefix_7ff01cb811f0]
+        /// </param>
+        /// 
+        /// <returns>
+        /// A unique database object name, no more than 30 characters long.
+        /// </returns>
+        public static string GetShortName(string prefix, bool withBracket = true)
         {
-            string extendedPrefix = string.Format(
-                "{0}_{1}_{2}@{3}",
-                prefix,
-                Environment.UserName,
-                Environment.MachineName,
-                DateTime.Now.ToString("yyyy_MM_dd", CultureInfo.InvariantCulture));
-            string name = GetUniqueName(extendedPrefix, withBracket);
-            if (name.Length > 128)
+            StringBuilder name = new(30);
+
+            if (withBracket)
             {
-                throw new ArgumentOutOfRangeException("the name is too long - SQL Server names are limited to 128");
+                name.Append('[');
             }
-            return name;
+
+            int maxPrefixLength = withBracket ? 16 : 18;
+            if (prefix.Length > maxPrefixLength)
+            {
+                prefix = prefix.Substring(0, maxPrefixLength);
+            }
+
+            name.Append(prefix);
+            name.Append('_');
+            name.Append(GetGuidParts());
+
+            if (withBracket)
+            {
+                name.Append(']');
+            }
+
+            return name.ToString();
+        }
+
+        /// <summary>
+        /// Generate a long unique database object name, whose maximum length is
+        /// 96 characters, with the format:
+        /// 
+        ///   <Prefix>_<GuidParts>_<UserName>_<MachineName>
+        ///
+        /// The Prefix will be truncated to satisfy the overall maximum length.
+        ///
+        /// The GUID Parts will be the characters from the 1st and 4th blocks
+        /// from a traditional string representation, as shown here:
+        ///
+        ///   7ff01cb8-88c7-11f0-b433-00155d7e531e
+        ///   ^^^^^^^^           ^^^^
+        ///
+        /// These 2 parts typically comprise a timestamp and clock sequence,
+        /// most likely to be unique for tests that generate names in quick
+        /// succession.  The 12 characters are concatenated together without any
+        /// separators.
+        ///
+        /// The UserName and MachineName are obtained from the Environment,
+        /// and will be truncated to satisfy the maximum overall length.
+        /// </summary>
+        /// 
+        /// <param name="prefix">
+        /// The prefix to use when generating the unique name, truncated to at
+        /// most 32 characters.
+        ///
+        /// This should not contain any characters that cannot be used in
+        /// database object names.  See:
+        /// 
+        /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
+        /// </param>
+        /// 
+        /// <param name="withBracket">
+        /// When true, the entire generated name will be enclosed in square
+        /// brackets, for example:
+        /// 
+        ///   [MyPrefix_7ff01cb811f0_test_user_ci_agent_machine_name]
+        /// </param>
+        /// 
+        /// <returns>
+        /// A unique database object name, no more than 96 characters long.
+        /// </returns>
+        public static string GetLongName(string prefix, bool withBracket = true)
+        {
+            StringBuilder name = new(96);
+
+            if (withBracket)
+            {
+                name.Append('[');
+            }
+
+            if (prefix.Length > 32)
+            {
+                prefix = prefix.Substring(0, 32);
+            }
+
+            name.Append(prefix);
+            name.Append('_');
+            name.Append(GetGuidParts());
+            name.Append('_');
+
+            var suffix =
+              Environment.UserName + '_' +
+              Environment.MachineName;
+
+            int maxSuffixLength = 96 - name.Length;
+            if (withBracket)
+            {
+                --maxSuffixLength;
+            }
+            if (suffix.Length > maxSuffixLength)
+            {
+                suffix = suffix.Substring(0, maxSuffixLength);
+            }
+
+            name.Append(suffix);
+
+            if (withBracket)
+            {
+                name.Append(']');
+            }
+
+            return name.ToString();
         }
 
         public static bool IsSupportingDistributedTransactions()
