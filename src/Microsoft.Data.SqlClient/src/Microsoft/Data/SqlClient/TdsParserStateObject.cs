@@ -536,6 +536,8 @@ namespace Microsoft.Data.SqlClient
 
         protected abstract uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize);
 
+        internal abstract void SetPacketData(PacketHandle packet, byte[] buffer, int bytesUsed);
+
         protected abstract bool CheckPacket(PacketHandle packet, TaskCompletionSource<object> source);
 
         internal abstract void Dispose();

@@ -344,6 +344,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal override void SetPacketData(PacketHandle packet, byte[] buffer, int bytesUsed)
+        {
+            Debug.Assert(packet.Type == PacketHandle.NativePacketType, "unexpected packet type when requiring NativePacket");
+            SniNativeWrapper.SniPacketSetData(packet.NativePacket, buffer, bytesUsed);
+        }
+
         internal override uint SniGetConnectionId(ref Guid clientConnectionId)
             => SniNativeWrapper.SniGetConnectionId(Handle, ref clientConnectionId);
 
