@@ -1597,8 +1597,8 @@ namespace Microsoft.Data.SqlClient
             bool isRetry)
         {
             _SqlRPC rpc = null;
-            int currentOrdinal = -1;
-            SqlTceCipherInfoEntry cipherInfoEntry;
+
+            // @TODO: This should be SqlTceCipherInfoTable
             Dictionary<int, SqlTceCipherInfoEntry> columnEncryptionKeyTable = new Dictionary<int, SqlTceCipherInfoEntry>();
 
             Debug.Assert((describeParameterEncryptionRpcOriginalRpcMap != null) == _batchRPCMode,
@@ -1616,6 +1616,7 @@ namespace Microsoft.Data.SqlClient
             // and the corresponding original rpc requests.
             bool lookupDictionaryResult;
 
+            // @TODO: If this is supposed to read the results of sp_describe_parameter_encryption there should only ever be 2/3 result sets. So no need to loop this.
             do
             {
                 if (_batchRPCMode)
@@ -1629,115 +1630,14 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                bool enclaveMetadataExists = true;
-
-                // First read the column encryption key list
-                while (ds.Read())
-                {
-
-#if DEBUG
-                    rowsAffected++;
-#endif
-
-                    // Column Encryption Key Ordinal.
-                    currentOrdinal = ds.GetInt32((int)DescribeParameterEncryptionResultSet1.KeyOrdinal);
-                    Debug.Assert(currentOrdinal >= 0, "currentOrdinal cannot be negative.");
-
-                    // Try to see if there was already an entry for the current ordinal.
-                    if (!columnEncryptionKeyTable.TryGetValue(currentOrdinal, out cipherInfoEntry))
-                    {
-                        // If an entry for this ordinal was not found, create an entry in the columnEncryptionKeyTable for this ordinal.
-                        cipherInfoEntry = new SqlTceCipherInfoEntry(currentOrdinal);
-                        columnEncryptionKeyTable.Add(currentOrdinal, cipherInfoEntry);
-                    }
-
-                    Debug.Assert(!cipherInfoEntry.Equals(default(SqlTceCipherInfoEntry)), "cipherInfoEntry should not be un-initialized.");
-
-                    // Read the CEK.
-                    byte[] encryptedKey = null;
-                    int encryptedKeyLength = (int)ds.GetBytes((int)DescribeParameterEncryptionResultSet1.EncryptedKey, 0, encryptedKey, 0, 0);
-                    encryptedKey = new byte[encryptedKeyLength];
-                    ds.GetBytes((int)DescribeParameterEncryptionResultSet1.EncryptedKey, 0, encryptedKey, 0, encryptedKeyLength);
-
-                    // Read the metadata version of the key.
-                    // It should always be 8 bytes.
-                    byte[] keyMdVersion = new byte[8];
-                    ds.GetBytes((int)DescribeParameterEncryptionResultSet1.KeyMdVersion, 0, keyMdVersion, 0, keyMdVersion.Length);
-
-                    // Validate the provider name
-                    string providerName = ds.GetString((int)DescribeParameterEncryptionResultSet1.ProviderName);
-
-                    string keyPath = ds.GetString((int)DescribeParameterEncryptionResultSet1.KeyPath);
-                    cipherInfoEntry.Add(encryptedKey: encryptedKey,
-                                        databaseId: ds.GetInt32((int)DescribeParameterEncryptionResultSet1.DbId),
-                                        cekId: ds.GetInt32((int)DescribeParameterEncryptionResultSet1.KeyId),
-                                        cekVersion: ds.GetInt32((int)DescribeParameterEncryptionResultSet1.KeyVersion),
-                                        cekMdVersion: keyMdVersion,
-                                        keyPath: keyPath,
-                                        keyStoreName: providerName,
-                                        algorithmName: ds.GetString((int)DescribeParameterEncryptionResultSet1.KeyEncryptionAlgorithm));
-
-                    bool isRequestedByEnclave = false;
-
-                    // Servers supporting enclave computations should always
-                    // return a boolean indicating whether the key is required by enclave or not.
-                    if (this._activeConnection.Parser.TceVersionSupported >= TdsEnums.MIN_TCE_VERSION_WITH_ENCLAVE_SUPPORT)
-                    {
-                        isRequestedByEnclave =
-                            ds.GetBoolean((int)DescribeParameterEncryptionResultSet1.IsRequestedByEnclave);
-                    }
-                    else
-                    {
-                        enclaveMetadataExists = false;
-                    }
-
-                    if (isRequestedByEnclave)
-                    {
-                        if (string.IsNullOrWhiteSpace(this.Connection.EnclaveAttestationUrl) && Connection.AttestationProtocol != SqlConnectionAttestationProtocol.None)
-                        {
-                            throw SQL.NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe(this._activeConnection.Parser.EnclaveType);
-                        }
-
-                        byte[] keySignature = null;
-
-                        if (!ds.IsDBNull((int)DescribeParameterEncryptionResultSet1.KeySignature))
-                        {
-                            int keySignatureLength = (int)ds.GetBytes((int)DescribeParameterEncryptionResultSet1.KeySignature, 0, keySignature, 0, 0);
-                            keySignature = new byte[keySignatureLength];
-                            ds.GetBytes((int)DescribeParameterEncryptionResultSet1.KeySignature, 0, keySignature, 0, keySignatureLength);
-                        }
-
-                        SqlSecurityUtility.VerifyColumnMasterKeySignature(providerName, keyPath, isRequestedByEnclave, keySignature, _activeConnection, this);
-
-                        int requestedKey = currentOrdinal;
-                        SqlTceCipherInfoEntry cipherInfo;
-
-                        // Lookup the key, failing which throw an exception
-                        if (!columnEncryptionKeyTable.TryGetValue(requestedKey, out cipherInfo))
-                        {
-                            throw SQL.InvalidEncryptionKeyOrdinalEnclaveMetadata(requestedKey, columnEncryptionKeyTable.Count);
-                        }
-
-                        if (keysToBeSentToEnclave == null)
-                        {
-                            keysToBeSentToEnclave = new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
-                            keysToBeSentToEnclave.TryAdd(currentOrdinal, cipherInfo);
-                        }
-                        else if (!keysToBeSentToEnclave.ContainsKey(currentOrdinal))
-                        {
-                            keysToBeSentToEnclave.TryAdd(currentOrdinal, cipherInfo);
-                        }
-
-                        requiresEnclaveComputations = true;
-                    }
-                }
-
+                // 1) Read the first result set that contains the column encryption key list
+                bool enclaveMetadataExists = ReadDescribeEncryptionParameterResults1(ds, columnEncryptionKeyTable);
                 if (!enclaveMetadataExists && !ds.NextResult())
                 {
                     throw SQL.UnexpectedDescribeParamFormatParameterMetadata();
                 }
 
-                // Find the RPC command that generated this tce request
+                // 2) Find the RPC command that generated this TCE request
                 if (_batchRPCMode)
                 {
                     Debug.Assert(_sqlRPCParameterEncryptionReqArray[resultSetSequenceNumber] != null, "_sqlRPCParameterEncryptionReqArray[resultSetSequenceNumber] should not be null.");
@@ -1759,7 +1659,7 @@ namespace Microsoft.Data.SqlClient
 
                 Debug.Assert(rpc != null, "rpc should not be null here.");
 
-                // Read the second result set containing the cipher metadata
+                // 3) Read the second result set containing the cipher metadata
                 int receivedMetadataCount = 0;
                 if (!enclaveMetadataExists || ds.NextResult())
                 {
@@ -1790,7 +1690,7 @@ namespace Microsoft.Data.SqlClient
                             "number of rows received (if received) for describe parameter encryption should be equal to rows affected by describe parameter encryption.");
 #endif
 
-
+                // 4) Read the third result set containing enclave attestation information
                 if (ShouldUseEnclaveBasedWorkflow && (enclaveAttestationParameters != null) && requiresEnclaveComputations)
                 {
                     if (!ds.NextResult())
@@ -1798,39 +1698,7 @@ namespace Microsoft.Data.SqlClient
                         throw SQL.UnexpectedDescribeParamFormatAttestationInfo(this._activeConnection.Parser.EnclaveType);
                     }
 
-                    bool attestationInfoRead = false;
-
-                    while (ds.Read())
-                    {
-                        if (attestationInfoRead)
-                        {
-                            throw SQL.MultipleRowsReturnedForAttestationInfo();
-                        }
-
-                        int attestationInfoLength = (int)ds.GetBytes((int)DescribeParameterEncryptionResultSet3.AttestationInfo, 0, null, 0, 0);
-                        byte[] attestationInfo = new byte[attestationInfoLength];
-                        ds.GetBytes((int)DescribeParameterEncryptionResultSet3.AttestationInfo, 0, attestationInfo, 0, attestationInfoLength);
-
-                        SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
-                        string enclaveType = this._activeConnection.Parser.EnclaveType;
-
-                        EnclaveDelegate.Instance.CreateEnclaveSession(
-                            attestationProtocol,
-                            enclaveType,
-                            GetEnclaveSessionParameters(),
-                            attestationInfo,
-                            enclaveAttestationParameters,
-                            customData,
-                            customDataLength,
-                            isRetry);
-                        enclaveAttestationParameters = null;
-                        attestationInfoRead = true;
-                    }
-
-                    if (!attestationInfoRead)
-                    {
-                        throw SQL.AttestationInfoNotReturnedFromSqlServer(this._activeConnection.Parser.EnclaveType, this._activeConnection.EnclaveAttestationUrl);
-                    }
+                    ReadDescribeEncryptionParameterResults3(ds, isRetry);
                 }
 
                 // The server has responded with encryption related information for this rpc request. So clear the needsFetchParameterEncryptionMetadata flag.
