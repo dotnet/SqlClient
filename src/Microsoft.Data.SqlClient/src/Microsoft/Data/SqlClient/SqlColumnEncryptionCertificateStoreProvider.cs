@@ -22,6 +22,16 @@ namespace Microsoft.Data.SqlClient
         public const string ProviderName = @"MSSQL_CERTIFICATE_STORE";
 
         /// <summary>
+        /// This encryption keystore uses a certificate as the column master key.
+        /// </summary>
+        internal const string MasterKeyType = @"certificate";
+
+        /// <summary>
+        /// This encryption keystore uses the master key path to reference a specific certificate.
+        /// </summary>
+        internal const string KeyPathReference = @"certificate";
+
+        /// <summary>
         /// RSA_OAEP is the only algorithm supported for encrypting/decrypting column encryption keys.
         /// </summary>
         internal const string RSAEncryptionAlgorithmWithOAEP = @"RSA_OAEP";
@@ -107,7 +117,7 @@ namespace Microsoft.Data.SqlClient
             // validate the ciphertext length
             if (cipherTextLength != keySizeInBytes)
             {
-                throw SQL.InvalidCiphertextLengthInEncryptedCEK(cipherTextLength, keySizeInBytes, masterKeyPath);
+                throw SQL.InvalidCiphertextLengthInEncryptedCEKCertificate(cipherTextLength, keySizeInBytes, masterKeyPath);
             }
 
             // Validate the signature length
@@ -115,7 +125,7 @@ namespace Microsoft.Data.SqlClient
             int signatureLength = encryptedColumnEncryptionKey.Length - currentIndex - cipherTextLength;
             if (signatureLength != keySizeInBytes)
             {
-                throw SQL.InvalidSignatureInEncryptedCEK(signatureLength, keySizeInBytes, masterKeyPath);
+                throw SQL.InvalidSignatureInEncryptedCEKCertificate(signatureLength, keySizeInBytes, masterKeyPath);
             }
 
             // Get ciphertext
