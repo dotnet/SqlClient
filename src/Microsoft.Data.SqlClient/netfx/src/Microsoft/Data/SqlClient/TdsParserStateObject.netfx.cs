@@ -243,6 +243,47 @@ namespace Microsoft.Data.SqlClient
             return SniPacketGetData(packet, _inBuff, ref dataSize);
         }
 
+        private bool TrySetBufferSecureStrings()
+        {
+            bool mustClearBuffer = false;
+
+            if (_securePasswords != null)
+            {
+                for (int i = 0; i < _securePasswords.Length; i++)
+                {
+                    if (_securePasswords[i] != null)
+                    {
+                        IntPtr str = IntPtr.Zero;
+                        try
+                        {
+                            str = Marshal.SecureStringToBSTR(_securePasswords[i]);
+                            byte[] data = new byte[_securePasswords[i].Length * 2];
+                            Marshal.Copy(str, data, 0, _securePasswords[i].Length * 2);
+                            if (!BitConverter.IsLittleEndian)
+                            {
+                                Span<byte> span = data.AsSpan();
+                                for (int ii = 0; ii < _securePasswords[i].Length * 2; ii += 2)
+                                {
+                                    short value = BinaryPrimitives.ReadInt16LittleEndian(span.Slice(ii));
+                                    BinaryPrimitives.WriteInt16BigEndian(span.Slice(ii), value);
+                                }
+                            }
+                            TdsParserStaticMethods.ObfuscatePassword(data);
+                            data.CopyTo(_outBuff, _securePasswordOffsetsInBuffer[i]);
+
+                            mustClearBuffer = true;
+                        }
+                        finally
+                        {
+                            Marshal.ZeroFreeBSTR(str);
+                        }
+                    }
+                }
+            }
+
+            return mustClearBuffer;
+        }
+
         public void ReadAsyncCallback(IntPtr key, PacketHandle packet, uint error)
         {
             // Key never used.
@@ -721,7 +762,7 @@ namespace Microsoft.Data.SqlClient
         {
             SNIPacket attnPacket = new SNIPacket(Handle);
             _sniAsyncAttnPacket = attnPacket;
-            SniNativeWrapper.SniPacketSetData(attnPacket, SQL.AttentionHeader, TdsEnums.HEADER_LEN, null, null);
+            SniNativeWrapper.SniPacketSetData(attnPacket, SQL.AttentionHeader, TdsEnums.HEADER_LEN);
             return PacketHandle.FromNativePacket(attnPacket);
         }
 
@@ -729,8 +770,13 @@ namespace Microsoft.Data.SqlClient
         {
             // Prepare packet, and write to packet.
             PacketHandle packet = GetResetWritePacket(_outBytesUsed);
-            SNIPacket nativePacket = packet.NativePacket;
-            SniNativeWrapper.SniPacketSetData(nativePacket, _outBuff, _outBytesUsed, _securePasswords, _securePasswordOffsetsInBuffer);
+            bool mustClearBuffer = TrySetBufferSecureStrings();
+
+            SetPacketData(packet, _outBuff, _outBytesUsed);
+            if (mustClearBuffer)
+            {
+                _outBuff.AsSpan(0, _outBytesUsed).Clear();
+            }
 
             Debug.Assert(Parser.Connection._parserLock.ThreadMayHaveLock(), "Thread is writing without taking the connection lock");
             Task task = SNIWritePacket(packet, out _, canAccumulate, callerHasConnectionLock: true);
