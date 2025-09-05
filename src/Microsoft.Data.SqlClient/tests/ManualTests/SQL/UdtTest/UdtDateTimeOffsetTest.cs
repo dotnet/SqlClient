@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class UdtDateTimeOffsetTest
     {
         private readonly string _connectionString = null;
-        private readonly string _udtTableType = DataTestUtility.GetUniqueNameForSqlServer("DataTimeOffsetTableType");
+        private readonly string _udtTableType = DataTestUtility.GetLongName("DataTimeOffsetTableType");
 
         public UdtDateTimeOffsetTest()
         {
@@ -74,26 +74,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void DateTimeOffsetAllScalesTestShouldSucceed()
         {
-            string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpType");
-
             using SqlConnection connection = new(_connectionString);
             connection.Open();
 
-            try
+            // Use different scale for each test: 0 to 7
+            int fromScale = 0;
+            int toScale = 7;
+            string tvpTypeName = DataTestUtility.GetLongName("tvpType"); // Need a unique name per scale, else we get errors. See https://github.com/dotnet/SqlClient/issues/3011
+
+            for (int scale = fromScale; scale <= toScale; scale++)
             {
-                // Use different scale for each test: 0 to 7
-                int fromScale = 0;
-                int toScale = 7;
+                DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 23, 59, 59, TimeSpan.Zero);
 
-                for (int scale = fromScale; scale <= toScale; scale++)
+                // Add sub-second offset corresponding to the scale being tested
+                TimeSpan subSeconds = TimeSpan.FromTicks((long)(TimeSpan.TicksPerSecond / Math.Pow(10, scale)));
+                dateTimeOffset = dateTimeOffset.Add(subSeconds);
+
+                DataTestUtility.DropUserDefinedType(connection, tvpTypeName);
+
+                try
                 {
-                    DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 23, 59, 59, TimeSpan.Zero);
-
-                    // Add sub-second offset corresponding to the scale being tested
-                    TimeSpan subSeconds = TimeSpan.FromTicks((long)(TimeSpan.TicksPerSecond / Math.Pow(10, scale)));
-                    dateTimeOffset = dateTimeOffset.Add(subSeconds);
-
-                    DataTestUtility.DropUserDefinedType(connection, tvpTypeName);
                     SetupDateTimeOffsetTableType(connection, tvpTypeName, scale);
 
                     var param = new SqlParameter
@@ -113,10 +113,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         Assert.Equal(dateTimeOffset, result);
                     }
                 }
-            }
-            finally
-            {
-                DataTestUtility.DropUserDefinedType(connection, tvpTypeName);
+                finally
+                {
+                    DataTestUtility.DropUserDefinedType(connection, tvpTypeName);
+                }
             }
         }
 
