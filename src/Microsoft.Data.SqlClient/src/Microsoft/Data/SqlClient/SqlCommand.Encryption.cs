@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Threading;
@@ -163,6 +164,88 @@ namespace Microsoft.Data.SqlClient
             });
 
             return describeParameterEncryptionDataReader;
+        }
+
+        private int ReadDescribeEncryptionParameterResults2(
+            SqlDataReader ds,
+            _SqlRPC rpc,
+            Dictionary<int, SqlTceCipherInfoEntry> columnEncryptionKeyTable)
+        {
+            Debug.Assert(rpc is not null, "Describe Parameter Encryption requested for non-TCE spec proc");
+
+            int receivedMetadataCount = 0;
+            int userParamCount = rpc.userParams?.Count ?? 0; // @TODO: Make this a property on _SqlRPC
+
+            while (ds.Read())
+            {
+                // @TODO: RowsAffected++;
+
+                string parameterName = ds.GetString((int)DescribeParameterEncryptionResultSet2.ParameterName);
+
+                // When the RPC object gets reused, the parameter array has more parameters than
+                // the valid params for the command. Null is used to indicate the end of the valid
+                // part of the array. Refer to GetRPCObject().
+                for (int index = 0; index < userParamCount; index++)
+                {
+                    SqlParameter sqlParameter = rpc.userParams[index];
+                    Debug.Assert(sqlParameter is not null, "sqlParameter should not be null.");
+
+                    // @TODO: And what happens if they're not in the same order?
+                    if (SqlParameter.ParameterNamesEqual(sqlParameter.ParameterName, parameterName))
+                    {
+                        Debug.Assert(sqlParameter.CipherMetadata is not null, "param.CipherMetaData should not be null.");
+
+                        sqlParameter.HasReceivedMetadata = true;
+                        receivedMetadataCount++;
+
+                        // Found the param, set up the encryption info.
+                        byte columnEncryptionType = ds.GetByte((int)DescribeParameterEncryptionResultSet2.ColumnEncryptionType);
+                        if (columnEncryptionType != (byte)SqlClientEncryptionType.PlainText)
+                        {
+                            byte cipherAlgorithmId = ds.GetByte(
+                                (int)DescribeParameterEncryptionResultSet2.ColumnEncryptionAlgorithm);
+                            int columnEncryptionKeyOrdinal = ds.GetInt32(
+                                (int)DescribeParameterEncryptionResultSet2.ColumnEncryptionKeyOrdinal);
+                            byte columnNormalizationRuleVersion = ds.GetByte(
+                                (int)DescribeParameterEncryptionResultSet2.NormalizationRuleVersion);
+
+                            // Lookup the key, failing which throw an exception
+                            bool cipherInfoEntryFound = columnEncryptionKeyTable.TryGetValue(
+                                columnEncryptionKeyOrdinal,
+                                out SqlTceCipherInfoEntry cipherInfoEntry);
+                            if (!cipherInfoEntryFound)
+                            {
+                                throw SQL.InvalidEncryptionKeyOrdinalParameterMetadata(
+                                    columnEncryptionKeyOrdinal,
+                                    columnEncryptionKeyTable.Count);
+                            }
+
+                            sqlParameter.CipherMetadata = new SqlCipherMetadata(
+                                sqlTceCipherInfoEntry: cipherInfoEntry,
+                                ordinal: unchecked((ushort)-1),
+                                cipherAlgorithmId: cipherAlgorithmId,
+                                cipherAlgorithmName: null,
+                                encryptionType: columnEncryptionType,
+                                normalizationRuleVersion: columnNormalizationRuleVersion);
+
+                            // Decrypt the symmetric key. This will also validate and throw if needed.
+                            SqlSecurityUtility.DecryptSymmetricKey(sqlParameter.CipherMetadata, _activeConnection, this);
+
+                            // This is effective only for _batchRPCMode even though we set it for
+                            // non-_batchRPCMode also, since for non-_batchRPCMode, param options
+                            // gets thrown away and reconstructed in BuildExecuteSql.
+                            // @TODO: I bet we could make this a bit cleaner
+                            int options = (int)(rpc.userParamMap[index] >> 32);
+                            options |= TdsEnums.RPC_PARAM_ENCRYPTED;
+                            rpc.userParamMap[index] = ((long)options << 32) | (long)index;
+                        }
+
+                        break;
+                    }
+                }
+            }
+
+            return receivedMetadataCount;
         }
     }
 }
