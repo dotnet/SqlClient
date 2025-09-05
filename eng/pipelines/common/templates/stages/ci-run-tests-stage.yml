@@ -30,6 +30,11 @@ parameters:
     type: jobList
     default: []
 
+  # The timeout, in minutes, for each test job.
+  - name: testsTimeout
+    type: string
+    default: 90
+
 stages:
 - ${{ each config in parameters.testConfigurations }}:
   - ${{ each image in config.value.images }}:
@@ -47,6 +52,7 @@ stages:
                 parameters:
                   debug: ${{ parameters.debug }}
                   buildType: ${{ parameters.buildType }}
+                  timeout: ${{ parameters.testsTimeout }}
                   poolName: ${{ config.value.pool }}
                   hostedPool: ${{ eq(config.value.hostedPool, true) }}
                   image: ${{ image.value }}
@@ -72,6 +78,7 @@ stages:
                   parameters:
                     debug: ${{ parameters.debug }}
                     buildType: ${{ parameters.buildType }}
+                    timeout: ${{ parameters.testsTimeout }}
                     poolName: ${{ config.value.pool }}
                     hostedPool: ${{ eq(config.value.hostedPool, true) }}
                     image: ${{ image.value }}
