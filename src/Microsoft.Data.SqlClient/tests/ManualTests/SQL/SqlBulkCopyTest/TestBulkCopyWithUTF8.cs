@@ -15,8 +15,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// </summary>
     public sealed class TestBulkCopyWithUtf8 : IDisposable
     {
-        private static string s_sourceTable = DataTestUtility.GetUniqueName("SourceTableForUTF8Data");
-        private static string s_destinationTable = DataTestUtility.GetUniqueName("DestinationTableForUTF8Data");
+        private static string s_sourceTable = DataTestUtility.GetShortName("SourceTableForUTF8Data");
+        private static string s_destinationTable = DataTestUtility.GetShortName("DestinationTableForUTF8Data");
         private static string s_testValue = "test";
         private static byte[] s_testValueInUtf8Bytes = new byte[] { 0x74, 0x65, 0x73, 0x74 };
         private static readonly string s_insertQuery = $"INSERT INTO {s_sourceTable} VALUES('{s_testValue}')";
