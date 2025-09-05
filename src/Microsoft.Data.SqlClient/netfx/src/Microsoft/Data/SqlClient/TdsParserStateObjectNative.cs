@@ -410,6 +410,21 @@ namespace Microsoft.Data.SqlClient
             return error;
         }
 
+        internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename)
+        {
+            AuthProviderInfo authInfo = new AuthProviderInfo();
+            authInfo.flags = info;
+            authInfo.tlsFirst = tlsFirst;
+            authInfo.certId = null;
+            authInfo.certHash = false;
+            authInfo.clientCertificateCallbackContext = IntPtr.Zero;
+            authInfo.clientCertificateCallback = null;
+            authInfo.serverCertFileName = string.IsNullOrEmpty(serverCertificateFilename) ? null : serverCertificateFilename;
+
+            // Add SSL (Encryption) SNI provider.
+            return SniNativeWrapper.SniAddProvider(Handle, Provider.SSL_PROV, ref authInfo);
+        }
+
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
             => SniNativeWrapper.SniSetInfo(Handle, QueryType.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
 

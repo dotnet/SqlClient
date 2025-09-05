@@ -57,8 +57,6 @@ namespace Microsoft.Data.SqlClient
         // General methods //
         /////////////////////
 
-        internal abstract uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename);
-
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);

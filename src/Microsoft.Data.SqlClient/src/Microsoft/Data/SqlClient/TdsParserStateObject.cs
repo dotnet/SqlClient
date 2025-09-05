@@ -532,6 +532,8 @@ namespace Microsoft.Data.SqlClient
             string hostNameInCertificate = "",
             string serverCertificateFilename = "");
 
+        internal abstract uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename);
+
         internal abstract uint CheckConnection();
 
         internal abstract PacketHandle GetResetWritePacket(int dataSize);
