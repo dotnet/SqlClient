@@ -388,5 +388,53 @@ namespace Microsoft.Data.SqlClient
 
             return receivedMetadataCount;
         }
+
+        private void ReadDescribeEncryptionParameterResults3(SqlDataReader ds, bool isRetry)
+        {
+            bool attestationInfoRead = false;
+            while (ds.Read())
+            {
+                if (attestationInfoRead)
+                {
+                    throw SQL.MultipleRowsReturnedForAttestationInfo();
+                }
+
+                int attestationInfoLength = (int)ds.GetBytes(
+                    (int)DescribeParameterEncryptionResultSet3.AttestationInfo,
+                    dataIndex: 0,
+                    buffer: null,
+                    bufferIndex: 0,
+                    length: 0);
+                byte[] attestationInfo = new byte[attestationInfoLength];
+                ds.GetBytes(
+                    (int)DescribeParameterEncryptionResultSet3.AttestationInfo,
+                    dataIndex: 0,
+                    buffer: attestationInfo,
+                    bufferIndex: 0,
+                    length: attestationInfoLength);
+
+                SqlConnectionAttestationProtocol attestationProtocol = _activeConnection.AttestationProtocol;
+                string enclaveType = _activeConnection.Parser.EnclaveType;
+
+                EnclaveDelegate.Instance.CreateEnclaveSession(
+                    attestationProtocol,
+                    enclaveType,
+                    GetEnclaveSessionParameters(),
+                    attestationInfo,
+                    enclaveAttestationParameters,
+                    customData,
+                    customDataLength,
+                    isRetry);
+                enclaveAttestationParameters = null;
+                attestationInfoRead = true;
+            }
+
+            if (!attestationInfoRead)
+            {
+                throw SQL.AttestationInfoNotReturnedFromSqlServer(
+                    _activeConnection.Parser.EnclaveType,
+                    _activeConnection.EnclaveAttestationUrl);
+            }
+        }
     }
 }
