@@ -174,8 +174,6 @@ namespace Microsoft.Data.SqlClient
             bool enclaveMetadataExists = true;
             while (ds.Read())
             {
-                // @TODO: RowsAffected++;
-
                 // Column encryption key ordinal
                 int currentOrdinal = ds.GetInt32((int)DescribeParameterEncryptionResultSet1.KeyOrdinal);
                 Debug.Assert(currentOrdinal >= 0, "currentOrdinal cannot be negative");
@@ -321,8 +319,6 @@ namespace Microsoft.Data.SqlClient
 
             while (ds.Read())
             {
-                // @TODO: RowsAffected++;
-
                 string parameterName = ds.GetString((int)DescribeParameterEncryptionResultSet2.ParameterName);
 
                 // When the RPC object gets reused, the parameter array has more parameters than
