@@ -1607,11 +1607,6 @@ namespace Microsoft.Data.SqlClient
             // Indicates the current result set we are reading, used in BatchRPCMode, where we can have more than 1 result set.
             int resultSetSequenceNumber = 0;
 
-#if DEBUG
-            // Keep track of the number of rows in the result sets.
-            int rowsAffected = 0;
-#endif
-
             // A flag that used in BatchRPCMode, to assert the result of lookup in to the dictionary maintaining the map of describe parameter encryption requests
             // and the corresponding original rpc requests.
             bool lookupDictionaryResult;
@@ -1684,11 +1679,6 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                 }
-
-#if DEBUG
-                Debug.Assert((rowsAffected == 0) || (rowsAffected == RowsAffectedByDescribeParameterEncryption),
-                            "number of rows received (if received) for describe parameter encryption should be equal to rows affected by describe parameter encryption.");
-#endif
 
                 // 4) Read the third result set containing enclave attestation information
                 if (ShouldUseEnclaveBasedWorkflow && (enclaveAttestationParameters != null) && requiresEnclaveComputations)
