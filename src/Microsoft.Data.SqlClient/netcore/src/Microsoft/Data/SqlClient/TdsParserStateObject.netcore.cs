@@ -11,7 +11,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
-using Microsoft.Data.SqlClient.ManagedSni;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -563,13 +562,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Async operation completion may be delayed (success pending).
-            try
-            {
-            }
-            finally
-            {
-                sniError = WritePacket(packet, sync);
-            }
+            sniError = WritePacket(packet, sync);
 
             if (sniError == TdsEnums.SNI_SUCCESS_IO_PENDING)
             {

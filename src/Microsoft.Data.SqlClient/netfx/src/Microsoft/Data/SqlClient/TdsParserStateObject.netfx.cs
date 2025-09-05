@@ -4,15 +4,11 @@
 
 using System;
 using System.Buffers.Binary;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
-using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 

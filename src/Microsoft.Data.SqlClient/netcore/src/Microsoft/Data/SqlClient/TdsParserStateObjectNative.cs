@@ -8,7 +8,6 @@ using System.Diagnostics;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Authentication;
-using System.Text;
 using System.Threading.Tasks;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;

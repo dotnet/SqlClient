@@ -6,8 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
-using System.Runtime.CompilerServices;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using System.Threading.Tasks;
@@ -251,7 +249,6 @@ namespace Microsoft.Data.SqlClient
             DisposePacketCache();
         }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         protected override void FreeGcHandle(int remaining, bool release)
         {
             if ((0 == remaining || release) && _gcHandle.IsAllocated)
