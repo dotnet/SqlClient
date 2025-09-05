@@ -393,7 +393,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlConnectionStringBuilder connectionStringBuilder = new(DataTestUtility.TCPConnectionString)
             {
-                InitialCatalog = DataTestUtility.GetUniqueNameForSqlServer("DoesNotExist", false),
+                InitialCatalog = DataTestUtility.GetLongName("DoesNotExist", false),
                 Pooling = false,
                 ConnectTimeout = 15,
                 ConnectRetryCount = 3
