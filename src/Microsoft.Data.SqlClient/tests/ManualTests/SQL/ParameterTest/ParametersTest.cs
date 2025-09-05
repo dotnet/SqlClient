@@ -17,6 +17,8 @@ using Microsoft.SqlServer.Types;
 using Microsoft.Data.SqlClient.Server;
 #endif
 
+using Microsoft.Data.SqlClient.Tests.Common;
+
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class ParametersTest
@@ -123,8 +125,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 // Create tmp table
                 var sCreateTable = "IF NOT EXISTS(";
-                sCreateTable += $"SELECT * FROM sysobjects WHERE name= '{ cTableName }' and xtype = 'U')";
-                sCreateTable += $"CREATE TABLE { cTableName }( BinValue binary(16)  null)";
+                sCreateTable += $"SELECT * FROM sysobjects WHERE name= '{cTableName}' and xtype = 'U')";
+                sCreateTable += $"CREATE TABLE {cTableName}( BinValue binary(16)  null)";
 
                 conn.Open();
                 var cmd = new SqlCommand(sCreateTable, conn);
@@ -141,7 +143,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     UpdatedRowSource = UpdateRowSource.None,
                     Connection = conn,
 
-                    CommandText = $"INSERT { cTableName } (BinValue) "
+                    CommandText = $"INSERT {cTableName} (BinValue) "
                 };
                 cmdInsert.CommandText += "Values(@BinValue)";
                 cmdInsert.Parameters.Add("@BinValue", SqlDbType.Binary, 16, "SourceBinValue");
@@ -339,7 +341,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 record1,
                 record2,
             };
-            
+
             using SqlConnection connection = new(builder.ConnectionString);
             string procName = DataTestUtility.GetLongName("Proc");
             string typeName = DataTestUtility.GetShortName("Type");
@@ -419,7 +421,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     cmd.CommandText = spName;
                     cmd.CommandType = CommandType.StoredProcedure;
-                    
+
                     DataTable dtTest = new();
                     dtTest.Columns.Add(new DataColumn("DateColumn", typeof(DateOnly)));
                     dtTest.Columns.Add(new DataColumn("TimeColumn", typeof(TimeOnly)));
