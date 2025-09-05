@@ -83,8 +83,6 @@ namespace Microsoft.Data.SqlClient
         // General methods //
         /////////////////////
 
-        internal uint CheckConnection() => SniNativeWrapper.SniCheckConnection(Handle);
-
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
@@ -121,11 +119,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 Interlocked.Increment(ref _readingCount);
-                SNIHandle handle = Handle;
-                if (handle != null)
-                {
-                    error = SniNativeWrapper.SniCheckConnection(handle);
-                }
+                error = CheckConnection();
             }
             finally
             {

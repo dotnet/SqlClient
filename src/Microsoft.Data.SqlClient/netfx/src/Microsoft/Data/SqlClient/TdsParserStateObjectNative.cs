@@ -269,6 +269,12 @@ namespace Microsoft.Data.SqlClient
             SniNativeWrapper.SniPacketRelease(syncReadPacket.NativePointer);
         }
 
+        internal override uint CheckConnection()
+        {
+            SNIHandle handle = Handle;
+            return handle == null ? TdsEnums.SNI_SUCCESS : SniNativeWrapper.SniCheckConnection(handle);
+        }
+
         internal override PacketHandle ReadAsync(SessionHandle handle, out uint error)
         {
             IntPtr readPacketPtr = IntPtr.Zero;
