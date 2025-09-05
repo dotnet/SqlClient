@@ -14,10 +14,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
     public class JsonBulkCopyTest
     {
         private readonly ITestOutputHelper _output;
-        private static readonly string _generatedJsonFile = DataTestUtility.GetUniqueName("randomRecords");
-        private static readonly string _outputFile = DataTestUtility.GetUniqueName("serverResults");
-        private static readonly string _sourceTableName = DataTestUtility.GetUniqueName("jsonBulkCopySrcTable", true);
-        private static readonly string _destinationTableName = DataTestUtility.GetUniqueName("jsonBulkCopyDestTable", true);
+        private static readonly string _generatedJsonFile = DataTestUtility.GetShortName("randomRecords");
+        private static readonly string _outputFile = DataTestUtility.GetShortName("serverResults");
+        private static readonly string _sourceTableName = DataTestUtility.GetShortName("jsonBulkCopySrcTable", true);
+        private static readonly string _destinationTableName = DataTestUtility.GetShortName("jsonBulkCopyDestTable", true);
 
         public JsonBulkCopyTest(ITestOutputHelper output)
         {

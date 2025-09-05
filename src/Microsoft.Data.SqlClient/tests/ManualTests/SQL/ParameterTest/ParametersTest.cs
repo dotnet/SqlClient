@@ -120,7 +120,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void Test_Copy_SqlParameter()
         {
             using var conn = new SqlConnection(s_connString);
-            string cTableName = DataTestUtility.GetUniqueNameForSqlServer("#tmp");
+            string cTableName = DataTestUtility.GetLongName("#tmp");
             try
             {
                 // Create tmp table
@@ -262,9 +262,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Table");
-            string procName = DataTestUtility.GetUniqueNameForSqlServer("Proc");
-            string typeName = DataTestUtility.GetUniqueName("Type");
+            string tableName = DataTestUtility.GetLongName("Table");
+            string procName = DataTestUtility.GetLongName("Proc");
+            string typeName = DataTestUtility.GetShortName("Type");
             try
             {
                 connection.Open();
@@ -343,8 +343,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             };
             
             using SqlConnection connection = new(builder.ConnectionString);
-            string procName = DataTestUtility.GetUniqueNameForSqlServer("Proc");
-            string typeName = DataTestUtility.GetUniqueName("Type");
+            string procName = DataTestUtility.GetLongName("Proc");
+            string typeName = DataTestUtility.GetShortName("Type");
             try
             {
                 connection.Open();
@@ -403,8 +403,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestDateOnlyTVPDataTable_CommandSP()
         {
-            string tableTypeName = "[dbo]." + DataTestUtility.GetUniqueNameForSqlServer("UDTTTestDateOnlyTVP");
-            string spName = DataTestUtility.GetUniqueNameForSqlServer("spTestDateOnlyTVP");
+            string tableTypeName = "[dbo]." + DataTestUtility.GetLongName("UDTTTestDateOnlyTVP");
+            string spName = DataTestUtility.GetLongName("spTestDateOnlyTVP");
             SqlConnection connection = new(s_connString);
             try
             {
@@ -451,8 +451,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestDateOnlyTVPSqlDataRecord_CommandSP()
         {
-            string tableTypeName = "[dbo]." + DataTestUtility.GetUniqueNameForSqlServer("UDTTTestDateOnlySqlDataRecordTVP");
-            string spName = DataTestUtility.GetUniqueNameForSqlServer("spTestDateOnlySqlDataRecordTVP");
+            string tableTypeName = "[dbo]." + DataTestUtility.GetLongName("UDTTTestDateOnlySqlDataRecordTVP");
+            string spName = DataTestUtility.GetLongName("spTestDateOnlySqlDataRecordTVP");
             SqlConnection connection = new(s_connString);
             try
             {
@@ -574,7 +574,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using LocalAppContextSwitchesHelper appContextSwitchesHelper = new();
 
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("TestDecimalParameterCMD");
+            string tableName = DataTestUtility.GetLongName("TestDecimalParameterCMD");
             using SqlConnection connection = InitialDatabaseTable(connectionString, tableName);
             try
             {
@@ -609,7 +609,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using LocalAppContextSwitchesHelper appContextSwitchesHelper = new();
 
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("TestDecimalParameterBC");
+            string tableName = DataTestUtility.GetLongName("TestDecimalParameterBC");
             using SqlConnection connection = InitialDatabaseTable(connectionString, tableName);
             try
             {
@@ -645,9 +645,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using LocalAppContextSwitchesHelper appContextSwitchesHelper = new();
 
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("TestDecimalParameterBC");
-            string tableTypeName = DataTestUtility.GetUniqueNameForSqlServer("UDTTTestDecimalParameterBC");
-            string spName = DataTestUtility.GetUniqueNameForSqlServer("spTestDecimalParameterBC");
+            string tableName = DataTestUtility.GetLongName("TestDecimalParameterBC");
+            string tableTypeName = DataTestUtility.GetLongName("UDTTTestDecimalParameterBC");
+            string spName = DataTestUtility.GetLongName("spTestDecimalParameterBC");
             using SqlConnection connection = InitialDatabaseUDTT(connectionString, tableName, tableTypeName, spName);
             try
             {
@@ -932,7 +932,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             int firstInput = 12;
 
-            string sprocName = DataTestUtility.GetUniqueName("P");
+            string sprocName = DataTestUtility.GetShortName("P");
             // input, output
             string createSprocQuery =
                 "CREATE PROCEDURE " + sprocName + " @in int " +
