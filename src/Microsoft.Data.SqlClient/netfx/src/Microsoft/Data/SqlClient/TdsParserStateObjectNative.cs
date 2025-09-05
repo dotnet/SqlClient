@@ -19,6 +19,10 @@ namespace Microsoft.Data.SqlClient
 {
     internal class TdsParserStateObjectNative : TdsParserStateObject
     {
+        private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
+
+        private SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
+        internal SNIPacket _sniAsyncAttnPacket = null;                // Packet to use to send Attn
         private readonly WritePacketCache _writePacketCache = new WritePacketCache(); // Store write packets that are ready to be re-used
 
         private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
@@ -36,6 +40,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         #region Properties
+
+        internal SNIHandle Handle => _sessionHandle;
 
         internal override uint Status => _sessionHandle != null ? _sessionHandle.Status : TdsEnums.SNI_UNINITIALIZED;
 

@@ -20,12 +20,6 @@ namespace Microsoft.Data.SqlClient
 {
     internal partial class TdsParserStateObject
     {
-        protected SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
-
-        // SNI variables                                                     // multiple resultsets in one batch.
-        protected SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
-        internal SNIPacket _sniAsyncAttnPacket = null;                // Packet to use to send Attn
-
         // Used for blanking out password in trace.
         internal int _tracePasswordOffset = 0;
         internal int _tracePasswordLength = 0;
@@ -68,17 +62,6 @@ namespace Microsoft.Data.SqlClient
             _lastSuccessfulIOTimer = parser._physicalStateObj._lastSuccessfulIOTimer;
         }
 
-        ////////////////
-        // Properties //
-        ////////////////
-        internal SNIHandle Handle
-        {
-            get
-            {
-                return _sessionHandle;
-            }
-        }
-
         /////////////////////
         // General methods //
         /////////////////////
@@ -92,7 +75,7 @@ namespace Microsoft.Data.SqlClient
 
             // NOTE: TdsParserSessionPool may call DecrementPendingCallbacks on a TdsParserStateObject which is already disposed
             // This is not dangerous (since the stateObj is no longer in use), but we need to add a workaround in the assert for it
-            Debug.Assert((remaining == -1 && _sessionHandle == null) || (0 <= remaining && remaining < 3), $"_pendingCallbacks values is invalid after decrementing: {remaining}");
+            Debug.Assert((remaining == -1 && SessionHandle.IsNull) || (0 <= remaining && remaining < 3), $"_pendingCallbacks values is invalid after decrementing: {remaining}");
             return remaining;
         }
 
