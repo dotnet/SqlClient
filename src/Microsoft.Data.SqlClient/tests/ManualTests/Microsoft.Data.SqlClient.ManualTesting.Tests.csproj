@@ -258,8 +258,6 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '3'">
     <Compile Include="TracingTests\MetricsTest.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp' AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
     <Compile Include="TracingTests\DiagnosticTest.cs" />
     <Compile Include="TracingTests\FakeDiagnosticListenerObserver.cs" />
   </ItemGroup>
@@ -339,6 +337,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
   </ItemGroup>
   <ItemGroup>
@@ -364,9 +363,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>%(Filename)%(Extension)</TargetPath>
     </ContentWithTargetPath>
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp'">
-    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
   </ItemGroup>
   <ItemGroup>
     <None Update="makepfxcert.ps1">
