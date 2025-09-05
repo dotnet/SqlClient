@@ -51,12 +51,10 @@ namespace Microsoft.Data.SqlClient
 
         protected override bool GenerateContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams)
         {
-#if NETFRAMEWORK
-            SNIHandle handle = _physicalStateObj.Handle;
-#else
+#if NET
             Debug.Assert(_physicalStateObj.SessionHandle.Type == SessionHandle.NativeHandleType);
-            SNIHandle handle = _physicalStateObj.SessionHandle.NativeHandle;
 #endif
+            SNIHandle handle = _physicalStateObj.SessionHandle.NativeHandle;
 
             // This must start as the length of the input, but will be updated by the call to SNISecGenClientContext to the written length
             var sendLength = s_maxSSPILength;
