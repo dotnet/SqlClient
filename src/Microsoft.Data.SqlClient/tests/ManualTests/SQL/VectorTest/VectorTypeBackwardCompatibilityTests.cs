@@ -17,14 +17,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
     {
         private readonly ITestOutputHelper _output;
         private static readonly string s_connectionString = ManualTesting.Tests.DataTestUtility.TCPConnectionString;
-        private static readonly string s_tableName = DataTestUtility.GetUniqueName("VectorTestTable");
-        private static readonly string s_bulkCopySrcTableName = DataTestUtility.GetUniqueName("VectorBulkCopyTestTable");
+        private static readonly string s_tableName = DataTestUtility.GetShortName("VectorTestTable");
+        private static readonly string s_bulkCopySrcTableName = DataTestUtility.GetShortName("VectorBulkCopyTestTable");
         private static readonly string s_bulkCopySrcTableDef = $@"(Id INT PRIMARY KEY IDENTITY, VectorData varchar(max) NULL)";
         private static readonly string s_tableDefinition = $@"(Id INT PRIMARY KEY IDENTITY, VectorData vector(3) NULL)";
         private static readonly string s_selectCmdString = $"SELECT VectorData FROM {s_tableName} ORDER BY Id DESC";
         private static readonly string s_insertCmdString = $"INSERT INTO {s_tableName} (VectorData) VALUES (@VectorData)";
         private static readonly string s_vectorParamName = $"@VectorData";
-        private static readonly string s_storedProcName = DataTestUtility.GetUniqueName("VectorsAsVarcharSp");
+        private static readonly string s_storedProcName = DataTestUtility.GetShortName("VectorsAsVarcharSp");
         private static readonly string s_storedProcBody = $@"
                 @InputVectorJson VARCHAR(MAX),   -- Input: Serialized float[] as JSON string
                 @OutputVectorJson VARCHAR(MAX) OUTPUT  -- Output: Echoed back from latest inserted row
