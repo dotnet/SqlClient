@@ -4238,9 +4238,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 Debug.Assert(
-                    (_sharedState._columnDataBytesRemaining == 0 || _sharedState._columnDataBytesRemaining == -1)
-                    &&
-                    (_stateObj._longlen == 0 || _stateObj.IsSnapshotContinuing()),
+                    (_sharedState._columnDataBytesRemaining == 0 || _sharedState._columnDataBytesRemaining == -1),
                     "Haven't read header yet, but column is partially read?"
                 );
             }
@@ -5394,6 +5392,10 @@ namespace Microsoft.Data.SqlClient
                     if (internalReadSuccess)
                     {
                         return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: true));
+                    }
+                    else
+                    {
+                        return reader.ExecuteAsyncCall(context);
                     }
                 }
             }

@@ -41,6 +41,10 @@ namespace Microsoft.Data.SqlClient
                 if (PartialPacketContainsCompletePacket())
                 {
                     Packet partialPacket = _partialPacket;
+                    // the partial packet can contain more than a single packet worth of data so to consume the 
+                    //  partial packet we must use the CurrentLength not just the RequiredLength and then later
+                    //  the multiplexer will split out the complete packet for consumption and maintain the
+                    //  additional data
                     SetBuffer(partialPacket.Buffer, 0, partialPacket.CurrentLength);
                     ClearPartialPacket();
                     getDataError = TdsEnums.SNI_SUCCESS;
@@ -50,7 +54,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_inBytesRead != 0)
                     {
-                        SetBuffer(new byte[_inBuff.Length], 0, 0);
+                        NewBuffer(_inBuff.Length);
                     }
                     getDataError = GetSniPacket(packet, ref dataSize);
                 }
@@ -76,7 +80,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (recurse && appended)
                         {
-                            SetBuffer(new byte[_inBuff.Length], 0, 0);
+                            NewBuffer(_inBuff.Length);
                             appended = false;
                         }
                         MultiplexPackets(
@@ -95,16 +99,19 @@ namespace Microsoft.Data.SqlClient
                         // if a partial packet was reconstructed it must be handled first
                         if (consumePartialPacket)
                         {
+                            // the partial packet has been processed by the multiplexer and should now have 
+                            //  only data from a single packet in it so we should use RequiredLength which
+                            //  is defined by the packet header here not CurrentLength
+                            Debug.Assert(PartialPacket != null && PartialPacket.RequiredLength == PartialPacket.CurrentLength);
                             if (_snapshot != null)
                             {
-                                _snapshot.AppendPacketData(PartialPacket.Buffer, PartialPacket.CurrentLength);
-                                SetBuffer(new byte[_inBuff.Length], 0, 0);
+                                _snapshot.AppendPacketData(PartialPacket.Buffer, PartialPacket.RequiredLength);
+                                NewBuffer(_inBuff.Length);
                                 appended = true;
                             }
                             else
                             {
-                                SetBuffer(PartialPacket.Buffer, 0, PartialPacket.CurrentLength);
-                                
+                                SetBuffer(PartialPacket.Buffer, 0, PartialPacket.RequiredLength);
                             }
                             bufferIsPartialCompleted = true;
                             ClearPartialPacket();
@@ -125,7 +132,7 @@ namespace Microsoft.Data.SqlClient
                                 // if we SetBuffer here to clear the packet buffer we will break the attention handling which relies
                                 // on the attention containing packet remaining in the active buffer even if we're appending to the
                                 // snapshot so we will have to use the appended variable to prevent the same buffer being added again
-                                //// SetBuffer(new byte[_inBuff.Length], 0, 0);
+                                //// NewBuffer(_inBuff.Length);
                                 appended = true;
                             }
                             else
@@ -141,7 +148,7 @@ namespace Microsoft.Data.SqlClient
                             // we don't process it
                             if (!bufferIsPartialCompleted)
                             {
-                                SetBuffer(_inBuff, 0, 0);
+                                NewBuffer(_inBuff.Length);
                             }
                         }
 
@@ -149,11 +156,20 @@ namespace Microsoft.Data.SqlClient
                         if (remainderPacketProduced)
                         {
                             SetPartialPacket(remainderPacket);
+                            if (appended && recurse)
+                            {
+                                // if we've appended to the snapshot already we can't recurse and append to it again because the
+                                //   snapshot might be cleared by the async cleanup functions
+                                // the only way to get a recurse output from the multiplexer is if it has produced a remainder packet so
+                                //  assert that this is the case and the put the remainder packet in the partial packet so that it
+                                //  can be picked up in another call.
+                                recurse = false;
+                            }
                             if (!bufferIsPartialCompleted)
                             {
                                 // we are keeping the partial packet buffer so replace it with a new one
                                 // unless we have already set the buffer to the partial packet buffer
-                                SetBuffer(new byte[_inBuff.Length], 0, 0);
+                                NewBuffer(_inBuff.Length);
                             }
                         }
 
@@ -301,7 +317,7 @@ namespace Microsoft.Data.SqlClient
                         remainderPacket = new Packet
                         {
                             Buffer = new byte[dataBuffer.Length],
-                            CurrentLength = remainderLength,
+                            CurrentLength = remainderLength
                         };
                         remainderPacket.SetCreatedBy(1);
 

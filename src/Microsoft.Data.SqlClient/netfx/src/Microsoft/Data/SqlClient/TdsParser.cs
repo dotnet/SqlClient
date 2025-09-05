@@ -13312,7 +13312,7 @@ namespace Microsoft.Data.SqlClient
             if (stateObj._longlen == 0)
             {
                 Debug.Assert(stateObj._longlenleft == 0);
-                totalCharsRead = 0;
+                totalCharsRead = startOffsetByteCount / 2;
                 return TdsOperationStatus.Done;       // No data
             }
 
@@ -13327,19 +13327,20 @@ namespace Microsoft.Data.SqlClient
             );
             charsLeft = len;
 
-            // If total length is known up front, the length isn't specified as unknown 
-            // and the caller doesn't pass int.max/2 indicating that it doesn't know the length
-            // allocate the whole buffer in one shot instead of realloc'ing and copying over each time
+            // If total data length is known up front from the plp header by being not SQL_PLP_UNKNOWNLEN
+            //  and the number of chars required is less than int.max/2 allocate the entire buffer now to avoid
+            //  later needing to repeatedly allocate new target buffers and copy data as we discover new data
             if (buff == null && stateObj._longlen != TdsEnums.SQL_PLP_UNKNOWNLEN && stateObj._longlen < (int.MaxValue >> 1))
             {
-                if (supportRentedBuff && stateObj._longlen < 1073741824) // 1 Gib
+                int stateLen = (int)stateObj._longlen >> 1;
+                if (supportRentedBuff && stateLen < 1073741824) // 1 Gib
                 {
-                    buff = ArrayPool<char>.Shared.Rent((int)Math.Min((int)stateObj._longlen, len));
+                    buff = ArrayPool<char>.Shared.Rent(Math.Min(stateLen, len));
                     rentedBuff = true;
                 }
                 else
                 {
-                    buff = new char[(int)Math.Min((int)stateObj._longlen, len)];
+                    buff = new char[Math.Min(stateLen, len)];
                     rentedBuff = false;
                 }
             }
