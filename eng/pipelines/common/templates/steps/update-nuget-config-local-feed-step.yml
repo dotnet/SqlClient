@@ -11,6 +11,11 @@ parameters:
   - name: downloadedNugetPath # path to the downloaded nuget files
     type: string
 
+  - name: abstractionsPackageVersion
+    displayName: Abstractions Package Version Override
+    type: string
+    default: ''
+
   - name: nugetPackageVersion
     type: string
     default: $(NugetPackageVersion)
@@ -34,7 +39,7 @@ steps:
     [Xml] $nugetConfig = Get-Content -Path "NuGet.config"
     $Value = Resolve-Path ${{parameters.downloadedNugetPath }}
     $newAdd = $nugetConfig.CreateElement("add")
-    $newAdd.SetAttribute("key","Package source")
+    $newAdd.SetAttribute("key","pipeline")
     $newAdd.SetAttribute("value", "$Value/" )
     $nugetConfig.configuration.packageSources.AppendChild($newAdd)
     $nugetConfig.Save("$rootFolder/NuGet.config")
@@ -51,7 +56,7 @@ steps:
   inputs:
     command: 'custom'
     custom: 'msbuild'
-    arguments: 'build.proj -t:restore'
+    arguments: 'build.proj -t:restore -p:AbstractionsPackageVersion=${{parameters.abstractionsPackageVersion}}.$(buildNumber)'
     feedsToUse: 'select'
 
 - powershell: |

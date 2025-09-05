@@ -54,6 +54,11 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: object
   default: [1, 2, 3]
 
+- name: abstractionsPackageVersion
+  displayName: Abstractions Package Version Override
+  type: string
+  default: 1.0.0
+
 - name: useManagedSNI
   displayName: |
     Use Managed/Native SNI on Windows,
@@ -65,13 +70,6 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   displayName: 'Code Coverage Target Frameworks'
   type: object
   default: [net462, net8.0]
-
-- name: buildType
-  displayName: 'Build Type'
-  default: Project
-  values:
-    - Project
-    - Package
 
 - name: buildConfiguration
   displayName: 'Build Configuration'
@@ -99,9 +97,10 @@ extends:
     targetFrameworksLinux: ${{ parameters.targetFrameworksLinux }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
     testSets: ${{ parameters.testSets }}
+    abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
-    buildType: ${{ parameters.buildType }}
+    buildType: Project
     buildConfiguration: ${{ parameters.buildConfiguration }}
     enableStressTests: ${{ parameters.enableStressTests }}
     testsTimeout: ${{ parameters.testsTimeout }}

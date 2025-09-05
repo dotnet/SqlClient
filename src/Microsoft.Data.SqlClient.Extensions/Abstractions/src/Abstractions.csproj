@@ -1,0 +1,95 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Additional project config is imported from parent Directory.Build.props
+    files.
+  -->
+
+  <!-- Configurable Properties -->
+  <PropertyGroup>
+    <!--
+      We use the AbstractionsPackageVersion from Versions.props.  It may be
+      specified on the command-line, or a default value is used.
+    -->
+    <PackageVersion>$(AbstractionsPackageVersion)</PackageVersion>
+    <!--
+      If the BuildNumber (also from Versions.props) isn't 0, then append it to
+      the PackageVersion.
+    -->
+    <PackageVersion Condition="'$(BuildNumber)' != '0'">$(PackageVersion).$(BuildNumber)</PackageVersion>
+  </PropertyGroup>
+
+  <!-- Target Config -->
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <!-- Compiler Config -->
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!-- Build Config -->
+  <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions</AssemblyName>
+    <!--
+      Apply the AssemblyVersion from Version.props, regardless of how we
+      determined the PackageVersion above.
+    -->
+    <AssemblyVersion>$(AbstractionsPackageAssemblyVersion)</AssemblyVersion>
+    <AssemblyFileVersion>$(PackageVersion)</AssemblyFileVersion>
+    <FileVersion>$(AssemblyFileVersion)</FileVersion>
+
+    <RootNamespace>Microsoft.Data.SqlClient.Extensions.Abstractions</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Our API is CLS Compliant. -->
+    <AssemblyAttribute Include="System.CLSCompliantAttribute">
+      <_Parameter1>true</_Parameter1>
+    </AssemblyAttribute>
+
+    <!-- Our unit tests have access to our internal types. -->
+    <InternalsVisibleTo Include="Microsoft.Data.SqlClient.Extensions.Abstractions.Test" />
+  </ItemGroup>
+
+  <!--
+    NuGet Package Config
+
+    See: https://learn.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target
+  -->
+  <PropertyGroup>
+    <!--
+      We omit specifying <PackageId> here since it defaults to $(AssemblyName),
+      specified above.
+    -->
+
+    <!--
+      We omit specifying <PackageVersion> here since it has already been
+      defined above as a configurable property.
+    -->
+
+    <PackageOutputPath>$(PackagesDir)</PackageOutputPath>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <!--
+      The parent Directory.Build.props file unilaterally adds '.pdb' to the
+      file types that are included in application packages.  We don't want this
+      behaviour, so we must reset this NuGet property to its original value.
+    -->
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(OriginalAllowedOutputExtensions)</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    
+    <Authors>Microsoft Corporation</Authors>
+    <Company>Microsoft Corporation</Company>
+    <Description>Microsoft.Data.SqlClient Extensions Abstractions</Description>
+    <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>dotnet.png</PackageIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="../../../../tools/icons/dotnet.png" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>
