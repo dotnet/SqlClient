@@ -284,6 +284,14 @@ namespace Microsoft.Data.SqlClient
             return PacketHandle.FromNativePointer(readPacketPtr);
         }
 
+        internal override PacketHandle CreateAndSetAttentionPacket()
+        {
+            SNIPacket attnPacket = new SNIPacket(Handle);
+            _sniAsyncAttnPacket = attnPacket;
+            SniNativeWrapper.SniPacketSetData(attnPacket, SQL.AttentionHeader, TdsEnums.HEADER_LEN);
+            return PacketHandle.FromNativePacket(attnPacket);
+        }
+
         internal override uint WritePacket(PacketHandle packet, bool sync)
         {
             Debug.Assert(packet.Type == PacketHandle.NativePacketType, "unexpected packet type when requiring NativePacket");

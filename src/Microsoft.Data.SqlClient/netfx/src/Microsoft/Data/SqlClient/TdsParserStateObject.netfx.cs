@@ -758,14 +758,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal PacketHandle CreateAndSetAttentionPacket()
-        {
-            SNIPacket attnPacket = new SNIPacket(Handle);
-            _sniAsyncAttnPacket = attnPacket;
-            SniNativeWrapper.SniPacketSetData(attnPacket, SQL.AttentionHeader, TdsEnums.HEADER_LEN);
-            return PacketHandle.FromNativePacket(attnPacket);
-        }
-
         private Task WriteSni(bool canAccumulate)
         {
             // Prepare packet, and write to packet.

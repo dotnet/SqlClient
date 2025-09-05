@@ -308,10 +308,9 @@ namespace Microsoft.Data.SqlClient
 
         internal override PacketHandle CreateAndSetAttentionPacket()
         {
-            SNIHandle handle = Handle;
-            SNIPacket attnPacket = new SNIPacket(handle);
+            SNIPacket attnPacket = new SNIPacket(Handle);
             _sniAsyncAttnPacket = attnPacket;
-            SetPacketData(PacketHandle.FromNativePacket(attnPacket), SQL.AttentionHeader, TdsEnums.HEADER_LEN);
+            SniNativeWrapper.SniPacketSetData(attnPacket, SQL.AttentionHeader, TdsEnums.HEADER_LEN);
             return PacketHandle.FromNativePacket(attnPacket);
         }
 

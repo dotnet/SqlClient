@@ -736,8 +736,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal abstract PacketHandle CreateAndSetAttentionPacket();
-
         private Task WriteSni(bool canAccumulate)
         {
             // Prepare packet, and write to packet.
