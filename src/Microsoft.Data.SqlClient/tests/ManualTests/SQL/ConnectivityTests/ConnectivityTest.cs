@@ -383,7 +383,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Throws<SqlException>(() => sqlConnection.Open());
             timer.Stop();
             duration = timer.Elapsed;
-            Assert.True(duration.Seconds > 5, $"Connection Open() with retries took less time than expected. Expect > 5 sec with transient fault handling. Took {duration.Seconds} sec.");                //    sqlConnection.Open();
+            Assert.True(duration.Seconds > 5, $"Connection Open() with retries took less time than expected. Expect > 5 sec with transient fault handling. Took {duration.Seconds} sec.");                  //    sqlConnection.Open();
         }
 
         [PlatformSpecific(TestPlatforms.Windows)]
