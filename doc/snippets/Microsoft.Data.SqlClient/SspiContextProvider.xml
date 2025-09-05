@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<docs>
+  <members name="SspiContextProvider">
+    <SspiContextProvider>
+      <summary>Provides the ability to customize SSPI context generation.</summary>
+    </SspiContextProvider>
+    <ctor>
+      <summary>Creates an instance of the SSPIContextProvider.</summary>
+    </ctor>
+    <GenerateContext>
+      <summary>Generates an SSPI outgoing blob given the incoming blob.</summary>
+      <param name="incomingBlob">Incoming blob</param>
+      <param name="outgoingBlobWriter">Outgoing blob</param>
+      <param name="authParams">Gets the authentication parameters associated with this connection.</param>
+      <returns>
+        <c>true</c> if the context was generated, otherwise <c>false</c>.
+      </returns>
+    </GenerateContext>
+  </members>
+</docs>
