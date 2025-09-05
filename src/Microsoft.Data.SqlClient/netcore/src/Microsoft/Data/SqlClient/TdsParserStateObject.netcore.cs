@@ -215,8 +215,10 @@ namespace Microsoft.Data.SqlClient
             return SniPacketGetData(packet, _inBuff, ref dataSize);
         }
 
-        private void SetBufferSecureStrings()
+        private bool TrySetBufferSecureStrings()
         {
+            bool mustClearBuffer = false;
+
             if (_securePasswords != null)
             {
                 for (int i = 0; i < _securePasswords.Length; i++)
@@ -240,6 +242,8 @@ namespace Microsoft.Data.SqlClient
                             }
                             TdsParserStaticMethods.ObfuscatePassword(data);
                             data.CopyTo(_outBuff, _securePasswordOffsetsInBuffer[i]);
+
+                            mustClearBuffer = true;
                         }
                         finally
                         {
@@ -248,6 +252,8 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
+
+            return mustClearBuffer;
         }
 
         public void ReadAsyncCallback(PacketHandle packet, uint error) =>
@@ -738,9 +744,13 @@ namespace Microsoft.Data.SqlClient
         {
             // Prepare packet, and write to packet.
             PacketHandle packet = GetResetWritePacket(_outBytesUsed);
+            bool mustClearBuffer = TrySetBufferSecureStrings();
 
-            SetBufferSecureStrings();
             SetPacketData(packet, _outBuff, _outBytesUsed);
+            if (mustClearBuffer)
+            {
+                _outBuff.AsSpan(0, _outBytesUsed).Clear();
+            }
 
             Debug.Assert(Parser.Connection._parserLock.ThreadMayHaveLock(), "Thread is writing without taking the connection lock");
             Task task = SNIWritePacket(packet, out _, canAccumulate, callerHasConnectionLock: true);
