@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 
 namespace Microsoft.Data.SqlClient.Diagnostics
 {
-    internal ref struct DiagnosticTransactionScope //: IDisposable
+    internal ref struct DiagnosticTransactionScope : IDisposable
     {
         public const int TransactionCommit = 1;
         public const int TransactionRollback = 2;

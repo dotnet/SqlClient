@@ -3954,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>인증서 경로는 null일 수 없습니다. &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt; 형식을 사용하세요. 여기서 &lt;certificate location&gt;은 '{0}' 또는 '{1}'입니다.</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>인증서 경로는 null일 수 없습니다. &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt; 형식을 사용하세요. 여기서 &lt;certificate location&gt;은 '{0}'입니다.</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>내부 오류입니다. 인증서 경로는 null일 수 없습니다. &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt; 형식을 사용하세요. 여기서 &lt;certificate location&gt;은 '{0}' 또는 '{1}'입니다.</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>내부 오류입니다. 인증서 경로는 null일 수 없습니다. &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt; 형식을 사용하세요. 여기서 &lt;certificate location&gt;은 '{0}'입니다.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>열 마스터 키 경로는 null이면 안 됩니다. Microsoft CSP(암호화 서비스 공급자)에 저장된 키에 대해 &lt;CSP 공급자 이름&gt;{0}&lt;키 식별자&gt; 형식을 사용하세요.</value>
@@ -3972,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>인증서 경로가 잘못되었습니다. '{0}'. &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt; 형식을 사용하세요. 여기서 &lt;certificate location&gt;은 '{1}' 또는 '{2}'입니다.</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>인증서 경로가 잘못되었습니다. '{0}'. &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt; 형식을 사용하세요. 여기서 &lt;certificate location&gt;은 '{1}'입니다.</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>내부 오류입니다. 인증서 경로가 잘못되었습니다. '{0}'. &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt; 형식을 사용하세요. 여기서 &lt;certificate location&gt;은 '{1}' 또는 '{2}'입니다.</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>내부 오류입니다. 인증서 경로가 잘못되었습니다. '{0}'. &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt; 형식을 사용하세요. 여기서 &lt;certificate location&gt;은 '{1}'입니다.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>열 마스터 키 경로 '{0}'이(가) 잘못되었습니다. Microsoft CSP(암호화 서비스 공급자)에 저장된 키에 대해 &lt;CSP 공급자 이름&gt;{1}&lt;키 식별자&gt; 형식을 사용하세요.</value>
@@ -3990,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>인증서 경로 '{1}'의 인증서 위치 '{0}'이(가) 잘못되었습니다. &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt; 형식을 사용하세요. 여기서 &lt;certificate location&gt;은 '{2}' 또는 '{3}'입니다.</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>인증서 경로 '{0}'의 인증서 위치 '{1}'이(가) 잘못되었습니다. &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt; 형식을 사용하세요. 여기서 &lt;certificate location&gt;은 '{2}'입니다.</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>내부 오류입니다. 인증서 경로 '{1}'의 인증서 위치 '{0}'이(가) 잘못되었습니다. &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt; 형식을 사용하세요. 여기서 &lt;certificate location&gt;은 '{2}' 또는 '{3}'입니다.</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>내부 오류입니다. 인증서 경로 '{0}'의 인증서 위치 '{1}'이(가) 잘못되었습니다. &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt; 형식을 사용하세요. 여기서 &lt;certificate location&gt;은 '{2}'입니다.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>인증서 경로 '{1}'에 지정된 인증서 저장소 '{0}'이(가) 잘못되었습니다. 필요한 값은 '{2}'입니다.</value>

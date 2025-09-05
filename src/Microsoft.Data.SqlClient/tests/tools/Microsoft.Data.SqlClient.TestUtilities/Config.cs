@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string KerberosDomainUser = null;
         public bool IsManagedInstance = false;
         public string AliasName = null;
-        public bool IsJsonSupported = false;
+        
         public static Config Load(string configPath = @"config.json")
         {
             try
