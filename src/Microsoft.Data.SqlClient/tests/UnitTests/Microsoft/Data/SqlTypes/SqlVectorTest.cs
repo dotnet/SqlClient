@@ -11,6 +11,8 @@ using Xunit;
 
 namespace Microsoft.Data.SqlTypes.UnitTests;
 
+#pragma warning disable CS1591 // Test classes do not require XML documentation comments
+
 public class SqlVectorTest
 {
     #region Tests
@@ -244,3 +246,5 @@ public class SqlVectorTest
     
     #endregion
 }
+
+#pragma warning restore CS1591

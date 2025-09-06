@@ -11,6 +11,8 @@ using Xunit;
 
 namespace Microsoft.Data.SqlTypes.UnitTests;
 
+#pragma warning disable CS1591 // Test classes do not require XML documentation comments
+
 public class SqlJsonTest
 {
     #region Private Fields
@@ -154,3 +156,5 @@ public class SqlJsonTest
 
     #endregion
 }
+
+#pragma warning restore CS1591
