@@ -44,18 +44,6 @@ namespace Microsoft.Data.SqlClient
         // cached metadata
         private _SqlMetaDataSet _cachedMetaData;
 
-        // @TODO: Make properties
-        internal ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
-        internal bool requiresEnclaveComputations = false;
-
-        private bool ShouldCacheEncryptionMetadata
-        {
-            get
-            {
-                return !requiresEnclaveComputations || _activeConnection.Parser.AreEnclaveRetriesSupported;
-            }
-        }
-
         internal EnclavePackage enclavePackage = null;
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
         private byte[] customData = null;
