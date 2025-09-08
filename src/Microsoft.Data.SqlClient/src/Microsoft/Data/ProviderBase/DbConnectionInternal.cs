@@ -513,17 +513,26 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        internal void DeactivateConnection(bool callDecrement=true)
+        internal void DeactivateConnection()
         {
             // Internal method called from the connection pooler so we don't expose
             // the Deactivate method publicly.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.DeactivateConnection|RES|INFO|CPOOL> {0}, Deactivating", ObjectID);
 
             #if DEBUG
-            int activateCount = _activateCount;
-            if(callDecrement)
-                activateCount = Interlocked.Decrement(ref _activateCount);
-            Debug.Assert(activateCount == 0, "activated multiple times?");
+            int origCount, newCount;
+            do
+            {
+                origCount = _activateCount;
+
+                if (origCount == 0)
+                {
+                  break;
+                }
+
+                newCount = origCount - 1;
+            }
+            while (Interlocked.CompareExchange(ref _activateCount, newCount, origCount) != origCount);
             #endif
 
             SqlClientEventSource.Metrics.ExitActiveConnection();
