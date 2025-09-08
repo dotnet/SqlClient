@@ -156,14 +156,7 @@ namespace Microsoft.Data.SqlClient
         private bool _parentOperationStarted = false;
 
         internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
-        
-        
-        
-        //
-        // _prepareHandle - the handle of a prepared command. Apparently there can be multiple prepared commands at a time - a feature that we do not support yet.
 
-        private static readonly object s_cachedInvalidPrepareHandle = (object)-1;
-        private object _prepareHandle = s_cachedInvalidPrepareHandle; // this is an int which is used in the object typed SqlParameter.Value field, avoid repeated boxing by storing in a box
         private int _preparedConnectionCloseCount = -1;
         private int _preparedConnectionReconnectCount = -1;
 

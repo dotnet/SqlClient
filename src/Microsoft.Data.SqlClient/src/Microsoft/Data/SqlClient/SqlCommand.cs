@@ -18,6 +18,12 @@ namespace Microsoft.Data.SqlClient
     [ToolboxItem(true)]
     public sealed partial class SqlCommand : DbCommand, ICloneable
     {
+        #region Constants
+
+        private static readonly object s_cachedInvalidPrepareHandle = (object)-1;
+
+        #endregion
+
         #region Fields
 
         /// <summary>
@@ -69,6 +75,13 @@ namespace Microsoft.Data.SqlClient
         private bool _inPrepare = false;
 
         /// <summary>
+        /// The handle of a prepared command. Apparently there can be multiple prepared commands at
+        /// a time - a feature that we do not support yet. this is an int which is used in the
+        /// object typed SqlParameter.Value field, avoid repeated boxing by storing in a box.
+        /// </summary>
+        private object _prepareHandle = s_cachedInvalidPrepareHandle; // this is an int which is used in the object typed SqlParameter.Value field, avoid repeated boxing by storing in a box
+
+        /// <summary>
         /// TDS session the current instance is using.
         /// </summary>
         private TdsParserStateObject _stateObj;
@@ -114,6 +127,7 @@ namespace Microsoft.Data.SqlClient
                 //    reconnectCount, the same only with reconnections.
                 
                 // only dirty if prepared
+                // @TODO: we probably do not need to store this as a temp variable.
                 var activeConnection = _activeConnection;
                 return IsPrepared &&
                        (_dirty ||
