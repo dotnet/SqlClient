@@ -74,13 +74,17 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         // @TODO: Make property - non-private fields are bad
-        internal SqlDependency _sqlDep;
+        // @TODO: Rename to match naming convention _enclavePackage
+        internal EnclavePackage enclavePackage = null;
 
         // @TODO: Make property - non-private fields are bad (this should be read-only externally)
         internal ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
 
         // @TODO: Make property - non-private fields are bad (this can be read-only externally)
         internal bool requiresEnclaveComputations = false;
+
+        // @TODO: Make property - non-private fields are bad
+        internal SqlDependency _sqlDep;
 
         // @TODO: Rename _batchRpcMode to follow pattern
         private bool _batchRPCMode;
@@ -120,6 +124,12 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private CommandType _commandType;
 
+        // @TODO: Rename to indicate that this is for enclave stuff, I think...
+        private byte[] customData = null;
+
+        // @TODO: Rename to indicate that this is for enclave stuff. Or just get rid of it and use the length of customData if possible.
+        private int customDataLength = 0;
+
         /// <summary>
         /// By default, the cmd object is visible on the design surface (i.e. VS7 Server Tray) to
         /// limit the number of components that clutter the design surface, when the DataAdapter
@@ -128,12 +138,6 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         // @TODO: Make auto-property
         private bool _designTimeInvisible;
-        
-        /// <summary>
-        /// Current state of preparation of the command.
-        /// By default, assume the user is not sharing a connection so the command has not been prepared.
-        /// </summary>
-        private EXECTYPE _execType = EXECTYPE.UNPREPARED;
 
         /// <summary>
         /// True if the user changes the command text or number of parameters after the command has
@@ -141,7 +145,16 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         // @TODO: Consider renaming "_IsUserDirty"
         private bool _dirty = false;
-        
+
+        /// <summary>
+        /// Current state of preparation of the command.
+        /// By default, assume the user is not sharing a connection so the command has not been prepared.
+        /// </summary>
+        private EXECTYPE _execType = EXECTYPE.UNPREPARED;
+
+        // @TODO: Rename to match naming conventions _enclaveAttestationParameters
+        private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
+
         /// <summary>
         /// On 8.0 and above the Prepared state cannot be left. Once a command is prepared it will
         /// always be prepared. A change in parameters, command text, etc (IsDirty) automatically
