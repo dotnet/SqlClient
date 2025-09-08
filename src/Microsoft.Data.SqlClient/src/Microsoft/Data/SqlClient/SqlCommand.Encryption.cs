@@ -220,6 +220,227 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
+        /// Executes the reader after checking to see if we need to encrypt input parameters and
+        /// then encrypting it if required.
+        /// * TryFetchInputParameterEncryptionInfo() ->
+        /// * ReadDescribeEncryptionParameterResults() ->
+        /// * EncryptInputParameters() ->
+        /// * RunExecuteReaderTds()
+        /// </summary>
+        private void PrepareForTransparentEncryption(
+            bool isAsync,
+            int timeout,
+            TaskCompletionSource<object> completion,
+            out Task returnTask,
+            bool asyncWrite,
+            out bool usedCache,
+            bool isRetry)
+        {
+            Debug.Assert(_activeConnection != null,
+                "_activeConnection should not be null in PrepareForTransparentEncryption.");
+            Debug.Assert(_activeConnection.Parser != null,
+                "_activeConnection.Parser should not be null in PrepareForTransparentEncryption.");
+            Debug.Assert(_activeConnection.Parser.IsColumnEncryptionSupported,
+                "_activeConnection.Parser.IsColumnEncryptionSupported should be true in PrepareForTransparentEncryption.");
+            Debug.Assert(_columnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled
+                         || (_columnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && _activeConnection.IsColumnEncryptionSettingEnabled),
+                "ColumnEncryption setting should be enabled for input parameter encryption.");
+            Debug.Assert(isAsync == (completion != null),
+                "completion should can be null if and only if mode is async.");
+
+            // Fetch reader witn input params
+            Task fetchInputParameterEncryptionInfoTask = null;
+            bool describeParameterEncryptionNeeded = false;
+            SqlDataReader describeParameterEncryptionDataReader = null;
+            returnTask = null;
+            usedCache = false;
+
+            // If we are not in _batchRPC and not already retrying, attempt to fetch the cipher MD for each parameter from the cache.
+            // If this succeeds then return immediately, otherwise just fall back to the full crypto MD discovery.
+            if (!_batchRPCMode &&
+                !isRetry &&
+                _parameters?.Count > 0 &&
+                SqlQueryMetadataCache.GetInstance().GetQueryMetadataIfExists(this))
+            {
+                usedCache = true;
+                return;
+            }
+
+            // A flag to indicate if finallyblock needs to execute.
+            bool processFinallyBlock = true;
+
+            // A flag to indicate if we need to decrement async count on the connection in finally block.
+            bool decrementAsyncCountInFinallyBlock = false;
+
+            // Flag to indicate if exception is caught during the execution, to govern clean up.
+            bool exceptionCaught = false;
+
+            // Used in _batchRPCMode to maintain a map of describe parameter encryption RPC requests (Keys) and their corresponding original RPC requests (Values).
+            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap = null;
+
+            try
+            {
+                try
+                {
+                    // Fetch the encryption information that applies to any of the input parameters.
+                    describeParameterEncryptionDataReader = TryFetchInputParameterEncryptionInfo(
+                        timeout,
+                        isAsync,
+                        asyncWrite,
+                        out describeParameterEncryptionNeeded,
+                        out fetchInputParameterEncryptionInfoTask,
+                        out describeParameterEncryptionRpcOriginalRpcMap,
+                        isRetry);
+
+                    Debug.Assert(describeParameterEncryptionNeeded || describeParameterEncryptionDataReader == null,
+                        "describeParameterEncryptionDataReader should be null if we don't need to request describe parameter encryption request.");
+                    Debug.Assert(fetchInputParameterEncryptionInfoTask == null || isAsync,
+                        "Task returned by TryFetchInputParameterEncryptionInfo, when in sync mode, in PrepareForTransparentEncryption.");
+                    Debug.Assert((describeParameterEncryptionRpcOriginalRpcMap != null) == _batchRPCMode,
+                        "describeParameterEncryptionRpcOriginalRpcMap can be non-null if and only if it is in _batchRPCMode.");
+
+                    // If we didn't have parameters, we can fall back to regular code path, by simply returning.
+                    if (!describeParameterEncryptionNeeded)
+                    {
+                        Debug.Assert(fetchInputParameterEncryptionInfoTask == null,
+                            "fetchInputParameterEncryptionInfoTask should not be set if describe parameter encryption is not needed.");
+                        Debug.Assert(describeParameterEncryptionDataReader == null,
+                            "SqlDataReader created for describe parameter encryption params when it is not needed.");
+
+                        return;
+                    }
+
+                    Debug.Assert(describeParameterEncryptionDataReader != null,
+                        "describeParameterEncryptionDataReader should not be null, as it is required to get results of describe parameter encryption.");
+
+                    // If we are in async execution, we need to decrement our async count on exception.
+                    decrementAsyncCountInFinallyBlock = isAsync;
+
+                    // Fire up another task to read the results of describe parameter encryption
+                    if (fetchInputParameterEncryptionInfoTask is not null)
+                    {
+                        // Mark that we should not process the finally block since we have async
+                        // execution pending. Note that this should be done outside the task's
+                        // continuation delegate.
+                        processFinallyBlock = false;
+                        describeParameterEncryptionDataReader = GetParameterEncryptionDataReader(
+                            out returnTask,
+                            fetchInputParameterEncryptionInfoTask,
+                            describeParameterEncryptionDataReader,
+                            describeParameterEncryptionRpcOriginalRpcMap,
+                            describeParameterEncryptionNeeded,
+                            isRetry);
+
+                        decrementAsyncCountInFinallyBlock = false;
+                    }
+                    else
+                    {
+                        // @TODO Make these else-if/else, or idk flip it around with the main if case
+                        if (isAsync)
+                        {
+                            // If it was async, ending the reader is still pending
+                            // Mark that we should not process the finally block since we have async
+                            // execution pending. Note that this should be done outside the task's
+                            // continuation delegate.
+                            processFinallyBlock = false;
+                            describeParameterEncryptionDataReader = GetParameterEncryptionDataReaderAsync(
+                                out returnTask,
+                                describeParameterEncryptionDataReader,
+                                describeParameterEncryptionRpcOriginalRpcMap,
+                                describeParameterEncryptionNeeded,
+                                isRetry);
+
+                            decrementAsyncCountInFinallyBlock = false;
+                        }
+                        else
+                        {
+                            // For synchronous execution, read the results of describe parameter
+                            // encryption here.
+                            ReadDescribeEncryptionParameterResults(
+                                describeParameterEncryptionDataReader,
+                                describeParameterEncryptionRpcOriginalRpcMap,
+                                isRetry);
+                        }
+
+                        #if DEBUG
+                        // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
+                        if (_sleepAfterReadDescribeEncryptionParameterResults)
+                        {
+                            Thread.Sleep(10000);
+                        }
+                        #endif
+                    }
+                }
+                catch (Exception e)
+                {
+                    // @TODO: should this also check if processFinallyBlock has been cleared in the try?
+                    processFinallyBlock = ADP.IsCatchableExceptionType(e);
+                    exceptionCaught = true;
+                    throw;
+                }
+                finally
+                {
+                    // Free up the state only for synchronous execution. For asynchronous
+                    // execution, free only if there was an exception.
+                    // @TODO: processFinallyBlock should probably switch this entire method?
+                    PrepareTransparentEncryptionFinallyBlock(
+                        closeDataReader: (processFinallyBlock && !isAsync) || exceptionCaught,
+                        decrementAsyncCount: decrementAsyncCountInFinallyBlock && exceptionCaught,
+                        clearDataStructures: (processFinallyBlock && !isAsync) || exceptionCaught,
+                        wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
+                        describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
+                        describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
+                }
+            }
+            catch (Exception e)
+            {
+                CachedAsyncState?.ResetAsyncState();
+                if (ADP.IsCatchableExceptionType(e))
+                {
+                    ReliablePutStateObject();
+                }
+
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Steps to be executed in the Prepare Transparent Encryption finally block.
+        /// </summary>
+        private void PrepareTransparentEncryptionFinallyBlock(
+            bool closeDataReader,
+            bool clearDataStructures,
+            bool decrementAsyncCount,
+            bool wasDescribeParameterEncryptionNeeded, // @TODO: This isn't used anywhere
+            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
+            SqlDataReader describeParameterEncryptionDataReader)
+        {
+            if (clearDataStructures)
+            {
+                // Clear some state variables in SqlCommand that reflect in-progress describe
+                // parameter encryption requests.
+                ClearDescribeParameterEncryptionRequests();
+                if (describeParameterEncryptionRpcOriginalRpcMap != null) // @TODO: This doesn't do anything
+                {
+                    describeParameterEncryptionRpcOriginalRpcMap = null;
+                }
+            }
+
+            if (decrementAsyncCount)
+            {
+                // Decrement the async count
+                SqlInternalConnectionTds internalConnection = _activeConnection.GetOpenTdsConnection();
+                internalConnection?.DecrementAsyncCount();
+            }
+
+            if (closeDataReader)
+            {
+                // Close the data reader to reset the _stateObj
+                describeParameterEncryptionDataReader?.Close();
+            }
+        }
+
+        /// <summary>
         /// Read the output of sp_describe_parameter_encryption
         /// </summary>
         /// <param name="ds">Resultset from calling to sp_describe_parameter_encryption</param>
