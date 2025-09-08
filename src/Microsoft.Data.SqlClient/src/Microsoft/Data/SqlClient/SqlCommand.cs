@@ -155,6 +155,10 @@ namespace Microsoft.Data.SqlClient
         // @TODO: IsPrepared is part of IsDirty - this is confusing.
         private bool IsUserPrepared => IsPrepared && !_hiddenPrepare && !IsDirty;
 
+        private bool IsStoredProcedure => CommandType is CommandType.StoredProcedure;
+
+        private bool IsSimpleTextQuery => CommandType is CommandType.Text && _parameters?.Count == 0;
+
         #endregion
 
         #region Public/Internal Methods
@@ -182,11 +186,9 @@ namespace Microsoft.Data.SqlClient
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
 
-                // Only prepare batch has parameters
-                // @TODO: Factor out stored proc/text+parameter count to property
-                // @TODO: Not using parentheses is confusing here b/c it relies on order of operations knowledge
-                if (IsPrepared && !IsDirty || CommandType == CommandType.StoredProcedure
-                                           || (CommandType == CommandType.Text && GetParameterCount(_parameters) == 0))
+                // Only prepare batch that has parameters
+                // @TODO: IsPrepared is part of IsDirty - this is confusing.
+                if ((IsPrepared && !IsDirty) || IsStoredProcedure || IsSimpleTextQuery)
                 {
                     // @TODO: Make a simpler SafeIncrementPrepares
                     Statistics?.SafeIncrement(ref Statistics._prepares);
