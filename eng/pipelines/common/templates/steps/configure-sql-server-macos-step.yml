@@ -49,7 +49,9 @@ steps:
     do
       echo Waiting for SQL Server to start (attempt #$counter)...
       sleep 3
-      sqlcmd -S 127.0.0.1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" 2>>$SQLCMD_ERRORS
+      cmd="sqlcmd -S 127.0.0.1 -No -U sa -P $MSSQL_SA_PW -Q 'SELECT @@VERSION'"
+      echo $cmd >>$SQLCMD_ERRORS
+      $cmd 2>>$SQLCMD_ERRORS
       errstatus=$?
       ((counter++))
     done
