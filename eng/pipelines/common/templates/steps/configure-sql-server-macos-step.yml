@@ -47,9 +47,9 @@ steps:
     errstatus=1
     while [ $counter -le 20 ] && [ $errstatus = 1 ]
     do
-      echo Waiting for SQL Server to start...
+      echo Waiting for SQL Server to start (attempt #$counter)...
       sleep 3
-      sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" 2>$SQLCMD_ERRORS
+      sqlcmd -S 127.0.0.1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" 2>>$SQLCMD_ERRORS
       errstatus=$?
       ((counter++))
     done
@@ -78,7 +78,7 @@ steps:
     sqlcmd -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" -l 2
 
     echo "Configuring Dedicated Administer Connections to allow remote connections..."
-    sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "sp_configure 'remote admin connections', 1; RECONFIGURE;"
+    sqlcmd -S 127.0.0.1 -No -U sa -P $MSSQL_SA_PW -Q "sp_configure 'remote admin connections', 1; RECONFIGURE;"
     if [ $? = 1 ]
     then
       echo "Error configuring DAC for remote access."
