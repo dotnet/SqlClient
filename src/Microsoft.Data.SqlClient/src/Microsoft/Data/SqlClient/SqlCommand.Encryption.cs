@@ -16,6 +16,12 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlCommand
     {
+        private EnclaveSessionParameters GetEnclaveSessionParameters() =>
+            new EnclaveSessionParameters(
+                _activeConnection.DataSource,
+                _activeConnection.EnclaveAttestationUrl,
+                _activeConnection.Database);
+
         // @TODO: Isn't this doing things asynchronously? We should just have a purely asynchronous and a purely synchronous pathway instead of this mix of check this check that and flags.
         private SqlDataReader GetParameterEncryptionDataReader(
             out Task returnTask,
@@ -167,6 +173,19 @@ namespace Microsoft.Data.SqlClient
 
             return describeParameterEncryptionDataReader;
         }
+
+        private void InvalidateEnclaveSession()
+        {
+            if (ShouldUseEnclaveBasedWorkflow && enclavePackage != null)
+            {
+                EnclaveDelegate.Instance.InvalidateEnclaveSession(
+                    _activeConnection.AttestationProtocol,
+                    _activeConnection.Parser.EnclaveType,
+                    GetEnclaveSessionParameters(),
+                    enclavePackage.EnclaveSession);
+            }
+        }
+
 
         /// <summary>
         /// Read the output of sp_describe_parameter_encryption

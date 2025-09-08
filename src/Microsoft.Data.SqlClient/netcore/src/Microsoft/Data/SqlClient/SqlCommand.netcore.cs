@@ -473,26 +473,6 @@ namespace Microsoft.Data.SqlClient
             }, TaskScheduler.Default);
         }
 
-        private void InvalidateEnclaveSession()
-        {
-            if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
-            {
-                EnclaveDelegate.Instance.InvalidateEnclaveSession(
-                    this._activeConnection.AttestationProtocol,
-                    this._activeConnection.Parser.EnclaveType,
-                    GetEnclaveSessionParameters(),
-                    this.enclavePackage.EnclaveSession);
-            }
-        }
-
-        private EnclaveSessionParameters GetEnclaveSessionParameters()
-        {
-            return new EnclaveSessionParameters(
-                this._activeConnection.DataSource,
-                this._activeConnection.EnclaveAttestationUrl,
-                this._activeConnection.Database);
-        }
-
         private void ValidateCustomProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
         {
             // Throw when the provided dictionary is null.
