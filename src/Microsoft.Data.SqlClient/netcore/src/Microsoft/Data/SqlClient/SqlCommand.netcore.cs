@@ -956,40 +956,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Resets the encryption related state of the command object and each of the parameters.
-        /// BatchRPC doesn't need special handling to cleanup the state of each RPC object and its parameters since a new RPC object and
-        /// parameters are generated on every execution.
-        /// </summary>
-        private void ResetEncryptionState()
-        {
-            // First reset the command level state.
-            ClearDescribeParameterEncryptionRequests();
-
-            // Reset the state for internal End execution.
-            _internalEndExecuteInitiated = false;
-
-            // Reset the state for the cache.
-            CachingQueryMetadataPostponed = false;
-
-            // Reset the state of each of the parameters.
-            if (_parameters != null)
-            {
-                for (int i = 0; i < _parameters.Count; i++)
-                {
-                    _parameters[i].CipherMetadata = null;
-                    _parameters[i].HasReceivedMetadata = false;
-                }
-            }
-
-            keysToBeSentToEnclave?.Clear();
-            enclavePackage = null;
-            requiresEnclaveComputations = false;
-            enclaveAttestationParameters = null;
-            customData = null;
-            customDataLength = 0;
-        }
-
-        /// <summary>
         /// Steps to be executed in the Prepare Transparent Encryption finally block.
         /// </summary>
         private void PrepareTransparentEncryptionFinallyBlock(bool closeDataReader,
