@@ -19,6 +19,8 @@ parameters:
 steps:
 # macOS only steps
 - bash: |
+    set -x
+
     # The "user" pipeline variable conflicts with homebrew, causing errors during install. Set it back to the pipeline user.
     USER=`whoami`
     SQLCMD_ERRORS=$(Agent.TempDirectory)/sqlcmd_err.log
@@ -34,7 +36,10 @@ steps:
     docker pull mcr.microsoft.com/mssql/server:2022-latest
     
     # Password for the SA user (required)
-    MSSQL_SA_PW=${{parameters.password }}
+    MSSQL_SA_PW=${{ parameters.password }}
+
+    echo Parameter: ${{ parameters.password }}
+    echo Password:  $MSSQL_SA_PW
 
     docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -p 1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
  
