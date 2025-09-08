@@ -124,6 +124,12 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private CommandType _commandType;
 
+        /// <summary>
+        /// Per-command custom providers. It can be provided by the user and can be set more than
+        /// once.
+        /// </summary>
+        private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
+
         // @TODO: Rename to indicate that this is for enclave stuff, I think...
         private byte[] customData = null;
 
@@ -663,7 +669,12 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Internal/Protected/Private Properties
-        
+
+        internal bool HasColumnEncryptionKeyStoreProvidersRegistered
+        {
+            get => _customColumnEncryptionKeyStoreProviders?.Count > 0;
+        }
+
         internal bool InPrepare => _inPrepare;
 
         internal int InternalRecordsAffected
@@ -815,6 +826,14 @@ namespace Microsoft.Data.SqlClient
         {
             // @TODO: Should we check for null on _activeConnection?
             get => !requiresEnclaveComputations || _activeConnection.Parser.AreEnclaveRetriesSupported;
+        }
+
+        private bool ShouldUseEnclaveBasedWorkflow
+        {
+            // @TODO: I'm pretty sure the or'd condition is used in several places. We could factor that out.
+            get => (!string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) ||
+                    _activeConnection.AttestationProtocol is SqlConnectionAttestationProtocol.None) &&
+                   IsColumnEncryptionEnabled;
         }
 
         #endregion
