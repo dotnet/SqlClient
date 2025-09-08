@@ -442,39 +442,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void ValidateCustomProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
-        {
-            // Throw when the provided dictionary is null.
-            if (customProviders is null)
-            {
-                throw SQL.NullCustomKeyStoreProviderDictionary();
-            }
-
-            // Validate that custom provider list doesn't contain any of system provider list
-            foreach (string key in customProviders.Keys)
-            {
-                // Validate the provider name
-                //
-                // Check for null or empty
-                if (string.IsNullOrWhiteSpace(key))
-                {
-                    throw SQL.EmptyProviderName();
-                }
-
-                // Check if the name starts with MSSQL_, since this is reserved namespace for system providers.
-                if (key.StartsWith(ADP.ColumnEncryptionSystemProviderNamePrefix, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    throw SQL.InvalidCustomKeyStoreProviderName(key, ADP.ColumnEncryptionSystemProviderNamePrefix);
-                }
-
-                // Validate the provider value
-                if (customProviders[key] is null)
-                {
-                    throw SQL.NullProviderValue(key);
-                }
-            }
-        }
-
         /// <summary>
         /// This function walks through the registered custom column encryption key store providers and returns an object if found.
         /// </summary>
