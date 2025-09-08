@@ -161,20 +161,7 @@ namespace Microsoft.Data.SqlClient
         private int _rowsAffectedBySpDescribeParameterEncryption = -1;
         
         private List<_SqlRPC> _RPCList;
-        private _SqlRPC[] _sqlRPCParameterEncryptionReqArray;
         private int _currentlyExecutingBatch;
-
-        /// <summary>
-        /// This variable is used to keep track of which RPC batch's results are being read when reading the results of
-        /// describe parameter encryption RPC requests in BatchRPCMode.
-        /// </summary>
-        private int _currentlyExecutingDescribeParameterEncryptionRPC;
-
-        /// <summary>
-        /// A flag to indicate if we have in-progress describe parameter encryption RPC requests.
-        /// Reset to false when completed.
-        /// </summary>
-        internal bool IsDescribeParameterEncryptionRPCCurrentlyInProgress { get; private set; }
 
         /// <summary>
         /// A flag to indicate if EndExecute was already initiated by the Begin call.

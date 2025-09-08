@@ -125,6 +125,13 @@ namespace Microsoft.Data.SqlClient
         private CommandType _commandType;
 
         /// <summary>
+        /// This variable is used to keep track of which RPC batch's results are being read when reading the results of
+        /// describe parameter encryption RPC requests in BatchRPCMode.
+        /// </summary>
+        // @TODO: Rename to match naming conventions
+        private int _currentlyExecutingDescribeParameterEncryptionRPC;
+
+        /// <summary>
         /// Per-command custom providers. It can be provided by the user and can be set more than
         /// once.
         /// </summary>
@@ -227,6 +234,9 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         // @TODO: Use int? and replace -1 usage with null
         private int _rowsAffected = -1;
+
+        // @TODO: Rename to match naming convention
+        private _SqlRPC[] _sqlRPCParameterEncryptionReqArray;
 
         /// <summary>
         /// TDS session the current instance is using.
@@ -692,6 +702,13 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
+
+        /// <summary>
+        /// A flag to indicate if we have in-progress describe parameter encryption RPC requests.
+        /// Reset to false when completed.
+        /// </summary>
+        // @TODO: Rename to match naming conventions
+        internal bool IsDescribeParameterEncryptionRPCCurrentlyInProgress { get; private set; }
 
         // @TODO: Rename to match conventions.
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
