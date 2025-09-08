@@ -434,7 +434,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestSqlServerTypesInsertAndRead()
         {
-            string tableName = DataTestUtility.GetLongName("Type");
+            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Type");
             string allTypesSQL = @$"
                     if not exists (select * from sysobjects where name='{tableName}' and xtype='U')
                     Begin

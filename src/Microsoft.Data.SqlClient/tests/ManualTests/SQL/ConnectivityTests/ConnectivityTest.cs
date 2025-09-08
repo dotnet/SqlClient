@@ -368,10 +368,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlConnectionStringBuilder connectionStringBuilder = new(DataTestUtility.TCPConnectionString)
             {
-                InitialCatalog = DataTestUtility.GetLongName("DoesNotExist", false),
+                InitialCatalog = "DoesNotExist0982532435423",
                 Pooling = false,
-                ConnectTimeout = 15,
-                ConnectRetryCount = 3
+                ConnectTimeout=15
             };
             using SqlConnection sqlConnection = new(connectionStringBuilder.ConnectionString);
             Stopwatch timer = new();
@@ -396,6 +395,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 !DataTestUtility.IsTCPConnStringSetup())
             {
                 return false;
+            }
+
+            using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
+            {
+                WindowsPrincipal principal = new(identity);
+                if (!principal.IsInRole(WindowsBuiltInRole.Administrator))
+                {
+                    return false;
+                }
             }
 
             using RegistryKey key = Registry.LocalMachine.OpenSubKey(ConnectToPath, true);

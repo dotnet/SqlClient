@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public AdapterTest()
         {
             // create random name for temp tables
-            _tempTable = DataTestUtility.GetShortName("AdapterTest");
+            _tempTable = DataTestUtility.GetUniqueName("AdapterTest");
             _tempTable = _tempTable.Replace('-', '_');
 
             _randomGuid = Guid.NewGuid().ToString();
@@ -487,7 +487,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void ParameterTest_InOut()
         {
-            string procName = DataTestUtility.GetShortName("P");
+            string procName = DataTestUtility.GetUniqueName("P");
             // input, output
             string spCreateInOut =
                 "CREATE PROCEDURE " + procName + " @in int, @inout int OUTPUT, @out nvarchar(8) OUTPUT " +
@@ -768,13 +768,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UpdateRefreshTest()
         {
-            string identTableName = DataTestUtility.GetShortName("ID_");
+            string identTableName = DataTestUtility.GetUniqueName("ID_");
             string createIdentTable =
                 $"CREATE TABLE {identTableName} (id int IDENTITY," +
                 "LastName nvarchar(50) NULL," +
                 "Firstname nvarchar(50) NULL)";
 
-            string spName = DataTestUtility.GetShortName("sp_insert", withBracket: false);
+            string spName = DataTestUtility.GetUniqueName("sp_insert", withBracket: false);
             string spCreateInsert =
                 $"CREATE PROCEDURE {spName}" +
                 "(@FirstName nvarchar(50), @LastName nvarchar(50), @id int OUTPUT) " +
@@ -1087,7 +1087,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void AutoGenErrorTest()
         {
-            string identTableName = DataTestUtility.GetShortName("ID_");
+            string identTableName = DataTestUtility.GetUniqueName("ID_");
             string createIdentTable =
                 $"CREATE TABLE {identTableName} (id int IDENTITY," +
                 "LastName nvarchar(50) NULL," +

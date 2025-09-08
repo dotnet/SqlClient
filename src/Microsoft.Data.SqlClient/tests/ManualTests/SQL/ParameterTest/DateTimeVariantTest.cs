@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSimpleParameter_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string procName = DataTestUtility.GetLongName("paramProc1");
+            string procName = DataTestUtility.GetUniqueNameForSqlServer("paramProc1");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -115,7 +115,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSimpleParameter_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string procName = DataTestUtility.GetLongName("paramProc2");
+            string procName = DataTestUtility.GetUniqueNameForSqlServer("paramProc2");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -153,7 +153,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSqlDataRecordParameterToTVP_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string tvpTypeName = DataTestUtility.GetLongName("tvpType");
+            string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpType");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -200,7 +200,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSqlDataRecordParameterToTVP_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
+            string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpVariant");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -245,7 +245,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSqlDataReaderParameterToTVP_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string tvpTypeName = DataTestUtility.GetLongName("tvpType");
+            string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpType");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -295,7 +295,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSqlDataReaderParameterToTVP_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
+            string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpVariant");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -347,10 +347,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSqlDataReader_TVP_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string tvpTypeName = DataTestUtility.GetLongName("tvpType");
-            string InputTableName = DataTestUtility.GetLongName("InputTable");
-            string OutputTableName = DataTestUtility.GetLongName("OutputTable");
-            string ProcName = DataTestUtility.GetLongName("spTVPProc");
+            string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpType");
+            string InputTableName = DataTestUtility.GetUniqueNameForSqlServer("InputTable");
+            string OutputTableName = DataTestUtility.GetUniqueNameForSqlServer("OutputTable");
+            string ProcName = DataTestUtility.GetUniqueNameForSqlServer("spTVPProc");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -428,10 +428,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSqlDataReader_TVP_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string tvpTypeName = DataTestUtility.GetLongName("tvpVariant_DRdrTVPVar");
-            string InputTableName = DataTestUtility.GetLongName("InputTable");
-            string OutputTableName = DataTestUtility.GetLongName("OutputTable");
-            string ProcName = DataTestUtility.GetLongName("spTVPProc_DRdrTVPVar");
+            string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpVariant_DRdrTVPVar");
+            string InputTableName = DataTestUtility.GetUniqueNameForSqlServer("InputTable");
+            string OutputTableName = DataTestUtility.GetUniqueNameForSqlServer("OutputTable");
+            string ProcName = DataTestUtility.GetUniqueNameForSqlServer("spTVPProc_DRdrTVPVar");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -512,8 +512,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSimpleDataReader_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string inputTable = DataTestUtility.GetLongName("inputTable");
-            string procName = DataTestUtility.GetLongName("paramProc3");
+            string inputTable = DataTestUtility.GetUniqueNameForSqlServer("inputTable");
+            string procName = DataTestUtility.GetUniqueNameForSqlServer("paramProc3");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -568,8 +568,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSimpleDataReader_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string inputTable = DataTestUtility.GetLongName("inputTable");
-            string procName = DataTestUtility.GetLongName("paramProc4");
+            string inputTable = DataTestUtility.GetUniqueNameForSqlServer("inputTable");
+            string procName = DataTestUtility.GetUniqueNameForSqlServer("paramProc4");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -624,8 +624,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "SqlBulkCopySqlDataReader_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string bulkCopySrcTableName = DataTestUtility.GetLongName("bulkSrcTable");
-            string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestTable");
+            string bulkCopySrcTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkSrcTable");
+            string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestTable");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -698,8 +698,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "SqlBulkCopySqlDataReader_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string bulkCopySrcTableName = DataTestUtility.GetLongName("bulkSrcTable");
-            string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestTable");
+            string bulkCopySrcTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkSrcTable");
+            string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestTable");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -776,7 +776,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "SqlBulkCopyDataTable_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestType");
+            string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestType");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -836,7 +836,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "SqlBulkCopyDataTable_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestVariant");
+            string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestVariant");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -886,7 +886,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "SqlBulkCopyDataRow_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestType");
+            string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestType");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -941,7 +941,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "SqlBulkCopyDataRow_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestVariant");
+            string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestVariant");
             try
             {
                 using SqlConnection conn = new(s_connStr);

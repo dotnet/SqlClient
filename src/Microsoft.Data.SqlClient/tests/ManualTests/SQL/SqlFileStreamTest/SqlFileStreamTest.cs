@@ -221,7 +221,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         fileStreamDir += "\\";
                     }
 
-                    string dbName = DataTestUtility.GetShortName("FS", false);
+                    string dbName = DataTestUtility.GetUniqueName("FS", false);
                     string createDBQuery = @$"CREATE DATABASE [{dbName}]
                                          ON PRIMARY
                                           (NAME = PhotoLibrary_data,
@@ -266,7 +266,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static string SetupTable(string connString)
         {
             // Generate random table name
-            string tempTable = DataTestUtility.GetLongName("fs");
+            string tempTable = DataTestUtility.GetUniqueNameForSqlServer("fs");
             // Create table
             string createTable = $"CREATE TABLE {tempTable} (EmployeeId INT  NOT NULL  PRIMARY KEY, Photo VARBINARY(MAX) FILESTREAM  NULL, RowGuid UNIQUEIDENTIFIER NOT NULL ROWGUIDCOL UNIQUE DEFAULT NEWID() ) ";
             ExecuteNonQueryCommand(createTable, connString);

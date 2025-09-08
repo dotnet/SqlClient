@@ -123,7 +123,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void CollatedDataReaderTest()
         {
-            string dbName = DataTestUtility.GetShortName("CollationTest", false);
+            var databaseName = DataTestUtility.GetUniqueName("DB");
+            // Remove square brackets
+            var dbName = databaseName.Substring(1, databaseName.Length - 2);
 
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
@@ -138,7 +140,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 con.Open();
 
                 // Create collated database
-                cmd.CommandText = $"CREATE DATABASE {dbName} COLLATE KAZAKH_90_CI_AI";
+                cmd.CommandText = $"CREATE DATABASE {databaseName} COLLATE KAZAKH_90_CI_AI";
                 cmd.ExecuteNonQuery();
 
                 //Create connection without pooling in order to delete database later.
@@ -163,7 +165,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                cmd.CommandText = $"DROP DATABASE {dbName}";
+                cmd.CommandText = $"DROP DATABASE {databaseName}";
                 cmd.ExecuteNonQuery();
             }
         }

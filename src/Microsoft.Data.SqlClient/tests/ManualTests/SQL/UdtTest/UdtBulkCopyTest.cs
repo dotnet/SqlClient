@@ -18,9 +18,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _connStr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { InitialCatalog = DataTestUtility.UdtTestDbName }).ConnectionString;
             SqlConnection conn = new SqlConnection(_connStr);
 
-            string cities = DataTestUtility.GetLongName("UdtBulkCopy_cities");
-            string customers = DataTestUtility.GetLongName("UdtBulkCopy_customers");
-            string circles = DataTestUtility.GetLongName("UdtBulkCopy_circles");
+            string cities = DataTestUtility.GetUniqueNameForSqlServer("UdtBulkCopy_cities");
+            string customers = DataTestUtility.GetUniqueNameForSqlServer("UdtBulkCopy_customers");
+            string circles = DataTestUtility.GetUniqueNameForSqlServer("UdtBulkCopy_circles");
 
             conn.Open();
             try

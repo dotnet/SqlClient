@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsSupportedDataClassification))]
         public static void TestDataClassificationResultSetRank()
         {
-            s_tableName = DataTestUtility.GetLongName("DC");
+            s_tableName = DataTestUtility.GetUniqueNameForSqlServer("DC");
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand sqlCommand = sqlConnection.CreateCommand())
             {
@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSupportedDataClassification))]
         public static void TestDataClassificationResultSet()
         {
-            s_tableName = DataTestUtility.GetLongName("DC");
+            s_tableName = DataTestUtility.GetUniqueNameForSqlServer("DC");
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand sqlCommand = sqlConnection.CreateCommand())
             {
@@ -232,7 +232,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             data.Rows.Add(Guid.NewGuid(), "Company 2", "sample2@contoso.com", 1);
             data.Rows.Add(Guid.NewGuid(), "Company 3", "sample3@contoso.com", 1);
 
-            var tableName = DataTestUtility.GetLongName("DC");
+            var tableName = DataTestUtility.GetUniqueNameForSqlServer("DC");
 
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {

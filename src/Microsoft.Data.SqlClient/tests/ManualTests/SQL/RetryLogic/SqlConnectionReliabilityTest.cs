@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void CreateDatabaseWhileTryingToConnect(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int currentRetries = 0;
-            string database = DataTestUtility.GetLongName($"RetryLogic_{provider.RetryLogic.RetryIntervalEnumerator.GetType().Name}", false);
+            string database = DataTestUtility.GetUniqueNameForSqlServer($"RetryLogic_{provider.RetryLogic.RetryIntervalEnumerator.GetType().Name}", false);
             var builder = new SqlConnectionStringBuilder(cnnString)
             {
                 InitialCatalog = database,

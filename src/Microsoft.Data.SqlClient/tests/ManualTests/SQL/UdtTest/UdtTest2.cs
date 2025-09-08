@@ -84,8 +84,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void UDTParams_Invalid2()
         {
-            string spInsertCustomer = DataTestUtility.GetLongName("spUdtTest2_InsertCustomer");
-            string tableName = DataTestUtility.GetLongName("UdtTest2");
+            string spInsertCustomer = DataTestUtility.GetUniqueNameForSqlServer("spUdtTest2_InsertCustomer");
+            string tableName = DataTestUtility.GetUniqueNameForSqlServer("UdtTest2");
 
             using (SqlConnection conn = new SqlConnection(_connStr))
             using (SqlCommand cmd = conn.CreateCommand())
@@ -143,8 +143,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void UDTParams_TypedNull()
         {
-            string spInsertCustomer = DataTestUtility.GetLongName("spUdtTest2_InsertCustomer");
-            string tableName = DataTestUtility.GetLongName("UdtTest2_Customer");
+            string spInsertCustomer = DataTestUtility.GetUniqueNameForSqlServer("spUdtTest2_InsertCustomer");
+            string tableName = DataTestUtility.GetUniqueNameForSqlServer("UdtTest2_Customer");
 
             using (SqlConnection conn = new SqlConnection(_connStr))
             using (SqlCommand cmd = conn.CreateCommand())
@@ -188,8 +188,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void UDTParams_NullInput()
         {
-            string spInsertCustomer = DataTestUtility.GetLongName("spUdtTest2_InsertCustomer");
-            string tableName = DataTestUtility.GetLongName("UdtTest2_Customer");
+            string spInsertCustomer = DataTestUtility.GetUniqueNameForSqlServer("spUdtTest2_InsertCustomer");
+            string tableName = DataTestUtility.GetUniqueNameForSqlServer("UdtTest2_Customer");
 
             using (SqlConnection conn = new SqlConnection(_connStr))
             using (SqlCommand cmd = conn.CreateCommand())
@@ -232,8 +232,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void UDTParams_InputOutput()
         {
-            string spInsertCity = DataTestUtility.GetLongName("spUdtTest2_InsertCity");
-            string tableName = DataTestUtility.GetLongName("UdtTest2");
+            string spInsertCity = DataTestUtility.GetUniqueNameForSqlServer("spUdtTest2_InsertCity");
+            string tableName = DataTestUtility.GetUniqueNameForSqlServer("UdtTest2");
 
             using (SqlConnection conn = new SqlConnection(_connStr))
             {

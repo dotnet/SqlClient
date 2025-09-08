@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void SqlAdapterTest()
         {
-            string tableName = DataTestUtility.GetLongName("Adapter");
+            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Adapter");
             string tableNameNoBrackets = tableName.Substring(1, tableName.Length - 2);
             try
             {

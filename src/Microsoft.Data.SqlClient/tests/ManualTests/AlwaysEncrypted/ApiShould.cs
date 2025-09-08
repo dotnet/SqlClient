@@ -148,8 +148,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             const string firstColumnName = @"firstColumn";
             const string secondColumnName = @"secondColumn";
             const string thirdColumnName = @"thirdColumn";
-            string inputProcedureName = DataTestUtility.GetShortName("InputProc").ToString();
-            string outputProcedureName = DataTestUtility.GetShortName("OutputProc").ToString();
+            string inputProcedureName = DataTestUtility.GetUniqueName("InputProc").ToString();
+            string outputProcedureName = DataTestUtility.GetUniqueName("OutputProc").ToString();
             const int charColumnSize = 100;
             const int decimalColumnPrecision = 10;
             const int decimalColumnScale = 4;
@@ -694,7 +694,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public async void TestExecuteReaderAsyncWithLargeQuery(string connectionString)
         {
-            string randomName = DataTestUtility.GetShortName(Guid.NewGuid().ToString().Replace("-", ""), false);
+            string randomName = DataTestUtility.GetUniqueName(Guid.NewGuid().ToString().Replace("-", ""), false);
             if (randomName.Length > 50)
             {
                 randomName = randomName.Substring(0, 50);
@@ -878,8 +878,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using SqlCommand sqlCommand = new("", sqlConnection, transaction: null,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
 
-            string procWithoutParams = DataTestUtility.GetShortName("EnclaveWithoutParams", withBracket: false);
-            string procWithParam = DataTestUtility.GetShortName("EnclaveWithParams", withBracket: false);
+            string procWithoutParams = DataTestUtility.GetUniqueName("EnclaveWithoutParams", withBracket: false);
+            string procWithParam = DataTestUtility.GetUniqueName("EnclaveWithParams", withBracket: false);
 
             try
             {
