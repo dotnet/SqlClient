@@ -230,7 +230,7 @@ namespace Microsoft.Data.SqlClient
         private void PrepareForTransparentEncryption(
             bool isAsync,
             int timeout,
-            TaskCompletionSource<object> completion,
+            TaskCompletionSource<object> completion, // @TODO: Only used for debug checks
             out Task returnTask,
             bool asyncWrite,
             out bool usedCache,
@@ -836,8 +836,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Resets the encryption related state of the command object and each of the parameters.
-        /// BatchRPC doesn't need special handling to cleanup the state of each RPC object and its parameters since a new RPC object and
-        /// parameters are generated on every execution.
+        /// BatchRPC doesn't need special handling to clean up the state of each RPC object and its
+        /// parameters since a new RPC object and parameters are generated on every execution.
         /// </summary>
         private void ResetEncryptionState()
         {
@@ -866,6 +866,25 @@ namespace Microsoft.Data.SqlClient
             enclaveAttestationParameters = null;
             customData = null;
             customDataLength = 0;
+        }
+
+        /// <summary>
+        /// Set the column encryption setting to the new one. Do not allow conflicting column
+        /// encryption settings.
+        /// @TODO: This basically just allows it to be set once and it cannot be changed after.
+        /// </summary>
+        private void SetColumnEncryptionSetting(SqlCommandColumnEncryptionSetting newColumnEncryptionSetting)
+        {
+            // @TODO: Why do we need a flag *and* the value itself. The value hasn't been set if it's null!
+            if (!_wasBatchModeColumnEncryptionSettingSetOnce)
+            {
+                _columnEncryptionSetting = newColumnEncryptionSetting;
+                _wasBatchModeColumnEncryptionSettingSetOnce = true;
+            }
+            else if (_columnEncryptionSetting != newColumnEncryptionSetting)
+            {
+                throw SQL.BatchedUpdateColumnEncryptionSettingMismatch();
+            }
         }
     }
 }
