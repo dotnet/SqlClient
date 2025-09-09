@@ -157,7 +157,8 @@ namespace Microsoft.Data.SqlClient
 
         private bool IsStoredProcedure => CommandType is CommandType.StoredProcedure;
 
-        private bool IsSimpleTextQuery => CommandType is CommandType.Text && _parameters?.Count == 0;
+        private bool IsSimpleTextQuery => CommandType is CommandType.Text &&
+                                          (_parameters is null || _parameters.Count == 0);
 
         #endregion
 
