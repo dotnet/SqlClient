@@ -10,6 +10,12 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    // The batch tests frequently get deadlocked against one another when run in
+    // parallel, so we define an xUnit Collection that disables parallelization.
+    [CollectionDefinition("BatchTestsCollection", DisableParallelization = true)]
+    public class BatchTestsCollection {}
+
+    [Collection("BatchTestsCollection")]
     public static class BatchTests
     {
 

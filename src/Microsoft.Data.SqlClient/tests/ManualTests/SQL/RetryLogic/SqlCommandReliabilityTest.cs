@@ -268,7 +268,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void DropDatabaseWithActiveConnection(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int currentRetries = 0;
-            string database = DataTestUtility.GetUniqueNameForSqlServer($"RetryLogic_{provider.RetryLogic.RetryIntervalEnumerator.GetType().Name}", false);
+            string database = DataTestUtility.GetLongName($"RetryLogic_{provider.RetryLogic.RetryIntervalEnumerator.GetType().Name}", false);
             var builder = new SqlConnectionStringBuilder(cnnString)
             {
                 InitialCatalog = database,
@@ -330,7 +330,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void UpdateALockedTable(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int currentRetries = 0;
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Region");
+            string tableName = DataTestUtility.GetLongName("Region");
             string fieldName = "RegionDescription";
 
             using (var cnn1 = new SqlConnection(cnnString))

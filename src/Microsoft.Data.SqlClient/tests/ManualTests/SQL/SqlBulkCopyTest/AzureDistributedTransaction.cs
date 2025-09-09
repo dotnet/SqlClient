@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class AzureDistributedTransaction
     {
         private static readonly string s_connectionString = DataTestUtility.TCPConnectionString;
-        private static readonly string s_tableName = DataTestUtility.GetUniqueNameForSqlServer("Azure");
+        private static readonly string s_tableName = DataTestUtility.GetLongName("Azure");
         private static readonly string s_createTableCmd = $"CREATE TABLE {s_tableName} (NAME NVARCHAR(40), AGE INT)";
         private static readonly string s_sqlBulkCopyCmd = "SELECT * FROM(VALUES ('Fuller', 33), ('Davon', 49)) AS q (FirstName, Age)";
         private static readonly int s_commandTimeout = 30;
