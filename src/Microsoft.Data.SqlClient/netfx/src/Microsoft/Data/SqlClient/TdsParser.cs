@@ -6541,24 +6541,10 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLIMAGE:
                     byte[] b = null;
 
-                    // If varbinary(max), we only read the first chunk here, expecting the caller to read the rest
-                    if (isPlp)
+                    result = stateObj.TryReadByteArrayWithContinue(length, isPlp, out b);
+                    if (result != TdsOperationStatus.Done)
                     {
-                        // If we are given -1 for length, then we read the entire value,
-                        // otherwise only the requested amount, usually first chunk.
-                        result = stateObj.TryReadPlpBytes(ref b, 0, length, out _);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
-                    }
-                    else
-                    {
-                        result = stateObj.TryReadByteArrayWithContinue(length, out b);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
+                        return result;
                     }
 
                     if (md.isEncrypted
@@ -6625,7 +6611,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLVECTOR:
                     // Vector data is read as non-plp binary value.
                     // This is same as reading varbinary(8000).
-                    result = stateObj.TryReadByteArrayWithContinue(length, out b);
+                    result = stateObj.TryReadByteArrayWithContinue(length, isPlp: false, out b);
                     if (result != TdsOperationStatus.Done)
                     {
                         return result;
