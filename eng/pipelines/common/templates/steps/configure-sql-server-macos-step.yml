@@ -38,8 +38,8 @@ steps:
     # Password for the SA user (required)
     MSSQL_SA_PW=${{ parameters.password }}
 
-    echo Parameter: ${{ parameters.password }}
-    echo Password:  $MSSQL_SA_PW
+    echo Password Parameter: ${{ parameters.password }} >> $SQLCMD_ERRORS
+    echo Password Variable:  $MSSQL_SA_PW >> $SQLCMD_ERRORS
 
     docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -p 1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
  
@@ -54,9 +54,7 @@ steps:
     do
       echo "Waiting for SQL Server to start (attempt #$counter)..."
       sleep 3
-      cmd="sqlcmd -S 127.0.0.1 -No -U sa -P \"$MSSQL_SA_PW\" -Q \"SELECT @@VERSION\""
-      echo "$cmd" >> $SQLCMD_ERRORS
-      $cmd >> $SQLCMD_ERRORS 2>&1
+      sqlcmd -S 127.0.0.1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" >> $SQLCMD_ERRORS 2>&1
       errstatus=$?
       ((counter++))
     done
