@@ -157,6 +157,55 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestEncryptDecryptWithCSP(string connectionString)
+        {
+            string providerName = @"Microsoft Enhanced RSA and AES Cryptographic Provider";
+            string keyIdentifier = DataTestUtility.GetUniqueNameForSqlServer("CSP");
+
+            try
+            {
+                CertificateUtilityWin.RSAPersistKeyInCsp(providerName, keyIdentifier);
+                string cspPath = String.Concat(providerName, @"/", keyIdentifier);
+
+                SQLSetupStrategyCspExt sqlSetupStrategyCsp = new SQLSetupStrategyCspExt(cspPath);
+                string tableName = sqlSetupStrategyCsp.CspProviderTable.Name;
+
+                try
+                {
+                    using SqlConnection sqlConn = new(connectionString);
+                    sqlConn.Open();
+
+                    Table.DeleteData(tableName, sqlConn);
+
+                    // insert 1 row data
+                    Customer customer = new Customer(45, "Microsoft", "Corporation");
+
+                    DatabaseHelper.InsertCustomerData(sqlConn, null, tableName, customer);
+
+                    // Test INPUT parameter on an encrypted parameter
+                    using SqlCommand sqlCommand = new(@$"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @firstName",
+                                                                sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled);
+                    SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
+                    Console.WriteLine(@"Exception: {0}");
+                    customerFirstParam.Direction = System.Data.ParameterDirection.Input;
+
+                    using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+                    ValidateResultSet(sqlDataReader);
+                }
+                finally
+                {
+                    // clean up database resources
+                    sqlSetupStrategyCsp.Dispose();
+                }
+            }
+            finally
+            {
+                CertificateUtilityWin.RSADeleteKeyInCsp(providerName, keyIdentifier);
+            }
+        }
+
         /// <summary>
         /// Validates that the results are the ones expected.
         /// </summary>

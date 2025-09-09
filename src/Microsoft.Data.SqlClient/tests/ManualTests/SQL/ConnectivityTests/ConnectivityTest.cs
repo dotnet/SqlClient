@@ -398,6 +398,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return false;
             }
 
+            using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
+            {
+                WindowsPrincipal principal = new(identity);
+                if (!principal.IsInRole(WindowsBuiltInRole.Administrator))
+                {
+                    return false;
+                }
+            }
+
             using RegistryKey key = Registry.LocalMachine.OpenSubKey(ConnectToPath, true);
             if (key == null)
             {
