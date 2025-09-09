@@ -627,7 +627,7 @@ namespace Microsoft.Data.Common
             return null;
         }
 
-        internal static long TimerCurrent() => DateTime.UtcNow.ToFileTimeUtc();
+        internal static long TimerCurrent() => Environment.TickCount64 * TimeSpan.TicksPerMillisecond;
 
         internal static long TimerFromSeconds(int seconds)
         {
