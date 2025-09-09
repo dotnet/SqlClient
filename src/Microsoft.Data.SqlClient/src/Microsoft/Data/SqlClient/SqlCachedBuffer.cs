@@ -39,10 +39,10 @@ namespace Microsoft.Data.SqlClient
         {
             buffer = null;
 
-            (bool canContinue, bool isStarting, _) = stateObj.GetSnapshotStatuses();
+            (bool canContinue, bool isStarting, bool isContinuing) = stateObj.GetSnapshotStatuses();
 
             List<byte[]> cachedBytes = null;
-            if (canContinue)
+            if (canContinue && isContinuing)
             {
                 cachedBytes = stateObj.TryTakeSnapshotStorage() as List<byte[]>;
                 if (isStarting)
@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient
                     result = stateObj.TryReadPlpBytes(ref byteArr, 0, cb, out cb, canContinue, writeDataSizeToSnapshot: false, compatibilityMode: false);
                     if (result != TdsOperationStatus.Done)
                     {
-                        if (result == TdsOperationStatus.NeedMoreData && canContinue && cb == byteArr.Length)
+                        if (result == TdsOperationStatus.NeedMoreData && canContinue && cb == byteArr.Length && (isContinuing || !isStarting))
                         {
                             // succeeded in getting the data but failed to find the next plp length
                             returnAfterAdd = true;

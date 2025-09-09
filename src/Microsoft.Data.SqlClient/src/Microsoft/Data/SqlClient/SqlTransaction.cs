@@ -9,10 +9,8 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
-
-#if NET
 using Microsoft.Data.SqlClient.Diagnostics;
-#else
+#if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 #endif
 
@@ -21,9 +19,7 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*' />
     public sealed class SqlTransaction : DbTransaction
     {
-        #if NET
         private static readonly SqlDiagnosticListener s_diagnosticListener = new();
-        #endif
 
         private static int s_objectTypeCount; // EventSource Counter
 
@@ -88,12 +84,10 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Commit/*' />
         public override void Commit()
         {
-            #if NET
             using DiagnosticTransactionScope diagnosticScope = s_diagnosticListener.CreateTransactionCommitScope(
                 _isolationLevel,
                 _connection,
                 InternalTransaction);
-            #endif
 
             ZombieCheck();
 
@@ -118,9 +112,7 @@ namespace Microsoft.Data.SqlClient
                 // @TODO: CER Exception Handling was removed here (see GH#3581)
                 catch (SqlException ex)
                 {
-                    #if NET
                     diagnosticScope.SetException(ex);
-                    #endif
 
                     // GitHub Issue #130 - When a timeout exception has occurred on transaction completion request,
                     // this connection may not be in reusable state.
@@ -131,13 +123,11 @@ namespace Microsoft.Data.SqlClient
                     }
                     throw;
                 }
-                #if NET
                 catch (Exception ex)
                 {
                     diagnosticScope.SetException(ex);
                     throw;
                 }
-                #endif
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
@@ -164,13 +154,11 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback2/*' />
         public override void Rollback()
         {
-            #if NET
             using DiagnosticTransactionScope diagnosticScope = s_diagnosticListener.CreateTransactionRollbackScope(
                 _isolationLevel,
                 _connection,
                 InternalTransaction,
                 transactionName: null);
-            #endif
 
             if (Is2005PartialZombie)
             {
@@ -203,13 +191,11 @@ namespace Microsoft.Data.SqlClient
                         InternalTransaction.Rollback();
                     }
                     // @TODO: CER Exception Handling was removed here (see GH#3581)
-                    #if NET
                     catch (Exception ex)
                     {
                         diagnosticScope.SetException(ex);
                         throw;
                     }
-                    #endif
                     finally
                     {
                         SqlStatistics.StopTimer(statistics);
@@ -226,13 +212,11 @@ namespace Microsoft.Data.SqlClient
         public void Rollback(string transactionName)
         #endif
         {
-            #if NET
             using DiagnosticTransactionScope diagnosticScope = s_diagnosticListener.CreateTransactionRollbackScope(
                 _isolationLevel,
                 _connection,
                 InternalTransaction,
                 transactionName);
-            #endif
 
             #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand(); // MDAC 81476
@@ -257,13 +241,11 @@ namespace Microsoft.Data.SqlClient
                     InternalTransaction.Rollback(transactionName);
                 }
                 // @TODO: CER Exception Handling was removed here (see GH#3581)
-                #if NET
                 catch (Exception ex)
                 {
                     diagnosticScope.SetException(ex);
                     throw;
                 }
-                #endif
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);

@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static SqlDecimal BulkCopySqlDecimalToTable(SqlDecimal decimalValue, int sourcePrecision, int sourceScale, int targetPrecision, int targetScale)
         {
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Table");
+            string tableName = DataTestUtility.GetLongName("Table");
             string connectionString = DataTestUtility.TCPConnectionString;
 
             SqlDecimal resultValue;
