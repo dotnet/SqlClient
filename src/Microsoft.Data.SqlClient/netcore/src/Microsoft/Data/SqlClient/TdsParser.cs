@@ -434,6 +434,8 @@ namespace Microsoft.Data.SqlClient
                 false,
                 true,
                 fParallel,
+                TransparentNetworkResolutionState.DisabledMode,
+                -1,
                 _connHandler.ConnectionOptions.IPAddressPreference,
                 FQDNforDNSCache,
                 ref _connHandler.pendingSQLDNSObject,
@@ -532,6 +534,8 @@ namespace Microsoft.Data.SqlClient
                     true,
                     true,
                     fParallel,
+                    TransparentNetworkResolutionState.DisabledMode,
+                    -1,
                     _connHandler.ConnectionOptions.IPAddressPreference,
                     FQDNforDNSCache,
                     ref _connHandler.pendingSQLDNSObject,
@@ -13051,6 +13055,8 @@ namespace Microsoft.Data.SqlClient
             char[] temp = null;
             bool buffIsRented = false;
             int startOffset = 0;
+
+            stateObj.RequestContinue(true);
             (bool canContinue, bool isStarting, bool isContinuing) = stateObj.GetSnapshotStatuses();
 
             if (canContinue)
@@ -13145,7 +13151,7 @@ namespace Microsoft.Data.SqlClient
             if (stateObj._longlen == 0)
             {
                 Debug.Assert(stateObj._longlenleft == 0);
-                totalCharsRead = 0;
+                totalCharsRead = startOffsetByteCount / 2;
                 return TdsOperationStatus.Done;       // No data
             }
 
@@ -13165,14 +13171,15 @@ namespace Microsoft.Data.SqlClient
             //  later needing to repeatedly allocate new target buffers and copy data as we discover new data
             if (buff == null && stateObj._longlen != TdsEnums.SQL_PLP_UNKNOWNLEN && stateObj._longlen < (int.MaxValue >> 1))
             {
-                if (supportRentedBuff && stateObj._longlen < 1073741824) // 1 Gib
+                int stateLen = (int)stateObj._longlen >> 1;
+                if (supportRentedBuff && stateLen < 1073741824) // 1 Gib
                 {
-                    buff = ArrayPool<char>.Shared.Rent((int)Math.Min((int)stateObj._longlen, len));
+                    buff = ArrayPool<char>.Shared.Rent(Math.Min(stateLen, len));
                     rentedBuff = true;
                 }
                 else
                 {
-                    buff = new char[(int)Math.Min((int)stateObj._longlen, len)];
+                    buff = new char[Math.Min(stateLen, len)];
                     rentedBuff = false;
                 }
             }

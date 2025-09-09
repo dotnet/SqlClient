@@ -3954,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>Zertifikatpfad darf nicht NULL sein. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{2}&lt;Zertifikatspeicher&gt;{2}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; entweder '{0}' oder '{1}' ist.</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Der Zertifikatspfad darf nicht NULL sein. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{1}&lt;Zertifikatspeicher&gt;{1}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; „{0}“ ist.</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>Interner Fehler. Zertifikatpfad darf nicht NULL sein. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{2}&lt;Zertifikatspeicher&gt;{2}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; entweder '{0}' oder '{1}' ist.</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Interner Fehler. Der Zertifikatspfad darf nicht NULL sein. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{1}&lt;Zertifikatspeicher&gt;{1}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; „{0}“ ist.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Der Masterschlüsselpfad der Spalte darf nicht NULL sein. Verwenden Sie das folgende Format für einen in einem Microsoft CSP-Anbieter (Cryptographic Service Provider, Kryptografiedienstanbieter) gespeicherten Schlüssel: &lt;CSP-Anbietername&gt;{0}&lt;Schlüsselbezeichner&gt;.</value>
@@ -3972,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>Ungültiger Zertifikatpfad: '{0}'. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{3}&lt;Zertifikatspeicher&gt;{3}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; entweder '{1}' oder '{2}' ist.</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Ungültiger Zertifikatpfad: „{0}“. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{2}&lt;Zertifikatspeicher&gt;{2}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; „{1}“ ist.</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>Interner Fehler. Ungültiger Zertifikatpfad: '{0}'. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{3}&lt;Zertifikatspeicher&gt;{3}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; entweder '{1}' oder '{2}' ist.</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Interner Fehler. Ungültiger Zertifikatpfad: „{0}“. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{2}&lt;Zertifikatspeicher&gt;{2}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; „{1}“ ist.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Ungültiger Schlüsselbezeichner im Masterschlüsselpfad der Spalte: '{0}'. Verwenden Sie das folgende Format für einen in einem Microsoft CSP-Anbieter (Cryptographic Service Provider, Kryptografiedienstanbieter) gespeicherten Schlüssel: &lt;CSP-Anbietername&gt;{1}&lt;Schlüsselbezeichner&gt;.</value>
@@ -3990,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>Ungültiger Zertifikatspeicherort '{0}' im Zertifikatpfad '{1}'. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{4}&lt;Zertifikatspeicher&gt;{4}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; entweder '{2}' oder '{3}' ist.</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>Ungültiger Zertifikatspeicherort „{0}“ im Zertifikatspfad „{1}“. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{3}&lt;Zertifikatspeicher&gt;{3}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; „{2}“ ist.</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>Interner Fehler. Ungültiger Zertifikatspeicherort '{0}' im Zertifikatpfad '{1}'. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{4}&lt;Zertifikatspeicher&gt;{4}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; entweder '{2}' oder '{3}' ist.</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>Interner Fehler. Ungültiger Zertifikatspeicherort „{0}“ im Zertifikatspfad „{1}“. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{3}&lt;Zertifikatspeicher&gt;{3}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; „{2}“ ist.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>Ungültiger Zertifikatspeicher '{0}' im Zertifikatpfad '{1}'. Erwarteter Wert: '{2}'.</value>

@@ -1377,11 +1377,8 @@ namespace Microsoft.Data.SqlClient
             internalConnection.ThreadHasParserLockForClose = true;
             try
             {
-                #if NETFRAMEWORK
-                _parser.RunReliably(RunBehavior.UntilDone, null, null, bulkCopyHandler, _stateObj);                
-                #else
-                _parser.Run(RunBehavior.UntilDone, null, null, bulkCopyHandler, _stateObj);
-                #endif
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
+                _parser.Run(RunBehavior.UntilDone, null, null, bulkCopyHandler, _stateObj);                
             }
             finally
             {

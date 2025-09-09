@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class UdtDateTimeOffsetTest
     {
         private readonly string _connectionString = null;
-        private readonly string _udtTableType = DataTestUtility.GetUniqueNameForSqlServer("DataTimeOffsetTableType");
+        private readonly string _udtTableType = DataTestUtility.GetLongName("DataTimeOffsetTableType");
         private readonly ITestOutputHelper _testOutputHelper;
 
         public UdtDateTimeOffsetTest(ITestOutputHelper testOutputHelper)
@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             for (int scale = fromScale; scale <= toScale; scale++)
             {
-                string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpType"); // Need a unique name per scale, else we get errors. See https://github.com/dotnet/SqlClient/issues/3011
+                string tvpTypeName = DataTestUtility.GetLongName("tvpType"); // Need a unique name per scale, else we get errors. See https://github.com/dotnet/SqlClient/issues/3011
 
                 DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 23, 59, 59, TimeSpan.Zero);
 
