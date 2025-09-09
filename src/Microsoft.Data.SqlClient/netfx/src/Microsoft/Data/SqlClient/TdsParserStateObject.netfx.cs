@@ -26,9 +26,6 @@ namespace Microsoft.Data.SqlClient
         protected SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
         internal SNIPacket _sniAsyncAttnPacket = null;                // Packet to use to send Attn
 
-        // Async variables
-        private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
-
         // Used for blanking out password in trace.
         internal int _tracePasswordOffset = 0;
         internal int _tracePasswordLength = 0;
@@ -39,7 +36,7 @@ namespace Microsoft.Data.SqlClient
         // Constructors //
         //////////////////
 
-        protected TdsParserStateObject(TdsParser parser, SNIHandle physicalConnection, bool async)
+        protected TdsParserStateObject(TdsParser parser, TdsParserStateObject physicalConnection, bool async)
         {
             // Construct a MARS session
             Debug.Assert(parser != null, "no parser?");
@@ -56,12 +53,8 @@ namespace Microsoft.Data.SqlClient
             // Determine packet size based on physical connection buffer lengths.
             SetPacketSize(_parser._physicalStateObj._outBuff.Length);
 
-            ConsumerInfo myInfo = CreateConsumerInfo(async);
-            SQLDNSInfo cachedDNSInfo;
+            CreateSessionHandle(physicalConnection, async);
 
-            SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCache, out cachedDNSInfo);
-
-            _sessionHandle = new SNIHandle(myInfo, physicalConnection, _parser.Connection.ConnectionOptions.IPAddressPreference, cachedDNSInfo);
             if (IsFailedHandle())
             {
                 AddError(parser.ProcessSNIError(this));
@@ -90,112 +83,19 @@ namespace Microsoft.Data.SqlClient
         // General methods //
         /////////////////////
 
-        private ConsumerInfo CreateConsumerInfo(bool async)
-        {
-            ConsumerInfo myInfo = new ConsumerInfo();
-
-            Debug.Assert(_outBuff.Length == _inBuff.Length, "Unexpected unequal buffers.");
-
-            myInfo.defaultBufferSize = _outBuff.Length; // Obtain packet size from outBuff size.
-
-            if (async)
-            {
-                myInfo.readDelegate = SNILoadHandle.SingletonInstance.ReadAsyncCallbackDispatcher;
-                myInfo.writeDelegate = SNILoadHandle.SingletonInstance.WriteAsyncCallbackDispatcher;
-                _gcHandle = GCHandle.Alloc(this, GCHandleType.Normal);
-                myInfo.key = (IntPtr)_gcHandle;
-            }
-            return myInfo;
-        }
-
-        internal void CreatePhysicalSNIHandle(
-            string serverName,
-            TimeoutTimer timeout,
-            out byte[] instanceName,
-            ref string spn,
-            bool flushCache,
-            bool async,
-            bool fParallel,
-            TransparentNetworkResolutionState transparentNetworkResolutionState,
-            int totalTimeout,
-            SqlConnectionIPAddressPreference ipPreference,
-            string cachedFQDN,
-            string hostNameInCertificate = "")
-        {
-            ConsumerInfo myInfo = CreateConsumerInfo(async);
-
-            // serverName : serverInfo.ExtendedServerName
-            // may not use this serverName as key
-
-            _ = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out SQLDNSInfo cachedDNSInfo);
-
-            _sessionHandle = new SNIHandle(myInfo, serverName, ref spn, timeout.MillisecondsRemainingInt,
-                out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout,
-                ipPreference, cachedDNSInfo, hostNameInCertificate);
-        }
-
         internal uint CheckConnection() => SniNativeWrapper.SniCheckConnection(Handle);
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, after decrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
 
-            if ((0 == remaining || release) && _gcHandle.IsAllocated)
-            {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, FREEING HANDLE!", ObjectID);
-                _gcHandle.Free();
-            }
+            FreeGcHandle(remaining, release);
 
             // NOTE: TdsParserSessionPool may call DecrementPendingCallbacks on a TdsParserStateObject which is already disposed
             // This is not dangerous (since the stateObj is no longer in use), but we need to add a workaround in the assert for it
             Debug.Assert((remaining == -1 && _sessionHandle == null) || (0 <= remaining && remaining < 3), $"_pendingCallbacks values is invalid after decrementing: {remaining}");
             return remaining;
-        }
-
-        internal void Dispose()
-        {
-
-            SafeHandle packetHandle = _sniPacket;
-            SafeHandle sessionHandle = _sessionHandle;
-            SafeHandle asyncAttnPacket = _sniAsyncAttnPacket;
-            _sniPacket = null;
-            _sessionHandle = null;
-            _sniAsyncAttnPacket = null;
-
-            DisposeCounters();
-
-            if (sessionHandle != null || packetHandle != null)
-            {
-                // Comment CloseMARSSession
-                // UNDONE - if there are pending reads or writes on logical connections, we need to block
-                // here for the callbacks!!!  This only applies to async.  Should be fixed by async fixes for
-                // AD unload/exit.
-
-                // TODO: Make this a BID trace point!
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                { }
-                finally
-                {
-                    if (packetHandle != null)
-                    {
-                        packetHandle.Dispose();
-                    }
-                    if (asyncAttnPacket != null)
-                    {
-                        asyncAttnPacket.Dispose();
-                    }
-                    if (sessionHandle != null)
-                    {
-                        sessionHandle.Dispose();
-                        DecrementPendingCallbacks(true); // Will dispose of GC handle.
-                    }
-                }
-            }
-
-            DisposePacketCache();
         }
 
         /// <summary>
@@ -260,7 +160,6 @@ namespace Microsoft.Data.SqlClient
 
                             PacketHandle syncReadPacket = default;
                             bool readFromNetwork = true;
-                            RuntimeHelpers.PrepareConstrainedRegions();
                             bool shouldDecrement = false;
                             try
                             {
@@ -371,7 +270,6 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
-            RuntimeHelpers.PrepareConstrainedRegions();
             bool processFinallyBlock = true;
             try
             {
@@ -654,14 +552,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Async operation completion may be delayed (success pending).
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-            }
-            finally
-            {
-                sniError = WritePacket(packet, sync);
-            }
+            sniError = WritePacket(packet, sync);
 
             if (sniError == TdsEnums.SNI_SUCCESS_IO_PENDING)
             {
@@ -769,7 +660,6 @@ namespace Microsoft.Data.SqlClient
 
                 PacketHandle attnPacket = CreateAndSetAttentionPacket();
 
-                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
                     // Dev11 #344723: SqlClient stress test suspends System_Data!Tcp::ReadSync via a call to SqlDataReader::Close

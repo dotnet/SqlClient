@@ -17,14 +17,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
     {
         private readonly ITestOutputHelper _output;
         private static readonly string s_connectionString = ManualTesting.Tests.DataTestUtility.TCPConnectionString;
-        private static readonly string s_tableName = DataTestUtility.GetUniqueName("VectorTestTable");
-        private static readonly string s_bulkCopySrcTableName = DataTestUtility.GetUniqueName("VectorBulkCopyTestTable");
+        private static readonly string s_tableName = DataTestUtility.GetShortName("VectorTestTable");
+        private static readonly string s_bulkCopySrcTableName = DataTestUtility.GetShortName("VectorBulkCopyTestTable");
         private static readonly string s_bulkCopySrcTableDef = $@"(Id INT PRIMARY KEY IDENTITY, VectorData varchar(max) NULL)";
         private static readonly string s_tableDefinition = $@"(Id INT PRIMARY KEY IDENTITY, VectorData vector(3) NULL)";
         private static readonly string s_selectCmdString = $"SELECT VectorData FROM {s_tableName} ORDER BY Id DESC";
         private static readonly string s_insertCmdString = $"INSERT INTO {s_tableName} (VectorData) VALUES (@VectorData)";
         private static readonly string s_vectorParamName = $"@VectorData";
-        private static readonly string s_storedProcName = DataTestUtility.GetUniqueName("VectorsAsVarcharSp");
+        private static readonly string s_storedProcName = DataTestUtility.GetShortName("VectorsAsVarcharSp");
         private static readonly string s_storedProcBody = $@"
                 @InputVectorJson VARCHAR(MAX),   -- Input: Serialized float[] as JSON string
                 @OutputVectorJson VARCHAR(MAX) OUTPUT  -- Output: Echoed back from latest inserted row
@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer))]
         public void TestVectorDataInsertionAsVarchar()
         {
             float[] data = { 1.1f, 2.2f, 3.3f };
@@ -173,7 +173,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer))]
         public async Task TestVectorParameterInitializationAsync()
         {
             float[] data = { 1.1f, 2.2f, 3.3f };
@@ -245,7 +245,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             await ValidateInsertedDataAsync(conn, null);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer))]
         public void TestVectorDataReadsAsVarchar()
         {
             float[] data = { 1.1f, 2.2f, 3.3f };
@@ -302,7 +302,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.Throws<SqlNullValueException>(() => reader.GetFieldValue<string>(0));
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer))]
         public async Task TestVectorDataReadsAsVarcharAsync()
         {
             float[] data = { 1.1f, 2.2f, 3.3f };
@@ -359,7 +359,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             await Assert.ThrowsAsync<SqlNullValueException>(async () => await reader2.GetFieldValueAsync<string>(0));
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer))]
         public void TestStoredProcParamsForVectorAsVarchar()
         {
             // Test data
@@ -405,7 +405,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.True(outputParam.Value == DBNull.Value);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer))]
         public async Task TestStoredProcParamsForVectorAsVarcharAsync()
         {
             // Test data
@@ -456,7 +456,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.True(outputParam.Value == DBNull.Value);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer))]
         public void TestSqlBulkCopyForVectorAsVarchar()
         {
             //Setup source with test data and create destination table for bulkcopy.
@@ -521,7 +521,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.True(verifyReader.IsDBNull(0));
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer))]
         public async Task TestSqlBulkCopyForVectorAsVarcharAsync()
         {
             //Setup source with test data and create destination table for bulkcopy.
@@ -586,7 +586,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.True(await verifyReader.IsDBNullAsync(0));
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer))]
         public void TestInsertVectorsAsVarcharWithPrepare()
         {
             SqlConnection conn = new SqlConnection(s_connectionString);

@@ -15,11 +15,13 @@ namespace Microsoft.Data.SqlClient
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]
     internal partial class SqlClientEventSource : EventSource
     {
+        private static bool s_initialMetricsEnabled = false;
+
         // Defines the singleton instance for the Resources ETW provider
         public static readonly SqlClientEventSource Log = new();
 
         // Provides access to metrics.
-        public static readonly SqlClientMetrics Metrics = new SqlClientMetrics(Log);
+        public static readonly SqlClientMetrics Metrics = new SqlClientMetrics(Log, s_initialMetricsEnabled);
 
         private SqlClientEventSource() { }
 
@@ -33,7 +35,14 @@ namespace Microsoft.Data.SqlClient
 
             if (command.Command == EventCommand.Enable)
             {
-                Metrics.EnableEventCounters();
+                if (Metrics == null)
+                {
+                    s_initialMetricsEnabled = true;
+                }
+                else
+                {
+                    Metrics.EnableEventCounters();
+                }
             }
         }
 #endif
@@ -1130,7 +1139,7 @@ namespace Microsoft.Data.SqlClient
             => new TrySNIEventScope(SqlClientEventSource.Log.TrySNIScopeEnterEvent(className, memberName));
     }
 
-    internal readonly ref struct TryEventScope //: IDisposable
+    internal readonly ref struct TryEventScope : IDisposable
     {
         private readonly long _scopeId;
 

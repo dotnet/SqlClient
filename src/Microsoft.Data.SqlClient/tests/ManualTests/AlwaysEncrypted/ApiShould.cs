@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// <summary>
     /// Always Encrypted public API Manual tests.
     /// </summary>
-    public sealed class ApiShould : IClassFixture<PlatformSpecificTestContext>, IDisposable
+    public sealed class ApiShould : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
         private SQLSetupStrategy _fixture;
 
@@ -63,9 +63,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             "Operation cancelled by user."
         };
 
-        public ApiShould(PlatformSpecificTestContext context)
+        public ApiShould(SQLSetupStrategyCertStoreProvider context)
         {
-            _fixture = context.Fixture;
+            _fixture = context;
             _tableName = _fixture.ApiTestTable.Name;
 
             ApiTestTable _customKeyStoreProviderTable = _fixture.CustomKeyStoreProviderTestTable as ApiTestTable;
@@ -166,8 +166,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             const string firstColumnName = @"firstColumn";
             const string secondColumnName = @"secondColumn";
             const string thirdColumnName = @"thirdColumn";
-            string inputProcedureName = DataTestUtility.GetUniqueName("InputProc").ToString();
-            string outputProcedureName = DataTestUtility.GetUniqueName("OutputProc").ToString();
+            string inputProcedureName = DataTestUtility.GetShortName("InputProc").ToString();
+            string outputProcedureName = DataTestUtility.GetShortName("OutputProc").ToString();
             const int charColumnSize = 100;
             const int decimalColumnPrecision = 10;
             const int decimalColumnScale = 4;
@@ -722,7 +722,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public async Task TestExecuteReaderAsyncWithLargeQuery(string connectionString)
         {
-            string randomName = DataTestUtility.GetUniqueName(Guid.NewGuid().ToString().Replace("-", ""), false);
+            string randomName = DataTestUtility.GetShortName(Guid.NewGuid().ToString().Replace("-", ""), false);
             if (randomName.Length > 50)
             {
                 randomName = randomName.Substring(0, 50);
@@ -912,8 +912,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using SqlCommand sqlCommand = new("", sqlConnection, transaction: null,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
 
-            string procWithoutParams = DataTestUtility.GetUniqueName("EnclaveWithoutParams", withBracket: false);
-            string procWithParam = DataTestUtility.GetUniqueName("EnclaveWithParams", withBracket: false);
+            string procWithoutParams = DataTestUtility.GetShortName("EnclaveWithoutParams", withBracket: false);
+            string procWithParam = DataTestUtility.GetShortName("EnclaveWithParams", withBracket: false);
 
             try
             {

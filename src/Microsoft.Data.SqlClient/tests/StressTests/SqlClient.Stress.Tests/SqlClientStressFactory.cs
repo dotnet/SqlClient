@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Data.SqlClient;
 using Microsoft.Test.Data.SqlClient;
@@ -74,8 +75,6 @@ namespace Stress.Data.SqlClient
             }
         }
 
-
-
         internal void Terminate()
         {
             if (_multiSubnetSetupHelper != null)
@@ -94,10 +93,16 @@ namespace Stress.Data.SqlClient
             get { return false; }
         }
 
-
         public override string CreateBaseConnectionString(Random rnd, ConnectionStringOptions options)
         {
+            return CreateBaseConnectionStringBuilder(rnd, options).ToString();
+        }
+
+        private SqlConnectionStringBuilder CreateBaseConnectionStringBuilder(
+            Random rnd, ConnectionStringOptions options)
+        {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+            builder.ApplicationName = "StressTests";
 
             switch (_scenario)
             {
@@ -124,6 +129,12 @@ namespace Stress.Data.SqlClient
             if (integratedSecurity)
             {
                 builder.IntegratedSecurity = true;
+            }
+            else if (_source.EntraIdUser.Length != 0)
+            {
+                builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryPassword;
+                builder.UserID = _source.EntraIdUser;
+                builder.Password = _source.EntraIdPassword;
             }
             else
             {
@@ -212,7 +223,7 @@ namespace Stress.Data.SqlClient
             builder.TrustServerCertificate = true;
 
             builder.MaxPoolSize = 1000;
-            return builder.ToString();
+            return builder;
         }
 
         protected override int GetNumDifferentApplicationNames()
@@ -221,6 +232,75 @@ namespace Stress.Data.SqlClient
             // to also have many different application names. Getting connections from many different pools is not interesting to test
             // because it reduces the amount of multithreadedness within each pool.
             return 1;
+        }
+
+        public override void CreateDatabase(DataSource source)
+        {
+            var database = (source as SqlServerDataSource).Database;
+
+            Console.WriteLine($"Creating database [{database}]...");
+
+            var builder = CreateBaseConnectionStringBuilder(
+                null, ConnectionStringOptions.DisableMultiSubnetFailover);
+            builder.InitialCatalog = "master";
+
+            using SqlConnection connection = new(builder.ToString());
+            connection.Open();
+
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = $"create database [{database}]";
+            command.ExecuteNonQuery();
+
+            Console.WriteLine($"Created database [{database}]");
+        }
+
+        public override void DropDatabase(DataSource source)
+        {
+            var database = (source as SqlServerDataSource).Database;
+
+            Console.WriteLine($"Dropping database [{database}]...");
+
+            var builder = CreateBaseConnectionStringBuilder(
+                null, ConnectionStringOptions.DisableMultiSubnetFailover);
+            builder.InitialCatalog = "master";
+
+            using SqlConnection connection = new(builder.ToString());
+            connection.Open();
+
+            // Kill all connections currently using the database so we can drop
+            // it.
+            {
+                using SqlCommand command = connection.CreateCommand();
+                command.CommandText =
+                    $"select session_id from sys.dm_exec_sessions where database_id = DB_ID('{database}')";
+
+                List<short> sessionIds = new();
+                {
+                    using var reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        sessionIds.Add(reader.GetInt16(0));
+                    }
+                }
+
+                foreach (var sessionId in sessionIds)
+                {
+                    using var killCommand = connection.CreateCommand();
+                    killCommand.CommandText = $"kill {sessionId}";
+                    Console.WriteLine($"  Killing session {sessionId}...");
+                    killCommand.ExecuteNonQuery();
+                    Console.WriteLine($"  Killed session {sessionId}");
+                }
+            }
+
+            // Drop the database.
+            {
+                using SqlCommand command = connection.CreateCommand();
+                command.CommandText = $"drop database [{database}]";
+                command.ExecuteNonQuery();
+            }
+
+            Console.WriteLine($"Dropped database [{database}]");
         }
     }
 }
