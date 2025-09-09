@@ -368,9 +368,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlConnectionStringBuilder connectionStringBuilder = new(DataTestUtility.TCPConnectionString)
             {
-                InitialCatalog = "DoesNotExist0982532435423",
+                InitialCatalog = DataTestUtility.GetLongName("DoesNotExist", false),
                 Pooling = false,
-                ConnectTimeout=15
+                ConnectTimeout = 15,
+                ConnectRetryCount = 3
             };
             using SqlConnection sqlConnection = new(connectionStringBuilder.ConnectionString);
             Stopwatch timer = new();
