@@ -16,6 +16,47 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlCommand
     {
+
+        #region Internal Methods
+
+        /// <summary>
+        /// This function returns a list of the names of the custom providers currently registered.
+        /// </summary>
+        /// <returns>Combined list of provider names</returns>
+        // @TODO: 1) This should be a property
+        // @TODO: 2) There is no reason for this to be a List, or even for it to be copied
+        // @TODO: 3) This doesn't check for null _customColumnEncryptionKeyStoreProviders
+        internal List<string> GetColumnEncryptionCustomKeyStoreProvidersNames()
+        {
+            if (_customColumnEncryptionKeyStoreProviders.Count > 0)
+            {
+                return new List<string>(_customColumnEncryptionKeyStoreProviders.Keys);
+            }
+
+            return new List<string>(0);
+        }
+
+        /// <summary>
+        /// This function walks through the registered custom column encryption key store providers
+        /// and returns an object if found.
+        /// </summary>
+        /// <param name="providerName">Provider Name to be searched in custom provider dictionary.</param>
+        /// <param name="columnKeyStoreProvider">
+        /// If the provider is found, the matching provider is returned.
+        /// </param>
+        /// <returns><c>true</c> if the provider is found, else returns <c>false</c></returns>
+        internal bool TryGetColumnEncryptionKeyStoreProvider(
+            string providerName,
+            out SqlColumnEncryptionKeyStoreProvider columnKeyStoreProvider)
+        {
+            Debug.Assert(!string.IsNullOrWhiteSpace(providerName), "Provider name is invalid");
+            return _customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
+        }
+
+        #endregion
+
+        #region Private Methods
+
         private static void ValidateCustomProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
         {
             // Throw when the provided dictionary is null.
@@ -886,5 +927,7 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.BatchedUpdateColumnEncryptionSettingMismatch();
             }
         }
+
+        #endregion
     }
 }
