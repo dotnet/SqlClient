@@ -105,7 +105,7 @@ namespace Microsoft.Data.SqlClient
         /// false. This may also be used to set other behavior which overrides connection level
         /// setting.
         /// </summary>
-        // @TODO: Make auto-property
+        // @TODO: Make auto-property, also make nullable.
         private SqlCommandColumnEncryptionSetting _columnEncryptionSetting =
             SqlCommandColumnEncryptionSetting.UseConnectionSetting;
         
@@ -267,6 +267,13 @@ namespace Microsoft.Data.SqlClient
         /// DbDataAdapter.
         /// </summary>
         private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
+
+        /// <summary>
+        /// Indicates if the column encryption setting was set at-least once in the batch rpc mode,
+        /// when using AddBatchCommand.
+        /// </summary>
+        // @TODO: can be replaced by using nullable for _columnEncryptionSetting.
+        private bool _wasBatchModeColumnEncryptionSettingSetOnce;
 
         #endregion
 
