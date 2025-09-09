@@ -13309,6 +13309,8 @@ namespace Microsoft.Data.SqlClient
             char[] temp = null;
             bool buffIsRented = false;
             int startOffset = 0;
+
+            stateObj.RequestContinue(true);
             (bool canContinue, bool isStarting, bool isContinuing) = stateObj.GetSnapshotStatuses();
 
             if (canContinue)
