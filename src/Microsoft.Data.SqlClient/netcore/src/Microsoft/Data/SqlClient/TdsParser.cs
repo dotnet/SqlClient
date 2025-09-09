@@ -8887,6 +8887,7 @@ namespace Microsoft.Data.SqlClient
         private int ApplyFeatureExData(TdsEnums.FeatureExtension requestedFeatures,
                                         SessionData recoverySessionData,
                                         FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
+                                        byte[] userAgentJsonPayload,
                                         bool useFeatureExt,
                                         int length,
                                         bool write = false)
@@ -8937,6 +8938,11 @@ namespace Microsoft.Data.SqlClient
                 if ((requestedFeatures & TdsEnums.FeatureExtension.VectorSupport) != 0)
                 {
                     length += WriteVectorSupportFeatureRequest(write);
+                }
+
+                if ((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) != 0)
+                {
+                    length += WriteUserAgentFeatureRequest(userAgentJsonPayload, write);
                 }
 
                 length++; // for terminator

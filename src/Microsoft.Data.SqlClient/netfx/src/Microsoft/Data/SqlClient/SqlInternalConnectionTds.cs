@@ -213,7 +213,7 @@ namespace Microsoft.Data.SqlClient
         internal bool IsVectorSupportEnabled = false;
 
         // User Agent Flag
-        internal bool IsUserAgentEnabled = true;
+        internal bool IsUserAgentSupportEnabled = true;
 
         // TCE flags
         internal byte _tceVersionSupported;
