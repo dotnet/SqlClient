@@ -153,10 +153,6 @@ namespace Microsoft.Data.SqlClient
                 return _cachedAsyncState;
             }
         }
-
-        // number of rows affected by sp_describe_parameter_encryption.
-        // The below line is used only for debug asserts and not exposed publicly or impacts functionality otherwise.
-        private int _rowsAffectedBySpDescribeParameterEncryption = -1;
         
         private List<_SqlRPC> _RPCList;
         private int _currentlyExecutingBatch;
@@ -2037,29 +2033,6 @@ namespace Microsoft.Data.SqlClient
             if (stateObj != null)
             {
                 stateObj.OnConnectionClosed();
-            }
-        }
-
-        /// <summary>
-        /// Get or add to the number of records affected by SpDescribeParameterEncryption.
-        /// The below line is used only for debug asserts and not exposed publicly or impacts functionality otherwise.
-        /// </summary>
-        internal int RowsAffectedByDescribeParameterEncryption
-        {
-            get
-            {
-                return _rowsAffectedBySpDescribeParameterEncryption;
-            }
-            set
-            {
-                if (-1 == _rowsAffectedBySpDescribeParameterEncryption)
-                {
-                    _rowsAffectedBySpDescribeParameterEncryption = value;
-                }
-                else if (0 < value)
-                {
-                    _rowsAffectedBySpDescribeParameterEncryption += value;
-                }
             }
         }
 
