@@ -228,6 +228,14 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Use int? and replace -1 usage with null
         private int _rowsAffected = -1;
 
+        /// <summary>
+        /// number of rows affected by sp_describe_parameter_encryption.
+        /// </summary>
+        // @TODO: Use int? and replace -1 usage with null
+        // @TODO: This is only used for debug asserts?
+        // @TODO: Rename to drop Sp
+        private int _rowsAffectedBySpDescribeParameterEncryption = -1;
+
         // @TODO: Rename to match naming convention
         private _SqlRPC[] _sqlRPCParameterEncryptionReqArray;
 
@@ -680,6 +688,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool InPrepare => _inPrepare;
 
+        // @TODO: Rename RowsAffectedInternal or
         internal int InternalRecordsAffected
         {
             get => _rowsAffected;
@@ -705,6 +714,26 @@ namespace Microsoft.Data.SqlClient
 
         // @TODO: Rename to match conventions.
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
+
+        /// <summary>
+        /// Get or add to the number of records affected by SpDescribeParameterEncryption.
+        /// The below line is used only for debug asserts and not exposed publicly or impacts functionality otherwise.
+        /// </summary>
+        internal int RowsAffectedByDescribeParameterEncryption
+        {
+            get => _rowsAffectedBySpDescribeParameterEncryption;
+            set
+            {
+                if (_rowsAffectedBySpDescribeParameterEncryption == -1)
+                {
+                    _rowsAffectedBySpDescribeParameterEncryption = value;
+                }
+                else if (value > 0)
+                {
+                    _rowsAffectedBySpDescribeParameterEncryption += value;
+                }
+            }
+        }
 
         internal SqlStatistics Statistics
         {
