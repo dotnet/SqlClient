@@ -119,6 +119,7 @@ namespace Microsoft.Data.SqlClient
                                                             capacity: 1,
                                                             comparer: StringComparer.OrdinalIgnoreCase);
 
+        private static readonly Action<object> s_openAsyncCancel = OpenAsyncCancel;
         private static readonly Action<Task<object>, object> s_openAsyncComplete = OpenAsyncComplete;
 
         private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
@@ -1768,7 +1769,7 @@ namespace Microsoft.Data.SqlClient
                         CancellationTokenRegistration registration = new CancellationTokenRegistration();
                         if (cancellationToken.CanBeCanceled)
                         {
-                            registration = cancellationToken.Register(() => completion.TrySetCanceled());
+                            registration = cancellationToken.Register(s_openAsyncCancel, completion);
                         }
                         OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, overrides, registration);
                         _currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(completion, result.Task);
@@ -1808,6 +1809,11 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.OpenAsyncComplete | Info | Correlation | Activity Id {0}, Client Connection Id {1}", ActivityCorrelator.Current, connection?.ClientConnectionId);
                 s_diagnosticListener.WriteConnectionOpenAfter(operationId, connection);
             }
+        }
+
+        private static void OpenAsyncCancel(object state)
+        {
+            ((TaskCompletionSource<DbConnectionInternal>)state).TrySetCanceled();
         }
 
         private class OpenAsyncRetry
