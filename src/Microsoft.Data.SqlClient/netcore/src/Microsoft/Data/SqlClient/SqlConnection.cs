@@ -40,6 +40,10 @@ namespace Microsoft.Data.SqlClient
     [DesignerCategory("")]
     public sealed partial class SqlConnection : DbConnection, ICloneable
     {
+#if NETFRAMEWORK
+        private static readonly object EventInfoMessage = new object();
+#endif
+
         private bool _AsyncCommandInProgress;
 
         // SQLStatistics support
@@ -1143,7 +1147,21 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/InfoMessage/*' />
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_InfoMessage)]
         [ResDescription(StringsHelper.ResourceNames.DbConnection_InfoMessage)]
+#if NET
         public event SqlInfoMessageEventHandler InfoMessage;
+#else
+        public event SqlInfoMessageEventHandler InfoMessage
+        {
+            add
+            {
+                Events.AddHandler(EventInfoMessage, value);
+            }
+            remove
+            {
+                Events.RemoveHandler(EventInfoMessage, value);
+            }
+        }
+#endif
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/FireInfoMessageEventOnUserErrors/*' />
         public bool FireInfoMessageEventOnUserErrors
@@ -2219,7 +2237,12 @@ namespace Microsoft.Data.SqlClient
         internal void OnInfoMessage(SqlInfoMessageEventArgs imevent, out bool notified)
         {
             SqlClientEventSource.Log.TryTraceEvent("SqlConnection.OnInfoMessage | API | Info | Object Id {0}, Message '{1}'", ObjectID, imevent.Message);
+#if NET
             SqlInfoMessageEventHandler handler = InfoMessage;
+#else
+            SqlInfoMessageEventHandler handler = (SqlInfoMessageEventHandler)Events[EventInfoMessage];
+#endif
+
             if (handler != null)
             {
                 notified = true;
