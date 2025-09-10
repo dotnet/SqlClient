@@ -1103,7 +1103,11 @@ namespace Microsoft.Data.SqlClient
             // Check if the usage of AccessToken has the conflict with credential
             if (_credential != null)
             {
+#if NET
                 throw ADP.InvalidMixedUsageOfCredentialAndAccessToken();
+#else
+                throw ADP.InvalidMixedUsageOfAccessTokenAndCredential();
+#endif
             }
 
             if (_accessTokenCallback != null)
@@ -1178,6 +1182,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool ForceNewConnection { get; set; }
 
+#if NET
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OnStateChange/*' />
         protected override void OnStateChange(StateChangeEventArgs stateChange)
         {
@@ -1186,6 +1191,7 @@ namespace Microsoft.Data.SqlClient
                 base.OnStateChange(stateChange);
             }
         }
+#endif
 
         //
         // PUBLIC METHODS
@@ -1438,6 +1444,12 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
+
+#if NETFRAMEWORK
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistDistributedTransaction/*' />
+        public void EnlistDistributedTransaction(System.EnterpriseServices.ITransaction transaction) =>
+            EnlistDistributedTransactionHelper(transaction);
+#endif
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Open/*' />
         public override void Open() =>
@@ -1864,11 +1876,13 @@ namespace Microsoft.Data.SqlClient
             return InnerConnection.GetSchema(ConnectionFactory, PoolGroup, this, collectionName, restrictionValues);
         }
 
+#if NET
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CanCreateBatch/*'/>
         public override bool CanCreateBatch => true;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbBatch/*'/>
         protected override DbBatch CreateDbBatch() => new SqlBatch(this);
+#endif
 
         private class OpenAsyncRetry
         {
