@@ -130,7 +130,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("Georgian_Modern_Sort_CI_AS")]
         public static void CollatedDataReaderTest(string collation)
         {
-            string dbName = DataTestUtility.GetUniqueName("CollationTest", false);
+            string dbName = DataTestUtility.GetShortName("CollationTest", false);
 
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {

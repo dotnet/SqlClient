@@ -12,8 +12,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class WriteToServerTest
     {
         private readonly string _connectionString = null;
-        private readonly string _tableName1 = DataTestUtility.GetUniqueName("Bulk1");
-        private readonly string _tableName2 = DataTestUtility.GetUniqueName("Bulk2");
+        private readonly string _tableName1 = DataTestUtility.GetShortName("Bulk1");
+        private readonly string _tableName2 = DataTestUtility.GetShortName("Bulk2");
 
         public WriteToServerTest()
         {

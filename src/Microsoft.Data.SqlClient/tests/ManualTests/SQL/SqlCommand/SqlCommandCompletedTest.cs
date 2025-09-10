@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void VerifyStatmentCompletedCalled()
         {
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("stmt");
+            string tableName = DataTestUtility.GetLongName("stmt");
 
             using (var conn = new SqlConnection(s_connStr))
             using (var cmd = conn.CreateCommand())
