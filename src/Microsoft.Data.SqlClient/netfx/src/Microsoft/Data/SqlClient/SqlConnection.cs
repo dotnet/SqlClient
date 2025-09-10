@@ -279,9 +279,9 @@ namespace Microsoft.Data.SqlClient
         {
             if (s_systemColumnEncryptionKeyStoreProviders.Count > 0)
             {
-                return new List<string>(s_systemColumnEncryptionKeyStoreProviders.Keys);
+                return [.. s_systemColumnEncryptionKeyStoreProviders.Keys];
             }
-            return new List<string>(0);
+            return [];
         }
 
         /// <summary>
@@ -294,13 +294,13 @@ namespace Microsoft.Data.SqlClient
             if (_customColumnEncryptionKeyStoreProviders is not null &&
                 _customColumnEncryptionKeyStoreProviders.Count > 0)
             {
-                return new List<string>(_customColumnEncryptionKeyStoreProviders.Keys);
+                return [.. _customColumnEncryptionKeyStoreProviders.Keys];
             }
             if (s_globalCustomColumnEncryptionKeyStoreProviders is not null)
             {
-                return new List<string>(s_globalCustomColumnEncryptionKeyStoreProviders.Keys);
+                return [.. s_globalCustomColumnEncryptionKeyStoreProviders.Keys];
             }
-            return new List<string>(0);
+            return [];
         }
 
         /// <summary>
