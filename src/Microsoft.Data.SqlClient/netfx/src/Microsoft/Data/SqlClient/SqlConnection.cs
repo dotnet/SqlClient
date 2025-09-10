@@ -664,6 +664,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionTimeout/*' />
         [ResDescription(StringsHelper.ResourceNames.SqlConnection_ConnectionTimeout)]
+        [ResCategory(StringsHelper.ResourceNames.SqlConnection_DataSource)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public override int ConnectionTimeout
         {
@@ -755,6 +756,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Database/*' />
         [ResDescription(StringsHelper.ResourceNames.SqlConnection_Database)]
+        [ResCategory(StringsHelper.ResourceNames.SqlConnection_DataSource)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public override string Database
         {
@@ -831,6 +833,7 @@ namespace Microsoft.Data.SqlClient
         [Browsable(true)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         [ResDescription(StringsHelper.ResourceNames.SqlConnection_DataSource)]
+        [ResCategory(StringsHelper.ResourceNames.SqlConnection_DataSource)]
         public override string DataSource
         {
             get

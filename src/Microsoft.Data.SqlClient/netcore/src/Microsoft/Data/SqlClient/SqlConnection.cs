@@ -583,6 +583,9 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionString/*' />
         [DefaultValue("")]
+#pragma warning disable 618 // ignore obsolete warning about RecommendedAsConfigurable to use SettingsBindableAttribute
+        [RecommendedAsConfigurable(true)]
+#pragma warning restore 618
         [SettingsBindableAttribute(true)]
         [RefreshProperties(RefreshProperties.All)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
