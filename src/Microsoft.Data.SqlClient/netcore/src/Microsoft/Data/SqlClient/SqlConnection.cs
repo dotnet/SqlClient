@@ -23,9 +23,12 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.SqlServer.Server;
+#if NETFRAMEWORK
+using System.Security.Permissions;
+#endif
 
 #if NETFRAMEWORK
-[assembly: InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey=" + Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey=" + Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 #endif
@@ -961,8 +964,11 @@ namespace Microsoft.Data.SqlClient
                 // Note: In Longhorn you'll be able to rename a machine without
                 // rebooting.  Therefore, don't cache this machine name.
                 SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                string result = constr?.WorkstationId ?? Environment.MachineName;
-                return result;
+
+                return constr?.WorkstationId
+                    // Getting machine name requires Environment.Permission.
+                    // User must have that permission in order to retrieve this
+                    ?? Environment.MachineName;
             }
         }
 
@@ -1260,6 +1266,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearAllPools/*' />
         public static void ClearAllPools()
         {
+#if NETFRAMEWORK
+            (new SqlClientPermission(PermissionState.Unrestricted)).Demand();
+#endif
             SqlConnectionFactory.Instance.ClearAllPools();
         }
 
@@ -1271,6 +1280,9 @@ namespace Microsoft.Data.SqlClient
             DbConnectionOptions connectionOptions = connection.UserConnectionOptions;
             if (connectionOptions != null)
             {
+#if NETFRAMEWORK
+                connectionOptions.DemandPermission();
+#endif
                 SqlConnectionFactory.Instance.ClearPool(connection);
             }
         }
@@ -1810,6 +1822,9 @@ namespace Microsoft.Data.SqlClient
         public override DataTable GetSchema(string collectionName, string[] restrictionValues)
         {
             SqlClientEventSource.Log.TryTraceEvent("SqlConnection.GetSchema | Info | Object Id {0}, Collection Name '{1}'", ObjectID, collectionName);
+#if NETFRAMEWORK
+            SqlConnection.ExecutePermission.Demand();
+#endif
             return InnerConnection.GetSchema(ConnectionFactory, PoolGroup, this, collectionName, restrictionValues);
         }
 
@@ -2202,6 +2217,11 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDbFilename);
                 }
 
+#if NETFRAMEWORK
+                PermissionSet permissionSet = connectionOptions.CreatePermissionSet();
+                permissionSet.Demand();
+#endif
+
                 ChangePassword(connectionString, connectionOptions, null, newPassword, null);
             }
         }
@@ -2258,6 +2278,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDbFilename);
                 }
+
+#if NETFRAMEWORK
+                PermissionSet permissionSet = connectionOptions.CreatePermissionSet();
+                permissionSet.Demand();
+#endif
 
                 ChangePassword(connectionString, connectionOptions, credential, null, newSecurePassword);
             }
