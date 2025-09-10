@@ -1500,6 +1500,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             ForceNewConnection = false;
                         }
+
                         SqlClientEventSource.Log.TryTraceEvent("SqlConnection.ReconnectAsync | Info | Reconnection succeeded. Client Connection Id {0} -> {1}", _originalConnectionId, ClientConnectionId);
                         return;
                     }
@@ -1695,6 +1696,7 @@ namespace Microsoft.Data.SqlClient
         {
             long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("SqlConnection.InternalOpenAsync | API | Object Id {0}", ObjectID);
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.InternalOpenAsync | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
+
             try
             {
                 Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
@@ -2160,6 +2162,8 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw;
                     }
+
+                    ADP.TraceExceptionWithoutRethrow(e);
                 }
             }
             else
@@ -2177,7 +2181,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (string.IsNullOrEmpty(connectionString))
                 {
-                    throw SQL.ChangePasswordArgumentMissing(nameof(newPassword));
+                    throw SQL.ChangePasswordArgumentMissing(nameof(connectionString));
                 }
                 if (string.IsNullOrEmpty(newPassword))
                 {
