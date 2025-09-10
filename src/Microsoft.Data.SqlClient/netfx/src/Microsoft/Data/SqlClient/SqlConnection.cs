@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient
         private string _accessToken; // Access Token to be used for token based authentication
 
         // connection resiliency
-        private object _reconnectLock = new object();
+        private object _reconnectLock;
         internal Task _currentReconnectionTask;
         private Task _asyncWaitingForReconnection; // current async task waiting for reconnection in non-MARS connections
         private Guid _originalConnectionId = Guid.Empty;
@@ -1598,6 +1598,12 @@ namespace Microsoft.Data.SqlClient
                             if (cData._unrecoverableStatesCount == 0)
                             {
                                 bool callDisconnect = false;
+
+                                if (_reconnectLock is null)
+                                {
+                                    Interlocked.CompareExchange(ref _reconnectLock, new object(), null);
+                                }
+
                                 lock (_reconnectLock)
                                 {
                                     tdsConn.CheckEnlistedTransactionBinding();
