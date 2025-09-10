@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient
         private Guid _originalConnectionId = Guid.Empty;
         private CancellationTokenSource _reconnectionCancellationSource;
         internal SessionData _recoverySessionData;
-        internal bool _suppressStateChangeForReconnection = false; // Do not use for anything else ! Value will be overwritten by CR process
+        internal bool _suppressStateChangeForReconnection;
         internal WindowsIdentity _lastIdentity;
         internal WindowsIdentity _impersonateIdentity;
         private int _reconnectCount;
@@ -1398,17 +1398,14 @@ namespace Microsoft.Data.SqlClient
         }
 
         private void DisposeMe(bool disposing)
-        { // MDAC 65459
-            // clear credential and AccessToken here rather than in IDisposable.Dispose as these are specific to SqlConnection only
-            //  IDisposable.Dispose is generated code from a template and used by other providers as well
+        {
             _credential = null;
             _accessToken = null;
 
             if (!disposing)
             {
-                // DevDiv2 Bug 457934:SQLConnection leaks when not disposed
-                // http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/457934
-                // For non-pooled connections we need to make sure that if the SqlConnection was not closed, then we release the GCHandle on the stateObject to allow it to be GCed
+                // For non-pooled connections we need to make sure that if the SqlConnection was not closed,
+                // then we release the GCHandle on the stateObject to allow it to be GCed
                 // For pooled connections, we will rely on the pool reclaiming the connection
                 var innerConnection = (InnerConnection as SqlInternalConnectionTds);
                 if ((innerConnection != null) && (!innerConnection.ConnectionOptions.Pooling))
@@ -2007,7 +2004,7 @@ namespace Microsoft.Data.SqlClient
                     return false;
                 }
             }
-            // does not require GC.KeepAlive(this) because of OnStateChange
+            // does not require GC.KeepAlive(this) because of ReRegisterForFinalize below.
 
             var tdsInnerConnection = (SqlInternalConnectionTds)InnerConnection;
 
@@ -2214,7 +2211,7 @@ namespace Microsoft.Data.SqlClient
                     handler(this, imevent);
                 }
                 catch (Exception e)
-                { // MDAC 53175
+                {
                     if (!ADP.IsCatchableOrSecurityExceptionType(e))
                     {
                         throw;
@@ -2268,7 +2265,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='/docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewSecurePassword/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewSecurePassword/*' />
         public static void ChangePassword(string connectionString, SqlCredential credential, SecureString newSecurePassword)
         {
             using (TryEventScope.Create("SqlConnection.ChangePassword | API | Password change requested."))

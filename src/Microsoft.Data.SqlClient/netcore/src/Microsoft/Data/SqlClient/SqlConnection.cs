@@ -86,6 +86,7 @@ namespace Microsoft.Data.SqlClient
         private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
 
         private Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
+
         private SspiContextProvider _sspiContextProvider;
 
         internal bool HasColumnEncryptionKeyStoreProvidersRegistered =>
@@ -460,41 +461,39 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
+                if (value)
                 {
-                    if (value)
+                    // start
+                    if (ConnectionState.Open == State)
                     {
-                        // start
+                        if (_statistics == null)
+                        {
+                            _statistics = new SqlStatistics();
+                            _statistics._openTimestamp = ADP.TimerCurrent();
+                        }
+                        // set statistics on the parser
+                        // update timestamp;
+                        Debug.Assert(Parser != null, "Where's the parser?");
+                        Parser.Statistics = _statistics;
+                    }
+                }
+                else
+                {
+                    // stop
+                    if (_statistics != null)
+                    {
                         if (ConnectionState.Open == State)
                         {
-                            if (_statistics == null)
-                            {
-                                _statistics = new SqlStatistics();
-                                _statistics._openTimestamp = ADP.TimerCurrent();
-                            }
-                            // set statistics on the parser
+                            // remove statistics from parser
                             // update timestamp;
-                            Debug.Assert(Parser != null, "Where's the parser?");
-                            Parser.Statistics = _statistics;
+                            TdsParser parser = Parser;
+                            Debug.Assert(parser != null, "Where's the parser?");
+                            parser.Statistics = null;
+                            _statistics._closeTimestamp = ADP.TimerCurrent();
                         }
                     }
-                    else
-                    {
-                        // stop
-                        if (_statistics != null)
-                        {
-                            if (ConnectionState.Open == State)
-                            {
-                                // remove statistics from parser
-                                // update timestamp;
-                                TdsParser parser = Parser;
-                                Debug.Assert(parser != null, "Where's the parser?");
-                                parser.Statistics = null;
-                                _statistics._closeTimestamp = ADP.TimerCurrent();
-                            }
-                        }
-                    }
-                    _collectstats = value;
                 }
+                _collectstats = value;
             }
         }
 
@@ -1399,10 +1398,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Open/*' />
-        public override void Open()
-        {
+        public override void Open() =>
             Open(SqlConnectionOverrides.None);
-        }
 
         private bool TryOpenWithRetry(TaskCompletionSource<DbConnectionInternal> retry, SqlConnectionOverrides overrides)
             => RetryLogicProvider.Execute(this, () => TryOpen(retry, overrides));
@@ -1977,6 +1974,7 @@ namespace Microsoft.Data.SqlClient
                 tdsInnerConnection.Parser.Statistics = null;
                 _statistics = null; // in case of previous Open/Close/reset_CollectStats sequence
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
 
             return true;
         }
