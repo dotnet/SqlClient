@@ -25,6 +25,7 @@ using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.SqlServer.Server;
 #if NETFRAMEWORK
 using System.Security.Permissions;
+using System.Security.Principal;
 #endif
 
 #if NETFRAMEWORK
@@ -63,6 +64,10 @@ namespace Microsoft.Data.SqlClient
         private CancellationTokenSource _reconnectionCancellationSource;
         internal SessionData _recoverySessionData;
         internal bool _suppressStateChangeForReconnection;
+#if NETFRAMEWORK
+        internal WindowsIdentity _lastIdentity;
+        internal WindowsIdentity _impersonateIdentity;
+#endif
         private int _reconnectCount;
 
         // Retry Logic
@@ -1363,6 +1368,13 @@ namespace Microsoft.Data.SqlClient
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
+#if NETFRAMEWORK
+                    // Dispose windows identity once connection is closed.
+                    if (_lastIdentity != null)
+                    {
+                        _lastIdentity.Dispose();
+                    }
+#endif
 
                     // we only want to log this if the previous state of the
                     // connection is open, as that's the valid use-case
@@ -1495,6 +1507,9 @@ namespace Microsoft.Data.SqlClient
                     }
                     try
                     {
+#if NETFRAMEWORK
+                        _impersonateIdentity = _lastIdentity;
+#endif
                         try
                         {
                             ForceNewConnection = true;
@@ -1507,6 +1522,9 @@ namespace Microsoft.Data.SqlClient
                         }
                         finally
                         {
+#if NETFRAMEWORK
+                            _impersonateIdentity = null;
+#endif
                             ForceNewConnection = false;
                         }
 
@@ -1932,6 +1950,7 @@ namespace Microsoft.Data.SqlClient
         private bool TryOpen(TaskCompletionSource<DbConnectionInternal> retry, SqlConnectionOverrides overrides = SqlConnectionOverrides.None)
         {
             SqlConnectionString connectionOptions = (SqlConnectionString)ConnectionOptions;
+            bool result = false;
 
             if (LocalAppContextSwitches.GlobalizationInvariantMode)
             {
@@ -1950,6 +1969,45 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.CredentialsNotProvided(connectionOptions.Authentication);
             }
 
+#if NETFRAMEWORK
+            if (_impersonateIdentity != null)
+            {
+                using (WindowsIdentity identity = DbConnectionPoolIdentity.GetCurrentWindowsIdentity())
+                {
+                    if (_impersonateIdentity.User == identity.User)
+                    {
+                        result = TryOpenInner(retry);
+                    }
+                    else
+                    {
+                        using (WindowsImpersonationContext context = _impersonateIdentity.Impersonate())
+                        {
+                            result = TryOpenInner(retry);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (this.UsesIntegratedSecurity(connectionOptions) || this.UsesActiveDirectoryIntegrated(connectionOptions))
+                {
+                    _lastIdentity = DbConnectionPoolIdentity.GetCurrentWindowsIdentity();
+                }
+                else
+                {
+                    _lastIdentity = null;
+                }
+                result = TryOpenInner(retry);
+            }
+#else
+            result = TryOpenInner(retry);
+#endif
+
+            return result;
+        }
+
+        private bool TryOpenInner(TaskCompletionSource<DbConnectionInternal> retry)
+        {
             if (ForceNewConnection)
             {
                 if (!InnerConnection.TryReplaceConnection(this, ConnectionFactory, retry, UserConnectionOptions))
