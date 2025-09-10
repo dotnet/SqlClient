@@ -99,6 +99,12 @@
     <Compile Include="$(CommonSourceRoot)\Microsoft\Data\ProviderBase\DbConnectionClosed.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionClosed.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncrypted\ColumnMasterKeyMetadata.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncrypted\ColumnMasterKeyMetadata.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncrypted\EncryptedColumnEncryptionKeyParameters.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncrypted\EncryptedColumnEncryptionKeyParameters.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\ChannelDbConnectionPool.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\ChannelDbConnectionPool.cs</Link>
     </Compile>
