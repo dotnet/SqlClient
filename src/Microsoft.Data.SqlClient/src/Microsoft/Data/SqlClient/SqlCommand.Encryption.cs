@@ -260,6 +260,165 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
+        /// Constructs the sp_describe_parameter_encryption request with the values from the original RPC call.
+        /// Prototype for &lt;sp_describe_parameter_encryption&gt; is
+        /// exec sp_describe_parameter_encryption @tsql=N'[SQL Statement]', @params=N'@p1 varbinary(256)'
+        /// </summary>
+        // @TODO: Why not just return the RPC?
+        // @TODO: Can we have a separate method path for batch RPC mode?
+        private void PrepareDescribeParameterEncryptionRequest(
+            _SqlRPC originalRpcRequest,
+            ref _SqlRPC describeParameterEncryptionRequest,
+            byte[] attestationParameters = null)
+        {
+            Debug.Assert(originalRpcRequest is not null);
+
+            // 1) Construct the RPC request for sp_describe_parameter_encryption
+            // sp_describe_parameter_encryption(
+            //    tsql,
+            //    params,
+            //    [attestationParameters] - used to identify and execute attestation protocol
+            // )
+            // @TODO: forSpDescribeParameterEncryption should just be a separate method.
+            GetRPCObject(
+                systemParamCount: attestationParameters is null ? 2 : 3,
+                userParamCount: 0,
+                ref describeParameterEncryptionRequest,
+                forSpDescribeParameterEncryption: true);
+            describeParameterEncryptionRequest.rpcName = "sp_describe_parameter_encryption";
+
+            // 2) Prepare @tsql parameter
+            string text;
+            if (_batchRPCMode)
+            {
+                // In _batchRPCMode, The actual T-SQL query is in the first parameter and not
+                // present as the rpcName, as is the case with non-_batchRPCMode.
+                Debug.Assert(originalRpcRequest.systemParamCount > 0,
+                    "originalRpcRequest didn't have at-least 1 parameter in BatchRPCMode, in PrepareDescribeParameterEncryptionRequest.");
+
+                text = (string)originalRpcRequest.systemParams[0].Value;
+
+                SqlParameter tsqlParam = describeParameterEncryptionRequest.systemParams[0];
+                tsqlParam.SqlDbType = (text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
+                    ? SqlDbType.NVarChar
+                    : SqlDbType.NText; // @TODO: Isn't this check being done in a lot of places? Can we factor it out to a utility?
+                tsqlParam.Value = text; // @TODO: Uh... isn't this the same value as it was before?
+                tsqlParam.Size = text.Length;
+                tsqlParam.Direction = ParameterDirection.Input;
+            }
+            else
+            {
+                text = originalRpcRequest.rpcName;
+
+                if (CommandType is CommandType.StoredProcedure)
+                {
+                    // For stored procedures, we need to prepare @tsql in the following format:
+                    // N'EXEC sp_name @param1=@param1, @param2=@param2, ..., @paramN=@paramN'
+                    describeParameterEncryptionRequest.systemParams[0] =
+                        BuildStoredProcedureStatementForColumnEncryption(text, originalRpcRequest.userParams);
+                }
+                else
+                {
+                    SqlParameter tsqlParam = describeParameterEncryptionRequest.systemParams[0];
+                    tsqlParam.SqlDbType = (text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
+                        ? SqlDbType.NVarChar
+                        : SqlDbType.NText;
+                    tsqlParam.Value = text;
+                    tsqlParam.Size = text.Length;
+                    tsqlParam.Direction = ParameterDirection.Input;
+                }
+            }
+
+            Debug.Assert(text is not null, "@tsql parameter is null in PrepareDescribeParameterEncryptionRequest.");
+
+            // 3) Prepare @params parameter
+            string parameterList;
+            if (_batchRPCMode)
+            {
+                // In _batchRPCMode, the input parameters start at parameters[1], parameters[0] is
+                // the T-SQL statement. rpcName is sp_executesql, and it is already in the format
+                // expected for BuildParamList, which is not the case with non-_batchRPCMode.
+                // systemParamCount == 2 when user parameters are supplied to BuildExecuteSql.
+                parameterList = originalRpcRequest.systemParamCount > 1
+                    ? (string)originalRpcRequest.systemParams[1].Value
+                    : null; // @TODO: If it gets set to this, we'll have a null exception later
+            }
+            else
+            {
+                // Need to create new parameters as we cannot have the same parameter being used in
+                // two SqlCommand objects.
+                SqlParameterCollection tempCollection = new SqlParameterCollection();
+                if (originalRpcRequest.userParams is not null)
+                {
+                    for (int i = 0; i < originalRpcRequest.userParams.Count; i++)
+                    {
+                        // @TODO: Use clone??
+                        SqlParameter param = originalRpcRequest.userParams[i];
+                        SqlParameter paramCopy = new SqlParameter
+                        {
+                            CompareInfo = param.CompareInfo,
+                            Direction = param.Direction,
+                            IsNullable = param.IsNullable,
+                            LocaleId = param.LocaleId,
+                            Offset = param.Offset,
+                            ParameterName = param.ParameterName,
+                            Precision = param.Precision,
+                            Scale = param.Scale,
+                            Size = param.Size,
+                            SourceColumn = param.SourceColumn,
+                            SourceColumnNullMapping = param.SourceColumnNullMapping,
+                            SourceVersion = param.SourceVersion,
+                            SqlDbType = param.SqlDbType,
+                            TypeName = param.TypeName,
+                            UdtTypeName = param.UdtTypeName,
+                            Value = param.Value,
+                            XmlSchemaCollectionDatabase = param.XmlSchemaCollectionDatabase,
+                            XmlSchemaCollectionName = param.XmlSchemaCollectionName,
+                            XmlSchemaCollectionOwningSchema = param.XmlSchemaCollectionOwningSchema,
+                        };
+                        tempCollection.Add(paramCopy);
+                    }
+                }
+
+                Debug.Assert(_stateObj is null,
+                    "_stateObj should be null at this time, in PrepareDescribeParameterEncryptionRequest.");
+                Debug.Assert(_activeConnection is not null,
+                    "_activeConnection should not be null at this time, in PrepareDescribeParameterEncryptionRequest.");
+
+                // @TODO: Shouldn't there be a way to do all this straight from the connection itself?
+                TdsParser tdsParser = null;
+                if (_activeConnection.Parser is not null)
+                {
+                    tdsParser = _activeConnection.Parser;
+                    if (tdsParser?.State is TdsParserState.Broken or TdsParserState.Closed)
+                    {
+                        // Connection's parser is null as well, therefore we must be closed
+                        throw ADP.ClosedConnectionError();
+                    }
+                }
+
+                parameterList = BuildParamList(tdsParser, tempCollection, includeReturnValue: true);
+            }
+
+            SqlParameter paramsParam = describeParameterEncryptionRequest.systemParams[1];
+            paramsParam.SqlDbType = (parameterList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
+                ? SqlDbType.NVarChar
+                : SqlDbType.NText;
+            paramsParam.Size = parameterList.Length;
+            paramsParam.Value = parameterList;
+            paramsParam.Direction = ParameterDirection.Input;
+
+            if (attestationParameters is not null)
+            {
+                SqlParameter attestationParametersParam = describeParameterEncryptionRequest.systemParams[2];
+                attestationParametersParam.SqlDbType = SqlDbType.VarBinary;
+                attestationParametersParam.Size = attestationParameters.Length;
+                attestationParametersParam.Value = attestationParameters;
+                attestationParametersParam.Direction = ParameterDirection.Input;
+            }
+        }
+
+        /// <summary>
         /// Executes the reader after checking to see if we need to encrypt input parameters and
         /// then encrypting it if required.
         /// * TryFetchInputParameterEncryptionInfo() ->
