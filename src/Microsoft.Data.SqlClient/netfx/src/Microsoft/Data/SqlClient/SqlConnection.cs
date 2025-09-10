@@ -586,16 +586,6 @@ namespace Microsoft.Data.SqlClient
             get => ((SqlConnectionString)ConnectionOptions).ConnectRetryInterval;
         }
 
-        internal SspiContextProvider SspiContextProvider
-        {
-            get { return _sspiContextProvider; }
-            set
-            {
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, accessToken: null,  accessTokenCallback: null, sspiContextProvider: value));
-                _sspiContextProvider = value;
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionString/*' />
         [DefaultValue("")]
 #pragma warning disable 618 // ignore obsolete warning about RecommendedAsConfigurable to use SettingsBindableAttribute
@@ -748,6 +738,16 @@ namespace Microsoft.Data.SqlClient
 
                 ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, null, value, sspiContextProvider: null));
                 _accessTokenCallback = value;
+            }
+        }
+
+        internal SspiContextProvider SspiContextProvider
+        {
+            get { return _sspiContextProvider; }
+            set
+            {
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: value));
+                _sspiContextProvider = value;
             }
         }
 
