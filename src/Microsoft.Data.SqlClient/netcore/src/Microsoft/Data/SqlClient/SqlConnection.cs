@@ -155,7 +155,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionString/*' />
         public SqlConnection(string connectionString) : this()
         {
-            ConnectionString = connectionString;    // setting connection string first so that ConnectionOption is available
+            ConnectionString = connectionString;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*' />

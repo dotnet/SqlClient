@@ -162,8 +162,9 @@ namespace Microsoft.Data.SqlClient
         public static IDictionary<string, IList<string>> ColumnEncryptionTrustedMasterKeyPaths => _ColumnEncryptionTrustedMasterKeyPaths;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionString/*' />
-        public SqlConnection(string connectionString) : this(connectionString, null)
+        public SqlConnection(string connectionString) : this()
         {
+            ConnectionString = connectionString;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*' />
