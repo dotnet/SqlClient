@@ -29,6 +29,8 @@ using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.UserAgent;
+
 #if NETFRAMEWORK
 using Microsoft.Data.SqlTypes;
 #endif
@@ -8868,7 +8870,15 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, useFeatureExt, length, true);
+                ApplyFeatureExData(
+                    requestedFeatures, 
+                    recoverySessionData, 
+                    fedAuthFeatureExtensionData, 
+                    UserAgentInfo.UserAgentCachedJsonPayload.ToArray(), 
+                    useFeatureExt, 
+                    length, 
+                    true
+                );
             }
             catch (Exception e)
             {

@@ -193,7 +193,8 @@ namespace Microsoft.Data.SqlClient
 
                 int feOffset = length;
                 // calculate and reserve the required bytes for the featureEx
-                length = ApplyFeatureExData(requestedFeatures, 
+                length = ApplyFeatureExData(
+                    requestedFeatures, 
                     recoverySessionData, 
                     fedAuthFeatureExtensionData,
                     UserAgentInfo.UserAgentCachedJsonPayload.ToArray(),

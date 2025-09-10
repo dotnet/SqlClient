@@ -3038,7 +3038,12 @@ namespace Microsoft.Data.SqlClient
                         IsVectorSupportEnabled = true;
                         break;
                     }
-
+                case TdsEnums.FEATUREEXT_USERAGENT:
+                    {
+                        // Unexpected ack from server but we ignore it entirely
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for USERAGENTSUPPORT (ignored)", ObjectID);
+                        break;
+                    }
                 default:
                     {
                         // Unknown feature ack
