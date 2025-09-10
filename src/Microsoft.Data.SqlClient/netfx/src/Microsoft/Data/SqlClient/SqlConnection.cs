@@ -861,6 +861,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 int result;
+
                 if (InnerConnection is SqlInternalConnectionTds innerConnection)
                 {
                     result = innerConnection.PacketSize;
@@ -909,10 +910,7 @@ namespace Microsoft.Data.SqlClient
         [ResDescription(StringsHelper.ResourceNames.SqlConnection_ServerVersion)]
         public override string ServerVersion
         {
-            get
-            {
-                return GetOpenConnection().ServerVersion;
-            }
+            get => GetOpenTdsConnection().ServerVersion;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerProcessId/*' />
@@ -921,8 +919,14 @@ namespace Microsoft.Data.SqlClient
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int ServerProcessId
         {
-            get => State.Equals(ConnectionState.Open) | State.Equals(ConnectionState.Executing) | State.Equals(ConnectionState.Fetching) ?
-                GetOpenTdsConnection().ServerProcessId : 0;
+            get
+            {
+                if ((State & (ConnectionState.Open | ConnectionState.Executing | ConnectionState.Fetching)) > 0)
+                {
+                    return GetOpenTdsConnection().ServerProcessId;
+                }
+                return 0;
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/State/*' />
@@ -1226,7 +1230,7 @@ namespace Microsoft.Data.SqlClient
                 bool isFirstAttempt = true;
                 do
                 {
-                    transaction = GetOpenConnection().BeginSqlTransaction(iso, transactionName, isFirstAttempt); // do not reconnect twice
+                    transaction = GetOpenTdsConnection().BeginSqlTransaction(iso, transactionName, isFirstAttempt); // do not reconnect twice
                     Debug.Assert(isFirstAttempt || !transaction.InternalTransaction.ConnectionHasBeenRestored, "Restored connection on non-first attempt");
                     isFirstAttempt = false;
                 } while (transaction.InternalTransaction.ConnectionHasBeenRestored);
@@ -2005,7 +2009,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return GetOpenConnection().HasLocalTransaction;
+                return GetOpenTdsConnection().HasLocalTransaction;
             }
         }
 
@@ -2018,7 +2022,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return false; //we will not go into reconnection if we are inside the transaction
                 }
-                return GetOpenConnection().HasLocalTransactionFromAPI;
+                return GetOpenTdsConnection().HasLocalTransactionFromAPI;
             }
         }
 
@@ -2030,7 +2034,7 @@ namespace Microsoft.Data.SqlClient
                 { // holds true even if task is completed
                     return true; // if CR is enabled, connection, if established, will be 2008+
                 }
-                return GetOpenConnection().Is2008OrNewer;
+                return GetOpenTdsConnection().Is2008OrNewer;
             }
         }
 
@@ -2069,7 +2073,7 @@ namespace Microsoft.Data.SqlClient
                     return; // execution will wait for this task later
                 }
             }
-            SqlInternalConnection innerConnection = GetOpenConnection(method);
+            SqlInternalConnectionTds innerConnection = GetOpenTdsConnection(method);
             innerConnection.ValidateConnectionForExecute(command);
         }
 
@@ -2134,27 +2138,6 @@ namespace Microsoft.Data.SqlClient
         //
         // PRIVATE METHODS
         //
-
-        internal SqlInternalConnection GetOpenConnection()
-        {
-            SqlInternalConnection innerConnection = (InnerConnection as SqlInternalConnection);
-            if (innerConnection == null)
-            {
-                throw ADP.ClosedConnectionError();
-            }
-            return innerConnection;
-        }
-
-        internal SqlInternalConnection GetOpenConnection(string method)
-        {
-            DbConnectionInternal innerConnection = InnerConnection;
-            SqlInternalConnection innerSqlConnection = (innerConnection as SqlInternalConnection);
-            if (innerSqlConnection == null)
-            {
-                throw ADP.OpenConnectionRequired(method, innerConnection.State);
-            }
-            return innerSqlConnection;
-        }
 
         internal SqlInternalConnectionTds GetOpenTdsConnection()
         {

@@ -855,10 +855,9 @@ namespace Microsoft.Data.SqlClient
             // can just return what the connection string had.
             get
             {
-                SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
                 int result;
 
-                if (innerConnection != null)
+                if (InnerConnection is SqlInternalConnectionTds innerConnection)
                 {
                     result = innerConnection.PacketSize;
                 }
@@ -867,6 +866,7 @@ namespace Microsoft.Data.SqlClient
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
                     result = constr != null ? constr.PacketSize : DbConnectionStringDefaults.PacketSize;
                 }
+
                 return result;
             }
         }
@@ -2114,7 +2114,6 @@ namespace Microsoft.Data.SqlClient
         //
         // PRIVATE METHODS
         //
-
 
         internal SqlInternalConnectionTds GetOpenTdsConnection()
         {
