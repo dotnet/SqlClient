@@ -1822,6 +1822,25 @@ namespace Microsoft.Data.SqlClient
             ((TaskCompletionSource<DbConnectionInternal>)state).TrySetCanceled();
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchema2/*' />
+        public override DataTable GetSchema()
+        {
+            return GetSchema(DbMetaDataCollectionNames.MetaDataCollections, null);
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionName/*' />
+        public override DataTable GetSchema(string collectionName)
+        {
+            return GetSchema(collectionName, null);
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValues/*' />
+        public override DataTable GetSchema(string collectionName, string[] restrictionValues)
+        {
+            SqlConnection.ExecutePermission.Demand();
+            return InnerConnection.GetSchema(ConnectionFactory, PoolGroup, this, collectionName, restrictionValues);
+        }
+
         private class OpenAsyncRetry
         {
             private SqlConnection _parent;
@@ -2422,6 +2441,25 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/System.ICloneable.Clone/*' />
         object ICloneable.Clone() => new SqlConnection(this);
+
+        private void CopyFrom(SqlConnection connection)
+        {
+            ADP.CheckArgumentNull(connection, nameof(connection));
+            _userConnectionOptions = connection.UserConnectionOptions;
+            _poolGroup = connection.PoolGroup;
+
+            // SQLBU 432115
+            //  Match the original connection's behavior for whether the connection was never opened,
+            //  but ensure Clone is in the closed state.
+            if (DbConnectionClosedNeverOpened.SingletonInstance == connection._innerConnection)
+            {
+                _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;
+            }
+            else
+            {
+                _innerConnection = DbConnectionClosedPreviouslyOpened.SingletonInstance;
+            }
+        }
 
         // UDT SUPPORT
         private Assembly ResolveTypeAssembly(AssemblyName asmRef, bool throwOnError)
