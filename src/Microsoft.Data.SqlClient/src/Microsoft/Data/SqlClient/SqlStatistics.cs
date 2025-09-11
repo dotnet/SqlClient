@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient
         // internal values that are not exposed through properties
         internal long _closeTimestamp;
         internal long _openTimestamp;
-        internal long _startExecutionTimestamp;
+        internal long? _startExecutionTimestamp;
         internal long _startFetchTimestamp;
         internal long _startNetworkServerTimestamp;
 
@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void ContinueOnNewConnection()
         {
-            _startExecutionTimestamp = 0;
+            _startExecutionTimestamp = null;
             _startFetchTimestamp = 0;
             _waitForDoneAfterRow = false;
             _waitForReply = false;
@@ -108,7 +108,7 @@ namespace Microsoft.Data.SqlClient
                 { "UnpreparedExecs", _unpreparedExecs },
 
                 { "ConnectionTime", ADP.TimerToMilliseconds(_connectionTime) },
-                { "ExecutionTime", ADP.TimerToMilliseconds(_executionTime) },
+                { "ExecutionTime", _executionTime },
                 { "NetworkServerTime", ADP.TimerToMilliseconds(_networkServerTime) }
             };
             Debug.Assert(dictionary.Count == Count);
@@ -117,9 +117,9 @@ namespace Microsoft.Data.SqlClient
 
         internal bool RequestExecutionTimer()
         {
-            if (_startExecutionTimestamp == 0)
+            if (!_startExecutionTimestamp.HasValue)
             {
-                _startExecutionTimestamp = ADP.TimerCurrent();
+                _startExecutionTimestamp = ADP.FastTimerCurrent();
                 return true;
             }
             return false;
@@ -127,7 +127,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void RequestNetworkServerTimer()
         {
-            Debug.Assert(_startExecutionTimestamp != 0, "No network time expected outside execution period");
+            Debug.Assert(_startExecutionTimestamp.HasValue, "No network time expected outside execution period");
             if (_startNetworkServerTimestamp == 0)
             {
                 _startNetworkServerTimestamp = ADP.TimerCurrent();
@@ -137,10 +137,16 @@ namespace Microsoft.Data.SqlClient
 
         internal void ReleaseAndUpdateExecutionTimer()
         {
-            if (_startExecutionTimestamp > 0)
+            if (_startExecutionTimestamp.HasValue)
             {
-                _executionTime += (ADP.TimerCurrent() - _startExecutionTimestamp);
-                _startExecutionTimestamp = 0;
+                long elapsed = ADP.FastTimerCurrent() - _startExecutionTimestamp.Value;
+                // Wraparound logic for timer
+                if (elapsed < 0)
+                {
+                    elapsed += (long)uint.MaxValue + 1;
+                }
+                _executionTime += elapsed;
+                _startExecutionTimestamp = null;
             }
         }
 
@@ -176,7 +182,7 @@ namespace Microsoft.Data.SqlClient
             _unpreparedExecs = 0;
             _waitForDoneAfterRow = false;
             _waitForReply = false;
-            _startExecutionTimestamp = 0;
+            _startExecutionTimestamp = null;
             _startNetworkServerTimestamp = 0;
         }
 
