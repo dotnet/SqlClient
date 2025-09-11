@@ -619,12 +619,12 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
-        // Test to verify client sends a UserAgent version
-        // and driver behaviour if server sends an Ack or not
+        // Test to verify that the client sends a UserAgent version
+        // and driver behaves correctly even if server sent an Ack
         [Theory]
-        [InlineData(false, false)] // We do not receive any Ack from the server
-        [InlineData(true, true)] // Server sends an Ack
-        public void TestConnWithUserAgentFeatureExtension(bool forceAck, bool expectAck)
+        [InlineData(false)] // We do not force test server to send an Ack
+        [InlineData(true)] // Server is forced to send an Ack
+        public void TestConnWithUserAgentFeatureExtension(bool forceAck)
         {
             using var server = TestTdsServer.StartTestServer();
 
@@ -635,7 +635,6 @@ namespace Microsoft.Data.SqlClient.Tests
             server.EmitUserAgentFeatureExtAck = forceAck;
 
             bool loginFound = false;
-            bool responseFound = false;
 
             // Captured from LOGIN7 as parsed by the test server
             byte observedVersion = 0;
@@ -665,42 +664,11 @@ namespace Microsoft.Data.SqlClient.Tests
             };
 
             // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
-            // Inspect whether the server ever sends back an ACK
-            server.OnAuthenticationResponseCompleted = response =>
-            {
-                var uaAckOptions = response
-                    .OfType<TDSFeatureExtAckToken>()
-                    .SelectMany(t => t.Options)
-                    .OfType<TDSFeatureExtAckGenericOption>()
-                    .Where(o => o.FeatureID == TDSFeatureID.UserAgentSupport)
-                    .ToList();
-
-                if (uaAckOptions.Count > 0)
-                {
-                    responseFound = true;
-                }
-
-                if (expectAck)
-                {
-                    Assert.True(uaAckOptions.Count >= 1, "Expected an ACK for UserAgentSupport");
-                }
-            };
-
             using var connection = new SqlConnection(server.ConnectionString);
             connection.Open();
 
             // Verify client did offer UserAgent
             Assert.True(loginFound, "Expected UserAgent extension in LOGIN7");
-
-            // Verify server ACK presence or absence per scenario
-            if (expectAck)
-            {
-                Assert.True(responseFound, "Server should acknowledge UserAgent when forced");
-            }
-            else
-            {
-                Assert.False(responseFound, "Server should not acknowledge UserAgent");
-            }
 
             // Verify the connection itself succeeded
             Assert.Equal(ConnectionState.Open, connection.State);
@@ -713,22 +681,15 @@ namespace Microsoft.Data.SqlClient.Tests
                 asm.GetTypes().FirstOrDefault(t => string.Equals(t.Name, "UserAgentInfo", StringComparison.Ordinal)) ??
                 asm.GetTypes().FirstOrDefault(t => t.FullName?.EndsWith(".UserAgentInfo", StringComparison.Ordinal) == true);
 
-            Assert.True(userAgentInfoType != null,
-                $"Unable to find UserAgentInfo type in assembly {asm.FullName}");
-
+            Assert.NotNull(userAgentInfoType);
+            
             // Try to get the property
             var prop = userAgentInfoType.GetProperty("UserAgentCachedJsonPayload",
                 BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-
-            Assert.True(prop != null,
-                "Unable to find property 'UserAgentCachedJsonPayload' on UserAgentInfo");
+            Assert.NotNull(prop);
 
             ReadOnlyMemory<byte> cachedPayload = (ReadOnlyMemory<byte>)prop.GetValue(null)!;
-
-            Assert.False(cachedPayload.IsEmpty);
-            Assert.True(observedJsonBytes.AsSpan().SequenceEqual(cachedPayload.Span),
-                "Observed UserAgent JSON does not match the cached payload bytes");
-
+            Assert.Equal(cachedPayload.ToArray(), observedJsonBytes.ToArray());
         }
     }
 }

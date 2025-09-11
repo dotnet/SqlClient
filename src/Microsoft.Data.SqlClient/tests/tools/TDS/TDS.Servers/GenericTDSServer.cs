@@ -70,11 +70,6 @@ namespace Microsoft.SqlServer.TDS.Servers
         private byte _clientSupportedVectorFeatureExtVersion = 0;
 
         /// <summary>
-        /// Client version for User Agent FeatureExtension.
-        /// </summary>
-        private byte _clientSupportedUserAgentFeatureExtVersion = 0;
-
-        /// <summary>
         /// Server will ACK UserAgentSupport in the login response when this property is set to true.
         /// </summary>
         public bool EmitUserAgentFeatureExtAck { get; set; } = false;
@@ -307,11 +302,7 @@ namespace Microsoft.SqlServer.TDS.Servers
                                 }
                                 break;
                             }
-                        case TDSFeatureID.UserAgentSupport:
-                            {
-                                _clientSupportedUserAgentFeatureExtVersion = ((TDSLogin7GenericOptionToken)option).Data[0];
-                                break;
-                            }
+
                         default:
                             {
                                 // Do nothing
@@ -701,7 +692,6 @@ namespace Microsoft.SqlServer.TDS.Servers
                     featureExtAckToken.Options.Add(uaAck);
                 }
             }
-
 
             // Create DONE token
             TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final);

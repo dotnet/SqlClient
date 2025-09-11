@@ -3037,9 +3037,13 @@ namespace Microsoft.Data.SqlClient
                     }
                 case TdsEnums.FEATUREEXT_USERAGENT:
                     {
-                        // TODO: define comment, TDS spec doesnot define an ack 
-                        // Unexpected ack from server but we ignore it entirely
-                        // TODO for tfuture if we can find and verify this log message
+                        // TODO: Verify that the server sends an acknowledgment (Ack)
+                        // using this log message in the future.
+
+                        // This Ack from the server is unexpected and is ignored completely.
+                        // According to the TDS specification, an Ack is not defined/expected
+                        // for this scenario. We handle it only for completeness
+                        // and to support testing.
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for USERAGENTSUPPORT (ignored)", ObjectID);
                         break;
                     }

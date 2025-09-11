@@ -32,7 +32,7 @@ namespace Microsoft.SqlServer.TDS
         /// <summary>
         /// User Agent Support
         /// </summary>
-        UserAgentSupport = 0x0F,
+        UserAgentSupport = 0x10,
 
         /// <summary>
         /// End of the list
