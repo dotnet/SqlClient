@@ -34,7 +34,7 @@ steps:
     docker pull mcr.microsoft.com/mssql/server:2022-latest
     
     # Password for the SA user (required)
-    MSSQL_SA_PW=${{parameters.password }}
+    MSSQL_SA_PW=${{ parameters.password }}
 
     docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -p 1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
  
@@ -42,28 +42,54 @@ steps:
 
     docker ps -a
 
-    # Connect to server and get the version:
-    counter=1
-    errstatus=1
-    while [ $counter -le 20 ] && [ $errstatus = 1 ]
+    # Connect to the SQL Server container and get its version.
+    #
+    # It can take a while for the docker container to start listening and be
+    # ready for connections, so we will wait for up to 2 minutes, checking every
+    # 3 seconds.
+
+    # Wait 3 seconds between attempts.
+    delay=3
+    
+    # Try up to 40 times (2 minutes) to connect.
+    maxAttempts=40
+    
+    # Attempt counter.
+    attempt=1
+
+    # Flag to indicate when SQL Server is ready to accept connections.
+    ready=0
+
+    while [ $attempt -le $maxAttempts ]
     do
-      echo Waiting for SQL Server to start...
-      sleep 3
-      sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" 2>$SQLCMD_ERRORS
-      errstatus=$?
-      ((counter++))
+      echo "Waiting for SQL Server to start (attempt #$attempt of $maxAttempts)..."
+    
+      sqlcmd -S 127.0.0.1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" >> $SQLCMD_ERRORS 2>&1
+    
+      # If the command was successful, then the SQL Server is ready.
+      if [ $? -eq 0 ]; then
+        ready=1
+        break
+      fi
+    
+      # Increment the attempt counter.
+      ((attempt++))
+    
+      # Wait before trying again.
+      sleep $delay
     done
 
-    # Display error if connection failed:
-    if [ $errstatus = 1 ]
+    # Is the SQL Server ready?
+    if [ $ready -eq 0 ]
     then
-      echo Cannot connect to SQL Server, installation aborted
+      # No, so report the error(s) and exit.
+      echo Cannot connect to SQL Server; installation aborted; errors were:
       cat $SQLCMD_ERRORS
       rm -f $SQLCMD_ERRORS
-      exit $errstatus
-    else
-      rm -f $SQLCMD_ERRORS
+      exit 1
     fi
+
+    rm -f $SQLCMD_ERRORS
 
     echo "Use sqlcmd to show which IP addresses are being listened on..."
     echo 0.0.0.0
@@ -78,7 +104,7 @@ steps:
     sqlcmd -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" -l 2
 
     echo "Configuring Dedicated Administer Connections to allow remote connections..."
-    sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "sp_configure 'remote admin connections', 1; RECONFIGURE;"
+    sqlcmd -S 127.0.0.1 -No -U sa -P $MSSQL_SA_PW -Q "sp_configure 'remote admin connections', 1; RECONFIGURE;"
     if [ $? = 1 ]
     then
       echo "Error configuring DAC for remote access."
