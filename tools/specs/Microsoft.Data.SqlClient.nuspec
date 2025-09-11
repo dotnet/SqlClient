@@ -38,6 +38,7 @@
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.7.1" />
         <dependency id="System.Buffers" version="4.5.1" />
         <dependency id="System.Data.Common" version="4.3.0" />
+        <dependency id="System.Diagnostics.DiagnosticSource" version="8.0.1" />
         <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
         <dependency id="System.Text.Encodings.Web" version="8.0.0" />
         <dependency id="System.Text.Json" version="8.0.5" />

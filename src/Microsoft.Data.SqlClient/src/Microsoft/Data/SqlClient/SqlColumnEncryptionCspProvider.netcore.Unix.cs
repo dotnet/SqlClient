@@ -29,6 +29,16 @@ namespace Microsoft.Data.SqlClient
         public const string ProviderName = @"MSSQL_CSP_PROVIDER";
 
         /// <summary>
+        /// This encryption keystore uses an asymmetric key as the column master key.
+        /// </summary>
+        internal const string MasterKeyType = @"asymmetric key";
+
+        /// <summary>
+        /// This encryption keystore uses the master key path to reference a CSP.
+        /// </summary>
+        internal const string KeyPathReference = @"Microsoft Cryptographic Service Provider (CSP)";
+
+        /// <summary>
         /// This function uses the asymmetric key specified by the key path
         /// and decrypts an encrypted CEK with RSA encryption algorithm.
         /// </summary>

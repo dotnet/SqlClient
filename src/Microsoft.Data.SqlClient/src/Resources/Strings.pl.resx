@@ -4075,7 +4075,10 @@
     <value>Określony zaszyfrowany klucz szyfrowania kolumny zawiera nieprawidłową wersję algorytmu szyfrowania „{0}”. Oczekiwana wersja to „{1}”.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>Określona długość szyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością tekstu szyfrowanego: {1} w przypadku używania klucza głównego kolumny (certyfikatu) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka certyfikatu może być nieprawidłowa.</value>
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
     <value>Określona długość szyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością tekstu szyfrowanego: {1} w przypadku używania klucza głównego kolumny (klucza asymetrycznego) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka dostawcy usług kryptograficznych firmy Microsoft (CSP) może być niepoprawna.</value>
@@ -4084,7 +4087,10 @@
     <value>Określona długość szyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością tekstu szyfrowanego: {1} w przypadku używania klucza głównego kolumny (klucza asymetrycznego) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka dostawcy interfejsu API kryptografii firmy Microsoft: ścieżka dostawcy następnej generacji (CNG) może być niepoprawna.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>Określona długość podpisu zaszyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością podpisu: {1} w przypadku używania klucza głównego kolumny (certyfikatu) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka certyfikatu może być nieprawidłowa.</value>
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
     <value>Określona długość podpisu zaszyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością podpisu: {1} w przypadku używania klucza głównego kolumny (klucza asymetrycznego) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka dostawcy usług kryptograficznych firmy Microsoft (CSP) może być niepoprawna.</value>
@@ -4092,11 +4098,14 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>Określona długość podpisu zaszyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością podpisu: {1} w przypadku używania klucza głównego kolumny (klucza asymetrycznego) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka dostawcy interfejsu API kryptografii firmy Microsoft: ścieżka dostawcy następnej generacji (CNG) może być niepoprawna.</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key ({0}) in '{1}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>Określony podpis zaszyfrowanego klucza szyfrowania kolumny jest niezgodny z podpisem obliczonym przy użyciu klucza głównego kolumny (certyfikatu) w elemencie „{0}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka może być nieprawidłowa.</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>Określony zaszyfrowany podpis klucza szyfrowania kolumny nie jest zgodny z podpisem obliczonym przy użyciu klucza głównego kolumny (klucz asymetryczny) w elemencie „{0}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka może być nieprawidłowa.</value>
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>Certyfikat określony w ścieżce klucza „{0}” nie ma klucza prywatnego do szyfrowania klucza szyfrowania kolumny. Sprawdź, czy certyfikat został zaimportowany poprawnie.</value>
