@@ -4075,7 +4075,10 @@
     <value>Указанный ключ шифрования зашифрованного столбца содержит недействительную версию алгоритма шифрования "{0}". Ожидается версия "{1}".</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>Длина зашифрованных данных указанного ключа шифрования зашифрованного столбца {0} не совпадает с длиной зашифрованных данных {1} при использовании главного ключа столбца (сертификата) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден или неверно указан путь к сертификату.</value>
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
     <value>Длина зашифрованных данных ({0}) указанного ключа шифрования зашифрованного столбца не соответствует длине зашифрованных данных ({1}) при использовании главного ключа (асимметричного ключа) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден, или указанный путь к поставщику служб шифрования Microsoft (CSP) может быть неверным.</value>
@@ -4084,7 +4087,10 @@
     <value>Длина зашифрованных данных ({0}) указанного ключа шифрования зашифрованного столбца не соответствует длине зашифрованных данных ({1}) при использовании главного ключа (асимметричного ключа) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден, или указанный путь к поставщику Microsoft Cryptography API: Next Generation (CNG) может быть неверным.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>Длина подписи указанного ключа шифрования зашифрованного столбца ({0}) не совпадает с длиной подписи ({1}) при использовании главного ключа столбца (сертификата) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден или неверно указан путь к сертификату.</value>
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
     <value>Указанная длина подписи ({0}) ключа шифрования зашифрованного столбца не соответствует длине подписи ({1}) при использовании главного ключа столбца (асимметричного ключа) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден, или указанный путь к поставщику служб шифрования Microsoft (CSP) может быть неверным.</value>
@@ -4092,11 +4098,14 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>Указанная длина подписи ({0}) ключа шифрования зашифрованного столбца не соответствует длине подписи ({1}) при использовании главного ключа столбца (асимметричного ключа) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден, или указанный путь к поставщику Microsoft Cryptography API: Next Generation (CNG) может быть неверным.</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key ({0}) in '{1}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>Подпись указанного ключа шифрования зашифрованного столбца не совпадает с подписью, вычисленной с помощью главного ключа столбца (сертификата) в "{0}". Ключ шифрования зашифрованного столбца может быть поврежден или неверно указан путь.</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>Указанная подпись ключа шифрования зашифрованного столбца не соответствует подписи, вычисленной с помощью главного ключа шифрования (асимметричного ключа) в "{0}". Ключ шифрования зашифрованного столбца может быть поврежден, или указанный путь может быть неверным.</value>
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>У сертификата, указанного в пути ключа "{0}", отсутствует закрытый ключ для шифрования ключа шифрования столбца. Убедитесь, что сертификат был импортирован правильно.</value>
