@@ -4,6 +4,7 @@
 
 using Microsoft.Data.SqlClient.AlwaysEncrypted;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 
 #nullable enable
@@ -33,7 +34,7 @@ namespace Microsoft.Data.SqlClient
         private const string RSAEncryptionAlgorithmWithOAEP = @"RSA_OAEP";
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/DecryptColumnEncryptionKey/*' />
-        public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
+        public override byte[] DecryptColumnEncryptionKey(string? masterKeyPath, string? encryptionAlgorithm, byte[]? encryptedColumnEncryptionKey)
         {
             // Validate the input parameters
             ValidateNonEmptyKeyPath(masterKeyPath, isSystemOp: true);
@@ -52,14 +53,14 @@ namespace Microsoft.Data.SqlClient
             ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: true);
 
             // Create RSA Provider with the given CNG name and key name
-            RSA rsaCngProvider = CreateRSACngProvider(masterKeyPath, isSystemOp: true);
-            using EncryptedColumnEncryptionKeyParameters cekDecryptionParameters = new(rsaCngProvider, masterKeyPath, MasterKeyType, KeyPathReference);
+            RSA rsaProvider = CreateRSACngProvider(masterKeyPath, isSystemOp: true);
+            using EncryptedColumnEncryptionKeyParameters cekDecryptionParameters = new(rsaProvider, masterKeyPath, MasterKeyType, KeyPathReference);
 
             return cekDecryptionParameters.Decrypt(encryptedColumnEncryptionKey);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/EncryptColumnEncryptionKey/*' />
-        public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
+        public override byte[] EncryptColumnEncryptionKey(string? masterKeyPath, string? encryptionAlgorithm, byte[]? columnEncryptionKey)
         {
             // Validate the input parameters
             ValidateNonEmptyKeyPath(masterKeyPath, isSystemOp: false);
@@ -77,21 +78,21 @@ namespace Microsoft.Data.SqlClient
             // Validate encryptionAlgorithm
             ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: false);
 
-            // CreateCNGProviderWithKey
-            RSA rsaCngProvider = CreateRSACngProvider(masterKeyPath, isSystemOp: false);
-            using EncryptedColumnEncryptionKeyParameters cekEncryptionParameters = new(rsaCngProvider, masterKeyPath, MasterKeyType, KeyPathReference);
+            // Create RSACNGProviderWithKey
+            RSA rsaProvider = CreateRSACngProvider(masterKeyPath, isSystemOp: false);
+            using EncryptedColumnEncryptionKeyParameters cekEncryptionParameters = new(rsaProvider, masterKeyPath, MasterKeyType, KeyPathReference);
 
             return cekEncryptionParameters.Encrypt(columnEncryptionKey);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/SignColumnMasterKeyMetadata/*' />
-        public override byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations)
+        public override byte[] SignColumnMasterKeyMetadata(string? masterKeyPath, bool allowEnclaveComputations)
         {
             throw new NotSupportedException();
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/VerifyColumnMasterKeyMetadata/*' />
-        public override bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
+        public override bool VerifyColumnMasterKeyMetadata(string? masterKeyPath, bool allowEnclaveComputations, byte[]? signature)
         {
             throw new NotSupportedException();
         }
@@ -100,9 +101,9 @@ namespace Microsoft.Data.SqlClient
         /// This function validates that the encryption algorithm is RSA_OAEP and if it is not,
         /// then throws an exception
         /// </summary>
-        /// <param name="encryptionAlgorithm">Asymmetric key encryptio algorithm</param>
+        /// <param name="encryptionAlgorithm">Asymmetric key encryption algorithm</param>
         /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
-        private static void ValidateEncryptionAlgorithm(string encryptionAlgorithm, bool isSystemOp)
+        private static void ValidateEncryptionAlgorithm([NotNull] string? encryptionAlgorithm, bool isSystemOp)
         {
             // This validates that the encryption algorithm is RSA_OAEP
             if (encryptionAlgorithm is null)
@@ -121,7 +122,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="masterKeyPath">keypath containing the CNG provider name and key name</param>
         /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
-        private static void ValidateNonEmptyKeyPath(string masterKeyPath, bool isSystemOp)
+        private static void ValidateNonEmptyKeyPath([NotNull] string? masterKeyPath, bool isSystemOp)
         {
             if (masterKeyPath is null)
             {

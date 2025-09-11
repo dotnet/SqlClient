@@ -5,6 +5,7 @@
 using Microsoft.Data.SqlClient.AlwaysEncrypted;
 using Microsoft.Win32;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 
 #nullable enable
@@ -36,7 +37,7 @@ namespace Microsoft.Data.SqlClient
         private const string RSAEncryptionAlgorithmWithOAEP = @"RSA_OAEP";
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/DecryptColumnEncryptionKey/*' />
-        public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
+        public override byte[] DecryptColumnEncryptionKey(string? masterKeyPath, string? encryptionAlgorithm, byte[]? encryptedColumnEncryptionKey)
         {
             // Validate the input parameters
             ValidateNonEmptyCSPKeyPath(masterKeyPath, isSystemOp: true);
@@ -55,14 +56,14 @@ namespace Microsoft.Data.SqlClient
             ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: true);
 
             // Create RSA Provider with the given CSP name and key name
-            RSACryptoServiceProvider rsaProvider = CreateRSACryptoProvider(masterKeyPath, isSystemOp: true);
+            RSA rsaProvider = CreateRSACryptoProvider(masterKeyPath, isSystemOp: true);
             using EncryptedColumnEncryptionKeyParameters cekDecryptionParameters = new(rsaProvider, masterKeyPath, MasterKeyType, KeyPathReference);
 
             return cekDecryptionParameters.Decrypt(encryptedColumnEncryptionKey);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/EncryptColumnEncryptionKey/*' />
-        public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
+        public override byte[] EncryptColumnEncryptionKey(string? masterKeyPath, string? encryptionAlgorithm, byte[]? columnEncryptionKey)
         {
             // Validate the input parameters
             ValidateNonEmptyCSPKeyPath(masterKeyPath, isSystemOp: false);
@@ -81,20 +82,20 @@ namespace Microsoft.Data.SqlClient
             ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: false);
 
             // Create RSA Provider with the given CSP name and key name
-            RSACryptoServiceProvider rsaProvider = CreateRSACryptoProvider(masterKeyPath, isSystemOp: false);
+            RSA rsaProvider = CreateRSACryptoProvider(masterKeyPath, isSystemOp: false);
             using EncryptedColumnEncryptionKeyParameters cekEncryptionParameters = new(rsaProvider, masterKeyPath, MasterKeyType, KeyPathReference);
 
             return cekEncryptionParameters.Encrypt(columnEncryptionKey);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/SignColumnMasterKeyMetadata/*' />
-        public override byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations)
+        public override byte[] SignColumnMasterKeyMetadata(string? masterKeyPath, bool allowEnclaveComputations)
         {
             throw new NotSupportedException();
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/VerifyColumnMasterKeyMetadata/*' />
-        public override bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
+        public override bool VerifyColumnMasterKeyMetadata(string? masterKeyPath, bool allowEnclaveComputations, byte[]? signature)
         {
             throw new NotSupportedException();
         }
@@ -105,7 +106,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="encryptionAlgorithm">Asymmetric key encryption algorithm</param>
         /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
-        private static void ValidateEncryptionAlgorithm(string encryptionAlgorithm, bool isSystemOp)
+        private static void ValidateEncryptionAlgorithm([NotNull] string? encryptionAlgorithm, bool isSystemOp)
         {
             // This validates that the encryption algorithm is RSA_OAEP
             if (encryptionAlgorithm is null)
@@ -124,7 +125,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="masterKeyPath">CSP key path.</param>
         /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
-        private static void ValidateNonEmptyCSPKeyPath(string masterKeyPath, bool isSystemOp)
+        private static void ValidateNonEmptyCSPKeyPath([NotNull] string? masterKeyPath, bool isSystemOp)
         {
             if (masterKeyPath is null)
             {
@@ -153,12 +154,11 @@ namespace Microsoft.Data.SqlClient
 
             // Create a new instance of CspParameters for an RSA container.
             CspParameters cspParams = new(providerType, cspProviderName, keyName) { Flags = CspProviderFlags.UseExistingKey };
-            RSACryptoServiceProvider rscp;
 
             try
             {
                 // Create a new instance of RSACryptoServiceProvider
-                rscp = new RSACryptoServiceProvider(cspParams);
+                return new RSACryptoServiceProvider(cspParams);
             }
             catch (CryptographicException e)
             {
@@ -174,8 +174,6 @@ namespace Microsoft.Data.SqlClient
                     throw;
                 }
             }
-
-            return rscp;
         }
 
         /// <summary>
