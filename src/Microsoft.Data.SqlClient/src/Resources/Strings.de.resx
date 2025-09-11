@@ -4075,7 +4075,10 @@
     <value>Der Verschlüsselungsschlüssel der angegebenen verschlüsselten Spalte enthält die ungültige Verschlüsselungsalgorithmusversion "{0}". Erwartet wird die Version "{1}".</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>Die angegebene Chiffretextlänge {0} des Verschlüsselungsschlüssels der verschlüsselten Spalte entspricht nicht der Chiffretextlänge {1}, wenn der Spaltenhauptschlüssel (Zertifikat) in '{2}' verwendet wird. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist möglicherweise beschädigt, oder der angegebene Zertifikatpfad ist falsch.</value>
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
     <value>Die angegebene Länge {0} des Verschlüsselungstexts des Verschlüsselungsschlüssels der verschlüsselten Spalte stimmt nicht mit der Länge {1} des Verschlüsselungstexts überein, wenn der Masterschlüssel der Spalte (asymmetrischer Schlüssel) in '{2}' verwendet wird. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist ggf. fehlerhaft, oder der angegebene Microsoft CSP-Pfad (Cryptographic Service Provider, Kryptografiedienstanbieter) ist ggf. falsch.</value>
@@ -4084,7 +4087,10 @@
     <value>Die angegebene Länge {0} des Verschlüsselungstexts des Verschlüsselungsschlüssels der verschlüsselten Spalte stimmt nicht mit der Länge {1} des Verschlüsselungstexts überein, wenn der Masterschlüssel der Spalte (asymmetrischer Schlüssel) in '{2}' verwendet wird. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist ggf. fehlerhaft, oder der Pfad des angegebenen Microsoft CNG-Anbieters (Cryptography API Next Generation) ist ggf. falsch.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>Die angegebene Signaturlänge {0} des Verschlüsselungsschlüssels der verschlüsselten Spalte entspricht nicht der Signaturlänge {1}, wenn der Spaltenhauptschlüssel (Zertifikat) in '{2}' verwendet wird. Der Verschlüsselungschlüssel der verschlüsselten Spalte ist möglicherweise beschädigt, oder der angegebene Zertifikatpfad ist falsch.</value>
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
     <value>Die angegebene Länge {0} der Signatur des Verschlüsselungsschlüssels der verschlüsselten Spalte stimmt nicht mit der Länge {1} der Signatur überein, wenn der Masterschlüssel der Spalte (asymmetrischer Schlüssel) in '{2}' verwendet wird. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist ggf. fehlerhaft, oder der angegebene Microsoft CSP-Pfad (Cryptographic Service Provider, Kryptografiedienstanbieter) ist ggf. falsch.</value>
@@ -4092,11 +4098,14 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>Die angegebene Länge {0} der Signatur des Verschlüsselungsschlüssels der verschlüsselten Spalte stimmt nicht mit der Länge {1} der Signatur überein, wenn der Masterschlüssel der Spalte (asymmetrischer Schlüssel) in '{2}' verwendet wird. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist ggf. fehlerhaft, oder der Pfad des angegebenen Microsoft CNG-Anbieters (Cryptography API Next Generation) ist ggf. falsch.</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key ({0}) in '{1}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>Die angegebene Verschlüsselungsschlüsselsignatur der verschlüsselten Spalte entspricht nicht der Signatur, die mit dem Spaltenhauptschlüssel (Zertifikat) in '{0}' berechnet wurde. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist möglicherweise beschädigt, oder der angegebene Pfad ist falsch.</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>Die angegebene Signatur des Verschlüsselungsschlüssels der verschlüsselten Spalte stimmt nicht mit dem Masterschlüssel der Spalte (asymmetrischer Schlüssel) in '{0}' überein. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist ggf. fehlerhaft, oder der angegebene Pfad ist ggf. falsch.</value>
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>Unter dem Schlüsselpfad '{0}' festgelegtes Zertifikat verfügt nicht über einen privaten Schlüssel zur Verschlüsselung eines Spaltenverschlüsselungsschlüssels. Stellen Sie sicher, dass das Zertifikat korrekt importiert wurde.</value>

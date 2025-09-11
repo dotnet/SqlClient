@@ -16,6 +16,16 @@ namespace Microsoft.Data.SqlClient
         public const string ProviderName = @"MSSQL_CNG_STORE";
 
         /// <summary>
+        /// This encryption keystore uses an asymmetric key as the column master key.
+        /// </summary>
+        internal const string MasterKeyType = @"asymmetric key";
+
+        /// <summary>
+        /// This encryption keystore uses the master key path to reference a CNG provider.
+        /// </summary>
+        internal const string KeyPathReference = @"Microsoft Cryptography API: Next Generation (CNG) provider";
+
+        /// <summary>
         /// RSA_OAEP is the only algorithm supported for encrypting/decrypting column encryption keys using this provider.
         /// For now, we are keeping all the providers in sync.
         /// </summary>
@@ -113,7 +123,7 @@ namespace Microsoft.Data.SqlClient
             // Validate the signature
             if (!RSAVerifySignature(hash, signature, rsaCngProvider))
             {
-                throw SQL.InvalidSignature(masterKeyPath);
+                throw SQL.InvalidAsymmetricKeySignature(masterKeyPath);
             }
 
             // Decrypt the CEK
