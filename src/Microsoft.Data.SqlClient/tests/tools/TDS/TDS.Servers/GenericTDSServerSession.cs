@@ -124,11 +124,6 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public bool IsVectorSupportEnabled { get; set; }
 
-        /// <summary>
-        /// Indicates whether this session supports User Agent Feature Extension
-        /// </summary>
-        public bool IsUserAgentSupportEnabled { get; set; }
-
         #region Session Options
 
         /// <summary>
