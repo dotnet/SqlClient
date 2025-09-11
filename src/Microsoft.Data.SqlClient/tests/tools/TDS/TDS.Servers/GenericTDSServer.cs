@@ -55,11 +55,6 @@ namespace Microsoft.SqlServer.TDS.Servers
         public bool EnableVectorFeatureExt { get; set; } = false;
 
         /// <summary>
-        /// Property for enabling user agent feature extension.
-        /// </summary>
-        public bool EnableUserAgentFeatureExt { get; set; } = true;
-
-        /// <summary>
         /// Property for setting server version for vector feature extension.
         /// </summary>
         public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
@@ -314,10 +309,7 @@ namespace Microsoft.SqlServer.TDS.Servers
                             }
                         case TDSFeatureID.UserAgentSupport:
                             {
-                                if (EnableUserAgentFeatureExt)
-                                {
-                                    _clientSupportedUserAgentFeatureExtVersion = ((TDSLogin7GenericOptionToken)option).Data[0];
-                                }
+                                _clientSupportedUserAgentFeatureExtVersion = ((TDSLogin7GenericOptionToken)option).Data[0];
                                 break;
                             }
                         default:

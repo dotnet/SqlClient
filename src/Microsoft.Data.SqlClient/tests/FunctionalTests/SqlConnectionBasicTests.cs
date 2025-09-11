@@ -630,7 +630,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             // Configure the server to support UserAgent version 0x01
             server.ServerSupportedUserAgentFeatureExtVersion = 0x01;
-            server.EnableUserAgentFeatureExt = true;
 
             // Opt in to forced ACK for UserAgentSupport (no negotiation)
             server.EmitUserAgentFeatureExtAck = forceAck;
@@ -665,6 +664,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 loginFound = true;
             };
 
+            // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
             // Inspect whether the server ever sends back an ACK
             server.OnAuthenticationResponseCompleted = response =>
             {
