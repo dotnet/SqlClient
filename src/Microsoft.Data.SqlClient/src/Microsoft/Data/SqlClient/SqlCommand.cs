@@ -969,8 +969,6 @@ namespace Microsoft.Data.SqlClient
             _customColumnEncryptionKeyStoreProviders = customColumnEncryptionKeyStoreProviders;
         }
 
-        #if NET
-        // @TODO: Why not just expose this for netfx?
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
         public void ResetCommandTimeout()
         {
@@ -980,7 +978,6 @@ namespace Microsoft.Data.SqlClient
                 _commandTimeout = DefaultCommandTimeout;
             }
         }
-        #endif
 
         #endregion
 
