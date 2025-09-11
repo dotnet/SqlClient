@@ -2250,6 +2250,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void OnInfoMessage(SqlInfoMessageEventArgs imevent, out bool notified)
         {
+            Debug.Assert(imevent != null, "null SqlInfoMessageEventArgs");
             SqlClientEventSource.Log.TryTraceEvent("SqlConnection.OnInfoMessage | API | Info | Object Id {0}, Message '{1}'", ObjectID, imevent.Message);
 #if NET
             SqlInfoMessageEventHandler handler = InfoMessage;
