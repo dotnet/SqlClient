@@ -648,19 +648,21 @@ namespace Microsoft.Data.SqlClient.Tests
                 var token = loginToken.FeatureExt
                                       .OfType<TDSLogin7GenericOptionToken>()
                                       .FirstOrDefault(t => t.FeatureID == TDSFeatureID.UserAgentSupport);
+                
 
-                if (token != null)
-                {
-                    Assert.Equal((byte)TDSFeatureID.UserAgentSupport, (byte)token.FeatureID);
+                // Test should fail if no UserAgent FE token is found
+                Assert.NotNull(token);
 
-                    // Layout: [0] = version byte, rest = UTF-8 JSON blob
-                    Assert.True(token.Data.Length >= 2, "UserAgent token is too short");
-                    observedVersion = token.Data[0];
-                    Assert.Equal(0x1, observedVersion);
+                Assert.Equal((byte)TDSFeatureID.UserAgentSupport, (byte)token.FeatureID);
 
-                    observedJsonBytes = token.Data.AsSpan(1).ToArray();
-                    loginFound = true;
-                }
+                // Layout: [0] = version byte, rest = UTF-8 JSON blob
+                Assert.True(token.Data.Length >= 2, "UserAgent token is too short");
+                
+                observedVersion = token.Data[0];
+                Assert.Equal(0x1, observedVersion);
+
+                observedJsonBytes = token.Data.AsSpan(1).ToArray();
+                loginFound = true;
             };
 
             // Inspect whether the server ever sends back an ACK
