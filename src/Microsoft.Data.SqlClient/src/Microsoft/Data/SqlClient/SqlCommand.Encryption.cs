@@ -89,6 +89,17 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Clear the state related to describe parameter encryption RPC requests.
+        /// </summary>
+        private void ClearDescribeParameterEncryptionRequests()
+        {
+            _sqlRPCParameterEncryptionReqArray = null;
+            _currentlyExecutingDescribeParameterEncryptionRPC = 0;
+            IsDescribeParameterEncryptionRPCCurrentlyInProgress = false;
+            _rowsAffectedBySpDescribeParameterEncryption = -1;
+        }
+
         private EnclaveSessionParameters GetEnclaveSessionParameters() =>
             new EnclaveSessionParameters(
                 _activeConnection.DataSource,
