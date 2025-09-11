@@ -1570,55 +1570,6 @@ namespace Microsoft.Data.SqlClient
             ReliablePutStateObject();
         }
 
-        internal int? GetRecordsAffected(int commandIndex)
-        {
-            Debug.Assert(_batchRPCMode, "Command is not in batch RPC Mode");
-            Debug.Assert(_RPCList != null, "batch command have been cleared");
-            return _RPCList[commandIndex].recordsAffected;
-        }
-
-        internal SqlBatchCommand GetCurrentBatchCommand()
-        {
-            if (_batchRPCMode)
-            {
-                return _RPCList[_currentlyExecutingBatch].batchCommand;
-            }
-            else
-            {
-                return _rpcArrayOf1?[0].batchCommand;
-            }
-        }
-
-        internal SqlBatchCommand GetBatchCommand(int index)
-        {
-            return _RPCList[index].batchCommand;
-        }
-
-        internal int GetCurrentBatchIndex()
-        {
-            return _batchRPCMode ? _currentlyExecutingBatch : -1;
-        }
-
-        internal SqlException GetErrors(int commandIndex)
-        {
-            SqlException result = null;
-            int length = (_RPCList[commandIndex].errorsIndexEnd - _RPCList[commandIndex].errorsIndexStart);
-            if (0 < length)
-            {
-                SqlErrorCollection errors = new SqlErrorCollection();
-                for (int i = _RPCList[commandIndex].errorsIndexStart; i < _RPCList[commandIndex].errorsIndexEnd; ++i)
-                {
-                    errors.Add(_RPCList[commandIndex].errors[i]);
-                }
-                for (int i = _RPCList[commandIndex].warningsIndexStart; i < _RPCList[commandIndex].warningsIndexEnd; ++i)
-                {
-                    errors.Add(_RPCList[commandIndex].warnings[i]);
-                }
-                result = SqlException.CreateException(errors, Connection.ServerVersion, Connection.ClientConnectionId, innerException: null, batchCommand: null);
-            }
-            return result;
-        }
-
         private static void CancelIgnoreFailureCallback(object state)
         {
             SqlCommand command = (SqlCommand)state;
