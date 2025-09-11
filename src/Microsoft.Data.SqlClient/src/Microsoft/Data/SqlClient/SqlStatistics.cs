@@ -139,12 +139,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_startExecutionTimestamp.HasValue)
             {
-                long elapsed = ADP.FastTimerCurrent() - _startExecutionTimestamp.Value;
-                // Wraparound logic for timer
-                if (elapsed < 0)
-                {
-                    elapsed += (long)uint.MaxValue + 1;
-                }
+                uint elapsed = ADP.CalculateTickCountElapsed(_startExecutionTimestamp.Value, ADP.FastTimerCurrent());
                 _executionTime += elapsed;
                 _startExecutionTimestamp = null;
             }
