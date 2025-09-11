@@ -192,6 +192,12 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 int feOffset = length;
+
+                // NOTE: This approach of pre-calculating the packet length is inefficient.
+                // We're making 2 passes over the data to be written.
+                // Instead, we should be writing everything to the buffer once,
+                // leaving a hole where the header length goes.
+                
                 // calculate and reserve the required bytes for the featureEx
                 length = ApplyFeatureExData(
                     requestedFeatures, 

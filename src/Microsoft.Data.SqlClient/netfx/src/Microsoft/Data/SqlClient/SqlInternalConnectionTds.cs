@@ -212,9 +212,6 @@ namespace Microsoft.Data.SqlClient
         // Vector Support Flag
         internal bool IsVectorSupportEnabled = false;
 
-        // User Agent Flag
-        internal bool IsUserAgentSupportEnabled = true;
-
         // TCE flags
         internal byte _tceVersionSupported;
 
@@ -3040,7 +3037,9 @@ namespace Microsoft.Data.SqlClient
                     }
                 case TdsEnums.FEATUREEXT_USERAGENT:
                     {
+                        // TODO: define comment, TDS spec doesnot define an ack 
                         // Unexpected ack from server but we ignore it entirely
+                        // TODO for tfuture if we can find and verify this log message
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for USERAGENTSUPPORT (ignored)", ObjectID);
                         break;
                     }

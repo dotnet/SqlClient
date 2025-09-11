@@ -9,14 +9,12 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.FeatureExtAck;
 using Microsoft.SqlServer.TDS.Login7;
-using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
@@ -621,30 +619,46 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
-        // Test to verify client sends a UserAgent version 
-        // We do not receive any Ack for it from the server
-        [Fact]
-        public void TestConnWithUnackedUserAgentFeatureExtension()
+        // Test to verify client sends a UserAgent version
+        // and driver behaviour if server sends an Ack or not
+        [Theory]
+        [InlineData(false, false)] // We do not receive any Ack from the server
+        [InlineData(true, true)] // Server sends an Ack
+        public void TestConnWithUserAgentFeatureExtension(bool forceAck, bool expectAck)
         {
             using var server = TestTdsServer.StartTestServer();
 
             // Configure the server to support UserAgent version 0x01
             server.ServerSupportedUserAgentFeatureExtVersion = 0x01;
             server.EnableUserAgentFeatureExt = true;
-            // By design its response logic never emits an ACK
+
+            // Opt in to forced ACK for UserAgentSupport (no negotiation)
+            server.EmitUserAgentFeatureExtAck = forceAck;
+
             bool loginFound = false;
             bool responseFound = false;
+
+            // Captured from LOGIN7 as parsed by the test server
+            byte observedVersion = 0;
+            byte[] observedJsonBytes = Array.Empty<byte>();
 
             // Inspect what the client sends in the LOGIN7 packet
             server.OnLogin7Validated = loginToken =>
             {
                 var token = loginToken.FeatureExt
-                               .OfType<TDSLogin7GenericOptionToken>()
-                               .FirstOrDefault(t => t.FeatureID == TDSFeatureID.UserAgentSupport);
+                                      .OfType<TDSLogin7GenericOptionToken>()
+                                      .FirstOrDefault(t => t.FeatureID == TDSFeatureID.UserAgentSupport);
+
                 if (token != null)
                 {
                     Assert.Equal((byte)TDSFeatureID.UserAgentSupport, (byte)token.FeatureID);
-                    Assert.Equal(0x1, token.Data[0]);
+
+                    // Layout: [0] = version byte, rest = UTF-8 JSON blob
+                    Assert.True(token.Data.Length >= 2, "UserAgent token is too short");
+                    observedVersion = token.Data[0];
+                    Assert.Equal(0x1, observedVersion);
+
+                    observedJsonBytes = token.Data.AsSpan(1).ToArray();
                     loginFound = true;
                 }
             };
@@ -652,64 +666,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // Inspect whether the server ever sends back an ACK
             server.OnAuthenticationResponseCompleted = response =>
             {
-                var ack = response
-                    .OfType<TDSFeatureExtAckToken>()
-                    .SelectMany(t => t.Options)
-                    .OfType<TDSFeatureExtAckGenericOption>()
-                    .FirstOrDefault(o => o.FeatureID == TDSFeatureID.UserAgentSupport);
-                if (ack != null)
-                {
-                    responseFound = true;
-                }
-            };
-
-            // Open the connection (this triggers the LOGIN7 exchange)
-            using var connection = new SqlConnection(server.ConnectionString);
-            connection.Open();
-
-            // Verify client did offer UserAgent
-            Assert.True(loginFound, "Expected UserAgent extension in LOGIN7");
-
-            // Verify server never acknowledged it
-            Assert.False(responseFound, "Server should not acknowledge UserAgent");
-
-            // Verify the connection itself succeeded
-            Assert.Equal(ConnectionState.Open, connection.State);
-        }
-
-        // Test to verify the driver behaviour even if server sends an Ack
-        [Fact]
-        public void TestConnWithAckedUserAgentFeatureExtension()
-        {
-            using var server = TestTdsServer.StartTestServer();
-
-            // Configure the test server
-            server.ServerSupportedUserAgentFeatureExtVersion = 0x01;
-            server.EnableUserAgentFeatureExt = true;
-
-            // Opt in to forced ACK for UserAgentSupport (no negotiation)
-            server.EmitUserAgentFeatureExtAck = true;
-
-            bool loginFound = false;
-            bool responseFound = false;
-
-            // Observe what the client sends in LOGIN7
-            server.OnLogin7Validated = loginToken =>
-            {
-                var token = loginToken.FeatureExt
-                                      .OfType<TDSLogin7GenericOptionToken>()
-                                      .FirstOrDefault(t => t.FeatureID == TDSFeatureID.UserAgentSupport);
-                if (token != null)
-                {
-                    Assert.Equal((byte)TDSFeatureID.UserAgentSupport, (byte)token.FeatureID);
-                    loginFound = true;
-                }
-            };
-
-            // Verify the server sent back an ACK for UserAgentSupport
-            server.OnAuthenticationResponseCompleted = response =>
-            {
-                // Find any FeatureExtAck option with FeatureID == UserAgentSupport
                 var uaAckOptions = response
                     .OfType<TDSFeatureExtAckToken>()
                     .SelectMany(t => t.Options)
@@ -717,19 +673,60 @@ namespace Microsoft.Data.SqlClient.Tests
                     .Where(o => o.FeatureID == TDSFeatureID.UserAgentSupport)
                     .ToList();
 
-                Assert.True(uaAckOptions.Count >= 1, "Expected an ACK for UserAgentSupport");
-                responseFound = true;
+                if (uaAckOptions.Count > 0)
+                {
+                    responseFound = true;
+                }
+
+                if (expectAck)
+                {
+                    Assert.True(uaAckOptions.Count >= 1, "Expected an ACK for UserAgentSupport");
+                }
             };
 
-            // Act: open the connection which triggers the LOGIN7 exchange
             using var connection = new SqlConnection(server.ConnectionString);
             connection.Open();
 
-            // Assert: client advertised the feature, server acknowledged it, connection is healthy
+            // Verify client did offer UserAgent
             Assert.True(loginFound, "Expected UserAgent extension in LOGIN7");
-            Assert.True(responseFound, "Server should acknowledge UserAgent when forced");
-            Assert.Equal(ConnectionState.Open, connection.State);
-        }
 
+            // Verify server ACK presence or absence per scenario
+            if (expectAck)
+            {
+                Assert.True(responseFound, "Server should acknowledge UserAgent when forced");
+            }
+            else
+            {
+                Assert.False(responseFound, "Server should not acknowledge UserAgent");
+            }
+
+            // Verify the connection itself succeeded
+            Assert.Equal(ConnectionState.Open, connection.State);
+
+            // Note: Accessing UserAgentInfo via Reflection.
+            // We cannot use InternalsVisibleTo here because making internals visible to FunctionalTests
+            // causes the *.TestHarness.cs stubs to clash with the real internal types in SqlClient.
+            var asm = typeof(SqlConnection).Assembly;
+            var userAgentInfoType =
+                asm.GetTypes().FirstOrDefault(t => string.Equals(t.Name, "UserAgentInfo", StringComparison.Ordinal)) ??
+                asm.GetTypes().FirstOrDefault(t => t.FullName?.EndsWith(".UserAgentInfo", StringComparison.Ordinal) == true);
+
+            Assert.True(userAgentInfoType != null,
+                $"Unable to find UserAgentInfo type in assembly {asm.FullName}");
+
+            // Try to get the property
+            var prop = userAgentInfoType.GetProperty("UserAgentCachedJsonPayload",
+                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+
+            Assert.True(prop != null,
+                "Unable to find property 'UserAgentCachedJsonPayload' on UserAgentInfo");
+
+            ReadOnlyMemory<byte> cachedPayload = (ReadOnlyMemory<byte>)prop.GetValue(null)!;
+
+            Assert.False(cachedPayload.IsEmpty);
+            Assert.True(observedJsonBytes.AsSpan().SequenceEqual(cachedPayload.Span),
+                "Observed UserAgent JSON does not match the cached payload bytes");
+
+        }
     }
 }
