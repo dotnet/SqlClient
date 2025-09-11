@@ -375,6 +375,16 @@ namespace Microsoft.Data.SqlClient
 
         private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
+        public void ResetCommandTimeout()
+        {
+            if (ADP.DefaultCommandTimeout != CommandTimeout)
+            {
+                PropertyChanging();
+                _commandTimeout = DefaultCommandTimeout;
+            }
+        }
+
         internal void OnStatementCompleted(int recordCount)
         {
             if (0 <= recordCount)
