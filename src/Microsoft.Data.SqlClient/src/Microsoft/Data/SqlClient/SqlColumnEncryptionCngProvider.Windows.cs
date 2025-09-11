@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient
             // Validate the input parameters
             ValidateNonEmptyKeyPath(masterKeyPath, isSystemOp: true);
 
-            if (encryptedColumnEncryptionKey == null)
+            if (encryptedColumnEncryptionKey is null)
             {
                 throw SQL.NullEncryptedColumnEncryptionKey();
             }
@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient
             // Validate the input parameters
             ValidateNonEmptyKeyPath(masterKeyPath, isSystemOp: false);
 
-            if (columnEncryptionKey == null)
+            if (columnEncryptionKey is null)
             {
                 throw SQL.NullColumnEncryptionKey();
             }
