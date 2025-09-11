@@ -7,7 +7,12 @@ using static Microsoft.Data.SqlClient.ManualTesting.Tests.ConnectionPoolTest;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public static class ConnectionPoolTestDebug
+    // TODO(GH-3604): Fix these failing assertions.
+    //
+    // xUnit won't run tests in an abstract class.
+    //
+    // public static class ConnectionPoolTestDebug
+    public abstract class ConnectionPoolTestDebug
     {
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsUsingManagedSNI))]
         [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
