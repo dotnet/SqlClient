@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
@@ -87,6 +88,139 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.NullProviderValue(key);
                 }
             }
+        }
+
+        /// <summary>
+        /// This function constructs a string parameter containing the exec statement in the following format
+        /// N'EXEC sp_name @param1=@param1, @param1=@param2, ..., @paramN=@paramN'
+        /// </summary>
+        /// <param name="storedProcedureName">Stored procedure name</param>
+        /// <param name="parameters">SqlParameter list</param>
+        /// <returns>A string SqlParameter containing the constructed sql statement value</returns>
+        // @TODO: This isn't building a statement, it's building a parameter?
+        private SqlParameter BuildStoredProcedureStatementForColumnEncryption(
+            string storedProcedureName,
+            SqlParameterCollection parameters)
+        {
+            Debug.Assert(CommandType is CommandType.StoredProcedure,
+                "BuildStoredProcedureStatementForColumnEncryption() should only be called for stored procedures");
+            Debug.Assert(!string.IsNullOrWhiteSpace(storedProcedureName),
+                "storedProcedureName cannot be null or empty in BuildStoredProcedureStatementForColumnEncryption");
+
+            StringBuilder execStatement = new StringBuilder(@"EXEC ");
+
+            if (parameters is null)
+            {
+                execStatement.Append(ParseAndQuoteIdentifier(storedProcedureName, isUdtTypeName: false));
+                return new SqlParameter
+                {
+                    ParameterName = null,
+                    Size = execStatement.Length,
+                    SqlDbType = (execStatement.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
+                        ? SqlDbType.NVarChar
+                        : SqlDbType.NText,
+                    Value = execStatement.ToString()
+                };
+            }
+
+            // Find the return value parameter (if any)
+            SqlParameter returnValueParameter = null;
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                if (parameters[i].Direction is ParameterDirection.ReturnValue)
+                {
+                    returnValueParameter = parameters[i];
+                    break;
+                }
+            }
+
+            // If there is a return value parameter, we need to assign the result to it
+            // EXEC @returnValue=moduleName [parameters]
+            // @TODO: This could be done in above loop to remove need for storing it
+            if (returnValueParameter is not null)
+            {
+                SqlParameter.AppendPrefixedParameterName(execStatement, returnValueParameter.ParameterName);
+                execStatement.Append("=");
+            }
+
+            execStatement.Append(ParseAndQuoteIdentifier(storedProcedureName, isUdtTypeName: false));
+
+            // Build parameter list in the format
+            // @param1=@param1, @param2=@param2, ..., @paramN=@paramN
+
+            // Append the first parameter
+            // @TODO: I guarantee there's a way to collapse these into a single loop
+            int index = 0;
+            int count = parameters.Count;
+            SqlParameter parameter;
+            if (count > 0)
+            {
+                // Skip the return value parameters
+                // @TODO: We assume there's only one return value param above, but here we assume there could me multiple?
+                while (index < parameters.Count && parameters[index].Direction is ParameterDirection.ReturnValue)
+                {
+                    index++;
+                }
+
+                if (index < count)
+                {
+                    parameter = parameters[index];
+
+                    // Possibility of a SQL Injection issue through parameter names and how to
+                    // construct valid identifier for parameters. Since the parameters come from
+                    // application itself, there should not be a security vulnerability. Also since
+                    // the query is not executed, but only analyzed there is no possibility for
+                    // elevation of privilege, but only for incorrect results which would only
+                    // affect the user that attempts the injection.
+                    // @TODO: See notes on SqlCommand.AppendPrefixedParameterName
+                    execStatement.Append(' ');
+                    SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
+                    execStatement.Append('=');
+                    SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
+
+                    // InputOutput and Output parameters need to be marked as such
+                    if (parameter.Direction is ParameterDirection.Output or ParameterDirection.InputOutput)
+                    {
+                        execStatement.Append(@" OUTPUT");
+                    }
+                }
+            }
+
+            // Move to the next parameter
+            index++;
+
+            // Append the rest of the parameters
+            // @TODO: No, like, for real, this is doing the exact same thing as the n=1 case above!!
+            for (; index < count; index++)
+            {
+                parameter = parameters[index];
+
+                // @TODO: Invert
+                if (parameter.Direction is not ParameterDirection.ReturnValue)
+                {
+                    execStatement.Append(' ');
+                    SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
+                    execStatement.Append('=');
+                    SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
+
+                    // InputOutput and Output parameters need to be marked as such
+                    if (parameter.Direction is ParameterDirection.Output or ParameterDirection.InputOutput)
+                    {
+                        execStatement.Append(@" OUTPUT");
+                    }
+                }
+            }
+
+            // Construct @tsql SqlParameter to be returned
+            return new SqlParameter
+            {
+                ParameterName = null,
+                Size = execStatement.Length,
+                SqlDbType = (execStatement.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
+                    ? SqlDbType.NVarChar
+                    : SqlDbType.NText,
+                Value = execStatement.ToString()
+            };
         }
 
         /// <summary>
