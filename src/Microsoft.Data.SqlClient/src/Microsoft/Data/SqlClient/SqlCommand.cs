@@ -243,6 +243,11 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Rename to drop Sp
         private int _rowsAffectedBySpDescribeParameterEncryption = -1;
 
+        /// <summary>
+        /// RPC for tracking execution of sp_describe_parameter_encryption.
+        /// </summary>
+        private _SqlRPC _rpcForEncryption = null;
+
         // @TODO: Rename to match naming convention
         private _SqlRPC[] _sqlRPCParameterEncryptionReqArray;
 
