@@ -4075,7 +4075,10 @@
     <value>Belirtilen şifreli sütun şifreleme anahtarı, geçersiz bir şifreleme algoritması sürümü ('{0}') içeriyor. Beklenen sürüm: '{1}'.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının şifreli metin uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (sertifika) kullanılırken şifreli metin uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen sertifika yolu hatalı olabilir.</value>
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının şifreli metin uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (asimetrik anahtar) kullanılırken şifreli metin uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk olabilir veya belirtilen Microsoft Şifreleme Hizmeti sağlayıcısı (CSP) yolu yanlış olabilir.</value>
@@ -4084,7 +4087,10 @@
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının şifreli metin uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (asimetrik anahtar) kullanılırken şifreli metin uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk olabilir veya belirtilen Microsoft Şifreleme API: Yeni Nesil (CNG) sağlayıcı yolu yanlış olabilir.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının imza uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (sertifika) kullanılırken imza uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen sertifika yolu hatalı olabilir.</value>
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının imza uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (asimetrik anahtar) kullanılırken imza uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk olabilir veya belirtilen Microsoft şifreleme hizmeti sağlayıcısı (CSP) yolu yanlış olabilir.</value>
@@ -4092,11 +4098,14 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının imza uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (asimetrik anahtar) kullanılırken imza uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk olabilir veya belirtilen Microsoft Şifreleme API: Yeni Nesil (CNG) sağlayıcı yolu yanlış olabilir.</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key ({0}) in '{1}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarı imzası, '{0}' konumundaki sütun ana anahtarı (sertifika) ile hesaplanan imzayla eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen yol hatalı olabilir.</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarı imzası, '{0}' konumundaki sütun ana anahtarı (asimetrik anahtar) ile hesaplanan imzayla eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen yol hatalı olabilir.</value>
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>'{0}' anahtar yolunda belirtilen sertifika, bir sütun şifreleme anahtarını şifreleyecek özel anahtara sahip değil. Sertifikanın doğru şekilde içe aktarıldığını doğrulayın.</value>
