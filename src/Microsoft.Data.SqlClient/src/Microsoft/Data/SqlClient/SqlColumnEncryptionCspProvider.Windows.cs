@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient
         internal const string MasterKeyType = @"asymmetric key";
 
         /// <summary>
-        /// This encryption keystore uses the master key path to reference a CSP.
+        /// This encryption keystore uses the master key path to reference a CSP provider.
         /// </summary>
         internal const string KeyPathReference = @"Microsoft Cryptographic Service Provider (CSP)";
 
@@ -102,10 +102,10 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// This function validates that the encryption algorithm is RSA_OAEP and if it is not,
-        /// then throws an exception
+        /// then throws an exception.
         /// </summary>
-        /// <param name="encryptionAlgorithm">Asymmetric key encryption algorithm</param>
-        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
+        /// <param name="encryptionAlgorithm">Asymmetric key encryption algorithm.</param>
+        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API.</param>
         private static void ValidateEncryptionAlgorithm([NotNull] string? encryptionAlgorithm, bool isSystemOp)
         {
             // This validates that the encryption algorithm is RSA_OAEP
@@ -123,8 +123,8 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Checks if the CSP key path is Empty or Null (and raises exception if they are).
         /// </summary>
-        /// <param name="masterKeyPath">CSP key path.</param>
-        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
+        /// <param name="masterKeyPath">Key path containing the CSP provider name and key name.</param>
+        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API.</param>
         private static void ValidateNonEmptyCSPKeyPath([NotNull] string? masterKeyPath, bool isSystemOp)
         {
             if (masterKeyPath is null)
@@ -139,10 +139,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Creates a RSACryptoServiceProvider from the given key path which contains both CSP name and key name
+        /// Creates a RSACryptoServiceProvider from the given key path.
         /// </summary>
-        /// <param name="keyPath">key path in the format of [CAPI provider name]/[key name]</param>
-        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
+        /// <param name="keyPath">Key path in the format of [CSP provider name]/[key name].</param>
+        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API.</param>
         /// <returns></returns>
         private static RSACryptoServiceProvider CreateRSACryptoProvider(string keyPath, bool isSystemOp)
         {
@@ -154,35 +154,27 @@ namespace Microsoft.Data.SqlClient
 
             // Create a new instance of CspParameters for an RSA container.
             CspParameters cspParams = new(providerType, cspProviderName, keyName) { Flags = CspProviderFlags.UseExistingKey };
+            const int KEYSETDOESNOTEXIST = -2146893802;
 
             try
             {
                 // Create a new instance of RSACryptoServiceProvider
                 return new RSACryptoServiceProvider(cspParams);
             }
-            catch (CryptographicException e)
+            catch (CryptographicException e) when (e.HResult == KEYSETDOESNOTEXIST)
             {
-                const int KEYSETDOESNOTEXIST = -2146893802;
-                if (e.HResult == KEYSETDOESNOTEXIST)
-                {
-                    // Key does not exist
-                    throw SQL.InvalidCspKeyIdentifier(keyName, keyPath, isSystemOp);
-                }
-                else
-                {
-                    // Bubble up the exception
-                    throw;
-                }
+                // Key does not exist
+                throw SQL.InvalidCspKeyIdentifier(keyName, keyPath, isSystemOp);
             }
         }
 
         /// <summary>
-        /// Extracts the CSP provider name and key name from the given key path
+        /// Extracts the CSP provider name and key name from the given key path.
         /// </summary>
-        /// <param name="keyPath">key path in the format of [CSP provider name]/[key name]</param>
-        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
-        /// <param name="cspProviderName">output containing the CSP provider name</param>
-        /// <param name="keyIdentifier">output containing the key name</param>
+        /// <param name="keyPath">Key path in the format [CSP provider name]/[key name].</param>
+        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API.</param>
+        /// <param name="cspProviderName">CSP provider name.</param>
+        /// <param name="keyIdentifier">Key name inside the CSP provider.</param>
         private static void GetCspProviderAndKeyName(string keyPath, bool isSystemOp, out string cspProviderName, out string keyIdentifier)
         {
             int indexOfSlash = keyPath.IndexOf('/');
@@ -205,11 +197,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Gets the provider type from a given CAPI provider name
+        /// Gets the type from a given CSP provider name.
         /// </summary>
-        /// <param name="providerName">CAPI provider name</param>
-        /// <param name="keyPath">key path in the format of [CSP provider name]/[key name]</param>
-        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
+        /// <param name="providerName">CSP provider name.</param>
+        /// <param name="keyPath">Key path in the format of [CSP provider name]/[key name].</param>
+        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API.</param>
         /// <returns></returns>
         private static int GetProviderType(string providerName, string keyPath, bool isSystemOp)
         {

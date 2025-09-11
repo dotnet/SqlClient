@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient
             // Validate encryptionAlgorithm
             ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: true);
 
-            // Create RSA Provider with the given CNG name and key name
+            // Create RSA Provider with the given CNG provider name and key name
             RSA rsaProvider = CreateRSACngProvider(masterKeyPath, isSystemOp: true);
             using EncryptedColumnEncryptionKeyParameters cekDecryptionParameters = new(rsaProvider, masterKeyPath, MasterKeyType, KeyPathReference);
 
@@ -78,7 +78,7 @@ namespace Microsoft.Data.SqlClient
             // Validate encryptionAlgorithm
             ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: false);
 
-            // Create RSACNGProviderWithKey
+            // Create RSA Provider with the given CNG provider name and key name
             RSA rsaProvider = CreateRSACngProvider(masterKeyPath, isSystemOp: false);
             using EncryptedColumnEncryptionKeyParameters cekEncryptionParameters = new(rsaProvider, masterKeyPath, MasterKeyType, KeyPathReference);
 
@@ -99,10 +99,10 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// This function validates that the encryption algorithm is RSA_OAEP and if it is not,
-        /// then throws an exception
+        /// then throws an exception.
         /// </summary>
-        /// <param name="encryptionAlgorithm">Asymmetric key encryption algorithm</param>
-        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
+        /// <param name="encryptionAlgorithm">Asymmetric key encryption algorithm.</param>
+        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API.</param>
         private static void ValidateEncryptionAlgorithm([NotNull] string? encryptionAlgorithm, bool isSystemOp)
         {
             // This validates that the encryption algorithm is RSA_OAEP
@@ -120,8 +120,8 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Checks if the CNG key path is Empty or Null (and raises exception if they are).
         /// </summary>
-        /// <param name="masterKeyPath">keypath containing the CNG provider name and key name</param>
-        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
+        /// <param name="masterKeyPath">Key path containing the CNG provider name and key name.</param>
+        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API.</param>
         private static void ValidateNonEmptyKeyPath([NotNull] string? masterKeyPath, bool isSystemOp)
         {
             if (masterKeyPath is null)
@@ -136,10 +136,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Creates a RSACng object from the given keyPath.
+        /// Creates a RSACng from the given key path.
         /// </summary>
-        /// <param name="keyPath"></param>
-        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
+        /// <param name="keyPath">Key path in the format of [CNG provider name]/[key name].</param>
+        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API.</param>
         /// <returns></returns>
         private static RSACng CreateRSACngProvider(string keyPath, bool isSystemOp)
         {
@@ -165,12 +165,12 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Extracts the CNG provider and key name from the key path
+        /// Extracts the CNG provider name and key name from the given key path.
         /// </summary>
-        /// <param name="keyPath">keypath in the format [CNG Provider]/[KeyName]</param>
-        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
-        /// <param name="cngProvider">CNG Provider</param>
-        /// <param name="keyIdentifier">Key identifier inside the CNG provider</param>
+        /// <param name="keyPath">Key path in the format [CNG provider name]/[key name].</param>
+        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API.</param>
+        /// <param name="cngProvider">CNG provider name.</param>
+        /// <param name="keyIdentifier">Key name inside the CNG provider.</param>
         private static void GetCngProviderAndKeyId(string keyPath, bool isSystemOp, out string cngProvider, out string keyIdentifier)
         {
             int indexOfSlash = keyPath.IndexOf('/');
