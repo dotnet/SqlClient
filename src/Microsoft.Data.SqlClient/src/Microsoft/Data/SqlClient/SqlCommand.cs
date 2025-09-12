@@ -11,6 +11,7 @@ using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
@@ -1589,6 +1590,180 @@ namespace Microsoft.Data.SqlClient
             current.warningsIndexStart = previous?.warningsIndexEnd ?? 0;
             current.warningsIndexEnd = stateObj.WarningCount;
             current.warnings = stateObj._warnings;
+        }
+
+        /// <summary>
+        /// Generates a parameter list string for use with sp_executesql, sp_prepare, and sp_prepexec.
+        /// </summary>
+        // @TODO: How does this compare with BuildStoredProcedureStatementForColumnEncryption
+        private string BuildParamList(TdsParser parser, SqlParameterCollection parameters, bool includeReturnValue)
+        {
+            // @TODO: Rather than manually add separators, is this something that could be done with a string.Join?
+            StringBuilder paramList = new StringBuilder();
+            bool fAddSeparation = false; // @TODO: Drop f prefix
+
+            int count = parameters.Count;
+            for (int i = 0; i < count; i++)
+            {
+                SqlParameter sqlParam = parameters[i];
+                sqlParam.Validate(i, isCommandProc: CommandType is CommandType.StoredProcedure);
+
+                // Skip return value parameters, we never send them to the server
+                // @TODO: Is that true if "includeReturnValue" is true?
+                if (!ShouldSendParameter(sqlParam, includeReturnValue))
+                {
+                    continue;
+                }
+
+                // Add separator for the ith parameter
+                if (fAddSeparation)
+                {
+                    paramList.Append(',');
+                }
+
+                // @TODO: This section could do with a bit of cleanup. --vvv
+
+                SqlParameter.AppendPrefixedParameterName(paramList, sqlParam.ParameterName);
+
+                MetaType mt = sqlParam.InternalMetaType;
+
+                //for UDTs, get the actual type name. Get only the typename, omit catalog and schema names.
+                //in TSQL you should only specify the unqualified type name
+
+                // paragraph above doesn't seem to be correct. Server won't find the type
+                // if we don't provide a fully qualified name
+                // @TODO: So ... what's correct? ---^^^
+                paramList.Append(" ");
+                if (mt.SqlDbType is SqlDbType.Udt) // @TODO: Switch :)
+                {
+                    string fullTypeName = sqlParam.UdtTypeName;
+                    if (string.IsNullOrEmpty(fullTypeName))
+                    {
+                        throw SQL.MustSetUdtTypeNameForUdtParams();
+                    }
+
+                    paramList.Append(ParseAndQuoteIdentifier(fullTypeName, isUdtTypeName: true));
+                }
+                else if (mt.SqlDbType is SqlDbType.Structured)
+                {
+                    string typeName = sqlParam.TypeName;
+                    if (string.IsNullOrEmpty(typeName))
+                    {
+                        throw SQL.MustSetTypeNameForParam(mt.TypeName, sqlParam.GetPrefixedParameterName());
+                    }
+
+                    // TVPs currently are the only Structured type and must be read only, so add that keyword
+                    paramList.Append(ParseAndQuoteIdentifier(typeName, isUdtTypeName: false));
+                    paramList.Append(" READONLY");
+                }
+                else
+                {
+                    // Func will change type to that with a 4 byte length if the type has a two
+                    // byte length and a parameter length > that expressible in 2 bytes.
+                    // @TODO: what func?
+                    mt = sqlParam.ValidateTypeLengths();
+                    if (!mt.IsPlp && sqlParam.Direction is not ParameterDirection.Output)
+                    {
+                        sqlParam.FixStreamDataForNonPLP();
+                    }
+
+                    paramList.Append(mt.TypeName);
+                }
+
+                fAddSeparation = true;
+
+                // @TODO: These seem to be a total hodge-podge of conditions. Can we make a list of categories we're checking and expected behaviors
+                if (mt.SqlDbType is SqlDbType.Decimal)
+                {
+                    byte scale = sqlParam.GetActualScale();
+                    byte precision = sqlParam.GetActualPrecision();
+                    if (precision == 0)
+                    {
+                        precision = TdsEnums.DEFAULT_NUMERIC_PRECISION;
+                    }
+
+                    paramList.AppendFormat("({0},{1})", precision, scale);
+                }
+                else if (mt.IsVarTime)
+                {
+                    byte scale = sqlParam.GetActualScale();
+                    paramList.AppendFormat("({0})", scale);
+                }
+                else if (mt.SqlDbType is SqlDbTypeExtensions.Vector)
+                {
+                    // The validate function for SqlParameters would have already thrown
+                    // InvalidCastException if an incompatible value is specified for vector type.
+                    ISqlVector vectorProps = (ISqlVector)sqlParam.Value;
+                    paramList.AppendFormat("({0})", vectorProps.Length);
+                }
+                else if (!mt.IsFixed && !mt.IsLong && mt.SqlDbType is not  SqlDbType.Timestamp
+                                                                   and not SqlDbType.Udt
+                                                                   and not SqlDbType.Structured)
+                {
+                    int size = sqlParam.Size;
+
+                    // If using non-unicode types, obtain the actual length in bytes from the
+                    // parser, with it's associated code page.
+                    if (mt.IsAnsiType)
+                    {
+                        object value = sqlParam.GetCoercedValue();
+                        string s = null;
+
+                        // Deal with the sql types
+                        if (value is not null && value != DBNull.Value)
+                        {
+                            // @TODO: I swear this can be one line in the if statement...
+                            s = value as string;
+                            if (s is null)
+                            {
+                                SqlString sval = value is SqlString ? (SqlString)value : SqlString.Null;
+                                if (!sval.IsNull)
+                                {
+                                    s = sval.Value;
+                                }
+                            }
+                        }
+
+                        if (s is not null)
+                        {
+                            int actualBytes = parser.GetEncodingCharLength(
+                                value: s,
+                                numChars: sqlParam.GetActualScale(),
+                                charOffset: sqlParam.Offset,
+                                encoding: null);
+                            if (actualBytes > size)
+                            {
+                                size = actualBytes;
+                            }
+                        }
+                    }
+
+                    // If the user specified a 0-sized parameter for a variable length field, pass
+                    // in the maximum size (8000 bytes or 4000 characters for wide types)
+                    if (size == 0)
+                    {
+                        size = mt.IsSizeInCharacters
+                            ? TdsEnums.MAXSIZE >> 1
+                            : TdsEnums.MAXSIZE;
+                    }
+
+                    paramList.AppendFormat("({0})", size);
+                }
+                else if (mt.IsPlp && mt.SqlDbType is not  SqlDbType.Xml
+                                                  and not SqlDbType.Udt
+                                                  and not SqlDbTypeExtensions.Json)
+                {
+                    paramList.Append("(max) "); // @TODO: All caps?
+                }
+
+                // Set the output bit for Output/InputOutput parameters
+                if (sqlParam.Direction is not ParameterDirection.Input)
+                {
+                    paramList.Append(" " + TdsEnums.PARAM_OUTPUT);
+                }
+            }
+
+            return paramList.ToString();
         }
 
         /// <summary>

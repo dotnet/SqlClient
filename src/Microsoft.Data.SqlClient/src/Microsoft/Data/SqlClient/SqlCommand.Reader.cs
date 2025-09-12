@@ -465,7 +465,10 @@ namespace Microsoft.Data.SqlClient
             if (userParamCount > 0)
             {
                 // @TODO: Why does batch RPC mode use different parameters?
-                string paramList = BuildParamList(_stateObj.Parser, _batchRPCMode ? parameters : _parameters);
+                string paramList = BuildParamList(
+                    _stateObj.Parser,
+                    _batchRPCMode ? parameters : _parameters,
+                    includeReturnValue: false);
                 sqlParam = rpc.systemParams[1];
                 sqlParam.SqlDbType = (paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
                     ? SqlDbType.NVarChar
@@ -503,14 +506,17 @@ namespace Microsoft.Data.SqlClient
             rpc.systemParamOptions[0] = TdsEnums.RPC_PARAM_BYREF;
 
             // @batch_params
-            string paramList = BuildParamList(_stateObj.Parser, _parameters);
+            string paramList = BuildParamList(
+                _stateObj.Parser,
+                _parameters,
+                includeReturnValue: false);
             sqlParam = rpc.systemParams[1];
             // @TODO: This pattern is used quite a bit - it could be factored out
             sqlParam.SqlDbType = (paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
                 ? SqlDbType.NVarChar
                 : SqlDbType.NText;
-            sqlParam.Value = paramList;
             sqlParam.Size = paramList.Length;
+            sqlParam.Value = paramList;
             sqlParam.Direction = ParameterDirection.Input;
 
             // @batch_text
