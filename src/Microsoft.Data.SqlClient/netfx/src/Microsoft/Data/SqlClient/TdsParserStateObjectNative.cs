@@ -6,8 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
-using System.Runtime.CompilerServices;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using System.Threading.Tasks;
@@ -19,6 +17,10 @@ namespace Microsoft.Data.SqlClient
 {
     internal class TdsParserStateObjectNative : TdsParserStateObject
     {
+        private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
+
+        private SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
+        internal SNIPacket _sniAsyncAttnPacket = null;                // Packet to use to send Attn
         private readonly WritePacketCache _writePacketCache = new WritePacketCache(); // Store write packets that are ready to be re-used
 
         private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
@@ -36,6 +38,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         #region Properties
+
+        internal SNIHandle Handle => _sessionHandle;
 
         internal override uint Status => _sessionHandle != null ? _sessionHandle.Status : TdsEnums.SNI_UNINITIALIZED;
 
@@ -245,7 +249,6 @@ namespace Microsoft.Data.SqlClient
             DisposePacketCache();
         }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         protected override void FreeGcHandle(int remaining, bool release)
         {
             if ((0 == remaining || release) && _gcHandle.IsAllocated)
@@ -269,6 +272,12 @@ namespace Microsoft.Data.SqlClient
             SniNativeWrapper.SniPacketRelease(syncReadPacket.NativePointer);
         }
 
+        internal override uint CheckConnection()
+        {
+            SNIHandle handle = Handle;
+            return handle == null ? TdsEnums.SNI_SUCCESS : SniNativeWrapper.SniCheckConnection(handle);
+        }
+
         internal override PacketHandle ReadAsync(SessionHandle handle, out uint error)
         {
             IntPtr readPacketPtr = IntPtr.Zero;
@@ -282,6 +291,14 @@ namespace Microsoft.Data.SqlClient
             IntPtr readPacketPtr = IntPtr.Zero;
             error = SniNativeWrapper.SniReadSyncOverAsync(handle, ref readPacketPtr, timeoutRemaining);
             return PacketHandle.FromNativePointer(readPacketPtr);
+        }
+
+        internal override PacketHandle CreateAndSetAttentionPacket()
+        {
+            SNIPacket attnPacket = new SNIPacket(Handle);
+            _sniAsyncAttnPacket = attnPacket;
+            SniNativeWrapper.SniPacketSetData(attnPacket, SQL.AttentionHeader, TdsEnums.HEADER_LEN);
+            return PacketHandle.FromNativePacket(attnPacket);
         }
 
         internal override uint WritePacket(PacketHandle packet, bool sync)
@@ -344,6 +361,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal override void SetPacketData(PacketHandle packet, byte[] buffer, int bytesUsed)
+        {
+            Debug.Assert(packet.Type == PacketHandle.NativePacketType, "unexpected packet type when requiring NativePacket");
+            SniNativeWrapper.SniPacketSetData(packet.NativePacket, buffer, bytesUsed);
+        }
+
         internal override uint SniGetConnectionId(ref Guid clientConnectionId)
             => SniNativeWrapper.SniGetConnectionId(Handle, ref clientConnectionId);
 
@@ -362,32 +385,39 @@ namespace Microsoft.Data.SqlClient
             PacketHandle temp = default;
             uint error = TdsEnums.SNI_SUCCESS;
 
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-            try
-            { }
-            finally
+            IncrementPendingCallbacks();
+            SessionHandle handle = SessionHandle;
+            // we do not need to consider partial packets when making this read because we
+            // expect this read to pend. a partial packet should not exist at setup of the
+            // parser
+            Debug.Assert(physicalStateObject.PartialPacket == null);
+            temp = ReadAsync(handle, out error);
+
+            Debug.Assert(temp.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
+
+            if (temp.NativePointer != IntPtr.Zero)
             {
-                IncrementPendingCallbacks();
-                SessionHandle handle = SessionHandle;
-                // we do not need to consider partial packets when making this read because we
-                // expect this read to pend. a partial packet should not exist at setup of the
-                // parser
-                Debug.Assert(physicalStateObject.PartialPacket == null);
-                temp = ReadAsync(handle, out error);
-
-                Debug.Assert(temp.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
-
-                if (temp.NativePointer != IntPtr.Zero)
-                {
-                    // Be sure to release packet, otherwise it will be leaked by native.
-                    ReleasePacket(temp);
-                }
+                // Be sure to release packet, otherwise it will be leaked by native.
+                ReleasePacket(temp);
             }
 
             Debug.Assert(IntPtr.Zero == temp.NativePointer, "unexpected syncReadPacket without corresponding SNIPacketRelease");
             return error;
+        }
+
+        internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename)
+        {
+            AuthProviderInfo authInfo = new AuthProviderInfo();
+            authInfo.flags = info;
+            authInfo.tlsFirst = tlsFirst;
+            authInfo.certId = null;
+            authInfo.certHash = false;
+            authInfo.clientCertificateCallbackContext = IntPtr.Zero;
+            authInfo.clientCertificateCallback = null;
+            authInfo.serverCertFileName = string.IsNullOrEmpty(serverCertificateFilename) ? null : serverCertificateFilename;
+
+            // Add SSL (Encryption) SNI provider.
+            return SniNativeWrapper.SniAddProvider(Handle, Provider.SSL_PROV, ref authInfo);
         }
 
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
