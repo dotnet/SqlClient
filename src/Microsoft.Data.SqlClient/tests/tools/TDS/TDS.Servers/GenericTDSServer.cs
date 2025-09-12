@@ -60,9 +60,24 @@ namespace Microsoft.SqlServer.TDS.Servers
         public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
 
         /// <summary>
+        /// Property for setting server version for user agent feature extension.
+        /// </summary>
+        public byte ServerSupportedUserAgentFeatureExtVersion { get; set; } = DefaultSupportedUserAgentFeatureExtVersion;
+
+        /// <summary>
         /// Client version for vector FeatureExtension.
         /// </summary>
         private byte _clientSupportedVectorFeatureExtVersion = 0;
+
+        /// <summary>
+        /// Server will ACK UserAgentSupport in the login response when this property is set to true.
+        /// </summary>
+        public bool EmitUserAgentFeatureExtAck { get; set; } = false;
+
+        /// <summary>
+        /// Default feature extension version supported on the server for user agent.
+        /// </summary>
+        public const byte DefaultSupportedUserAgentFeatureExtVersion = 0x01;
 
         /// <summary>
         /// Session counter
@@ -651,6 +666,30 @@ namespace Microsoft.SqlServer.TDS.Servers
                 {
                     // Update the existing token
                     featureExtAckToken.Options.Add(vectorSupportOption);
+                }
+            }
+
+            // If tests request it, force an ACK for UserAgentSupport with no negotiation
+            if (EmitUserAgentFeatureExtAck)
+            {
+                byte ackVersion = ServerSupportedUserAgentFeatureExtVersion;
+
+                var data = new byte[] { ackVersion };
+                var uaAck = new TDSFeatureExtAckGenericOption(
+                    TDSFeatureID.UserAgentSupport,
+                    (uint)data.Length,
+                    data);
+
+                // Reuse an existing FeatureExtAck token if present, otherwise add a new one
+                var featureExtAckToken = responseMessage.OfType<TDSFeatureExtAckToken>().FirstOrDefault();
+                if (featureExtAckToken == null)
+                {
+                    featureExtAckToken = new TDSFeatureExtAckToken(uaAck);
+                    responseMessage.Add(featureExtAckToken);
+                }
+                else
+                {
+                    featureExtAckToken.Options.Add(uaAck);
                 }
             }
 

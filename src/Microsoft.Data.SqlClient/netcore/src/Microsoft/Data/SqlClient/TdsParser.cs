@@ -29,6 +29,8 @@ using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.UserAgent;
+
 #if NETFRAMEWORK
 using Microsoft.Data.SqlTypes;
 #endif
@@ -8868,7 +8870,15 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, useFeatureExt, length, true);
+                ApplyFeatureExData(
+                    requestedFeatures, 
+                    recoverySessionData, 
+                    fedAuthFeatureExtensionData, 
+                    UserAgentInfo.UserAgentCachedJsonPayload.ToArray(), 
+                    useFeatureExt, 
+                    length, 
+                    true
+                );
             }
             catch (Exception e)
             {
@@ -8887,6 +8897,7 @@ namespace Microsoft.Data.SqlClient
         private int ApplyFeatureExData(TdsEnums.FeatureExtension requestedFeatures,
                                         SessionData recoverySessionData,
                                         FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
+                                        byte[] userAgentJsonPayload,
                                         bool useFeatureExt,
                                         int length,
                                         bool write = false)
@@ -8937,6 +8948,11 @@ namespace Microsoft.Data.SqlClient
                 if ((requestedFeatures & TdsEnums.FeatureExtension.VectorSupport) != 0)
                 {
                     length += WriteVectorSupportFeatureRequest(write);
+                }
+
+                if ((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) != 0)
+                {
+                    length += WriteUserAgentFeatureRequest(userAgentJsonPayload, write);
                 }
 
                 length++; // for terminator
