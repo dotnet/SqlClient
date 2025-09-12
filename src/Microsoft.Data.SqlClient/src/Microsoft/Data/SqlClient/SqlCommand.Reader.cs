@@ -409,7 +409,11 @@ namespace Microsoft.Data.SqlClient
             int userParameterCount = CountSendableParameters(_parameters);
 
             _SqlRPC rpc = null;
-            GetRPCObject(systemParameterCount, userParameterCount, ref rpc);
+            GetRPCObject(
+                systemParameterCount,
+                userParameterCount,
+                ref rpc,
+                forSpDescribeParameterEncryption: false);
             rpc.ProcID = TdsEnums.RPC_PROCID_EXECUTE;
             rpc.rpcName = TdsEnums.SP_EXECUTE;
 
@@ -445,7 +449,11 @@ namespace Microsoft.Data.SqlClient
             int userParamCount = CountSendableParameters(parameters);
             int systemParamCount = userParamCount > 0 ? 2 : 1;
 
-            GetRPCObject(systemParamCount, userParamCount, ref rpc);
+            GetRPCObject(
+                systemParamCount,
+                userParamCount,
+                ref rpc,
+                forSpDescribeParameterEncryption: false);
             rpc.ProcID = TdsEnums.RPC_PROCID_EXECUTESQL;
             rpc.rpcName = TdsEnums.SP_EXECUTESQL;
 
@@ -491,7 +499,11 @@ namespace Microsoft.Data.SqlClient
             int userParameterCount = CountSendableParameters(_parameters);
 
             _SqlRPC rpc = null;
-            GetRPCObject(systemParameterCount, userParameterCount, ref rpc);
+            GetRPCObject(
+                systemParameterCount,
+                userParameterCount,
+                ref rpc,
+                forSpDescribeParameterEncryption: false);
             rpc.ProcID = TdsEnums.RPC_PROCID_PREPEXEC;
             rpc.rpcName = TdsEnums.SP_PREPEXEC;
 
@@ -544,7 +556,11 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(CommandType is CommandType.StoredProcedure, "Command must be a stored proc to execute an RPC");
 
             int userParameterCount = CountSendableParameters(parameters);
-            GetRPCObject(systemParamCount: 0, userParameterCount, ref rpc);
+            GetRPCObject(
+                systemParamCount: 0,
+                userParameterCount,
+                ref rpc,
+                forSpDescribeParameterEncryption: false);
             rpc.ProcID = 0;
 
             // TDS Protocol allows rpc name with maximum length of 1046 bytes for ProcName

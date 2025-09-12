@@ -1823,6 +1823,72 @@ namespace Microsoft.Data.SqlClient
         private void CheckThrowSNIException() =>
             _stateObj?.CheckThrowSNIException();
 
+        // @TODO: Why not *return* it?
+        // @TODO: Rename to match naming conventions GetRpcObject
+        // @TODO: This method would be less confusing if the initialized rpc is always provided (ie, the caller knows which member to grab an existing rpc from), and this method just initializes it.
+        private void GetRPCObject(
+            int systemParamCount,
+            int userParamCount,
+            ref _SqlRPC rpc, // @TODO: When is this not null?
+            bool forSpDescribeParameterEncryption)
+        {
+            // @TODO: This method seems like its overoptimizing for no good reason. It basically exists just to allow reuse of an _SqlRPC object.
+
+            // Designed to minimize necessary allocations
+            if (rpc is null)
+            {
+                if (!forSpDescribeParameterEncryption)
+                {
+                    // @TODO: When the arrayOf1 is used vs the list of RPCs is used is confusing to say the least.
+                    if (_rpcArrayOf1 is null)
+                    {
+                        _rpcArrayOf1 = new _SqlRPC[1];
+                        _rpcArrayOf1[0] = new _SqlRPC();
+                    }
+
+                    rpc = _rpcArrayOf1[0];
+                }
+                else
+                {
+                    _rpcForEncryption ??= new _SqlRPC();
+                    rpc = _rpcForEncryption;
+                }
+            }
+
+            // @TODO: This should be a "clear" or "reset" method on the _SqlRPC object. But reuse of an object like this is dangerous.
+            rpc.ProcID = 0;
+            rpc.rpcName = null;
+            rpc.options = 0;
+            rpc.systemParamCount = systemParamCount;
+            rpc.needsFetchParameterEncryptionMetadata = false;
+
+            // Make sure there is enough space in the parameters and param options arrays
+            int currentSystemParamCount = rpc.systemParams?.Length ?? 0;
+            if (currentSystemParamCount < systemParamCount)
+            {
+                // @TODO: It's especially dangerous because we'll be leaking parameters and data.
+                Array.Resize(ref rpc.systemParams, systemParamCount);
+                Array.Resize(ref rpc.systemParamOptions, systemParamCount);
+
+                // Initialize new elements in the array
+                for (int index = currentSystemParamCount; index < systemParamCount; index++)
+                {
+                    rpc.systemParams[index] = new SqlParameter();
+                }
+            }
+
+            for (int i = 0; i < systemParamCount; i++)
+            {
+                rpc.systemParamOptions[i] = 0;
+            }
+
+            int currentUserParamCount = rpc.userParamMap?.Length ?? 0;
+            if (currentUserParamCount < userParamCount)
+            {
+                Array.Resize(ref rpc.userParamMap, userParamCount);
+            }
+        }
+
         // @TODO: Rename PrepareInternal
         private void InternalPrepare()
         {
