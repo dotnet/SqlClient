@@ -1560,17 +1560,13 @@ namespace Microsoft.Data.SqlClient
             return TdsOperationStatus.Done;
         }
 
-        internal TdsOperationStatus TryReadByteArrayWithContinue(int length, out byte[] value)
-        {
-            return TryReadByteArrayWithContinue(length, false, out value);
-        }
         internal TdsOperationStatus TryReadByteArrayWithContinue(int length, bool isPlp, out byte[] value)
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
 
             byte[] buf = null;
             RequestContinue(true);
-            (bool canContinue, bool isStarting, bool isContinuing) = GetSnapshotStatuses();
+            (bool canContinue, bool _, bool isContinuing) = GetSnapshotStatuses();
 
             if (isPlp)
             {
@@ -1973,7 +1969,7 @@ namespace Microsoft.Data.SqlClient
 
             if (((_inBytesUsed + cBytes) > _inBytesRead) || (_inBytesPacket < cBytes))
             {
-                TdsOperationStatus result = TryReadByteArrayWithContinue(cBytes, out buf);
+                TdsOperationStatus result = TryReadByteArrayWithContinue(cBytes, isPlp: false, out buf);
                 if (result != TdsOperationStatus.Done)
                 {
                     value = null;
