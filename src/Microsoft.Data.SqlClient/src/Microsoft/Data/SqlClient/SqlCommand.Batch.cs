@@ -127,5 +127,15 @@ namespace Microsoft.Data.SqlClient
         }
 
         #endregion
+
+        #region Private Methods
+
+        private void ClearBatchCommand()
+        {
+            _RPCList?.Clear();
+            _currentlyExecutingBatch = 0;
+        }
+
+        #endregion
     }
 }

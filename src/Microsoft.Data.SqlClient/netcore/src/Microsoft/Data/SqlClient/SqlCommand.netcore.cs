@@ -1493,12 +1493,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void ClearBatchCommand()
-        {
-            _RPCList?.Clear();
-            _currentlyExecutingBatch = 0;
-        }
-
         private static void CancelIgnoreFailureCallback(object state)
         {
             SqlCommand command = (SqlCommand)state;
