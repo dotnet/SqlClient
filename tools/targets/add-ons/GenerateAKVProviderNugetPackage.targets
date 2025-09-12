@@ -7,6 +7,6 @@
     <Message Text="Setting NugetPackageVersion to $(NugetPackageVersion)" />
     <Exec Command="powershell.exe -NonInteractive -executionpolicy Unrestricted ^
       -command &quot;&amp;$(ToolsDir)scripts\downloadLatestNuget.ps1 -nugetDestPath '$(NuGetRoot)'&quot;" />
-    <Exec Command="$(NuGetCmd) pack $(ToolsDir)specs\add-ons\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec -Version $(NugetPackageVersion) -Symbols -SymbolPackageFormat snupkg -OutputDirectory $(PackagesDir) -properties Configuration=$(Configuration);ReferenceType=$(ReferenceType)" />
+    <Exec Command="$(NuGetCmd) pack $(ToolsDir)specs\add-ons\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec -Version $(NugetPackageVersion) -Symbols -SymbolPackageFormat snupkg -OutputDirectory $(PackagesDir) -properties Configuration=$(Configuration);ReferenceType=$(ReferenceType);NoWarn=NU5128" />
   </Target>
 </Project>

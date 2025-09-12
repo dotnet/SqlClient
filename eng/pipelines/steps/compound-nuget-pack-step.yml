@@ -44,7 +44,7 @@ steps:
                     -SymbolPackageFormat snupkg
                     -Version ${{ parameters.packageVersion }}
                     -OutputDirectory ${{ parameters.outputDirectory }}
-                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};ReferenceType=${{ parameters.referenceType }}"
+                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};ReferenceType=${{ parameters.referenceType }};NoWarn=NU5128"
     - ${{ else }}:
           - task: NuGetCommand@2
             displayName: 'Generate NuGet Package'
@@ -55,5 +55,4 @@ steps:
                     ${{ parameters.nuspecPath }}
                     -Version ${{ parameters.packageVersion }}
                     -OutputDirectory ${{ parameters.outputDirectory }}
-                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};ReferenceType=${{ parameters.referenceType }}"
-
+                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};ReferenceType=${{ parameters.referenceType }};NoWarn=NU5128"
