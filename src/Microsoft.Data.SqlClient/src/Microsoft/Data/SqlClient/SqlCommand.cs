@@ -92,6 +92,8 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private AsyncState _cachedAsyncState = null;
 
+        private int _currentlyExecutingBatch;
+
         /// <summary>
         /// Number of instances of SqlCommand that have been created. Used to generate ObjectId
         /// </summary>
@@ -262,6 +264,10 @@ namespace Microsoft.Data.SqlClient
         /// RPC for tracking execution of sp_describe_parameter_encryption.
         /// </summary>
         private _SqlRPC _rpcForEncryption = null;
+
+        // @TODO: Rename to match naming conventions
+        // @TODO: This could probably be an array
+        private List<_SqlRPC> _RPCList;
 
         // @TODO: Rename to match naming convention
         private _SqlRPC[] _sqlRPCParameterEncryptionReqArray;

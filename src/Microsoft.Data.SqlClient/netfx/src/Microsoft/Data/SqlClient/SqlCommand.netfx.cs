@@ -42,9 +42,6 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
         internal static int DebugForceAsyncWriteDelay { get; set; }
 #endif
-        
-        private List<_SqlRPC> _RPCList;
-        private int _currentlyExecutingBatch;
 
         /// <summary>
         /// A flag to indicate if EndExecute was already initiated by the Begin call.
