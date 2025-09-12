@@ -45,6 +45,53 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private static readonly object s_cachedInvalidPrepareHandle = (object)-1;
 
+        /// <summary>
+        /// 2005- column ordinals (this array indexed by ProcParamsColIndex
+        /// </summary>
+        // @TODO: There's gotta be a better way to define these than with 3x static structures
+        // @TODO: Rename to ProcParamNamesPreSql2008
+        private static readonly string[] PreSql2008ProcParamsNames = new string[]
+        {
+            "PARAMETER_NAME",           // ParameterName,
+            "PARAMETER_TYPE",           // ParameterType,
+            "DATA_TYPE",                // DataType
+            null,                       // ManagedDataType, introduced in 2008
+            "CHARACTER_MAXIMUM_LENGTH", // CharacterMaximumLength,
+            "NUMERIC_PRECISION",        // NumericPrecision,
+            "NUMERIC_SCALE",            // NumericScale,
+            "UDT_CATALOG",              // TypeCatalogName,
+            "UDT_SCHEMA",               // TypeSchemaName,
+            "TYPE_NAME",                // TypeName,
+            "XML_CATALOGNAME",          // XmlSchemaCollectionCatalogName,
+            "XML_SCHEMANAME",           // XmlSchemaCollectionSchemaName,
+            "XML_SCHEMACOLLECTIONNAME", // XmlSchemaCollectionName
+            "UDT_NAME",                 // UdtTypeName
+            null,                       // Scale for datetime types with scale, introduced in 2008
+        };
+
+        /// <summary>
+        /// 2008+ column ordinals (this array indexed by ProcParamsColIndex.
+        /// </summary>
+        // @TODO: There's gotta be a better way to define these than with 3x static structures
+        // @TODO: Rename to ProcParamNamesPostSql2008
+        internal static readonly string[] Sql2008ProcParamsNames = new[] {
+            "PARAMETER_NAME",           // ParameterName,
+            "PARAMETER_TYPE",           // ParameterType,
+            null,                       // DataType, removed from 2008+
+            "MANAGED_DATA_TYPE",        // ManagedDataType,
+            "CHARACTER_MAXIMUM_LENGTH", // CharacterMaximumLength,
+            "NUMERIC_PRECISION",        // NumericPrecision,
+            "NUMERIC_SCALE",            // NumericScale,
+            "TYPE_CATALOG_NAME",        // TypeCatalogName,
+            "TYPE_SCHEMA_NAME",         // TypeSchemaName,
+            "TYPE_NAME",                // TypeName,
+            "XML_CATALOGNAME",          // XmlSchemaCollectionCatalogName,
+            "XML_SCHEMANAME",           // XmlSchemaCollectionSchemaName,
+            "XML_SCHEMACOLLECTIONNAME", // XmlSchemaCollectionName
+            null,                       // UdtTypeName, removed from 2008+
+            "SS_DATETIME_PRECISION",    // Scale for datetime types with scale
+        };
+
         #endregion
 
         #region Fields
@@ -112,15 +159,14 @@ namespace Microsoft.Data.SqlClient
         private static readonly SqlDiagnosticListener s_diagnosticListener = new();
 
         /// <summary>
-        /// Prevents the completion events for ExecuteReader from being fired if ExecuteReader is being
-        /// called as part of a parent operation (e.g. ExecuteScalar, or SqlBatch.ExecuteScalar.)
-        /// </summary>
-        private bool _parentOperationStarted = false;
-
-        /// <summary>
         /// Connection that will be used to process the current instance.
         /// </summary>
         private SqlConnection _activeConnection;
+
+        /// <summary>
+        /// Cut down on object creation and cache all the cached metadata
+        /// </summary>
+        private _SqlMetaDataSet _cachedMetaData;
 
         /// <summary>
         /// Column Encryption Override. Defaults to SqlConnectionSetting, in which case it will be
@@ -205,7 +251,12 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         // @TODO: Make auto-property
         private bool _inPrepare = false;
-        
+
+        /// <summary>
+        /// A flag to indicate if EndExecute was already initiated by the Begin call.
+        /// </summary>
+        private volatile bool _internalEndExecuteInitiated;
+
         private SqlNotificationRequest _notification;
         
         #if NETFRAMEWORK
@@ -217,6 +268,12 @@ namespace Microsoft.Data.SqlClient
         /// Parameters that have been added to the current instance.
         /// </summary>
         private SqlParameterCollection _parameters;
+
+        /// <summary>
+        /// Prevents the completion events for ExecuteReader from being fired if ExecuteReader is being
+        /// called as part of a parent operation (e.g. ExecuteScalar, or SqlBatch.ExecuteScalar.)
+        /// </summary>
+        private bool _parentOperationStarted = false;
 
         /// <summary>
         /// Volatile bool used to synchronize with cancel thread the state change of an executing
@@ -247,6 +304,12 @@ namespace Microsoft.Data.SqlClient
         private object _prepareHandle = s_cachedInvalidPrepareHandle;
 
         /// <summary>
+        /// Last TaskCompletionSource for reconnect task - use for cancellation only.
+        /// </summary>
+        // @TODO: Ideally we should have this as a Task.
+        private TaskCompletionSource<object> _reconnectionCompletionSource = null;
+
+        /// <summary>
         /// Retry logic provider to use for execution of the current instance.
         /// </summary>
         private SqlRetryLogicBaseProvider _retryLogicProvider;
@@ -265,6 +328,12 @@ namespace Microsoft.Data.SqlClient
         // @TODO: This is only used for debug asserts?
         // @TODO: Rename to drop Sp
         private int _rowsAffectedBySpDescribeParameterEncryption = -1;
+
+        /// <summary>
+        /// Used for RPC executes.
+        /// </summary>
+        // @TODO: This is very unclear why it needs to be an array
+        private _SqlRPC[] _rpcArrayOf1 = null;
 
         /// <summary>
         /// RPC for tracking execution of sp_describe_parameter_encryption.
@@ -417,7 +486,27 @@ namespace Microsoft.Data.SqlClient
             /// </summary>
             PREPARED,           
         }
-        
+
+        // Index into indirection arrays for columns of interest to DeriveParameters
+        private enum ProcParamsColIndex
+        {
+            ParameterName = 0,
+            ParameterType,
+            DataType,        // Obsolete in 2008, use ManagedDataType instead
+            ManagedDataType, // New in 2008
+            CharacterMaximumLength,
+            NumericPrecision,
+            NumericScale,
+            TypeCatalogName,
+            TypeSchemaName,
+            TypeName,
+            XmlSchemaCollectionCatalogName,
+            XmlSchemaCollectionSchemaName,
+            XmlSchemaCollectionName,
+            UdtTypeName,  // Obsolete in 2008.  Holds the actual typename if UDT, since TypeName didn't back then.
+            DateTimeScale // New in 2008
+        }
+
         #endregion
 
         #region Public Properties
@@ -732,6 +821,11 @@ namespace Microsoft.Data.SqlClient
         internal static int DebugForceAsyncWriteDelay { get; set; }
         #endif
 
+        /// <summary>
+        /// A flag to indicate whether we postponed caching the query metadata for this command.
+        /// </summary>
+        internal bool CachingQueryMetadataPostponed { get; set; }
+
         internal bool HasColumnEncryptionKeyStoreProvidersRegistered
         {
             get => _customColumnEncryptionKeyStoreProviders?.Count > 0;
@@ -762,7 +856,12 @@ namespace Microsoft.Data.SqlClient
         /// Reset to false when completed.
         /// </summary>
         // @TODO: Rename to match naming conventions
+        // @TODO: Can be made private?
         internal bool IsDescribeParameterEncryptionRPCCurrentlyInProgress { get; private set; }
+
+        // @TODO: Autoproperty
+        // @TODO: MetaData or Metadata?
+        internal _SqlMetaDataSet MetaData => _cachedMetaData;
 
         // @TODO: Rename to match conventions.
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
@@ -911,14 +1010,16 @@ namespace Microsoft.Data.SqlClient
         }
 
         private bool IsPrepared => _execType is not EXECTYPE.UNPREPARED;
-        
-        // @TODO: IsPrepared is part of IsDirty - this is confusing.
-        private bool IsUserPrepared => IsPrepared && !_hiddenPrepare && !IsDirty;
+
+        private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
 
         private bool IsStoredProcedure => CommandType is CommandType.StoredProcedure;
 
         private bool IsSimpleTextQuery => CommandType is CommandType.Text &&
                                           (_parameters is null || _parameters.Count == 0);
+
+        // @TODO: IsPrepared is part of IsDirty - this is confusing.
+        private bool IsUserPrepared => IsPrepared && !_hiddenPrepare && !IsDirty;
 
         private bool ShouldCacheEncryptionMetadata
         {

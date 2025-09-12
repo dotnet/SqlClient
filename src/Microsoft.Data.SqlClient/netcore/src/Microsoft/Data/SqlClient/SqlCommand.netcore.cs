@@ -25,27 +25,6 @@ namespace Microsoft.Data.SqlClient
     // TODO: Add designer attribute when Microsoft.VSDesigner.Data.VS.SqlCommandDesigner uses Microsoft.Data.SqlClient
     public sealed partial class SqlCommand : DbCommand, ICloneable
     {
-        private _SqlRPC[] _rpcArrayOf1 = null;                // Used for RPC executes
-
-        // cut down on object creation and cache all these
-        // cached metadata
-        private _SqlMetaDataSet _cachedMetaData;
-
-        // Last TaskCompletionSource for reconnect task - use for cancellation only
-        private TaskCompletionSource<object> _reconnectionCompletionSource = null;
-
-        /// <summary>
-        /// A flag to indicate if EndExecute was already initiated by the Begin call.
-        /// </summary>
-        private volatile bool _internalEndExecuteInitiated;
-
-        /// <summary>
-        /// A flag to indicate whether we postponed caching the query metadata for this command.
-        /// </summary>
-        internal bool CachingQueryMetadataPostponed { get; set; }
-
-        private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
-
         internal void OnStatementCompleted(int recordCount)
         {
             if (0 <= recordCount)
@@ -393,64 +372,6 @@ namespace Microsoft.Data.SqlClient
             return sproc;
         }
 
-        // Index into indirection arrays for columns of interest to DeriveParameters
-        private enum ProcParamsColIndex
-        {
-            ParameterName = 0,
-            ParameterType,
-            DataType, // obsolete in 2008, use ManagedDataType instead
-            ManagedDataType, // new in 2008
-            CharacterMaximumLength,
-            NumericPrecision,
-            NumericScale,
-            TypeCatalogName,
-            TypeSchemaName,
-            TypeName,
-            XmlSchemaCollectionCatalogName,
-            XmlSchemaCollectionSchemaName,
-            XmlSchemaCollectionName,
-            UdtTypeName, // obsolete in 2008.  Holds the actual typename if UDT, since TypeName didn't back then.
-            DateTimeScale // new in 2008
-        };
-
-        // 2005- column ordinals (this array indexed by ProcParamsColIndex
-        internal static readonly string[] PreSql2008ProcParamsNames = new string[] {
-            "PARAMETER_NAME",           // ParameterName,
-            "PARAMETER_TYPE",           // ParameterType,
-            "DATA_TYPE",                // DataType
-            null,                       // ManagedDataType,     introduced in 2008
-            "CHARACTER_MAXIMUM_LENGTH", // CharacterMaximumLength,
-            "NUMERIC_PRECISION",        // NumericPrecision,
-            "NUMERIC_SCALE",            // NumericScale,
-            "UDT_CATALOG",              // TypeCatalogName,
-            "UDT_SCHEMA",               // TypeSchemaName,
-            "TYPE_NAME",                // TypeName,
-            "XML_CATALOGNAME",          // XmlSchemaCollectionCatalogName,
-            "XML_SCHEMANAME",           // XmlSchemaCollectionSchemaName,
-            "XML_SCHEMACOLLECTIONNAME", // XmlSchemaCollectionName
-            "UDT_NAME",                 // UdtTypeName
-            null,                       // Scale for datetime types with scale, introduced in 2008
-        };
-
-        // 2008+ column ordinals (this array indexed by ProcParamsColIndex
-        internal static readonly string[] Sql2008ProcParamsNames = new string[] {
-            "PARAMETER_NAME",           // ParameterName,
-            "PARAMETER_TYPE",           // ParameterType,
-            null,                       // DataType, removed from 2008+
-            "MANAGED_DATA_TYPE",        // ManagedDataType,
-            "CHARACTER_MAXIMUM_LENGTH", // CharacterMaximumLength,
-            "NUMERIC_PRECISION",        // NumericPrecision,
-            "NUMERIC_SCALE",            // NumericScale,
-            "TYPE_CATALOG_NAME",        // TypeCatalogName,
-            "TYPE_SCHEMA_NAME",         // TypeSchemaName,
-            "TYPE_NAME",                // TypeName,
-            "XML_CATALOGNAME",          // XmlSchemaCollectionCatalogName,
-            "XML_SCHEMANAME",           // XmlSchemaCollectionSchemaName,
-            "XML_SCHEMACOLLECTIONNAME", // XmlSchemaCollectionName
-            null,                       // UdtTypeName, removed from 2008+
-            "SS_DATETIME_PRECISION",    // Scale for datetime types with scale
-        };
-
         internal void DeriveParameters()
         {
             switch (CommandType)
@@ -737,15 +658,6 @@ namespace Microsoft.Data.SqlClient
                     return ParameterDirection.Input;
             }
 
-        }
-
-        // get cached metadata
-        internal _SqlMetaDataSet MetaData
-        {
-            get
-            {
-                return _cachedMetaData;
-            }
         }
 
         // Check to see if notifications auto enlistment is turned on. Enlist if so.
