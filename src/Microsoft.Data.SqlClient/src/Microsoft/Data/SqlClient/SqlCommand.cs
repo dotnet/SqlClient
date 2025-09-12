@@ -34,6 +34,12 @@ namespace Microsoft.Data.SqlClient
     {
         #region Constants
 
+        // @TODO: Rename to match naming conventions
+        private const int MaxRPCNameLength = 1046;
+
+        // @TODO: Make property (externally visible fields are bad)
+        internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
+
         /// <summary>
         /// Pre-boxed invalid prepare handle - used to optimize boxing behavior.
         /// </summary>
@@ -1446,6 +1452,9 @@ namespace Microsoft.Data.SqlClient
 
         #region Private Methods
 
+        private static void CancelIgnoreFailureCallback(object state) =>
+            ((SqlCommand)state).CancelIgnoreFailure();
+
         private static void OnDone(TdsParserStateObject stateObj, int index, IList<_SqlRPC> rpcList, int rowsAffected)
         {
             // @TODO: Is the state object not the same as the currently stored one?
@@ -1473,6 +1482,26 @@ namespace Microsoft.Data.SqlClient
             current.warningsIndexStart = previous?.warningsIndexEnd ?? 0;
             current.warningsIndexEnd = stateObj.WarningCount;
             current.warnings = stateObj._warnings;
+        }
+
+        /// <summary>
+        /// This method is used to route CancellationTokens to the Cancel method. Cancellation is a
+        /// suggestion, and exceptions should be ignored rather than allowed to be unhandled, as
+        /// there is no way to route them to the caller. It would be expected that the error will
+        /// be observed anyway from the regular method. An example is cancelling an operation on a
+        /// closed connection.
+        /// </summary>
+        // @TODO: If this is only used in above callback, just combine them together.
+        private void CancelIgnoreFailure()
+        {
+            try
+            {
+                Cancel();
+            }
+            catch
+            {
+                // We are ignoring failure here.
+            }
         }
 
         // @TODO: Rename PrepareInternal

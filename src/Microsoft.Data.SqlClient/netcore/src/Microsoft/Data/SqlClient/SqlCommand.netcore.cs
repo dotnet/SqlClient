@@ -16,6 +16,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Diagnostics;
 
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
@@ -24,10 +25,6 @@ namespace Microsoft.Data.SqlClient
     // TODO: Add designer attribute when Microsoft.VSDesigner.Data.VS.SqlCommandDesigner uses Microsoft.Data.SqlClient
     public sealed partial class SqlCommand : DbCommand, ICloneable
     {
-        private const int MaxRPCNameLength = 1046;
-
-        internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
-
         private _SqlRPC[] _rpcArrayOf1 = null;                // Used for RPC executes
 
         // cut down on object creation and cache all these
@@ -1483,29 +1480,6 @@ namespace Microsoft.Data.SqlClient
             if (stateObj != null)
             {
                 stateObj.OnConnectionClosed();
-            }
-        }
-
-        private static void CancelIgnoreFailureCallback(object state)
-        {
-            SqlCommand command = (SqlCommand)state;
-            command.CancelIgnoreFailure();
-        }
-
-        private void CancelIgnoreFailure()
-        {
-            // This method is used to route CancellationTokens to the Cancel method.
-            // Cancellation is a suggestion, and exceptions should be ignored
-            // rather than allowed to be unhandled, as there is no way to route
-            // them to the caller.  It would be expected that the error will be
-            // observed anyway from the regular method.  An example is cancelling
-            // an operation on a closed connection.
-            try
-            {
-                Cancel();
-            }
-            catch (Exception)
-            {
             }
         }
 
