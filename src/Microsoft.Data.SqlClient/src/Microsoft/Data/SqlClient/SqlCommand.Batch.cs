@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 
@@ -95,6 +96,34 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_batchRPCMode, "Command is not in batch RPC mode");
             Debug.Assert(_RPCList is not null, "Batch commands have been cleared");
             return _RPCList[commandIndex].recordsAffected;
+        }
+
+        // @TODO: Rename to match naming conventions
+        internal void SetBatchRPCMode(bool value, int commandCount = 1)
+        {
+            _batchRPCMode = value;
+            ClearBatchCommand();
+            if (_batchRPCMode)
+            {
+                if (_RPCList is null)
+                {
+                    // @TODO: Could this be done with an array?
+                    _RPCList = new List<_SqlRPC>(commandCount);
+                }
+                else
+                {
+                    _RPCList.Capacity = commandCount;
+                }
+            }
+        }
+
+        // @TODO: Rename to match naming conventions
+        internal void SetBatchRPCModeReadyToExecute()
+        {
+            Debug.Assert(_batchRPCMode, "Command is not in batch RPC Mode");
+            Debug.Assert(_RPCList is not null, "No batch commands specified");
+
+            _currentlyExecutingBatch = 0;
         }
 
         #endregion

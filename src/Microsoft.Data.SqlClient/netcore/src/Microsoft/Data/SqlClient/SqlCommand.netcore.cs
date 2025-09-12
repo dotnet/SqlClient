@@ -1499,31 +1499,6 @@ namespace Microsoft.Data.SqlClient
             _currentlyExecutingBatch = 0;
         }
 
-        internal void SetBatchRPCMode(bool value, int commandCount = 1)
-        {
-            _batchRPCMode = value;
-            ClearBatchCommand();
-            if (_batchRPCMode)
-            {
-                if (_RPCList == null)
-                {
-                    _RPCList = new List<_SqlRPC>(commandCount);
-                }
-                else
-                {
-                    _RPCList.Capacity = commandCount;
-                }
-            }
-        }
-
-        internal void SetBatchRPCModeReadyToExecute()
-        {
-            Debug.Assert(_batchRPCMode, "Command is not in batch RPC Mode");
-            Debug.Assert(_RPCList != null, "No batch commands specified");
-
-            _currentlyExecutingBatch = 0;
-        }
-
         private static void CancelIgnoreFailureCallback(object state)
         {
             SqlCommand command = (SqlCommand)state;
