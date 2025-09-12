@@ -11,10 +11,6 @@ release:
 
 ### Breaking Changes
 
-- Removed undocumented `SqlCommand.EndExecuteNonQueryAsync()` method from the
-  public API for .NET 8.0 and 9.0 targets.
-  ([#3460](https://github.com/dotnet/SqlClient/pull/3460))
-
 - Removed `Constrained Execution Region` error handling blocks and associated
   `SqlConnection` cleanup which may affect how potentially-broken connections
   are expunged from the pool.
@@ -26,7 +22,13 @@ release:
   ([#3534](https://github.com/dotnet/SqlClient/pull/3534),
    [#3537](https://github.com/dotnet/SqlClient/pull/3537))
 
-### Other Changes
+### Added
+
+- `SqlColumnEncryptionCertificateStoreProvider` now works on Windows, Linux,
+  and macOS.
+  ([#3014](https://github.com/dotnet/SqlClient/pull/3014))
+
+### Changed
 
 - Updated `SqlVector.Null` to return a nullable `SqlVector` instance in the
   reference API to match the implementation.
