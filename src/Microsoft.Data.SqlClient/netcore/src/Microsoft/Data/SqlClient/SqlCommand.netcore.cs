@@ -1124,37 +1124,6 @@ namespace Microsoft.Data.SqlClient
             return parameters != null ? parameters.Count : 0;
         }
 
-        // Adds quotes to each part of a SQL identifier that may be multi-part, while leaving
-        //  the result as a single composite name.
-        private static string ParseAndQuoteIdentifier(string identifier, bool isUdtTypeName)
-        {
-            string[] strings = SqlParameter.ParseTypeName(identifier, isUdtTypeName);
-            return QuoteIdentifier(strings);
-        }
-
-        private static string QuoteIdentifier(ReadOnlySpan<string> strings)
-        {
-            StringBuilder bld = new StringBuilder();
-
-            // Stitching back together is a little tricky. Assume we want to build a full multi-part name
-            //  with all parts except trimming separators for leading empty names (null or empty strings,
-            //  but not whitespace). Separators in the middle should be added, even if the name part is 
-            //  null/empty, to maintain proper location of the parts.
-            for (int i = 0; i < strings.Length; i++)
-            {
-                if (0 < bld.Length)
-                {
-                    bld.Append('.');
-                }
-                if (strings[i] != null && 0 != strings[i].Length)
-                {
-                    ADP.AppendQuotedString(bld, "[", "]", strings[i]);
-                }
-            }
-
-            return bld.ToString();
-        }
-
         // returns set option text to turn on format only and key info on and off
         //  When we are executing as a text command, then we never need
         // to turn off the options since they command text is executed in the scope of sp_executesql.

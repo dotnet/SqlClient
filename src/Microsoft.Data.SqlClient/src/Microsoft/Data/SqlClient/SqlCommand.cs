@@ -1593,6 +1593,39 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
+        /// Adds quotes to each part of a SQL identifier that may be multi-part, while leaving the
+        /// result as a single composite name.
+        /// </summary>
+        // @TODO: This little utility is either likely duplicated in other places, and likely belongs in some other class.
+        private static string ParseAndQuoteIdentifier(string identifier, bool isUdtTypeName) =>
+            QuoteIdentifier(SqlParameter.ParseTypeName(identifier, isUdtTypeName));
+
+        // @TODO: This little utility is either likely duplicated in other places, and likely belongs in some other class.
+        private static string QuoteIdentifier(ReadOnlySpan<string> strings)
+        {
+            // Stitching back together is a little tricky. Assume we want to build a full
+            // multipart name with all parts except trimming separators for leading empty names
+            // (null or empty strings, but not whitespace). Separators in the middle should be
+            // added, even if the name part is null/empty, to maintain proper location of the parts
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < strings.Length; i++)
+            {
+                if (builder.Length > 0)
+                {
+                    builder.Append('.');
+                }
+
+                string str = strings[i];
+                if (!string.IsNullOrEmpty(str))
+                {
+                    ADP.AppendQuotedString(builder, "[", "]", str);
+                }
+            }
+
+            return builder.ToString();
+        }
+
+        /// <summary>
         /// Generates a parameter list string for use with sp_executesql, sp_prepare, and sp_prepexec.
         /// </summary>
         // @TODO: How does this compare with BuildStoredProcedureStatementForColumnEncryption

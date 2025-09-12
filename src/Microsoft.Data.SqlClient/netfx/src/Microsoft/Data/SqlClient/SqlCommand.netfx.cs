@@ -1072,7 +1072,7 @@ namespace Microsoft.Data.SqlClient
                                     parts[1] != null // server should not be null or we don't need to remove it
                                 )
                                 {
-                                    parameter.TypeName = QuoteIdentifier(parts, 2, 2);
+                                    parameter.TypeName = QuoteIdentifier(parts.AsSpan(2, 2));
                                 }
                             }
                         }
@@ -1133,37 +1133,6 @@ namespace Microsoft.Data.SqlClient
         private static int GetParameterCount(SqlParameterCollection parameters)
         {
             return parameters != null ? parameters.Count : 0;
-        }
-
-        // Adds quotes to each part of a SQL identifier that may be multi-part, while leaving
-        //  the result as a single composite name.
-        private static string ParseAndQuoteIdentifier(string identifier, bool isUdtTypeName)
-        {
-            string[] strings = SqlParameter.ParseTypeName(identifier, isUdtTypeName);
-            return ADP.BuildMultiPartName(strings);
-        }
-
-        private static string QuoteIdentifier(string[] strings, int offset, int length)
-        {
-            StringBuilder bld = new StringBuilder();
-
-            // Stitching back together is a little tricky. Assume we want to build a full multi-part name
-            //  with all parts except trimming separators for leading empty names (null or empty strings,
-            //  but not whitespace). Separators in the middle should be added, even if the name part is 
-            //  null/empty, to maintain proper location of the parts.
-            for (int i = offset; i < (offset + length); i++)
-            {
-                if (0 < bld.Length)
-                {
-                    bld.Append('.');
-                }
-                if (strings[i] != null && 0 != strings[i].Length)
-                {
-                    ADP.AppendQuotedString(bld, "[", "]", strings[i]);
-                }
-            }
-
-            return bld.ToString();
         }
 
         // returns set option text to turn on format only and key info on and off
