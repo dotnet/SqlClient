@@ -1262,6 +1262,12 @@ namespace Microsoft.Data.SqlClient
 
         #region Internal Methods
 
+        /// <summary>
+        /// We're being notified that the underlying connection was closed.
+        /// </summary>
+        internal void OnConnectionClosed() =>
+            _stateObj?.OnConnectionClosed();
+
         internal void OnDoneDescribeParameterEncryptionProc(TdsParserStateObject stateObj)
         {
             // @TODO: Is this not the same stateObj as the currently stored one?
@@ -1605,6 +1611,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // @TODO: Rename to match naming convention
+        private void CheckThrowSNIException() =>
+            _stateObj?.CheckThrowSNIException();
+
         // @TODO: Rename PrepareInternal
         private void InternalPrepare()
         {
@@ -1634,6 +1644,9 @@ namespace Microsoft.Data.SqlClient
 
             Statistics?.SafeIncrement(ref Statistics._prepares);
         }
+
+        private void NotifyDependency() =>
+            _sqlDep?.StartTimer(Notification);
 
         private void PropertyChanging()
         {

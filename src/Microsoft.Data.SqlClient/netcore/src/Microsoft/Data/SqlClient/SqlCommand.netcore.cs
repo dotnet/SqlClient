@@ -1375,32 +1375,5 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(System.Data.CommandType.Text == this.CommandType, "invalid call to GetCommandText for stored proc!");
             return GetSetOptionsString(behavior) + this.CommandText;
         }
-
-        internal void CheckThrowSNIException()
-        {
-            var stateObj = _stateObj;
-            if (stateObj != null)
-            {
-                stateObj.CheckThrowSNIException();
-            }
-        }
-
-        // We're being notified that the underlying connection has closed
-        internal void OnConnectionClosed()
-        {
-            var stateObj = _stateObj;
-            if (stateObj != null)
-            {
-                stateObj.OnConnectionClosed();
-            }
-        }
-
-        private void NotifyDependency()
-        {
-            if (_sqlDep != null)
-            {
-                _sqlDep.StartTimer(Notification);
-            }
-        }
     }
 }
