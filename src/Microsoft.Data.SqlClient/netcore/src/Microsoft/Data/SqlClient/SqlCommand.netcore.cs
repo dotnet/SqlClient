@@ -37,10 +37,6 @@ namespace Microsoft.Data.SqlClient
         // Last TaskCompletionSource for reconnect task - use for cancellation only
         private TaskCompletionSource<object> _reconnectionCompletionSource = null;
 
-#if DEBUG
-        internal static int DebugForceAsyncWriteDelay { get; set; }
-#endif
-
         /// <summary>
         /// A flag to indicate if EndExecute was already initiated by the Begin call.
         /// </summary>

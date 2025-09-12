@@ -721,6 +721,11 @@ namespace Microsoft.Data.SqlClient
 
         #region Internal/Protected/Private Properties
 
+        #if DEBUG
+        // @TODO: 1) This is never set, 2) This is only used in TdsParserStateObject
+        internal static int DebugForceAsyncWriteDelay { get; set; }
+        #endif
+
         internal bool HasColumnEncryptionKeyStoreProvidersRegistered
         {
             get => _customColumnEncryptionKeyStoreProviders?.Count > 0;
