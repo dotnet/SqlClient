@@ -31,13 +31,13 @@ Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncrypti
         <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" />
       </group>
       <group targetFramework="net8.0">
-        <dependency id="Microsoft.Data.SqlClient" version="(6,7.0]" />
+        <dependency id="Microsoft.Data.SqlClient" version="(6.2,7.1)" />
         <dependency id="Azure.Core" version="1.47.1" />
         <dependency id="Azure.Security.KeyVault.Keys" version="4.7.0" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" />
       </group>
       <group targetFramework="net9.0">
-        <dependency id="Microsoft.Data.SqlClient" version="(6,7.0]" />
+        <dependency id="Microsoft.Data.SqlClient" version="(6.2,7.1)" />
         <dependency id="Azure.Core" version="1.47.1" />
         <dependency id="Azure.Security.KeyVault.Keys" version="4.7.0" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="9.0.5" />
