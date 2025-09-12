@@ -2521,7 +2521,7 @@
     <value>Bu komut, zaman uyumsuz bağlantı gerektiriyor. Bağlantı dizesinde “Asynchronous Processing=true” ayarını yapın.</value>
   </data>
   <data name="SQL_ConnectTimeout" xml:space="preserve">
-    <value>The connection attempt timed out.</value>
+    <value>Bağlantı denemesi zaman aşımına uğradı.</value>
   </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>Zaman aşımı süresi sona erdi.  Sonuç olarak bağlantı kesildi.</value>
@@ -3954,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>Sertifika yolu null olamaz. Şu biçimi kullanın: &lt;sertifika konumu&gt;{2}&lt;sertifika deposu&gt;{2}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{0}' veya '{1}' değerindedir.</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Sertifika yolu null olamaz. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{1}&lt;sertifika depolama alanı&gt;{1}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{0}'.</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>İç hata. Sertifika yolu null olamaz. Şu biçimi kullanın: &lt;sertifika konumu&gt;{2}&lt;sertifika deposu&gt;{2}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{0}' veya '{1}' değerindedir.</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>İç hata. Sertifika yolu null olamaz. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{1}&lt;sertifika depolama alanı&gt;{1}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{0}'.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Sütun ana anahtar yolu null olamaz. Microsoft şifreleme hizmeti sağlayıcısı (CSP) içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CSP Sağlayıcısı Adı&gt;{0}&lt;Anahtar Tanımlayıcısı&gt;.</value>
@@ -3972,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>Geçerli sertifika yolu: '{0}'. Şu biçimi kullanın: &lt;sertifika konumu&gt;{3}&lt;sertifika deposu&gt;{3}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{1}' veya '{2}' değerindedir.</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Geçerli sertifika yolu: '{0}'. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{2}&lt;sertifika depolama alanı&gt;{2}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{1}'.</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>İç hata. Geçerli sertifika yolu: '{0}'. Şu biçimi kullanın: &lt;sertifika konumu&gt;{3}&lt;sertifika deposu&gt;{3}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{1}' veya '{2}' değerindedir.</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>İç hata. Geçerli sertifika yolu: '{0}'. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{2}&lt;sertifika depolama alanı&gt;{2}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{1}'.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Geçersiz sütun ana anahtar yolu: '{0}'. Microsoft şifreleme hizmeti sağlayıcısı (CSP) içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CSP Sağlayıcısı Adı&gt;{1}&lt;Anahtar Tanımlayıcısı&gt;.</value>
@@ -3990,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>Sertifika yolu '{1}'de geçersiz sertifika konumu '{0}'. Şu biçimi kullanın: &lt;sertifika konumu&gt;{4}&lt;sertifika deposu&gt;{4}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{2}' veya '{3}' değerindedir.</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>Sertifika yolu '{1}'de geçersiz sertifika konumu '{0}'. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{3}&lt;sertifika depolama alanı&gt;{3}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{2}'.</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>İç hata. Sertifika yolu '{1}'de geçersiz sertifika konumu '{0}'. Şu biçimi kullanın: &lt;sertifika konumu&gt;{4}&lt;sertifika deposu&gt;{4}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{2}' veya '{3}' değerindedir.</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>İç hata. Sertifika yolu '{1}'de geçersiz sertifika konumu '{0}'. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{3}&lt;sertifika depolama alanı&gt;{3}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{2}'.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>Sertifika yolu '{1}'de belirtilen geçersiz sertifika deposu '{0}'. Beklenen değer: '{2}'.</value>
@@ -4057,7 +4075,10 @@
     <value>Belirtilen şifreli sütun şifreleme anahtarı, geçersiz bir şifreleme algoritması sürümü ('{0}') içeriyor. Beklenen sürüm: '{1}'.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının şifreli metin uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (sertifika) kullanılırken şifreli metin uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen sertifika yolu hatalı olabilir.</value>
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının şifreli metin uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (asimetrik anahtar) kullanılırken şifreli metin uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk olabilir veya belirtilen Microsoft Şifreleme Hizmeti sağlayıcısı (CSP) yolu yanlış olabilir.</value>
@@ -4066,7 +4087,10 @@
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının şifreli metin uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (asimetrik anahtar) kullanılırken şifreli metin uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk olabilir veya belirtilen Microsoft Şifreleme API: Yeni Nesil (CNG) sağlayıcı yolu yanlış olabilir.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının imza uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (sertifika) kullanılırken imza uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen sertifika yolu hatalı olabilir.</value>
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının imza uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (asimetrik anahtar) kullanılırken imza uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk olabilir veya belirtilen Microsoft şifreleme hizmeti sağlayıcısı (CSP) yolu yanlış olabilir.</value>
@@ -4074,11 +4098,14 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının imza uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (asimetrik anahtar) kullanılırken imza uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk olabilir veya belirtilen Microsoft Şifreleme API: Yeni Nesil (CNG) sağlayıcı yolu yanlış olabilir.</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key ({0}) in '{1}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarı imzası, '{0}' konumundaki sütun ana anahtarı (sertifika) ile hesaplanan imzayla eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen yol hatalı olabilir.</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarı imzası, '{0}' konumundaki sütun ana anahtarı (asimetrik anahtar) ile hesaplanan imzayla eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen yol hatalı olabilir.</value>
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>'{0}' anahtar yolunda belirtilen sertifika, bir sütun şifreleme anahtarını şifreleyecek özel anahtara sahip değil. Sertifikanın doğru şekilde içe aktarıldığını doğrulayın.</value>
@@ -4666,18 +4693,18 @@
     <value>SqlBatchCommand listesi başlatılmadı.</value>
   </data>
   <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to get vector data from column '{0}'. Vectors are only supported for columns of type vector.</value>
+    <value>'{0}' sütunundan vektör verilerini alma  denemesi geçersiz. Vektörler yalnızca vektör türündeki sütunlar için desteklenir.</value>
   </data>
   <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
-    <value>Unsupported Vector type '{0}'.</value>
+    <value>'{0}' vektör türü desteklenmiyor.</value>
   </data>
   <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
-    <value>'null' value not supported for output parameter '{0}' of SqlDbtype Vector.</value>
+    <value>SqlDbType Vector'ın '{0}' çıkış parametresi için 'null' değeri desteklenmiyor.</value>
   </data>
   <data name="ADP_InvalidVectorHeader" xml:space="preserve">
-    <value>Invalid vector header received.</value>
+    <value>Geçersiz vektör başlığı alındı.</value>
   </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
-    <value>{0} Invalid JSON string for vector.</value>
+    <value>Vektör JSON dizesi {0} geçersiz.</value>
   </data>
 </root>

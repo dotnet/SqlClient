@@ -7,6 +7,7 @@
     <ItemGroup>
         <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="6.0.2" />
         <PackageVersion Include="System.Buffers" Version="4.5.1" />
+        <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
         <PackageVersion Include="System.Memory" Version="4.5.5" />
         <PackageVersion Include="System.Data.Common" Version="4.3.0" />
         <PackageVersion Include="System.Text.Encodings.Web" Version="8.0.0" />
@@ -14,7 +15,7 @@
     </ItemGroup>
     <!-- NetFx and NetCore project dependencies -->
     <ItemGroup>
-        <PackageVersion Include="Azure.Identity" Version="1.13.2" />
+        <PackageVersion Include="Azure.Identity" Version="1.14.2" />
         <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="7.7.1" />
         <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="7.7.1" />
         <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
@@ -26,7 +27,7 @@
     </ItemGroup>
     <!-- AKV Provider project dependencies -->
     <ItemGroup>
-        <PackageVersion Include="Azure.Core" Version="[1.44.1,2.0.0)" />
+        <PackageVersion Include="Azure.Core" Version="[1.47.1,2.0.0)" />
         <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="[4.7.0,5.0.0)" />
     </ItemGroup>
     <!-- Test Project Dependencies -->

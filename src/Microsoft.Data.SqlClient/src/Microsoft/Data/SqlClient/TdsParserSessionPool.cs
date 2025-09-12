@@ -215,25 +215,6 @@ namespace Microsoft.Data.SqlClient
                         _cachedCount,
                         _cache.Count);
         }
-
-#if NETFRAMEWORK
-        // This is called from a ThreadAbort - ensure that it can be run from a CER Catch
-        internal void BestEffortCleanup()
-        {
-            for (int i = 0; i < _cache.Count; i++)
-            {
-                TdsParserStateObject session = _cache[i];
-                if (session != null)
-                {
-                    SNIHandle sessionHandle = session.Handle;
-                    if (sessionHandle != null)
-                    {
-                        sessionHandle.Dispose();
-                    }
-                }
-            }
-        }
-#endif
     }
 }
 

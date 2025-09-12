@@ -8,6 +8,7 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
@@ -84,6 +85,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             bool flushCache,
             bool async,
             bool parallel,
+            TransparentNetworkResolutionState transparentNetworkResolutionState,
+            int totalTimeout,
             SqlConnectionIPAddressPreference iPAddressPreference,
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
@@ -365,6 +368,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return TdsEnums.SNI_ERROR;
         }
 
+        internal override uint PostReadAsyncForMars(TdsParserStateObject physicalStateObject) => TdsEnums.SNI_SUCCESS_IO_PENDING;
+
         internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename)
         {
             SniHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
@@ -386,10 +391,10 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return TdsEnums.SNI_SUCCESS;
         }
 
-        internal override uint WaitForSSLHandShakeToComplete(out int protocolVersion)
+        internal override uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion)
         {
             protocolVersion = GetSessionSNIHandleHandleOrThrow().ProtocolVersion;
-            return 0;
+            return TdsEnums.SNI_SUCCESS;
         }
 
         internal override SniErrorDetails GetErrorDetails()

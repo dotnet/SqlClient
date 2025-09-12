@@ -99,6 +99,12 @@
     <Compile Include="$(CommonSourceRoot)\Microsoft\Data\ProviderBase\DbConnectionClosed.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionClosed.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncrypted\ColumnMasterKeyMetadata.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncrypted\ColumnMasterKeyMetadata.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncrypted\EncryptedColumnEncryptionKeyParameters.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncrypted\EncryptedColumnEncryptionKeyParameters.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\ChannelDbConnectionPool.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\ChannelDbConnectionPool.cs</Link>
     </Compile>
@@ -201,62 +207,62 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs">
       <Link>Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\DiagnosticScope.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\DiagnosticScope.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\DiagnosticScope.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\DiagnosticScope.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\DiagnosticTransactionScope.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\DiagnosticTransactionScope.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\DiagnosticTransactionScope.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\DiagnosticTransactionScope.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandAfter.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandAfter.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandAfter.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandAfter.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandBefore.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandBefore.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandBefore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandBefore.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandError.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandError.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandError.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandError.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseAfter.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseAfter.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseAfter.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseAfter.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseBefore.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseBefore.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseBefore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseBefore.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseError.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseError.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseError.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseError.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenAfter.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenAfter.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenAfter.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenAfter.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenBefore.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenBefore.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenBefore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenBefore.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenError.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenError.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenError.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenError.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientMetrics.cs">
       <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientMetrics.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitAfter.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitAfter.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitAfter.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitAfter.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitBefore.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitBefore.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitBefore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitBefore.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitError.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitError.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitError.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitError.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackAfter.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackAfter.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackAfter.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackAfter.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackBefore.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackBefore.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackBefore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackBefore.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackError.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackError.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackError.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackError.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlDiagnosticListener.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlDiagnosticListener.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlDiagnosticListener.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlDiagnosticListener.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\DisposableTemporaryOnStack.cs">
       <Link>Microsoft\Data\SqlClient\DisposableTemporaryOnStack.cs</Link>
@@ -561,6 +567,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCollation.cs">
       <Link>Microsoft\Data\SqlClient\SqlCollation.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs</Link>
     </Compile>
@@ -569,6 +578,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommand.cs">
+      <Link>Microsoft\Data\SqlClient\SqlCommand.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommandSet.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommandSet.cs</Link>
@@ -789,6 +801,12 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlVector.cs">
       <Link>Microsoft\Data\SqlTypes\SqlVector.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\UserAgent\UserAgentInfo.cs">
+      <Link>Microsoft\Data\SqlClient\UserAgent\UserAgentInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\UserAgent\UserAgentInfoDto.cs">
+      <Link>Microsoft\Data\SqlClient\UserAgent\UserAgentInfoDto.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Resources\ResCategoryAttribute.cs">
       <Link>Resources\ResCategoryAttribute.cs</Link>
     </Compile>
@@ -799,7 +817,7 @@
       <Link>System\Diagnostics\CodeAnalysis.cs</Link>
     </Compile>
     
-    <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlCommand.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
@@ -945,9 +963,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NativeSspiContextProvider.cs">
       <Link>Microsoft\Data\SqlClient\SSPI\NativeSspiContextProvider.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs</Link>
     </Compile>
@@ -958,8 +973,12 @@
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
     
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
+
+    <EmbeddedResource Include="$(CommonSourceRoot)Resources\ILLink.Substitutions.Windows.xml">
+      <LogicalName>ILLink.Substitutions.xml</LogicalName>
+      <Link>Resources\ILLink.Substitutions.Windows.xml</Link>
+    </EmbeddedResource>
   </ItemGroup>
 
   <!-- Unix only -->
@@ -985,9 +1004,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SessionHandle.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlClient\SessionHandle.netcore.Unix.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.netcore.Unix.cs">
-      <Link>Microsoft\Data\SqlClinet\SqlColumnEncryptionCertificateStoreProvider.netcore.Unix.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlClinet\SqlColumnEncryptionCngProvider.netcore.Unix.cs</Link>
     </Compile>
@@ -1001,7 +1017,10 @@
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs</Link>
     </Compile>
 
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
+    <EmbeddedResource Include="$(CommonSourceRoot)Resources\ILLink.Substitutions.Unix.xml">
+      <LogicalName>ILLink.Substitutions.xml</LogicalName>
+      <Link>Resources\ILLink.Substitutions.Unix.xml</Link>
+    </EmbeddedResource>
   </ItemGroup>
 
   <!-- Resources -->
@@ -1034,6 +1053,7 @@
 
   <!-- Package References Etc -->
   <ItemGroup>
+    <PackageReference Include="Azure.Core" />
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />

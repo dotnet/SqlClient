@@ -2521,7 +2521,7 @@
     <value>Este comando requiere una conexión asincrónica. Establezca "Asynchronous Processing=true" en la cadena de conexión.</value>
   </data>
   <data name="SQL_ConnectTimeout" xml:space="preserve">
-    <value>The connection attempt timed out.</value>
+    <value>Se agotó el tiempo de espera del intento de conexión.</value>
   </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>Valor de tiempo de espera caducado. Por ello, se ha interrumpido la conexión.</value>
@@ -3954,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>La ruta de certificado no puede ser nula. Use el siguiente formato: &lt;ubicación de certificado&gt;{2}&lt;almacenamiento de certificado&gt;{2}&lt;huella digital de certificado&gt;, donde &lt;ubicación de certificado&gt; es "{0}" o "{1}".</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>La ruta de acceso del certificado no puede ser nula. Use el formato siguiente: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, donde &lt;certificate location&gt; es "{0}".</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>Error interno. La ruta de certificado no puede ser nula. Use el siguiente formato: &lt;ubicación de certificado&gt;{2}&lt;almacén de certificados&gt;{2}&lt;huella digital de certificado&gt;, donde &lt;ubicación de certificado&gt; es "{0}" o "{1}".</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Error interno. La ruta de acceso del certificado no puede ser nula. Use el formato siguiente: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, donde &lt;certificate location&gt; es "{0}".</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>La ruta de la clave maestra de la columna no puede ser nula. Use el siguiente formato para una clave almacenada en un proveedor de servicios criptográficos (CSP) de Microsoft: &lt;Nombre de proveedor CSP&gt;{0}&lt;Identificador clave&gt;.</value>
@@ -3972,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>Ruta de certificado no válida: "{0}". Use el siguiente formato: &lt;ubicación de certificado&gt;{3}&lt;almacén de certificados&gt;{3}&lt;huella digital de certificado&gt;, donde &lt;ubicación de certificado&gt; es "{1}" o "{2}".</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Ruta de acceso de certificado no válida: "{0}". Use el formato siguiente: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, donde &lt;certificate location&gt; es "{1}".</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>Error interno. Ruta de certificado no válida: "{0}". Use el siguiente formato: &lt;ubicación de certificado&gt;{3}&lt;almacén de certificados&gt;{3}&lt;huella digital de certificado&gt;, donde &lt;ubicación de certificado&gt; es "{1}" o "{2}".</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Error interno. Ruta de acceso de certificado no válida: "{0}". Use el formato siguiente: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, donde &lt;certificate location&gt; es "{1}".</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Ruta de la clave maestra de la columna '{0}' no válida. Use el siguiente formato para una clave almacenada en un proveedor de servicios criptográficos (CSP) de Microsoft: &lt;Nombre de proveedor CSP&gt;{1}&lt;Identificador clave&gt;.</value>
@@ -3990,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>Ubicación de certificado no válida "{0}" en la ruta de certificado "{1}". Use el siguiente formato: &lt;ubicación de certificado&gt;{4}&lt;almacén de certificados&gt;{4}&lt;huella digital de certificado&gt;, donde &lt;ubicación de certificado&gt; es "{2}" o "{3}".</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>Ubicación de certificado "{0}" no válida en la ruta de acceso del certificado "{1}". Use el formato siguiente: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, donde &lt;certificate location&gt; es "{2}".</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>Error interno. Ubicación de certificado no válida "{0}" en la ruta de certificado "{1}". Use el siguiente formato: &lt;ubicación de certificado&gt;{4}&lt;almacén de certificados&gt;{4}&lt;huella digital de certificado&gt;, donde &lt;ubicación de certificado&gt; es "{2}" o "{3}".</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>Error interno. Ubicación de certificado "{0}" no válida en la ruta de acceso del certificado "{1}". Use el formato siguiente: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, donde &lt;certificate location&gt; es "{2}".</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>Se ha especificado un almacén de certificados "{0}" no válido en la ruta de certificado "{1}". Valor esperado: "{2}".</value>
@@ -4057,7 +4075,10 @@
     <value>La clave de cifrado de columna cifrada especificada contiene una versión de algoritmo de cifrado no válida '{0}'. La versión esperada es '{1}'.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>La longitud del texto cifrado de la clave de cifrado de la columna cifrada especificada ({0}) no coincide con la longitud del texto cifrado ({1}) al usar una clave maestra de columna (certificado) en "{2}". Puede que la clave de cifrado de la columna cifrada esté dañada o que la ruta del certificado especificada no sea correcta.</value>
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
     <value>La longitud del texto cifrado de la clave de cifrado de la columna cifrada especificada {0} no coincide con la longitud del texto cifrado {1} al usar la clave maestra de la columna (clave asimétrica) en '{2}'. La clave de cifrado de la columna cifrada puede estar dañada o la ruta especificada del proveedor de servicios criptográficos (CSP) de Microsoft puede no ser correcta.</value>
@@ -4066,7 +4087,10 @@
     <value>La longitud del texto cifrado de la clave de cifrado de la columna cifrada especificada {0} no coincide con la longitud del texto cifrado {1} al usar la clave maestra de la columna (clave asimétrica) en '{2}'. La clave de cifrado de la columna cifrada puede estar dañada o la ruta especificada del proveedor Cryptography API: Next Generation (CNG) de Microsoft puede no ser correcta.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>La longitud de la firma de la clave de cifrado de columna cifrada especificada ({0}) no coincide con la longitud de la firma ({1}) al usar la clave maestra de columna (certificado) en "{2}". Puede que la clave de cifrado de la columna cifrada esté dañada o que la ruta del certificado especificada no sea correcta.</value>
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
     <value>La longitud de la firma de clave de cifrado de la columna cifrada especificada {0} no coincide con la longitud de la firma {1} al usar la clave maestra de la columna (clave asimétrica) en '{2}'. La clave de cifrado de la columna cifrada puede estar dañada o la ruta especificada del proveedor de servicios criptográficos (CSP) de Microsoft puede no ser correcta.</value>
@@ -4074,11 +4098,14 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>La longitud de la firma de clave de cifrado de la columna cifrada especificada {0} no coincide con la longitud de la firma {1} al usar la clave maestra de la columna (clave asimétrica) en '{2}'. La clave de cifrado de la columna cifrada puede estar dañada o la ruta especificada del proveedor Cryptography API: Next Generation (CNG) de Microsoft puede no ser correcta.</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key ({0}) in '{1}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>La firma de clave de cifrado de columna cifrada especificada no coincide con la firma calculada con la clave maestra de columna (certificado) en "{0}". Puede que la clave de cifrado de la columna cifrada esté dañada o que la ruta del certificado especificada no sea correcta.</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>La firma de clave de cifrado de la columna cifrada especificada no coincide con la firma calculada mediante la clave maestra de la columna (clave asimétrica) en '{0}'. La clave de cifrado de la columna cifrada puede estar dañada o la ruta especificada puede no ser correcta.</value>
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>El certificado especificado en la ruta de claves "{0}" no tiene una clave privada para cifrar una clave de cifrado de columnas. Compruebe que el certificado se ha importado correctamente.</value>
@@ -4666,18 +4693,18 @@
     <value>No se ha inicializado la lista SqlBatchCommand.</value>
   </data>
   <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to get vector data from column '{0}'. Vectors are only supported for columns of type vector.</value>
+    <value>Intento no válido de obtener datos vectoriales de la columna '{0}'. Los vectores solo son compatibles con columnas del tipo vector.</value>
   </data>
   <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
-    <value>Unsupported Vector type '{0}'.</value>
+    <value>El tipo de vector "{0}" no es compatible.</value>
   </data>
   <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
-    <value>'null' value not supported for output parameter '{0}' of SqlDbtype Vector.</value>
+    <value>El valor 'null' no es compatible con el parámetro de salida '{0}' de SqlDbType.Vector.</value>
   </data>
   <data name="ADP_InvalidVectorHeader" xml:space="preserve">
-    <value>Invalid vector header received.</value>
+    <value>Se recibió un encabezado de vector no válido.</value>
   </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
-    <value>{0} Invalid JSON string for vector.</value>
+    <value>Cadena JSON {0} no válida para el vector.</value>
   </data>
 </root>

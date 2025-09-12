@@ -22,12 +22,12 @@ Once the environment is setup properly, execute the desired set of commands belo
 |`BuildNetCore`|Builds the .NET driver for all target frameworks.|
 |`BuildNetCoreAllOS`|Builds the .NET driver for all target frameworks and operating systems.|
 |`BuildNetFx`|Builds the .NET Framework driver for all target frameworks.|
-|`BuildTests`|Builds tests for the .NET and .NET Framework drivers.|
 |`BuildTestsNetCore`|Builds tests for the .NET driver.|
 |`BuildTestsNetFx`|Builds tests for the .NET Framework driver.|
 |`Clean`|Cleans generated files.|
 |`Restore`|Restores Nuget packages.|
-|`RunTests`|Runs the functional and manual tests for the .NET Framework and .NET drivers|
+|`RunTests`|Runs the unit, functional, and manual tests for the .NET Framework and .NET drivers|
+|`RunUnitTests`|Runs just the unit tests for the .NET Framework and .NET drivers|
 |`RunFunctionalTests`|Runs just the functional tests for the .NET Framework and .NET drivers|
 |`RunManualTests`|Runs just the manual tests for the .NET Framework and .NET drivers|
 |`BuildAkv`|Builds the Azure Key Vault Provider package for all supported platforms.|
@@ -51,39 +51,35 @@ Using the default configuration and running all tests:
 
 ```bash
 msbuild
-msbuild -t:BuildTests
+msbuild -t:BuildTestsNetFx -p:TF=net462
+msbuild -t:BuildTestsNetCore
 msbuild -t:RunTests
-```
-
-Targeting .NET Framework (or any specific supported version):
-
-```bash
-msbuild -p:TF=net462
-msbuild -t:BuildTests -p:TF=net462
-msbuild -t:RunTests -p:TF=net462
 ```
 
 Using the Release configuration:
 
 ```bash
 msbuild -p:configuration=Release
-msbuild -t:BuildTests -p:configuration=Release
+msbuild -t:BuildTestsNetFx -p:TF=net462 -p:configuration=Release
+msbuild -t:BuildTestsNetCore -p:configuration=Release
 msbuild -t:RunTests -p:configuration=Release
 ```
 
-Running only the functional tests:
+Running only the unit tests:
 
 ```bash
 msbuild
-msbuild -t:BuildTests
-msbuild -t:RunFunctionalTests
+msbuild -t:BuildTestsNetFx -p:TF=net462
+msbuild -t:BuildTestsNetCore
+msbuild -t:RunUnitTests
 ```
 
 Using a specific dotnet version/architecture:
 
 ```bash
 msbuild -p:configuration=Release
-msbuild -t:BuildTests -p:configuration=Release
+msbuild -t:BuildTestsNetFx -p:TF=net462 -p:configuration=Release
+msbuild -t:BuildTestsNetCore -p:configuration=Release
 msbuild -t:RunTests -p:configuration=Release -p:DotnetPath=C:\net8-win-x86\
 ```
 
@@ -224,10 +220,10 @@ msbuild -t:BuildTestsNetCore -p:ReferenceType=Package
 For .NET Framework, below reference types are supported:
 
 ```bash
-msbuild -t:BuildTestsNetFx -p:ReferenceType=Project
+msbuild -t:BuildTestsNetFx -p:TF=net462 -p:ReferenceType=Project
 # Default setting uses Project Reference.
 
-msbuild -t:BuildTestsNetFx -p:ReferenceType=Package
+msbuild -t:BuildTestsNetFx -p:TF=net462 -p:ReferenceType=Package
 ```
 
 ### Running Tests with Reference Type
@@ -245,12 +241,12 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 ### Building Tests with custom target framework
 
 ```bash
-msbuild -t:BuildTestsNetFx -p:TargetNetFxVersion=net462
+msbuild -t:BuildTestsNetFx -p:TF=net462
 # Build the tests for custom .NET Framework target
 ```
 
 ```bash
-msbuild -t:BuildTestsNetCore -p:TargetNetCoreVersion=net8.0
+msbuild -t:BuildTestsNetCore -p:TF=net8.0
 # Build the tests for custom .NET target
 ```
 

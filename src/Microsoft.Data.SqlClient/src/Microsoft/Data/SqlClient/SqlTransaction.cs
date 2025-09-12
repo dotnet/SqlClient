@@ -9,10 +9,8 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
-
-#if NET
 using Microsoft.Data.SqlClient.Diagnostics;
-#else
+#if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 #endif
 
@@ -21,9 +19,7 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*' />
     public sealed class SqlTransaction : DbTransaction
     {
-        #if NET
         private static readonly SqlDiagnosticListener s_diagnosticListener = new();
-        #endif
 
         private static int s_objectTypeCount; // EventSource Counter
 
@@ -88,12 +84,10 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Commit/*' />
         public override void Commit()
         {
-            #if NET
             using DiagnosticTransactionScope diagnosticScope = s_diagnosticListener.CreateTransactionCommitScope(
                 _isolationLevel,
                 _connection,
                 InternalTransaction);
-            #endif
 
             ZombieCheck();
 
@@ -106,46 +100,19 @@ namespace Microsoft.Data.SqlClient
                     ObjectId,
                     ActivityCorrelator.Current,
                     Connection?.ClientConnectionId);
-
-                #if NETFRAMEWORK
-                TdsParser bestEffortCleanupTarget = null;
-                RuntimeHelpers.PrepareConstrainedRegions();
-                #endif
+                
                 try
                 {
-                    #if NETFRAMEWORK
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                    #endif
-
                     statistics = SqlStatistics.StartTimer(Statistics);
 
                     _isFromApi = true;
 
                     InternalTransaction.Commit();
                 }
-                #if NETFRAMEWORK
-                catch (OutOfMemoryException e)
-                {
-                    _connection.Abort(e);
-                    throw;
-                }
-                catch (StackOverflowException e)
-                {
-                    _connection.Abort(e);
-                    throw;
-                }
-                catch (ThreadAbortException e)
-                {
-                    _connection.Abort(e);
-                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                    throw;
-                }
-                #endif
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
                 catch (SqlException ex)
                 {
-                    #if NET
                     diagnosticScope.SetException(ex);
-                    #endif
 
                     // GitHub Issue #130 - When a timeout exception has occurred on transaction completion request,
                     // this connection may not be in reusable state.
@@ -156,13 +123,11 @@ namespace Microsoft.Data.SqlClient
                     }
                     throw;
                 }
-                #if NET
                 catch (Exception ex)
                 {
                     diagnosticScope.SetException(ex);
                     throw;
                 }
-                #endif
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
@@ -176,41 +141,11 @@ namespace Microsoft.Data.SqlClient
         {
             if (disposing)
             {
-                #if NETFRAMEWORK
-                TdsParser bestEffortCleanupTarget = null;
-                RuntimeHelpers.PrepareConstrainedRegions();
-                #endif
-                try
+                if (!IsZombied && !Is2005PartialZombie)
                 {
-                    #if NETFRAMEWORK
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                    #endif
-
-                    if (!IsZombied && !Is2005PartialZombie)
-                    {
-                        InternalTransaction.Dispose();
-                    }
+                    InternalTransaction.Dispose();
                 }
-                catch (OutOfMemoryException e)
-                {
-                    _connection.Abort(e);
-                    throw;
-                }
-                catch (StackOverflowException e)
-                {
-                    _connection.Abort(e);
-                    throw;
-                }
-                catch (ThreadAbortException e)
-                {
-                    _connection.Abort(e);
-
-                    #if NETFRAMEWORK
-                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                    #endif
-
-                    throw;
-                }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
             }
 
             base.Dispose(disposing);
@@ -219,13 +154,11 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback2/*' />
         public override void Rollback()
         {
-            #if NET
             using DiagnosticTransactionScope diagnosticScope = s_diagnosticListener.CreateTransactionRollbackScope(
                 _isolationLevel,
                 _connection,
                 InternalTransaction,
                 transactionName: null);
-            #endif
 
             if (Is2005PartialZombie)
             {
@@ -248,46 +181,21 @@ namespace Microsoft.Data.SqlClient
                         ObjectId,
                         ActivityCorrelator.Current,
                         Connection?.ClientConnectionId);
-
-                    #if NETFRAMEWORK
-                    TdsParser bestEffortCleanupTarget = null;
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    #endif
+                    
                     try
                     {
-                        #if NETFRAMEWORK
-                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                        #endif
 
                         statistics = SqlStatistics.StartTimer(Statistics);
 
                         _isFromApi = true;
                         InternalTransaction.Rollback();
                     }
-                    #if NETFRAMEWORK
-                    catch (OutOfMemoryException e)
-                    {
-                        _connection.Abort(e);
-                        throw;
-                    }
-                    catch (StackOverflowException e)
-                    {
-                        _connection.Abort(e);
-                        throw;
-                    }
-                    catch (ThreadAbortException e)
-                    {
-                        _connection.Abort(e);
-                        SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                        throw;
-                    }
-                    #else
+                    // @TODO: CER Exception Handling was removed here (see GH#3581)
                     catch (Exception ex)
                     {
                         diagnosticScope.SetException(ex);
                         throw;
                     }
-                    #endif
                     finally
                     {
                         SqlStatistics.StopTimer(statistics);
@@ -304,13 +212,11 @@ namespace Microsoft.Data.SqlClient
         public void Rollback(string transactionName)
         #endif
         {
-            #if NET
             using DiagnosticTransactionScope diagnosticScope = s_diagnosticListener.CreateTransactionRollbackScope(
                 _isolationLevel,
                 _connection,
                 InternalTransaction,
                 transactionName);
-            #endif
 
             #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand(); // MDAC 81476
@@ -327,46 +233,19 @@ namespace Microsoft.Data.SqlClient
             using (eventScopeEnter)
             {
                 SqlStatistics statistics = null;
-
-                #if NETFRAMEWORK
-                TdsParser bestEffortCleanupTarget = null;
-                RuntimeHelpers.PrepareConstrainedRegions();
-                #endif
                 try
                 {
-                    #if NETFRAMEWORK
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                    #endif
-
                     statistics = SqlStatistics.StartTimer(Statistics);
 
                     _isFromApi = true;
                     InternalTransaction.Rollback(transactionName);
                 }
-                #if NETFRAMEWORK
-                catch (OutOfMemoryException e)
-                {
-                    _connection.Abort(e);
-                    throw;
-                }
-                catch (StackOverflowException e)
-                {
-                    _connection.Abort(e);
-                    throw;
-                }
-                catch (ThreadAbortException e)
-                {
-                    _connection.Abort(e);
-                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                    throw;
-                }
-                #else
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
                 catch (Exception ex)
                 {
                     diagnosticScope.SetException(ex);
                     throw;
                 }
-                #endif
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
@@ -391,42 +270,13 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             using (TryEventScope.Create("SqlTransaction.Save | API | Object Id {0} | Save Point Name '{1}'", ObjectId, savePointName))
             {
-                #if NETFRAMEWORK
-                TdsParser bestEffortCleanupTarget = null;
-                RuntimeHelpers.PrepareConstrainedRegions();
-                #endif
                 try
                 {
-                    #if NETFRAMEWORK
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                    #endif
-
                     statistics = SqlStatistics.StartTimer(Statistics);
 
                     InternalTransaction.Save(savePointName);
                 }
-                #if NETFRAMEWORK
-                catch (OutOfMemoryException e)
-                {
-                    _connection.Abort(e);
-                    throw;
-                }
-                catch (StackOverflowException e)
-                {
-                    _connection.Abort(e);
-                    throw;
-                }
-                catch (ThreadAbortException e)
-                {
-                    _connection.Abort(e);
-
-                    #if NETFRAMEWORK
-                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                    #endif
-
-                    throw;
-                }
-                #endif
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);

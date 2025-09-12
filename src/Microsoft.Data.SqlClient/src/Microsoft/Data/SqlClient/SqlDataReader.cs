@@ -264,44 +264,12 @@ namespace Microsoft.Data.SqlClient
                         throw SQL.PendingBeginXXXExists();
                     }
 
-#if NETFRAMEWORK
-                    RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                    try
+                    Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
+                    if (TryConsumeMetaData() != TdsOperationStatus.Done)
                     {
-                        Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                        if (TryConsumeMetaData() != TdsOperationStatus.Done)
-                        {
-                            throw SQL.SynchronousCallMayNotPend();
-                        }
+                        throw SQL.SynchronousCallMayNotPend();
                     }
-                    catch (System.OutOfMemoryException e)
-                    {
-                        _isClosed = true;
-                        if (_connection != null)
-                        {
-                            _connection.Abort(e);
-                        }
-                        throw;
-                    }
-                    catch (System.StackOverflowException e)
-                    {
-                        _isClosed = true;
-                        if (_connection != null)
-                        {
-                            _connection.Abort(e);
-                        }
-                        throw;
-                    }
-                    catch (System.Threading.ThreadAbortException e)
-                    {
-                        _isClosed = true;
-                        if (_connection != null)
-                        {
-                            _connection.Abort(e);
-                        }
-                        throw;
-                    }
+                    // @TODO: CER Exception Handling was removed here (see GH#3581)
                 }
 
                 return _metaData;
@@ -875,43 +843,11 @@ namespace Microsoft.Data.SqlClient
         private void CleanPartialReadReliable()
         {
             AssertReaderState(requireData: true, permitAsync: false);
-
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-            try
-            {
-                TdsOperationStatus result = TryCleanPartialRead();
-                Debug.Assert(result == TdsOperationStatus.Done, "Should not pend on sync call");
-                Debug.Assert(!_sharedState._dataReady, "_dataReady should be cleared");
-            }
-            catch (System.OutOfMemoryException e)
-            {
-                _isClosed = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _isClosed = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _isClosed = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
-            }
+            
+            TdsOperationStatus result = TryCleanPartialRead();
+            Debug.Assert(result == TdsOperationStatus.Done, "Should not pend on sync call");
+            Debug.Assert(!_sharedState._dataReady, "_dataReady should be cleared");
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Dispose/*' />
@@ -1027,13 +963,9 @@ namespace Microsoft.Data.SqlClient
             TdsParser parser = _parser;
             TdsParserStateObject stateObj = _stateObj;
             bool closeConnection = (IsCommandBehavior(CommandBehavior.CloseConnection));
-            bool aborting = false;
             bool cleanDataFailed = false;
             TdsOperationStatus result;
 
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
             try
             {
                 if ((!_isClosed) && (parser != null) && (stateObj != null) && (stateObj.HasPendingData))
@@ -1091,48 +1023,10 @@ namespace Microsoft.Data.SqlClient
                 RestoreServerSettings(parser, stateObj);
                 return TdsOperationStatus.Done;
             }
-            catch (System.OutOfMemoryException e)
-            {
-                _isClosed = true;
-                aborting = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _isClosed = true;
-                aborting = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _isClosed = true;
-                aborting = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             finally
             {
-                if (aborting)
-                {
-                    _isClosed = true;
-                    _command = null; // we are done at this point, don't allow navigation to the connection
-                    _connection = null;
-                    _statistics = null;
-                    _stateObj = null;
-                    _parser = null;
-                }
-                else if (closeReader)
+                if (closeReader)
                 {
                     bool wasClosed = _isClosed;
                     _isClosed = true;
@@ -1158,55 +1052,26 @@ namespace Microsoft.Data.SqlClient
                     {
                         Connection.RemoveWeakReference(this);  // This doesn't catch everything -- the connection may be closed, but it prevents dead readers from clogging the collection
                     }
-
-#if NETFRAMEWORK
-                    RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                    try
+                    
+                    // IsClosed may be true if CloseReaderFromConnection was called - in which case, the session has already been closed
+                    if (!wasClosed && stateObj != null)
                     {
-                        // IsClosed may be true if CloseReaderFromConnection was called - in which case, the session has already been closed
-                        if (!wasClosed && stateObj != null)
+                        if (!cleanDataFailed)
                         {
-                            if (!cleanDataFailed)
+                            stateObj.CloseSession();
+                        }
+                        else
+                        {
+                            if (parser != null)
                             {
-                                stateObj.CloseSession();
-                            }
-                            else
-                            {
-                                if (parser != null)
-                                {
-                                    parser.State = TdsParserState.Broken; // We failed while draining data, so TDS pointer can be between tokens - cannot recover
-                                    parser.PutSession(stateObj);
-                                    parser.Connection.BreakConnection();
-                                }
+                                parser.State = TdsParserState.Broken; // We failed while draining data, so TDS pointer can be between tokens - cannot recover
+                                parser.PutSession(stateObj);
+                                parser.Connection.BreakConnection();
                             }
                         }
-                        // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
                     }
-                    catch (System.OutOfMemoryException e)
-                    {
-                        if (_connection != null)
-                        {
-                            _connection.Abort(e);
-                        }
-                        throw;
-                    }
-                    catch (System.StackOverflowException e)
-                    {
-                        if (_connection != null)
-                        {
-                            _connection.Abort(e);
-                        }
-                        throw;
-                    }
-                    catch (System.Threading.ThreadAbortException e)
-                    {
-                        if (_connection != null)
-                        {
-                            _connection.Abort(e);
-                        }
-                        throw;
-                    }
+                    // @TODO: CER Exception Handling was removed here (see GH#3581)
+                    
                     // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
 
                     // do not retry here
@@ -1791,265 +1656,233 @@ namespace Microsoft.Data.SqlClient
         {
             remaining = 0;
             TdsOperationStatus result;
+            
+            int cbytes = 0;
+            AssertReaderState(requireData: true, permitAsync: true, columnIndex: i, enforceSequentialAccess: true);
 
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-            try
+            // sequential reading
+            if (IsCommandBehavior(CommandBehavior.SequentialAccess))
             {
-                int cbytes = 0;
-                AssertReaderState(requireData: true, permitAsync: true, columnIndex: i, enforceSequentialAccess: true);
+                Debug.Assert(!HasActiveStreamOrTextReaderOnColumn(i), "Column has an active Stream or TextReader");
 
-                // sequential reading
-                if (IsCommandBehavior(CommandBehavior.SequentialAccess))
+                if (_metaData[i] != null && _metaData[i].cipherMD != null)
                 {
-                    Debug.Assert(!HasActiveStreamOrTextReaderOnColumn(i), "Column has an active Stream or TextReader");
-
-                    if (_metaData[i] != null && _metaData[i].cipherMD != null)
-                    {
-                        throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(_metaData[i].column);
-                    }
-
-                    if (_sharedState._nextColumnHeaderToRead <= i)
-                    {
-                        result = TryReadColumnHeader(i);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
-                    }
-
-                    // If data is null, ReadColumnHeader sets the data.IsNull bit.
-                    if (_data[i] != null && _data[i].IsNull)
-                    {
-                        throw new SqlNullValueException();
-                    }
-
-                    // If there are an unknown (-1) number of bytes left for a PLP, read its size
-                    if ((-1 == _sharedState._columnDataBytesRemaining) && (_metaData[i].metaType.IsPlp))
-                    {
-                        ulong left;
-                        result = _parser.TryPlpBytesLeft(_stateObj, out left);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
-                        _sharedState._columnDataBytesRemaining = (long)left;
-                    }
-
-                    if (0 == _sharedState._columnDataBytesRemaining)
-                    {
-                        return TdsOperationStatus.Done; // We've read this column to the end
-                    }
-
-                    // if no buffer is passed in, return the number total of bytes, or -1
-                    if (buffer == null)
-                    {
-                        if (_metaData[i].metaType.IsPlp)
-                        {
-                            remaining = (long)_parser.PlpBytesTotalLength(_stateObj);
-                            return TdsOperationStatus.Done;
-                        }
-                        remaining = _sharedState._columnDataBytesRemaining;
-                        return TdsOperationStatus.Done;
-                    }
-
-                    if (dataIndex < 0)
-                    {
-                        throw ADP.NegativeParameter(nameof(dataIndex));
-                    }
-
-                    if (dataIndex < _columnDataBytesRead)
-                    {
-                        throw ADP.NonSeqByteAccess(dataIndex, _columnDataBytesRead, nameof(GetBytes));
-                    }
-
-                    // if the dataIndex is not equal to bytes read, then we have to skip bytes
-                    long cb = dataIndex - _columnDataBytesRead;
-
-                    // if dataIndex is outside of the data range, return 0
-                    if ((cb > _sharedState._columnDataBytesRemaining) && !_metaData[i].metaType.IsPlp)
-                    {
-                        return TdsOperationStatus.Done;
-                    }
-
-                    // if bad buffer index, throw
-                    if (bufferIndex < 0 || bufferIndex >= buffer.Length)
-                    {
-                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
-                    }
-
-                    // if there is not enough room in the buffer for data
-                    if (length + bufferIndex > buffer.Length)
-                    {
-                        throw ADP.InvalidBufferSizeOrIndex(length, bufferIndex);
-                    }
-
-                    if (length < 0)
-                    {
-                        throw ADP.InvalidDataLength(length);
-                    }
-
-                    // Skip if needed
-                    if (cb > 0)
-                    {
-                        if (_metaData[i].metaType.IsPlp)
-                        {
-                            ulong skipped;
-                            result = _parser.TrySkipPlpValue((ulong)cb, _stateObj, out skipped);
-                            if (result != TdsOperationStatus.Done)
-                            {
-                                return result;
-                            }
-                            _columnDataBytesRead += (long)skipped;
-                        }
-                        else
-                        {
-                            result = _stateObj.TrySkipLongBytes(cb);
-                            if (result != TdsOperationStatus.Done)
-                            {
-                                return result;
-                            }
-                            _columnDataBytesRead += cb;
-                            _sharedState._columnDataBytesRemaining -= cb;
-                        }
-                    }
-
-                    int bytesRead;
-                    result = TryGetBytesInternalSequential(i, buffer, bufferIndex, length, out bytesRead);
-                    remaining = (int)bytesRead;
-                    return result;
+                    throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(_metaData[i].column);
                 }
 
-                // random access now!
-                // note that since we are caching in an array, and arrays aren't 64 bit ready yet,
-                // we need can cast to int if the dataIndex is in range
+                if (_sharedState._nextColumnHeaderToRead <= i)
+                {
+                    result = TryReadColumnHeader(i);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        return result;
+                    }
+                }
+
+                // If data is null, ReadColumnHeader sets the data.IsNull bit.
+                if (_data[i] != null && _data[i].IsNull)
+                {
+                    throw new SqlNullValueException();
+                }
+
+                // If there are an unknown (-1) number of bytes left for a PLP, read its size
+                if ((-1 == _sharedState._columnDataBytesRemaining) && (_metaData[i].metaType.IsPlp))
+                {
+                    ulong left;
+                    result = _parser.TryPlpBytesLeft(_stateObj, out left);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        return result;
+                    }
+                    _sharedState._columnDataBytesRemaining = (long)left;
+                }
+
+                if (0 == _sharedState._columnDataBytesRemaining)
+                {
+                    return TdsOperationStatus.Done; // We've read this column to the end
+                }
+
+                // if no buffer is passed in, return the number total of bytes, or -1
+                if (buffer == null)
+                {
+                    if (_metaData[i].metaType.IsPlp)
+                    {
+                        remaining = (long)_parser.PlpBytesTotalLength(_stateObj);
+                        return TdsOperationStatus.Done;
+                    }
+                    remaining = _sharedState._columnDataBytesRemaining;
+                    return TdsOperationStatus.Done;
+                }
+
                 if (dataIndex < 0)
                 {
                     throw ADP.NegativeParameter(nameof(dataIndex));
                 }
 
-                if (dataIndex > int.MaxValue)
+                if (dataIndex < _columnDataBytesRead)
                 {
-                    throw ADP.InvalidSourceBufferIndex(cbytes, dataIndex, nameof(dataIndex));
+                    throw ADP.NonSeqByteAccess(dataIndex, _columnDataBytesRead, nameof(GetBytes));
                 }
 
-                int ndataIndex = (int)dataIndex;
-                byte[] data;
+                // if the dataIndex is not equal to bytes read, then we have to skip bytes
+                long cb = dataIndex - _columnDataBytesRead;
 
-                // WebData 99342 - in the non-sequential case, we need to support
-                //                 the use of GetBytes on string data columns, but
-                //                 GetSqlBinary isn't supposed to.  What we end up
-                //                 doing isn't exactly pretty, but it does work.
-                if (_metaData[i].metaType.IsBinType)
+                // if dataIndex is outside of the data range, return 0
+                if ((cb > _sharedState._columnDataBytesRemaining) && !_metaData[i].metaType.IsPlp)
                 {
-                    data = GetSqlBinary(i).Value;
+                    return TdsOperationStatus.Done;
                 }
-                else
-                {
-                    Debug.Assert(_metaData[i].metaType.IsLong, "non long type?");
-                    Debug.Assert(_metaData[i].metaType.IsCharType, "non-char type?");
 
-                    SqlString temp = GetSqlString(i);
-                    if (_metaData[i].metaType.IsNCharType)
+                // if bad buffer index, throw
+                if (bufferIndex < 0 || bufferIndex >= buffer.Length)
+                {
+                    throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
+                }
+
+                // if there is not enough room in the buffer for data
+                if (length + bufferIndex > buffer.Length)
+                {
+                    throw ADP.InvalidBufferSizeOrIndex(length, bufferIndex);
+                }
+
+                if (length < 0)
+                {
+                    throw ADP.InvalidDataLength(length);
+                }
+
+                // Skip if needed
+                if (cb > 0)
+                {
+                    if (_metaData[i].metaType.IsPlp)
                     {
-                        data = temp.GetUnicodeBytes();
+                        ulong skipped;
+                        result = _parser.TrySkipPlpValue((ulong)cb, _stateObj, out skipped);
+                        if (result != TdsOperationStatus.Done)
+                        {
+                            return result;
+                        }
+                        _columnDataBytesRead += (long)skipped;
                     }
                     else
                     {
-                        data = temp.GetNonUnicodeBytes();
-                    }
-                }
-
-                cbytes = data.Length;
-
-                // if no buffer is passed in, return the number of characters we have
-                if (buffer == null)
-                {
-                    remaining = cbytes;
-                    return TdsOperationStatus.Done;
-                }
-
-                // if dataIndex is outside of data range, return 0
-                if (ndataIndex < 0 || ndataIndex >= cbytes)
-                {
-                    return TdsOperationStatus.Done;
-                }
-                try
-                {
-                    if (ndataIndex < cbytes)
-                    {
-                        // help the user out in the case where there's less data than requested
-                        if ((ndataIndex + length) > cbytes)
+                        result = _stateObj.TrySkipLongBytes(cb);
+                        if (result != TdsOperationStatus.Done)
                         {
-                            cbytes = cbytes - ndataIndex;
+                            return result;
                         }
-                        else
-                        {
-                            cbytes = length;
-                        }
+                        _columnDataBytesRead += cb;
+                        _sharedState._columnDataBytesRemaining -= cb;
                     }
-
-                    Buffer.BlockCopy(data, ndataIndex, buffer, bufferIndex, cbytes);
                 }
-                catch (Exception e)
+
+                int bytesRead;
+                result = TryGetBytesInternalSequential(i, buffer, bufferIndex, length, out bytesRead);
+                remaining = (int)bytesRead;
+                return result;
+            }
+
+            // random access now!
+            // note that since we are caching in an array, and arrays aren't 64 bit ready yet,
+            // we need can cast to int if the dataIndex is in range
+            if (dataIndex < 0)
+            {
+                throw ADP.NegativeParameter(nameof(dataIndex));
+            }
+
+            if (dataIndex > int.MaxValue)
+            {
+                throw ADP.InvalidSourceBufferIndex(cbytes, dataIndex, nameof(dataIndex));
+            }
+
+            int ndataIndex = (int)dataIndex;
+            byte[] data;
+
+            // WebData 99342 - in the non-sequential case, we need to support
+            //                 the use of GetBytes on string data columns, but
+            //                 GetSqlBinary isn't supposed to.  What we end up
+            //                 doing isn't exactly pretty, but it does work.
+            if (_metaData[i].metaType.IsBinType)
+            {
+                data = GetSqlBinary(i).Value;
+            }
+            else
+            {
+                Debug.Assert(_metaData[i].metaType.IsLong, "non long type?");
+                Debug.Assert(_metaData[i].metaType.IsCharType, "non-char type?");
+
+                SqlString temp = GetSqlString(i);
+                if (_metaData[i].metaType.IsNCharType)
                 {
-                    if (!ADP.IsCatchableExceptionType(e))
-                    {
-                        throw;
-                    }
-                    cbytes = data.Length;
-
-                    if (length < 0)
-                    {
-                        throw ADP.InvalidDataLength(length);
-                    }
-
-                    // if bad buffer index, throw
-                    if (bufferIndex < 0 || bufferIndex >= buffer.Length)
-                    {
-                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
-                    }
-
-                    // if there is not enough room in the buffer for data
-                    if (cbytes + bufferIndex > buffer.Length)
-                    {
-                        throw ADP.InvalidBufferSizeOrIndex(cbytes, bufferIndex);
-                    }
-
-                    throw;
+                    data = temp.GetUnicodeBytes();
                 }
+                else
+                {
+                    data = temp.GetNonUnicodeBytes();
+                }
+            }
 
+            cbytes = data.Length;
+
+            // if no buffer is passed in, return the number of characters we have
+            if (buffer == null)
+            {
                 remaining = cbytes;
                 return TdsOperationStatus.Done;
             }
-            catch (System.OutOfMemoryException e)
+
+            // if dataIndex is outside of data range, return 0
+            if (ndataIndex < 0 || ndataIndex >= cbytes)
             {
-                _isClosed = true;
-                if (_connection != null)
+                return TdsOperationStatus.Done;
+            }
+            try
+            {
+                if (ndataIndex < cbytes)
                 {
-                    _connection.Abort(e);
+                    // help the user out in the case where there's less data than requested
+                    if ((ndataIndex + length) > cbytes)
+                    {
+                        cbytes = cbytes - ndataIndex;
+                    }
+                    else
+                    {
+                        cbytes = length;
+                    }
                 }
+
+                Buffer.BlockCopy(data, ndataIndex, buffer, bufferIndex, cbytes);
+            }
+            catch (Exception e)
+            {
+                if (!ADP.IsCatchableExceptionType(e))
+                {
+                    throw;
+                }
+                cbytes = data.Length;
+
+                if (length < 0)
+                {
+                    throw ADP.InvalidDataLength(length);
+                }
+
+                // if bad buffer index, throw
+                if (bufferIndex < 0 || bufferIndex >= buffer.Length)
+                {
+                    throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
+                }
+
+                // if there is not enough room in the buffer for data
+                if (cbytes + bufferIndex > buffer.Length)
+                {
+                    throw ADP.InvalidBufferSizeOrIndex(cbytes, bufferIndex);
+                }
+
                 throw;
             }
-            catch (System.StackOverflowException e)
-            {
-                _isClosed = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _isClosed = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
-            }
+
+            remaining = cbytes;
+            return TdsOperationStatus.Done;
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         internal int GetBytesInternalSequential(int i, byte[] buffer, int index, int length, long? timeoutMilliseconds = null)
@@ -2102,79 +1935,47 @@ namespace Microsoft.Data.SqlClient
             bytesRead = 0;
             TdsOperationStatus result;
 
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-            try
+            if ((_sharedState._columnDataBytesRemaining == 0) || (length == 0))
             {
-                if ((_sharedState._columnDataBytesRemaining == 0) || (length == 0))
+                // No data left or nothing requested, return 0
+                bytesRead = 0;
+                return TdsOperationStatus.Done;
+            }
+            else
+            {
+                // if plp columns, do partial reads. Don't read the entire value in one shot.
+                if (_metaData[i].metaType.IsPlp)
                 {
-                    // No data left or nothing requested, return 0
-                    bytesRead = 0;
+                    // Read in data
+                    result = _stateObj.TryReadPlpBytes(ref buffer, index, length, out bytesRead);
+                    _columnDataBytesRead += bytesRead;
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        return result;
+                    }
+
+                    // Query for number of bytes left
+                    ulong left;
+                    result = _parser.TryPlpBytesLeft(_stateObj, out left);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        _sharedState._columnDataBytesRemaining = -1;
+                        return result;
+                    }
+                    _sharedState._columnDataBytesRemaining = (long)left;
                     return TdsOperationStatus.Done;
                 }
                 else
                 {
-                    // if plp columns, do partial reads. Don't read the entire value in one shot.
-                    if (_metaData[i].metaType.IsPlp)
-                    {
-                        // Read in data
-                        result = _stateObj.TryReadPlpBytes(ref buffer, index, length, out bytesRead);
-                        _columnDataBytesRead += bytesRead;
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
-
-                        // Query for number of bytes left
-                        ulong left;
-                        result = _parser.TryPlpBytesLeft(_stateObj, out left);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            _sharedState._columnDataBytesRemaining = -1;
-                            return result;
-                        }
-                        _sharedState._columnDataBytesRemaining = (long)left;
-                        return TdsOperationStatus.Done;
-                    }
-                    else
-                    {
-                        // Read data (not exceeding the total amount of data available)
-                        int bytesToRead = (int)Math.Min((long)length, _sharedState._columnDataBytesRemaining);
-                        result = _stateObj.TryReadByteArray(buffer.AsSpan(index), bytesToRead, out bytesRead);
-                        _columnDataBytesRead += bytesRead;
-                        _sharedState._columnDataBytesRemaining -= bytesRead;
-                        return result;
-                    }
+                    // Read data (not exceeding the total amount of data available)
+                    int bytesToRead = (int)Math.Min((long)length, _sharedState._columnDataBytesRemaining);
+                    result = _stateObj.TryReadByteArray(buffer.AsSpan(index), bytesToRead, out bytesRead);
+                    _columnDataBytesRead += bytesRead;
+                    _sharedState._columnDataBytesRemaining -= bytesRead;
+                    return result;
                 }
             }
-            catch (System.OutOfMemoryException e)
-            {
-                _isClosed = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _isClosed = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _isClosed = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetTextReader/*' />
@@ -2446,126 +2247,94 @@ namespace Microsoft.Data.SqlClient
 
         private long GetCharsFromPlpData(int i, long dataIndex, char[] buffer, int bufferIndex, int length)
         {
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-            try
+            long cch;
+
+            AssertReaderState(requireData: true, permitAsync: false, columnIndex: i, enforceSequentialAccess: true);
+            Debug.Assert(!HasActiveStreamOrTextReaderOnColumn(i), "Column has active Stream or TextReader");
+            // don't allow get bytes on non-long or non-binary columns
+            Debug.Assert(_metaData[i].metaType.IsPlp, "GetCharsFromPlpData called on a non-plp column!");
+            // Must be sequential reading
+            Debug.Assert(IsCommandBehavior(CommandBehavior.SequentialAccess), "GetCharsFromPlpData called for non-Sequential access");
+
+            if (!_metaData[i].metaType.IsCharType)
             {
-                long cch;
+                throw SQL.NonCharColumn(_metaData[i].column);
+            }
 
-                AssertReaderState(requireData: true, permitAsync: false, columnIndex: i, enforceSequentialAccess: true);
-                Debug.Assert(!HasActiveStreamOrTextReaderOnColumn(i), "Column has active Stream or TextReader");
-                // don't allow get bytes on non-long or non-binary columns
-                Debug.Assert(_metaData[i].metaType.IsPlp, "GetCharsFromPlpData called on a non-plp column!");
-                // Must be sequential reading
-                Debug.Assert(IsCommandBehavior(CommandBehavior.SequentialAccess), "GetCharsFromPlpData called for non-Sequential access");
+            if (_sharedState._nextColumnHeaderToRead <= i)
+            {
+                ReadColumnHeader(i);
+            }
 
-                if (!_metaData[i].metaType.IsCharType)
-                {
-                    throw SQL.NonCharColumn(_metaData[i].column);
-                }
+            // If data is null, ReadColumnHeader sets the data.IsNull bit.
+            if (_data[i] != null && _data[i].IsNull)
+            {
+                throw new SqlNullValueException();
+            }
 
-                if (_sharedState._nextColumnHeaderToRead <= i)
-                {
-                    ReadColumnHeader(i);
-                }
+            if (dataIndex < _columnDataCharsRead)
+            {
+                // Don't allow re-read of same chars in sequential access mode
+                throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, nameof(GetChars));
+            }
 
-                // If data is null, ReadColumnHeader sets the data.IsNull bit.
-                if (_data[i] != null && _data[i].IsNull)
-                {
-                    throw new SqlNullValueException();
-                }
+            // If we start reading the new column, either dataIndex is 0 or
+            // _columnDataCharsRead is 0 and dataIndex > _columnDataCharsRead is true below.
+            // In both cases we will clean decoder
+            if (dataIndex == 0)
+            {
+                _stateObj._plpdecoder = null;
+            }
 
-                if (dataIndex < _columnDataCharsRead)
-                {
-                    // Don't allow re-read of same chars in sequential access mode
-                    throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, nameof(GetChars));
-                }
+            bool isUnicode = _metaData[i].metaType.IsNCharType;
 
-                // If we start reading the new column, either dataIndex is 0 or
-                // _columnDataCharsRead is 0 and dataIndex > _columnDataCharsRead is true below.
-                // In both cases we will clean decoder
-                if (dataIndex == 0)
-                {
-                    _stateObj._plpdecoder = null;
-                }
-
-                bool isUnicode = _metaData[i].metaType.IsNCharType;
-
-                // If there are an unknown (-1) number of bytes left for a PLP, read its size
-                if (-1 == _sharedState._columnDataBytesRemaining)
-                {
-                    _sharedState._columnDataBytesRemaining = (long)_parser.PlpBytesLeft(_stateObj);
-                }
-
-                if (0 == _sharedState._columnDataBytesRemaining)
-                {
-                    _stateObj._plpdecoder = null;
-                    return 0; // We've read this column to the end
-                }
-
-                // if no buffer is passed in, return the total number of characters or -1
-                if (buffer == null)
-                {
-                    cch = (long)_parser.PlpBytesTotalLength(_stateObj);
-                    return (isUnicode && (cch > 0)) ? cch >> 1 : cch;
-                }
-                if (dataIndex > _columnDataCharsRead)
-                {
-                    // Skip chars
-
-                    // Clean decoder state: we do not reset it, but destroy to ensure
-                    // that we do not start decoding the column with decoder from the old one
-                    _stateObj._plpdecoder = null;
-                    cch = dataIndex - _columnDataCharsRead;
-                    cch = isUnicode ? (cch << 1) : cch;
-                    cch = (long)_parser.SkipPlpValue((ulong)(cch), _stateObj);
-                    _columnDataBytesRead += cch;
-                    _columnDataCharsRead += (isUnicode && (cch > 0)) ? cch >> 1 : cch;
-                }
-                cch = length;
-
-                if (isUnicode)
-                {
-                    cch = (long)_parser.ReadPlpUnicodeChars(ref buffer, bufferIndex, length, _stateObj);
-                    _columnDataBytesRead += (cch << 1);
-                }
-                else
-                {
-                    cch = (long)_parser.ReadPlpAnsiChars(ref buffer, bufferIndex, length, _metaData[i], _stateObj);
-                    _columnDataBytesRead += cch << 1;
-                }
-                _columnDataCharsRead += cch;
+            // If there are an unknown (-1) number of bytes left for a PLP, read its size
+            if (-1 == _sharedState._columnDataBytesRemaining)
+            {
                 _sharedState._columnDataBytesRemaining = (long)_parser.PlpBytesLeft(_stateObj);
-                return cch;
             }
-            catch (System.OutOfMemoryException e)
+
+            if (0 == _sharedState._columnDataBytesRemaining)
             {
-                _isClosed = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
+                _stateObj._plpdecoder = null;
+                return 0; // We've read this column to the end
             }
-            catch (System.StackOverflowException e)
+
+            // if no buffer is passed in, return the total number of characters or -1
+            if (buffer == null)
             {
-                _isClosed = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
+                cch = (long)_parser.PlpBytesTotalLength(_stateObj);
+                return (isUnicode && (cch > 0)) ? cch >> 1 : cch;
             }
-            catch (System.Threading.ThreadAbortException e)
+            if (dataIndex > _columnDataCharsRead)
             {
-                _isClosed = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
+                // Skip chars
+
+                // Clean decoder state: we do not reset it, but destroy to ensure
+                // that we do not start decoding the column with decoder from the old one
+                _stateObj._plpdecoder = null;
+                cch = dataIndex - _columnDataCharsRead;
+                cch = isUnicode ? (cch << 1) : cch;
+                cch = (long)_parser.SkipPlpValue((ulong)(cch), _stateObj);
+                _columnDataBytesRead += cch;
+                _columnDataCharsRead += (isUnicode && (cch > 0)) ? cch >> 1 : cch;
             }
+            cch = length;
+
+            if (isUnicode)
+            {
+                cch = (long)_parser.ReadPlpUnicodeChars(ref buffer, bufferIndex, length, _stateObj);
+                _columnDataBytesRead += (cch << 1);
+            }
+            else
+            {
+                cch = (long)_parser.ReadPlpAnsiChars(ref buffer, bufferIndex, length, _metaData[i], _stateObj);
+                _columnDataBytesRead += cch << 1;
+            }
+            _columnDataCharsRead += cch;
+            _sharedState._columnDataBytesRemaining = (long)_parser.PlpBytesLeft(_stateObj);
+            return cch;
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         internal long GetStreamingXmlChars(int i, long dataIndex, char[] buffer, int bufferIndex, int length)
@@ -3724,10 +3493,6 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             using (TryEventScope.Create("SqlDataReader.NextResult | API | Object Id {0}", ObjectID))
             {
-#if NETFRAMEWORK
-                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
@@ -3863,33 +3628,7 @@ namespace Microsoft.Data.SqlClient
                     more = success;
                     return TdsOperationStatus.Done;
                 }
-                catch (System.OutOfMemoryException e)
-                {
-                    _isClosed = true;
-                    if (_connection != null)
-                    {
-                        _connection.Abort(e);
-                    }
-                    throw;
-                }
-                catch (System.StackOverflowException e)
-                {
-                    _isClosed = true;
-                    if (_connection != null)
-                    {
-                        _connection.Abort(e);
-                    }
-                    throw;
-                }
-                catch (System.Threading.ThreadAbortException e)
-                {
-                    _isClosed = true;
-                    if (_connection != null)
-                    {
-                        _connection.Abort(e);
-                    }
-                    throw;
-                }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
@@ -3924,10 +3663,6 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             using (TryEventScope.Create("SqlDataReader.TryReadInternal | API | Object Id {0}", ObjectID))
             {
-#if NETFRAMEWORK
-                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-
                 try
                 {
                     TdsOperationStatus result;
@@ -4087,36 +3822,7 @@ namespace Microsoft.Data.SqlClient
 
                     return TdsOperationStatus.Done;
                 }
-                catch (OutOfMemoryException e)
-                {
-                    _isClosed = true;
-                    SqlConnection con = _connection;
-                    if (con != null)
-                    {
-                        con.Abort(e);
-                    }
-                    throw;
-                }
-                catch (StackOverflowException e)
-                {
-                    _isClosed = true;
-                    SqlConnection con = _connection;
-                    if (con != null)
-                    {
-                        con.Abort(e);
-                    }
-                    throw;
-                }
-                catch (System.Threading.ThreadAbortException e)
-                {
-                    _isClosed = true;
-                    SqlConnection con = _connection;
-                    if (con != null)
-                    {
-                        con.Abort(e);
-                    }
-                    throw;
-                }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
@@ -4143,54 +3849,22 @@ namespace Microsoft.Data.SqlClient
         {
             CheckDataIsReady(columnIndex: i, permitAsync: true, allowPartiallyReadColumn: allowPartiallyReadColumn, methodName: null);
 
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-            try
-            {
-                Debug.Assert(_sharedState._nextColumnHeaderToRead <= _metaData.Length, "_sharedState._nextColumnHeaderToRead too large");
-                Debug.Assert(_sharedState._nextColumnDataToRead <= _metaData.Length, "_sharedState._nextColumnDataToRead too large");
+            Debug.Assert(_sharedState._nextColumnHeaderToRead <= _metaData.Length, "_sharedState._nextColumnHeaderToRead too large");
+            Debug.Assert(_sharedState._nextColumnDataToRead <= _metaData.Length, "_sharedState._nextColumnDataToRead too large");
 
-                if (setTimeout)
-                {
-                    SetTimeout(_defaultTimeoutMilliseconds);
-                }
+            if (setTimeout)
+            {
+                SetTimeout(_defaultTimeoutMilliseconds);
+            }
 
-                TdsOperationStatus result = TryReadColumnInternal(i, readHeaderOnly: false, forStreaming: forStreaming);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
-                }
+            TdsOperationStatus result = TryReadColumnInternal(i, readHeaderOnly: false, forStreaming: forStreaming);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
 
-                Debug.Assert(_data[i] != null, " data buffer is null?");
-            }
-            catch (System.OutOfMemoryException e)
-            {
-                _isClosed = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _isClosed = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _isClosed = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
-            }
+            Debug.Assert(_data[i] != null, " data buffer is null?");
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
 
             return TdsOperationStatus.Done;
         }
@@ -4233,41 +3907,9 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.InvalidRead();
             }
-
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-            try
-            {
-                return TryReadColumnInternal(i, readHeaderOnly: true);
-            }
-            catch (System.OutOfMemoryException e)
-            {
-                _isClosed = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _isClosed = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _isClosed = true;
-                if (_connection != null)
-                {
-                    _connection.Abort(e);
-                }
-                throw;
-            }
+            
+            return TryReadColumnInternal(i, readHeaderOnly: true);
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         internal TdsOperationStatus TryReadColumnInternal(int i, bool readHeaderOnly = false, bool forStreaming = false)
@@ -4596,9 +4238,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 Debug.Assert(
-                    (_sharedState._columnDataBytesRemaining == 0 || _sharedState._columnDataBytesRemaining == -1)
-                    &&
-                    (_stateObj._longlen == 0 || _stateObj.IsSnapshotContinuing()),
+                    (_sharedState._columnDataBytesRemaining == 0 || _sharedState._columnDataBytesRemaining == -1),
                     "Haven't read header yet, but column is partially read?"
                 );
             }
@@ -5752,6 +5392,10 @@ namespace Microsoft.Data.SqlClient
                     if (internalReadSuccess)
                     {
                         return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: true));
+                    }
+                    else
+                    {
+                        return reader.ExecuteAsyncCall(context);
                     }
                 }
             }

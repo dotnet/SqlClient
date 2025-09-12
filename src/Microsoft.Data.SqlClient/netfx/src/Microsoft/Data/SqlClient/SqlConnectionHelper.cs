@@ -170,7 +170,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Open->ClosedPreviouslyOpened, and doom the internal connection too...
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         internal void Abort(Exception e)
         {
             DbConnectionInternal innerConnection = _innerConnection;  // Should not cause memory allocation...

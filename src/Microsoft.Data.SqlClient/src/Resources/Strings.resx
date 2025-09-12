@@ -3954,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{0}' or '{1}'.</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{0}' or '{1}'.</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Column master key path cannot be null. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
@@ -3972,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{1}' or '{2}'.</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{1}' or '{2}'.</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
@@ -3990,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{2}' or '{3}'.</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{2}' or '{3}'.</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>Invalid certificate store '{0}' specified in certificate path '{1}'. Expected value: '{2}'.</value>
@@ -4057,6 +4075,9 @@
     <value>Specified encrypted column encryption key contains an invalid encryption algorithm version '{0}'. Expected version is '{1}'.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
     <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
@@ -4066,6 +4087,9 @@
     <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
     <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
@@ -4074,10 +4098,13 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect.</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key ({0}) in '{1}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (certificate) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
     <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">

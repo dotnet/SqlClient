@@ -2521,7 +2521,7 @@
     <value>Для этой команды необходимо асинхронное подключение. Укажите в строке подключения «Asynchronous Processing=true».</value>
   </data>
   <data name="SQL_ConnectTimeout" xml:space="preserve">
-    <value>The connection attempt timed out.</value>
+    <value>Истекло время ожидания для попытки подключения.</value>
   </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>Истекло время ожидания. Подключение разорвано.</value>
@@ -3954,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>Путь к сертификату не может иметь значение Null. Используйте следующий формат: &lt;расположение_сертификата&gt;{2}&lt;хранилище_сертификатов&gt;{2}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {0} или {1}.</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Путь к сертификату не может быть равен null. Используйте следующий формат: &lt;расположение_сертификата&gt;{1}&lt;хранилище_сертификатов&gt;{1}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение "{0}".</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>Внутренняя ошибка. Путь к сертификату не может иметь значение Null. Используйте следующий формат: &lt;расположение_сертификата&gt;{2}&lt;хранилище_сертификатов&gt;{2}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {0} или {1}.</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Внутренняя ошибка. Путь к сертификату не может быть равен null. Используйте следующий формат: &lt;расположение_сертификата&gt;{1}&lt;хранилище_сертификатов&gt;{1}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение "{0}".</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Путь к главному ключу столбца не может иметь значение NULL. Используйте следующий формат для ключа, хранимого в поставщике служб шифрования Microsoft (CSP): &lt;имя поставщика CNG&gt;{0}&lt;идентификатор ключа&gt;.</value>
@@ -3972,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>Недействительный путь к сертификату: "{0}". Используйте следующий формат: &lt;расположение_сертификата&gt;{3}&lt;хранилище_сертификатов&gt;{3}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {1} или {2}.</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Недействительный путь к сертификату: "{0}". Используйте следующий формат: &lt;расположение_сертификата&gt;{2}&lt;хранилище_сертификатов&gt;{2}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение "{1}".</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>Внутренняя ошибка. Недействительный путь к сертификату: "{0}". Используйте следующий формат: &lt;расположение_сертификата&gt;{3}&lt;хранилище_сертификатов&gt;{3}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {1} или {2}.</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Внутренняя ошибка. Недействительный путь к сертификату: "{0}". Используйте следующий формат: &lt;расположение_сертификата&gt;{2}&lt;хранилище_сертификатов&gt;{2}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение "{1}".</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Недопустимый путь к главному ключу столбца: "{0}". Используйте следующий формат для ключа, хранимого в поставщике служб шифрования Microsoft (CSP): &lt;имя поставщика CSP&gt;{1}&lt;идентификатор ключа&gt;.</value>
@@ -3990,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>Недействительное расположение сертификата "{0}" в пути к сертификату "{1}". Используйте следующий формат: &lt;расположение_сертификата&gt;{4}&lt;хранилище_сертификатов&gt;{4}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {2} или {3}.</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>Недопустимое расположение сертификата "{0}" в пути к сертификату "{1}". Используйте следующий формат: &lt;расположение_сертификата&gt;{3}&lt;хранилище_сертификатов&gt;{3}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение "{2}".</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>Внутренняя ошибка. Недействительное расположение сертификата "{0}" в пути к сертификату "{1}". Используйте следующий формат: &lt;расположение_сертификата&gt;{4}&lt;хранилище_сертификатов&gt;{4}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {2} или {3}.</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>Внутренняя ошибка. Недопустимое расположение сертификата "{0}" в пути к сертификату "{1}". Используйте следующий формат: &lt;расположение_сертификата&gt;{3}&lt;хранилище_сертификатов&gt;{3}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение "{2}".</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>В пути к сертификату "{1}" указано недействительное хранилище сертификатов "{0}". Ожидается значение "{2}".</value>
@@ -4057,7 +4075,10 @@
     <value>Указанный ключ шифрования зашифрованного столбца содержит недействительную версию алгоритма шифрования "{0}". Ожидается версия "{1}".</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>Длина зашифрованных данных указанного ключа шифрования зашифрованного столбца {0} не совпадает с длиной зашифрованных данных {1} при использовании главного ключа столбца (сертификата) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден или неверно указан путь к сертификату.</value>
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
     <value>Длина зашифрованных данных ({0}) указанного ключа шифрования зашифрованного столбца не соответствует длине зашифрованных данных ({1}) при использовании главного ключа (асимметричного ключа) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден, или указанный путь к поставщику служб шифрования Microsoft (CSP) может быть неверным.</value>
@@ -4066,7 +4087,10 @@
     <value>Длина зашифрованных данных ({0}) указанного ключа шифрования зашифрованного столбца не соответствует длине зашифрованных данных ({1}) при использовании главного ключа (асимметричного ключа) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден, или указанный путь к поставщику Microsoft Cryptography API: Next Generation (CNG) может быть неверным.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>Длина подписи указанного ключа шифрования зашифрованного столбца ({0}) не совпадает с длиной подписи ({1}) при использовании главного ключа столбца (сертификата) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден или неверно указан путь к сертификату.</value>
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
     <value>Указанная длина подписи ({0}) ключа шифрования зашифрованного столбца не соответствует длине подписи ({1}) при использовании главного ключа столбца (асимметричного ключа) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден, или указанный путь к поставщику служб шифрования Microsoft (CSP) может быть неверным.</value>
@@ -4074,11 +4098,14 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>Указанная длина подписи ({0}) ключа шифрования зашифрованного столбца не соответствует длине подписи ({1}) при использовании главного ключа столбца (асимметричного ключа) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден, или указанный путь к поставщику Microsoft Cryptography API: Next Generation (CNG) может быть неверным.</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key ({0}) in '{1}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>Подпись указанного ключа шифрования зашифрованного столбца не совпадает с подписью, вычисленной с помощью главного ключа столбца (сертификата) в "{0}". Ключ шифрования зашифрованного столбца может быть поврежден или неверно указан путь.</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>Указанная подпись ключа шифрования зашифрованного столбца не соответствует подписи, вычисленной с помощью главного ключа шифрования (асимметричного ключа) в "{0}". Ключ шифрования зашифрованного столбца может быть поврежден, или указанный путь может быть неверным.</value>
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>У сертификата, указанного в пути ключа "{0}", отсутствует закрытый ключ для шифрования ключа шифрования столбца. Убедитесь, что сертификат был импортирован правильно.</value>
@@ -4666,18 +4693,18 @@
     <value>Список SqlBatchCommand не инициализирован.</value>
   </data>
   <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to get vector data from column '{0}'. Vectors are only supported for columns of type vector.</value>
+    <value>Недопустимая попытка получить векторные данные из столбца "{0}". Векторы поддерживаются только для столбцов векторного типа.</value>
   </data>
   <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
-    <value>Unsupported Vector type '{0}'.</value>
+    <value>Неподдерживаемый тип вектора "{0}".</value>
   </data>
   <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
-    <value>'null' value not supported for output parameter '{0}' of SqlDbtype Vector.</value>
+    <value>Значение null не поддерживается для выходного параметра "{0}" вектора SqlDbType.</value>
   </data>
   <data name="ADP_InvalidVectorHeader" xml:space="preserve">
-    <value>Invalid vector header received.</value>
+    <value>Получен недопустимый заголовок вектора.</value>
   </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
-    <value>{0} Invalid JSON string for vector.</value>
+    <value>{0} Недопустимая строка JSON для вектора.</value>
   </data>
 </root>

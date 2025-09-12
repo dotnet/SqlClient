@@ -58,7 +58,7 @@ where T : unmanaged
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/CreateNull/*' />
     public static SqlVector<T> CreateNull(int length) => new(length);
 
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor2/*' />
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor1/*' />
     public SqlVector(ReadOnlyMemory<T> memory)
     {
         (_elementType, _elementSize) = GetTypeFieldsOrThrow();

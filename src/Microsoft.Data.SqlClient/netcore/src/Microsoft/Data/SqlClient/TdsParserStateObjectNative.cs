@@ -52,14 +52,12 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        public TdsParserStateObjectNative(TdsParser parser)
+        internal TdsParserStateObjectNative(TdsParser parser)
             : base(parser)
         {
         }
 
-        ////////////////
-        // Properties //
-        ////////////////
+        #region Properties
 
         internal SNIHandle Handle => _sessionHandle;
 
@@ -70,6 +68,8 @@ namespace Microsoft.Data.SqlClient
         protected override PacketHandle EmptyReadPacket => PacketHandle.FromNativePointer(default);
 
         internal override Guid? SessionId => default;
+
+        #endregion
 
         protected override void CreateSessionHandle(TdsParserStateObject physicalConnection, bool async)
         {
@@ -83,6 +83,9 @@ namespace Microsoft.Data.SqlClient
             _sessionHandle = new SNIHandle(myInfo, nativeSNIObject.Handle, _parser.Connection.ConnectionOptions.IPAddressPreference, cachedDNSInfo);
         }
 
+        // Retrieve the IP and port number from native SNI for TCP protocol. The IP information is stored temporarily in the
+        // pendingSQLDNSObject but not in the DNS Cache at this point. We only add items to the DNS Cache after we receive the
+        // IsSupported flag as true in the feature ext ack from server.
         internal override void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo)
         {
             uint result;
@@ -155,11 +158,13 @@ namespace Microsoft.Data.SqlClient
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            out Microsoft.Data.SqlClient.ManagedSni.ResolvedServerSpn resolvedSpn,
+            out ManagedSni.ResolvedServerSpn resolvedSpn,
             bool flushCache,
             bool async,
             bool fParallel,
-            SqlConnectionIPAddressPreference ipPreference,
+            TransparentNetworkResolutionState transparentNetworkResolutionState,
+            int totalTimeout,
+            SqlConnectionIPAddressPreference iPAddressPreference,
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
             string serverSPN,
@@ -188,7 +193,7 @@ namespace Microsoft.Data.SqlClient
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, serverName, ref serverSPN, timeout.MillisecondsRemainingInt, out instanceName,
-                flushCache, !async, fParallel, ipPreference, cachedDNSInfo, hostNameInCertificate);
+                flushCache, !async, fParallel, iPAddressPreference, cachedDNSInfo, hostNameInCertificate);
             resolvedSpn = new(serverSPN.TrimEnd());
         }
 
@@ -385,6 +390,43 @@ namespace Microsoft.Data.SqlClient
         internal override uint EnableMars(ref uint info)
             => SniNativeWrapper.SniAddProvider(Handle, Provider.SMUX_PROV, ref info);
 
+        internal override uint PostReadAsyncForMars(TdsParserStateObject physicalStateObject)
+        {
+            // HACK HACK HACK - for Async only
+            // Have to post read to initialize MARS - will get callback on this when connection goes
+            // down or is closed.
+
+            PacketHandle temp = default;
+            uint error = TdsEnums.SNI_SUCCESS;
+
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
+            try
+            { }
+            finally
+            {
+                IncrementPendingCallbacks();
+                SessionHandle handle = SessionHandle;
+                // we do not need to consider partial packets when making this read because we
+                // expect this read to pend. a partial packet should not exist at setup of the
+                // parser
+                Debug.Assert(physicalStateObject.PartialPacket == null);
+                temp = ReadAsync(handle, out error);
+
+                Debug.Assert(temp.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
+
+                if (temp.NativePointer != IntPtr.Zero)
+                {
+                    // Be sure to release packet, otherwise it will be leaked by native.
+                    ReleasePacket(temp);
+                }
+            }
+
+            Debug.Assert(IntPtr.Zero == temp.NativePointer, "unexpected syncReadPacket without corresponding SNIPacketRelease");
+            return error;
+        }
+
         internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename)
         {
             AuthProviderInfo authInfo = new AuthProviderInfo();
@@ -399,7 +441,7 @@ namespace Microsoft.Data.SqlClient
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
             => SniNativeWrapper.SniSetInfo(Handle, QueryType.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
 
-        internal override uint WaitForSSLHandShakeToComplete(out int protocolVersion)
+        internal override uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion)
         {
             uint returnValue = SniNativeWrapper.SniWaitForSslHandshakeToComplete(Handle, GetTimeoutRemaining(), out uint nativeProtocolVersion);
             var nativeProtocol = (NativeProtocols)nativeProtocolVersion;
@@ -407,35 +449,35 @@ namespace Microsoft.Data.SqlClient
 #pragma warning disable CA5398 // Avoid hardcoded SslProtocols values
             if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_SERVER))
             {
-                protocolVersion = (int)SslProtocols.Tls12;
+                protocolVersion = SslProtocols.Tls12;
             }
             else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_SERVER))
             {
                 /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later */
-                protocolVersion = (int)SslProtocols.Tls13;
+                protocolVersion = SslProtocols.Tls13;
             }
             else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_SERVER))
             {
-                protocolVersion = (int)SslProtocols.Tls11;
+                protocolVersion = SslProtocols.Tls11;
             }
             else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_SERVER))
             {
-                protocolVersion = (int)SslProtocols.Tls;
+                protocolVersion = SslProtocols.Tls;
             }
             else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_SERVER))
             {
                 // SSL 2.0 and 3.0 are only referenced to log a warning, not explicitly used for connections
 #pragma warning disable CS0618, CA5397
-                protocolVersion = (int)SslProtocols.Ssl3;
+                protocolVersion = SslProtocols.Ssl3;
             }
             else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_SERVER))
             {
-                protocolVersion = (int)SslProtocols.Ssl2;
+                protocolVersion = SslProtocols.Ssl2;
 #pragma warning restore CS0618, CA5397
             }
             else //if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_NONE))
             {
-                protocolVersion = (int)SslProtocols.None;
+                protocolVersion = SslProtocols.None;
             }
 #pragma warning restore CA5398 // Avoid hardcoded SslProtocols values 
             return returnValue;
@@ -453,16 +495,8 @@ namespace Microsoft.Data.SqlClient
         {
             lock (_writePacketLockObject)
             {
-#if NETFRAMEWORK
-                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                try
-                { }
-                finally
-                {
-                    _writePacketCache.Dispose();
-                    // Do not set _writePacketCache to null, just in case a WriteAsyncCallback completes after this point
-                }
+                _writePacketCache.Dispose();
+                // Do not set _writePacketCache to null, just in case a WriteAsyncCallback completes after this point
             }
         }
 

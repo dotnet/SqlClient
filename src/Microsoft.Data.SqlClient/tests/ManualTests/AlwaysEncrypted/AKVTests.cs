@@ -130,7 +130,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void TestRoundTripWithAKVAndCertStoreProvider()
         {
             SqlColumnEncryptionCertificateStoreProvider certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();

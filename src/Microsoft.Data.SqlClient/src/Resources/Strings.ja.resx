@@ -2521,7 +2521,7 @@
     <value>このコマンドには非同期接続が必要です。接続文字列に "Asynchronous Processing=true" を設定してください。</value>
   </data>
   <data name="SQL_ConnectTimeout" xml:space="preserve">
-    <value>The connection attempt timed out.</value>
+    <value>接続試行がタイムアウトしました。</value>
   </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>タイムアウトに達しました。その結果、接続が切断されました。</value>
@@ -3954,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>証明書パスを Null にすることはできません。次の形式を使用してください: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;。ここで &lt;certificate location&gt; は '{0}' または '{1}' のいずれかです。</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>証明書のパスを null 値にすることはできません。次の形式を使用してください: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;。なお、&lt;certificate location&gt; は '{0}' です。</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>内部エラー。証明書パスを Null にすることはできません。次の形式を使用してください: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;。ここで &lt;certificate location&gt; は '{0}' または '{1}' のいずれかです。</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>内部エラー。証明書のパスを null 値にすることはできません。次の形式を使用してください: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;。なお、&lt;certificate location&gt; は '{0}' です。</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>列マスター キーのパスを null にすることはできません。Microsoft 暗号化サービス プロバイダー (CSP) に保存されるキーには、次の形式を使用してください: &lt;CSP プロバイダー名&gt;{0}&lt;キー識別子&gt;。</value>
@@ -3972,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>証明書パス '{0}' が無効です。次の形式を使用してください: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;。ここで &lt;certificate location&gt; は '{1}' または '{2}' のいずれかです。</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>証明書パスが無効です: '{0}'。次の形式を使用してください: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;。なお &lt;certificate location&gt; は '{1}' です。</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>内部エラー。証明書パス '{0}' が無効です。次の形式を使用してください: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;。ここで &lt;certificate location&gt; は '{1}' または '{2}' のいずれかです。</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>内部エラー。証明書パスが無効です: '{0}'。次の形式を使用してください: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;。なお &lt;certificate location&gt; は '{1}' です。</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>列マスター キーのパス: '{0}' が無効です。Microsoft 暗号化サービス プロバイダー (CSP) に保存されるキーには、次の形式を使用してください: &lt;CSP プロバイダー名&gt;{1}&lt;キー識別子&gt;。</value>
@@ -3990,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>証明書パス '{1}' の証明書の場所 '{0}' が無効です。次の形式を使用してください: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;。ここで &lt;certificate location&gt; は '{2}' または '{3}' のいずれかです。</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>証明書パス {1}'' の証明書の場所 '{0}' が無効です。次の形式を使用してください: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;。なお &lt;certificate location&gt; は '{2}' です。</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>内部エラー。証明書パス '{1}' の証明書の場所 '{0}' が無効です。次の形式を使用してください: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;。ここで &lt;certificate location&gt; は '{2}' または '{3}' のいずれかです。</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>内部エラー。証明書パス {1}'' の証明書の場所 '{0}' が無効です。次の形式を使用してください: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;。なお &lt;certificate location&gt; は '{2}' です。</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>証明書パス '{1}' で指定された証明書ストア '{0}' が無効です。予期されている値は '{2}' です。</value>
@@ -4057,7 +4075,10 @@
     <value>指定した方法で暗号化された列暗号化キーに、無効な暗号化アルゴリズムのバージョン '{0}' が含まれています。期待されているバージョンは '{1}' です。</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>指定した暗号化された列暗号化キーの暗号化テキストの長さ {0} が、'{2}' にある列マスター キー (証明書) を使った暗号化テキストの長さ {1} と一致しません 。暗号化された列暗号化キーが壊れているか、指定された証明書のパスが正しくない可能性があります。</value>
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
     <value>指定された暗号化列の暗号化キーの暗号化テキストの長さ: {0} が、'{2}' にある列マスター キー (非対称キー) を使った暗号化テキストの長さ: {1} と一致しません 。暗号化列の暗号化キーが壊れているか、指定された Microsoft 暗号化サービス プロバイダー (CSP) のパスが正しくない可能性があります。</value>
@@ -4066,7 +4087,10 @@
     <value>指定された暗号化列の暗号化キーの暗号化テキストの長さ: {0} が、'{2}' にある列マスター キー (非対称キー) を使った暗号化テキストの長さ: {1} と一致しません 。暗号化列の暗号化キーが壊れているか、指定された Microsoft Cryptography API: Next Generation (CNG) プロバイダーのパスが正しくない可能性があります。</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>指定した暗号化された列暗号化キーの署名の長さ {0} が、'{2}' の列マスター キー (証明書) を使った署名の長さ {1} と一致しません。暗号化された列暗号化キーが壊れているか、指定されたパスが正しくない可能性があります。</value>
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
     <value>指定された暗号化列の暗号化キーの署名の長さ: {0} が、'{2}' にある列マスター キー (非対称キー) を使った署名の長さ: {1} と一致しません 。暗号化列の暗号化キーが壊れているか、指定された Microsoft 暗号化サービス プロバイダー (CSP) のパスが正しくない可能性があります。</value>
@@ -4074,11 +4098,14 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>指定された暗号化列の暗号化キーの署名の長さ: {0} が、'{2}' にある列マスター キー (非対称キー) を使った署名の長さ: {1} と一致しません 。暗号化列の暗号化キーが壊れているか、指定された Microsoft Cryptography API: Next Generation (CNG) プロバイダーのパスが正しくない可能性があります。</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key ({0}) in '{1}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>指定した暗号化された列暗号化キーの署名が、'{0}' にある列マスター キー (証明書) を使って計算された署名と一致しません 。暗号化された列暗号化キーが壊れているか、指定されたパスが正しくない可能性があります。</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>指定された暗号化列の暗号化キーの署名が、'{0}' にある列マスター キー (非対称キー) を使って計算された署名と一致しません 。暗号化列の暗号化キーが壊れているか、指定されたパスが正しくない可能性があります。</value>
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>キーのパス '{0}' で指定された証明書には、列暗号化キーを暗号化する秘密キーがありません。証明書が正常にインポートされていることを確認してください。</value>
@@ -4666,18 +4693,18 @@
     <value>SqlBatchCommand リストが初期化されていません。</value>
   </data>
   <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to get vector data from column '{0}'. Vectors are only supported for columns of type vector.</value>
+    <value>列 '{0}' からベクター データを取得しようとしましたが無効です。ベクターは、ベクター型の列でのみサポートされます。</value>
   </data>
   <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
-    <value>Unsupported Vector type '{0}'.</value>
+    <value>サポートされていないベクター型 '{0}'。</value>
   </data>
   <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
-    <value>'null' value not supported for output parameter '{0}' of SqlDbtype Vector.</value>
+    <value>SqlDbtype ベクターの出力パラメーター '{0}' では、'null' 値はサポートされていません。</value>
   </data>
   <data name="ADP_InvalidVectorHeader" xml:space="preserve">
-    <value>Invalid vector header received.</value>
+    <value>無効なベクター ヘッダーを受信しました。</value>
   </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
-    <value>{0} Invalid JSON string for vector.</value>
+    <value>{0} ベクターの JSON 文字列が無効です。</value>
   </data>
 </root>

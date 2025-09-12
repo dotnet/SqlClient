@@ -1497,7 +1497,7 @@ namespace Microsoft.Data.Common
         }
 
         //
-        // : IDbCommand
+        // IDbCommand
         //
         internal static Exception InvalidCommandTimeout(int value, string name)
         {
@@ -1505,7 +1505,7 @@ namespace Microsoft.Data.Common
         }
 
         //
-        // : DbDataAdapter
+        // DbDataAdapter
         //
         internal static InvalidOperationException ComputerNameEx(int lastError)
         {
@@ -1513,7 +1513,7 @@ namespace Microsoft.Data.Common
         }
 
         //
-        // : SNI
+        // SNI
         //
         internal static PlatformNotSupportedException SNIPlatformNotSupported(string platform) => new(StringsHelper.GetString(Strings.SNI_PlatformNotSupportedNetFx, platform));
 
@@ -1575,7 +1575,6 @@ namespace Microsoft.Data.Common
             return value;
         }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         internal static IntPtr IntPtrOffset(IntPtr pbase, int offset)
         {
             if (4 == ADP.s_ptrSize)
@@ -1636,7 +1635,7 @@ namespace Microsoft.Data.Common
         }
 
         //
-        // : IDbCommand
+        // IDbCommand
         //
         internal static Exception InvalidCommandTimeout(int value, [CallerMemberName] string property = "")
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidCommandTimeout, value.ToString(CultureInfo.InvariantCulture)), property);
