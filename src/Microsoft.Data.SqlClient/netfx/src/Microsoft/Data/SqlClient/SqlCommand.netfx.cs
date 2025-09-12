@@ -1536,40 +1536,6 @@ namespace Microsoft.Data.SqlClient
             _currentlyExecutingBatch = 0;
         }
 
-        internal void AddBatchCommand(SqlBatchCommand batchCommand)
-        {
-            Debug.Assert(_batchRPCMode, "Command is not in batch RPC Mode");
-            Debug.Assert(_RPCList != null);
-
-            _SqlRPC rpc = new _SqlRPC
-            {
-                batchCommand = batchCommand
-            };
-            string commandText = batchCommand.CommandText;
-            CommandType cmdType = batchCommand.CommandType;
-
-            CommandText = commandText;
-            CommandType = cmdType;
-
-            // Set the column encryption setting.
-            SetColumnEncryptionSetting(batchCommand.ColumnEncryptionSetting);
-
-            GetStateObject();
-            if (cmdType == CommandType.StoredProcedure)
-            {
-                BuildRPC(false, batchCommand.Parameters, ref rpc);
-            }
-            else
-            {
-                // All batch sql statements must be executed inside sp_executesql, including those without parameters
-                BuildExecuteSql(CommandBehavior.Default, commandText, batchCommand.Parameters, ref rpc);
-            }
-
-            _RPCList.Add(rpc);
-
-            ReliablePutStateObject();
-        }
-
         private static void CancelIgnoreFailureCallback(object state)
         {
             SqlCommand command = (SqlCommand)state;

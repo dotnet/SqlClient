@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Data;
 using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient
@@ -10,6 +11,37 @@ namespace Microsoft.Data.SqlClient
     public sealed partial class SqlCommand
     {
         #region Internal Methods
+
+        internal void AddBatchCommand(SqlBatchCommand batchCommand)
+        {
+            Debug.Assert(_batchRPCMode, "Command is not in batch RPC Mode");
+            Debug.Assert(_RPCList is not null);
+
+            _SqlRPC rpc = new _SqlRPC { batchCommand = batchCommand };
+            string commandText = batchCommand.CommandText;
+            CommandType cmdType = batchCommand.CommandType;
+
+            CommandText = commandText;
+            CommandType = cmdType;
+
+            SetColumnEncryptionSetting(batchCommand.ColumnEncryptionSetting);
+
+            // @TODO: Hmm, maybe we could have get/put become a IDisposable thing
+            GetStateObject();
+            if (cmdType is CommandType.StoredProcedure)
+            {
+                BuildRPC(inSchema: false, batchCommand.Parameters, ref rpc);
+            }
+            else
+            {
+                // All batch sql statements must be executed inside sp_executesql, including those
+                // without parameters
+                BuildExecuteSql(CommandBehavior.Default, commandText, batchCommand.Parameters, ref rpc);
+            }
+
+            _RPCList.Add(rpc);
+            ReliablePutStateObject();
+        }
 
         internal SqlBatchCommand GetBatchCommand(int index) =>
             _RPCList[index].batchCommand;
