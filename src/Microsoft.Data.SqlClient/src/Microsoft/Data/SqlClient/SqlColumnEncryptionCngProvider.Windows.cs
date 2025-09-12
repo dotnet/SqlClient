@@ -144,36 +144,32 @@ namespace Microsoft.Data.SqlClient
         private static RSACng CreateRSACngProvider(string keyPath, bool isSystemOp)
         {
             // Get CNGProvider and the KeyID
-            GetCngProviderAndKeyId(keyPath, isSystemOp, out string cngProviderName, out string keyIdentifier);
-
-            CngProvider cngProvider = new(cngProviderName);
-            CngKey cngKey;
+            GetCngProviderAndKeyId(keyPath, isSystemOp, out CngProvider cngProvider, out string keyIdentifier);
 
             try
             {
-                cngKey = CngKey.Open(keyIdentifier, cngProvider);
+                using CngKey cngKey = CngKey.Open(keyIdentifier, cngProvider);
+
+                // The RSACng constructor copies the input CngKey, so it is safe to dispose the original.
+                return new RSACng(cngKey);
             }
             catch (CryptographicException)
             {
-                throw SQL.InvalidCngKey(keyPath, cngProviderName, keyIdentifier, isSystemOp);
-            }
-
-            using (cngKey)
-            {
-                return new RSACng(cngKey);
+                throw SQL.InvalidCngKey(keyPath, cngProvider.Provider, keyIdentifier, isSystemOp);
             }
         }
 
         /// <summary>
-        /// Extracts the CNG provider name and key name from the given key path.
+        /// Extracts the CNG provider and key name from the given key path.
         /// </summary>
         /// <param name="keyPath">Key path in the format [CNG provider name]/[key name].</param>
         /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API.</param>
-        /// <param name="cngProvider">CNG provider name.</param>
+        /// <param name="cngProvider">CNG provider.</param>
         /// <param name="keyIdentifier">Key name inside the CNG provider.</param>
-        private static void GetCngProviderAndKeyId(string keyPath, bool isSystemOp, out string cngProvider, out string keyIdentifier)
+        private static void GetCngProviderAndKeyId(string keyPath, bool isSystemOp, out CngProvider cngProvider, out string keyIdentifier)
         {
-            int indexOfSlash = keyPath.IndexOf('/');
+            ReadOnlySpan<char> keyPathSpan = keyPath.AsSpan();
+            int indexOfSlash = keyPathSpan.IndexOf('/');
 
             if (indexOfSlash == -1)
             {
@@ -188,7 +184,28 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.EmptyCngKeyId(keyPath, isSystemOp);
             }
 
-            cngProvider = keyPath.Substring(0, indexOfSlash);
+            ReadOnlySpan<char> cngProviderName = keyPathSpan.Slice(0, indexOfSlash);
+
+            // If the provider is one of the well-known providers, use the static instance instead of allocating a new string and CngProvider.
+            if (cngProviderName.Equals(CngProvider.MicrosoftSoftwareKeyStorageProvider.Provider.AsSpan(), StringComparison.OrdinalIgnoreCase))
+            {
+                cngProvider = CngProvider.MicrosoftSoftwareKeyStorageProvider;
+            }
+            else if (cngProviderName.Equals(CngProvider.MicrosoftSmartCardKeyStorageProvider.Provider.AsSpan(), StringComparison.OrdinalIgnoreCase))
+            {
+                cngProvider = CngProvider.MicrosoftSmartCardKeyStorageProvider;
+            }
+#if NET
+            else if (cngProviderName.Equals(CngProvider.MicrosoftPlatformCryptoProvider.Provider.AsSpan(), StringComparison.OrdinalIgnoreCase))
+            {
+                cngProvider = CngProvider.MicrosoftPlatformCryptoProvider;
+            }
+#endif
+            else
+            {
+                cngProvider = new(cngProviderName.ToString());
+            }
+
             keyIdentifier = keyPath.Substring(indexOfSlash + 1);
         }
     }
