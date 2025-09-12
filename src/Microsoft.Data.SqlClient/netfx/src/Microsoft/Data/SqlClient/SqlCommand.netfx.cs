@@ -1413,38 +1413,5 @@ namespace Microsoft.Data.SqlClient
                 _sqlDep.StartTimer(Notification);
             }
         }
-
-        private void WriteBeginExecuteEvent()
-        {
-            SqlClientEventSource.Log.TryBeginExecuteEvent(ObjectID, Connection?.DataSource, Connection?.Database, CommandText, Connection?.ClientConnectionId);
-        }
-
-        /// <summary>
-        /// Writes and end execute event in Event Source.
-        /// </summary>
-        /// <param name="success">True if SQL command finished successfully, otherwise false.</param>
-        /// <param name="sqlExceptionNumber">Gets a number that identifies the type of error.</param>
-        /// <param name="synchronous">True if SQL command was executed synchronously, otherwise false.</param>
-        private void WriteEndExecuteEvent(bool success, int? sqlExceptionNumber, bool synchronous)
-        {
-            if (SqlClientEventSource.Log.IsExecutionTraceEnabled())
-            {
-                // SqlEventSource.WriteEvent(int, int, int, int) is faster than provided overload SqlEventSource.WriteEvent(int, object[]).
-                // that's why trying to fit several booleans in one integer value
-
-                // success state is stored the first bit in compositeState 0x01
-                int successFlag = success ? 1 : 0;
-
-                // isSqlException is stored in the 2nd bit in compositeState 0x100
-                int isSqlExceptionFlag = sqlExceptionNumber.HasValue ? 2 : 0;
-
-                // synchronous state is stored in the second bit in compositeState 0x10
-                int synchronousFlag = synchronous ? 4 : 0;
-
-                int compositeState = successFlag | isSqlExceptionFlag | synchronousFlag;
-
-                SqlClientEventSource.Log.TryEndExecuteEvent(ObjectID, compositeState, sqlExceptionNumber.GetValueOrDefault(), Connection?.ClientConnectionId);
-            }
-        }
     }
 }

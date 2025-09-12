@@ -1669,6 +1669,53 @@ namespace Microsoft.Data.SqlClient
                 $"Object Id {ObjectID}, Command unprepared.");
         }
 
+        private void WriteBeginExecuteEvent()
+        {
+            SqlClientEventSource.Log.TryBeginExecuteEvent(
+                ObjectID,
+                _activeConnection?.DataSource,
+                _activeConnection?.Database,
+                CommandText,
+                _activeConnection?.ClientConnectionId);
+        }
+
+        /// <summary>
+        /// Writes and end execute event in Event Source.
+        /// </summary>
+        /// <param name="success">True if SQL command finished successfully, otherwise false.</param>
+        /// <param name="sqlExceptionNumber">Number that identifies the type of error.</param>
+        /// <param name="isSynchronous">
+        /// True if SQL command was executed synchronously, otherwise false.
+        /// </param>
+        private void WriteEndExecuteEvent(bool success, int? sqlExceptionNumber, bool isSynchronous)
+        {
+            if (!SqlClientEventSource.Log.IsExecutionTraceEnabled())
+            {
+                return;
+            }
+
+            // SqlEventSource.WriteEvent(int, int, int, int) is faster than provided overload
+            // SqlEventSource.WriteEvent(int, object[]). That's why we're trying to fit several
+            // booleans in one integer value.
+
+            // Success state is stored the first bit in compositeState 0x01
+            int successFlag = success ? 1 : 0;
+
+            // isSqlException is stored in the 2nd bit in compositeState 0x100
+            int isSqlExceptionFlag = sqlExceptionNumber.HasValue ? 2 : 0;
+
+            // Synchronous state is stored in the second bit in compositeState 0x10
+            int synchronousFlag = isSynchronous ? 4 : 0;
+
+            int compositeState = successFlag | isSqlExceptionFlag | synchronousFlag;
+
+            SqlClientEventSource.Log.TryEndExecuteEvent(
+                ObjectID,
+                compositeState,
+                sqlExceptionNumber.GetValueOrDefault(),
+                _activeConnection?.ClientConnectionId);
+        }
+
         #endregion
 
         private sealed class AsyncState
