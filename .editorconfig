@@ -158,23 +158,13 @@ dotnet_code_quality.CA2100.excluded_type_names_with_derived_types = Microsoft.Da
 dotnet_diagnostic.xUnit1031.severity=none
 dotnet_diagnostic.xUnit1030.severity=none
 
-[*.{csproj,vcxproj,vcxproj.filters,proj,nativeproj,locproj}]
-indent_size = 2
-
-# Xml build files
-[*.builds]
-indent_size = 2
-
 # Xml files
-[*.{xml,stylecop,resx,ruleset}]
-indent_size = 2
-
-# Xml config files
-[*.{props,targets,config,nuspec}]
+[*.{xml,csproj,stylecop,resx,ruleset,props,targets,config,nuspec}]
 indent_size = 2
 
 # Shell scripts
 [*.sh]
 end_of_line = lf
+
 [*.{cmd, bat}]
 end_of_line = crlf
