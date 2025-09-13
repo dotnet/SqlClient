@@ -4075,10 +4075,10 @@
     <value>A chave de criptografia de coluna criptografada especificada contém uma versão inválida do algoritmo de criptografia '{0}'. A versão esperada é '{1}'.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+    <value>O comprimento do texto cifrado da chave de criptografia de coluna criptografada especificado: {0} não corresponde ao comprimento do texto cifrado: {1} ao usar a chave mestra de coluna ({2}) em "{3}". A chave de criptografia da coluna criptografada pode estar corrompida ou o caminho {4} especificado pode estar incorreto.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
-    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
+    <value>O tamanho especificado do texto cifrado da chave de criptografia da coluna criptografada: {0} não corresponde ao tamanho do texto cifrado: {1} ao usar a chave mestra da coluna (certificado) em "{2}". A chave de criptografia da coluna criptografada pode estar corrompida ou o caminho de certificado especificado pode estar incorreto.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
     <value>O tamanho do texto cifrado da chave de criptografia da coluna criptografada especificada: {0} não corresponde ao tamanho do texto cifrado: {1} ao usar a chave mestra da coluna (chave assimétrica) em '{2}'. A chave de criptografia da coluna criptografada por estar corrompida ou o caminho do provedor de CSP (Provedor de Serviços de Criptografia) da Microsoft pode estar incorreto.</value>
@@ -4087,10 +4087,10 @@
     <value>O tamanho do texto cifrado da chave de criptografia da coluna criptografada especificada: {0} não corresponde ao tamanho do texto cifrado: {1} ao usar a chave mestra da coluna (chave assimétrica) em '{2}'. A chave de criptografia da coluna criptografada pode estar corrompida ou o caminho do provedor CNG (Cryptography API: Next Generation) da Microsoft pode estar incorreto.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+    <value>O comprimento da assinatura da chave de criptografia de coluna criptografada especificada: {0} não corresponde ao comprimento da assinatura: {1} ao usar a chave mestra de coluna ({2}) em "{3}". A chave de criptografia da coluna criptografada pode estar corrompida ou o caminho {4} especificado pode estar incorreto.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
-    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
+    <value>O comprimento da assinatura da chave de criptografia da coluna criptografada especificada: {0} não corresponde ao comprimento da assinatura: {1} ao usar a chave mestra de coluna (certificado) em "{2}". A chave de criptografia da coluna criptografada pode estar corrompida ou o caminho de certificado especificado pode estar incorreto.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
     <value>O tamanho da assinatura de chave de criptografia da coluna criptografada especificada: {0} não corresponde ao tamanho da assinatura: {1} ao usar a chave mestra da coluna (chave assimétrica) em '{2}'. A chave de criptografia da coluna criptografada pode estar corrompida ou o caminho de CSP (Provedor de Serviços de Criptografia) da Microsoft pode estar incorreto.</value>
@@ -4099,13 +4099,13 @@
     <value>O tamanho da assinatura de chave de criptografia da coluna criptografada especificada: {0} não corresponde ao tamanho da assinatura: {1} ao usar a chave mestra da coluna (chave assimétrica) em '{2}'. A chave de criptografia da coluna criptografada pode estar corrompida ou o caminho do provedor CNG (Cryptography API: Next Generation) da Microsoft pode estar incorreto.</value>
   </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key ({0}) in '{1}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+    <value>A assinatura de chave de criptografia de coluna criptografada especificada não corresponde à assinatura computada com a chave mestra de coluna ({0}) em "{1}". A chave de criptografia da coluna criptografada pode estar corrompida ou o caminho especificado pode estar incorreto.</value>
   </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>A assinatura da chave de criptografia especificada na coluna criptografada não corresponde à assinatura calculada pela chave mestra da coluna (certificado) em '{0}'. A chave de criptografia da coluna criptografada pode estar corrompida ou o caminho especificado pode estar errado.</value>
   </data>
   <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
-    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+    <value>A assinatura da chave de criptografia da coluna criptografada especificada não corresponde à assinatura computada com a chave mestra da coluna (chave assimétrica) em "{0}". A chave de criptografia da coluna criptografada pode estar corrompida ou o caminho especificado pode estar incorreto.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>O certificado especificado no caminho da chave '{0}' não tem uma chave privada para criptografar uma chave de criptografia de coluna. Verifique se que o certificado for importado corretamente.</value>

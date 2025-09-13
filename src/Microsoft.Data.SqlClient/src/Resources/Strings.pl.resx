@@ -4075,7 +4075,7 @@
     <value>Określony zaszyfrowany klucz szyfrowania kolumny zawiera nieprawidłową wersję algorytmu szyfrowania „{0}”. Oczekiwana wersja to „{1}”.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+    <value>Określona długość szyfrowanego klucza szyfrowania kolumny tekstu szyfrowanego: {0} nie jest zgodna z długością tekstu szyfrowanego: {1} w przypadku używania klucza głównego kolumny ({2}) w „{3}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka {4} może być nieprawidłowa.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
     <value>Określona długość szyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością tekstu szyfrowanego: {1} w przypadku używania klucza głównego kolumny (certyfikatu) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka certyfikatu może być nieprawidłowa.</value>
@@ -4087,7 +4087,7 @@
     <value>Określona długość szyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością tekstu szyfrowanego: {1} w przypadku używania klucza głównego kolumny (klucza asymetrycznego) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka dostawcy interfejsu API kryptografii firmy Microsoft: ścieżka dostawcy następnej generacji (CNG) może być niepoprawna.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+    <value>Określona długość podpisu zaszyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością podpisu: {1} w przypadku używania klucza głównego kolumny ({2}) w „{3}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka {4} może być nieprawidłowa.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
     <value>Określona długość podpisu zaszyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością podpisu: {1} w przypadku używania klucza głównego kolumny (certyfikatu) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka certyfikatu może być nieprawidłowa.</value>
@@ -4099,7 +4099,7 @@
     <value>Określona długość podpisu zaszyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością podpisu: {1} w przypadku używania klucza głównego kolumny (klucza asymetrycznego) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka dostawcy interfejsu API kryptografii firmy Microsoft: ścieżka dostawcy następnej generacji (CNG) może być niepoprawna.</value>
   </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key ({0}) in '{1}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+    <value>Określony podpis zaszyfrowanego klucza szyfrowania kolumny jest niezgodny z podpisem obliczonym przy użyciu klucza głównego kolumny ({0}) w „{1}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka może być nieprawidłowa.</value>
   </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>Określony podpis zaszyfrowanego klucza szyfrowania kolumny jest niezgodny z podpisem obliczonym przy użyciu klucza głównego kolumny (certyfikatu) w elemencie „{0}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka może być nieprawidłowa.</value>
