@@ -470,6 +470,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 #endif
         }
 
+        public static void CreateTable(SqlConnection sqlConnection, string tableName, string createBody)
+        {
+            DropTable(sqlConnection, tableName);
+            string tableCreate = "CREATE TABLE " + tableName + createBody;
+            using (SqlCommand command = sqlConnection.CreateCommand())
+            {
+                command.CommandText = tableCreate;
+                command.ExecuteNonQuery();
+            }
+        }
         public static void DropTable(SqlConnection sqlConnection, string tableName)
         {
             ResurrectConnection(sqlConnection);
