@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Preview Release 7.0.0-preview1.TBD] - 2025-09-12
+## [Preview Release 7.0.0-preview1.25257.1] - 2025-09-12
 
 This update brings the following changes since the [6.1.0](release-notes/6.1/6.1.0.md)
 release:
@@ -33,10 +33,6 @@ release:
 - Updated `SqlVector.Null` to return a nullable `SqlVector` instance in the
   reference API to match the implementation.
   ([#3521](https://github.com/dotnet/SqlClient/pull/3521))
-
-- `SqlColumnEncryptionCertificateStoreProvider` now works on Windows, Linux,
-  and macOS.
-  ([#3014](https://github.com/dotnet/SqlClient/pull/3014))
 
 - Performance improvements for all built-in
   `SqlColumnEncryptionKeyStoreProvider` implementations.
