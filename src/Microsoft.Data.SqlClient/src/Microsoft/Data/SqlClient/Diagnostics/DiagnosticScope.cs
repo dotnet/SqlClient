@@ -2,14 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET
-
 using System;
 using System.Runtime.CompilerServices;
 
 namespace Microsoft.Data.SqlClient.Diagnostics
 {
-    internal ref struct DiagnosticScope //: IDisposable
+    internal ref struct DiagnosticScope : IDisposable
     {
         private const int CommandOperation = 1;
         private const int ConnectionOpenOperation = 2;
@@ -106,5 +104,3 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         }
     }
 }
-
-#endif

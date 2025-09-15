@@ -46,6 +46,9 @@ csharp_style_var_for_built_in_types = false:none
 csharp_style_var_when_type_is_apparent = false:none
 csharp_style_var_elsewhere = false:suggestion
 
+# don't prefer the range operator, netfx doesn't have these types
+csharp_style_prefer_range_operator = false
+
 # use language keywords instead of BCL types
 dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
 dotnet_style_predefined_type_for_member_access = true:suggestion
@@ -155,23 +158,13 @@ dotnet_code_quality.CA2100.excluded_type_names_with_derived_types = Microsoft.Da
 dotnet_diagnostic.xUnit1031.severity=none
 dotnet_diagnostic.xUnit1030.severity=none
 
-[*.{csproj,vcxproj,vcxproj.filters,proj,nativeproj,locproj}]
-indent_size = 2
-
-# Xml build files
-[*.builds]
-indent_size = 2
-
 # Xml files
-[*.{xml,stylecop,resx,ruleset,slnx}]
-indent_size = 2
-
-# Xml config files
-[*.{props,targets,config,nuspec}]
+[*.{xml,slnx,csproj,stylecop,resx,ruleset,props,targets,config,nuspec}]
 indent_size = 2
 
 # Shell scripts
 [*.sh]
 end_of_line = lf
+
 [*.{cmd, bat}]
 end_of_line = crlf

@@ -411,6 +411,8 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.StartsWith("ExecuteScalar:", ex.Message);
         }
 
+        #region Prepare()
+
         [Fact]
         public void Prepare_Connection_Null()
         {
@@ -427,50 +429,91 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
-        public void Prepare_Connection_Closed()
+        public void Prepare_ConnectionClosed_TextWithoutParams()
         {
-            string connectionString = "Initial Catalog=a;Server=b;User ID=c;"
-                + "Password=d";
-            SqlConnection cn = new SqlConnection(connectionString);
+            // Arrange
+            using SqlConnection connection = GetNonConnectingConnection();
+            using SqlCommand command = new SqlCommand();
+            command.Connection = connection;
+            command.CommandType = CommandType.Text;
+            command.CommandText = COMMAND_TEXT;
 
-            SqlCommand cmd;
-
-            // Text, without parameters
-            cmd = new SqlCommand("select count(*) from whatever", cn);
-            cmd.Prepare();
-
-            // Text, with parameters
-            cmd = new SqlCommand("select count(*) from whatever", cn);
-            cmd.Parameters.Add("@TestPar1", SqlDbType.Int);
-
-            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cmd.Prepare());
-            // Prepare requires an open and available
-            // Connection. The connection's current state
-            // is Closed
-            Assert.Null(ex.InnerException);
-            Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("Prepare", StringComparison.Ordinal) != -1);
-
-            // Text, parameters cleared
-            cmd = new SqlCommand("select count(*) from whatever", cn);
-            cmd.Parameters.Add("@TestPar1", SqlDbType.Int);
-            cmd.Parameters.Clear();
-            cmd.Prepare();
-
-            // StoredProcedure, without parameters
-            cmd = new SqlCommand("FindCustomer", cn);
-            cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Prepare();
-
-            // StoredProcedure, with parameters
-            cmd = new SqlCommand("FindCustomer", cn);
-            cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.Add("@TestPar1", SqlDbType.Int);
-            cmd.Prepare();
-
-            // ensure connection was not implictly opened
-            Assert.Equal(ConnectionState.Closed, cn.State);
+            // Act / Assert
+            command.Prepare();
+            Assert.Equal(ConnectionState.Closed, connection.State);
         }
+
+        [Fact]
+        public void Prepare_ConnectionClosed_TextWithClearedParams()
+        {
+            // Arrange
+            using SqlConnection connection = GetNonConnectingConnection();
+            using SqlCommand command = new SqlCommand();
+            command.Connection = connection;
+            command.CommandType = CommandType.Text;
+            command.CommandText = COMMAND_TEXT;
+            command.Parameters.Add("@TestPar1", SqlDbType.Int);
+            command.Parameters.Clear();
+
+            // Act / Assert
+            command.Prepare();
+            Assert.Equal(ConnectionState.Closed, connection.State);
+        }
+
+        [Fact]
+        public void Prepare_ConnectionClosed_TextWithParams()
+        {
+            // Arrange
+            using SqlConnection connection = GetNonConnectingConnection();
+            using SqlCommand command = new SqlCommand();
+            command.Connection = connection;
+            command.CommandType = CommandType.Text;
+            command.CommandText = COMMAND_TEXT;
+            command.Parameters.Add("@TestPar1", SqlDbType.Int);
+
+            // Act
+            Action action = () => command.Prepare();
+
+            // Assert
+            var exception = Assert.Throws<InvalidOperationException>(action);
+            Assert.Null(exception.InnerException);
+            Assert.NotNull(exception.Message);
+            Assert.Contains("Prepare", exception.Message);
+
+            Assert.Equal(ConnectionState.Closed, connection.State);
+        }
+
+        [Fact]
+        public void Prepare_ConnectionClosed_SprocWithoutParams()
+        {
+            // Arrange
+            using SqlConnection connection = GetNonConnectingConnection();
+            using SqlCommand command = new SqlCommand();
+            command.Connection = connection;
+            command.CommandType = CommandType.StoredProcedure;
+            command.CommandText = "FindCustomer";
+
+            // Act / Assert
+            command.Prepare();
+            Assert.Equal(ConnectionState.Closed, connection.State);
+        }
+
+        [Fact]
+        public void Prepare_ConnectionClosed_SprocWithParams()
+        {
+            // Arrange
+            using SqlConnection connection = GetNonConnectingConnection();
+            using SqlCommand command = new SqlCommand();
+            command.Connection = connection;
+            command.CommandType = CommandType.StoredProcedure;
+            command.CommandText = "FindCustomer";
+
+            // Act / Assert
+            command.Prepare();
+            Assert.Equal(ConnectionState.Closed, connection.State);
+        }
+
+        #endregion
 
         [Fact]
         public void ResetCommandTimeout()
@@ -518,5 +561,8 @@ namespace Microsoft.Data.SqlClient.Tests
                 cmd.Parameters.Remove(cmd.Parameters[0]);
             }
         }
+
+        private static SqlConnection GetNonConnectingConnection() =>
+            new SqlConnection("Initial Catalog=a;Server=b;User ID=c;Password=d");
     }
 }

@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,19 +9,20 @@ using System.Data;
 
 namespace Microsoft.Data.SqlClient.Diagnostics
 {
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitAfter"]/SqlClientTransactionCommitAfter/*'/>
-    public sealed class SqlClientTransactionCommitAfter : IReadOnlyList<KeyValuePair<string, object>>
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitError"]/SqlClientTransactionCommitError/*'/>
+    public sealed class SqlClientTransactionCommitError : IReadOnlyList<KeyValuePair<string, object>>
     {
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitAfter"]/Name/*'/>
-        public const string Name = "Microsoft.Data.SqlClient.WriteTransactionCommitAfter";
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitError"]/Name/*'/>
+        public const string Name = "Microsoft.Data.SqlClient.WriteTransactionCommitError";
 
-        internal SqlClientTransactionCommitAfter(
+        internal SqlClientTransactionCommitError(
             Guid operationId,
             string operation,
             long timestamp,
             IsolationLevel isolationLevel,
             SqlConnection connection,
-            long? transactionId)
+            long? transactionId,
+            Exception ex)
         {
             OperationId = operationId;
             Operation = operation;
@@ -31,6 +30,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             IsolationLevel = isolationLevel;
             Connection = connection;
             TransactionId = transactionId;
+            Exception = ex;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
@@ -40,15 +40,17 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
         public long Timestamp { get; }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitAfter"]/IsolationLevel/*'/>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitError"]/IsolationLevel/*'/>
         public IsolationLevel IsolationLevel { get; }
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitAfter"]/Connection/*'/>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitError"]/Connection/*'/>
         public SqlConnection Connection { get; }
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitAfter"]/TransactionId/*'/>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitError"]/TransactionId/*'/>
         public long? TransactionId { get; }
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitError"]/Exception/*'/>
+        public Exception Exception { get; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
-        public int Count => 3 + 3;
+        public int Count => 3 + 4;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
@@ -61,6 +63,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                 3 => new KeyValuePair<string, object>(nameof(IsolationLevel), IsolationLevel),
                 4 => new KeyValuePair<string, object>(nameof(Connection), Connection),
                 5 => new KeyValuePair<string, object>(nameof(TransactionId), TransactionId),
+                6 => new KeyValuePair<string, object>(nameof(Exception), Exception),
                 _ => throw new IndexOutOfRangeException(nameof(index)),
             };
         }
@@ -79,5 +82,3 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         }
     }
 }
-
-#endif

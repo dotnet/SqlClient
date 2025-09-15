@@ -25,6 +25,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.SqlServer.Server;
 
 [assembly: InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey=" + Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
@@ -70,6 +71,9 @@ namespace Microsoft.Data.SqlClient
         // Retry Logic
         private SqlRetryLogicBaseProvider _retryLogicProvider;
 
+        // diagnostics listener
+        private static readonly SqlDiagnosticListener s_diagnosticListener = new();
+
         // Transient Fault handling flag. This is needed to convey to the downstream mechanism of connection establishment, if Transient Fault handling should be used or not
         // The downstream handling of Connection open is the same for idle connection resiliency. Currently we want to apply transient fault handling only to the connections opened
         // using SqlConnection.Open() method.
@@ -112,6 +116,8 @@ namespace Microsoft.Data.SqlClient
             = new(concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary*/,
                                                             capacity: 1,
                                                             comparer: StringComparer.OrdinalIgnoreCase);
+
+        private static readonly Action<Task<object>, object> s_openAsyncComplete = OpenAsyncComplete;
 
         private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
 
@@ -1295,7 +1301,27 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.Close|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
 
+                ConnectionState previousState = State;
+                Guid operationId = default(Guid);
+                Guid clientConnectionId = default(Guid);
+
+                // during the call to Dispose() there is a redundant call to
+                // Close(). because of this, the second time Close() is invoked the
+                // connection is already in a closed state. this doesn't seem to be a
+                // problem except for logging, as we'll get duplicate Before/After/Error
+                // log entries
+                if (previousState != ConnectionState.Closed)
+                {
+                    operationId = s_diagnosticListener.WriteConnectionCloseBefore(this);
+                    // we want to cache the ClientConnectionId for After/Error logging, as when the connection
+                    // is closed then we will lose this identifier
+                    //
+                    // note: caching this is only for diagnostics logging purposes
+                    clientConnectionId = ClientConnectionId;
+                }
+
                 SqlStatistics statistics = null;
+                Exception e = null;
 
                 try
                 {
@@ -1325,6 +1351,11 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
                 // @TODO: CER Exception Handling was removed here (see GH#3581)
+                catch (Exception ex)
+                {
+                    e = ex;
+                    throw;
+                }
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
@@ -1332,6 +1363,20 @@ namespace Microsoft.Data.SqlClient
                     if (_lastIdentity != null)
                     {
                         _lastIdentity.Dispose();
+                    }
+
+                    // we only want to log this if the previous state of the
+                    // connection is open, as that's the valid use-case
+                    if (previousState != ConnectionState.Closed)
+                    {
+                        if (e != null)
+                        {
+                            s_diagnosticListener.WriteConnectionCloseError(operationId, clientConnectionId, this, e);
+                        }
+                        else
+                        {
+                            s_diagnosticListener.WriteConnectionCloseAfter(operationId, clientConnectionId, this);
+                        }
                     }
                 }
             }
@@ -1386,19 +1431,13 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.Open|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
 
-                if (StatisticsEnabled)
-                {
-                    if (_statistics == null)
-                    {
-                        _statistics = new SqlStatistics();
-                    }
-                    else
-                    {
-                        _statistics.ContinueOnNewConnection();
-                    }
-                }
+                Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
+
+                PrepareStatisticsForNewConnection();
 
                 SqlStatistics statistics = null;
+                Exception e = null;
+
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
@@ -1408,9 +1447,23 @@ namespace Microsoft.Data.SqlClient
                         throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                     }
                 }
+                catch (Exception ex)
+                {
+                    e = ex;
+                    throw;
+                }
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
+
+                    if (e != null)
+                    {
+                        s_diagnosticListener.WriteConnectionOpenError(operationId, this, e);
+                    }
+                    else
+                    {
+                        s_diagnosticListener.WriteConnectionOpenAfter(operationId, this);
+                    }
                 }
             }
         }
@@ -1658,17 +1711,9 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                if (StatisticsEnabled)
-                {
-                    if (_statistics == null)
-                    {
-                        _statistics = new SqlStatistics();
-                    }
-                    else
-                    {
-                        _statistics.ContinueOnNewConnection();
-                    }
-                }
+                Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
+
+                PrepareStatisticsForNewConnection();
 
                 SqlStatistics statistics = null;
                 try
@@ -1677,7 +1722,17 @@ namespace Microsoft.Data.SqlClient
 
                     System.Transactions.Transaction transaction = ADP.GetCurrentTransaction();
                     TaskCompletionSource<DbConnectionInternal> completion = new TaskCompletionSource<DbConnectionInternal>(transaction);
-                    TaskCompletionSource<object> result = new TaskCompletionSource<object>();
+                    TaskCompletionSource<object> result = new TaskCompletionSource<object>(state: this);
+
+                    if (s_diagnosticListener.IsEnabled(SqlClientConnectionOpenAfter.Name) ||
+                        s_diagnosticListener.IsEnabled(SqlClientConnectionOpenError.Name))
+                    {
+                        result.Task.ContinueWith(
+                            continuationAction: s_openAsyncComplete,
+                            state: operationId, // connection is passed in TaskCompletionSource async state
+                            scheduler: TaskScheduler.Default
+                        );
+                    }
 
                     if (cancellationToken.IsCancellationRequested)
                     {
@@ -1693,6 +1748,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     catch (Exception e)
                     {
+                        s_diagnosticListener.WriteConnectionOpenError(operationId, this, e);
                         result.SetException(e);
                         return result.Task;
                     }
@@ -1716,6 +1772,11 @@ namespace Microsoft.Data.SqlClient
 
                     return result.Task;
                 }
+                catch (Exception ex)
+                {
+                    s_diagnosticListener.WriteConnectionOpenError(operationId, this, ex);
+                    throw;
+                }
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
@@ -1724,6 +1785,22 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlClientEventSource.Log.TryPoolerScopeLeaveEvent(scopeID);
+            }
+        }
+
+        private static void OpenAsyncComplete(Task<object> task, object state)
+        {
+            Guid operationId = (Guid)state;
+            SqlConnection connection = (SqlConnection)task.AsyncState;
+            if (task.Exception != null)
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.OpenAsyncComplete | Error | Correlation | Activity Id {0}, Exception {1}", ActivityCorrelator.Current, task.Exception.Message);
+                s_diagnosticListener.WriteConnectionOpenError(operationId, connection, task.Exception);
+            }
+            else
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.OpenAsyncComplete | Info | Correlation | Activity Id {0}, Client Connection Id {1}", ActivityCorrelator.Current, connection?.ClientConnectionId);
+                s_diagnosticListener.WriteConnectionOpenAfter(operationId, connection);
             }
         }
 
@@ -1800,6 +1877,23 @@ namespace Microsoft.Data.SqlClient
                     _parent.CloseInnerConnection();
                     _parent._currentCompletion = null;
                     _result.SetException(e);
+                }
+            }
+        }
+
+        private void PrepareStatisticsForNewConnection()
+        {
+            if (StatisticsEnabled ||
+                s_diagnosticListener.IsEnabled(SqlClientCommandAfter.Name) ||
+                s_diagnosticListener.IsEnabled(SqlClientConnectionOpenAfter.Name))
+            {
+                if (_statistics == null)
+                {
+                    _statistics = new SqlStatistics();
+                }
+                else
+                {
+                    _statistics.ContinueOnNewConnection();
                 }
             }
         }
@@ -1882,7 +1976,10 @@ namespace Microsoft.Data.SqlClient
                 GC.ReRegisterForFinalize(this);
             }
 
-            if (StatisticsEnabled)
+            // The _statistics can change with StatisticsEnabled. Copying to a local variable before checking for a null value.
+            SqlStatistics statistics = _statistics;
+            if (StatisticsEnabled ||
+                (s_diagnosticListener.IsEnabled(SqlClientCommandAfter.Name) && statistics != null))
             {
                 _statistics._openTimestamp = ADP.TimerCurrent();
                 tdsInnerConnection.Parser.Statistics = _statistics;

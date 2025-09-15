@@ -841,6 +841,16 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Correlation Trace
+
+        [NonEvent]
+        internal void TryCorrelationTraceEvent(string message)
+        {
+            if (Log.IsCorrelationEnabled())
+            {
+                CorrelationTrace(message);
+            }
+        } 
+        
         [NonEvent]
         internal void TryCorrelationTraceEvent<T0>(string message, T0 args0)
         {
@@ -1139,7 +1149,7 @@ namespace Microsoft.Data.SqlClient
             => new TrySNIEventScope(SqlClientEventSource.Log.TrySNIScopeEnterEvent(className, memberName));
     }
 
-    internal readonly ref struct TryEventScope //: IDisposable
+    internal readonly ref struct TryEventScope : IDisposable
     {
         private readonly long _scopeId;
 

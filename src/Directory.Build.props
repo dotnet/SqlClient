@@ -128,14 +128,11 @@
   </PropertyGroup>
 
   <!--
-    For non-.NET, we explicitly set the C# language version to 13.  This matches
-    the language version used by the .NET 9 SDK, and provides helpful modern
-    language features.  While this isn't strictly supported by .NET in general,
-    it works well in practice.  There are very few C# language features that
-    depend on SDK APIs, and we avoid them.
+    We want to use the latest C# language regardless of target framework,
+    so we explicitly set LangVersion for all targets.
 
-    For .NET, we omit this property entirely, which results in the SDK choosing
-    the C# language version that matches the .NET version.
+    We will roll this version forward as new C# language versions are released
+    and associated with the newest .NET SDK we support.
 
     Details here:
 
@@ -143,8 +140,8 @@
 
     https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/configure-language-version
   -->
-  <PropertyGroup
-    Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' != '.NETCoreApp'">
-    <LangVersion>13.0</LangVersion>
+  <PropertyGroup>
+    <!-- The newest .NET SDK we support is .NET 9.0, which uses C# 13 -->
+    <LangVersion>13</LangVersion>
   </PropertyGroup>
 </Project>
