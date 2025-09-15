@@ -861,42 +861,5 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.OperationCancelled();
             }
         }
-
-        private void ReliablePutStateObject()
-        {
-            PutStateObject();
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
-        }
-
-        private void PutStateObject()
-        {
-            TdsParserStateObject stateObj = _stateObj;
-            _stateObj = null;
-
-            if (stateObj != null)
-            {
-                stateObj.CloseSession();
-            }
-        }
-
-        private SqlParameterCollection GetCurrentParameterCollection()
-        {
-            if (_batchRPCMode)
-            {
-                if (_RPCList.Count > _currentlyExecutingBatch)
-                {
-                    return _RPCList[_currentlyExecutingBatch].userParams;
-                }
-                else
-                {
-                    Debug.Fail("OnReturnValue: SqlCommand got too many DONEPROC events");
-                    return null;
-                }
-            }
-            else
-            {
-                return _parameters;
-            }
-        }
     }
 }

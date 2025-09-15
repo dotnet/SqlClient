@@ -1957,6 +1957,23 @@ namespace Microsoft.Data.SqlClient
             return GetOptionsSetString(behavior) + CommandText;
         }
 
+        private SqlParameterCollection GetCurrentParameterCollection()
+        {
+            if (!_batchRPCMode)
+            {
+                return _parameters;
+            }
+
+            if (_RPCList.Count > _currentlyExecutingBatch)
+            {
+                return _RPCList[_currentlyExecutingBatch].userParams;
+            }
+
+            // @TODO: Is there any point to us failing here?
+            Debug.Fail("OnReturnValue: SqlCommand got too many DONEPROC events");
+            return null;
+        }
+
         // @TODO: Why not *return* it? (update: ok, this is because the intention is to reuse existing RPC objects, but the way it is doing it is confusing)
         // @TODO: Rename to match naming conventions GetRpcObject
         // @TODO: This method would be less confusing if the initialized rpc is always provided (ie, the caller knows which member to grab an existing rpc from), and this method just initializes it.
@@ -2060,6 +2077,18 @@ namespace Microsoft.Data.SqlClient
         {
             IsDirty = true;
         }
+
+        private void PutStateObject()
+        {
+            TdsParserStateObject stateObject = _stateObj;
+            _stateObj = null;
+
+            stateObject?.CloseSession();
+        }
+
+        // @TODO: THERE IS NOTHING RELIABLE ABOUT THIS!!! REMOVE!!!
+        private void ReliablePutStateObject() =>
+            PutStateObject();
 
         // @TODO Rename to match naming conventions
         private void SetUpRPCParameters(_SqlRPC rpc, bool inSchema, SqlParameterCollection parameters)
