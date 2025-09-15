@@ -108,7 +108,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         private static void SendVariantBulkCopy(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
-            string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDest");
+            string bulkCopyTableName = DataTestUtility.GetLongName("bulkDest");
 
             // Fetch reader using type.
             using SqlDataReader dr = GetReaderForVariant(paramValue, false);
@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         private static void SendVariantTvp(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
-            string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpVariant");
+            string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
 
             using SqlConnection connTvp = new(s_connStr);
             connTvp.Open();

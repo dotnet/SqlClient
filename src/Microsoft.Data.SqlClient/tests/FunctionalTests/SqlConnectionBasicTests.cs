@@ -281,7 +281,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(10)]
         [InlineData(5)]
         [InlineData(1)]
-        public async void ConnectionTimeoutTestAsync(int timeout)
+        public async Task ConnectionTimeoutTestAsync(int timeout)
         {
             // Start a server with connection timeout from the inline data.
             using TestTdsServer server = TestTdsServer.StartTestServer(false, false, timeout);
