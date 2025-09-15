@@ -897,53 +897,5 @@ namespace Microsoft.Data.SqlClient
                 return _parameters;
             }
         }
-
-        private SqlParameter GetParameterForOutputValueExtraction(SqlParameterCollection parameters,
-                        string paramName, int paramCount)
-        {
-            SqlParameter thisParam = null;
-            bool foundParam = false;
-
-            if (paramName == null)
-            {
-                // rec.parameter should only be null for a return value from a function
-                for (int i = 0; i < paramCount; i++)
-                {
-                    thisParam = parameters[i];
-                    // searching for ReturnValue
-                    if (thisParam.Direction == ParameterDirection.ReturnValue)
-                    {
-                        foundParam = true;
-                        break; // found it
-                    }
-                }
-            }
-            else
-            {
-                for (int i = 0; i < paramCount; i++)
-                {
-                    thisParam = parameters[i];
-                    // searching for Output or InputOutput or ReturnValue with matching name
-                    if (
-                        thisParam.Direction != ParameterDirection.Input &&
-                        thisParam.Direction != ParameterDirection.ReturnValue &&
-                        SqlParameter.ParameterNamesEqual(paramName, thisParam.ParameterName, StringComparison.Ordinal)
-                    )
-                    {
-                        foundParam = true;
-                        break; // found it
-                    }
-                }
-            }
-
-            if (foundParam)
-            {
-                return thisParam;
-            }
-            else
-            {
-                return null;
-            }
-        }
     }
 }

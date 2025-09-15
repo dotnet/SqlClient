@@ -1634,6 +1634,40 @@ namespace Microsoft.Data.SqlClient
         private static int GetParameterCount(SqlParameterCollection parameters) =>
             parameters?.Count ?? 0;
 
+        private static SqlParameter GetParameterForOutputValueExtraction(
+            SqlParameterCollection parameters, // @TODO: Is this ever not Parameters?
+            string paramName,
+            int paramCount) // @TODO: Is this ever not Parameters.Count?
+        {
+            SqlParameter thisParam;
+            if (paramName is null)
+            {
+                // rec.parameter should only be null for a return value from a function
+                for (int i = 0; i < paramCount; i++)
+                {
+                    thisParam = parameters[i];
+                    if (thisParam.Direction is ParameterDirection.ReturnValue)
+                    {
+                        return thisParam;
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < paramCount; i++)
+                {
+                    thisParam = parameters[i];
+                    if (thisParam.Direction is not (ParameterDirection.Input or ParameterDirection.ReturnValue) &&
+                        SqlParameter.ParameterNamesEqual(paramName, thisParam.ParameterName, StringComparison.Ordinal))
+                    {
+                        return thisParam;
+                    }
+                }
+            }
+
+            return null;
+        }
+
         private static bool ShouldSendParameter(SqlParameter p, bool includeReturnValue = false)
         {
             switch (p.Direction)
