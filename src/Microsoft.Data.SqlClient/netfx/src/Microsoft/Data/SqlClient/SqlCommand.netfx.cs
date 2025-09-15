@@ -947,52 +947,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        //
-        // returns true if the parameter is not a return value
-        // and it's value is not DBNull (for a nullable parameter)
-        //
-        private static bool ShouldSendParameter(SqlParameter p, bool includeReturnValue = false)
-        {
-            switch (p.Direction)
-            {
-                case ParameterDirection.ReturnValue:
-                    // return value parameters are not sent, except for the parameter list of sp_describe_parameter_encryption
-                    return includeReturnValue;
-                case ParameterDirection.Output:
-                case ParameterDirection.InputOutput:
-                case ParameterDirection.Input:
-                    // InputOutput/Output parameters are aways sent
-                    return true;
-                default:
-                    Debug.Fail("Invalid ParameterDirection!");
-                    return false;
-            }
-        }
-
-        private static int CountSendableParameters(SqlParameterCollection parameters)
-        {
-            int cParams = 0;
-
-            if (parameters != null)
-            {
-                int count = parameters.Count;
-                for (int i = 0; i < count; i++)
-                {
-                    if (ShouldSendParameter(parameters[i]))
-                    {
-                        cParams++;
-                    }
-                }
-            }
-            return cParams;
-        }
-
-        // Returns total number of parameters
-        private static int GetParameterCount(SqlParameterCollection parameters)
-        {
-            return parameters != null ? parameters.Count : 0;
-        }
-
         // returns set option text to turn on format only and key info on and off
         //  When we are executing as a text command, then we never need
         // to turn off the options since they command text is executed in the scope of sp_executesql.

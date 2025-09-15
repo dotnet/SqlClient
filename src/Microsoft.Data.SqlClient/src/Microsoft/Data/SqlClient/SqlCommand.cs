@@ -1563,6 +1563,49 @@ namespace Microsoft.Data.SqlClient
         private static void CancelIgnoreFailureCallback(object state) =>
             ((SqlCommand)state).CancelIgnoreFailure();
 
+        // @TODO: Assess if a parameterized version of this method is necessary or if a property can suffice.
+        private static int CountSendableParameters(SqlParameterCollection parameters)
+        {
+            if (parameters is null)
+            {
+                return 0;
+            }
+
+            int sendableParameters = 0;
+            int count = parameters.Count;
+            for (int i = 0; i < count; i++)
+            {
+                if (ShouldSendParameter(parameters[i]))
+                {
+                    sendableParameters++;
+                }
+            }
+
+            return sendableParameters;
+        }
+
+        // @TODO: Assess if a parameterized version of this method is necessary or if a property can suffice.
+        private static int GetParameterCount(SqlParameterCollection parameters) =>
+            parameters?.Count ?? 0;
+
+        private static bool ShouldSendParameter(SqlParameter p, bool includeReturnValue = false)
+        {
+            switch (p.Direction)
+            {
+                case ParameterDirection.ReturnValue:
+                    // Return value parameters are not sent, except for the parameter list of
+                    // sp_describe_parameter_encryption
+                    return includeReturnValue;
+                case ParameterDirection.Input:
+                case ParameterDirection.Output:
+                case ParameterDirection.InputOutput:
+                    return true;
+                default:
+                    Debug.Fail("Invalid ParameterDirection!");
+                    return false;
+            }
+        }
+
         private static void OnDone(TdsParserStateObject stateObj, int index, IList<_SqlRPC> rpcList, int rowsAffected)
         {
             // @TODO: Is the state object not the same as the currently stored one?
@@ -1927,6 +1970,7 @@ namespace Microsoft.Data.SqlClient
             IsDirty = true;
         }
 
+        // @TODO Rename to match naming conventions
         private void SetUpRPCParameters(_SqlRPC rpc, bool inSchema, SqlParameterCollection parameters)
         {
             int paramCount = GetParameterCount(parameters);
