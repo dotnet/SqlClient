@@ -1927,6 +1927,84 @@ namespace Microsoft.Data.SqlClient
             IsDirty = true;
         }
 
+        private void SetUpRPCParameters(_SqlRPC rpc, bool inSchema, SqlParameterCollection parameters)
+        {
+            int paramCount = GetParameterCount(parameters);
+            int userParamCount = 0;
+
+            for (int index = 0; index < paramCount; index++)
+            {
+                SqlParameter parameter = parameters[index];
+                parameter.Validate(index, isCommandProc: CommandType is CommandType.StoredProcedure);
+
+                // Func will change type to that with a 4 byte length if the type has a 2 byte
+                // length and a parameter length > than that expressible in 2 bytes.
+                if (!parameter.ValidateTypeLengths().IsPlp && parameter.Direction is not ParameterDirection.Output)
+                {
+                    parameter.FixStreamDataForNonPLP();
+                }
+
+                if (ShouldSendParameter(parameter))
+                {
+                    byte options = 0;
+
+                    // Set output bit
+                    if (parameter.Direction is ParameterDirection.InputOutput or ParameterDirection.Output)
+                    {
+                        options |= TdsEnums.RPC_PARAM_BYREF;
+                    }
+
+                    // Set the encrypted bit if the parameter is to be encrypted
+                    if (parameter.CipherMetadata is not null)
+                    {
+                        options |= TdsEnums.RPC_PARAM_ENCRYPTED;
+                    }
+
+                    // Set default value bit
+                    if (parameter.Direction is not ParameterDirection.Output)
+                    {
+                        // Remember that Convert.IsEmpty is null, DBNull.Value is a database null!
+
+                        // Don't assume a default value exists for parameters in the case when the
+                        // user is simply requesting schema. TVPs use DEFAULT and do not allow
+                        // NULL, even for schema only.
+                        if (parameter.Value is null && (!inSchema || parameter.SqlDbType is SqlDbType.Structured))
+                        {
+                            options |= TdsEnums.RPC_PARAM_DEFAULT;
+                        }
+
+                        // Detect incorrectly derived type names unchanged yb the caller and fix
+                        if (parameter.IsDerivedParameterTypeName)
+                        {
+                            string[] parts = MultipartIdentifier.ParseMultipartIdentifier(
+                                parameter.TypeName,
+                                leftQuote: "[\"",
+                                rightQuote: "]\"",
+                                property: Strings.SQL_TDSParserTableName,
+                                ThrowOnEmptyMultipartName: false);
+                            if (parts?.Length == 4)
+                            {
+                                if (parts[3] is not null && // Name must not be null
+                                    parts[2] is not null && // Schema must not be null
+                                    parts[1] is not null)   // Server should not be null or we don't need to remove it
+                                {
+                                    parameter.TypeName = QuoteIdentifier(parts.AsSpan(2, 2));
+                                }
+                            }
+                        }
+                    }
+
+                    rpc.userParamMap[userParamCount] = ((long)options << 32) | (long)index;
+                    userParamCount++;
+
+                    // Must set parameter option bit for LOB_COOKIE if unfilled LazyMat blob
+                }
+            }
+
+            rpc.userParamCount = userParamCount;
+            rpc.userParams = parameters;
+        }
+
         private void Unprepare()
         {
             Debug.Assert(IsPrepared, "Invalid attempt to Unprepare a non-prepared command!");
