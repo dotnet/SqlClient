@@ -1807,6 +1807,34 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal void OnStatementCompleted(int recordCount)
+        {
+            if (recordCount >= 0)
+            {
+                StatementCompletedEventHandler handler = _statementCompletedEventHandler;
+                if (handler is not null)
+                {
+                    try
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlCommand.OnStatementCompleted | Info | " +
+                            $"Object Id {ObjectID}, " +
+                            $"Record Count {recordCount}, " +
+                            $"Client Connection Id {_activeConnection?.ClientConnectionId}");
+
+                        handler(this, new StatementCompletedEventArgs(recordCount));
+                    }
+                    catch (Exception e)
+                    {
+                        if (!ADP.IsCatchableOrSecurityExceptionType(e))
+                        {
+                            throw;
+                        }
+                    }
+                }
+            }
+        }
+
         #endregion
 
         #region Protected Methods

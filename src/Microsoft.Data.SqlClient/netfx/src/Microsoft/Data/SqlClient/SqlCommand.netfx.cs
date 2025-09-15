@@ -26,31 +26,6 @@ namespace Microsoft.Data.SqlClient
     // TODO: Add designer attribute when Microsoft.VSDesigner.Data.VS.SqlCommandDesigner uses Microsoft.Data.SqlClient
     public sealed partial class SqlCommand : DbCommand, ICloneable
     {
-        internal void OnStatementCompleted(int recordCount)
-        {
-            if (0 <= recordCount)
-            {
-                StatementCompletedEventHandler handler = _statementCompletedEventHandler;
-                if (handler != null)
-                {
-                    try
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent("SqlCommand.OnStatementCompleted | Info | ObjectId {0}, Record Count {1}, Client Connection Id {2}", ObjectID, recordCount, Connection?.ClientConnectionId);
-                        handler(this, new StatementCompletedEventArgs(recordCount));
-                    }
-                    catch (Exception e)
-                    {
-                        if (!ADP.IsCatchableOrSecurityExceptionType(e))
-                        {
-                            throw;
-                        }
-
-                        ADP.TraceExceptionWithoutRethrow(e);
-                    }
-                }
-            }
-        }
-
         private void VerifyEndExecuteState(Task completionTask, string endMethod, bool fullCheckForColumnEncryption = false)
         {
             Debug.Assert(completionTask != null);
