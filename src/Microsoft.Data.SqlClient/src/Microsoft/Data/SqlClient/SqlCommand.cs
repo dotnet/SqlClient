@@ -1043,7 +1043,7 @@ namespace Microsoft.Data.SqlClient
 
         #endregion
 
-        #region Public/Internal Methods
+        #region Public Methods
 
         object ICloneable.Clone() =>
             Clone();
@@ -1267,6 +1267,276 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Internal Methods
+
+        // @TODO: This is only called by SqlCommandBuilder, it should live there. EXCEPT for the one call to ValidateCommand and setting _parameters at the end. Is that really necessary?
+        // @TODO: This also an crazy long method.
+        internal void DeriveParameters()
+        {
+            switch (CommandType)
+            {
+                case CommandType.StoredProcedure:
+                    // This is the only case we can handle with this method.
+                    break;
+                case System.Data.CommandType.TableDirect:
+                case System.Data.CommandType.Text:
+                    throw ADP.DeriveParametersNotSupported(this);
+                default:
+                    throw ADP.InvalidCommandType(CommandType);
+            }
+
+            // Validate that we have a valid connection
+            ValidateCommand(isAsync: false);
+
+            // Use common parser for SqlClient and OleDb - parse into 4 parts - Server, Catalog,
+            // Schema, ProcedureName
+            string[] parsedSProc = MultipartIdentifier.ParseMultipartIdentifier(
+                name: CommandText,
+                leftQuote: "[\"",
+                rightQuote: "]\"",
+                property: Strings.SQL_SqlCommandCommandText,
+                ThrowOnEmptyMultipartName: false);
+
+            if (string.IsNullOrEmpty(parsedSProc[3]))
+            {
+                throw ADP.NoStoredProcedureExists(CommandText);
+            }
+
+            Debug.Assert(parsedSProc.Length == 4,
+                "Invalid array length result from SqlCommandBuilder.ParseProcedureName");
+
+            // Build call for sp_procedure_params_rowset built of unquoted values from user:
+            // [user server, if provided].[user catalog, else current database].
+            // [sys if 2005, else blank].[sp_procedure_params_rowset]
+            StringBuilder cmdText = new StringBuilder();
+
+            // Server - pass only if user provided.
+            if (!string.IsNullOrEmpty(parsedSProc[0]))
+            {
+                SqlCommandSet.BuildStoredProcedureName(cmdText, parsedSProc[0]);
+                cmdText.Append(".");
+            }
+
+            // Catalog - pass user provided, otherwise use current database.
+            if (string.IsNullOrEmpty(parsedSProc[1]))
+            {
+                parsedSProc[1] = Connection.Database;
+            }
+            SqlCommandSet.BuildStoredProcedureName(cmdText, parsedSProc[1]);
+            cmdText.Append(".");
+
+            // Schema - only if 2005, and then only pass sys.  Also - pass managed version of sproc
+            // for 2005, else older sproc.
+            string[] colNames;
+            bool useManagedDataType;
+            if (Connection.Is2008OrNewer)
+            {
+                // Procedure - [sp_procedure_params_managed]
+                cmdText.Append("[sys].[").Append(TdsEnums.SP_PARAMS_MGD10).Append("]");
+
+                colNames = Sql2008ProcParamsNames;
+                useManagedDataType = true;
+            }
+            else
+            {
+                // Procedure - [sp_procedure_params_managed]
+                cmdText.Append("[sys].[").Append(TdsEnums.SP_PARAMS_MANAGED).Append("]");
+
+                colNames = PreSql2008ProcParamsNames;
+                useManagedDataType = false;
+            }
+
+            SqlCommand paramsCmd = new SqlCommand(cmdText.ToString(), Connection, Transaction)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            // Prepare parameters for sp_procedure_params_rowset:
+            // 1) procedure name - unquote user value
+            // 2) group number - parsed at the time we unquoted procedure name
+            // 3) procedure schema - unquote user value
+
+            // ProcedureName is 4th element in parsed array
+            paramsCmd.Parameters.Add(new SqlParameter("@procedure_name", SqlDbType.NVarChar, 255));
+            paramsCmd.Parameters[0].Value = UnquoteProcedureName(parsedSProc[3], out object groupNumber);
+
+            if (groupNumber is not null)
+            {
+                SqlParameter param = paramsCmd.Parameters.Add(new SqlParameter("@group_number", SqlDbType.Int));
+                param.Value = groupNumber;
+            }
+
+            if (!string.IsNullOrEmpty(parsedSProc[2]))
+            {
+                // SchemaName is 3rd element in parsed array
+                SqlParameter param = paramsCmd.Parameters.Add(new SqlParameter("@procedure_schema", SqlDbType.NVarChar, 255));
+                param.Value = UnquoteProcedurePart(parsedSProc[2]);
+            }
+
+            SqlDataReader r = null;
+
+            List<SqlParameter> parameters = new List<SqlParameter>();
+            bool processFinallyBlock = true;
+
+            try
+            {
+                // @TODO: Use using block
+                r = paramsCmd.ExecuteReader();
+                while (r.Read())
+                {
+                    // each row corresponds to a parameter of the stored proc.  Fill in all the info
+                    SqlParameter p = new SqlParameter
+                    {
+                        ParameterName = (string)r[colNames[(int)ProcParamsColIndex.ParameterName]]
+                    };
+
+                    // type
+                    if (useManagedDataType)
+                    {
+                        p.SqlDbType = (SqlDbType)(short)r[colNames[(int)ProcParamsColIndex.ManagedDataType]];
+
+                        // 2005 didn't have as accurate of information as we're getting for 2008, so re-map a couple of
+                        //  types for backward compatability.
+                        switch (p.SqlDbType)
+                        {
+                            case SqlDbType.Image:
+                            case SqlDbType.Timestamp:
+                                p.SqlDbType = SqlDbType.VarBinary;
+                                break;
+
+                            case SqlDbType.NText:
+                                p.SqlDbType = SqlDbType.NVarChar;
+                                break;
+
+                            case SqlDbType.Text:
+                                p.SqlDbType = SqlDbType.VarChar;
+                                break;
+
+                            default:
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        short dbType = (short)r[colNames[(int)ProcParamsColIndex.DataType]];
+                        string typeName = ADP.IsNull(r[colNames[(int)ProcParamsColIndex.TypeName]])
+                            ? string.Empty
+                            : (string)r[colNames[(int)ProcParamsColIndex.TypeName]];
+                        p.SqlDbType = MetaType.GetSqlDbTypeFromOleDbType(dbType, typeName);
+                    }
+
+                    // size
+                    object a = r[colNames[(int)ProcParamsColIndex.CharacterMaximumLength]];
+                    if (a is int size)
+                    {
+                        // Map MAX sizes correctly. The 2008 server-side proc sends 0 for these
+                        // instead of -1. Should be fixed on the 2008 side, but would likely hold
+                        // up the RI, and is safer to fix here. If we can get the server-side fixed
+                        // before shipping 2008, we can remove this mapping.
+                        if (size == 0 && p.SqlDbType is SqlDbType.NVarChar or SqlDbType.VarBinary or SqlDbType.VarChar)
+                        {
+                            size = -1;
+                        }
+                        p.Size = size;
+                    }
+
+                    // direction
+                    p.Direction = GetParameterDirectionFromOleDbDirection(
+                        (short)r[colNames[(int)ProcParamsColIndex.ParameterType]]);
+
+                    if (p.SqlDbType is SqlDbType.Decimal)
+                    {
+                        p.ScaleInternal = (byte)((short)r[colNames[(int)ProcParamsColIndex.NumericScale]] & 0xff);
+                        p.PrecisionInternal = (byte)((short)r[colNames[(int)ProcParamsColIndex.NumericPrecision]] & 0xff);
+                    }
+
+                    // Type name for Udt
+                    if (p.SqlDbType is SqlDbType.Udt)
+                    {
+                        string udtTypeName = useManagedDataType
+                            ? (string)r[colNames[(int)ProcParamsColIndex.TypeName]]
+                            : (string)r[colNames[(int)ProcParamsColIndex.UdtTypeName]];
+
+                        // Read the type name
+                        p.UdtTypeName = r[colNames[(int)ProcParamsColIndex.TypeCatalogName]] + "." +
+                                        r[colNames[(int)ProcParamsColIndex.TypeSchemaName]] + "." +
+                                        udtTypeName;
+                    }
+
+                    // type name for Structured types (same as for Udt's except assign p.TypeName
+                    // instead of p.UdtTypeName)
+                    if (p.SqlDbType is SqlDbType.Structured)
+                    {
+                        Debug.Assert(_activeConnection.Is2008OrNewer,
+                            "Invalid datatype token received from pre-2008 server");
+
+                        //read the type name
+                        p.TypeName = r[colNames[(int)ProcParamsColIndex.TypeCatalogName]] + "." +
+                                     r[colNames[(int)ProcParamsColIndex.TypeSchemaName]] + "." +
+                                     r[colNames[(int)ProcParamsColIndex.TypeName]];
+
+                        // the constructed type name above is incorrectly formatted, it should be a
+                        // 2 part name not 3 for compatibility we can't change this because the bug
+                        // has existed for a long time and been worked around by users, so identify
+                        // that it is present and catch it later in the execution process once
+                        // users can no longer interact with the parameter type name.
+                        p.IsDerivedParameterTypeName = true;
+                    }
+
+                    // XmlSchema name for Xml types
+                    if (p.SqlDbType is SqlDbType.Xml)
+                    {
+                        object value;
+
+                        value = r[colNames[(int)ProcParamsColIndex.XmlSchemaCollectionCatalogName]];
+                        p.XmlSchemaCollectionDatabase = ADP.IsNull(value) ? string.Empty : (string)value;
+
+                        value = r[colNames[(int)ProcParamsColIndex.XmlSchemaCollectionSchemaName]];
+                        p.XmlSchemaCollectionOwningSchema = ADP.IsNull(value) ? string.Empty : (string)value;
+
+                        value = r[colNames[(int)ProcParamsColIndex.XmlSchemaCollectionName]];
+                        p.XmlSchemaCollectionName = ADP.IsNull(value) ? string.Empty : (string)value;
+                    }
+
+                    if (MetaType._IsVarTime(p.SqlDbType))
+                    {
+                        object value = r[colNames[(int)ProcParamsColIndex.DateTimeScale]];
+                        if (value is int intValue)
+                        {
+                            p.ScaleInternal = (byte)(intValue & 0xff);
+                        }
+                    }
+
+                    parameters.Add(p);
+                }
+            }
+            catch (Exception e)
+            {
+                processFinallyBlock = ADP.IsCatchableExceptionType(e);
+                throw;
+            }
+            finally
+            {
+                if (processFinallyBlock)
+                {
+                    r?.Close();
+
+                    // always unhook the user's connection
+                    paramsCmd.Connection = null;
+                }
+            }
+
+            if (parameters.Count == 0)
+            {
+                throw ADP.NoStoredProcedureExists(CommandText);
+            }
+
+            Parameters.Clear();
+
+            foreach (SqlParameter temp in parameters)
+            {
+                _parameters.Add(temp);
+            }
+        }
 
         /// <summary>
         /// We're being notified that the underlying connection was closed.
@@ -1638,6 +1908,21 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Assess if a parameterized version of this method is necessary or if a property can suffice.
         private static int GetParameterCount(SqlParameterCollection parameters) =>
             parameters?.Count ?? 0;
+
+        // @TODO: This is only used in DeriveParameters, and as such should live in SqlCommandBuilder
+        private static ParameterDirection GetParameterDirectionFromOleDbDirection(short oleDbDirection)
+        {
+            Debug.Assert(oleDbDirection >= 1 && oleDbDirection <= 4,
+                "invalid parameter direction from params_rowset!");
+
+            return oleDbDirection switch
+            {
+                2 => ParameterDirection.InputOutput,
+                3 => ParameterDirection.Output,
+                4 => ParameterDirection.ReturnValue,
+                _ => ParameterDirection.Input
+            };
+        }
 
         private static SqlParameter GetParameterForOutputValueExtraction(
             SqlParameterCollection parameters, // @TODO: Is this ever not Parameters?
