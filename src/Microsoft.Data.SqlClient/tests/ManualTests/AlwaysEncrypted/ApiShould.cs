@@ -692,7 +692,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
-        public async void TestExecuteReaderAsyncWithLargeQuery(string connectionString)
+        public async Task TestExecuteReaderAsyncWithLargeQuery(string connectionString)
         {
             string randomName = DataTestUtility.GetShortName(Guid.NewGuid().ToString().Replace("-", ""), false);
             if (randomName.Length > 50)

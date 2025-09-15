@@ -418,7 +418,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region Async
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
-        public async void RetryExecuteAsyncFail(string cnnString, SqlRetryLogicBaseProvider provider)
+        public async Task RetryExecuteAsyncFail(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
             int cancelAfterRetries = numberOfTries + 1;
@@ -483,7 +483,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
-        public async void RetryExecuteAsyncCancel(string cnnString, SqlRetryLogicBaseProvider provider)
+        public async Task RetryExecuteAsyncCancel(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
             int cancelAfterRetries = numberOfTries - 1;
@@ -567,7 +567,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
-        public async void ConcurrentExecutionAsync(string cnnString, SqlRetryLogicBaseProvider provider)
+        public async Task ConcurrentExecutionAsync(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             string query = "SELECT bad command";
             await ProcessDataAsAsync(cnnString, provider, query, cmd => cmd.ExecuteScalarAsync());

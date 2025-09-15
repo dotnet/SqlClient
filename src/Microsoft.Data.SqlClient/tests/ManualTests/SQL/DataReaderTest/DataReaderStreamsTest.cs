@@ -157,7 +157,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // Synapse: Cannot find data type 'XML'.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
-        public static async void GetFieldValue_OfXmlReader(CommandBehavior behavior, bool isExecuteAsync)
+        public static async Task GetFieldValue_OfXmlReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -191,7 +191,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
-        public static async void GetFieldValue_OfStream(CommandBehavior behavior, bool isExecuteAsync)
+        public static async Task GetFieldValue_OfStream(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -224,7 +224,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
-        public static async void GetFieldValue_OfTextReader(CommandBehavior behavior, bool isExecuteAsync)
+        public static async Task GetFieldValue_OfTextReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -258,7 +258,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
-        public static async void GetStream(CommandBehavior behavior, bool isExecuteAsync)
+        public static async Task GetStream(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -294,7 +294,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
-        public static async void GetXmlReader(CommandBehavior behavior, bool isExecuteAsync)
+        public static async Task GetXmlReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -328,7 +328,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
-        public static async void GetTextReader(CommandBehavior behavior, bool isExecuteAsync)
+        public static async Task GetTextReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -474,7 +474,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
 #if NETCOREAPP
         [ConditionalFact(typeof(DataTestUtility),nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static async void ReadAsyncContentsCompletes()
+        public static async Task ReadAsyncContentsCompletes()
         {
             string expectedXml = "<test>This is a test string</test>";
             string query = $"SELECT CAST('{expectedXml}' AS NVARCHAR(MAX))";

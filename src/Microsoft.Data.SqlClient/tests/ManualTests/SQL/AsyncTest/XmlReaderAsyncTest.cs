@@ -3,8 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Threading.Tasks;
 using System.Xml;
-using System.Xml.Linq;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -71,7 +71,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Synapse: Parse error at line: 1, column: 29: Incorrect syntax near 'FOR'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static async void MoveToContentAsyncTest()
+        public static async Task MoveToContentAsyncTest()
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand command = new SqlCommand(CommandText, connection))
