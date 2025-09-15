@@ -2040,6 +2040,51 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // @TODO: This method is smelly - it gets the parser state object from the parser and stores it, but also handles the cancelled exception throwing and connection closed exception throwing.
+        private void GetStateObject(TdsParser parser = null) // @TODO: Is this ever not null?
+        {
+            Debug.Assert(_stateObj is null, "StateObject not null on GetStateObject");
+            Debug.Assert(_activeConnection is not null, "no active connection?");
+
+            if (_pendingCancel)
+            {
+                _pendingCancel = false; // Not really needed, but we'll reset anyway.
+
+                // If a pendingCancel exists on the object, we must have had a Cancel() call
+                // between the point that we entered an Execute* API and the point in Execute* that
+                // we proceeded to call this function and obtain a stateObject. In that case, we
+                // now throw a cancelled error.
+                throw SQL.OperationCancelled();
+            }
+
+            if (parser == null)
+            {
+                parser = _activeConnection.Parser;
+                if (parser == null || parser.State is TdsParserState.Broken or TdsParserState.Closed)
+                {
+                    // Connection's parser is null as well, therefore we must be closed
+                    throw ADP.ClosedConnectionError();
+                }
+            }
+
+            TdsParserStateObject stateObj = parser.GetSession(this);
+            stateObj.StartSession(this);
+
+            _stateObj = stateObj;
+
+            if (_pendingCancel)
+            {
+                _pendingCancel = false; // Not really needed, but we'll reset anyway.
+
+                // If a pendingCancel exists on the object, we must have had a Cancel() call
+                // between the point that we entered this function and the point where we obtained
+                // and actually assigned the stateObject to the local member. It is possible that
+                // the flag is set as well as a call to stateObj.Cancel - though that would be a
+                // no-op. So - throw.
+                throw SQL.OperationCancelled();
+            }
+        }
+
         // @TODO: Rename PrepareInternal
         private void InternalPrepare()
         {
