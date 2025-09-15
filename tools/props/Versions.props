@@ -67,8 +67,8 @@
     <NewtonsoftJsonVersion>13.0.1</NewtonsoftJsonVersion>
     <SystemRuntimeInteropServicesRuntimeInformationVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationVersion>
     <SystemDataOdbcVersion>6.0.1</SystemDataOdbcVersion>
-    <XunitVersion>2.6.3</XunitVersion>
-    <XunitrunnervisualstudioVersion>2.5.5</XunitrunnervisualstudioVersion>
+    <XunitVersion>2.9.3</XunitVersion>
+    <XunitrunnervisualstudioVersion>2.8.2</XunitrunnervisualstudioVersion>
     <MicrosoftNETFrameworkReferenceAssembliesVersion>1.0.3</MicrosoftNETFrameworkReferenceAssembliesVersion>
     <MicrosoftDotNetRemoteExecutorVersion>7.0.0-beta.22316.1</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
