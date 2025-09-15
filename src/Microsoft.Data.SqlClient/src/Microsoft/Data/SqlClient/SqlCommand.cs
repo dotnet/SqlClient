@@ -2320,6 +2320,144 @@ namespace Microsoft.Data.SqlClient
         private void CheckThrowSNIException() =>
             _stateObj?.CheckThrowSNIException();
 
+        // @TODO: This method *needs* to be decomposed.
+        private void CreateLocalCompletionTask(
+            CommandBehavior behavior,
+            object stateObject,
+            int timeout,
+            bool usedCache,
+            bool asyncWrite,
+            TaskCompletionSource<object> globalCompletion,
+            TaskCompletionSource<object> localCompletion,
+            Func<SqlCommand, IAsyncResult, bool, string, object> endFunc,
+            Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc,
+            string endMethod,
+            long firstAttemptStart)
+        {
+            localCompletion.Task.ContinueWith(
+                task =>
+                {
+                    if (task.IsFaulted)
+                    {
+                        globalCompletion.TrySetException(task.Exception.InnerException);
+                        return;
+                    }
+
+                    if (task.IsCanceled)
+                    {
+                        globalCompletion.TrySetCanceled();
+                        return;
+                    }
+
+                    try
+                    {
+                        // Mark that we initiated the internal EndExecute. This should always be false
+                        // until we set it here.
+                        Debug.Assert(!_internalEndExecuteInitiated);
+                        _internalEndExecuteInitiated = true;
+
+                        // Lock on _stateObj prevents races with close/cancel
+                        lock (_stateObj)
+                        {
+                            endFunc(this, task, /*isInternal:*/ true, endMethod);
+                        }
+
+                        globalCompletion.TrySetResult(task.Result);
+                    }
+                    catch (Exception e)
+                    {
+                        // Put the state object back in the cache.
+                        // Do not reset the async state, since this is managed by the user Begin/End,
+                        // not internally.
+                        if (ADP.IsCatchableExceptionType(e))
+                        {
+                            ReliablePutStateObject();
+                        }
+
+                        // Check if we have an error we can retry
+                        bool shouldRetry = e is EnclaveDelegate.RetryableEnclaveQueryExecutionException;
+                        if (e is SqlException sqlException)
+                        {
+                            for (int i = 0; i < sqlException.Errors.Count; i++)
+                            {
+                                bool isConversionError =
+                                    sqlException.Errors[i].Number == TdsEnums.TCE_CONVERSION_ERROR_CLIENT_RETRY;
+                                bool isEnclaveSessionError =
+                                    sqlException.Errors[i].Number == TdsEnums.TCE_ENCLAVE_INVALID_SESSION_HANDLE;
+
+                                if ((usedCache && isConversionError) ||
+                                    (ShouldUseEnclaveBasedWorkflow && isEnclaveSessionError))
+                                {
+                                    shouldRetry = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!shouldRetry)
+                        {
+                            // If we cannot retry, reset the async state to make sure we leave is clean.
+                            CachedAsyncState?.ResetAsyncState();
+
+                            try
+                            {
+                                _activeConnection.GetOpenTdsConnection().DecrementAsyncCount();
+                                globalCompletion.TrySetException(e);
+                            }
+                            catch (Exception e2)
+                            {
+                                globalCompletion.TrySetException(e2);
+                            }
+
+                            return;
+                        }
+
+                        // Remove the entry from the caceh since it was inconsistent
+                        SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
+                        InvalidateEnclaveSession();
+
+                        // Kick off the retry
+                        try
+                        {
+                            _internalEndExecuteInitiated = false;
+                            Task<object> retryTask = (Task<object>)retryFunc(
+                                this,
+                                behavior,
+                                /*asyncCallback:*/ null, // @TODO: Is this ever not null?
+                                stateObject,
+                                TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart),
+                                /*isRetry:*/ true,
+                                asyncWrite);
+
+                            retryTask.ContinueWith(
+                                static (retryTask, state) =>
+                                {
+                                    TaskCompletionSource<object> completionSource = (TaskCompletionSource<object>)state;
+                                    if (retryTask.IsFaulted)
+                                    {
+                                        completionSource.TrySetException(retryTask.Exception.InnerException);
+                                    }
+                                    else if (retryTask.IsCanceled)
+                                    {
+                                        completionSource.TrySetCanceled();
+                                    }
+                                    else
+                                    {
+                                        completionSource.TrySetResult(retryTask.Result);
+                                    }
+                                },
+                                state: globalCompletion,
+                                TaskScheduler.Default);
+                        }
+                        catch (Exception e2)
+                        {
+                            globalCompletion.TrySetException(e2);
+                        }
+                    }
+                },
+                TaskScheduler.Default);
+        }
+
         // @TODO: The naming of this is a bit sketchy, it implies we're just returning CommandText, but we're adding the options string to it. I'd suggest either removing the method entirely or renaming to indicate the
         private string GetCommandText(CommandBehavior behavior)
         {
@@ -2600,6 +2738,54 @@ namespace Microsoft.Data.SqlClient
 
             rpc.userParamCount = userParamCount;
             rpc.userParams = parameters;
+        }
+
+        // @TODO: This method *needs* to be decomposed.
+        private bool TriggerInternalEndAndRetryIfNecessary(
+            CommandBehavior behavior,
+            object stateObject,
+            int timeout,
+            bool usedCache,
+            bool isRetry,
+            bool asyncWrite,
+            TaskCompletionSource<object> globalCompletion,
+            TaskCompletionSource<object> localCompletion,
+            Func<SqlCommand, IAsyncResult, bool, string, object> endFunc,
+            Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc,
+            string endMethod)
+        {
+            // We shouldn't be using the cache if we are in retry.
+            Debug.Assert(!usedCache || !isRetry);
+
+            // If column encryption is enabled, and we used the cache, we want to catch any
+            // potential exceptions that were caused by the query cache and retry if the error
+            // indicates that we should. So, try to read the result of the query before completing
+            // the overall task and trigger a retry if appropriate.
+            if ((IsColumnEncryptionEnabled && !isRetry && (usedCache || ShouldUseEnclaveBasedWorkflow))
+                #if DEBUG
+                || _forceInternalEndQuery
+                #endif
+               )
+            {
+                long firstAttemptStart = ADP.TimerCurrent();
+
+                CreateLocalCompletionTask(
+                    behavior,
+                    stateObject,
+                    timeout,
+                    usedCache,
+                    asyncWrite,
+                    globalCompletion,
+                    localCompletion,
+                    endFunc,
+                    retryFunc,
+                    endMethod,
+                    firstAttemptStart);
+
+                return true;
+            }
+
+            return false;
         }
 
         private void Unprepare()
