@@ -34,6 +34,7 @@
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
     <SystemTextEncodingsWebVersion>6.0.0</SystemTextEncodingsWebVersion>
     <MicrosoftSourceLinkGitHubVersion>8.0.0</MicrosoftSourceLinkGitHubVersion>
+    <SystemTextJsonVersion>6.0.11</SystemTextJsonVersion>
   </PropertyGroup>
   <!-- NetCore project dependencies -->
   <PropertyGroup>
