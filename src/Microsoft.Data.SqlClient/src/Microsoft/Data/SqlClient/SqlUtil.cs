@@ -635,6 +635,7 @@ namespace Microsoft.Data.SqlClient
             return exception;
         }
 
+        // @TODO: Rename....
         internal static Exception PendingBeginXXXExists()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_PendingBeginXXXExists));

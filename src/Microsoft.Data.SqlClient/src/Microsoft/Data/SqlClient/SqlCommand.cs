@@ -11,6 +11,7 @@ using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -2241,6 +2242,101 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryTraceEvent(
                 $"SqlCommand.UnPrepare | Info | " +
                 $"Object Id {ObjectID}, Command unprepared.");
+        }
+
+        private void ValidateAsyncCommand()
+        {
+            if (CachedAsyncState is not null && CachedAsyncState.PendingAsyncOperation)
+            {
+                // Enforce only one pending async execute at a time.
+                if (CachedAsyncState.IsActiveConnectionValid(_activeConnection))
+                {
+                    throw SQL.PendingBeginXXXExists();
+                }
+
+                // @TODO: This is smelly - why are we mucking with parser state obj here?
+                _stateObj = null; // Session was re-claimed by session pool upon connection close.
+                CachedAsyncState.ResetAsyncState();
+            }
+        }
+
+        private void ValidateCommand(bool isAsync, [CallerMemberName] string method = "")
+        {
+            if (_activeConnection is null)
+            {
+                throw ADP.ConnectionRequired(method);
+            }
+
+            // Ensure that the connection is open and that the PArser is in the correct state
+            // @TODO: Remove cast when possible.
+            SqlInternalConnectionTds tdsConnection = (SqlInternalConnectionTds)_activeConnection.InnerConnection;
+
+            // Ensure that if column encryption override was used then server supports it
+            // @TODO: This is kinda clunky
+            if (((ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && _activeConnection.IsColumnEncryptionSettingEnabled) ||
+                 (ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled || ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.ResultSetOnly))
+                && tdsConnection != null
+                && tdsConnection.Parser != null
+                && !tdsConnection.Parser.IsColumnEncryptionSupported)
+            {
+                throw SQL.TceNotSupported();
+            }
+
+            if (tdsConnection is not null) // @TODO: Why would it ever be null??
+            {
+                // @TODO: We check state here and in GetStateObject ... one or the other seems fishy.
+                TdsParser parser = tdsConnection.Parser;
+                if (parser is null || parser.State is TdsParserState.Closed)
+                {
+                    throw ADP.OpenConnectionRequired(method, ConnectionState.Closed);
+                }
+
+                if (parser.State is not TdsParserState.OpenLoggedIn)
+                {
+                    throw ADP.OpenConnectionRequired(method, ConnectionState.Broken);
+                }
+            }
+            else if (_activeConnection.State is ConnectionState.Closed)
+            {
+                throw ADP.OpenConnectionRequired(method, ConnectionState.Closed);
+            }
+            else if (_activeConnection.State is ConnectionState.Broken)
+            {
+                throw ADP.OpenConnectionRequired(method, ConnectionState.Broken);
+            }
+
+            // @TODO: Ok, so ... why do we have other places calling this method?
+            ValidateAsyncCommand();
+
+            // Close any dead, non-MARS readers, if applicable, and throw if still busy. Throw if
+            // we have a live reader for this command.
+            _activeConnection.ValidateConnectionForExecute(method, this);
+
+            // Check to see if the currently set transaction has completed. If so, null out our
+            // local reference.
+            if (_transaction is not null && _transaction.Connection is null)
+            {
+                _transaction = null;
+            }
+
+            // Throw if the connection is in a transaction but there is no locally assigned
+            // transaction object.
+            if (_activeConnection.HasLocalTransactionFromAPI && _transaction is null)
+            {
+                throw ADP.TransactionRequired(method);
+            }
+
+            // If we have a transaction, check to ensure that the active connection associated with
+            // the transaction.
+            if (_transaction is not null && _activeConnection != _transaction.Connection)
+            {
+                throw ADP.TransactionConnectionMismatch();
+            }
+
+            if (string.IsNullOrEmpty(CommandText))
+            {
+                throw ADP.CommandTextRequired(method);
+            }
         }
 
         private void WriteBeginExecuteEvent()
