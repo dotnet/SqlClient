@@ -27,6 +27,13 @@
 # can be depended on by downstream stages.
 
 parameters:
+
+  # The name of the pipeline artifact to publish.
+  - name: artifactName
+    displayName: Pipeline Artifact Name
+    type: string
+    default: Abstractions.Artifact
+
   # The type of build to produce (Release or Debug)
   - name: buildConfiguration
     displayName: Build Configuration
@@ -36,23 +43,17 @@ parameters:
     - Release
     - Debug
 
-  # The version (Major.Minor.Patch) to apply to the package.
-  - name: packageVersion
-    displayName: Package Version Override
-    type: string
-    default: ''
-
   # The build number of the pipeline.
   - name: buildNumber
     displayName: Build Number
     type: string
     default: $(Build.BuildNumber)
 
-  # The name of the pipeline artifact to publish.
-  - name: artifactName
-    displayName: Pipeline Artifact Name
-    type: string
-    default: Abstractions.Artifact
+  # The list of .NET Framework runtimes to test against.
+  - name: netFrameworkTestRuntimes
+    displayName: .NET Framework Test Runtimes
+    type: object
+    default: [net462, net47, net471, net472, net48, net481]
 
   # The list of .NET runtimes to test against.
   - name: netTestRuntimes
@@ -60,11 +61,11 @@ parameters:
     type: object
     default: [net8.0, net9.0]
 
-  # The list of .NET Framework runtimes to test against.
-  - name: netFrameworkTestRuntimes
-    displayName: .NET Framework Test Runtimes
-    type: object
-    default: [net462, net47, net471, net472, net48, net481]
+  # The version (Major.Minor.Patch) to apply to the package.
+  - name: packageVersion
+    displayName: Package Version Override
+    type: string
+    default: ''
 
   # The verbosity level for the dotnet CLI commands.
   - name: verbosity
@@ -79,10 +80,12 @@ parameters:
     - diagnostic
 
 stages:
+
   - stage: build_abstractions_package_stage
     displayName: Build Abstractions Package
 
     variables:
+
       # The directory where dotnet artifacts will be staged.  Not to be
       # confused with pipeline artifact.
       - name: dotnetArtifactsDir
@@ -100,16 +103,16 @@ stages:
       # dotnet CLI arguments common to all commands.
       - name: commonArguments
         value: >-
-          --verbosity ${{parameters.verbosity}}
+          --verbosity ${{ parameters.verbosity }}
           --artifacts-path $(dotnetArtifactsDir)
 
       # dotnet CLI arguments for build/test/pack commands
       - name: buildArguments
         value: >-
           $(commonArguments)
-          --configuration ${{parameters.buildConfiguration}}
+          --configuration ${{ parameters.buildConfiguration }}
           -p:BuildNumber=$(Build.BuildNumber)
-          -p:AbstractionsPackageVersion=${{parameters.packageVersion}}
+          -p:AbstractionsPackageVersion=${{ parameters.packageVersion }}
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public
@@ -135,217 +138,218 @@ stages:
 
     jobs:
 
-    # --------------------------------------------------------------------------
-    # Build and test on Linux.
+      # ------------------------------------------------------------------------
+      # Build and test on Linux.
 
-    - job: build_abstractions_package_job_linux
-      displayName: '[Linux] Build Abstractions Package'
-      pool:
-        name: Azure Pipelines
-        vmImage: ubuntu-latest
+      - job: build_abstractions_package_job_linux
+        displayName: '[Linux] Build Abstractions Package'
+        pool:
+          name: Azure Pipelines
+          vmImage: ubuntu-latest
 
-      steps:
+        steps:
 
-      - task: UseDotNet@2
-        displayName: Install .NET 9.0 SDK
-        inputs:
-          packageType: sdk
-          version: 9.x
+          - task: UseDotNet@2
+            displayName: Install .NET 9.0 SDK
+            inputs:
+              packageType: sdk
+              version: 9.x
 
-      - task: UseDotNet@2
-        displayName: Install .NET 8.0 Runtime
-        inputs:
-          packageType: runtime
-          version: 8.x
+          - task: UseDotNet@2
+            displayName: Install .NET 8.0 Runtime
+            inputs:
+              packageType: runtime
+              version: 8.x
 
-      # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't
-      # support all of our argument combinations for the different build steps.
-      - task: DotNetCoreCLI@2
-        displayName: Restore Solution
-        inputs:
-          command: custom
-          custom: restore
-          projects: $(project)
-          arguments: $(commonArguments)
+          # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't
+          # support all of our argument combinations for the different build
+          # steps.
+          - task: DotNetCoreCLI@2
+            displayName: Restore Solution
+            inputs:
+              command: custom
+              custom: restore
+              projects: $(project)
+              arguments: $(commonArguments)
 
-      - task: DotNetCoreCLI@2
-        displayName: Build Solution
-        inputs:
-          command: custom
-          custom: build
-          projects: $(project)
-          arguments: $(buildArguments) --no-restore
+          - task: DotNetCoreCLI@2
+            displayName: Build Solution
+            inputs:
+              command: custom
+              custom: build
+              projects: $(project)
+              arguments: $(buildArguments) --no-restore
 
-      - ${{ each runtime in parameters.netTestRuntimes }}:
-        - task: DotNetCoreCLI@2
-          displayName: Test [${{runtime}}]
-          inputs:
-            command: custom
-            custom: test
-            projects: $(project)
-            arguments: $(buildArguments) --no-build -f ${{runtime}}
+          - ${{ each runtime in parameters.netTestRuntimes }}:
+            - task: DotNetCoreCLI@2
+              displayName: Test [${{ runtime }}]
+              inputs:
+                command: custom
+                custom: test
+                projects: $(project)
+                arguments: $(buildArguments) --no-build -f ${{ runtime }}
 
-    # --------------------------------------------------------------------------
-    # Build and test on Windows.
+      # ------------------------------------------------------------------------
+      # Build and test on Windows.
 
-    - job: build_abstractions_package_job_windows
-      displayName: '[Win] Build Abstractions Package'
-      pool:
-        name: Azure Pipelines
-        # The Windows images include a suitable .NET Framework runtime, so we
-        # don't have to install one explicitly below.
-        vmImage: windows-latest
+      - job: build_abstractions_package_job_windows
+        displayName: '[Win] Build Abstractions Package'
+        pool:
+          name: Azure Pipelines
+          # The Windows images include a suitable .NET Framework runtime, so we
+          # don't have to install one explicitly below.
+          vmImage: windows-latest
 
-      steps:
+        steps:
 
-      - task: UseDotNet@2
-        displayName: Install .NET 9.0 SDK
-        inputs:
-          packageType: sdk
-          version: 9.x
+          - task: UseDotNet@2
+            displayName: Install .NET 9.0 SDK
+            inputs:
+              packageType: sdk
+              version: 9.x
 
-      - task: UseDotNet@2
-        displayName: Install .NET 8.0 Runtime
-        inputs:
-          packageType: runtime
-          version: 8.x
+          - task: UseDotNet@2
+            displayName: Install .NET 8.0 Runtime
+            inputs:
+              packageType: runtime
+              version: 8.x
 
-      - task: DotNetCoreCLI@2
-        displayName: Restore Solution
-        inputs:
-          command: custom
-          custom: restore
-          projects: $(project)
-          arguments: $(commonArguments)
+          - task: DotNetCoreCLI@2
+            displayName: Restore Solution
+            inputs:
+              command: custom
+              custom: restore
+              projects: $(project)
+              arguments: $(commonArguments)
 
-      - task: DotNetCoreCLI@2
-        displayName: Build Solution
-        inputs:
-          command: custom
-          custom: build
-          projects: $(project)
-          arguments: $(buildArguments) --no-restore
+          - task: DotNetCoreCLI@2
+            displayName: Build Solution
+            inputs:
+              command: custom
+              custom: build
+              projects: $(project)
+              arguments: $(buildArguments) --no-restore
 
-      - ${{ each runtime in parameters.netTestRuntimes }}:
-        - task: DotNetCoreCLI@2
-          displayName: Test [${{runtime}}]
-          inputs:
-            command: custom
-            custom: test
-            projects: $(project)
-            arguments: $(buildArguments) --no-build -f ${{runtime}}
+          - ${{ each runtime in parameters.netTestRuntimes }}:
+            - task: DotNetCoreCLI@2
+              displayName: Test [${{ runtime }}]
+              inputs:
+                command: custom
+                custom: test
+                projects: $(project)
+                arguments: $(buildArguments) --no-build -f ${{ runtime }}
 
-      - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
-        - task: DotNetCoreCLI@2
-          displayName: Test [${{runtime}}]
-          inputs:
-            command: custom
-            custom: test
-            projects: $(project)
-            arguments: $(buildArguments) --no-build -f ${{runtime}}
+          - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
+            - task: DotNetCoreCLI@2
+              displayName: Test [${{ runtime }}]
+              inputs:
+                command: custom
+                custom: test
+                projects: $(project)
+                arguments: $(buildArguments) --no-build -f ${{ runtime }}
 
-    # --------------------------------------------------------------------------
-    # Build and test on macOS
+      # ------------------------------------------------------------------------
+      # Build and test on macOS
 
-    - job: build_abstractions_package_job_macos
-      displayName: '[macOS] Build Abstractions Package'
-      pool:
-        name: Azure Pipelines
-        vmImage: macos-latest
+      - job: build_abstractions_package_job_macos
+        displayName: '[macOS] Build Abstractions Package'
+        pool:
+          name: Azure Pipelines
+          vmImage: macos-latest
 
-      steps:
+        steps:
 
-      - task: UseDotNet@2
-        displayName: Install .NET 9.0 SDK
-        inputs:
-          packageType: sdk
-          version: 9.x
+          - task: UseDotNet@2
+            displayName: Install .NET 9.0 SDK
+            inputs:
+              packageType: sdk
+              version: 9.x
 
-      - task: UseDotNet@2
-        displayName: Install .NET 8.0 Runtime
-        inputs:
-          packageType: runtime
-          version: 8.x
+          - task: UseDotNet@2
+            displayName: Install .NET 8.0 Runtime
+            inputs:
+              packageType: runtime
+              version: 8.x
 
-      - task: DotNetCoreCLI@2
-        displayName: Restore Solution
-        inputs:
-          command: custom
-          custom: restore
-          projects: $(project)
-          arguments: $(commonArguments)
+          - task: DotNetCoreCLI@2
+            displayName: Restore Solution
+            inputs:
+              command: custom
+              custom: restore
+              projects: $(project)
+              arguments: $(commonArguments)
 
-      - task: DotNetCoreCLI@2
-        displayName: Build Solution
-        inputs:
-          command: custom
-          custom: build
-          projects: $(project)
-          arguments: $(buildArguments) --no-restore
+          - task: DotNetCoreCLI@2
+            displayName: Build Solution
+            inputs:
+              command: custom
+              custom: build
+              projects: $(project)
+              arguments: $(buildArguments) --no-restore
 
-      - ${{ each runtime in parameters.netTestRuntimes }}:
-        - task: DotNetCoreCLI@2
-          displayName: Test [${{runtime}}]
-          inputs:
-            command: custom
-            custom: test
-            projects: $(project)
-            arguments: $(buildArguments) --no-build -f ${{runtime}}
+          - ${{ each runtime in parameters.netTestRuntimes }}:
+            - task: DotNetCoreCLI@2
+              displayName: Test [${{ runtime }}]
+              inputs:
+                command: custom
+                custom: test
+                projects: $(project)
+                arguments: $(buildArguments) --no-build -f ${{ runtime }}
 
-    # --------------------------------------------------------------------------
-    # Create and publish the NuGet package.
+      # ------------------------------------------------------------------------
+      # Create and publish the NuGet package.
 
-    - job: publish_abstractions_package_job
-      displayName: Publish Abstractions Package
-      dependsOn:
-        # We depend on all of the build jobs to ensure the tests pass before
-        # producing the NuGet package.
-        - build_abstractions_package_job_linux
-        - build_abstractions_package_job_windows
-        - build_abstractions_package_job_macos
-      pool:
-        name: Azure Pipelines
-        vmImage: ubuntu-latest
+      - job: publish_abstractions_package_job
+        displayName: Publish Abstractions Package
+        dependsOn:
+          # We depend on all of the build jobs to ensure the tests pass before
+          # producing the NuGet package.
+          - build_abstractions_package_job_linux
+          - build_abstractions_package_job_windows
+          - build_abstractions_package_job_macos
+        pool:
+          name: Azure Pipelines
+          vmImage: ubuntu-latest
 
-      steps:
+        steps:
 
-      - task: UseDotNet@2
-        displayName: Install .NET 9.0 SDK
-        inputs:
-          packageType: sdk
-          version: 9.x
+          - task: UseDotNet@2
+            displayName: Install .NET 9.0 SDK
+            inputs:
+              packageType: sdk
+              version: 9.x
 
-      # There is probably a way to avoid this restore and build, and just re-use
-      # the dotnet artifacts from a previous build job.  Downloading the dotnet
-      # artifacts didn't work (further investigation TBD), so we just build them
-      # again.
-      - task: DotNetCoreCLI@2
-        displayName: Restore Solution
-        inputs:
-          command: custom
-          custom: restore
-          projects: $(project)
-          arguments: $(commonArguments)
+          # There is probably a way to avoid this restore and build, and just
+          # re-use the dotnet artifacts from a previous build job.  Downloading
+          # the dotnet artifacts didn't work (further investigation TBD), so we
+          # just build them again.
+          - task: DotNetCoreCLI@2
+            displayName: Restore Solution
+            inputs:
+              command: custom
+              custom: restore
+              projects: $(project)
+              arguments: $(commonArguments)
 
-      - task: DotNetCoreCLI@2
-        displayName: Build Solution
-        inputs:
-          command: custom
-          custom: build
-          projects: $(project)
-          arguments: $(buildArguments) --no-restore
+          - task: DotNetCoreCLI@2
+            displayName: Build Solution
+            inputs:
+              command: custom
+              custom: build
+              projects: $(project)
+              arguments: $(buildArguments) --no-restore
 
-      - task: DotNetCoreCLI@2
-        displayName: Create NuGet Package
-        inputs:
-          command: custom
-          custom: pack
-          projects: $(project)
-          arguments: $(buildArguments) --no-build -o $(dotnetPackagesDir)
+          - task: DotNetCoreCLI@2
+            displayName: Create NuGet Package
+            inputs:
+              command: custom
+              custom: pack
+              projects: $(project)
+              arguments: $(buildArguments) --no-build -o $(dotnetPackagesDir)
 
-      - task: PublishPipelineArtifact@1
-        displayName: Publish Pipeline Artifact
-        inputs:
-          targetPath: $(dotnetPackagesDir)
-          artifactName: ${{parameters.artifactName}}
-          publishLocation: pipeline
+          - task: PublishPipelineArtifact@1
+            displayName: Publish Pipeline Artifact
+            inputs:
+              targetPath: $(dotnetPackagesDir)
+              artifactName: ${{ parameters.artifactName }}
+              publishLocation: pipeline

@@ -13,9 +13,8 @@
     <AbstractionsPackageMajorVersion>1</AbstractionsPackageMajorVersion>
 
     <!--
-      The default Abstractions package version.
-
-      This may be overridden by specifying a value on the command-line:
+      The default Abstractions package version.  This may be overridden by
+      specifying a value on the command-line:
 
         msbuild -p:AbstractionsPackageVersion=1.0.0
         dotnet build -p:AbstractionsPackageVersion=1.0.0

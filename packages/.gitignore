@@ -1,0 +1,12 @@
+# The packages/ directory must exist for local development due to the various
+# NuGet.config files that refer to it.  However, we never want any files in
+# this directory to be included in source control.
+#
+# Git doesn't track directories, only files, so we need this .gitignore file
+# to force Git into tracking the packages/ directory itself.
+
+# Ignore everything in this directory
+*
+
+# Except this file
+!.gitignore
