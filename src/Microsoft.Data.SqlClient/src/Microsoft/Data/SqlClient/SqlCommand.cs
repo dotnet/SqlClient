@@ -19,6 +19,10 @@ using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.Diagnostics;
 
+#if NETFRAMEWORK
+using System.Security.Permissions;
+#endif
+
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/SqlCommand/*'/>
@@ -1749,6 +1753,17 @@ namespace Microsoft.Data.SqlClient
             return builder.ToString();
         }
 
+        #if NETFRAMEWORK
+        [SecurityPermission(SecurityAction.Assert, Infrastructure = true)]
+        private static string SqlNotificationContext()
+        {
+            SqlConnection.VerifyExecutePermission();
+
+            // Since this information is protected, follow it so that it is not exposed to the user.
+            return System.Runtime.Remoting.Messaging.CallContext.GetData("MS.SqlDependencyCookie") as string;
+        }
+        #endif
+
         /// <summary>
         /// Generates a parameter list string for use with sp_executesql, sp_prepare, and sp_prepexec.
         /// </summary>
@@ -1943,6 +1958,79 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private void CheckNotificationStateAndAutoEnlist()
+        {
+            #if NETFRAMEWORK
+            // First, if auto-enlist is on, check server version and then obtain context if
+            // present. If so, auto-enlist to the dependency ID given in the context data.
+            if (NotificationAutoEnlist)
+            {
+                string notifyContext = SqlNotificationContext();
+                if (!string.IsNullOrEmpty(notifyContext))
+                {
+                    // Map to dependency by ID set in context data.
+                    SqlDependency dependency = SqlDependencyPerAppDomainDispatcher.SingletonInstance
+                        .LookupDependencyEntry(notifyContext);
+                    dependency?.AddCommandDependency(this);
+                }
+            }
+            #endif
+
+            // If we have a notification with a dependency, set up the notification at this time.
+            // If the user passes options, then we will always have option data at the time the
+            // SqlDependency ctor is called. BUt if we are using default queue, then we do not have
+            // this data until Start(). Due to this, we always delay setting options until execute.
+
+            // There is a variance between Start(), SqlDependency(), and Execute. This is the best
+            // way to solve that problem.
+            // @TODO: Combine these two if statements
+            if (Notification is not null)
+            {
+                if (_sqlDep is not null)
+                {
+                    if (_sqlDep.Options is null)
+                    {
+                        // If null, SqlDependency was not created with options, so we need to
+                        // obtain default options now. GetDefaultOptions can and will throw under
+                        // certain conditions. @TODO: Like what?
+
+                        // In order to match the appropriate start, we need 3 pieces of info:
+                        // 1) server,
+                        // 2) user identify (SQL auth or integrated security)
+                        // 3) database
+
+                        // Obtain identity from connection.
+                        // @TODO: Remove cast when possible.
+                        SqlInternalConnectionTds internalConnection =
+                            (SqlInternalConnectionTds)_activeConnection.InnerConnection;
+
+                        SqlDependency.IdentityUserNamePair identityUserName = internalConnection.Identity is not null
+                            ? new SqlDependency.IdentityUserNamePair(
+                                internalConnection.Identity,
+                                userName: null)
+                            : new SqlDependency.IdentityUserNamePair(
+                                identity: null,
+                                internalConnection.ConnectionOptions.UserID);
+
+                        Notification.Options = SqlDependency.GetDefaultComposedOptions(
+                            _activeConnection.DataSource,
+                            InternalTdsConnection.ServerProvidedFailoverPartner,
+                            identityUserName,
+                            _activeConnection.Database);
+                    }
+
+                    // Set UserData on notifications, as well as adding to the appdomain
+                    // dispatcher. The value is computed by an algorithm on the dependency, fixed
+                    // and will always produce the same value given identical command text and
+                    // parameter values.
+                    Notification.UserData = _sqlDep.ComputeHashAndAddToDispatcher(this);
+
+                    // Maintain server list for SqlDependency
+                    _sqlDep.AddToServerList(_activeConnection.DataSource);
+                }
+            }
+        }
+
         // @TODO: Rename to match naming convention
         private void CheckThrowSNIException() =>
             _stateObj?.CheckThrowSNIException();
@@ -2132,6 +2220,20 @@ namespace Microsoft.Data.SqlClient
             stateObject?.CloseSession();
         }
 
+        private Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outerTask)
+        {
+            SqlConnection connection = _activeConnection;
+            if (connection is null)
+            {
+                throw ADP.ClosedConnectionError();
+            }
+
+            return connection.RegisterForConnectionCloseNotification(
+                outerTask,
+                this,
+                SqlReferenceCollection.CommandTag);
+        }
+
         // @TODO: THERE IS NOTHING RELIABLE ABOUT THIS!!! REMOVE!!!
         private void ReliablePutStateObject() =>
             PutStateObject();
@@ -2260,6 +2362,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // @TODO: isAsync isn't used.
         private void ValidateCommand(bool isAsync, [CallerMemberName] string method = "")
         {
             if (_activeConnection is null)
