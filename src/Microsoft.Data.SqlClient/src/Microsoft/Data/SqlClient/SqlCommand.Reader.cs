@@ -1381,7 +1381,7 @@ namespace Microsoft.Data.SqlClient
                             $"Command Text '{CommandText}'");
                     }
 
-                    string text = GetCommandText(cmdBehavior) + GetResetOptionsString(cmdBehavior);
+                    string text = GetCommandText(cmdBehavior) + GetOptionsResetString(cmdBehavior);
 
                     // If the query requires enclave computations, pass the enclave package in the
                     // SqlBatch TDS stream
@@ -1489,7 +1489,7 @@ namespace Microsoft.Data.SqlClient
                     // If we need to augment the command because a user has changed the command
                     // behavior (e.g. FillSchema) then batch sql them over. This is inefficient (3
                     // round trips) but the only way we can get metadata only from a stored proc.
-                    optionSettings = GetSetOptionsString(cmdBehavior);
+                    optionSettings = GetOptionsSetString(cmdBehavior);
 
                     if (returnStream)
                     {
@@ -1528,7 +1528,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         // And turn OFF when the ds exhausts the stream on Close()
-                        optionSettings = GetResetOptionsString(cmdBehavior);
+                        optionSettings = GetOptionsResetString(cmdBehavior);
                     }
 
                     // Execute sproc

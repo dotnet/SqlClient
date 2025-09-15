@@ -1584,6 +1584,52 @@ namespace Microsoft.Data.SqlClient
             return sendableParameters;
         }
 
+        /// <summary>
+        /// Returns SET option text to turn off format only and key info on and off. When we are
+        /// executing as a text command, then we never need to turn off the options since the
+        /// command text is executed in the scope of sp_executesql. For a sproc command, however,
+        /// we must send over batch sql and then turn off the SET options after we read the data.
+        /// </summary>
+        private static string GetOptionsSetString(CommandBehavior behavior)
+        {
+            string s = null;
+            if (behavior is CommandBehavior.SchemaOnly or CommandBehavior.KeyInfo)
+            {
+                // SET FMTONLY ON will cause the server to ignore other SET OPTIONS, so turn if off
+                // before we ask for browse mode metadata
+                s = TdsEnums.FMTONLY_OFF;
+
+                if (behavior is CommandBehavior.KeyInfo)
+                {
+                    s += TdsEnums.BROWSE_ON;
+                }
+
+                if (behavior is CommandBehavior.SchemaOnly)
+                {
+                    s += TdsEnums.FMTONLY_ON;
+                }
+            }
+
+            return s;
+        }
+
+        private static string GetOptionsResetString(CommandBehavior behavior)
+        {
+            string s = null;
+
+            if (behavior is CommandBehavior.SchemaOnly)
+            {
+                s += TdsEnums.FMTONLY_OFF;
+            }
+
+            if (behavior is CommandBehavior.KeyInfo)
+            {
+                s += TdsEnums.BROWSE_OFF;
+            }
+
+            return s;
+        }
+
         // @TODO: Assess if a parameterized version of this method is necessary or if a property can suffice.
         private static int GetParameterCount(SqlParameterCollection parameters) =>
             parameters?.Count ?? 0;
@@ -1866,7 +1912,18 @@ namespace Microsoft.Data.SqlClient
         private void CheckThrowSNIException() =>
             _stateObj?.CheckThrowSNIException();
 
-        // @TODO: Why not *return* it?
+        // @TODO: The naming of this is a bit sketchy, it implies we're just returning CommandText, but we're adding the options string to it. I'd suggest either removing the method entirely or renaming to indicate the
+        private string GetCommandText(CommandBehavior behavior)
+        {
+            // Build the batch string we send over, since we execute within a stored proc
+            // (sp_executesql), the SET options never need to be turned off since they are scoped
+            // to the sproc.
+            Debug.Assert(CommandType is CommandType.Text,
+                "invalid call to GetCommandText for stored proc!");
+            return GetOptionsSetString(behavior) + CommandText;
+        }
+
+        // @TODO: Why not *return* it? (update: ok, this is because the intention is to reuse existing RPC objects, but the way it is doing it is confusing)
         // @TODO: Rename to match naming conventions GetRpcObject
         // @TODO: This method would be less confusing if the initialized rpc is always provided (ie, the caller knows which member to grab an existing rpc from), and this method just initializes it.
         private void GetRPCObject(
