@@ -465,26 +465,3 @@ stages:
             UserManagedIdentityClientId: $(UserManagedIdentityClientId)
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
-
-    # Azure Sql Server - Mac
-        mac_azure_sql:
-          pool: $(defaultHostedPoolName)
-          hostedPool: true
-          images:
-            MacOSLatest_Azure_Sql: macos-latest
-          TargetFrameworks: ${{parameters.targetFrameworksLinux }}
-          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
-          buildPlatforms: [AnyCPU]
-          testSets: ${{parameters.testSets }}
-          useManagedSNI: [true]
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
-          configSqlFor: azure
-          operatingSystem: Mac
-          configProperties:
-            # config.json properties
-            TCPConnectionString: $(AZURE_DB_SP_TCP_CONN_STRING)
-            NPConnectionString: $(AZURE_DB_SP_NP_CONN_STRING)
-            SupportsIntegratedSecurity: false
-            ManagedIdentitySupported: false
-            LocalDbAppName: $(LocalDbAppName)
-            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
