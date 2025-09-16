@@ -4075,10 +4075,10 @@
     <value>La clave de cifrado de columna cifrada especificada contiene una versión de algoritmo de cifrado no válida '{0}'. La versión esperada es '{1}'.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+    <value>La longitud del texto cifrado de la clave de cifrado de columnas cifradas especificada, que es de {0}, no coincide con la longitud del texto cifrado, de {1}, al usar una clave maestra de columnas (certificado) en ({2}) en “{3}”. Es posible que la clave de cifrado de la columna cifrada esté dañada o que la ruta de acceso {4} especificada no sea correcta.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
-    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
+    <value>La longitud del texto cifrado de la clave de cifrado de columnas cifradas especificada, que es de {0}, no coincide con la longitud del texto cifrado, de {1}, al usar una clave maestra de columnas (certificado) en "{2}". Puede que la clave de cifrado de columnas cifradas esté dañada o que la ruta especificada del certificado no sea correcta.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
     <value>La longitud del texto cifrado de la clave de cifrado de la columna cifrada especificada {0} no coincide con la longitud del texto cifrado {1} al usar la clave maestra de la columna (clave asimétrica) en '{2}'. La clave de cifrado de la columna cifrada puede estar dañada o la ruta especificada del proveedor de servicios criptográficos (CSP) de Microsoft puede no ser correcta.</value>
@@ -4087,10 +4087,10 @@
     <value>La longitud del texto cifrado de la clave de cifrado de la columna cifrada especificada {0} no coincide con la longitud del texto cifrado {1} al usar la clave maestra de la columna (clave asimétrica) en '{2}'. La clave de cifrado de la columna cifrada puede estar dañada o la ruta especificada del proveedor Cryptography API: Next Generation (CNG) de Microsoft puede no ser correcta.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+    <value>La longitud de la signatura de la clave de cifrado de columnas cifradas especificada, que es de {0}, no coincide con la longitud de la signatura, de {1}, al usar una clave maestra de columnas (certificado) en ({2}) en “{3}”. Es posible que la clave de cifrado de la columna cifrada esté dañada o que la ruta de acceso {4} especificada no sea correcta.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
-    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
+    <value>La longitud de la signatura de la clave de cifrado de columnas cifradas especificada, que es de {0}, no coincide con la longitud de la signatura, de {1}, al usar una clave maestra de columnas (certificado) en ({2}). Puede que la clave de cifrado de columnas cifradas esté dañada o que la ruta especificada del certificado no sea correcta.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
     <value>La longitud de la firma de clave de cifrado de la columna cifrada especificada {0} no coincide con la longitud de la firma {1} al usar la clave maestra de la columna (clave asimétrica) en '{2}'. La clave de cifrado de la columna cifrada puede estar dañada o la ruta especificada del proveedor de servicios criptográficos (CSP) de Microsoft puede no ser correcta.</value>
@@ -4099,13 +4099,13 @@
     <value>La longitud de la firma de clave de cifrado de la columna cifrada especificada {0} no coincide con la longitud de la firma {1} al usar la clave maestra de la columna (clave asimétrica) en '{2}'. La clave de cifrado de la columna cifrada puede estar dañada o la ruta especificada del proveedor Cryptography API: Next Generation (CNG) de Microsoft puede no ser correcta.</value>
   </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key ({0}) in '{1}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+    <value>La signatura de la clave de cifrado de columnas cifradas especificada no coincide con la signatura calculada con la clave maestra de columnas ({0}) en “{1}”. Es posible que la clave de cifrado de la columna cifrada esté dañada o que la ruta de acceso especificada no sea correcta.</value>
   </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>La firma de clave de cifrado de columna cifrada especificada no coincide con la firma calculada con la clave maestra de columna (certificado) en "{0}". Puede que la clave de cifrado de la columna cifrada esté dañada o que la ruta del certificado especificada no sea correcta.</value>
   </data>
   <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
-    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+    <value>La signatura de la clave de cifrado de columnas cifradas especificada no coincide con la signatura calculada con la clave maestra de columnas (clave asimétrica) en “{0}”. Es posible que la clave de cifrado de la columna cifrada esté dañada o que la ruta de acceso especificada no sea correcta.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>El certificado especificado en la ruta de claves "{0}" no tiene una clave privada para cifrar una clave de cifrado de columnas. Compruebe que el certificado se ha importado correctamente.</value>
