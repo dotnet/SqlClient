@@ -394,9 +394,16 @@ namespace Microsoft.Data.SqlClient
         public override bool DesignTimeVisible
         {
             get => !_designTimeInvisible;
-            set => _designTimeInvisible = !value;
+            set
+            {
+                _designTimeInvisible = !value;
+
+                #if NETFRAMEWORK
+                TypeDescriptor.Refresh(this);
+                #endif
+            }
         }
-        
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EnableOptimizedParameterBinding/*'/>
         public bool EnableOptimizedParameterBinding { get; set; }
 
@@ -618,17 +625,20 @@ namespace Microsoft.Data.SqlClient
 
         private bool IsColumnEncryptionEnabled
         {
-            // The order in the below if is important since _activeConnection.Parser can throw if
-            // the underlying tds connection is closed, and we don't want to change the behavior
-            // for folks not trying to use transparent parameter encryption i.e. who don't use
-            // (SqlCommandColumnEncryptionSetting.Enabled or
-            // _activeConnection.IsColumnEncryptionSettingEnabled) here.
-            get => _columnEncryptionSetting is SqlCommandColumnEncryptionSetting.Enabled
-                                            or SqlCommandColumnEncryptionSetting.UseConnectionSetting
-                && _activeConnection is not null
-                && _activeConnection.Parser is not null
-                && _activeConnection.Parser.IsColumnEncryptionSupported;
+            get
+            {
+                bool isEncryptionEnabled =
+                    _columnEncryptionSetting is SqlCommandColumnEncryptionSetting.Enabled ||
+                    (_columnEncryptionSetting is SqlCommandColumnEncryptionSetting.UseConnectionSetting &&
+                     _activeConnection.IsColumnEncryptionSettingEnabled);
 
+                // Order matters here b/c 1) _activeConnection.Parser can throw if the underlying
+                // connection is closed, and 2) we do not want to throw in that situation unless
+                // the user is using transparent parameter encryption (breaks old behavior).
+                return isEncryptionEnabled &&
+                       _activeConnection.Parser is not null &&
+                       _activeConnection.Parser.IsColumnEncryptionSupported;
+            }
         }
 
         private bool IsDirty
