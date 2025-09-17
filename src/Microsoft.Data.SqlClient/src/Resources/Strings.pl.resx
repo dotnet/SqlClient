@@ -4075,6 +4075,9 @@
     <value>Określony zaszyfrowany klucz szyfrowania kolumny zawiera nieprawidłową wersję algorytmu szyfrowania „{0}”. Oczekiwana wersja to „{1}”.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
+    <value>Określona długość szyfrowanego klucza szyfrowania kolumny tekstu szyfrowanego: {0} nie jest zgodna z długością tekstu szyfrowanego: {1} w przypadku używania klucza głównego kolumny ({2}) w „{3}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka {4} może być nieprawidłowa.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
     <value>Określona długość szyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością tekstu szyfrowanego: {1} w przypadku używania klucza głównego kolumny (certyfikatu) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka certyfikatu może być nieprawidłowa.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
@@ -4084,6 +4087,9 @@
     <value>Określona długość szyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością tekstu szyfrowanego: {1} w przypadku używania klucza głównego kolumny (klucza asymetrycznego) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka dostawcy interfejsu API kryptografii firmy Microsoft: ścieżka dostawcy następnej generacji (CNG) może być niepoprawna.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
+    <value>Określona długość podpisu zaszyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością podpisu: {1} w przypadku używania klucza głównego kolumny ({2}) w „{3}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka {4} może być nieprawidłowa.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
     <value>Określona długość podpisu zaszyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością podpisu: {1} w przypadku używania klucza głównego kolumny (certyfikatu) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka certyfikatu może być nieprawidłowa.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
@@ -4092,10 +4098,13 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>Określona długość podpisu zaszyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością podpisu: {1} w przypadku używania klucza głównego kolumny (klucza asymetrycznego) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka dostawcy interfejsu API kryptografii firmy Microsoft: ścieżka dostawcy następnej generacji (CNG) może być niepoprawna.</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>Określony podpis zaszyfrowanego klucza szyfrowania kolumny jest niezgodny z podpisem obliczonym przy użyciu klucza głównego kolumny ({0}) w „{1}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka może być nieprawidłowa.</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>Określony podpis zaszyfrowanego klucza szyfrowania kolumny jest niezgodny z podpisem obliczonym przy użyciu klucza głównego kolumny (certyfikatu) w elemencie „{0}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka może być nieprawidłowa.</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
     <value>Określony zaszyfrowany podpis klucza szyfrowania kolumny nie jest zgodny z podpisem obliczonym przy użyciu klucza głównego kolumny (klucz asymetryczny) w elemencie „{0}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka może być nieprawidłowa.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">

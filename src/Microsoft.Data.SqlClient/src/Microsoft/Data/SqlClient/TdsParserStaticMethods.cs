@@ -100,6 +100,10 @@ namespace Microsoft.Data.SqlClient
         //       If this logic changed, SNIPacketSetData needs to be changed as well
         internal static byte[] ObfuscatePassword(string password)
         {
+            if (string.IsNullOrEmpty(password))
+            {
+                return Array.Empty<byte>();
+            }
             byte[] bObfuscated = new byte[password.Length << 1];
             int s;
             byte bLo;
@@ -118,6 +122,10 @@ namespace Microsoft.Data.SqlClient
 
         internal static byte[] ObfuscatePassword(byte[] password)
         {
+            if (password == null || password.Length == 0)
+            {
+                return Array.Empty<byte>();
+            }
             byte bLo;
             byte bHi;
 

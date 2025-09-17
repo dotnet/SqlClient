@@ -4075,7 +4075,10 @@
     <value>指定的加密資料行加密金鑰，包含無效的加密演算法版本 '{0}'。預期的版本為 '{1}'。</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>指定的加密資料行加密金鑰的加密文字長度 {0}，不符合使用 '{2}' 中資料行主要金鑰 (憑證) 時的加密文字長度 {1}。可能是該加密資料行加密金鑰已損毀，或指定的憑證路徑不正確。</value>
+    <value>指定的加密資料行加密金鑰加密文字長度 {0} 與在 '{3}' 中使用資料行主要金鑰 ({2}) 時的加密文字長度 {1} 不符。可能是該加密資料行加密金鑰已損毀，或指定的 {4} 路徑不正確。</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
+    <value>指定的加密資料行加密金鑰加密文字長度 {0} 與在 '{2}' 中使用資料行主要金鑰 (憑證) 時的加密文字長度 {1} 不符。該加密資料行的加密金鑰可能已毀損，或指定的憑證路徑可能不正確。</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
     <value>使用 '{2}' 中的資料行主要金鑰 (非對稱金鑰) 時，指定之加密資料行加密金鑰的加密文字長度 {0} 不符合加密文字長度 {1}。可能是因為加密資料行加密金鑰已毀損，或指定的 Microsoft 密碼編譯服務提供者 (CSP) 路徑不正確。</value>
@@ -4084,7 +4087,10 @@
     <value>使用 '{2}' 中的資料行主要金鑰 (非對稱金鑰) 時，指定之加密資料行加密金鑰的加密文字長度 {0} 不符合加密文字長度 {1}。可能是加密資料行加密金鑰已毀損，或指定的 Microsoft 密碼編譯 API: 新一代密碼編譯 (CNG) 路徑不正確。</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>指定的加密資料行加密金鑰的簽章長度 {0}，不符合使用 '{2}' 中資料行主要金鑰 (憑證) 時的簽章長度 {1}。可能是該加密資料行加密金鑰已損毀，或指定的憑證路徑不正確。</value>
+    <value>指定的加密資料行加密金鑰簽章長度 {0} 與在 '{3}' 中使用資料行主要金鑰 ({2}) 時的簽章長度 {1} 不符。可能是該加密資料行加密金鑰已損毀，或指定的 {4} 路徑不正確。</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
+    <value>指定的加密資料行加密金鑰簽章長度 {0} 與在 '{2}' 中使用資料行主要金鑰 (憑證) 時的簽章長度 {1} 不符。該加密資料行的加密金鑰可能已毀損，或指定的憑證路徑可能不正確。</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
     <value>使用 '{2}' 中的資料行主要金鑰 (非對稱金鑰) 時，指定之加密資料行加密金鑰的特徵標記長度 {0} 不符合特徵標記長度 {1}。可能是加密資料行加密金鑰已毀損，或指定的 Microsoft 密碼編譯服務提供者 (CSP) 路徑不正確。</value>
@@ -4092,11 +4098,14 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>使用 '{2}' 中的資料行主要金鑰 (非對稱金鑰) 時，指定之加密資料行加密金鑰的特徵標記長度 {0} 不符合特徵標記長度 {1}。可能是加密資料行加密金鑰已毀損，或指定的 Microsoft 密碼編譯 API: 新一代密碼編譯 (CNG) 路徑不正確。</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>指定之加密資料行的加密金鑰簽章與從 '{1}' 中之資料行主要金鑰 ({0}) 計算所得的簽章不符。可能是該加密資料行加密金鑰已損毀，或指定的路徑不正確。</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>指定的加密資料行加密金鑰簽章，不符合從 '{0}' 中資料行主要金鑰 (憑證) 計算所得的簽章。可能是該加密資料行加密金鑰已損毀，或指定的路徑不正確。</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>指定的加密資料行加密金鑰特徵標記長度，不符合 '{0}' 中由資料行主要金鑰 (非對稱金鑰) 計算而來的特徵標記長度。可能是因為加密資料行加密金鑰已毀損，或指定的路徑不正確。</value>
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
+    <value>指定之加密資料行的加密金鑰簽章與從 '{0}' 中之資料行主要金鑰 (非對稱金鑰) 計算所得的簽章不符。可能是該加密資料行加密金鑰已損毀，或指定的路徑不正確。</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>金鑰路徑 '{0}' 中所指定的憑證沒有可將資料行加密金鑰加密的私密金鑰。請確認憑證已正確匯入。</value>
