@@ -24,12 +24,13 @@ using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.SqlServer.Server;
 #if NETFRAMEWORK
+using System.Runtime.CompilerServices;
 using System.Security.Permissions;
 using System.Security.Principal;
 #endif
 
 #if NETFRAMEWORK
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey=" + Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
+[assembly: InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey=" + Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 #endif
@@ -930,7 +931,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if ((State & (ConnectionState.Open | ConnectionState.Executing | ConnectionState.Fetching)) > 0)
+                if ((State & (ConnectionState.Open | ConnectionState.Executing | ConnectionState.Fetching)) != 0)
                 {
                     return GetOpenTdsConnection().ServerProcessId;
                 }
