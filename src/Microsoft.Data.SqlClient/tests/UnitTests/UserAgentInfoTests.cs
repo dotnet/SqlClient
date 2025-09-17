@@ -26,7 +26,6 @@ namespace Microsoft.Data.SqlClient.UnitTests
     /// </summary>
     public class UserAgentInfoTests
     {
-#pragma warning disable CS1591 // Test classes do not require XML documentation comments
         // Cached payload is within the 2,047‑byte spec and never null
         [Fact]
         public void CachedPayload_IsNotNull_And_WithinSpecLimit()
@@ -71,7 +70,6 @@ namespace Microsoft.Data.SqlClient.UnitTests
             string actual = UserAgentInfo.TruncateOrDefault(input, max);
             Assert.Equal(expected, actual);
         }
-#pragma warning restore CS1591
 
         // AdjustJsonPayloadSize drops all low‑priority fields when required
 
@@ -297,7 +295,6 @@ namespace Microsoft.Data.SqlClient.UnitTests
             }
         }
 
-#pragma warning disable CS1591 // Test classes do not require XML documentation comments
         // End-to-end test that combines truncation, adjustment, and serialization
         [Fact]
         public void EndToEnd_Truncate_Adjust_Serialize_Works()
@@ -330,6 +327,5 @@ namespace Microsoft.Data.SqlClient.UnitTests
             JsonElement os = root.GetProperty(UserAgentInfoDto.OsJsonKey);
             Assert.Equal(osType, os.GetProperty(UserAgentInfoDto.OsInfo.TypeJsonKey).GetString());
         }
-#pragma warning restore CS1591
     }
 }

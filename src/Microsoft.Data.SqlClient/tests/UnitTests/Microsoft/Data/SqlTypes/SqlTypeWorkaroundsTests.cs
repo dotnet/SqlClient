@@ -8,7 +8,6 @@ using Microsoft.Data.SqlTypes;
 using Xunit;
 
 #nullable enable
-#pragma warning disable CS1591 // Test classes do not require XML documentation comments
 
 namespace Microsoft.Data.SqlClient.UnitTests
 {
@@ -205,5 +204,3 @@ namespace Microsoft.Data.SqlClient.UnitTests
         #endif
     }
 }
-
-#pragma warning restore CS1591

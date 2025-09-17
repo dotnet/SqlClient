@@ -11,7 +11,6 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests
 {
-#pragma warning disable CS1591 // Test classes do not require XML documentation comments
     public class ChannelDbConnectionPoolTest
     {
         private readonly ChannelDbConnectionPool _pool;
@@ -153,5 +152,4 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Throws<NotImplementedException>(() => _pool.TryGetConnection(null!, null!, null!, out _));
         }
     }
-#pragma warning restore CS1591
 }
