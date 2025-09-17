@@ -520,8 +520,19 @@ namespace Microsoft.Data.ProviderBase
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.DeactivateConnection|RES|INFO|CPOOL> {0}, Deactivating", ObjectID);
 
             #if DEBUG
-            int activateCount = Interlocked.Decrement(ref _activateCount);
-            Debug.Assert(activateCount == 0, "activated multiple times?");
+            int origCount, newCount;
+            do
+            {
+                origCount = _activateCount;
+
+                if (origCount == 0)
+                {
+                  break;
+                }
+
+                newCount = origCount - 1;
+            }
+            while (Interlocked.CompareExchange(ref _activateCount, newCount, origCount) != origCount);
             #endif
 
             SqlClientEventSource.Metrics.ExitActiveConnection();
