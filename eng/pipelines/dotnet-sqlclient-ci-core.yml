@@ -117,8 +117,8 @@ stages:
         verbosity: diagnostic
 
   # Build MDS and its NuGet packages.
-  - stage: build_nugets
-    displayName: 'Build NuGet Packages'
+  - stage: build_mds_package
+    displayName: 'Build MDS Package'
 
     # When building MDS via packages, we must depend on the Abstractions 
     # package.
@@ -157,17 +157,12 @@ stages:
       testsTimeout: ${{ parameters.testsTimeout }}
       abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
 
-      # When testing MDS via packages, we must depend on the Abstractions _and_
+      # When testing MDS via packages, we must depend on the Abstractions and
       # MDS packages.
       ${{ if eq(parameters.buildType, 'Package') }}:
         dependsOn:
           - build_abstractions_package_stage
           - build_nugets
-      # When testing MDS via projects, we only depend on the Abstrations
-      # package.
-      ${{ else }}:
-        dependsOn:
-          - build_abstractions_package_stage
 
       ${{if ne(parameters.SNIVersion, '')}}:
         prebuildSteps: # steps to run prior to building and running tests on each job

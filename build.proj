@@ -51,7 +51,8 @@
 
   <!-- Populate all managed projects -->
   <ItemGroup>
-    <AbstractionsPackage Include="src/Microsoft.Data.SqlClient.Extensions/Abstractions/Abstractions.slnx" />
+    <AbstractionsPackage Include="src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
+    <AbstractionsTestPackage Include="src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/AbstractionsTest.csproj" />
     <SqlServerLib Include="**/Microsoft.SqlServer.Server.csproj" />
     <NetFxDriver Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledWindows)' == 'true'" />
     <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
@@ -116,6 +117,28 @@
 
     <MSBuild
       Projects="@(AbstractionsPackage)"
+      Targets="Build"
+      Properties="$(BuildProperties)" />
+  </Target>
+
+  <Target Name="RestoreAbstractionsTestPackage">
+    <PropertyGroup>
+      <BuildProperties Condition="'$(AbstractionsPackageVersion)' != ''">AbstractionsPackageVersion=$(AbstractionsPackageVersion)</BuildProperties>
+    </PropertyGroup>
+
+    <MSBuild
+      Projects="@(AbstractionsTestPackage)"
+      Targets="Restore"
+      Properties="$(BuildProperties)" />
+  </Target>
+
+  <Target Name="BuildAbstractionsTestPackage">
+    <PropertyGroup>
+      <BuildProperties Condition="'$(AbstractionsPackageVersion)' != ''">AbstractionsPackageVersion=$(AbstractionsPackageVersion)</BuildProperties>
+    </PropertyGroup>
+
+    <MSBuild
+      Projects="@(AbstractionsTestPackage)"
       Targets="Build"
       Properties="$(BuildProperties)" />
   </Target>
