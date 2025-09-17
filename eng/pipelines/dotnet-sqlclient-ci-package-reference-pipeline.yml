@@ -63,7 +63,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   default: [1, 2, 3]
 
 - name: abstractionsPackageVersion
-  displayName: Abstractions Package Version Override
+  displayName: Abstractions Package Version
   type: string
   default: 1.0.0
 
@@ -108,7 +108,7 @@ extends:
     abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
-    buildType: Package
+    referenceType: Package
     buildConfiguration: ${{ parameters.buildConfiguration }}
     enableStressTests: ${{ parameters.enableStressTests }}
     testsTimeout: ${{ parameters.testsTimeout }}

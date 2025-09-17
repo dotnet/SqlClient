@@ -4,36 +4,43 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: debug
-    type: boolean
-    default: false
+  - name: abstractionsArtifactName
+    type: string
 
-  - name: testConfigurations
-    type: object
+  - name: abstractionsPackageVersion
+    type: string
 
-  - name: dependsOn
-    type: object
-    default: []
-
-  - name: buildType
-    displayName: 'Build Type'
+  - name: referenceType
     default: Project
     values:
       - Project
       - Package
 
-  - name: abstractionsPackageVersion
-    displayName: Abstractions Package Version Override
-    type: string
-    default: ''
+  - name: debug
+    type: boolean
+    default: false
 
-  - name: prebuildSteps
-    type: stepList
+  - name: dependsOn
+    type: object
     default: []
+
+  - name: mdsArtifactName
+    type: string
+    default: MDS.Artifact
+
+  - name: mdsPackageVersion
+    type: string
   
   - name: postTestJobs
     type: jobList
     default: []
+
+  - name: prebuildSteps
+    type: stepList
+    default: []
+
+  - name: testConfigurations
+    type: object
 
   # The timeout, in minutes, for each test job.
   - name: testsTimeout
@@ -53,14 +60,17 @@ stages:
               - template: ../jobs/ci-run-tests-job.yml@self
                 parameters:
                   debug: ${{ parameters.debug }}
-                  buildType: ${{ parameters.buildType }}
+                  referenceType: ${{ parameters.referenceType }}
                   timeout: ${{ parameters.testsTimeout }}
                   poolName: ${{ config.value.pool }}
                   hostedPool: ${{ eq(config.value.hostedPool, true) }}
                   image: ${{ image.value }}
                   jobDisplayName: ${{ format('{0}_{1}_{2}', replace(targetFramework, '.', '_'), platform, testSet) }}
                   configProperties: ${{ config.value.configProperties }}
-                  abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+                  abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
+                  abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
+                  mdsArtifactName: ${{ parameters.mdsArtifactName }}
+                  mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
                   prebuildSteps: ${{ parameters.prebuildSteps }}
                   targetFramework: ${{ targetFramework }}
                   netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
@@ -80,7 +90,7 @@ stages:
                 - template: ../jobs/ci-run-tests-job.yml@self
                   parameters:
                     debug: ${{ parameters.debug }}
-                    buildType: ${{ parameters.buildType }}
+                    referenceType: ${{ parameters.referenceType }}
                     timeout: ${{ parameters.testsTimeout }}
                     poolName: ${{ config.value.pool }}
                     hostedPool: ${{ eq(config.value.hostedPool, true) }}
@@ -91,7 +101,10 @@ stages:
                       jobDisplayName: ${{ format('{0}_{1}_{2}_{3}', replace(targetFramework, '.', '_'), platform, 'NativeSNI', testSet) }}
                     configProperties: ${{ config.value.configProperties }}
                     useManagedSNI: ${{ useManagedSNI }}
-                    abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+                    abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
+                    abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
+                    mdsArtifactName: ${{ parameters.mdsArtifactName }}
+                    mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
                     prebuildSteps: ${{ parameters.prebuildSteps }}                  
                     targetFramework: ${{ targetFramework }}
                     netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}

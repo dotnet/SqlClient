@@ -8,21 +8,11 @@ parameters:
     type: boolean
     default: false
 
-  - name: artifactName
+  - name: referenceType
     type: string
-    default: Artifacts
-  
-  - name: buildType
-    displayName: 'Build Type'
-    default: Project
     values:
       - Project
       - Package
-
-  - name: abstractionsPackageVersion
-    displayName: Abstractions Package Version Override
-    type: string
-    default: ''
 
 steps:
 - template: ensure-dotnet-version.yml
@@ -42,23 +32,8 @@ steps:
       Get-ChildItem env: | Sort-Object Name
     displayName: 'List Environment Variables [debug]'
 
-- ${{if eq(parameters.buildType, 'Package')}}:
-  - task: DownloadPipelineArtifact@2
-    displayName: 'Download NuGet Package'
-    inputs:
-      buildType: current
-      artifact: ${{parameters.artifactName }}
-      patterns: '**/*.nupkg'
-      targetPath: $(Pipeline.Workspace)/${{parameters.artifactName }}
-
+- ${{if eq(parameters.referenceType, 'Package')}}:
   - template: update-nuget-config-local-feed-step.yml@self
     parameters:
-      downloadedNugetPath: $(Pipeline.Workspace)\${{parameters.artifactName }}
+      downloadedNugetPath: $(Build.SourcesDirectory)/packages
       debug: ${{ parameters.debug }}
-      abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
-
-- ${{ else }}: # project
-  - template: ci-project-build-step.yml@self
-    parameters:
-      build: allNoDocs
-      abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}

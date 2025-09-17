@@ -63,9 +63,12 @@ parameters:
   type: object
   default: [net462, net8.0]
 
-- name: buildType
-  displayName: 'Build Type'
-  default: Project
+# The way we will reference sibling projects in the .csproj files:
+#   Project - use <ProjectReference> references.
+#   Package - use <PackageReference> references to NuGet packages in the
+#             packages/ directory.
+- name: referenceType
+  displayName: 'Reference Type'
   values:
     - Project
     - Package
@@ -122,13 +125,14 @@ stages:
 
     # When building MDS via packages, we must depend on the Abstractions 
     # package.
-    ${{ if eq(parameters.buildType, 'Package') }}:
+    ${{ if eq(parameters.referenceType, 'Package') }}:
       dependsOn:
         - build_abstractions_package_stage
 
     jobs:
     - template: common/templates/jobs/ci-build-nugets-job.yml@self
       parameters:
+        referenceType: ${{ parameters.referenceType }}
         configuration: ${{ parameters.buildConfiguration }}
         abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
         abstractionsArtifactName: $(abstractionsArtifactName)
@@ -144,7 +148,7 @@ stages:
     - template: stages/stress-tests-ci-stage.yml@self
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        dependsOn: [build_nugets]
+        dependsOn: [build_mds_packages_job]
         pipelineArtifactName: $(artifactName)
         mdsPackageVersion: $(NugetPackageVersion)
         ${{ if eq(parameters.debug, 'true') }}:
@@ -153,39 +157,33 @@ stages:
   - template: common/templates/stages/ci-run-tests-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
-      buildType: ${{ parameters.buildType }}
+      referenceType: ${{ parameters.referenceType }}
       testsTimeout: ${{ parameters.testsTimeout }}
+      abstractionsArtifactName: $(abstractionsArtifactName)
       abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
+      mdsArtifactName: $(mdsArtifactName)
+      mdsPackageVersion: $(NugetPackageVersion)
 
       # When testing MDS via packages, we must depend on the Abstractions and
       # MDS packages.
-      ${{ if eq(parameters.buildType, 'Package') }}:
+      ${{ if eq(parameters.referenceType, 'Package') }}:
         dependsOn:
           - build_abstractions_package_stage
           - build_nugets
 
-      ${{if ne(parameters.SNIVersion, '')}}:
-        prebuildSteps: # steps to run prior to building and running tests on each job
+      prebuildSteps: # steps to run prior to building and running tests on each job
+        - ${{if ne(parameters.SNIVersion, '')}}:
           - template: common/templates/steps/override-sni-version.yml@self
             parameters:
               SNIVersion: ${{parameters.SNIVersion}}
               SNIValidationFeed: ${{parameters.SNIValidationFeed}}
-          - template: common/templates/steps/ci-prebuild-step.yml@self
-            parameters:
-              debug: ${{ parameters.debug }}
-              artifactName: $(mdsArtifactName)
-              buildType: ${{ parameters.buildType }}
-              abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
-      ${{else}}:
-        prebuildSteps: # steps to run prior to building and running tests on each job
-          - template: common/templates/steps/ci-prebuild-step.yml@self
-            parameters:
-              debug: ${{ parameters.debug }}
-              artifactName: $(mdsArtifactName)
-              buildType: ${{ parameters.buildType }}
-              abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
 
-      ${{ if eq(parameters.buildType, 'Project') }}: # only run the code coverage job if the build type is project
+        - template: common/templates/steps/ci-prebuild-step.yml@self
+          parameters:
+            debug: ${{ parameters.debug }}
+            referenceType: ${{ parameters.referenceType }}
+
+      ${{ if eq(parameters.referenceType, 'Project') }}: # only run the code coverage job if the build type is project
         postTestJobs: # jobs to run after the tests are done
         - template: common/templates/jobs/ci-code-coverage-job.yml@self
           parameters:

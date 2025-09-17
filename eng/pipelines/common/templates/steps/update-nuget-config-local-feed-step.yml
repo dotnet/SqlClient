@@ -11,15 +11,6 @@ parameters:
   - name: downloadedNugetPath # path to the downloaded nuget files
     type: string
 
-  - name: abstractionsPackageVersion
-    displayName: Abstractions Package Version Override
-    type: string
-    default: ''
-
-  - name: nugetPackageVersion
-    type: string
-    default: $(NugetPackageVersion)
-
 steps:
 - powershell: |
     # Get a list of package sources available
@@ -50,39 +41,3 @@ steps:
       # Display the content of the NuGet.config file
       Get-Content -Path "NuGet.config"
     displayName: 'Read NuGet.config [debug]'
-
-- task: DotNetCoreCLI@2
-  displayName: 'Restore NuGets'
-  inputs:
-    command: 'custom'
-    custom: 'msbuild'
-    arguments: 'build.proj -t:restore -p:AbstractionsPackageVersion=${{parameters.abstractionsPackageVersion}}.$(buildNumber)'
-    feedsToUse: 'select'
-
-- powershell: |
-    $Doc = [xml](Get-Content "./Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj")
-    $parent_xpath = '/Project/ItemGroup/ProjectReference'
-    $node = $Doc.SelectSingleNode($parent_xpath)
-    $parentNode = $node.ParentNode
-    while($node -ne $null) {
-        $node.ParentNode.RemoveChild($node)
-        $node = $Doc.SelectSingleNode($parent_xpath)
-    }
-
-    $parent_xpath = '/Project/ItemGroup/PackageReference[@Include="Microsoft.Data.SqlClient"]'
-    $node = $Doc.SelectSingleNode($parent_xpath)
-    
-    if($node -eq $null){
-        $packagerefnode = $doc.createelement("packagereference")
-        $value = $doc.selectsinglenode('/project/itemgroup/projectreference')
-        $attrinclude = $doc.createattribute("include")
-        $attrinclude.value = "microsoft.data.sqlclient"
-        $packagerefnode.attributes.append($attrinclude)
-        $parentNode.AppendChild($packageRefNode)
-    }
-
-    $currentFolder = Get-Location
-    $filePath = Join-Path $currentFolder "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj"
-    $Doc.Save($filePath)
-  workingDirectory: 'src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider'
-  displayName: 'Update AKV Project Ref to Package Ref (.NET Framework/Core)'

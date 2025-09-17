@@ -4,6 +4,13 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+
+  - name: referenceType
+    type: string
+    values:
+      - Project
+      - Package
+
   - name: poolName
     type: string
     default: $(ci_var_defaultPoolName)
@@ -33,12 +40,11 @@ parameters:
     default: []
 
   - name: abstractionsPackageVersion
-    displayName: Abstractions Package Version Override
     type: string
-    default: ''
 
 jobs:
-- job: build_nugets
+- job: build_mds_packages_job
+  displayName: Build MDS Packages
 
   pool:
     name: ${{parameters.poolName }}
@@ -53,14 +59,14 @@ jobs:
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
-  # Download the Abstractions package artifacts and put them in the packages/
-  # directory in the repo root.  This is where the MDS NuGet.config file will
-  # look for local packages.
-  - task: DownloadPipelineArtifact@2
-    displayName: Download Abstractions Package Artifact
-    inputs:
-      artifactName: ${{ parameters.abstractionsArtifactName }}
-      targetPath: $(Build.SourcesDirectory)/packages
+  # If we're testing in Package mode, download the Abstractions package
+  # artifacts and put them in the packages/ directory in the repo root.
+  - ${{ if eq(parameters.referenceType, 'Package') }}:
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Abstractions Package Artifact
+      inputs:
+        artifactName: ${{ parameters.abstractionsArtifactName }}
+        targetPath: $(Build.SourcesDirectory)/packages
 
   - template: ../steps/ci-project-build-step.yml@self
     parameters:

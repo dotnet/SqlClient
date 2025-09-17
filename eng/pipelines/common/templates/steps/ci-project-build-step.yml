@@ -35,9 +35,8 @@ parameters:
       - allNoDocs
 
   - name: abstractionsPackageVersion
-    displayName: Abstractions Package Version Override
+    displayName: Abstractions Package Version
     type: string
-    default: ''
 
 steps:
 - template: ./ensure-dotnet-version.yml@self
