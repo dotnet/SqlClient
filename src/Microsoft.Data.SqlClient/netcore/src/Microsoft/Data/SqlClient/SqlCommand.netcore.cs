@@ -78,29 +78,5 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ClosedConnectionError();
             }
         }
-
-        private void WaitForAsyncResults(IAsyncResult asyncResult, bool isInternal)
-        {
-            Task completionTask = (Task)asyncResult;
-            if (!asyncResult.IsCompleted)
-            {
-                asyncResult.AsyncWaitHandle.WaitOne();
-            }
-
-            if (_stateObj != null)
-            {
-                _stateObj._networkPacketTaskSource = null;
-            }
-
-            // If this is an internal command we will decrement the count when the End method is actually called by the user.
-            // If we are using Column Encryption and the previous task failed, the async count should have already been fixed up.
-            // There is a generic issue in how we handle the async count because:
-            // a) BeginExecute might or might not clean it up on failure.
-            // b) In EndExecute, we check the task state before waiting and throw if it's failed, whereas if we wait we will always adjust the count.
-            if (!isInternal && (!IsColumnEncryptionEnabled || !completionTask.IsFaulted))
-            {
-                _activeConnection.GetOpenTdsConnection().DecrementAsyncCount();
-            }
-        }
     }
 }
