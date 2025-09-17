@@ -186,7 +186,7 @@ namespace Microsoft.Data.SqlClient
                     if (candidateMethod == authenticationMethod)
                     {
                         _sqlAuthLogger.LogError(nameof(SqlAuthenticationProviderManager), methodName, $"Failed to add provider {GetProviderType(provider)} because a user-defined provider with type {GetProviderType(_providers[authenticationMethod])} already existed for authentication {authenticationMethod}.");
-                        break;
+                        return false; // return here to avoid replacing user-defined provider
                     }
                 }
             }
