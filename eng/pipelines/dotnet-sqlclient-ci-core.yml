@@ -57,6 +57,11 @@ parameters:
   type: string
   default: $(ci_var_defaultPoolName)
 
+# The timeout, in minutes, for each test job.
+- name: testsTimeout
+  type: string
+  default: 90
+
 variables:
   - template: libraries/ci-build-variables.yml@self
 
@@ -78,6 +83,7 @@ stages:
     parameters:
       debug: ${{ parameters.debug }}
       buildType: ${{ parameters.buildType }}
+      testsTimeout: ${{ parameters.testsTimeout }}
       ${{ if eq(parameters.buildType, 'Package') }}:
         dependsOn: build_nugets
 
@@ -457,28 +463,5 @@ stages:
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
             UserManagedIdentityClientId: $(UserManagedIdentityClientId)
-            LocalDbAppName: $(LocalDbAppName)
-            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
-
-    # Azure Sql Server - Mac
-        mac_azure_sql:
-          pool: $(defaultHostedPoolName)
-          hostedPool: true
-          images:
-            MacOSLatest_Azure_Sql: macos-latest
-          TargetFrameworks: ${{parameters.targetFrameworksLinux }}
-          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
-          buildPlatforms: [AnyCPU]
-          testSets: ${{parameters.testSets }}
-          useManagedSNI: [true]
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
-          configSqlFor: azure
-          operatingSystem: Mac
-          configProperties:
-            # config.json properties
-            TCPConnectionString: $(AZURE_DB_SP_TCP_CONN_STRING)
-            NPConnectionString: $(AZURE_DB_SP_NP_CONN_STRING)
-            SupportsIntegratedSecurity: false
-            ManagedIdentitySupported: false
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)

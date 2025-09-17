@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void UTF8databaseTest()
         {
             const string letters = @"!\#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\u007f€\u0081‚ƒ„…†‡ˆ‰Š‹Œ\u008dŽ\u008f\u0090‘’“”•–—˜™š›œ\u009džŸ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
-            string dbName = DataTestUtility.GetUniqueNameForSqlServer("UTF8databaseTest", false);
+            string dbName = DataTestUtility.GetLongName("UTF8databaseTest", false);
             string tblName = "Table1";
 
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
