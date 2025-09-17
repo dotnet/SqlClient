@@ -27,8 +27,7 @@ The following build targets are defined in `build.proj`:
 |`BuildNetFx`|Builds the .NET Framework driver for all target frameworks.|
 |`BuildTestsNetCore`|Builds tests for the .NET driver.|
 |`BuildTestsNetFx`|Builds tests for the .NET Framework driver.|
-|`Clean`|Cleans generated files, except for NuGet packages published to `packages/`.|
-|`CleanAll`|Cleans all generated files.|
+|`Clean`|Cleans all generated files.|
 |`Restore`|Restores NuGet packages.|
 |`RunTests`|Runs the unit, functional, and manual tests for the .NET Framework and .NET drivers|
 |`RunUnitTests`|Runs just the unit tests for the .NET Framework and .NET drivers|

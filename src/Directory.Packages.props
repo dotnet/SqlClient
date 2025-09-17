@@ -7,11 +7,17 @@
   <!-- ===================================================================== -->
   <!-- Shared Dependencies -->
 
+  <!-- Sibling Packages -->
+  <ItemGroup Condition="$(ReferenceType) == 'Package'">
+    <PackageVersion
+      Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
+      Version="$(AbstractionsPackageVersion)" />
+  </ItemGroup>
+
   <!-- Published -->
   <ItemGroup>
     <!-- MDS and AKV -->
     <PackageVersion Include="Azure.Core" Version="1.47.1" />
-    <PackageVersion Include="Microsoft.Data.SqlClient.Extensions.Abstractions" Version="$(AbstractionsPackageVersion)" />
   </ItemGroup>
 
   <!-- Published - Target Framework Specific Dependencies -->

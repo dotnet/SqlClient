@@ -119,7 +119,13 @@ stages:
   # Build MDS and its NuGet packages.
   - stage: build_nugets
     displayName: 'Build NuGet Packages'
-    dependsOn: build_abstractions_package_stage
+
+    # When building MDS via packages, we must depend on the Abstractions 
+    # package.
+    ${{ if eq(parameters.buildType, 'Package') }}:
+      dependsOn:
+        - build_abstractions_package_stage
+
     jobs:
     - template: common/templates/jobs/ci-build-nugets-job.yml@self
       parameters:

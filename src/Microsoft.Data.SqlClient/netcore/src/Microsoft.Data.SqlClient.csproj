@@ -1056,7 +1056,6 @@
     <PackageReference Include="Azure.Core" />
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
-    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
@@ -1067,6 +1066,19 @@
 
     <!-- Transitive dependencies that would otherwise bring in older, vulnerable versions. -->
     <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+
+  <!--
+    Refer to the Abstractions package via project or package reference
+    depending on our build parameters.
+  -->
+  <ItemGroup>
+    <ProjectReference
+      Include="../../../Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"
+      Condition="'$(ReferenceType)' == 'Project'" />
+    <PackageReference
+      Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
+      Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
 
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
