@@ -25,58 +25,5 @@ namespace Microsoft.Data.SqlClient
     // TODO: Add designer attribute when Microsoft.VSDesigner.Data.VS.SqlCommandDesigner uses Microsoft.Data.SqlClient
     public sealed partial class SqlCommand : DbCommand, ICloneable
     {
-        private void VerifyEndExecuteState(Task completionTask, string endMethod, bool fullCheckForColumnEncryption = false)
-        {
-            Debug.Assert(completionTask != null);
-            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.VerifyEndExecuteState | API | ObjectId {0}, Client Connection Id {1}, MARS={2}, AsyncCommandInProgress={3}",
-                                                    _activeConnection?.ObjectID, _activeConnection?.ClientConnectionId,
-                                                    _activeConnection?.Parser?.MARSOn, _activeConnection?.AsyncCommandInProgress);
-
-            if (completionTask.IsCanceled)
-            {
-                if (_stateObj != null)
-                {
-                    _stateObj.Parser.State = TdsParserState.Broken; // We failed to respond to attention, we have to quit!
-                    _stateObj.Parser.Connection.BreakConnection();
-                    _stateObj.Parser.ThrowExceptionAndWarning(_stateObj, this);
-                }
-                else
-                {
-                    Debug.Assert(_reconnectionCompletionSource == null || _reconnectionCompletionSource.Task.IsCanceled, "ReconnectCompletionSource should be null or cancelled");
-                    throw SQL.CR_ReconnectionCancelled();
-                }
-            }
-            else if (completionTask.IsFaulted)
-            {
-                throw completionTask.Exception.InnerException;
-            }
-
-            // If transparent parameter encryption was attempted, then we need to skip other checks like those on EndMethodName
-            // since we want to wait for async results before checking those fields.
-            if (IsColumnEncryptionEnabled && !fullCheckForColumnEncryption)
-            {
-                if (_activeConnection.State != ConnectionState.Open)
-                {
-                    // If the connection is not 'valid' then it was closed while we were executing
-                    throw ADP.ClosedConnectionError();
-                }
-
-                return;
-            }
-
-            if (CachedAsyncState.EndMethodName == null)
-            {
-                throw ADP.MethodCalledTwice(endMethod);
-            }
-            if (endMethod != CachedAsyncState.EndMethodName)
-            {
-                throw ADP.MismatchedAsyncResult(CachedAsyncState.EndMethodName, endMethod);
-            }
-            if ((_activeConnection.State != ConnectionState.Open) || (!CachedAsyncState.IsActiveConnectionValid(_activeConnection)))
-            {
-                // If the connection is not 'valid' then it was closed while we were executing
-                throw ADP.ClosedConnectionError();
-            }
-        }
     }
 }

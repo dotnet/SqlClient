@@ -3016,6 +3016,74 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private void VerifyEndExecuteState(
+            Task completionTask,
+            string endMethod,
+            bool fullCheckForColumnEncryption = false)
+        {
+            Debug.Assert(completionTask is not null);
+
+            SqlClientEventSource.Log.TryTraceEvent(
+                $"SqlCommand.VerifyEndExecuteState | API | " +
+                $"Object Id {ObjectID}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"MARS={_activeConnection?.Parser?.MARSOn}, " +
+                $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
+
+            if (completionTask.IsCanceled)
+            {
+                if (_stateObj is not null)
+                {
+                    // We failed to respond to attention, we have to quit!
+                    _stateObj.Parser.State = TdsParserState.Broken;
+                    _stateObj.Parser.Connection.BreakConnection();
+                    _stateObj.Parser.ThrowExceptionAndWarning(_stateObj, this);
+                }
+                else
+                {
+                    Debug.Assert(_reconnectionCompletionSource is null || _reconnectionCompletionSource.Task.IsCanceled,
+                        "ReconnectCompletionSource should be null or cancelled");
+                    throw SQL.CR_ReconnectionCancelled();
+                }
+            }
+            else if (completionTask.IsFaulted)
+            {
+                throw completionTask.Exception.InnerException;
+            }
+
+            // If transparent parameter encryption was attempted, then we need to skip other checks
+            // like those on EndMethodName since we want to wait for async results before checking
+            // those fields.
+            if (IsColumnEncryptionEnabled && !fullCheckForColumnEncryption)
+            {
+                if (_activeConnection?.State is not ConnectionState.Open)
+                {
+                    // If the connection is not "valid" then it was closed while we were executing
+                    throw ADP.ClosedConnectionError();
+                }
+
+                return;
+            }
+
+            if (CachedAsyncState.EndMethodName is null)
+            {
+                throw ADP.MethodCalledTwice(endMethod);
+            }
+
+            if (CachedAsyncState.EndMethodName != endMethod)
+            {
+                throw ADP.MismatchedAsyncResult(CachedAsyncState.EndMethodName, endMethod);
+            }
+
+            if (_activeConnection?.State is not ConnectionState.Open ||
+                !CachedAsyncState.IsActiveConnectionValid(_activeConnection))
+            {
+                // @TODO: Why do we have multiple checks for an "invalid" connection?
+                // If the connection is not 'valid' then it was closed while we were executing
+                throw ADP.ClosedConnectionError();
+            }
+        }
+
         private void WaitForAsyncResults(IAsyncResult asyncResult, bool isInternal)
         {
             Task completionTask = (Task)asyncResult;
