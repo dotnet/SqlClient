@@ -12,7 +12,6 @@ parameters:
 
   - name: publishSymbols
     type: string
-    default: '$(PublishSymbols)'
 
   - name: symbolsVersion
     type: string

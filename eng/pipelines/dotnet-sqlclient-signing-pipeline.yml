@@ -38,7 +38,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 - name: 'debug'
   displayName: 'Enable debug output'
   type: boolean
-  default: true
+  default: false
 
 - name: publishSymbols
   displayName: 'Publish symbols'
