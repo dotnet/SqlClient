@@ -41,46 +41,86 @@ public sealed class NativeSerializationTest : IDisposable
     public static TheoryData<object, byte[]> SerializedNonNullPrimitiveTypeValues() =>
         new()
         {
-            { new BoolWrapperStruct { Field1 = true },
-                new byte[] { 0x01 } },
-            { new ByteWrapperStruct { Field1 = 0x20 },
-                new byte[] { 0x20 } },
-            { new SByteWrapperStruct { Field1 = -0x1 },
-                new byte[] { 0x7F } },
-            { new UShortWrapperStruct { Field1 = 0x8000 },
-                new byte[] { 0x80, 0x00 } },
-            { new ShortWrapperStruct { Field1 = 0x1234 },
-                new byte[] { 0x92, 0x34 } },
-            { new UIntWrapperStruct { Field1 = 0xFFFFFFFF },
-                new byte[] { 0xFF, 0xFF, 0xFF, 0xFF } },
-            { new IntWrapperStruct { Field1 = -0x12345678 },
-                new byte[] { 0x6D, 0xCB, 0xA9, 0x88 } },
-            { new ULongWrapperStruct { Field1 = ulong.MaxValue },
-                new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF } },
-            { new LongWrapperStruct { Field1 = long.MinValue },
-                new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
-            { new FloatWrapperStruct { Field1 = -0 },
-                new byte[] { 0x80, 0x00, 0x00, 0x00 } },
-            { new DoubleWrapperStruct { Field1 = Math.PI },
-                new byte[] { 0xC0, 0x09, 0x21, 0xFB, 0x54, 0x44, 0x2D, 0x18 } },
-            { new SqlByteWrapperStruct { Field1 = 0x20 },
-                new byte[] { 0x01, 0x20 } },
-            { new SqlInt16WrapperStruct { Field1 = 0x1234 },
-                new byte[] { 0x01, 0x92, 0x34 } },
-            { new SqlInt32WrapperStruct { Field1 = -0x12345678 },
-                new byte[] { 0x01, 0x6D, 0xCB, 0xA9, 0x88 } },
-            { new SqlInt64WrapperStruct { Field1 = long.MinValue },
-                new byte[] { 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
-            { new SqlBooleanWrapperStruct { Field1 = false },
-                new byte[] { 0x01 } },
-            { new SqlSingleWrapperStruct { Field1 = -1 },
-                new byte[] { 0x01, 0x40, 0x7F, 0xFF, 0xFF } },
-            { new SqlDoubleWrapperStruct { Field1 = -Math.PI },
-                new byte[] { 0x01, 0x3F, 0xF6, 0xDE, 0x04, 0xAB, 0xBB, 0xD2, 0xE7 } },
-            { new SqlDateTimeWrapperStruct { Field1 = new DateTime(2000, 1, 1, 12, 34, 56, 500) },
-                new byte[] { 0x01, 0x80, 0x00, 0x8E, 0xAC, 0x80, 0xCF, 0x59, 0xD6 } },
-            { new SqlMoneyWrapperStruct { Field1 = 1.10m },
-                new byte[] { 0x01, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2A, 0xF8 } }
+            {
+                new BoolWrapperStruct { Field1 = true },
+                new byte[] { 0x01 }
+            },
+            {
+                new ByteWrapperStruct { Field1 = 0x20 },
+                new byte[] { 0x20 }
+            },
+            {
+                new SByteWrapperStruct { Field1 = -0x1 },
+                new byte[] { 0x7F }
+            },
+            {
+                new UShortWrapperStruct { Field1 = 0x8000 },
+                new byte[] { 0x80, 0x00 }
+            },
+            {
+                new ShortWrapperStruct { Field1 = 0x1234 },
+                new byte[] { 0x92, 0x34 }
+            },
+            {
+                new UIntWrapperStruct { Field1 = 0xFFFFFFFF },
+                new byte[] { 0xFF, 0xFF, 0xFF, 0xFF }
+            },
+            {
+                new IntWrapperStruct { Field1 = -0x12345678 },
+                new byte[] { 0x6D, 0xCB, 0xA9, 0x88 }
+            },
+            {
+                new ULongWrapperStruct { Field1 = ulong.MaxValue },
+                new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }
+            },
+            {
+                new LongWrapperStruct { Field1 = long.MinValue },
+                new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+            },
+            {
+                new FloatWrapperStruct { Field1 = -0 },
+                new byte[] { 0x80, 0x00, 0x00, 0x00 }
+            },
+            {
+                new DoubleWrapperStruct { Field1 = Math.PI },
+                new byte[] { 0xC0, 0x09, 0x21, 0xFB, 0x54, 0x44, 0x2D, 0x18 }
+            },
+            {
+                new SqlByteWrapperStruct { Field1 = 0x20 },
+                new byte[] { 0x01, 0x20 }
+            },
+            {
+                new SqlInt16WrapperStruct { Field1 = 0x1234 },
+                new byte[] { 0x01, 0x92, 0x34 }
+            },
+            {
+                new SqlInt32WrapperStruct { Field1 = -0x12345678 },
+                new byte[] { 0x01, 0x6D, 0xCB, 0xA9, 0x88 }
+            },
+            {
+                new SqlInt64WrapperStruct { Field1 = long.MinValue },
+                new byte[] { 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+            },
+            {
+                new SqlBooleanWrapperStruct { Field1 = false },
+                new byte[] { 0x01 }
+            },
+            {
+                new SqlSingleWrapperStruct { Field1 = -1 },
+                new byte[] { 0x01, 0x40, 0x7F, 0xFF, 0xFF }
+            },
+            {
+                new SqlDoubleWrapperStruct { Field1 = -Math.PI },
+                new byte[] { 0x01, 0x3F, 0xF6, 0xDE, 0x04, 0xAB, 0xBB, 0xD2, 0xE7 }
+            },
+            {
+                new SqlDateTimeWrapperStruct { Field1 = new DateTime(2000, 1, 1, 12, 34, 56, 500) },
+                new byte[] { 0x01, 0x80, 0x00, 0x8E, 0xAC, 0x80, 0xCF, 0x59, 0xD6 }
+            },
+            {
+                new SqlMoneyWrapperStruct { Field1 = 1.10m },
+                new byte[] { 0x01, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2A, 0xF8 }
+            }
         };
 
     /// <summary>
@@ -90,66 +130,206 @@ public sealed class NativeSerializationTest : IDisposable
     public static TheoryData<object, byte[]> SerializedNestedNonNullPrimitiveTypeValues() =>
         new()
         {
-            { new NestedBoolWrapperStruct { Field1 = true, Field2 = new BoolWrapperStruct { Field1 = false } },
-                new byte[] { 0x01,
-                    0x00 } },
-            { new NestedByteWrapperStruct { Field1 = 0x20, Field2 = new ByteWrapperStruct { Field1 = 0x30 } },
-                new byte[] { 0x20,
-                    0x30 } },
-            { new NestedSByteWrapperStruct { Field1 = -0x01, Field2 = new SByteWrapperStruct { Field1 = 0x01 } },
-                new byte[] { 0x7F,
-                    0x81 } },
-            { new NestedUShortWrapperStruct { Field1 = 0x8000, Field2 = new UShortWrapperStruct { Field1 = 0x8014 } },
-                new byte[] { 0x80, 0x00,
-                    0x80, 0x14 } },
-            { new NestedShortWrapperStruct { Field1 = 0x1234, Field2 = new ShortWrapperStruct { Field1 = 0x4321 } },
-                new byte[] { 0x92, 0x34,
-                    0xC3, 0x21 } },
-            { new NestedUIntWrapperStruct { Field1 = 0xFFFFFFFF, Field2 = new UIntWrapperStruct { Field1 = 0x00000000 } },
-                new byte[] { 0xFF, 0xFF, 0xFF, 0xFF,
-                    0x00, 0x00, 0x00, 0x00 } },
-            { new NestedIntWrapperStruct { Field1 = -0x12345678, Field2 = new IntWrapperStruct { Field1 = 0x12345678 } },
-                new byte[] { 0x6D, 0xCB, 0xA9, 0x88,
-                    0x92, 0x34, 0x56, 0x78 } },
-            { new NestedULongWrapperStruct { Field1 = ulong.MaxValue, Field2 = new ULongWrapperStruct { Field1 = long.MaxValue } },
-                new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-                    0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF } },
-            { new NestedLongWrapperStruct { Field1 = long.MinValue, Field2 = new LongWrapperStruct { Field1 = long.MaxValue } },
-                new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF } },
-            { new NestedFloatWrapperStruct { Field1 = -0, Field2 = new FloatWrapperStruct { Field1 = +0 } },
-                new byte[] { 0x80, 0x00, 0x00, 0x00,
-                    0x80, 0x00, 0x00, 0x00 } },
-            { new NestedDoubleWrapperStruct { Field1 = Math.PI, Field2 = new DoubleWrapperStruct { Field1 = Math.PI } },
-                new byte[] { 0xC0, 0x09, 0x21, 0xFB, 0x54, 0x44, 0x2D, 0x18,
-                    0xC0, 0x09, 0x21, 0xFB, 0x54, 0x44, 0x2D, 0x18 } },
-            { new NestedSqlByteWrapperStruct { Field1 = 0x20, Field2 = new SqlByteWrapperStruct { Field1 = 0x30 } },
-                new byte[] { 0x01, 0x20,
-                    0x01, 0x30 } },
-            { new NestedSqlInt16WrapperStruct { Field1 = 0x1234, Field2 = new SqlInt16WrapperStruct { Field1 = 0x4321 } },
-                new byte[] { 0x01, 0x92, 0x34,
-                    0x01, 0xC3, 0x21 } },
-            { new NestedSqlInt32WrapperStruct { Field1 = -0x12345678, Field2 = new SqlInt32WrapperStruct { Field1 = 0x12345678 } },
-                new byte[] { 0x01, 0x6D, 0xCB, 0xA9, 0x88,
-                    0x01, 0x92, 0x34, 0x56, 0x78 } },
-            { new NestedSqlInt64WrapperStruct { Field1 = long.MinValue, Field2 = new SqlInt64WrapperStruct { Field1 = long.MaxValue } },
-                new byte[] { 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x01, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF } },
-            { new NestedSqlBooleanWrapperStruct { Field1 = false, Field2 = new SqlBooleanWrapperStruct { Field1 = true } },
-                new byte[] { 0x01,
-                    0x02 } },
-            { new NestedSqlSingleWrapperStruct { Field1 = -0, Field2 = new SqlSingleWrapperStruct { Field1 = +0 } },
-                new byte[] { 0x01, 0x80, 0x00, 0x00, 0x00,
-                    0x01, 0x80, 0x00, 0x00, 0x00 } },
-            { new NestedSqlDoubleWrapperStruct { Field1 = Math.PI, Field2 = new SqlDoubleWrapperStruct { Field1 = Math.PI } },
-                new byte[] { 0x01, 0xC0, 0x09, 0x21, 0xFB, 0x54, 0x44, 0x2D, 0x18,
-                    0x01, 0xC0, 0x09, 0x21, 0xFB, 0x54, 0x44, 0x2D, 0x18 } },
-            { new NestedSqlDateTimeWrapperStruct { Field1 = new DateTime(2000, 1, 1, 12, 34, 56, 500), Field2 = new SqlDateTimeWrapperStruct { Field1 = new DateTime(2000, 1, 1) } },
-                new byte[] { 0x01, 0x80, 0x00, 0x8E, 0xAC, 0x80, 0xCF, 0x59, 0xD6,
-                    0x01, 0x80, 0x00, 0x8E, 0xAC, 0x80, 0x00, 0x00, 0x00 } },
-            { new NestedSqlMoneyWrapperStruct { Field1 = 1.10m, Field2 = new SqlMoneyWrapperStruct { Field1 = -2.55m } },
-                new byte[] { 0x01, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2A, 0xF8,
-                    0x01, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x9C, 0x64 } }
+            {
+                new NestedBoolWrapperStruct { Field1 = true, Field2 = new BoolWrapperStruct { Field1 = false } },
+                new byte[]
+                {
+                    // Field1
+                    0x01,
+                    // Field2
+                    0x00
+                }
+            },
+            {
+                new NestedByteWrapperStruct { Field1 = 0x20, Field2 = new ByteWrapperStruct { Field1 = 0x30 } },
+                new byte[]
+                {
+                    // Field1
+                    0x20,
+                    // Field2
+                    0x30
+                }
+            },
+            {
+                new NestedSByteWrapperStruct { Field1 = -0x01, Field2 = new SByteWrapperStruct { Field1 = 0x01 } },
+                new byte[]
+                {
+                    // Field1
+                    0x7F,
+                    // Field2
+                    0x81
+                }
+            },
+            {
+                new NestedUShortWrapperStruct { Field1 = 0x8000, Field2 = new UShortWrapperStruct { Field1 = 0x8014 } },
+                new byte[]
+                {
+                    // Field1
+                    0x80, 0x00,
+                    // Field2.Field1
+                    0x80, 0x14
+                }
+            },
+            {
+                new NestedShortWrapperStruct { Field1 = 0x1234, Field2 = new ShortWrapperStruct { Field1 = 0x4321 } },
+                new byte[]
+                {
+                    // Field1
+                    0x92, 0x34,
+                    // Field2.Field1
+                    0xC3, 0x21
+                }
+            },
+            {
+                new NestedUIntWrapperStruct { Field1 = 0xFFFFFFFF, Field2 = new UIntWrapperStruct { Field1 = 0x00000000 } },
+                new byte[]
+                {
+                    // Field1
+                    0xFF, 0xFF, 0xFF, 0xFF,
+                    // Field2.Field1
+                    0x00, 0x00, 0x00, 0x00
+                }
+            },
+            {
+                new NestedIntWrapperStruct { Field1 = -0x12345678, Field2 = new IntWrapperStruct { Field1 = 0x12345678 } },
+                new byte[]
+                {
+                    /// Field1
+                    0x6D, 0xCB, 0xA9, 0x88,
+                    // Field2.Field1
+                    0x92, 0x34, 0x56, 0x78
+                }
+            },
+            {
+                new NestedULongWrapperStruct { Field1 = ulong.MaxValue, Field2 = new ULongWrapperStruct { Field1 = long.MaxValue } },
+                new byte[]
+                {
+                    // Field1
+                    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                    // Field2.Field1
+                    0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+                }
+            },
+            {
+                new NestedLongWrapperStruct { Field1 = long.MinValue, Field2 = new LongWrapperStruct { Field1 = long.MaxValue } },
+                new byte[]
+                {
+                    // Field1
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    // Field2.Field1
+                    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+                }
+            },
+            {
+                new NestedFloatWrapperStruct { Field1 = -0, Field2 = new FloatWrapperStruct { Field1 = +0 } },
+                new byte[]
+                {
+                    // Field1
+                    0x80, 0x00, 0x00, 0x00,
+                    // Field2.Field1
+                    0x80, 0x00, 0x00, 0x00
+                }
+            },
+            {
+                new NestedDoubleWrapperStruct { Field1 = Math.PI, Field2 = new DoubleWrapperStruct { Field1 = Math.PI } },
+                new byte[]
+                {
+                    // Field1
+                    0xC0, 0x09, 0x21, 0xFB, 0x54, 0x44, 0x2D, 0x18,
+                    // Field2.Field1
+                    0xC0, 0x09, 0x21, 0xFB, 0x54, 0x44, 0x2D, 0x18
+                }
+            },
+            {
+                new NestedSqlByteWrapperStruct { Field1 = 0x20, Field2 = new SqlByteWrapperStruct { Field1 = 0x30 } },
+                new byte[]
+                {
+                    // Field1
+                    0x01, 0x20,
+                    // Field2.Field1
+                    0x01, 0x30
+                }
+            },
+            {
+                new NestedSqlInt16WrapperStruct { Field1 = 0x1234, Field2 = new SqlInt16WrapperStruct { Field1 = 0x4321 } },
+                new byte[]
+                {
+                    // Field1
+                    0x01, 0x92, 0x34,
+                    // Field2.Field1
+                    0x01, 0xC3, 0x21
+                }
+            },
+            {
+                new NestedSqlInt32WrapperStruct { Field1 = -0x12345678, Field2 = new SqlInt32WrapperStruct { Field1 = 0x12345678 } },
+                new byte[]
+                {
+                    // Field1
+                    0x01, 0x6D, 0xCB, 0xA9, 0x88,
+                    // Field2.Field1
+                    0x01, 0x92, 0x34, 0x56, 0x78
+                }
+            },
+            {
+                new NestedSqlInt64WrapperStruct { Field1 = long.MinValue, Field2 = new SqlInt64WrapperStruct { Field1 = long.MaxValue } },
+                new byte[]
+                {
+                    // Field1
+                    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    // Field2.Field1
+                    0x01, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+                }
+            },
+            {
+                new NestedSqlBooleanWrapperStruct { Field1 = false, Field2 = new SqlBooleanWrapperStruct { Field1 = true } },
+                new byte[]
+                {
+                    // Field1
+                    0x01,
+                    // Field2.Field1
+                    0x02
+                }
+            },
+            {
+                new NestedSqlSingleWrapperStruct { Field1 = -0, Field2 = new SqlSingleWrapperStruct { Field1 = +0 } },
+                new byte[]
+                {
+                    // Field1
+                    0x01, 0x80, 0x00, 0x00, 0x00,
+                    // Field2.Field1
+                    0x01, 0x80, 0x00, 0x00, 0x00
+                }
+            },
+            {
+                new NestedSqlDoubleWrapperStruct { Field1 = Math.PI, Field2 = new SqlDoubleWrapperStruct { Field1 = Math.PI } },
+                new byte[]
+                {
+                    // Field1
+                    0x01, 0xC0, 0x09, 0x21, 0xFB, 0x54, 0x44, 0x2D, 0x18,
+                    // Field2.Field1
+                    0x01, 0xC0, 0x09, 0x21, 0xFB, 0x54, 0x44, 0x2D, 0x18
+                }
+            },
+            {
+                new NestedSqlDateTimeWrapperStruct { Field1 = new DateTime(2000, 1, 1, 12, 34, 56, 500), Field2 = new SqlDateTimeWrapperStruct { Field1 = new DateTime(2000, 1, 1) } },
+                new byte[]
+                {
+                    // Field1
+                    0x01, 0x80, 0x00, 0x8E, 0xAC, 0x80, 0xCF, 0x59, 0xD6,
+                    // Field2.Field1
+                    0x01, 0x80, 0x00, 0x8E, 0xAC, 0x80, 0x00, 0x00, 0x00
+                }
+            },
+            {
+                new NestedSqlMoneyWrapperStruct { Field1 = 1.10m, Field2 = new SqlMoneyWrapperStruct { Field1 = -2.55m } },
+                new byte[]
+                {
+                    // Field1
+                    0x01, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2A, 0xF8,
+                    // Field2.Field1
+                    0x01, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x9C, 0x64
+                }
+            }
         };
 
     /// <summary>
@@ -159,24 +339,42 @@ public sealed class NativeSerializationTest : IDisposable
     public static TheoryData<object, byte[]> SerializedNullPrimitiveTypeValues() =>
         new()
         {
-            { new SqlByteWrapperStruct { Field1 = SqlByte.Null },
-                new byte[] { 0x00, 0x00 } },
-            { new SqlInt16WrapperStruct { Field1 = SqlInt16.Null },
-                new byte[] { 0x00, 0x80, 0x00 } },
-            { new SqlInt32WrapperStruct { Field1 = SqlInt32.Null },
-                new byte[] { 0x00, 0x80, 0x00, 0x00, 0x00 } },
-            { new SqlInt64WrapperStruct { Field1 = SqlInt64.Null },
-                new byte[] { 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
-            { new SqlBooleanWrapperStruct { Field1 = SqlBoolean.Null },
-                new byte[] { 0x00 } },
-            { new SqlSingleWrapperStruct { Field1 = SqlSingle.Null },
-                new byte[] { 0x00, 0x80, 0x00, 0x00, 0x00 } },
-            { new SqlDoubleWrapperStruct { Field1 = SqlDouble.Null },
-                new byte[] { 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
-            { new SqlDateTimeWrapperStruct { Field1 = SqlDateTime.Null },
-                new byte[] { 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00 } },
-            { new SqlMoneyWrapperStruct { Field1 = SqlMoney.Null },
-                new byte[] { 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } }
+            {
+                new SqlByteWrapperStruct { Field1 = SqlByte.Null },
+                new byte[] { 0x00, 0x00 }
+            },
+            {
+                new SqlInt16WrapperStruct { Field1 = SqlInt16.Null },
+                new byte[] { 0x00, 0x80, 0x00 }
+            },
+            {
+                new SqlInt32WrapperStruct { Field1 = SqlInt32.Null },
+                new byte[] { 0x00, 0x80, 0x00, 0x00, 0x00 }
+            },
+            {
+                new SqlInt64WrapperStruct { Field1 = SqlInt64.Null },
+                new byte[] { 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+            },
+            {
+                new SqlBooleanWrapperStruct { Field1 = SqlBoolean.Null },
+                new byte[] { 0x00 }
+            },
+            {
+                new SqlSingleWrapperStruct { Field1 = SqlSingle.Null },
+                new byte[] { 0x00, 0x80, 0x00, 0x00, 0x00 }
+            },
+            {
+                new SqlDoubleWrapperStruct { Field1 = SqlDouble.Null },
+                new byte[] { 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+            },
+            {
+                new SqlDateTimeWrapperStruct { Field1 = SqlDateTime.Null },
+                new byte[] { 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00 }
+            },
+            {
+                new SqlMoneyWrapperStruct { Field1 = SqlMoney.Null },
+                new byte[] { 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+            }
         };
 
     /// <summary>
