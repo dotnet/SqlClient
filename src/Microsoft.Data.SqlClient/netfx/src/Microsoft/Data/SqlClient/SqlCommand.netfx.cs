@@ -103,17 +103,5 @@ namespace Microsoft.Data.SqlClient
                 _activeConnection.GetOpenTdsConnection().DecrementAsyncCount();
             }
         }
-
-        private void ThrowIfReconnectionHasBeenCanceled()
-        {
-            if (_stateObj == null)
-            {
-                var reconnectionCompletionSource = _reconnectionCompletionSource;
-                if (reconnectionCompletionSource != null && reconnectionCompletionSource.Task.IsCanceled)
-                {
-                    throw SQL.CR_ReconnectionCancelled();
-                }
-            }
-        }
     }
 }

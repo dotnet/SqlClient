@@ -2830,6 +2830,19 @@ namespace Microsoft.Data.SqlClient
             rpc.userParams = parameters;
         }
 
+        private void ThrowIfReconnectionHasBeenCanceled()
+        {
+            if (_stateObj is not null)
+            {
+                return;
+            }
+
+            if (_reconnectionCompletionSource?.Task?.IsCanceled ?? false)
+            {
+                throw SQL.CR_ReconnectionCancelled();
+            }
+        }
+
         // @TODO: This method *needs* to be decomposed.
         private bool TriggerInternalEndAndRetryIfNecessary(
             CommandBehavior behavior,
