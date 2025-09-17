@@ -2078,6 +2078,68 @@ namespace Microsoft.Data.SqlClient
         #endif
 
         /// <summary>
+        /// User value in this format: [server].[database].[schema].[sp_foo];1 This function should
+        /// only be passed "[sp_foo];1". This function uses a pretty simple parser that doesn't do
+        /// any validation. Ideally, we would have support from the server rather than us having to
+        /// do this.
+        /// </summary>
+        // @TODO: Verify that this method needs to exist, and needs to exist in this class.
+        private static string UnquoteProcedureName(string name, out object groupNumber)
+        {
+            groupNumber = null; // Out param - initialize value to no value.
+            string sproc = name;
+
+            if (sproc != null)
+            {
+                if (char.IsDigit(sproc[sproc.Length - 1]))
+                {
+                    // If last char is a digit, parse.
+                    int semicolon = sproc.LastIndexOf(';');
+                    if (semicolon != -1)
+                    {
+                        // If we found a semicolon, obtain the integer.
+                        string part = sproc.Substring(semicolon + 1);
+                        int number = 0;
+                        if (int.TryParse(part, out number))
+                        {
+                            // No checking, just fail if this doesn't work.
+                            groupNumber = number;
+                            sproc = sproc.Substring(0, semicolon);
+                        }
+                    }
+                }
+                sproc = UnquoteProcedurePart(sproc);
+            }
+
+            return sproc;
+        }
+
+        //
+        /// <summary>
+        /// If the user part is quoted, remove first and last brackets and then unquote any right
+        /// square brackets in the procedure.  This is a very simple parser that performs no
+        /// validation. As with the function below, ideally we should have support from the server
+        /// for this.
+        /// </summary>
+        // @TODO: Verify that this method needs to exist, and needs to exist in this class.
+        private static string UnquoteProcedurePart(string part)
+        {
+            if (part is not null && 2 <= part.Length)
+            {
+                if (part[0] == '[' && part[part.Length - 1] == ']')
+                {
+                    // strip outer '[' & ']'
+                    part = part.Substring(1, part.Length - 2);
+
+                    // undo quoted "]" from "]]" to "]"
+                    part = part.Replace("]]", "]");
+                }
+            }
+
+            return part;
+        }
+
+        /// <summary>
         /// Generates a parameter list string for use with sp_executesql, sp_prepare, and sp_prepexec.
         /// </summary>
         // @TODO: How does this compare with BuildStoredProcedureStatementForColumnEncryption
@@ -3067,7 +3129,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 _cachedAsyncConnection = activeConnection;
 
-                // Should only be needed for non-MARS, but set anyways.
+                // Should only be needed for non-MARS, but set anyway.
                 _cachedAsyncConnection.AsyncCommandInProgress = true;
                 _cachedEndMethod = endMethod;
             }
