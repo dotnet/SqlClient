@@ -42,9 +42,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public TestTrustedMasterKeyPaths(SQLSetupStrategyCertStoreProvider fixture)
         {
             LogStart();
-            columnMasterKeyPath = string.Format(@"{0}/{1}/{2}", StoreLocation.CurrentUser.ToString(), @"my", CertificateUtility.CreateCertificate().Thumbprint);
+
+            Log("Getting store location current user...");
+            var user = StoreLocation.CurrentUser.ToString();
+            Log($"Store location current user: {user}");
+
+            Log("Creating certificate...");
+            var cert = CertificateUtility.CreateCertificate();
+            Log($"Created certificate with thumbprint {cert.Thumbprint}");
+
+            columnMasterKeyPath = $"{user}/my/{cert.Thumbprint}";
             this.fixture = fixture;
             tableName = fixture.TrustedMasterKeyPathsTestTable.Name;
+
             LogEnd();
         }
 
