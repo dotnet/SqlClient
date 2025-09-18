@@ -1017,8 +1017,7 @@
     <Compile Include="$(CommonSourceRoot)System\Runtime\CompilerServices\IsExternalInit.netfx.cs">
       <Link>System\Runtime\CompilerServices\IsExternalInit.netfx.cs</Link>
     </Compile>
-    
-    <Compile Include="Microsoft\Data\SqlClient\SqlCommand.netfx.cs" />
+
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
   </ItemGroup>
   <!-- Resources  -->
