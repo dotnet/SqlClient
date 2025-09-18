@@ -30,7 +30,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
     /// <summary>
     /// General server handler
     /// </summary>
-    public abstract class ServerEndPointHandler<T> where T : ServerEndPointConnection
+    public abstract class ServerEndPointHandler<T> : IDisposable
+        where T : ServerEndPointConnection
     {
         /// <summary>
         /// Gets/Sets the event log for the proxy server
@@ -100,21 +101,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             // Update ServerEndpoint with the actual address/port, e.g. if port=0 was given
             ServerEndPoint = (IPEndPoint)ListenerSocket.LocalEndpoint;
 
-            Log($"{GetType().Name} {EndpointName} Is Server Socket Bound: {ListenerSocket.Server.IsBound} Testing connectivity to the endpoint created for the server.");
-            using (TcpClient client = new TcpClient())
-            {
-                try
-                {
-                    client.Connect("localhost", ServerEndPoint.Port);
-                }
-                catch (Exception e)
-                {
-                    Log($"{GetType().Name} {EndpointName} Error occurred while testing server endpoint {e.Message}");
-                    throw;
-                }
-            }
-            Log($"{GetType().Name} {EndpointName} Endpoint test successful.");
-
             // Initialize the listener
             ListenerThread = new Thread(new ThreadStart(_RequestListener)) { IsBackground = true };
             ListenerThread.Name = "TDS Server EndPoint Listener";
@@ -148,7 +134,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             foreach (T connection in unlockedConnections)
             {
                 // Request to stop
-                connection.Stop();
+                connection.Dispose();
             }
 
             // If server failed to start there is no thread to join
@@ -165,6 +151,12 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                 ListenerSocket.Stop();
                 ListenerSocket = null;
             }
+        }
+
+        public void Dispose()
+        {
+            // Stop the listener
+            Stop();
         }
 
         /// <summary>
