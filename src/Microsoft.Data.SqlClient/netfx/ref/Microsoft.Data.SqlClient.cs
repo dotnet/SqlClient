@@ -800,6 +800,9 @@ namespace Microsoft.Data.SqlClient
         public int CommandTimeout { get { throw null; } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionString/*'/>
         [System.ComponentModel.DefaultValueAttribute("")]
+#pragma warning disable CS0618
+        [System.ComponentModel.RecommendedAsConfigurableAttribute(true)]
+#pragma warning restore CS0618
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         [System.ComponentModel.SettingsBindableAttribute(true)]
         public override string ConnectionString { get { throw null; } set { } }
