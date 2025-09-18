@@ -165,7 +165,7 @@ stages:
       ${{ if eq(parameters.referenceType, 'Package') }}:
         dependsOn:
           - build_abstractions_package_stage
-          - build_nugets
+          - build_mds_akv_packages_stage
 
       prebuildSteps: # steps to run prior to building and running tests on each job
         - ${{if ne(parameters.SNIVersion, '')}}:

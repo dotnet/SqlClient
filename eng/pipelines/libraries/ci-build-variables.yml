@@ -6,7 +6,6 @@
 
 variables:
   - group: 'ADO Build properties'
-  - group: 'ADO CI Packaging'
   - group: 'ADO Test Configuration Properties'
   
   - name: buildNumber
@@ -16,11 +15,11 @@ variables:
   - name: SQLTarget
     value: 'localhost'
   - name: abstractionsPackageVersion
-    value: 1.0.0.$(buildNumber)
+    value: 1.0.0.$(buildNumber)-ci
   - name: akvPackageVersion
-    value: 7.0.0.$(buildNumber)
+    value: 7.0.0.$(buildNumber)-ci
   - name: mdsPackageVersion
-    value: $(Major).$(Minor)$(Patch)-pull.1$(buildnumber)
+    value: 7.0.0.$(buildNumber)-ci
   - name: skipComponentGovernanceDetection
     value: true
   - name: runCodesignValidationInjection
