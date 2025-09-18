@@ -108,8 +108,7 @@ stages:
   - template: stages/build-abstractions-package-ci-stage.yml@self
     parameters:
       buildConfiguration: Release
-      packageVersion: $(abstractionsPackageVersion)
-      buildNumber: $(buildNumber)
+      abstractionsPackageVersion: $(abstractionsPackageVersion)
       artifactName: $(abstractionsArtifactName)
       ${{if eq(parameters.debug, 'true')}}:
         verbosity: diagnostic

@@ -10,7 +10,7 @@
 # The NuGet packages have the following properties:
 #
 #   Name:     Microsoft.Data.SqlClient.Extensions.Abstractions
-#   Version:  $(artifactsPackageVersion)
+#   Version:  ${{ abstractionsPackageVersion }} (from parameter)
 #
 # The following NuGet packages are published:
 #
@@ -18,12 +18,16 @@
 #   Microsoft.Data.SqlClient.Extensions.Abstractions.<version>.snupkg (symbols)
 #
 # The packages are published to pipeline artifacts with the name specified by
-# the 'artifactName' parameter.
+# the ${{ artifactName }} parameter.
 #
 # This template defines a stage named 'build_abstractions_package_stage' that
 # can be depended on by downstream stages.
 
 parameters:
+
+  # The version to apply to the NuGet package and DLLs.
+  - name: abstractionsPackageVersion
+    type: string
 
   # The name of the pipeline artifact to publish.
   - name: artifactName
@@ -37,16 +41,6 @@ parameters:
     values:
     - Release
     - Debug
-
-  # The build number of the pipeline.
-  - name: buildNumber
-    type: string
-    default: $(Build.BuildNumber)
-
-  # The version (Major.Minor.Patch) to apply to the package.
-  - name: packageVersion
-    type: string
-    default: ''
 
   # The verbosity level for the dotnet CLI commands.
   - name: verbosity
@@ -78,6 +72,7 @@ stages:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           netRuntimes: [net8.0, net9.0]
           netFrameworkRuntimes: []
+          verbosity: ${{ parameters.verbosity }}
 
       # ------------------------------------------------------------------------
       # Build and test on Windows
@@ -91,6 +86,7 @@ stages:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           netRuntimes: [net8.0, net9.0]
           netFrameworkRuntimes: [net462, net47, net471, net472, net48, net481]
+          verbosity: ${{ parameters.verbosity }}
 
       # ------------------------------------------------------------------------
       # Build and test on macOS.
@@ -104,6 +100,7 @@ stages:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           netRuntimes: [net8.0, net9.0]
           netFrameworkRuntimes: []
+          verbosity: ${{ parameters.verbosity }}
 
       # ------------------------------------------------------------------------
       # Create and publish the NuGet package.
@@ -112,6 +109,7 @@ stages:
         parameters:
           artifactName: ${{ parameters.artifactName }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
+          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           verbosity: ${{ parameters.verbosity }}
           dependsOn:
             # We depend on all of the test jobs to ensure the tests pass before
