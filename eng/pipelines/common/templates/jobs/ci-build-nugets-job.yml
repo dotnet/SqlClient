@@ -78,7 +78,7 @@ jobs:
 
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:
-      NugetPackageVersion: $(NugetPackageVersion)
+      mdsPackageVersion: $(mdsPackageVersion)
       configuration: $(Configuration)
       nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
       OutputDirectory: $(packagePath)
@@ -87,7 +87,7 @@ jobs:
 
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:
-      NugetPackageVersion: $(NugetPackageVersion)
+      mdsPackageVersion: $(mdsPackageVersion)
       configuration: $(Configuration)
       nuspecPath: 'tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
       OutputDirectory: $(packagePath)

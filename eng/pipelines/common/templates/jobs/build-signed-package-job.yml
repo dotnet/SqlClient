@@ -27,8 +27,8 @@ jobs:
   variables:
   - template: ../../../libraries/variables.yml@self
   - ${{ if parameters.isPreview }}:
-    - name: NugetPackageVersion
-      value: $(PreviewNugetPackageVersion)
+    - name: mdsPackageVersion
+      value: $(previewMdsPackageVersion)
 
   steps:
   - script: SET
@@ -64,4 +64,4 @@ jobs:
   - template: ../steps/publish-symbols-step.yml@self
     parameters:
       publishSymbols: ${{ parameters['PublishSymbols'] }}
-      symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(NuGetPackageVersion)_$(System.TimelineId)
+      symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(mdsPackageVersion)_$(System.TimelineId)

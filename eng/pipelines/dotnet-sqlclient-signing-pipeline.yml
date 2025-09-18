@@ -114,7 +114,7 @@ extends:
       sbom:
         enabled: ${{ not(parameters['isPreview']) }}
         packageName: Microsoft.Data.SqlClient
-        packageVersion: $(NugetPackageVersion)
+        packageVersion: $(mdsPackageVersion)
       policheck:
         enabled: ${{ not(parameters['isPreview']) }}
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'

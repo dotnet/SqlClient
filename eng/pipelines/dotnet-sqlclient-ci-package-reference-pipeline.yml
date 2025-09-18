@@ -62,11 +62,6 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: object
   default: [1, 2, 3]
 
-- name: abstractionsPackageVersion
-  displayName: Abstractions Package Version
-  type: string
-  default: 1.0.0
-
 - name: useManagedSNI
   displayName: |
     Use Managed/Native SNI on Windows,
@@ -105,7 +100,6 @@ extends:
     targetFrameworksLinux: ${{ parameters.targetFrameworksLinux }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
     testSets: ${{ parameters.testSets }}
-    abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
     referenceType: Package

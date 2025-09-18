@@ -6,7 +6,6 @@
     <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
   </PropertyGroup>
 
-
   <!-- Abstractions Package Properties -->
   <PropertyGroup>
     <!-- The current Major version number for the Abstractions package. -->
@@ -32,13 +31,14 @@
   <PropertyGroup>
     <MdsVersionDefault>7.0.0</MdsVersionDefault>
 
+    <MdsPackageVersion Condition="'$(MdsPackageVersion)' == ''">$(MdsVersionDefault).$(BuildNumber)-dev</MdsPackageVersion>
+
     <!--
       TODO: The remaining properties in this group should be renamed to be
       specific to MDS, and then used in the MDS project.  As-is, these names are
       used by the build tooling and may be unintentionally included in other
       (non-MDS) projects.
     -->
-    <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">$(MdsVersionDefault).$(BuildNumber)-dev</NugetPackageVersion>
 
     <!--
       GOTCHA: These two Assembly properties must appear in the first
@@ -52,7 +52,7 @@
     <AssemblyVersion>7.0.0.0</AssemblyVersion>
 
     <FileVersion>$(AssemblyFileVersion)</FileVersion>
-    <Version>$(NugetPackageVersion)</Version>
+    <Version>$(MdsPackageVersion)</Version>
   </PropertyGroup>
 
   <!-- SqlServer Package Properties -->
@@ -68,7 +68,7 @@
 
   <!-- AKV Package Properties -->
   <PropertyGroup>
-    <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>
+    <TestAKVProviderVersion>$(AkvPackageVersion)</TestAKVProviderVersion>
 
     <!--
       GOTCHA: This property must appear in the last <PropertyGroup> in this file
@@ -78,6 +78,6 @@
 
       See the 'Modify TestMicrosoftDataSqlClientVersion' step.
     -->
-    <TestMicrosoftDataSqlClientVersion>$(NugetPackageVersion)</TestMicrosoftDataSqlClientVersion>
+    <TestMicrosoftDataSqlClientVersion>$(MdsPackageVersion)</TestMicrosoftDataSqlClientVersion>
   </PropertyGroup>
 </Project>
