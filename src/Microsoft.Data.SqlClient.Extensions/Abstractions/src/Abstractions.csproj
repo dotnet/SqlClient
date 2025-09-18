@@ -12,19 +12,18 @@
     <AbstractionsPackageMajorVersion>1</AbstractionsPackageMajorVersion>
 
     <!--
-      The default Abstractions package version.  This may be overridden by
-      specifying a value on the command-line:
+      If the Abstractions package version is specified on the command-line, then
+      we use it as-is, for example:
 
         msbuild -p:AbstractionsPackageVersion=1.0.0
         dotnet build -p:AbstractionsPackageVersion=1.0.0
-    -->
-    <AbstractionsPackageVersion>$(AbstractionsPackageMajorVersion).0.0</AbstractionsPackageVersion>
 
-    <!--
-      If the $(BuildNumber) property is defined, append it as the fourth part
-      of the version number (the revision part).
+      Otherwise, we use a default value with a "-dev" suffix.
+
+      $(BuildNumber) is defined in tools/props/Versions.props.
     -->
-    <AbstractionsPackageVersion Condition="'$(BuildNumber)' != ''">$(AbstractionsPackageVersion).$(BuildNumber)</AbstractionsPackageVersion>
+    <AbstractionsPackageVersionSuffix Condition="'$(AbstractionsPackageVersion)' == ''">-dev</AbstractionsPackageVersionSuffix>
+    <AbstractionsPackageVersion>$(AbstractionsPackageMajorVersion).0.0.$(BuildNumber)</AbstractionsPackageVersion>
 
     <!--
       We pin the AssemblyVersion of our package to its current Major version
@@ -47,16 +46,12 @@
   <!-- Build Config -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions</AssemblyName>
-    <!--
-      We use the AbstractionsPackageVersion supplied via a command-line
-      property, or the default from Versions.props.
-    -->
-    <PackageVersion>$(AbstractionsPackageVersion)</PackageVersion>
-    <AssemblyVersion>$(AbstractionsPackageAssemblyVersion)</AssemblyVersion>
-    <AssemblyFileVersion>$(PackageVersion)</AssemblyFileVersion>
-    <FileVersion>$(AssemblyFileVersion)</FileVersion>
-
     <RootNamespace>Microsoft.Data.SqlClient.Extensions.Abstractions</RootNamespace>
+
+    <AssemblyVersion>$(AbstractionsPackageAssemblyVersion)</AssemblyVersion>
+    <AssemblyFileVersion>$(AbstractionsPackageVersion)</AssemblyFileVersion>
+    <FileVersion>$(AssemblyFileVersion)</FileVersion>
+    <Version>$(AbstractionsPackageVersion)$(AbstractionsPackageVersionSuffix)</Version>
   </PropertyGroup>
   <ItemGroup>
     <!-- Our API is CLS Compliant. -->
@@ -79,11 +74,7 @@
       specified above.
     -->
 
-    <!--
-      We omit specifying <PackageVersion> here since it has already been
-      defined above as a configurable property.
-    -->
-
+    <PackageVersion>$(Version)</PackageVersion>
     <PackageOutputPath>$(PackagesDir)</PackageOutputPath>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
