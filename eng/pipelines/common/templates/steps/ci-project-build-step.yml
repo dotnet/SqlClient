@@ -35,7 +35,6 @@ parameters:
       - allNoDocs
 
   - name: abstractionsPackageVersion
-    displayName: Abstractions Package Version
     type: string
 
 steps:

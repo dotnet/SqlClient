@@ -12,6 +12,10 @@
 
 parameters:
 
+  # The version to apply to the Abstractions NuGet package and its assemblies.
+  - name: abstractionsPackageVersion
+    type: string
+
   # The name to apply to the published pipeline artifact.
   - name: artifactName
     type: string
@@ -72,6 +76,7 @@ jobs:
         value: >-
           $(commonArguments)
           --configuration ${{ parameters.buildConfiguration }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public project.

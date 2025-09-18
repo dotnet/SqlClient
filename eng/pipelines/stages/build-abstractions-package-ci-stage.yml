@@ -9,11 +9,8 @@
 #
 # The NuGet packages have the following properties:
 #
-#   Name:     Microsoft.Data.SqlClient.Extensions.Abstractions Version:
-#   <packageVersion>.<buildNumber>
-#
-#   Where <packageVersion> and <buildNumber> are the values of the
-#   'packageVersion' and 'buildNumber' parameters, respectively.
+#   Name:     Microsoft.Data.SqlClient.Extensions.Abstractions
+#   Version:  $(artifactsPackageVersion)
 #
 # The following NuGet packages are published:
 #

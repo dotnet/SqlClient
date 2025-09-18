@@ -104,7 +104,7 @@ variables:
 stages:
 
   # Build the Abstractions package, and publish it to the pipeline artifacts
-  # under the name specified by the 'abstractionsArtifactName' variable.
+  # under the given artifact name.
   - template: stages/build-abstractions-package-ci-stage.yml@self
     parameters:
       buildConfiguration: Release
@@ -115,8 +115,8 @@ stages:
         verbosity: diagnostic
 
   # Build MDS and its NuGet packages.
-  - stage: build_mds_package
-    displayName: 'Build MDS Package'
+  - stage: build_mds_akv_packages_stage
+    displayName: 'Build MDS & AKV Packages'
 
     # When building MDS via packages, we must depend on the Abstractions 
     # package.
@@ -139,6 +139,7 @@ stages:
                 SNIVersion: ${{parameters.SNIVersion}}
                 SNIValidationFeed: ${{parameters.SNIValidationFeed}}
 
+  # Run the stress tests, if desired.
   - ${{ if eq(parameters.enableStressTests, true) }}:
     - template: stages/stress-tests-ci-stage.yml@self
       parameters:
@@ -148,7 +149,8 @@ stages:
         mdsPackageVersion: $(mdsPackageVersion)
         ${{ if eq(parameters.debug, 'true') }}:
           verbosity: 'detailed'
-    
+  
+  # Run the MDS and AKV tests.
   - template: common/templates/stages/ci-run-tests-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}

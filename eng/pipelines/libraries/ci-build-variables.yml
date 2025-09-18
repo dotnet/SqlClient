@@ -15,8 +15,10 @@ variables:
     value: 'net8.0'
   - name: SQLTarget
     value: 'localhost'
-  - name: akvPackageVersion
+  - name: abstractionsPackageVersion
     value: 1.0.0.$(buildNumber)
+  - name: akvPackageVersion
+    value: 7.0.0.$(buildNumber)
   - name: mdsPackageVersion
     value: $(Major).$(Minor)$(Patch)-pull.1$(buildnumber)
   - name: skipComponentGovernanceDetection

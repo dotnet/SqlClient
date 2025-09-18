@@ -43,8 +43,8 @@ parameters:
     type: string
 
 jobs:
-- job: build_mds_packages_job
-  displayName: Build MDS Packages
+- job: build_mds_akv_packages_job
+  displayName: Build MDS & AKV Packages
 
   pool:
     name: ${{parameters.poolName }}
@@ -83,7 +83,7 @@ jobs:
       nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
       OutputDirectory: $(packagePath)
       generateSymbolsPackage: false
-      displayName: 'Generate NuGet package M.D.SqlClient'
+      displayName: 'Create MDS NuGet Package'
 
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:
@@ -93,7 +93,7 @@ jobs:
       OutputDirectory: $(packagePath)
       generateSymbolsPackage: false
       installNuget: false
-      displayName: 'Generate NuGet package AKV Provider'
+      displayName: 'Create AKV NuGet Package'
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish Pipeline Artifact'
