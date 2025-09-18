@@ -6,27 +6,6 @@
     <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
   </PropertyGroup>
 
-  <!-- Abstractions Package Properties -->
-  <PropertyGroup>
-    <!-- The current Major version number for the Abstractions package. -->
-    <AbstractionsPackageMajorVersion>1</AbstractionsPackageMajorVersion>
-
-    <!--
-      The default Abstractions package version.  This may be overridden by
-      specifying a value on the command-line:
-
-        msbuild -p:AbstractionsPackageVersion=1.0.0
-        dotnet build -p:AbstractionsPackageVersion=1.0.0
-    -->
-    <AbstractionsPackageVersion>$(AbstractionsPackageMajorVersion).0.0</AbstractionsPackageVersion>
-
-    <!--
-      We pin the AssemblyVersion of our package to its current Major version
-      number, with all remaining parts set to 0.
-    -->
-    <AbstractionsPackageAssemblyVersion>$(AbstractionsPackageMajorVersion).0.0.0</AbstractionsPackageAssemblyVersion>
-  </PropertyGroup>
-
   <!-- MDS Package Properties -->
   <PropertyGroup>
     <MdsVersionDefault>7.0.0</MdsVersionDefault>

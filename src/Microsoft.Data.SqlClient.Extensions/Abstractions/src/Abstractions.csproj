@@ -6,18 +6,31 @@
     files.
   -->
 
-  <!-- Configurable Properties -->
+  <!-- Versioning Properties -->
   <PropertyGroup>
+    <!-- The current Major version number for the Abstractions package. -->
+    <AbstractionsPackageMajorVersion>1</AbstractionsPackageMajorVersion>
+
     <!--
-      We use the AbstractionsPackageVersion from Versions.props.  It may be
-      specified on the command-line, or a default value is used.
+      The default Abstractions package version.  This may be overridden by
+      specifying a value on the command-line:
+
+        msbuild -p:AbstractionsPackageVersion=1.0.0
+        dotnet build -p:AbstractionsPackageVersion=1.0.0
     -->
-    <PackageVersion>$(AbstractionsPackageVersion)</PackageVersion>
+    <AbstractionsPackageVersion>$(AbstractionsPackageMajorVersion).0.0</AbstractionsPackageVersion>
+
     <!--
-      If the BuildNumber (also from Versions.props) isn't 0, then append it to
-      the PackageVersion.
+      If the $(BuildNumber) property is defined, append it as the fourth part
+      of the version number (the revision part).
     -->
-    <PackageVersion Condition="'$(BuildNumber)' != '0'">$(PackageVersion).$(BuildNumber)</PackageVersion>
+    <AbstractionsPackageVersion Condition="'$(BuildNumber)' != ''">$(AbstractionsPackageVersion).$(BuildNumber)</AbstractionsPackageVersion>
+
+    <!--
+      We pin the AssemblyVersion of our package to its current Major version
+      number, with all remaining parts set to 0.
+    -->
+    <AbstractionsPackageAssemblyVersion>$(AbstractionsPackageMajorVersion).0.0.0</AbstractionsPackageAssemblyVersion>
   </PropertyGroup>
 
   <!-- Target Config -->
@@ -35,9 +48,10 @@
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions</AssemblyName>
     <!--
-      Apply the AssemblyVersion from Version.props, regardless of how we
-      determined the PackageVersion above.
+      We use the AbstractionsPackageVersion supplied via a command-line
+      property, or the default from Versions.props.
     -->
+    <PackageVersion>$(AbstractionsPackageVersion)</PackageVersion>
     <AssemblyVersion>$(AbstractionsPackageAssemblyVersion)</AssemblyVersion>
     <AssemblyFileVersion>$(PackageVersion)</AssemblyFileVersion>
     <FileVersion>$(AssemblyFileVersion)</FileVersion>

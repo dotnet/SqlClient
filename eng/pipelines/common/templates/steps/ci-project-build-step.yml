@@ -52,7 +52,7 @@ steps:
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
     - task: MSBuild@1
-      displayName: 'Restore nugets [Win]'
+      displayName: 'Restore [Win]'
       condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
       inputs:
         solution: build.proj
@@ -62,7 +62,7 @@ steps:
 
     - ${{ if eq(parameters.build, 'allNoDocs') }}:
       - task: MSBuild@1
-        displayName: 'Build Driver [Win]'
+        displayName: 'Build Driver (no docs) [Win]'
         condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
         inputs:
           solution: build.proj
@@ -107,7 +107,7 @@ steps:
 
 - ${{ if or(eq(parameters.operatingSystem, 'Linux'), eq(parameters.operatingSystem, 'MacOS'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - task: DotNetCoreCLI@2
-    displayName: 'Build Driver [non-Win]'
+    displayName: 'Build Driver [${{ parameters.operatingSystem }}]'
     condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
     inputs:
       command: custom

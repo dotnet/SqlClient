@@ -52,7 +52,7 @@
   <!-- Populate all managed projects -->
   <ItemGroup>
     <AbstractionsPackage Include="src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
-    <AbstractionsTestPackage Include="src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/AbstractionsTest.csproj" />
+    <AbstractionsTestPackage Include="src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/Abstractions.Test.csproj" />
     <SqlServerLib Include="**/Microsoft.SqlServer.Server.csproj" />
     <NetFxDriver Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledWindows)' == 'true'" />
     <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
@@ -117,7 +117,7 @@
 
     <MSBuild
       Projects="@(AbstractionsPackage)"
-      Targets="Build"
+      Targets="Build;Pack"
       Properties="$(BuildProperties)" />
   </Target>
 
