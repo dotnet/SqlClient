@@ -22,8 +22,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class JsonStreamTest
     {
         private readonly ITestOutputHelper _output;
-        private static readonly string _jsonFile = DataTestUtility.GetUniqueName("randomRecords") + ".json";
-        private static readonly string _outputFile = DataTestUtility.GetUniqueName("serverRecords") + ".json";
+        private static readonly string _jsonFile = DataTestUtility.GetShortName("randomRecords") + ".json";
+        private static readonly string _outputFile = DataTestUtility.GetShortName("serverRecords") + ".json";
 
         public JsonStreamTest(ITestOutputHelper output)
         {
