@@ -50,7 +50,10 @@ jobs:
   
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:
-      OutputDirectory: $(artifactDirectory)
+      nuspecPath: $(nuspecPath)
+      packageVersion: $(mdsPackageVersion)
+      outputDirectory: $(artifactDirectory)
+      displayName: 'Create MDS NuGet Package'
   
   - template: ../steps/esrp-code-signing-step.yml@self
     parameters:

@@ -78,19 +78,19 @@ jobs:
 
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:
-      mdsPackageVersion: $(mdsPackageVersion)
+      packageVersion: $(mdsPackageVersion)
       configuration: $(Configuration)
       nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
-      OutputDirectory: $(packagePath)
+      outputDirectory: $(packagePath)
       generateSymbolsPackage: false
       displayName: 'Create MDS NuGet Package'
 
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:
-      mdsPackageVersion: $(mdsPackageVersion)
+      packageVersion: $(akvPackageVersion)
       configuration: $(Configuration)
       nuspecPath: 'tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
-      OutputDirectory: $(packagePath)
+      outputDirectory: $(packagePath)
       generateSymbolsPackage: false
       installNuget: false
       displayName: 'Create AKV NuGet Package'

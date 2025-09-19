@@ -122,6 +122,8 @@ stages:
     ${{ if eq(parameters.referenceType, 'Package') }}:
       dependsOn:
         - build_abstractions_package_stage
+    ${{ else }}:
+      dependsOn: []
 
     jobs:
     - template: common/templates/jobs/ci-build-nugets-job.yml@self
@@ -143,7 +145,7 @@ stages:
     - template: stages/stress-tests-ci-stage.yml@self
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        dependsOn: [build_mds_packages_job]
+        dependsOn: [build_mds_akv_packages_stage]
         pipelineArtifactName: $(artifactName)
         mdsPackageVersion: $(mdsPackageVersion)
         ${{ if eq(parameters.debug, 'true') }}:

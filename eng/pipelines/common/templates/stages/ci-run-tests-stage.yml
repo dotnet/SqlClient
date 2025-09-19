@@ -10,12 +10,6 @@ parameters:
   - name: abstractionsPackageVersion
     type: string
 
-  - name: referenceType
-    default: Project
-    values:
-      - Project
-      - Package
-
   - name: debug
     type: boolean
     default: false
@@ -38,6 +32,12 @@ parameters:
   - name: prebuildSteps
     type: stepList
     default: []
+
+  - name: referenceType
+    default: Project
+    values:
+      - Project
+      - Package
 
   - name: testConfigurations
     type: object

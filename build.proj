@@ -2,8 +2,9 @@
 <Project ToolsVersion="Current" DefaultTargets="BuildAllConfigurations" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <Import Project="src/Directory.Build.props" />
-  <Import Project="$(ToolsDir)targets\GenerateNugetPackage.targets" />
-  <Import Project="$(ToolsDir)targets\add-ons\GenerateAKVProviderNugetPackage.targets" />
+  <Import Project="$(ToolsDir)targets\GenerateSqlServerPackage.targets" />
+  <Import Project="$(ToolsDir)targets\GenerateMdsPackage.targets" />
+  <Import Project="$(ToolsDir)targets\add-ons\GenerateAkvPackage.targets" />
 
   <PropertyGroup>
     <!-- SourceLink variable-->
