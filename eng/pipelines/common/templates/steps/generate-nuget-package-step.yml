@@ -52,6 +52,6 @@ steps:
   inputs:
     command: custom
     ${{ if parameters.generateSymbolsPackage }}:
-      arguments: 'pack -Symbols -SymbolPackageFormat snupkg ${{parameters.nuspecPath}} -Version ${{parameters.mdsPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'
+      arguments: 'pack -Symbols -SymbolPackageFormat snupkg ${{parameters.nuspecPath}} -Version ${{parameters.packageVersion}} -OutputDirectory ${{parameters.outputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'
     ${{else }}:
-      arguments: 'pack ${{parameters.nuspecPath}} -Version ${{parameters.mdsPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'
+      arguments: 'pack ${{parameters.nuspecPath}} -Version ${{parameters.packageVersion}} -OutputDirectory ${{parameters.outputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'
