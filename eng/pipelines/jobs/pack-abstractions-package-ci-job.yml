@@ -57,9 +57,9 @@ jobs:
 
     variables:
 
-      # The Abstractions solution file to use for all dotnet CLI commands.
-      - name: solution
-        value: src/Microsoft.Data.SqlClient.Extensions/Abstractions/Abstractions.slnx
+      # The Abstractions project file to use for all dotnet CLI commands.
+      - name: project
+        value: src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj
 
       # The directory where the NuGet packages will be staged before being
       # published as pipeline artifacts.
@@ -118,7 +118,7 @@ jobs:
         inputs:
           command: custom
           custom: restore
-          projects: $(solution)
+          projects: $(project)
           arguments: $(commonArguments)
 
       # Build the solution.
@@ -127,7 +127,7 @@ jobs:
         inputs:
           command: custom
           custom: build
-          projects: $(solution)
+          projects: $(project)
           arguments: $(buildArguments) --no-restore
 
       # Create the NuGet packages.
@@ -136,7 +136,7 @@ jobs:
         inputs:
           command: custom
           custom: pack
-          projects: $(solution)
+          projects: $(project)
           arguments: $(buildArguments) --no-build -o $(dotnetPackagesDir)
 
       # Publish the NuGet packages as a named pipeline artifact.

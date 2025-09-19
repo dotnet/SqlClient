@@ -344,10 +344,16 @@ jobs:
 
   - powershell: |
       # Check assembly versions.
+      #
+      # GOTCHA: This expects the Versions.props file having XML elements in a
+      # certain order.  If the order changes, this check will fail!
+      #
+      # TODO: This also isn't checking the versions of the actual assemblies in
+      # the package, so it isn't terribly useful.
 
       [Xml] $versionprops = Get-Content -Path "tools/props/Versions.props" 
-      $AssemblyFileVersion =  $versionprops.Project.PropertyGroup[0].AssemblyFileVersion
-      $AssemblyVersion = $versionprops.Project.PropertyGroup[0].AssemblyVersion
+      $AssemblyFileVersion =  $versionprops.Project.PropertyGroup[1].AssemblyFileVersion
+      $AssemblyVersion = $versionprops.Project.PropertyGroup[1].AssemblyVersion
       
       if($AssemblyFileVersion -eq $AssemblyVersion)
       {

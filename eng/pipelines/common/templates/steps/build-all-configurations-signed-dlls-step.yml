@@ -4,6 +4,13 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+
+  - name: abstractionsPackageVersion
+    type: string
+
+  - name: abstractionsAssemblyFileVersion
+    type: string
+
   - name: AssemblyFileVersion
     type: string
     default: $(AssemblyFileVersion)
@@ -47,4 +54,4 @@ steps:
     inputs:
       solution: '**/build.proj'
       configuration: '${{parameters.Configuration }}'
-      msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAllConfigurations -p:GenerateNuget=false -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'
+      msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAllConfigurations -p:GenerateNuget=false -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }} -p:AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }}'

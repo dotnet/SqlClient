@@ -20,7 +20,7 @@
     -->
 
     <!--
-      GOTCHA: These two Assembly properties must appear in the first
+      GOTCHA: These two Assembly properties must appear in the second
       <PropertyGroup> in this file due to hardcoded XML processing in:
 
       eng/pipelines/common/templates/jobs/validate-signed-package-job.yml
