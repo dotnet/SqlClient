@@ -49,9 +49,11 @@ namespace Microsoft.Data.SqlClient
                 SqlDataReader ds = IsProviderRetriable
                     ? RunExecuteReaderWithRetry(CommandBehavior.Default, RunBehavior.ReturnImmediately, returnStream: true)
                     : RunExecuteReader(CommandBehavior.Default, RunBehavior.ReturnImmediately, returnStream: true);
+
+                object result = CompleteExecuteScalar(ds, _batchRPCMode);
                 success = true;
 
-                return CompleteExecuteScalar(ds, _batchRPCMode);
+                return result;
             }
             catch (Exception ex)
             {
@@ -203,6 +205,8 @@ namespace Microsoft.Data.SqlClient
             {
                 if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false) && reader.FieldCount > 0)
                 {
+                    // no async untyped value getter, this will work ok as long as the value is in
+                    // the current packet
                     result = reader.GetValue(0);
                 }
             } while (_batchRPCMode &&
@@ -214,15 +218,15 @@ namespace Microsoft.Data.SqlClient
         
         private Task<object> ExecuteScalarAsyncInternal(CancellationToken cancellationToken)
         {
-            SqlClientEventSource.Log.TryTraceEvent(
-                "SqlCommand.ExecuteScalarAsyncInternal | API " +
-                $"Object Id {ObjectID}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.InternalExecuteScalarAsync | API | Correlation | " +
                 $"Object Id {ObjectID}, " +
                 $"Activity Id {ActivityCorrelator.Current}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                $"Command Text '{CommandText}'");
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlCommand.ExecuteScalarAsyncInternal | API " +
+                $"Object Id {ObjectID}, " +
                 $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
                 $"Command Text '{CommandText}'");
 
