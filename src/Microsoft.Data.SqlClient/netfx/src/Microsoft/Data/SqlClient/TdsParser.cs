@@ -7903,6 +7903,7 @@ namespace Microsoft.Data.SqlClient
             if (bits == null)
             {
                 bits = new int[4];
+                stateObj._decimalBits = bits;
             }
             else
             {
@@ -7976,8 +7977,12 @@ namespace Microsoft.Data.SqlClient
             }
 
             Span<uint> data = stackalloc uint[4];
+#if NET
+            d.WriteTdsValue(data);
+#else
             SqlTypeWorkarounds.SqlDecimalWriteTdsValue(d, data);
-            
+#endif
+
             byte[] bytesPart = SerializeUnsignedInt(data[0], stateObj);
             Buffer.BlockCopy(bytesPart, 0, bytes, current, 4);
             current += 4;
@@ -8006,7 +8011,11 @@ namespace Microsoft.Data.SqlClient
             }
 
             Span<uint> data = stackalloc uint[4];
+#if NET
+            d.WriteTdsValue(data);
+#else
             SqlTypeWorkarounds.SqlDecimalWriteTdsValue(d, data);
+#endif
 
             WriteUnsignedInt(data[0], stateObj);
             WriteUnsignedInt(data[1], stateObj);
