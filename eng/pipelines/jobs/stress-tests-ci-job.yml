@@ -4,7 +4,7 @@
 # file in the project root for more information.
 ################################################################################
 
-# This stage builds and runs stress tests against an MDS NuGet package available
+# This job builds and runs stress tests against an MDS NuGet package available
 # as a pipeline artifact.
 #
 # The stress tests are located here:

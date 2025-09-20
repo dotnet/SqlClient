@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<docs>
+  <members name="Sample">
+    <Sample>
+      <summary>
+        Sample class to demonstrate packaging and pipelines.
+      </summary>
+    </Sample>
+    <ctor>
+      <summary>Construct with a name.</summary>
+      <param name="name">The name.</param>
+    </ctor>
+    <Name>
+      <summary>Gets the name.</summary>
+      <value>The name.</value>
+    </Name>
+  </members>
+</docs>
