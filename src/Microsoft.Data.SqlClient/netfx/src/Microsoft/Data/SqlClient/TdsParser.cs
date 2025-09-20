@@ -2988,7 +2988,6 @@ namespace Microsoft.Data.SqlClient
 
                             // Give the parser the new collation values in case parameters don't specify one
                             _defaultCollation = env._newCollation;
-                            _defaultLCID = env._newCollation.LCID;
 
                             // UTF8 collation
                             if (env._newCollation.IsUTF8)
@@ -3004,6 +3003,7 @@ namespace Microsoft.Data.SqlClient
                                     _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
                                 }
                             }
+                            _defaultLCID = env._newCollation.LCID;
                         }
 
                         result = stateObj.TryReadByte(out byteLength);
