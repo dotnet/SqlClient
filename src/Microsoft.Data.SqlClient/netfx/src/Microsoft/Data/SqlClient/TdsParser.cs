@@ -142,7 +142,9 @@ namespace Microsoft.Data.SqlClient
 
         // size of Guid  (e.g. _clientConnectionId, ActivityId.Id)
         private const int GUID_SIZE = 16;
+#if NETFRAMEWORK
         private byte[] _tempGuidBytes;
+#endif
 
         // now data length is 1 byte
         // First bit is 1 indicating client support failover partner with readonly intent
@@ -6482,7 +6484,11 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLUNIQUEID:
                     {
                         Debug.Assert(length == 16, "invalid length for SqlGuid type!");
+#if NET
+                        value.SqlGuid = new SqlGuid(unencryptedBytes);   // doesn't copy the byte array
+#else
                         value.SqlGuid = SqlTypeWorkarounds.ByteArrayToSqlGuid(unencryptedBytes);
+#endif
                         break;
                     }
 
