@@ -12354,43 +12354,43 @@ namespace Microsoft.Data.SqlClient
             {
                 writerSettings.Async = true;
             }
-            using (ConstrainedTextWriter writer = new ConstrainedTextWriter(new StreamWriter(new TdsOutputStream(this, stateObj, preambleToSkip), encoding), size))
-            using (XmlWriter ww = XmlWriter.Create(writer, writerSettings))
+
+            using ConstrainedTextWriter writer = new ConstrainedTextWriter(new StreamWriter(new TdsOutputStream(this, stateObj, preambleToSkip), encoding), size);
+            using XmlWriter ww = XmlWriter.Create(writer, writerSettings);
+
+            if (feed._source.ReadState == ReadState.Initial)
             {
-                if (feed._source.ReadState == ReadState.Initial)
+                feed._source.Read();
+            }
+
+            while (!feed._source.EOF && !writer.IsComplete)
+            {
+                // We are copying nodes from a reader to a writer.  This will cause the
+                // XmlDeclaration to be emitted despite ConformanceLevel.Fragment above.
+                // Therefore, we filter out the XmlDeclaration while copying.
+                if (feed._source.NodeType == XmlNodeType.XmlDeclaration)
                 {
                     feed._source.Read();
-                }
-
-                while (!feed._source.EOF && !writer.IsComplete)
-                {
-                    // We are copying nodes from a reader to a writer.  This will cause the
-                    // XmlDeclaration to be emitted despite ConformanceLevel.Fragment above.
-                    // Therefore, we filter out the XmlDeclaration while copying.
-                    if (feed._source.NodeType == XmlNodeType.XmlDeclaration)
-                    {
-                        feed._source.Read();
-                        continue;
-                    }
-
-                    if (_asyncWrite)
-                    {
-                        await ww.WriteNodeAsync(feed._source, true).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        ww.WriteNode(feed._source, true);
-                    }
+                    continue;
                 }
 
                 if (_asyncWrite)
                 {
-                    await ww.FlushAsync().ConfigureAwait(false);
+                    await ww.WriteNodeAsync(feed._source, true).ConfigureAwait(false);
                 }
                 else
                 {
-                    ww.Flush();
+                    ww.WriteNode(feed._source, true);
                 }
+            }
+
+            if (_asyncWrite)
+            {
+                await ww.FlushAsync().ConfigureAwait(false);
+            }
+            else
+            {
+                ww.Flush();
             }
         }
 
