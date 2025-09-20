@@ -6581,19 +6581,19 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLTIME:
                     // We normalize to maximum precision to allow conversion across different precisions.
                     Debug.Assert(length == 5, "invalid length for time type!");
-                    value.SetToTime(unencryptedBytes.AsSpan().Slice(0, length), TdsEnums.MAX_TIME_SCALE, denormalizedScale);
+                    value.SetToTime(unencryptedBytes, TdsEnums.MAX_TIME_SCALE, denormalizedScale);
                     break;
 
                 case TdsEnums.SQLDATETIME2:
                     // We normalize to maximum precision to allow conversion across different precisions.
                     Debug.Assert(length == 8, "invalid length for datetime2 type!");
-                    value.SetToDateTime2(unencryptedBytes.AsSpan().Slice(0, length), TdsEnums.MAX_TIME_SCALE, denormalizedScale);
+                    value.SetToDateTime2(unencryptedBytes, TdsEnums.MAX_TIME_SCALE, denormalizedScale);
                     break;
 
                 case TdsEnums.SQLDATETIMEOFFSET:
                     // We normalize to maximum precision to allow conversion across different precisions.
                     Debug.Assert(length == 10, "invalid length for datetimeoffset type!");
-                    value.SetToDateTimeOffset(unencryptedBytes.AsSpan().Slice(0, length), TdsEnums.MAX_TIME_SCALE, denormalizedScale);
+                    value.SetToDateTimeOffset(unencryptedBytes, TdsEnums.MAX_TIME_SCALE, denormalizedScale);
                     break;
 
                 default:
