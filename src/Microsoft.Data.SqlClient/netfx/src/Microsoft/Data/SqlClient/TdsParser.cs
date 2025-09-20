@@ -398,8 +398,10 @@ namespace Microsoft.Data.SqlClient
             // Encryption is not supported on SQL Local DB - disable it if they have only specified Mandatory
             if (connHandler.ConnectionOptions.LocalDBInstance != null)
             {
+#if NETFRAMEWORK
                 // Create LocalDB instance if necessary
                 LocalDbApi.CreateLocalDbInstance(connHandler.ConnectionOptions.LocalDBInstance);
+#endif
                 if (encrypt == SqlConnectionEncryptOption.Mandatory)
                 {
                     encrypt = SqlConnectionEncryptOption.Optional;
