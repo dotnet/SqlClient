@@ -4938,7 +4938,7 @@ namespace Microsoft.Data.SqlClient
                 // internal meta data class
                 _SqlMetaData col = altMetaDataSet[i];
 
-                result = stateObj.TryReadByte(out _);
+                result = stateObj.TryReadByte(out col.op);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
@@ -4955,6 +4955,27 @@ namespace Microsoft.Data.SqlClient
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
+                }
+
+                if (string.IsNullOrEmpty(col.column))
+                {
+                    // create column name from op
+                    col.column = col.op switch
+                    {
+                        TdsEnums.AOPAVG => "avg",
+                        TdsEnums.AOPCNT => "cnt",
+                        TdsEnums.AOPCNTB => "cntb",
+                        TdsEnums.AOPMAX => "max",
+                        TdsEnums.AOPMIN => "min",
+                        TdsEnums.AOPSUM => "sum",
+                        TdsEnums.AOPANY => "any",
+                        TdsEnums.AOPNOOP => "noop",
+                        TdsEnums.AOPSTDEV => "stdev",
+                        TdsEnums.AOPSTDEVP => "stdevp",
+                        TdsEnums.AOPVAR => "var",
+                        TdsEnums.AOPVARP => "varp",
+                        _ => col.column,
+                    };
                 }
             }
 

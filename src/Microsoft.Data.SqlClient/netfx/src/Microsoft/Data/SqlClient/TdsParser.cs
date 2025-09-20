@@ -4953,7 +4953,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     return result;
                 }
-                result = stateObj.TryReadUInt16(out col.operand);
+
+                result = stateObj.TryReadUInt16(out _);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
@@ -4969,56 +4970,22 @@ namespace Microsoft.Data.SqlClient
                 if (string.IsNullOrEmpty(col.column))
                 {
                     // create column name from op
-                    switch (col.op)
+                    col.column = col.op switch
                     {
-                        case TdsEnums.AOPAVG:
-                            col.column = "avg";
-                            break;
-
-                        case TdsEnums.AOPCNT:
-                            col.column = "cnt";
-                            break;
-
-                        case TdsEnums.AOPCNTB:
-                            col.column = "cntb";
-                            break;
-
-                        case TdsEnums.AOPMAX:
-                            col.column = "max";
-                            break;
-
-                        case TdsEnums.AOPMIN:
-                            col.column = "min";
-                            break;
-
-                        case TdsEnums.AOPSUM:
-                            col.column = "sum";
-                            break;
-
-                        case TdsEnums.AOPANY:
-                            col.column = "any";
-                            break;
-
-                        case TdsEnums.AOPNOOP:
-                            col.column = "noop";
-                            break;
-
-                        case TdsEnums.AOPSTDEV:
-                            col.column = "stdev";
-                            break;
-
-                        case TdsEnums.AOPSTDEVP:
-                            col.column = "stdevp";
-                            break;
-
-                        case TdsEnums.AOPVAR:
-                            col.column = "var";
-                            break;
-
-                        case TdsEnums.AOPVARP:
-                            col.column = "varp";
-                            break;
-                    }
+                        TdsEnums.AOPAVG => "avg",
+                        TdsEnums.AOPCNT => "cnt",
+                        TdsEnums.AOPCNTB => "cntb",
+                        TdsEnums.AOPMAX => "max",
+                        TdsEnums.AOPMIN => "min",
+                        TdsEnums.AOPSUM => "sum",
+                        TdsEnums.AOPANY => "any",
+                        TdsEnums.AOPNOOP => "noop",
+                        TdsEnums.AOPSTDEV => "stdev",
+                        TdsEnums.AOPSTDEVP => "stdevp",
+                        TdsEnums.AOPVAR => "var",
+                        TdsEnums.AOPVARP => "varp",
+                        _ => col.column,
+                    };
                 }
             }
 
