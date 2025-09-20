@@ -1509,6 +1509,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlError ProcessSNIError(TdsParserStateObject stateObj)
         {
+            using TryEventScope _ = TryEventScope.Create(nameof(TdsParser));
 #if DEBUG
             // There is an exception here for MARS as its possible that another thread has closed the connection just as we see an error
             Debug.Assert(SniContext.Undefined != stateObj.DebugOnlyCopyOfSniContext || ((_fMARS) && ((_state == TdsParserState.Closed) || (_state == TdsParserState.Broken))), "SniContext must not be None");
