@@ -388,17 +388,19 @@ namespace Microsoft.Data.SqlClient
                     authType == SqlAuthenticationMethod.NotSpecified ? SqlAuthenticationMethod.SqlPassword.ToString() : authType.ToString());
             }
 
-            //Create LocalDB instance if necessary
+            // Encryption is not supported on SQL Local DB - disable it if they have only specified Mandatory
             if (connHandler.ConnectionOptions.LocalDBInstance != null)
             {
+                // Create LocalDB instance if necessary
                 LocalDbApi.CreateLocalDbInstance(connHandler.ConnectionOptions.LocalDBInstance);
                 if (encrypt == SqlConnectionEncryptOption.Mandatory)
                 {
-                    // Encryption is not supported on SQL Local DB - disable it for current session.
                     encrypt = SqlConnectionEncryptOption.Optional;
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Encryption will be disabled as target server is a SQL Local DB instance.");
                 }
             }
+
+            _authenticationProvider = null;
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
@@ -406,10 +408,6 @@ namespace Microsoft.Data.SqlClient
                 _authenticationProvider = Connection._sspiContextProvider ?? _physicalStateObj.CreateSspiContextProvider();
 
                 SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | SSPI or Active Directory Authentication Library loaded for SQL Server based integrated authentication");
-            }
-            else
-            {
-                _authenticationProvider = null;
             }
 
             // if Strict encryption (i.e. isTlsFirst) is chosen trust server certificate should always be false.
@@ -447,6 +445,7 @@ namespace Microsoft.Data.SqlClient
                 FQDNforDNSCache = FQDNforDNSCache.Substring(0, commaPos);
             }
 
+            // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             _physicalStateObj.CreatePhysicalSNIHandle(
                 serverInfo.ExtendedServerName,
                 timeout,
@@ -571,6 +570,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 uint retCode = _physicalStateObj.SniGetConnectionId(ref _connHandler._clientConnectionId);
+
                 Debug.Assert(retCode == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionId");
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
 
@@ -1501,14 +1501,15 @@ namespace Microsoft.Data.SqlClient
                         // Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol.
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError|ERR|ADV> Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol.");
                         throw SQL.MultiSubnetFailoverWithNonTcpProtocol();
-
-                        // continue building SqlError instance
                 }
             }
+            // continue building SqlError instance
 
-            // error.errorMessage is null terminated with garbage beyond that, since fixed length
+            // details.ErrorMessage is null terminated with garbage beyond that, since fixed length
+            // PInvoke code automatically sets the length of the string for us, so no need to look for \0
             string errorMessage;
             errorMessage = string.IsNullOrEmpty(details.ErrorMessage) ? string.Empty : details.ErrorMessage;
+
             /*  Format SNI errors and add Context Information
              *
              *  General syntax is:
@@ -1544,7 +1545,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Native Error Code = {0}", win32ErrorCode);
             if (details.SniErrorNumber == 0)
             {
-                // Provider error. The message from provider is preceeded with non-localizable info from SNI
+                // Provider error. The message from provider is preceded with non-localizable info from SNI
                 // strip provider info from SNI
                 //
                 int iColon = errorMessage.IndexOf(':');
@@ -1591,8 +1592,8 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryAdvancedTraceErrorEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Error Message. Native Error = {0}, Line Number ={1}, Function ={2}, Exception ={3}, Server = {4}",
                     details.NativeError, (int)details.LineNumber, details.Function, details.Exception, _server);
 
-            return new SqlError(details.NativeError, 0x00, TdsEnums.FATAL_ERROR_CLASS,
-                                _server, errorMessage, details.Function, (int)details.LineNumber, win32ErrorCode);
+            return new SqlError(infoNumber: details.NativeError, errorState: 0x00, TdsEnums.FATAL_ERROR_CLASS, _server,
+                                errorMessage, details.Function, (int)details.LineNumber, win32ErrorCode: win32ErrorCode);
         }
 
         internal void CheckResetConnection(TdsParserStateObject stateObj)
@@ -4782,7 +4783,7 @@ namespace Microsoft.Data.SqlClient
                 SqlDataReader.SharedState sharedState = stateObj._readerState;
                 if (sharedState != null && sharedState._dataReady)
                 {
-                    var metadata = stateObj._cleanupMetaData;
+                    _SqlMetaDataSet metadata = stateObj._cleanupMetaData;
                     TdsOperationStatus result;
                     if (stateObj._partialHeaderBytesRead > 0)
                     {
@@ -4826,7 +4827,6 @@ namespace Microsoft.Data.SqlClient
                                     throw SQL.SynchronousCallMayNotPend();
                                 }
                             }
-
                         }
 
 
@@ -4840,12 +4840,12 @@ namespace Microsoft.Data.SqlClient
                 }
                 Run(RunBehavior.Clean, null, null, null, stateObj);
             }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch
             {
                 _connHandler.DoomThisConnection();
                 throw;
             }
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
 
@@ -9780,7 +9780,8 @@ namespace Microsoft.Data.SqlClient
                                 if (
                                     !(cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled
                                     ||
-                                    (cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && cmd.Connection.IsColumnEncryptionSettingEnabled)))
+                                    (cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && cmd.Connection.IsColumnEncryptionSettingEnabled))
+                                )
                                 {
                                     throw SQL.ParamInvalidForceColumnEncryptionSetting(param.ParameterName, rpcext.GetCommandTextOrRpcName());
                                 }
@@ -10163,7 +10164,7 @@ namespace Microsoft.Data.SqlClient
                             maxsize = 1;
                     }
 
-                    WriteParameterVarLen(mt, maxsize, false/*IsNull*/, stateObj);
+                    WriteParameterVarLen(mt, maxsize, isNull: false, stateObj);
                 }
             }
             else
@@ -10289,7 +10290,7 @@ namespace Microsoft.Data.SqlClient
                         maxsize = sqlVectorProps.Size;
                     }
 
-                    WriteParameterVarLen(mt, maxsize, false/*IsNull*/, stateObj);
+                    WriteParameterVarLen(mt, maxsize, isNull: false, stateObj);
                 }
             }
 
@@ -10311,9 +10312,9 @@ namespace Microsoft.Data.SqlClient
             {
                 stateObj.WriteByte(param.GetActualScale());
             }
-            // For vector type we need to write scale as the element type of the vector.
             else if (mt.SqlDbType == SqlDbTypeExtensions.Vector)
             {
+                // For vector type we need to write scale as the element type of the vector.
                 stateObj.WriteByte(((ISqlVector)param.Value).ElementType);
             }
 
@@ -10479,6 +10480,7 @@ namespace Microsoft.Data.SqlClient
                 if (tsk.Exception != null)
                 {
                     Exception exc = tsk.Exception.InnerException;
+
                     try
                     {
                         FailureCleanup(stateObj, tsk.Exception);
@@ -13446,7 +13448,6 @@ namespace Microsoft.Data.SqlClient
             totalCharsRead = (startOffsetByteCount >> 1);
             charsLeft -= totalCharsRead;
             offst += totalCharsRead;
-
 
             while (charsLeft > 0)
             {

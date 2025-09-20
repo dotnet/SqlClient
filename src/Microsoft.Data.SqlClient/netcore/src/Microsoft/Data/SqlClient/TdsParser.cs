@@ -386,10 +386,13 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Encryption is not supported on SQL Local DB - disable it if they have only specified Mandatory
-            if (connHandler.ConnectionOptions.LocalDBInstance != null && encrypt == SqlConnectionEncryptOption.Mandatory)
+            if (connHandler.ConnectionOptions.LocalDBInstance != null)
             {
-                encrypt = SqlConnectionEncryptOption.Optional;
-                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Encryption will be disabled as target server is a SQL Local DB instance.");
+                if (encrypt == SqlConnectionEncryptOption.Mandatory)
+                {
+                    encrypt = SqlConnectionEncryptOption.Optional;
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Encryption will be disabled as target server is a SQL Local DB instance.");
+                }
             }
 
             _authenticationProvider = null;
@@ -398,6 +401,7 @@ namespace Microsoft.Data.SqlClient
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
                 _authenticationProvider = Connection._sspiContextProvider ?? _physicalStateObj.CreateSspiContextProvider();
+
                 SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | SSPI or Active Directory Authentication Library loaded for SQL Server based integrated authentication");
             }
 
@@ -848,6 +852,7 @@ namespace Microsoft.Data.SqlClient
                         int actIdSize = GUID_SIZE + sizeof(uint);
                         offset += actIdSize;
                         optionDataSize += actIdSize;
+
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}", _connHandler?._clientConnectionId, actId);
                         break;
 
@@ -1479,11 +1484,12 @@ namespace Microsoft.Data.SqlClient
                             // Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol.
                             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError|ERR|ADV> Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol.");
                             throw SQL.MultiSubnetFailoverWithNonTcpProtocol();
-                            // continue building SqlError instance
                     }
                 }
-                // PInvoke code automatically sets the length of the string for us
-                // So no need to look for \0
+                // continue building SqlError instance
+
+                // details.ErrorMessage is null terminated with garbage beyond that, since fixed length
+                // PInvoke code automatically sets the length of the string for us, so no need to look for \0
                 string errorMessage = details.ErrorMessage;
 
                 /*  Format SNI errors and add Context Information
@@ -1529,6 +1535,7 @@ namespace Microsoft.Data.SqlClient
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > ':' character missing in sni errorMessage. Error Message index of ':' = {0}", iColon);
                     Debug.Assert(errorMessage.Length > iColon + 1 && errorMessage[iColon + 1] == ' ', "Expecting a space after the ':' character");
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Expecting a space after the ':' character. Error Message Length = {0}", errorMessage.Length);
+
                     // extract the message excluding the colon and trailing cr/lf chars
                     if (0 <= iColon)
                     {
@@ -6994,8 +7001,8 @@ namespace Microsoft.Data.SqlClient
                         {
                             return result;
                         }
-                        value.SqlBinary = SqlBinary.WrapBytes(b); // doesn't copy the byte array
 
+                        value.SqlBinary = SqlBinary.WrapBytes(b); // doesn't copy the byte array
                         break;
                     }
 
@@ -7868,13 +7875,17 @@ namespace Microsoft.Data.SqlClient
 
             // sign
             if (d.IsPositive)
+            {
                 bytes[current++] = 1;
+            }
             else
+            {
                 bytes[current++] = 0;
-
+            }
 
             Span<uint> data = stackalloc uint[4];
             d.WriteTdsValue(data);
+
             byte[] bytesPart = SerializeUnsignedInt(data[0], stateObj);
             Buffer.BlockCopy(bytesPart, 0, bytes, current, 4);
             current += 4;
@@ -7894,12 +7905,17 @@ namespace Microsoft.Data.SqlClient
         {
             // sign
             if (d.IsPositive)
+            {
                 stateObj.WriteByte(1);
+            }
             else
+            {
                 stateObj.WriteByte(0);
+            }
 
             Span<uint> data = stackalloc uint[4];
             d.WriteTdsValue(data);
+
             WriteUnsignedInt(data[0], stateObj);
             WriteUnsignedInt(data[1], stateObj);
             WriteUnsignedInt(data[2], stateObj);
@@ -10103,7 +10119,7 @@ namespace Microsoft.Data.SqlClient
                             maxsize = 1;
                     }
 
-                    WriteParameterVarLen(mt, maxsize, false /*IsNull*/, stateObj);
+                    WriteParameterVarLen(mt, maxsize, isNull: false, stateObj);
                 }
             }
             else
@@ -10227,9 +10243,9 @@ namespace Microsoft.Data.SqlClient
                         // vector value when communicating with SQL Server.
                         var sqlVectorProps = ((ISqlVector)param.Value);
                         maxsize = sqlVectorProps.Size;
-                    }   
+                    }
 
-                    WriteParameterVarLen(mt, maxsize, false /*IsNull*/, stateObj);
+                    WriteParameterVarLen(mt, maxsize, isNull: false, stateObj);
                 }
             }
 
@@ -10256,6 +10272,7 @@ namespace Microsoft.Data.SqlClient
                 // For vector type we need to write scale as the element type of the vector.
                 stateObj.WriteByte(((ISqlVector)param.Value).ElementType);
             }
+
             // write out collation or xml metadata
 
             if ((mt.SqlDbType == SqlDbType.Xml || mt.SqlDbType == SqlDbTypeExtensions.Json))
@@ -10372,7 +10389,7 @@ namespace Microsoft.Data.SqlClient
             );
         }
 
-        // This is in its own method to avoid always allocating the lambda in  TDSExecuteRPCParameter
+        // This is in its own method to avoid always allocating the lambda in TDSExecuteRPCParameter
         private void TDSExecuteRPCParameterSetupFlushCompletion(TdsParserStateObject stateObj, TaskCompletionSource<object> completion, Task execFlushTask, bool taskReleaseConnectionLock)
         {
             execFlushTask.ContinueWith(tsk => ExecuteFlushTaskCallback(tsk, stateObj, completion, taskReleaseConnectionLock), TaskScheduler.Default);
@@ -10504,7 +10521,7 @@ namespace Microsoft.Data.SqlClient
                 // Value for TVP default is empty list, not NULL
                 if (SqlDbType.Structured == metaData.SqlDbType && metaData.IsMultiValued)
                 {
-                    value = Array.Empty<SqlDataRecord>();
+                    value = Array.Empty<Server.SqlDataRecord>();
                     typeCode = ExtendedClrTypeCode.IEnumerableOfSqlDataRecord;
                 }
                 else
@@ -10526,7 +10543,10 @@ namespace Microsoft.Data.SqlClient
             {
                 value = param.GetCoercedValue();
                 typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(
-                    metaData.SqlDbType, metaData.IsMultiValued, value, null);
+                    metaData.SqlDbType,
+                    metaData.IsMultiValued,
+                    value,
+                    udtType: null);
             }
 
             if (advancedTraceIsOn)
@@ -11673,21 +11693,19 @@ namespace Microsoft.Data.SqlClient
             // For Plp fields, this should only be used when writing to metadata header.
             // For actual data length, WriteDataLength should be used.
             // For Xml fields, there is no token length field. For MAX fields it is 0xffff.
+            if (TdsEnums.SQLUDT == token)
             {
-                if (TdsEnums.SQLUDT == token)
-                {
-                    tokenLength = 8;
-                }
-                else if (token == TdsEnums.SQLXMLTYPE)
-                {
-                    tokenLength = 8;
-                }
-                else if (token == TdsEnums.SQLVECTOR)
-                {
-                    tokenLength = 2;
-                    WriteShort(length, stateObj);
-                    return;
-                }
+                tokenLength = 8;
+            }
+            else if (token == TdsEnums.SQLXMLTYPE)
+            {
+                tokenLength = 8;
+            }
+            else if (token == TdsEnums.SQLVECTOR)
+            {
+                tokenLength = 2;
+                WriteShort(length, stateObj);
+                return;
             }
 
             if (tokenLength == 0)
