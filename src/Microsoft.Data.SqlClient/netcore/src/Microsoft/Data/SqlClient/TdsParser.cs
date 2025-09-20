@@ -1457,8 +1457,6 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                 // There is an exception here for MARS as its possible that another thread has closed the connection just as we see an error
                 Debug.Assert(SniContext.Undefined != stateObj.DebugOnlyCopyOfSniContext || ((_fMARS) && ((_state == TdsParserState.Closed) || (_state == TdsParserState.Broken))), "SniContext must not be None");
-                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.ProcessSNIError|ERR> SNIContext must not be None = {0}, _fMARS = {1}, TDS Parser State = {2}", stateObj.DebugOnlyCopyOfSniContext, _fMARS, _state);
-
 #endif
                 TdsParserStateObject.SniErrorDetails details = stateObj.GetErrorDetails();
 
@@ -1487,7 +1485,6 @@ namespace Microsoft.Data.SqlClient
                 // PInvoke code automatically sets the length of the string for us
                 // So no need to look for \0
                 string errorMessage = details.ErrorMessage;
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("< sc.TdsParser.ProcessSNIError |ERR|ADV > Error message Detail: {0}", details.ErrorMessage);
 
                 /*  Format SNI errors and add Context Information
                  *
@@ -1502,15 +1499,17 @@ namespace Microsoft.Data.SqlClient
                  * !=null       | == 0     | replace text left of errorMessage
                  */
 
+#if NET
                 if (LocalAppContextSwitches.UseManagedNetworking)
                 {
                     Debug.Assert(!string.IsNullOrEmpty(details.ErrorMessage) || details.SniErrorNumber != 0, "Empty error message received from SNI");
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Empty error message received from SNI. Error Message = {0}, SNI Error Number ={1}", details.ErrorMessage, details.SniErrorNumber);
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Error message received from SNI. Error Message = {0}, SNI Error Number ={1}", details.ErrorMessage, details.SniErrorNumber);
                 }
                 else
+#endif
                 {
                     Debug.Assert(!string.IsNullOrEmpty(details.ErrorMessage), "Empty error message received from SNI");
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Empty error message received from SNI. Error Message = {0}", details.ErrorMessage);
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Error message received from SNI. Error Message = {0}", details.ErrorMessage);
                 }
 
                 string sqlContextInfo = StringsHelper.GetResourceString(stateObj.SniContext.ToString());
@@ -4702,8 +4701,9 @@ namespace Microsoft.Data.SqlClient
                     //  we actually MUST use the code page (i.e. don't error if no ANSI data is sent).
                     success = true;
                 }
-                catch (ArgumentException)
+                catch (ArgumentException e)
                 {
+                    ADP.TraceExceptionWithoutRethrow(e);
                 }
 
                 // If we failed, it is quite possible this is because certain culture id's
@@ -4734,8 +4734,9 @@ namespace Microsoft.Data.SqlClient
                                 codePage = new CultureInfo(cultureId).TextInfo.ANSICodePage;
                                 success = true;
                             }
-                            catch (ArgumentException)
+                            catch (ArgumentException e)
                             {
+                                ADP.TraceExceptionWithoutRethrow(e);
                             }
                             break;
                         case 0x827:     // Mapping Non-supported Lithuanian code page to supported Lithuanian.
@@ -4744,8 +4745,9 @@ namespace Microsoft.Data.SqlClient
                                 codePage = new CultureInfo(0x427).TextInfo.ANSICodePage;
                                 success = true;
                             }
-                            catch (ArgumentException)
+                            catch (ArgumentException e)
                             {
+                                ADP.TraceExceptionWithoutRethrow(e);
                             }
                             break;
                         case 0x43f:
@@ -8375,6 +8377,7 @@ namespace Microsoft.Data.SqlClient
 
                 // If an exception occurs - break the connection.
                 // Attention error will not be thrown in this case by Run(), but other failures may.
+                ADP.TraceExceptionWithoutRethrow(e);
                 _state = TdsParserState.Broken;
                 _connHandler.BreakConnection();
 

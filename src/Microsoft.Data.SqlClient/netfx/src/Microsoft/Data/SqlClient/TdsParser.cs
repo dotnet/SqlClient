@@ -340,6 +340,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (stateObj._attentionSent)
             {
+                SqlClientEventSource.Log.TryTraceEvent("TdsParser.ProcessPendingAck | INFO | Connection Object Id {0}, State Obj Id {1}, Processing Attention.", _connHandler.ObjectID, stateObj.ObjectID);
                 ProcessAttention(stateObj);
             }
         }
@@ -404,48 +405,11 @@ namespace Microsoft.Data.SqlClient
             {
                 _authenticationProvider = Connection._sspiContextProvider ?? _physicalStateObj.CreateSspiContextProvider();
 
-                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SSPI or Active Directory Authentication Library for SQL Server based integrated authentication");
+                SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | SSPI or Active Directory Authentication Library loaded for SQL Server based integrated authentication");
             }
             else
             {
                 _authenticationProvider = null;
-
-                switch (authType)
-                {
-                    case SqlAuthenticationMethod.ActiveDirectoryPassword:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Password authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Integrated authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryInteractive:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Interactive authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Service Principal authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Device Code Flow authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Managed Identity authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryMSI:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory MSI authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryDefault:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Default authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Workload Identity authentication");
-                        break;
-                    case SqlAuthenticationMethod.SqlPassword:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SQL Password authentication");
-                        break;
-                    default:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SQL authentication");
-                        break;
-                }
             }
 
             // if Strict encryption (i.e. isTlsFirst) is chosen trust server certificate should always be false.
@@ -901,7 +865,7 @@ namespace Microsoft.Data.SqlClient
                         offset += actIdSize;
                         optionDataSize += actIdSize;
 
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}", _connHandler._clientConnectionId, actId);
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}", _connHandler?._clientConnectionId, actId);
                         break;
 
                     case (int)PreLoginOptions.FEDAUTHREQUIRED:
@@ -1242,7 +1206,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.Deactivate|ADV> {0} deactivating", ObjectID);
             if (SqlClientEventSource.Log.IsStateDumpEnabled())
             {
-                SqlClientEventSource.Log.StateDumpEvent("<sc.TdsParser.Deactivate|STATE> {0}, {1}", ObjectID, TraceString());
+                SqlClientEventSource.Log.StateDumpEvent("<sc.TdsParser.Deactivate|STATE> {0} {1}", ObjectID, TraceString());
             }
 
             if (MARSOn)
@@ -1525,14 +1489,17 @@ namespace Microsoft.Data.SqlClient
                 {
                     case SniErrors.MultiSubnetFailoverWithMoreThan64IPs:
                         // Connecting with the MultiSubnetFailover connection option to a SQL Server instance configured with more than 64 IP addresses is not supported.
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError|ERR|ADV> Connecting with the MultiSubnetFailover connection option to a SQL Server instance configured with more than 64 IP addresses is not supported.");
                         throw SQL.MultiSubnetFailoverWithMoreThan64IPs();
 
                     case SniErrors.MultiSubnetFailoverWithInstanceSpecified:
                         // Connecting to a named SQL Server instance using the MultiSubnetFailover connection option is not supported.
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError|ERR|ADV> Connecting to a named SQL Server instance using the MultiSubnetFailover connection option is not supported.");
                         throw SQL.MultiSubnetFailoverWithInstanceSpecified();
 
                     case SniErrors.MultiSubnetFailoverWithNonTcpProtocol:
                         // Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol.
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError|ERR|ADV> Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol.");
                         throw SQL.MultiSubnetFailoverWithNonTcpProtocol();
 
                         // continue building SqlError instance
@@ -1555,7 +1522,18 @@ namespace Microsoft.Data.SqlClient
              * !=null       | == 0     | replace text left of errorMessage
             */
 
-            Debug.Assert(!string.IsNullOrEmpty(errorMessage), "Empty error message received from SNI");
+#if NET
+            if (LocalAppContextSwitches.UseManagedNetworking)
+            {
+                Debug.Assert(!string.IsNullOrEmpty(details.ErrorMessage) || details.SniErrorNumber != 0, "Empty error message received from SNI");
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Error message received from SNI. Error Message = {0}, SNI Error Number ={1}", details.ErrorMessage, details.SniErrorNumber);
+            }
+            else
+#endif
+            {
+                Debug.Assert(!string.IsNullOrEmpty(details.ErrorMessage), "Empty error message received from SNI");
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Error message received from SNI. Error Message = {0}", details.ErrorMessage);
+            }
 
             string sqlContextInfo = StringsHelper.GetString(Enum.GetName(typeof(SniContext), stateObj.SniContext));
             string providerRid = string.Format("SNI_PN{0}", (int)details.Provider);
@@ -1563,6 +1541,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
             int win32ErrorCode = details.NativeError;
 
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Native Error Code = {0}", win32ErrorCode);
             if (details.SniErrorNumber == 0)
             {
                 // Provider error. The message from provider is preceeded with non-localizable info from SNI
@@ -1570,7 +1549,9 @@ namespace Microsoft.Data.SqlClient
                 //
                 int iColon = errorMessage.IndexOf(':');
                 Debug.Assert(0 <= iColon, "':' character missing in sni errorMessage");
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > ':' character missing in sni errorMessage. Error Message index of ':' = {0}", iColon);
                 Debug.Assert(errorMessage.Length > iColon + 1 && errorMessage[iColon + 1] == ' ', "Expecting a space after the ':' character");
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Expecting a space after the ':' character. Error Message Length = {0}", errorMessage.Length);
 
                 // extract the message excluding the colon and trailing cr/lf chars
                 if (0 <= iColon)
@@ -1602,9 +1583,13 @@ namespace Microsoft.Data.SqlClient
                     errorMessage += LocalDbApi.GetLocalDbMessage(details.NativeError);
                     win32ErrorCode = 0;
                 }
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Extracting the latest exception from native SNI. errorMessage: {0}", errorMessage);
             }
             errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})",
                 sqlContextInfo, providerName, (int)details.SniErrorNumber, errorMessage);
+
+            SqlClientEventSource.Log.TryAdvancedTraceErrorEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Error Message. Native Error = {0}, Line Number ={1}, Function ={2}, Exception ={3}, Server = {4}",
+                    details.NativeError, (int)details.LineNumber, details.Function, details.Exception, _server);
 
             return new SqlError(details.NativeError, 0x00, TdsEnums.FATAL_ERROR_CLASS,
                                 _server, errorMessage, details.Function, (int)details.LineNumber, win32ErrorCode);
@@ -2493,8 +2478,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             _connHandler._federatedAuthenticationInfoReceived = true;
                             SqlFedAuthInfo info;
-                            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TryRun|SEC> Received federated authentication info token");
-
+                            
                             result = TryProcessFedAuthInfo(stateObj, tokenLength, out info);
                             if (result != TdsOperationStatus.Done)
                             {
@@ -4040,7 +4024,7 @@ namespace Microsoft.Data.SqlClient
             tokenLen -= sizeof(uint); // remaining length is shortened since we read optCount
             if (SqlClientEventSource.Log.IsAdvancedTraceOn())
             {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ADV> CountOfInfoIDs = {0}", optionsCount.ToString(CultureInfo.InvariantCulture));
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ADV> CountOfInfoIDs = {0}", optionsCount.ToString(CultureInfo.InvariantCulture));
             }
             if (tokenLen > 0)
             {
@@ -9546,8 +9530,8 @@ namespace Microsoft.Data.SqlClient
                     // Reset the ThreadHasParserLock value in case our caller expects it to be set\not set
                     _connHandler.ThreadHasParserLockForClose = originalThreadHasParserLock;
                 }
+                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.FailureCleanup|ERR> Exception rethrown.");
             }
-            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.FailureCleanup|ERR> Exception rethrown.");
         }
 
         internal Task TdsExecuteSQLBatch(string text, int timeout, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool sync, bool callerHasConnectionLock = false, byte[] enclavePackage = null)
