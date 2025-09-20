@@ -1369,12 +1369,12 @@ namespace Microsoft.Data.SqlClient
             //_errorAndWarningsLock lock is implemented inside GetFullErrorAndWarningCollection
             SqlErrorCollection temp = stateObj.GetFullErrorAndWarningCollection(out breakConnection);
 
+            Debug.Assert(temp != null, "TdsParser::ThrowExceptionAndWarning: null errors collection!");
+            Debug.Assert(temp.Count > 0, "TdsParser::ThrowExceptionAndWarning called with no exceptions or warnings!");
             if (temp.Count == 0)
             {
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.ThrowExceptionAndWarning|ERR> Potential multi-threaded misuse of connection, unexpectedly empty warnings/errors under lock {0}", ObjectID);
             }
-            Debug.Assert(temp != null, "TdsParser::ThrowExceptionAndWarning: null errors collection!");
-            Debug.Assert(temp.Count > 0, "TdsParser::ThrowExceptionAndWarning called with no exceptions or warnings!");
             Debug.Assert(_connHandler != null, "TdsParser::ThrowExceptionAndWarning called with null connectionHandler!");
 
             // Don't break the connection if it is already closed
@@ -2220,7 +2220,6 @@ namespace Microsoft.Data.SqlClient
 #else
                     throw SQL.ParsingErrorToken(ParsingErrorState.InvalidTdsTokenReceived, token); // MDAC 82443
 #endif
-
                 }
 
                 int tokenLength;

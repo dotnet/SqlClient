@@ -636,7 +636,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void RemoveEncryption()
         {
-            Debug.Assert((_encryptionOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.LOGIN, "Invalid encryption option state");
+            Debug.Assert(_encryptionOption == EncryptionOptions.LOGIN, "Invalid encryption option state");
 
             uint error = _physicalStateObj.DisableSsl();
 
@@ -1375,6 +1375,7 @@ namespace Microsoft.Data.SqlClient
             //_errorAndWarningsLock lock is implemented inside GetFullErrorAndWarningCollection
             SqlErrorCollection temp = stateObj.GetFullErrorAndWarningCollection(out breakConnection);
 
+            Debug.Assert(temp != null, "TdsParser::ThrowExceptionAndWarning: null errors collection!");
             Debug.Assert(temp.Count > 0, "TdsParser::ThrowExceptionAndWarning called with no exceptions or warnings!");
             if (temp.Count == 0)
             {
@@ -1405,7 +1406,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            Debug.Assert(temp != null, "TdsParser::ThrowExceptionAndWarning: 0 errors in collection");
             if (temp != null && temp.Count > 0)
             {
                 // Construct the exception now that we've collected all the errors
@@ -1502,7 +1502,6 @@ namespace Microsoft.Data.SqlClient
 
             if (details.SniErrorNumber != 0)
             {
-
                 // handle special SNI error codes that are converted into exception which is not a SqlException.
                 switch (details.SniErrorNumber)
                 {
@@ -2198,11 +2197,18 @@ namespace Microsoft.Data.SqlClient
 
                 if (!IsValidTdsToken(token))
                 {
-                    Debug.Fail($"unexpected token; token = {token,-2:X2}");
+#if DEBUG
+                    string message = stateObj.DumpBuffer();
+                    Debug.Fail(message);
+#endif
                     _state = TdsParserState.Broken;
                     _connHandler.BreakConnection();
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Run|ERR> Potential multi-threaded misuse of connection, unexpected TDS token found {0}", ObjectID);
+#if DEBUG
+                    throw new InvalidOperationException(message);
+#else
                     throw SQL.ParsingErrorToken(ParsingErrorState.InvalidTdsTokenReceived, token); // MDAC 82443
+#endif
                 }
 
                 int tokenLength;
@@ -4788,6 +4794,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         codePage = ci.TextInfo.ANSICodePage;
                     }
+                    Debug.Assert(codePage >= 0, $"Invalid code page. codePage: {codePage}. cultureId: {cultureId}");
                 }
             }
 
@@ -10614,9 +10621,9 @@ namespace Microsoft.Data.SqlClient
                     udtType: null);
             }
 
-            var sendDefaultValue = sendDefault ? 1 : 0;
             if (advancedTraceIsOn)
             {
+                int sendDefaultValue = sendDefault ? 1 : 0;
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.WriteSmiParameter|ADV> {0}, Sending parameter '{1}', default flag={2}, metadata:{3}", ObjectID, param.ParameterName, sendDefaultValue, metaData.TraceString(3));
             }
 
