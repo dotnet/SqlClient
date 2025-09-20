@@ -4009,7 +4009,7 @@ namespace Microsoft.Data.SqlClient
                 return result;
             }
 
-            result = stateObj.TryReadString(len, out a.programName);
+            result = stateObj.TrySkipBytes(len * ADP.CharSize);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
@@ -4291,7 +4291,7 @@ namespace Microsoft.Data.SqlClient
             returnValue = null;
             SqlReturnValue rec = new SqlReturnValue();
             rec.length = length;        // In 2005 this length is -1
-            TdsOperationStatus result = stateObj.TryReadUInt16(out rec.parmIndex);
+            TdsOperationStatus result = stateObj.TryReadUInt16(out _);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
