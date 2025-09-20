@@ -10416,7 +10416,8 @@ namespace Microsoft.Data.SqlClient
                     startRpc,
                     startParam
                 ),
-                onFailure: exc => TdsExecuteRPC_OnFailure(exc, stateObj)
+                onFailure: exc => TdsExecuteRPC_OnFailure(exc, stateObj),
+                connectionToDoom: _connHandler
             );
         }
 
@@ -11838,7 +11839,8 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     return AsyncHelper.CreateContinuationTask<int, TdsParserStateObject>(unterminatedWriteTask,
-                        WriteInt, 0, stateObj
+                        WriteInt, 0, stateObj,
+                        connectionToDoom: _connHandler
                     );
                 }
             }
