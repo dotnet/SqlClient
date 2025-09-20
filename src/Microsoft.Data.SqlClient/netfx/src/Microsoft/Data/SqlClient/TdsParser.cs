@@ -657,6 +657,11 @@ namespace Microsoft.Data.SqlClient
                 // Cache physical stateObj and connection.
                 _pMarsPhysicalConObj = _physicalStateObj;
 
+#if NET
+                if (LocalAppContextSwitches.UseManagedNetworking)
+                    _pMarsPhysicalConObj.IncrementPendingCallbacks();
+#endif
+
                 uint info = 0;
                 uint error = _pMarsPhysicalConObj.EnableMars(ref info);
 
@@ -1593,16 +1598,29 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                // SNI error. Replace the entire message.
-                errorMessage = SQL.GetSNIErrorMessage(details.SniErrorNumber);
-
-                // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
-                if (details.SniErrorNumber == SniErrors.LocalDBErrorCode)
+#if NET
+                if (LocalAppContextSwitches.UseManagedNetworking)
                 {
-                    errorMessage += LocalDbApi.GetLocalDbMessage(details.NativeError);
-                    win32ErrorCode = 0;
+                    // SNI error. Append additional error message info if available and hasn't been included.
+                    string sniLookupMessage = SQL.GetSNIErrorMessage(details.SniErrorNumber);
+                    errorMessage = (string.IsNullOrEmpty(errorMessage) || errorMessage.Contains(sniLookupMessage))
+                                    ? sniLookupMessage
+                                    : (sniLookupMessage + ": " + errorMessage);
                 }
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Extracting the latest exception from native SNI. errorMessage: {0}", errorMessage);
+                else
+#endif
+                {
+                    // SNI error. Replace the entire message.
+                    errorMessage = SQL.GetSNIErrorMessage(details.SniErrorNumber);
+
+                    // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
+                    if (details.SniErrorNumber == SniErrors.LocalDBErrorCode)
+                    {
+                        errorMessage += LocalDbApi.GetLocalDbMessage(details.NativeError);
+                        win32ErrorCode = 0;
+                    }
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Extracting the latest exception from native SNI. errorMessage: {0}", errorMessage);
+                }
             }
             errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})",
                 sqlContextInfo, providerName, (int)details.SniErrorNumber, errorMessage);
@@ -1900,7 +1918,9 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ParameterValueOutOfRange(v.ToString());
             }
 
-            return BitConverter.GetBytes(v);
+            var bytes = new byte[4];
+            BinaryPrimitives.WriteInt32LittleEndian(bytes, BitConverterCompatible.SingleToInt32Bits(v));
+            return bytes;
         }
 
         /// <summary>
@@ -2049,7 +2069,9 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ParameterValueOutOfRange(v.ToString());
             }
 
-            return BitConverter.GetBytes(v);
+            var bytes = new byte[8];
+            BinaryPrimitives.WriteInt64LittleEndian(bytes, BitConverter.DoubleToInt64Bits(v));
+            return bytes;
         }
 
         /// <summary>
@@ -6523,10 +6545,11 @@ namespace Microsoft.Data.SqlClient
                     length = checked((int)length - 1);
                     int[] bits = new int[4];
                     int decLength = length >> 2;
+                    ReadOnlySpan<byte> span = unencryptedBytes.AsSpan();
                     for (int i = 0; i < decLength; i++)
                     {
                         // up to 16 bytes of data following the sign byte
-                        bits[i] = BitConverter.ToInt32(unencryptedBytes, index);
+                        bits[i] = BinaryPrimitives.ReadInt32LittleEndian(span.Slice(index));
                         index += 4;
                     }
                     value.SetToDecimal(md.baseTI.precision, md.baseTI.scale, fPositive, bits);
@@ -8181,7 +8204,20 @@ namespace Microsoft.Data.SqlClient
 
         private static void CopyCharsToBytes(char[] source, int sourceOffset, byte[] dest, int destOffset, int charLength)
         {
-            Buffer.BlockCopy(source, sourceOffset, dest, destOffset, charLength * ADP.CharSize);
+            if (!BitConverter.IsLittleEndian)
+            {
+                int desti = 0;
+                Span<byte> span = dest.AsSpan();
+                for (int srci = 0; srci < charLength; srci++)
+                {
+                    BinaryPrimitives.WriteUInt16LittleEndian(span.Slice(desti + destOffset), (ushort)source[srci + sourceOffset]);
+                    desti += 2;
+                }
+            }
+            else
+            {
+                Buffer.BlockCopy(source, sourceOffset, dest, destOffset, charLength * ADP.CharSize);
+            }
         }
 
         private static void CopyStringToBytes(string source, int sourceOffset, byte[] dest, int destOffset, int charLength)

@@ -654,8 +654,10 @@ namespace Microsoft.Data.SqlClient
                 // Cache physical stateObj and connection.
                 _pMarsPhysicalConObj = _physicalStateObj;
 
+#if NET
                 if (LocalAppContextSwitches.UseManagedNetworking)
                     _pMarsPhysicalConObj.IncrementPendingCallbacks();
+#endif
 
                 uint info = 0;
                 uint error = _pMarsPhysicalConObj.EnableMars(ref info);
@@ -1588,6 +1590,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
+#if NET
                     if (LocalAppContextSwitches.UseManagedNetworking)
                     {
                         // SNI error. Append additional error message info if available and hasn't been included.
@@ -1597,6 +1600,7 @@ namespace Microsoft.Data.SqlClient
                                         : (sniLookupMessage + ": " + errorMessage);
                     }
                     else
+#endif
                     {
                         // SNI error. Replace the entire message.
                         errorMessage = SQL.GetSNIErrorMessage(details.SniErrorNumber);
@@ -6477,7 +6481,7 @@ namespace Microsoft.Data.SqlClient
                     length = checked((int)length - 1);
                     int[] bits = new int[4];
                     int decLength = length >> 2;
-                    var span = unencryptedBytes.AsSpan();
+                    ReadOnlySpan<byte> span = unencryptedBytes.AsSpan();
                     for (int i = 0; i < decLength; i++)
                     {
                         // up to 16 bytes of data following the sign byte
