@@ -349,9 +349,14 @@ namespace Microsoft.Data.SqlClient
                               SqlInternalConnectionTds connHandler,
                               TimeoutTimer timeout,
                               SqlConnectionString connectionOptions,
+#if NETFRAMEWORK
                               bool withFailover,
                               bool isFirstTransparentAttempt,
-                              bool disableTnir)
+                              bool disableTnir
+#else
+                              bool withFailover
+#endif
+            )
         {
             SqlConnectionEncryptOption encrypt = connectionOptions.Encrypt;
             bool isTlsFirst = (encrypt == SqlConnectionEncryptOption.Strict);
@@ -423,8 +428,10 @@ namespace Microsoft.Data.SqlClient
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.InitializeConnection);
 
             bool fParallel = _connHandler.ConnectionOptions.MultiSubnetFailover;
-
             TransparentNetworkResolutionState transparentNetworkResolutionState;
+            int totalTimeout;
+
+#if NETFRAMEWORK
             if (_connHandler.ConnectionOptions.TransparentNetworkIPResolution && !disableTnir)
             {
                 if (isFirstTransparentAttempt)
@@ -433,9 +440,14 @@ namespace Microsoft.Data.SqlClient
                     transparentNetworkResolutionState = TransparentNetworkResolutionState.ParallelMode;
             }
             else
+            {
                 transparentNetworkResolutionState = TransparentNetworkResolutionState.DisabledMode;
-
-            int totalTimeout = _connHandler.ConnectionOptions.ConnectTimeout;
+            }
+            totalTimeout = _connHandler.ConnectionOptions.ConnectTimeout;
+#else
+            transparentNetworkResolutionState = TransparentNetworkResolutionState.DisabledMode;
+            totalTimeout = -1;
+#endif
 
             FQDNforDNSCache = serverInfo.ResolvedServerName;
 
@@ -1371,7 +1383,11 @@ namespace Microsoft.Data.SqlClient
             breakConnection &= (TdsParserState.Closed != _state);
             if (breakConnection)
             {
+#if NETFRAMEWORK
                 if ((_state == TdsParserState.OpenNotLoggedIn) && (_connHandler.ConnectionOptions.TransparentNetworkIPResolution || _connHandler.ConnectionOptions.MultiSubnetFailover || _loginWithFailover) && (temp.Count == 1) && ((temp[0].Number == TdsEnums.TIMEOUT_EXPIRED) || (temp[0].Number == TdsEnums.SNI_WAIT_TIMEOUT)))
+#else
+                if ((_state == TdsParserState.OpenNotLoggedIn) && (_connHandler.ConnectionOptions.MultiSubnetFailover || _loginWithFailover) && (temp.Count == 1) && ((temp[0].Number == TdsEnums.TIMEOUT_EXPIRED) || (temp[0].Number == TdsEnums.SNI_WAIT_TIMEOUT)))
+#endif
                 {
                     // DevDiv2 Bug 459546: With "MultiSubnetFailover=yes" in the Connection String, SQLClient incorrectly throws a Timeout using shorter time slice (3-4 seconds), not honoring the actual 'Connect Timeout'
                     // http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/459546
@@ -13838,7 +13854,11 @@ namespace Microsoft.Data.SqlClient
                             _statisticsIsInTransaction ? bool.TrueString : bool.FalseString,
                             _fPreserveTransaction ? bool.TrueString : bool.FalseString,
                             _connHandler == null ? "(null)" : _connHandler.ConnectionOptions.MultiSubnetFailover.ToString((IFormatProvider)null),
-                            _connHandler == null ? "(null)" : _connHandler.ConnectionOptions.TransparentNetworkIPResolution.ToString((IFormatProvider)null));
+#if NETFRAMEWORK
+                           _connHandler == null ? "(null)" : _connHandler.ConnectionOptions.TransparentNetworkIPResolution.ToString((IFormatProvider)null));
+#else
+                           _connHandler == null ? "(null)" : bool.FalseString);
+#endif
         }
 
         private string TraceObjectClass(object instance)
