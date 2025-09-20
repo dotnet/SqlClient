@@ -1523,7 +1523,7 @@ namespace Microsoft.Data.SqlClient
 
                 // details.ErrorMessage is null terminated with garbage beyond that, since fixed length
                 // PInvoke code automatically sets the length of the string for us, so no need to look for \0
-                string errorMessage = details.ErrorMessage;
+                string errorMessage = details.ErrorMessage ?? string.Empty;
 
                 /*  Format SNI errors and add Context Information
                  *
@@ -1552,7 +1552,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 string sqlContextInfo = StringsHelper.GetResourceString(stateObj.SniContext.ToString());
-                string providerRid = string.Format("SNI_PN{0}", details.Provider);
+                string providerRid = $"SNI_PN{details.Provider}";
                 string providerName = StringsHelper.GetResourceString(providerRid);
                 Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
                 int win32ErrorCode = details.NativeError;
@@ -1621,7 +1621,11 @@ namespace Microsoft.Data.SqlClient
                     details.NativeError, (int)details.LineNumber, details.Function, details.Exception, _server);
 
                 return new SqlError(infoNumber: details.NativeError, errorState: 0x00, TdsEnums.FATAL_ERROR_CLASS, _server,
+#if NET
                     errorMessage, details.Function, (int)details.LineNumber, win32ErrorCode: details.NativeError, details.Exception);
+#else
+                    errorMessage, details.Function, (int)details.LineNumber, win32ErrorCode: win32ErrorCode);
+#endif
             }
         }
 

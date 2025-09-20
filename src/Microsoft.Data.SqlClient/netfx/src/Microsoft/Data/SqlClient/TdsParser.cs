@@ -1530,8 +1530,7 @@ namespace Microsoft.Data.SqlClient
 
             // details.ErrorMessage is null terminated with garbage beyond that, since fixed length
             // PInvoke code automatically sets the length of the string for us, so no need to look for \0
-            string errorMessage;
-            errorMessage = string.IsNullOrEmpty(details.ErrorMessage) ? string.Empty : details.ErrorMessage;
+            string errorMessage = details.ErrorMessage ?? string.Empty;
 
             /*  Format SNI errors and add Context Information
              *
@@ -1559,9 +1558,9 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Error message received from SNI. Error Message = {0}", details.ErrorMessage);
             }
 
-            string sqlContextInfo = StringsHelper.GetString(Enum.GetName(typeof(SniContext), stateObj.SniContext));
-            string providerRid = string.Format("SNI_PN{0}", (int)details.Provider);
-            string providerName = StringsHelper.GetString(providerRid);
+            string sqlContextInfo = StringsHelper.GetResourceString(stateObj.SniContext.ToString());
+            string providerRid = $"SNI_PN{details.Provider}";
+            string providerName = StringsHelper.GetResourceString(providerRid);
             Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
             int win32ErrorCode = details.NativeError;
 
@@ -1581,7 +1580,7 @@ namespace Microsoft.Data.SqlClient
                 if (0 <= iColon)
                 {
                     int len = errorMessage.Length;
-                    len -= 2; // exclude newline sequence
+                    len -= Environment.NewLine.Length; // exclude newline sequence
                     iColon += 2;  // skip over ": " sequence
                     len -= iColon;
                     /*
@@ -1629,7 +1628,11 @@ namespace Microsoft.Data.SqlClient
                     details.NativeError, (int)details.LineNumber, details.Function, details.Exception, _server);
 
             return new SqlError(infoNumber: details.NativeError, errorState: 0x00, TdsEnums.FATAL_ERROR_CLASS, _server,
+#if NET
+                                errorMessage, details.Function, (int)details.LineNumber, win32ErrorCode: details.NativeError, details.Exception);
+#else
                                 errorMessage, details.Function, (int)details.LineNumber, win32ErrorCode: win32ErrorCode);
+#endif
         }
 
         internal void CheckResetConnection(TdsParserStateObject stateObj)
