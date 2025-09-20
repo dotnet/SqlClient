@@ -1640,7 +1640,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         // If using Async & MARS and we do not own ResetEvent - grab it.  We need to not grab lock here
                         // for case where multiple packets are sent to server from one execute.
-                        stateObj._fResetEventOwned = _resetConnectionEvent.WaitOne(stateObj.GetTimeoutRemaining());
+                        stateObj._fResetEventOwned = _resetConnectionEvent.WaitOne(stateObj.GetTimeoutRemaining(), false);
 
                         if (stateObj._fResetEventOwned)
                         {
