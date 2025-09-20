@@ -9191,56 +9191,59 @@ namespace Microsoft.Data.SqlClient
         {
             if (useFeatureExt)
             {
-                if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)
+                checked
                 {
-                    length += WriteSessionRecoveryFeatureRequest(recoverySessionData, write);
-                }
-                if ((requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0)
-                {
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TdsLogin|SEC> Sending federated authentication feature request & wirte = {0}", write);
-                    Debug.Assert(fedAuthFeatureExtensionData != null, "fedAuthFeatureExtensionData should not null.");
-                    length += WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData, write: write);
-                }
-                if ((requestedFeatures & TdsEnums.FeatureExtension.Tce) != 0)
-                {
-                    length += WriteTceFeatureRequest(write);
-                }
-                if ((requestedFeatures & TdsEnums.FeatureExtension.GlobalTransactions) != 0)
-                {
-                    length += WriteGlobalTransactionsFeatureRequest(write);
-                }
-                if ((requestedFeatures & TdsEnums.FeatureExtension.AzureSQLSupport) != 0)
-                {
-                    length += WriteAzureSQLSupportFeatureRequest(write);
-                }
-                if ((requestedFeatures & TdsEnums.FeatureExtension.DataClassification) != 0)
-                {
-                    length += WriteDataClassificationFeatureRequest(write);
-                }
-                if ((requestedFeatures & TdsEnums.FeatureExtension.UTF8Support) != 0)
-                {
-                    length += WriteUTF8SupportFeatureRequest(write);
-                }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)
+                    {
+                        length += WriteSessionRecoveryFeatureRequest(recoverySessionData, write);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TdsLogin|SEC> Sending federated authentication feature request & wirte = {0}", write);
+                        Debug.Assert(fedAuthFeatureExtensionData != null, "fedAuthFeatureExtensionData should not null.");
+                        length += WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData, write: write);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.Tce) != 0)
+                    {
+                        length += WriteTceFeatureRequest(write);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.GlobalTransactions) != 0)
+                    {
+                        length += WriteGlobalTransactionsFeatureRequest(write);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.AzureSQLSupport) != 0)
+                    {
+                        length += WriteAzureSQLSupportFeatureRequest(write);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.DataClassification) != 0)
+                    {
+                        length += WriteDataClassificationFeatureRequest(write);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.UTF8Support) != 0)
+                    {
+                        length += WriteUTF8SupportFeatureRequest(write);
+                    }
 
-                if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
-                {
-                    length += WriteSQLDNSCachingFeatureRequest(write);
-                }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
+                    {
+                        length += WriteSQLDNSCachingFeatureRequest(write);
+                    }
 
-                if ((requestedFeatures & TdsEnums.FeatureExtension.JsonSupport) != 0)
-                {
-                    length += WriteJsonSupportFeatureRequest(write);
-                }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.JsonSupport) != 0)
+                    {
+                        length += WriteJsonSupportFeatureRequest(write);
+                    }
 
-                if ((requestedFeatures & TdsEnums.FeatureExtension.VectorSupport) != 0)
-                {
-                    length += WriteVectorSupportFeatureRequest(write);
-                }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.VectorSupport) != 0)
+                    {
+                        length += WriteVectorSupportFeatureRequest(write);
+                    }
 
-                length++; // for terminator
-                if (write)
-                {
-                    _physicalStateObj.WriteByte(0xFF); // terminator
+                    length++; // for terminator
+                    if (write)
+                    {
+                        _physicalStateObj.WriteByte(0xFF); // terminator
+                    }
                 }
             }
 
