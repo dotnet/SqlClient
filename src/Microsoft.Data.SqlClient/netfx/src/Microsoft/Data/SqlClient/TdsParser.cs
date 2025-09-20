@@ -10289,7 +10289,7 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(udtVal != null, "GetBytes returned null instance. Make sure that it always returns non-null value");
                         size = udtVal.Length;
                         
-                        if (size < 0 || (size >= maxSupportedSize && maxsize != -1))
+                        if (size >= maxSupportedSize && maxsize != -1)
                         {
                             throw SQL.UDTInvalidSize(maxsize, maxSupportedSize);
                         }

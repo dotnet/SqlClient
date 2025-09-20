@@ -3543,7 +3543,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         // Check if the attestation protocol is specified and supports the enclave type.
-                        if (SqlConnectionAttestationProtocol.NotSpecified != attestationProtocol && !IsValidAttestationProtocol(attestationProtocol, EnclaveType))
+                        if (attestationProtocol != SqlConnectionAttestationProtocol.NotSpecified && !IsValidAttestationProtocol(attestationProtocol, EnclaveType))
                         {
                             throw SQL.AttestationProtocolNotSupportEnclaveType(attestationProtocol.ToString(), EnclaveType);
                         }
