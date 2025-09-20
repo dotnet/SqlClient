@@ -451,11 +451,13 @@ namespace Microsoft.Data.SqlClient
 
             FQDNforDNSCache = serverInfo.ResolvedServerName;
 
-            int commaPos = FQDNforDNSCache.IndexOf(",");
+            int commaPos = FQDNforDNSCache.IndexOf(",", StringComparison.Ordinal);
             if (commaPos != -1)
             {
                 FQDNforDNSCache = FQDNforDNSCache.Substring(0, commaPos);
             }
+
+            _connHandler.pendingSQLDNSObject = null;
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             _physicalStateObj.CreatePhysicalSNIHandle(
@@ -515,8 +517,11 @@ namespace Microsoft.Data.SqlClient
             uint result = _physicalStateObj.SniGetConnectionId(ref _connHandler._clientConnectionId);
             Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionId");
 
-            // for DNS Caching phase 1
-            _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject);
+            if (_connHandler.pendingSQLDNSObject == null)
+            {
+                // for DNS Caching phase 1
+                _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject);
+            }
 
             if (!ClientOSEncryptionSupport)
             {
@@ -586,8 +591,11 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(retCode == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionId");
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
 
-                // for DNS Caching phase 1
-                _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject);
+                if (_connHandler.pendingSQLDNSObject == null)
+                {
+                    // for DNS Caching phase 1
+                    _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject);
+                }
 
                 SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCertificateFilename);
                 status = ConsumePreLoginHandshake(
