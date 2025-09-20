@@ -32,13 +32,23 @@ variables:
   # These are version values that will be used by the official build.  They
   # should be updated after each release to reflect the next release's versions.
 
-  # The NuGet package version for the Abstractions package.
+  # The NuGet package version for GA releases (non-preview).
   - name: abstractionsPackageVersion
-    value: 1.0.0.$(Build.BuildNumber)
+    value: '1.0.0'
   
+  # The NuGet package version for preview releases.
+  - name: abstractionsPackagePreviewVersion
+    value: 1.0.0-preview1.$(Build.BuildNumber)
+
   # The AssemblyFileVersion for all assemblies in the Abstractions package.
+  #
+  # Versions must be in the format: Major.Minor.Build.Revision, but
+  # $(Build.BuildNumber) has the format XXX.YY, so we must omit the dot.  This
+  # perturbs the build number and could cause duplicates if Azure Pipelines
+  # changes how $(Build.BuildNumber) is formatted in the future, but it's the
+  # best we can do without producing an invalid version number.
   - name: abstractionsAssemblyFileVersion
-    value: '1.0.0.0'
+    value: 1.0.0.$[ replace($(Build.BuildNumber), '.', '') ]
 
   # Update this after every release. This is used to generate the MDS NuGet package version.
   - name: Major
@@ -59,6 +69,6 @@ variables:
   - name: previewMdsPackageVersion
     value: $(Major).$(Minor).$(Patch)$(Preview)$(Revision).$(Build.BuildNumber)
   - name: AssemblyFileVersion
-    value: '$(Major).$(Minor)$(Patch).$(Build.BuildNumber)'
+    value: $(Major).$(Minor).$(Patch).$[ replace($(Build.BuildNumber), '.', '') ]
   - name: nuspecPath
     value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'

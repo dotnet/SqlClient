@@ -107,7 +107,7 @@ extends:
         softwareFolder: $(softwareFolder)
         symbolsFolder: $(symbolsFolder)
         softwarename: Microsoft.Data.SqlClient
-        versionNumber: $(AssemblyFileVersion)
+        versionNumber: $(mdsAssemblyFileVersion)
       codeql:
         compiled:
         enabled: ${{ not(parameters['isPreview']) }}

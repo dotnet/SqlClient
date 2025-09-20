@@ -41,7 +41,10 @@ jobs:
   - template: ../steps/build-all-configurations-signed-dlls-step.yml@self
     parameters:
       # These values are sourced from common-variables.yml.
-      abstractionsPackageVersion: $(abstractionsPackageVersion)
+      ${{ if eq(parameters.isPreview, false) }}:
+        abstractionsPackageVersion: $(abstractionsPackageVersion)
+      ${{ else }}:
+        abstractionsPackageVersion: $(abstractionsPackagePreviewVersion)
       abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
 
   - template: ../steps/code-analyze-step.yml@self

@@ -27,11 +27,11 @@ parameters:
 
   - name: assembly_file_version_netfx
     type: string
-    default: $(AssemblyFileVersion)
+    default: $(mdsAssemblyFileVersion)
 
   - name: assembly_file_version_core
     type: string
-    default: $(AssemblyFileVersion)
+    default: $(mdsAssemblyFileVersion)
 
   - name: isPreview
     type: boolean

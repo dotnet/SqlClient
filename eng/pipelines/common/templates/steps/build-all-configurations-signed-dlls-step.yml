@@ -11,9 +11,9 @@ parameters:
   - name: abstractionsAssemblyFileVersion
     type: string
 
-  - name: AssemblyFileVersion
+  - name: mdsAssemblyFileVersion
     type: string
-    default: $(AssemblyFileVersion)
+    default: $(mdsAssemblyFileVersion)
   
   - name: Configuration
     type: string
@@ -54,4 +54,4 @@ steps:
     inputs:
       solution: '**/build.proj'
       configuration: '${{parameters.Configuration }}'
-      msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAllConfigurations -p:GenerateNuget=false -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }} -p:AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }}'
+      msbuildArguments: '-p:AssemblyFileVersion=${{parameters.mdsAssemblyFileVersion }} -t:BuildAllConfigurations -p:GenerateNuget=false -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }} -p:AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }}'
