@@ -6498,7 +6498,11 @@ namespace Microsoft.Data.SqlClient
                             unencryptedBytes = bytes;
                         }
 
+#if NET
                         value.SqlBinary = new SqlBinary(unencryptedBytes);   // doesn't copy the byte array
+#else
+                        value.SqlBinary = SqlTypeWorkarounds.ByteArrayToSqlBinary(unencryptedBytes);
+#endif
                         break;
                     }
 
@@ -6724,7 +6728,11 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
+#if NET
                         value.SqlBinary = SqlBinary.WrapBytes(b); // doesn't copy the byte array
+#else
+                        value.SqlBinary = SqlTypeWorkarounds.ByteArrayToSqlBinary(b);
+#endif
                     }
                     break;
 
@@ -6739,7 +6747,11 @@ namespace Microsoft.Data.SqlClient
 
                     // Internally, we use Sqlbinary to deal with varbinary data and store it in 
                     // SqlBuffer as SqlBinary value.
+#if NET
                     value.SqlBinary = SqlBinary.WrapBytes(b);
+#else
+                    value.SqlBinary = SqlTypeWorkarounds.ByteArrayToSqlBinary(b);
+#endif
 
                     // Extract the metadata from the payload and set it as the vector attributes
                     // in the SqlBuffer. This metadata is further used when constructing a SqlVector
@@ -7068,7 +7080,11 @@ namespace Microsoft.Data.SqlClient
                             return result;
                         }
 
+#if NET
                         value.SqlBinary = SqlBinary.WrapBytes(b); // doesn't copy the byte array
+#else
+                        value.SqlBinary = SqlTypeWorkarounds.ByteArrayToSqlBinary(b);
+#endif
                         break;
                     }
 
