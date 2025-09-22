@@ -27,11 +27,11 @@ parameters:
 
   - name: assembly_file_version_netfx
     type: string
-    default: $(AssemblyFileVersion)
+    default: $(mdsAssemblyFileVersion)
 
   - name: assembly_file_version_core
     type: string
-    default: $(AssemblyFileVersion)
+    default: $(mdsAssemblyFileVersion)
 
   - name: isPreview
     type: boolean
@@ -288,48 +288,45 @@ jobs:
       # For NetFx we have a different FileVersion, but product versions are all
       # the same.  Some may have extra numbering at the end.  We only check for
       # the first parts.
+      $failed = 0
 
       foreach ( $pVersion in Get-ChildItem *.dll -Path $(extractedNugetPath)  -Recurse | ForEach-Object versioninfo ) 
       {
           if ($pVersion.ProductVersion -Like '$(ProductVersion)*') 
           {
-              Write-Host Valid Product Version:"$pVersion.ProductVersion" $pVersion.ProductVersion detected for $pVersion.FileName -ForegroundColor Green
+              Write-Host -ForegroundColor Green "Correct ProductVersion detected for $($pVersion.FileName): $($pVersion.ProductVersion)"
           }
           else
           { 
-                Write-Host "Wrong ProductVersion detected. Expected: '$(ProductVersion)', but Detected: "$pVersion.ProductVersion""
-                Exit -1
+                Write-Host -ForegroundColor Red "Wrong ProductVersion detected for $($pVersion.FileName); expected: $(ProductVersion); found: $($pVersion.ProductVersion)"
+                $failed = 1
           }
       
-          if($pVersion.FileName -like '*lib\$(CurrentNetFxVersion)*'){
-      
-              if($pVersion.FileVersion -eq '${{parameters.assembly_file_version_netfx }}')
-              {
-                  Write-Host 'Correct File version Detected for net46,' $pVersion.FileVersion -ForegroundColor Green
-              }
-              else
-              {
-                  Write-Host 'Wrong File version Detected for net46,' $pVersion.FileVersion -ForegroundColor Red
-                  Exit -1
-              }
+          $expectedFileVersion = "${{parameters.assembly_file_version_core}}"
+
+          if ($pVersion.FileName -like '*lib\$(CurrentNetFxVersion)*')
+          {
+              $expectedFileVersion = "${{parameters.assembly_file_version_netfx}}"
+          }
+          
+          if ($pVersion.FileVersion -eq $expectedFileVersion)
+          {
+              Write-Host -ForegroundColor Green "Correct FileVersion detected for $($pVersion.FileName): $($pVersion.FileVersion)"
           }
           else
           {
-              
-              if($pVersion.FileVersion -eq '${{parameters.assembly_file_version_core}}')
-              {
-                    Write-Host 'Correct File version Detected for netcore,' $pVersion.FileVersion -ForegroundColor Green
-              }
-              else
-              {
-                  Write-Host 'Wrong File version Detected for netcore and ref folder,' $pVersion.FileVersion -ForegroundColor Red
-                  Exit -1
-              }
+              Write-Host -ForegroundColor Red "Wrong FileVersion detected for $($pVersion.FileName); expected $($expectedFileVersion); found: $($pVersion.FileVersion)"
+              $failed = 1
           }
       }
       
+      if ($failed -ne 0)
+      {
+          Exit -1
+      }
+
       Get-ChildItem *.dll -Path $(extractedNugetPath)  -Recurse | ForEach-Object versioninfo
-    displayName: 'Verify "File Version" matches provided pipeline variable "ASSEMBLY_FILE_VERSION" for DLLs'
+    displayName: 'Verify "File Version" matches expected values for DLLs'
 
   - powershell: |
       # Change TestMicrosoftDataSqlClientVersion
@@ -344,10 +341,16 @@ jobs:
 
   - powershell: |
       # Check assembly versions.
+      #
+      # GOTCHA: This expects the Versions.props file having XML elements in a
+      # certain order.  If the order changes, this check will fail!
+      #
+      # TODO: This also isn't checking the versions of the actual assemblies in
+      # the package, so it isn't terribly useful.
 
       [Xml] $versionprops = Get-Content -Path "tools/props/Versions.props" 
-      $AssemblyFileVersion =  $versionprops.Project.PropertyGroup[0].AssemblyFileVersion
-      $AssemblyVersion = $versionprops.Project.PropertyGroup[0].AssemblyVersion
+      $AssemblyFileVersion =  $versionprops.Project.PropertyGroup[1].AssemblyFileVersion
+      $AssemblyVersion = $versionprops.Project.PropertyGroup[1].AssemblyVersion
       
       if($AssemblyFileVersion -eq $AssemblyVersion)
       {

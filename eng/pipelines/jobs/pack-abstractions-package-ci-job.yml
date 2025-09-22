@@ -12,6 +12,10 @@
 
 parameters:
 
+  # The version to apply to the Abstractions NuGet package and its assemblies.
+  - name: abstractionsPackageVersion
+    type: string
+
   # The name to apply to the published pipeline artifact.
   - name: artifactName
     type: string
@@ -53,9 +57,9 @@ jobs:
 
     variables:
 
-      # The Abstractions solution file to use for all dotnet CLI commands.
-      - name: solution
-        value: src/Microsoft.Data.SqlClient.Extensions/Abstractions/Abstractions.slnx
+      # The Abstractions project file to use for all dotnet CLI commands.
+      - name: project
+        value: src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj
 
       # The directory where the NuGet packages will be staged before being
       # published as pipeline artifacts.
@@ -72,6 +76,7 @@ jobs:
         value: >-
           $(commonArguments)
           --configuration ${{ parameters.buildConfiguration }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public project.
@@ -113,7 +118,7 @@ jobs:
         inputs:
           command: custom
           custom: restore
-          projects: $(solution)
+          projects: $(project)
           arguments: $(commonArguments)
 
       # Build the solution.
@@ -122,7 +127,7 @@ jobs:
         inputs:
           command: custom
           custom: build
-          projects: $(solution)
+          projects: $(project)
           arguments: $(buildArguments) --no-restore
 
       # Create the NuGet packages.
@@ -131,7 +136,7 @@ jobs:
         inputs:
           command: custom
           custom: pack
-          projects: $(solution)
+          projects: $(project)
           arguments: $(buildArguments) --no-build -o $(dotnetPackagesDir)
 
       # Publish the NuGet packages as a named pipeline artifact.

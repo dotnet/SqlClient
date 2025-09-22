@@ -76,9 +76,9 @@ jobs:
 
     variables:
 
-      # The Abstractions solution file to use for all dotnet CLI commands.
-      - name: solution
-        value: src/Microsoft.Data.SqlClient.Extensions/Abstractions/Abstractions.slnx
+      # The Abstractions test project file to use for all dotnet CLI commands.
+      - name: project
+        value: src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/Abstractions.Test.csproj
 
       # dotnet CLI arguments common to all commands.
       - name: commonArguments
@@ -141,7 +141,7 @@ jobs:
         inputs:
           command: custom
           custom: restore
-          projects: $(solution)
+          projects: $(project)
           arguments: $(commonArguments)
 
       # Build the solution.
@@ -150,7 +150,7 @@ jobs:
         inputs:
           command: custom
           custom: build
-          projects: $(solution)
+          projects: $(project)
           arguments: $(buildArguments) --no-restore
 
       # Run the tests for each .NET runtime.
@@ -160,7 +160,7 @@ jobs:
           inputs:
             command: custom
             custom: test
-            projects: $(solution)
+            projects: $(project)
             arguments: $(buildArguments) --no-build -f ${{ runtime }}
 
       # Run the tests for each .NET Framework runtime.
@@ -170,5 +170,5 @@ jobs:
           inputs:
             command: custom
             custom: test
-            projects: $(solution)
+            projects: $(project)
             arguments: $(buildArguments) --no-build -f ${{ runtime }}

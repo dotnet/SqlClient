@@ -104,25 +104,26 @@ variables:
 stages:
 
   # Build the Abstractions package, and publish it to the pipeline artifacts
-  # under the name specified by the 'abstractionsArtifactName' variable.
+  # under the given artifact name.
   - template: stages/build-abstractions-package-ci-stage.yml@self
     parameters:
       buildConfiguration: Release
-      packageVersion: $(abstractionsPackageVersion)
-      buildNumber: $(buildNumber)
+      abstractionsPackageVersion: $(abstractionsPackageVersion)
       artifactName: $(abstractionsArtifactName)
       ${{if eq(parameters.debug, 'true')}}:
         verbosity: diagnostic
 
   # Build MDS and its NuGet packages.
-  - stage: build_mds_package
-    displayName: 'Build MDS Package'
+  - stage: build_mds_akv_packages_stage
+    displayName: 'Build MDS & AKV Packages'
 
     # When building MDS via packages, we must depend on the Abstractions 
     # package.
     ${{ if eq(parameters.referenceType, 'Package') }}:
       dependsOn:
         - build_abstractions_package_stage
+    ${{ else }}:
+      dependsOn: []
 
     jobs:
     - template: common/templates/jobs/ci-build-nugets-job.yml@self
@@ -139,16 +140,18 @@ stages:
                 SNIVersion: ${{parameters.SNIVersion}}
                 SNIValidationFeed: ${{parameters.SNIValidationFeed}}
 
+  # Run the stress tests, if desired.
   - ${{ if eq(parameters.enableStressTests, true) }}:
     - template: stages/stress-tests-ci-stage.yml@self
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        dependsOn: [build_mds_packages_job]
+        dependsOn: [build_mds_akv_packages_stage]
         pipelineArtifactName: $(artifactName)
         mdsPackageVersion: $(mdsPackageVersion)
         ${{ if eq(parameters.debug, 'true') }}:
           verbosity: 'detailed'
-    
+  
+  # Run the MDS and AKV tests.
   - template: common/templates/stages/ci-run-tests-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
@@ -164,7 +167,7 @@ stages:
       ${{ if eq(parameters.referenceType, 'Package') }}:
         dependsOn:
           - build_abstractions_package_stage
-          - build_nugets
+          - build_mds_akv_packages_stage
 
       prebuildSteps: # steps to run prior to building and running tests on each job
         - ${{if ne(parameters.SNIVersion, '')}}:

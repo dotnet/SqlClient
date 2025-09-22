@@ -6,17 +6,15 @@
 parameters:
   - name: nuspecPath
     type: string
-    default: '$(nuspecPath)'
 
-  - name: mdsPackageVersion
+  - name: packageVersion
     type: string
-    default: '$(mdsPackageVersion)'
 
-  - name: OutputDirectory
+  - name: outputDirectory
     type: string
     default: '$(Build.SourcesDirectory)/packages'
 
-  - name: Configuration
+  - name: configuration
     type: string
     default: '$(Configuration)'
 
@@ -26,7 +24,6 @@ parameters:
 
   - name: displayName
     type: string
-    default: 'NuGet pack with snupkg'
 
   - name: installNuget
     type: boolean
@@ -55,6 +52,6 @@ steps:
   inputs:
     command: custom
     ${{ if parameters.generateSymbolsPackage }}:
-      arguments: 'pack -Symbols -SymbolPackageFormat snupkg ${{parameters.nuspecPath}} -Version ${{parameters.mdsPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'
+      arguments: 'pack -Symbols -SymbolPackageFormat snupkg ${{parameters.nuspecPath}} -Version ${{parameters.packageVersion}} -OutputDirectory ${{parameters.outputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'
     ${{else }}:
-      arguments: 'pack ${{parameters.nuspecPath}} -Version ${{parameters.mdsPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'
+      arguments: 'pack ${{parameters.nuspecPath}} -Version ${{parameters.packageVersion}} -OutputDirectory ${{parameters.outputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'

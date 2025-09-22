@@ -10,12 +10,6 @@ parameters:
   - name: abstractionsPackageVersion
     type: string
 
-  - name: referenceType
-    type: string
-    values:
-      - Project
-      - Package
-
   - name: configProperties
     type: object
     default: {} # - key: 'value'
@@ -69,6 +63,12 @@ parameters:
   - name: publishTestResults
     type: boolean
     default: false
+
+  - name: referenceType
+    type: string
+    values:
+      - Project
+      - Package
 
   - name: targetFramework
     type: string

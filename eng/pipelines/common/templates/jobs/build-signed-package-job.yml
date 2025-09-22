@@ -39,7 +39,15 @@ jobs:
     name: GetBuildType
   
   - template: ../steps/build-all-configurations-signed-dlls-step.yml@self
-  
+    parameters:
+      # These values are sourced from common-variables.yml.
+      ${{ if eq(parameters.isPreview, false) }}:
+        abstractionsPackageVersion: $(abstractionsPackageVersion)
+      ${{ else }}:
+        abstractionsPackageVersion: $(abstractionsPackagePreviewVersion)
+      abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
+      mdsAssemblyFileVersion: $(mdsAssemblyFileVersion)
+
   - template: ../steps/code-analyze-step.yml@self
     parameters:
       analyzeType: all
@@ -50,7 +58,10 @@ jobs:
   
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:
-      OutputDirectory: $(artifactDirectory)
+      nuspecPath: $(nuspecPath)
+      packageVersion: $(mdsPackageVersion)
+      outputDirectory: $(artifactDirectory)
+      displayName: 'Create MDS NuGet Package'
   
   - template: ../steps/esrp-code-signing-step.yml@self
     parameters:
