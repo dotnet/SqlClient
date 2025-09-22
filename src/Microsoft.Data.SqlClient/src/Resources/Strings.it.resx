@@ -4075,7 +4075,10 @@
     <value>La chiave di crittografia di colonna crittografata specificata contiene una versione non valida '{0}' dell'algoritmo di crittografia. La versione prevista è '{1}'.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>La lunghezza {0} del testo crittografato della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} del testo crittografato quando si usa la chiave master di colonna (certificato) in '{2}'. La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato per il certificato potrebbe essere errato.</value>
+    <value>La lunghezza {0} del testo crittografato della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} del testo crittografato quando si usa la chiave master di colonna ({2}) in "{3}". La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato {4} potrebbe essere errato.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
+    <value>La lunghezza {0} del testo crittografato della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} del testo crittografato quando si usa la chiave master di colonna (certificato) in "{2}". La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato per il certificato potrebbe essere errato.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
     <value>La lunghezza {0} del testo crittografato della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} del testo crittografato quando si usa la chiave master di colonna (chiave asimmetrica) in '{2}'. La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato per il provider del servizio di crittografia (CSP) Microsoft potrebbe essere errato.</value>
@@ -4084,7 +4087,10 @@
     <value>La lunghezza {0} del testo crittografato della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} del testo crittografato quando si usa la chiave master di colonna (chiave asimmetrica) in '{2}'. La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato per il provider dell'API Criptography Next Generation (CNG) Microsoft potrebbe essere errato.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>La lunghezza {0} della firma della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} della firma quando si usa la chiave master di colonna (certificato) in '{2}'. La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato per il certificato potrebbe essere errato.</value>
+    <value>La lunghezza {0} della firma della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} della firma quando si usa la chiave master di colonna ({2}) in "{3}". La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato {4} potrebbe essere errato.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
+    <value>La lunghezza {0} della firma della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} della firma quando si usa la chiave master di colonna (certificato) in "{2}". La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato per il certificato potrebbe essere errato.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
     <value>La lunghezza {0} della firma della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} della firma quando si usa la chiave master di colonna (chiave asimmetrica) in '{2}'. La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato per il provider del servizio di crittografia (CSP) Microsoft potrebbe essere errato.</value>
@@ -4092,11 +4098,14 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>La lunghezza {0} della firma della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} della firma quando si usa la chiave master di colonna (chiave asimmetrica) in '{2}'. La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato per il provider dell'API Criptography Next Generation (CNG) Microsoft potrebbe essere errato.</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>La firma della chiave di crittografia di colonna crittografata specificata non corrisponde a quella calcolata con la chiave master di colonna ({0}) in "{1}". La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato potrebbe essere errato.</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>La firma della chiave di crittografia di colonna crittografata specificata non corrisponde a quella calcolata con la chiave master di colonna (certificato) in '{0}'. La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato potrebbe essere errato.</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>La firma della chiave di crittografia di colonna crittografata specificata non corrisponde a quella calcolata con la chiave master di colonna (chiave asimmetrica) in '{0}'. La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato potrebbe essere errato.</value>
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
+    <value>La firma della chiave di crittografia di colonna crittografata specificata non corrisponde a quella calcolata con la chiave master di colonna (chiave asimmetrica) in "{0}". La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato potrebbe essere errato.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>Il certificato specificato nel percorso chiave '{0}' non include una chiave privata per crittografare una chiave di crittografia di colonna. Verificare che il certificato sia stato importato correttamente.</value>

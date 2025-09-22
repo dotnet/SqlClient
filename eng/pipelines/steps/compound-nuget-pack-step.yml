@@ -56,4 +56,3 @@ steps:
                     -Version ${{ parameters.packageVersion }}
                     -OutputDirectory ${{ parameters.outputDirectory }}
                     -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};ReferenceType=${{ parameters.referenceType }}"
-

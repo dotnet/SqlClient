@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 bufferAfter[start + 5]);
 
             // slice into the existing buffer
-            ReadOnlySpan<byte> writtenSpan = new ReadOnlySpan<byte>(
+            ReadOnlySpan<byte> writtenSpan = new(
                 bufferAfter,
                 start + 6,
                 appended - 6);
