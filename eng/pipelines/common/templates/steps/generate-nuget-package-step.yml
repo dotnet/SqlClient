@@ -32,11 +32,11 @@ parameters:
     type: boolean
     default: true
 
-  - name: referenceType
-    default: project
-    values:
-    - project
-    - package
+  # Semi-colon separated properties to pass to nuget via the -properties
+  # argument.
+  - name: properties
+    type: string
+    default: ''
 
 steps:
 - ${{ if parameters.installNuget }}:
@@ -55,6 +55,6 @@ steps:
   inputs:
     command: custom
     ${{ if parameters.generateSymbolsPackage }}:
-      arguments: 'pack -Symbols -SymbolPackageFormat snupkg ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'
+      arguments: 'pack -Symbols -SymbolPackageFormat snupkg ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};${{parameters.properties}}"'
     ${{else }}:
-      arguments: 'pack ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'
+      arguments: 'pack ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};${{parameters.properties}}"'

@@ -34,7 +34,7 @@ variables:
   - name: Patch
     value: '0'
 
-    # Update this for preview releases.
+  # Update this for preview releases.
   - name: Preview
     value: '-preview'
   - name: Revision
@@ -48,3 +48,11 @@ variables:
     value: '$(Major).$(Minor)$(Patch).$(Build.BuildNumber)'
   - name: nuspecPath
     value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'
+
+  # TODO(ADO-38703): Remove these when the other pipeline changes arrive.
+  - name: abstractionsPackageVersion
+    value: 1.0.0.$[ split(variables['Build.BuildNumber'], '.')[0] ]
+  - name: mdsPackageVersion
+    value: $(NugetPackageVersion)
+  - name: akvPackageVersion
+    value: $(NugetPackageVersion)

@@ -23,3 +23,11 @@ variables:
     value: false
   - name: packagePath
     value: '$(Build.SourcesDirectory)/packages'
+
+  # TODO(ADO-38703): Remove these when the other pipeline changes arrive.
+  - name: abstractionsPackageVersion
+    value: 1.0.0.$[ split(variables['Build.BuildNumber'], '.')[0] ]
+  - name: mdsPackageVersion
+    value: $(NugetPackageVersion)
+  - name: akvPackageVersion
+    value: $(NugetPackageVersion)
