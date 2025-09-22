@@ -46,6 +46,7 @@ jobs:
       ${{ else }}:
         abstractionsPackageVersion: $(abstractionsPackagePreviewVersion)
       abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
+      mdsAssemblyFileVersion: $(mdsAssemblyFileVersion)
 
   - template: ../steps/code-analyze-step.yml@self
     parameters:

@@ -13,7 +13,6 @@ parameters:
 
   - name: mdsAssemblyFileVersion
     type: string
-    default: $(mdsAssemblyFileVersion)
   
   - name: Configuration
     type: string
