@@ -19,7 +19,6 @@ using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Identity.Client;
-using static Microsoft.Data.SqlClient.ManagedSni.DataSource;
 
 namespace Microsoft.Data.SqlClient
 {
