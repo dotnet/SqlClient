@@ -4075,7 +4075,10 @@
     <value>지정한 암호화된 열 암호화 키에 잘못된 암호화 알고리즘 버전 '{0}'이(가) 포함되어 있습니다. 필요한 버전은 '{1}'입니다.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>'{2}'의 열 마스터 키(인증서)를 사용할 때 지정한 암호화된 열 암호화 키의 암호 텍스트 길이 {0}이(가) 암호 텍스트 길이 {1}과(와) 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정한 인증서 경로가 올바르지 않을 수 있습니다.</value>
+    <value>'{3}'에서 열 마스터 키({2})를 사용할 때 지정된 암호화된 열 암호화 키의 암호 텍스트 길이 {0}이(가) 암호 텍스트 길이 {1}과(와) 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정된 {4} 경로가 잘못되었을 수 있습니다.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
+    <value>'{2}'에서 열 마스터 키(인증서)를 사용할 때 지정된 암호화된 열 암호화 키의 암호 텍스트 길이 {0}이(가) 암호 텍스트 길이 {1}과(와) 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정된 인증서 경로가 잘못되었을 수 있습니다.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
     <value>'{2}'의 열 마스터 키(비대칭 키)를 사용할 때 지정한 암호화된 열 암호화 키의 암호 텍스트 길이 {0}이(가) 암호 텍스트 길이 {1}과(와) 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정된 Microsoft CSP(암호화 서비스 공급자) 경로가 잘못되었을 수 있습니다.</value>
@@ -4084,7 +4087,10 @@
     <value>'{2}'의 열 마스터 키(비대칭 키)를 사용할 때 지정한 암호화된 열 암호화 키의 암호 텍스트 길이 {0}이(가) 암호 텍스트 길이 {1}과(와) 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정된 Microsoft CNG(Cryptography API: Next Generation) 공급자 경로가 잘못되었을 수 있습니다.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>'{2}'의 열 마스터 키(인증서)를 사용할 때 지정한 암호화된 열 암호화 키의 서명 길이 {0}이(가) 서명 길이 {1}과(와) 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정한 인증서 경로가 올바르지 않을 수 있습니다.</value>
+    <value>'{3}'에서 열 마스터 키({2})를 사용할 때 암호화된 열 암호화 키의 서명 길이 {0}이(가) 서명 길이 {1}과(와) 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정된 {4} 경로가 잘못되었을 수 있습니다.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
+    <value>'{2}'에서 열 마스터 키(인증서)를 사용할 때 지정된 암호화된 열 암호화 키의 서명 길이 {0}이(가) 서명 길이 {1}과(와) 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정된 인증서 경로가 잘못되었을 수 있습니다.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
     <value>'{2}'의 열 마스터 키(비대칭 키)를 사용할 때 지정한 암호화된 열 암호화 키의 서명 길이 {0}이(가) 서명 길이 {1}과(와) 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정된 Microsoft CSP(암호화 서비스 공급자) 경로가 잘못되었을 수 있습니다.</value>
@@ -4092,11 +4098,14 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>'{2}'의 열 마스터 키(비대칭 키)를 사용할 때 지정한 암호화된 열 암호화 키의 서명 길이 {0}이(가) 서명 길이 {1}과(와) 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정된 Microsoft CNG(Cryptography API: Next Generation) 공급자 경로가 잘못되었을 수 있습니다.</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>'{1}'에서 지정한 암호화된 열 암호화 키 서명이 열 마스터 키({0})로 계산된 서명과 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정된 경로가 잘못되었을 수 있습니다.</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>지정한 암호화된 열 암호화 키 서명이 '{0}'의 열 마스터 키(인증서)를 사용하여 계산된 서명과 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정한 경로가 올바르지 않을 수 있습니다.</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>지정한 암호화된 열 암호화 키 서명이 '{0}'에 있는 열 마스터 키(비대칭 키)로 계산된 서명과 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정된 경로가 잘못되었을 수 있습니다.</value>
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
+    <value>'{0}'에서 지정된 암호화된 열 암호화 키 서명이 열 마스터 키(비대칭 키)로 계산된 서명과 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정된 경로가 잘못되었을 수 있습니다.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>키 경로 '{0}'의 지정된 인증서에 열 암호화 키를 암호화할 프라이빗 키가 없습니다. 인증서를 올바로 가져왔는지 확인하세요.</value>

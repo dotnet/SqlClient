@@ -25,22 +25,16 @@ Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncrypti
     <tags>sqlclient microsoft.data.sqlclient azurekeyvaultprovider akvprovider alwaysencrypted</tags>
     <dependencies>
       <group targetFramework="net462">
-        <dependency id="Microsoft.Data.SqlClient" version="[6.1.1,7.0.0)" />
-        <dependency id="Azure.Core" version="[1.47.1,2.0.0)" />
-        <dependency id="Azure.Security.KeyVault.Keys" version="[4.7.0,5.0.0)" />
+        <dependency id="Microsoft.Data.SqlClient" version="(6.2,7.1)" />
+        <dependency id="Azure.Core" version="1.47.1" />
+        <dependency id="Azure.Security.KeyVault.Keys" version="4.7.0" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" />
       </group>
       <group targetFramework="net8.0">
-        <dependency id="Microsoft.Data.SqlClient" version="[6.1.1,7.0.0)" />
-        <dependency id="Azure.Core" version="[1.47.1,2.0.0)" />
-        <dependency id="Azure.Security.KeyVault.Keys" version="[4.7.0,5.0.0)" />
+        <dependency id="Microsoft.Data.SqlClient" version="(6.2,7.1)" />
+        <dependency id="Azure.Core" version="1.47.1" />
+        <dependency id="Azure.Security.KeyVault.Keys" version="4.7.0" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" />
-      </group>
-      <group targetFramework="net9.0">
-        <dependency id="Microsoft.Data.SqlClient" version="[6.1.1,7.0.0)" />
-        <dependency id="Azure.Core" version="[1.47.1,2.0.0)" />
-        <dependency id="Azure.Security.KeyVault.Keys" version="[4.7.0,5.0.0)" />
-        <dependency id="Microsoft.Extensions.Caching.Memory" version="9.0.4" />
       </group>
     </dependencies>
     <frameworkAssemblies>
@@ -68,5 +62,13 @@ Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncrypti
     <file src="..\..\..\artifacts\$ReferenceType$\bin\Unix\$Configuration$.AnyCPU\AzureKeyVaultProvider\net8.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="runtimes\unix\lib\net8.0\" exclude="" />
 
     <file src="..\..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\net8.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.xml" target="lib\net8.0\" exclude="" />
-    </files>
+
+    <!--
+      GOTCHA: Even though we target .NET 9.0 and build DLLs for it, we do not
+      publish them!  AKV doesn't actually use any .NET 9.0 specific features,
+      so we don't need to publish DLLs.  Apps targeting .NET 9.0 will happily
+      use the AKV .NET 8.0 DLLs.
+    -->
+
+  </files>
 </package>

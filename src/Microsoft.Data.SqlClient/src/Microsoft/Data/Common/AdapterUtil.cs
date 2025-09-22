@@ -630,6 +630,13 @@ namespace Microsoft.Data.Common
 
         internal static long TimerCurrent() => DateTime.UtcNow.ToFileTimeUtc();
 
+        internal static long FastTimerCurrent() => Environment.TickCount;
+
+        internal static uint CalculateTickCountElapsed(long startTick, long endTick)
+        {
+            return (uint)(endTick - startTick);
+        }
+
         internal static long TimerFromSeconds(int seconds)
         {
             long result = checked((long)seconds * TimeSpan.TicksPerSecond);
@@ -1167,6 +1174,9 @@ namespace Microsoft.Data.Common
             => DataAdapter(StringsHelper.GetString(Strings.ADP_DeriveParametersNotSupported, value.GetType().Name, value.CommandType.ToString()));
 
         internal static Exception NoStoredProcedureExists(string sproc) => InvalidOperation(StringsHelper.GetString(Strings.ADP_NoStoredProcedureExists, sproc));
+
+        internal static Exception InvalidCommandTimeout(int value, [CallerMemberName] string property = "")
+            => Argument(StringsHelper.GetString(Strings.ADP_InvalidCommandTimeout, value.ToString(CultureInfo.InvariantCulture)), property);
 #endregion
 
 #region DbMetaDataFactory
@@ -1498,15 +1508,7 @@ namespace Microsoft.Data.Common
         }
 
         //
-        // : IDbCommand
-        //
-        internal static Exception InvalidCommandTimeout(int value, string name)
-        {
-            return Argument(StringsHelper.GetString(Strings.ADP_InvalidCommandTimeout, value.ToString(CultureInfo.InvariantCulture)), name);
-        }
-
-        //
-        // : DbDataAdapter
+        // DbDataAdapter
         //
         internal static InvalidOperationException ComputerNameEx(int lastError)
         {
@@ -1514,7 +1516,7 @@ namespace Microsoft.Data.Common
         }
 
         //
-        // : SNI
+        // SNI
         //
         internal static PlatformNotSupportedException SNIPlatformNotSupported(string platform) => new(StringsHelper.GetString(Strings.SNI_PlatformNotSupportedNetFx, platform));
 
@@ -1634,12 +1636,6 @@ namespace Microsoft.Data.Common
 #endif
             return InvalidEnumerationValue(typeof(ParameterDirection), (int)value);
         }
-
-        //
-        // : IDbCommand
-        //
-        internal static Exception InvalidCommandTimeout(int value, [CallerMemberName] string property = "")
-            => Argument(StringsHelper.GetString(Strings.ADP_InvalidCommandTimeout, value.ToString(CultureInfo.InvariantCulture)), property);
 #endregion
 #endif
     }

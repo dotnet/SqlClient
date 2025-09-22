@@ -26,16 +26,10 @@ using Microsoft.Data.SqlClient.Server;
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/SqlCommand/*'/>
-    [DefaultEvent("RecordsAffected")]
-    [ToolboxItem(true)]
-    [DesignerCategory("")]
     // TODO: Add designer attribute when Microsoft.VSDesigner.Data.VS.SqlCommandDesigner uses Microsoft.Data.SqlClient
     public sealed partial class SqlCommand : DbCommand, ICloneable
     {
-        private static int _objectTypeCount; // EventSource Counter
         private const int MaxRPCNameLength = 1046;
-        internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount);
 
         internal sealed class ExecuteReaderAsyncCallContext : AAsyncCallContext<SqlCommand, SqlDataReader, CancellationTokenRegistration>
         {
@@ -113,25 +107,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private string _commandText;
-        private CommandType _commandType;
-        private int? _commandTimeout;
-        private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
-        private bool _designTimeInvisible;
-
         /// <summary>
         /// Indicates if the column encryption setting was set at-least once in the batch rpc mode, when using AddBatchCommand.
         /// </summary>
         private bool _wasBatchModeColumnEncryptionSettingSetOnce;
-
-        /// <summary>
-        /// Column Encryption Override. Defaults to SqlConnectionSetting, in which case
-        /// it will be Enabled if SqlConnectionOptions.IsColumnEncryptionSettingEnabled = true, Disabled if false.
-        /// This may also be used to set other behavior which overrides connection level setting.
-        /// </summary>
-        private SqlCommandColumnEncryptionSetting _columnEncryptionSetting = SqlCommandColumnEncryptionSetting.UseConnectionSetting;
-
-        internal SqlDependency _sqlDep;
 
 #if DEBUG
         /// <summary>
@@ -165,38 +144,6 @@ namespace Microsoft.Data.SqlClient
 
         internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
 
-        // Prepare
-        // Against 7.0 Serve a prepare/unprepare requires an extra roundtrip to the server.
-        //
-        // From 8.0 and above, the preparation can be done as part of the command execution.
-
-        private enum EXECTYPE
-        {
-            UNPREPARED,         // execute unprepared commands, all server versions (results in sp_execsql call)
-            PREPAREPENDING,     // prepare and execute command, 8.0 and above only  (results in sp_prepexec call)
-            PREPARED,           // execute prepared commands, all server versions   (results in sp_exec call)
-        }
-
-        // _hiddenPrepare
-        // On 8.0 and above the Prepared state cannot be left. Once a command is prepared it will always be prepared.
-        // A change in parameters, commandtext etc (IsDirty) automatically causes a hidden prepare
-        //
-        // _inPrepare will be set immediately before the actual prepare is done.
-        // The OnReturnValue function will test this flag to determine whether the returned value is a _prepareHandle or something else.
-        //
-        // _prepareHandle - the handle of a prepared command. Apparently there can be multiple prepared commands at a time - a feature that we do not support yet.
-
-        private static readonly object s_cachedInvalidPrepareHandle = (object)-1;
-        private bool _inPrepare = false;
-        private object _prepareHandle = s_cachedInvalidPrepareHandle; // this is an int which is used in the object typed SqlParameter.Value field, avoid repeated boxing by storing in a box
-        private bool _hiddenPrepare = false;
-        private int _preparedConnectionCloseCount = -1;
-        private int _preparedConnectionReconnectCount = -1;
-
-        private SqlParameterCollection _parameters;
-        private SqlConnection _activeConnection;
-        private bool _dirty = false;               // true if the user changes the commandtext or number of parameters after the command is already prepared
-        private EXECTYPE _execType = EXECTYPE.UNPREPARED; // by default, assume the user is not sharing a connection so the command has not been prepared
         private _SqlRPC[] _rpcArrayOf1 = null;                // Used for RPC executes
         private _SqlRPC _rpcForEncryption = null;                // Used for sp_describe_parameter_encryption RPC executes
 
@@ -227,30 +174,6 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
         internal static int DebugForceAsyncWriteDelay { get; set; }
 #endif
-        internal bool InPrepare
-        {
-            get
-            {
-                return _inPrepare;
-            }
-        }
-
-        /// <summary>
-        /// Return if column encryption setting is enabled.
-        /// The order in the below if is important since _activeConnection.Parser can throw if the
-        /// underlying tds connection is closed and we don't want to change the behavior for folks
-        /// not trying to use transparent parameter encryption i.e. who don't use (SqlCommandColumnEncryptionSetting.Enabled or _activeConnection.IsColumnEncryptionSettingEnabled) here.
-        /// </summary>
-        internal bool IsColumnEncryptionEnabled
-        {
-            get
-            {
-                return (_columnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled
-                        || (_columnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && _activeConnection.IsColumnEncryptionSettingEnabled))
-                       && _activeConnection.Parser != null
-                       && _activeConnection.Parser.IsColumnEncryptionSupported;
-            }
-        }
 
         internal bool ShouldUseEnclaveBasedWorkflow =>
             (!string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) || Connection.AttestationProtocol == SqlConnectionAttestationProtocol.None) &&
@@ -367,35 +290,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // sql reader will pull this value out for each NextResult call.  It is not cumulative
-        // _rowsAffected is cumulative for ExecuteNonQuery across all rpc batches
-        internal int _rowsAffected = -1; // rows affected by the command
-
         // number of rows affected by sp_describe_parameter_encryption.
         // The below line is used only for debug asserts and not exposed publicly or impacts functionality otherwise.
         private int _rowsAffectedBySpDescribeParameterEncryption = -1;
-
-        private SqlNotificationRequest _notification;
-
-        // transaction support
-        private SqlTransaction _transaction;
-
-        private StatementCompletedEventHandler _statementCompletedEventHandler;
-
-        private TdsParserStateObject _stateObj; // this is the TDS session we're using.
-
-        // Volatile bool used to synchronize with cancel thread the state change of an executing
-        // command going from pre-processing to obtaining a stateObject.  The cancel synchronization
-        // we require in the command is only from entering an Execute* API to obtaining a
-        // stateObj.  Once a stateObj is successfully obtained, cancel synchronization is handled
-        // by the stateObject.
-        private volatile bool _pendingCancel;
-
-        private bool _batchRPCMode;
+        
         private List<_SqlRPC> _RPCList;
         private _SqlRPC[] _sqlRPCParameterEncryptionReqArray;
         private int _currentlyExecutingBatch;
-        private SqlRetryLogicBaseProvider _retryLogicProvider;
 
         /// <summary>
         /// This variable is used to keep track of which RPC batch's results are being read when reading the results of
@@ -473,237 +374,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Connection/*'/>
-        [DefaultValue(null)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_Connection)]
-        new public SqlConnection Connection
-        {
-            get
-            {
-                return _activeConnection;
-            }
-            set
-            {
-                // Don't allow the connection to be changed while in an async operation.
-                if (_activeConnection != value && _activeConnection != null)
-                {
-                    // If new value...
-                    if (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation)
-                    {
-                        // If in pending async state, throw.
-                        throw SQL.CannotModifyPropertyAsyncOperationInProgress();
-                    }
-                }
-
-                // Check to see if the currently set transaction has completed.  If so,
-                // null out our local reference.
-                if (_transaction != null && _transaction.Connection == null)
-                {
-                    _transaction = null;
-                }
-
-                // Command is no longer prepared on new connection, cleanup prepare status
-                if (IsPrepared)
-                {
-                    if (_activeConnection != value && _activeConnection != null)
-                    {
-                        try
-                        {
-                            // cleanup
-                            Unprepare();
-                        }
-                        catch (Exception)
-                        {
-                            // we do not really care about errors in unprepare (may be the old connection went bad)
-                        }
-                        finally
-                        {
-                            // clean prepare status (even successful Unprepare does not do that)
-                            _prepareHandle = s_cachedInvalidPrepareHandle;
-                            _execType = EXECTYPE.UNPREPARED;
-                        }
-                    }
-                }
-                _activeConnection = value;
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_Connection | API | ObjectId {0}, Client Connection Id {1}", ObjectID, value?.ClientConnectionId);
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbConnection/*'/>
-        protected override DbConnection DbConnection
-        {
-            get
-            {
-                return Connection;
-            }
-            set
-            {
-                Connection = (SqlConnection)value;
-            }
-        }
-
-        private SqlInternalConnectionTds InternalTdsConnection
-        {
-            get
-            {
-                return (SqlInternalConnectionTds)_activeConnection.InnerConnection;
-            }
-        }
-
         private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public SqlRetryLogicBaseProvider RetryLogicProvider
-        {
-            get
-            {
-                if (_retryLogicProvider == null)
-                {
-                    _retryLogicProvider = SqlConfigurableRetryLogicManager.CommandProvider;
-                }
-                return _retryLogicProvider;
-            }
-            set
-            {
-                _retryLogicProvider = value;
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Notification/*'/>
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)] // MDAC 90471
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Notification)]
-        [ResDescription(StringsHelper.ResourceNames.SqlCommand_Notification)]
-        public SqlNotificationRequest Notification
-        {
-            get
-            {
-                return _notification;
-            }
-            set
-            {
-                _sqlDep = null;
-                _notification = value;
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_Notification | API | Object Id {0}", ObjectID);
-            }
-        }
-
-        internal SqlStatistics Statistics
-        {
-            get
-            {
-                if (_activeConnection != null)
-                {
-                    if (_activeConnection.StatisticsEnabled ||
-                        s_diagnosticListener.IsEnabled(SqlClientCommandAfter.Name))
-                    {
-                        return _activeConnection.Statistics;
-                    }
-                }
-                return null;
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Transaction/*'/>
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_Transaction)]
-        new public SqlTransaction Transaction
-        {
-            get
-            {
-                // if the transaction object has been zombied, just return null
-                if (_transaction != null && _transaction.Connection == null)
-                {
-                    _transaction = null;
-                }
-                return _transaction;
-            }
-            set
-            {
-                // Don't allow the transaction to be changed while in an async operation.
-                if (_transaction != value && _activeConnection != null)
-                {
-                    // If new value...
-                    if (CachedAsyncState.PendingAsyncOperation)
-                    {
-                        // If in pending async state, throw
-                        throw SQL.CannotModifyPropertyAsyncOperationInProgress();
-                    }
-                }
-                _transaction = value;
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_Transaction | API | Object Id {0}, Internal Transaction Id {1}, Client Connection Id {2}", ObjectID, value?.InternalTransaction?.TransactionId, Connection?.ClientConnectionId);
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbTransaction/*'/>
-        protected override DbTransaction DbTransaction
-        {
-            get
-            {
-                return Transaction;
-            }
-            set
-            {
-                Transaction = (SqlTransaction)value;
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_DbTransaction | API | Object Id {0}, Client Connection Id {1}", ObjectID, Connection?.ClientConnectionId);
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandText/*'/>
-        [DefaultValue("")]
-        [RefreshProperties(RefreshProperties.All)] // MDAC 67707
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandText)]
-        public override string CommandText
-        {
-            get => _commandText ?? "";
-            set
-            {
-                if (_commandText != value)
-                {
-                    PropertyChanging();
-                    _commandText = value;
-                }
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_CommandText | API | Object Id {0}, String Value = '{1}', Client Connection Id {2}", ObjectID, value, Connection?.ClientConnectionId);
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ColumnEncryptionSetting/*'/>
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.TCE_SqlCommand_ColumnEncryptionSetting)]
-        public SqlCommandColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandTimeout/*'/>
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandTimeout)]
-        public override int CommandTimeout
-        {
-            get
-            {
-                return _commandTimeout ?? DefaultCommandTimeout;
-            }
-            set
-            {
-                if (value < 0)
-                {
-                    throw ADP.InvalidCommandTimeout(value);
-                }
-
-                if (value != _commandTimeout)
-                {
-                    PropertyChanging();
-                    _commandTimeout = value;
-                }
-
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_CommandTimeout | API | ObjectId {0}, Command Timeout value {1}, Client Connection Id {2}", ObjectID, value, Connection?.ClientConnectionId);
-            }
-        }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
         public void ResetCommandTimeout()
@@ -712,142 +383,6 @@ namespace Microsoft.Data.SqlClient
             {
                 PropertyChanging();
                 _commandTimeout = DefaultCommandTimeout;
-            }
-        }
-
-        private int DefaultCommandTimeout
-        {
-            get
-            {
-                return _activeConnection?.CommandTimeout ?? ADP.DefaultCommandTimeout;
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandType/*'/>
-        [DefaultValue(CommandType.Text)]
-        [RefreshProperties(RefreshProperties.All)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandType)]
-        public override CommandType CommandType
-        {
-            get
-            {
-                CommandType cmdType = _commandType;
-                return ((0 != cmdType) ? cmdType : CommandType.Text);
-            }
-            set
-            {
-                if (_commandType != value)
-                {
-                    switch (value)
-                    {
-                        case CommandType.Text:
-                        case CommandType.StoredProcedure:
-                            PropertyChanging();
-                            _commandType = value;
-                            break;
-                        case System.Data.CommandType.TableDirect:
-                            throw SQL.NotSupportedCommandType(value);
-                        default:
-                            throw ADP.InvalidCommandType(value);
-                    }
-
-                    SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_CommandType | API | ObjectId {0}, Command type value {1}, Client Connection Id {2}", ObjectID, (int)value, Connection?.ClientConnectionId);
-                }
-            }
-        }
-
-        // By default, the cmd object is visible on the design surface (i.e. VS7 Server Tray)
-        // to limit the number of components that clutter the design surface,
-        // when the DataAdapter design wizard generates the insert/update/delete commands it will
-        // set the DesignTimeVisible property to false so that cmds won't appear as individual objects
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DesignTimeVisible/*'/>
-        [DefaultValue(true)]
-        [DesignOnly(true)]
-        [Browsable(false)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public override bool DesignTimeVisible
-        {
-            get
-            {
-                return !_designTimeInvisible;
-            }
-            set
-            {
-                _designTimeInvisible = !value;
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EnableOptimizedParameterBinding/*'/>
-        public bool EnableOptimizedParameterBinding { get; set; }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_Parameters)]
-        new public SqlParameterCollection Parameters
-        {
-            get
-            {
-                if (_parameters == null)
-                {
-                    // delay the creation of the SqlParameterCollection
-                    // until user actually uses the Parameters property
-                    _parameters = new SqlParameterCollection();
-                }
-                return _parameters;
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbParameterCollection/*'/>
-        protected override DbParameterCollection DbParameterCollection
-        {
-            get
-            {
-                return Parameters;
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/UpdatedRowSource/*'/>
-        [DefaultValue(UpdateRowSource.Both)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Update)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_UpdatedRowSource)]
-        public override UpdateRowSource UpdatedRowSource
-        {
-            get
-            {
-                return _updatedRowSource;
-            }
-            set
-            {
-                switch (value)
-                {
-                    case UpdateRowSource.None:
-                    case UpdateRowSource.OutputParameters:
-                    case UpdateRowSource.FirstReturnedRecord:
-                    case UpdateRowSource.Both:
-                        _updatedRowSource = value;
-                        break;
-                    default:
-                        throw ADP.InvalidUpdateRowSource(value);
-                }
-
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.UpdatedRowSource | API | ObjectId {0}, Updated row source value {1}, Client Connection Id {2}", ObjectID, (int)value, Connection?.ClientConnectionId);
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/StatementCompleted/*'/>
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_StatementCompleted)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_StatementCompleted)]
-        public event StatementCompletedEventHandler StatementCompleted
-        {
-            add
-            {
-                _statementCompletedEventHandler += value;
-            }
-            remove
-            {
-                _statementCompletedEventHandler -= value;
             }
         }
 
@@ -872,137 +407,6 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-        }
-
-        private void PropertyChanging()
-        {
-            // also called from SqlParameterCollection
-            this.IsDirty = true;
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Prepare/*'/>
-        public override void Prepare()
-        {
-            // Reset _pendingCancel upon entry into any Execute - used to synchronize state
-            // between entry into Execute* API and the thread obtaining the stateObject.
-            _pendingCancel = false;
-
-            SqlStatistics statistics = null;
-            using (TryEventScope.Create("SqlCommand.Prepare | API | Object Id {0}", ObjectID))
-            {
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.Prepare | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId);
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-
-                    // only prepare if batch with parameters
-                    if (this.IsPrepared && !this.IsDirty
-                        || (this.CommandType == CommandType.StoredProcedure)
-                        || ((System.Data.CommandType.Text == this.CommandType)
-                                && (0 == GetParameterCount(_parameters))))
-                    {
-                        if (Statistics != null)
-                        {
-                            Statistics.SafeIncrement(ref Statistics._prepares);
-                        }
-                        _hiddenPrepare = false;
-                    }
-                    else
-                    {
-                        // Validate the command outside of the try/catch to avoid putting the _stateObj on error
-                        ValidateCommand(isAsync: false);
-
-                        bool processFinallyBlock = true;
-                        try
-                        {
-                            // NOTE: The state object isn't actually needed for this, but it is still here for back-compat (since it does a bunch of checks)
-                            GetStateObject();
-
-                            // Loop through parameters ensuring that we do not have unspecified types, sizes, scales, or precisions
-                            if (_parameters != null)
-                            {
-                                int count = _parameters.Count;
-                                for (int i = 0; i < count; ++i)
-                                {
-                                    _parameters[i].Prepare(this);
-                                }
-                            }
-
-                            InternalPrepare();
-                        }
-                        catch (Exception e)
-                        {
-                            processFinallyBlock = ADP.IsCatchableExceptionType(e);
-                            throw;
-                        }
-                        finally
-                        {
-                            if (processFinallyBlock)
-                            {
-                                _hiddenPrepare = false; // The command is now officially prepared
-
-                                ReliablePutStateObject();
-                            }
-                        }
-                    }
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                }
-            }
-        }
-
-        private void InternalPrepare()
-        {
-            if (this.IsDirty)
-            {
-                Debug.Assert(_cachedMetaData == null || !_dirty, "dirty query should not have cached metadata!"); // can have cached metadata if dirty because of parameters
-                //
-                // someone changed the command text or the parameter schema so we must unprepare the command
-                //
-                this.Unprepare();
-                this.IsDirty = false;
-            }
-            Debug.Assert(_execType != EXECTYPE.PREPARED, "Invalid attempt to Prepare already Prepared command!");
-            Debug.Assert(_activeConnection != null, "must have an open connection to Prepare");
-            Debug.Assert(_stateObj != null, "TdsParserStateObject should not be null");
-            Debug.Assert(_stateObj.Parser != null, "TdsParser class should not be null in Command.Execute!");
-            Debug.Assert(_stateObj.Parser == _activeConnection.Parser, "stateobject parser not same as connection parser");
-            Debug.Assert(false == _inPrepare, "Already in Prepare cycle, this.inPrepare should be false!");
-
-            // remember that the user wants to do a prepare but don't actually do an rpc
-            _execType = EXECTYPE.PREPAREPENDING;
-            // Note the current close count of the connection - this will tell us if the connection has been closed between calls to Prepare() and Execute
-            _preparedConnectionCloseCount = _activeConnection.CloseCount;
-            _preparedConnectionReconnectCount = _activeConnection.ReconnectCount;
-
-            if (Statistics != null)
-            {
-                Statistics.SafeIncrement(ref Statistics._prepares);
-            }
-        }
-
-        // SqlInternalConnectionTds needs to be able to unprepare a statement
-        internal void Unprepare()
-        {
-            Debug.Assert(true == IsPrepared, "Invalid attempt to Unprepare a non-prepared command!");
-            Debug.Assert(_activeConnection != null, "must have an open connection to UnPrepare");
-            Debug.Assert(false == _inPrepare, "_inPrepare should be false!");
-            _execType = EXECTYPE.PREPAREPENDING;
-
-            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.UnPrepare | Info | Object Id {0}, Current Prepared Handle {1}", ObjectID, _prepareHandle);
-
-            // Don't zero out the handle because we'll pass it in to sp_prepexec on the next prepare
-            // Unless the close count isn't the same as when we last prepared
-            if ((_activeConnection.CloseCount != _preparedConnectionCloseCount) || (_activeConnection.ReconnectCount != _preparedConnectionReconnectCount))
-            {
-                // reset our handle
-                _prepareHandle = s_cachedInvalidPrepareHandle;
-            }
-
-            _cachedMetaData = null;
-            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.UnPrepare | Info | Object Id {0}, Command unprepared.", ObjectID);
         }
 
         // Cancel is supposed to be multi-thread safe.
@@ -6761,48 +6165,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal TdsParserStateObject StateObject
-        {
-            get
-            {
-                return _stateObj;
-            }
-        }
-
-        private bool IsPrepared
-        {
-            get { return (_execType != EXECTYPE.UNPREPARED); }
-        }
-
-        private bool IsUserPrepared
-        {
-            get { return IsPrepared && !_hiddenPrepare && !IsDirty; }
-        }
-
-        internal bool IsDirty
-        {
-            get
-            {
-                // only dirty if prepared
-                var activeConnection = _activeConnection;
-                return (IsPrepared &&
-                    (_dirty ||
-                    ((_parameters != null) && (_parameters.IsDirty)) ||
-                    ((activeConnection != null) && ((activeConnection.CloseCount != _preparedConnectionCloseCount) || (activeConnection.ReconnectCount != _preparedConnectionReconnectCount)))));
-            }
-            set
-            {
-                // only mark the command as dirty if it is already prepared
-                // but always clear the value if it we are clearing the dirty flag
-                _dirty = value ? IsPrepared : false;
-                if (_parameters != null)
-                {
-                    _parameters.IsDirty = _dirty;
-                }
-                _cachedMetaData = null;
-            }
-        }
-
         /// <summary>
         /// Get or add to the number of records affected by SpDescribeParameterEncryption.
         /// The below line is used only for debug asserts and not exposed publicly or impacts functionality otherwise.
@@ -6822,25 +6184,6 @@ namespace Microsoft.Data.SqlClient
                 else if (0 < value)
                 {
                     _rowsAffectedBySpDescribeParameterEncryption += value;
-                }
-            }
-        }
-
-        internal int InternalRecordsAffected
-        {
-            get
-            {
-                return _rowsAffected;
-            }
-            set
-            {
-                if (-1 == _rowsAffected)
-                {
-                    _rowsAffected = value;
-                }
-                else if (0 < value)
-                {
-                    _rowsAffected += value;
                 }
             }
         }
