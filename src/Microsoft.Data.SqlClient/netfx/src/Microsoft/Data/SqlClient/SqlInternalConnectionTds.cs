@@ -2267,6 +2267,12 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case TdsEnums.ENV_LOGSHIPNODE:
+                    if (LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnEnvChange> {0}, Ignoring server provided failover partner '{1}' due to IgnoreServerProvidedFailoverPartner AppContext switch.", ObjectID, rec._newValue);
+                        break;
+                    }
+
                     _currentFailoverPartner = rec._newValue;
                     break;
 
