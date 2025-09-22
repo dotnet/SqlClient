@@ -294,28 +294,28 @@ jobs:
       {
           if ($pVersion.ProductVersion -Like '$(ProductVersion)*') 
           {
-              Write-Host Valid ProductVersion: $pVersion.ProductVersion detected for $pVersion.FileName -ForegroundColor Green
+              Write-Host -ForegroundColor Green "Correct ProductVersion detected for $($pVersion.FileName): $($pVersion.ProductVersion)"
           }
           else
           { 
-                Write-Host "Wrong ProductVersion detected for $pVersion.FileName; expected: '$(ProductVersion)'; found: "$pVersion.ProductVersion"" -ForegroundColor Red
+                Write-Host -ForegroundColor Red "Wrong ProductVersion detected for $($pVersion.FileName); expected: $(ProductVersion); found: $($pVersion.ProductVersion)"
                 $failed = 1
           }
       
-          $expectedFileVersion = ${{parameters.assembly_file_version_core}}
+          $expectedFileVersion = "${{parameters.assembly_file_version_core}}"
 
           if ($pVersion.FileName -like '*lib\$(CurrentNetFxVersion)*')
           {
-              $expectedFileVersion = ${{parameters.assembly_file_version_netfx}}
+              $expectedFileVersion = "${{parameters.assembly_file_version_netfx}}"
           }
           
           if ($pVersion.FileVersion -eq $expectedFileVersion)
           {
-              Write-Host "Correct FileVersion detected for $pVersion.FileName: $pVersion.FileVersion" -ForegroundColor Green
+              Write-Host -ForegroundColor Green "Correct FileVersion detected for $($pVersion.FileName): $($pVersion.FileVersion)"
           }
           else
           {
-              Write-Host "Wrong FileVersion detected for $pVersion.FileName; expected $expectedFileVersion; found: $pVersion.FileVersion" -ForegroundColor Red
+              Write-Host -ForegroundColor Red "Wrong FileVersion detected for $($pVersion.FileName); expected $($expectedFileVersion); found: $($pVersion.FileVersion)"
               $failed = 1
           }
       }
