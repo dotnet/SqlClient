@@ -32,7 +32,7 @@ variables:
   # changes how $(Build.BuildNumber) is formatted in the future, but it's the
   # best we can do without producing an invalid version number.
   - name: assemblyBuildNumber
-    value: $[ replace($(Build.BuildNumber), '.', '') ]
+    value: $[ replace(variables['Build.BuildNumber'], '.', '') ]
   
   # ----------------------------------------------------------------------------
   # Abstractions Package Versions
