@@ -10,6 +10,9 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <content>
+    /// This partial contains the methods related to ExecuteScalar public API.
+    /// </content>
     public partial class SqlCommand
     {
         #region Public/Internal Methods
