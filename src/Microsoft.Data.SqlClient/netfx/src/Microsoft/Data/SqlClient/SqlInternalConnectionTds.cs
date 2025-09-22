@@ -1905,12 +1905,21 @@ namespace Microsoft.Data.SqlClient
                         failoverDemandDone = true;
                     }
 
-                    // Primary server may give us a different failover partner than the connection string indicates.  Update it
+                    // Primary server may give us a different failover partner than the connection string indicates.
+                    // Update it only if we are respecting server-provided failover partner values.
                     if (ServerProvidedFailoverPartner != null && failoverServerInfo.ResolvedServerName != ServerProvidedFailoverPartner)
                     {
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}, new failover partner={1}", ObjectID, ServerProvidedFailoverPartner);
-                        failoverServerInfo.SetDerivedNames(protocol, ServerProvidedFailoverPartner);
+                        if (LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}, Ignoring server provided failover partner '{1}' due to IgnoreServerProvidedFailoverPartner AppContext switch.", ObjectID, ServerProvidedFailoverPartner);
+                        }
+                        else
+                        {
+                            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}, new failover partner={1}", ObjectID, ServerProvidedFailoverPartner);
+                            failoverServerInfo.SetDerivedNames(protocol, ServerProvidedFailoverPartner);
+                        }
                     }
+
                     currentServerInfo = failoverServerInfo;
                     _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.Failover);
                 }
@@ -2031,8 +2040,13 @@ namespace Microsoft.Data.SqlClient
             {
                 // We must wait for CompleteLogin to finish for to have the
                 // env change from the server to know its designated failover
-                // partner; save this information in ServerProvidedFailoverPartner.
-                PoolGroupProviderInfo.FailoverCheck(useFailoverHost, connectionOptions, ServerProvidedFailoverPartner);
+                // partner.
+
+                // When ignoring server provided failover partner, we must pass in the original failover partner from the connection string.
+                // Otherwise the pool group's failover partner designation will be updated to point to the server provided value.
+                string actualFailoverPartner = LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner ? failoverHost : ServerProvidedFailoverPartner;
+
+                PoolGroupProviderInfo.FailoverCheck(useFailoverHost, connectionOptions, actualFailoverPartner);
             }
             CurrentDataSource = (useFailoverHost ? failoverHost : primaryServerInfo.UserServerName);
         }
@@ -2260,12 +2274,6 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case TdsEnums.ENV_LOGSHIPNODE:
-                    if (LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnEnvChange> {0}, Ignoring server provided failover partner '{1}' due to IgnoreServerProvidedFailoverPartner AppContext switch.", ObjectID, rec._newValue);
-                        break;
-                    }
-
                     ServerProvidedFailoverPartner = rec._newValue;
                     break;
 
