@@ -326,7 +326,6 @@ namespace Microsoft.Data.SqlClient
         // FOR CONNECTION RESET MANAGEMENT
         private bool _fResetConnection;
         private string _originalDatabase;
-        private string _currentFailoverPartner;                     // only set by ENV change from server
         private string _originalLanguage;
         private string _currentLanguage;
         private int _currentPacketSize;
@@ -714,13 +713,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal string ServerProvidedFailOverPartner
-        {
-            get
-            {
-                return _currentFailoverPartner;
-            }
-        }
+        internal string ServerProvidedFailoverPartner { get; set; }
 
         internal SqlConnectionPoolGroupProviderInfo PoolGroupProviderInfo
         {
@@ -1515,7 +1508,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ROR_FailoverNotSupportedConnString();
                         }
 
-                        if (ServerProvidedFailOverPartner != null)
+                        if (ServerProvidedFailoverPartner != null)
                         {
                             throw SQL.ROR_FailoverNotSupportedServer(this);
                         }
@@ -1665,7 +1658,7 @@ namespace Microsoft.Data.SqlClient
                                         isFirstTransparentAttempt: isFirstTransparentAttempt,
                                         disableTnir: disableTnir);
 
-                    if (connectionOptions.MultiSubnetFailover && ServerProvidedFailOverPartner != null)
+                    if (connectionOptions.MultiSubnetFailover && ServerProvidedFailoverPartner != null)
                     {
                         // connection succeeded: trigger exception if server sends failover partner and MultiSubnetFailover is used
                         throw SQL.MultiSubnetFailoverWithFailoverPartner(serverProvidedFailoverPartner: true, internalConnection: this);
@@ -1693,7 +1686,7 @@ namespace Microsoft.Data.SqlClient
                         _currentPacketSize = ConnectionOptions.PacketSize;
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
                         CurrentDatabase = _originalDatabase = ConnectionOptions.InitialCatalog;
-                        _currentFailoverPartner = null;
+                        ServerProvidedFailoverPartner = null;
                         _instanceName = string.Empty;
 
                         routingAttempts++;
@@ -1732,7 +1725,7 @@ namespace Microsoft.Data.SqlClient
                 // We only get here when we failed to connect, but are going to re-try
 
                 // Switch to failover logic if the server provided a partner
-                if (ServerProvidedFailOverPartner != null)
+                if (ServerProvidedFailoverPartner != null)
                 {
                     if (connectionOptions.MultiSubnetFailover)
                     {
@@ -1748,7 +1741,7 @@ namespace Microsoft.Data.SqlClient
                     LoginWithFailover(
                                 true,   // start by using failover partner, since we already failed to connect to the primary
                                 serverInfo,
-                                ServerProvidedFailOverPartner,
+                                ServerProvidedFailoverPartner,
                                 newPassword,
                                 newSecurePassword,
                                 redirectedUserInstance,
@@ -1770,8 +1763,8 @@ namespace Microsoft.Data.SqlClient
             {
                 // We must wait for CompleteLogin to finish for to have the
                 // env change from the server to know its designated failover
-                // partner; save this information in _currentFailoverPartner.
-                PoolGroupProviderInfo.FailoverCheck(false, connectionOptions, ServerProvidedFailOverPartner);
+                // partner; save this information in ServerProvidedFailoverPartner.
+                PoolGroupProviderInfo.FailoverCheck(false, connectionOptions, ServerProvidedFailoverPartner);
             }
             CurrentDataSource = originalServerInfo.UserServerName;
         }
@@ -1855,7 +1848,7 @@ namespace Microsoft.Data.SqlClient
             ServerInfo failoverServerInfo = new ServerInfo(connectionOptions, failoverHost, connectionOptions.FailoverPartnerSPN);
 
             ResolveExtendedServerName(primaryServerInfo, !redirectedUserInstance, connectionOptions);
-            if (ServerProvidedFailOverPartner == null)
+            if (ServerProvidedFailoverPartner == null)
             {
                 ResolveExtendedServerName(failoverServerInfo, !redirectedUserInstance && failoverHost != primaryServerInfo.UserServerName, connectionOptions);
             }
@@ -1913,10 +1906,10 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // Primary server may give us a different failover partner than the connection string indicates.  Update it
-                    if (ServerProvidedFailOverPartner != null && failoverServerInfo.ResolvedServerName != ServerProvidedFailOverPartner)
+                    if (ServerProvidedFailoverPartner != null && failoverServerInfo.ResolvedServerName != ServerProvidedFailoverPartner)
                     {
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}, new failover partner={1}", ObjectID, ServerProvidedFailOverPartner);
-                        failoverServerInfo.SetDerivedNames(protocol, ServerProvidedFailOverPartner);
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}, new failover partner={1}", ObjectID, ServerProvidedFailoverPartner);
+                        failoverServerInfo.SetDerivedNames(protocol, ServerProvidedFailoverPartner);
                     }
                     currentServerInfo = failoverServerInfo;
                     _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.Failover);
@@ -1967,7 +1960,7 @@ namespace Microsoft.Data.SqlClient
                         _currentPacketSize = connectionOptions.PacketSize;
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
                         CurrentDatabase = _originalDatabase = connectionOptions.InitialCatalog;
-                        _currentFailoverPartner = null;
+                        ServerProvidedFailoverPartner = null;
                         _instanceName = string.Empty;
 
                         AttemptOneLogin(
@@ -2029,7 +2022,7 @@ namespace Microsoft.Data.SqlClient
             _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.HasLoggedIn;
 
             // if connected to failover host, but said host doesn't have DbMirroring set up, throw an error
-            if (useFailoverHost && ServerProvidedFailOverPartner == null)
+            if (useFailoverHost && ServerProvidedFailoverPartner == null)
             {
                 throw SQL.InvalidPartnerConfiguration(failoverHost, CurrentDatabase);
             }
@@ -2038,8 +2031,8 @@ namespace Microsoft.Data.SqlClient
             {
                 // We must wait for CompleteLogin to finish for to have the
                 // env change from the server to know its designated failover
-                // partner; save this information in _currentFailoverPartner.
-                PoolGroupProviderInfo.FailoverCheck(useFailoverHost, connectionOptions, ServerProvidedFailOverPartner);
+                // partner; save this information in ServerProvidedFailoverPartner.
+                PoolGroupProviderInfo.FailoverCheck(useFailoverHost, connectionOptions, ServerProvidedFailoverPartner);
             }
             CurrentDataSource = (useFailoverHost ? failoverHost : primaryServerInfo.UserServerName);
         }
@@ -2273,7 +2266,7 @@ namespace Microsoft.Data.SqlClient
                         break;
                     }
 
-                    _currentFailoverPartner = rec._newValue;
+                    ServerProvidedFailoverPartner = rec._newValue;
                     break;
 
                 case TdsEnums.ENV_PROMOTETRANSACTION:
