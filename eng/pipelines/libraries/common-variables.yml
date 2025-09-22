@@ -26,6 +26,14 @@ variables:
   - name: artifactDirectory
     value: '$(REPOROOT)/packages'
 
+  # C# assembly versions must be in the format: Major.Minor.Build.Revision, but
+  # $(Build.BuildNumber) has the format XXX.YY, so we must omit the dot.  This
+  # perturbs the build number and could cause duplicates if Azure Pipelines
+  # changes how $(Build.BuildNumber) is formatted in the future, but it's the
+  # best we can do without producing an invalid version number.
+  - name: assemblyBuildNumber
+    value: $[ replace($(Build.BuildNumber), '.', '') ]
+  
   # ----------------------------------------------------------------------------
   # Abstractions Package Versions
   #
@@ -42,13 +50,8 @@ variables:
 
   # The AssemblyFileVersion for all assemblies in the Abstractions package.
   #
-  # Versions must be in the format: Major.Minor.Build.Revision, but
-  # $(Build.BuildNumber) has the format XXX.YY, so we must omit the dot.  This
-  # perturbs the build number and could cause duplicates if Azure Pipelines
-  # changes how $(Build.BuildNumber) is formatted in the future, but it's the
-  # best we can do without producing an invalid version number.
   - name: abstractionsAssemblyFileVersion
-    value: 1.0.0.$[ replace($(Build.BuildNumber), '.', '') ]
+    value: 1.0.0.$(assemblyBuildNumber)
 
   # Update this after every release. This is used to generate the MDS NuGet package version.
   - name: Major
@@ -68,7 +71,7 @@ variables:
     value: $(Major).$(Minor).$(Patch)
   - name: previewMdsPackageVersion
     value: $(Major).$(Minor).$(Patch)$(Preview)$(Revision).$(Build.BuildNumber)
-  - name: AssemblyFileVersion
-    value: $(Major).$(Minor).$(Patch).$[ replace($(Build.BuildNumber), '.', '') ]
+  - name: mdsAssemblyFileVersion
+    value: $(Major).$(Minor).$(Patch).$(assemblyBuildNumber)
   - name: nuspecPath
     value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'
