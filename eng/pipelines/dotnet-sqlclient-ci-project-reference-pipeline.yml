@@ -66,13 +66,6 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: object
   default: [net462, net8.0]
 
-- name: buildType
-  displayName: 'Build Type'
-  default: Project
-  values:
-    - Project
-    - Package
-
 - name: buildConfiguration
   displayName: 'Build Configuration'
   default: Release
@@ -101,7 +94,7 @@ extends:
     testSets: ${{ parameters.testSets }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
-    buildType: ${{ parameters.buildType }}
+    referenceType: Project
     buildConfiguration: ${{ parameters.buildConfiguration }}
     enableStressTests: ${{ parameters.enableStressTests }}
     testsTimeout: ${{ parameters.testsTimeout }}

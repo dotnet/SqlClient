@@ -27,8 +27,10 @@ jobs:
   variables:
   - template: ../../../libraries/variables.yml@self
   - ${{ if parameters.isPreview }}:
-    - name: NugetPackageVersion
-      value: $(PreviewNugetPackageVersion)
+    - name: abstrationsPackageVersion
+      value: $(abstractionsPackagePreviewVersion)
+    - name: mdsPackageVersion
+      value: $(previewMdsPackageVersion)
 
   steps:
   - script: SET
@@ -39,7 +41,12 @@ jobs:
     name: GetBuildType
   
   - template: ../steps/build-all-configurations-signed-dlls-step.yml@self
-  
+    parameters:
+      # These values are sourced from common-variables.yml.
+      abstractionsPackageVersion: $(abstractionsPackageVersion)
+      abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
+      mdsAssemblyFileVersion: $(mdsAssemblyFileVersion)
+
   - template: ../steps/code-analyze-step.yml@self
     parameters:
       analyzeType: all
@@ -50,7 +57,10 @@ jobs:
   
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:
-      OutputDirectory: $(artifactDirectory)
+      nuspecPath: $(nuspecPath)
+      packageVersion: $(mdsPackageVersion)
+      outputDirectory: $(artifactDirectory)
+      displayName: 'Create MDS NuGet Package'
       properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion)'
   
   - template: ../steps/esrp-code-signing-step.yml@self
@@ -65,4 +75,4 @@ jobs:
   - template: ../steps/publish-symbols-step.yml@self
     parameters:
       publishSymbols: ${{ parameters['PublishSymbols'] }}
-      symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(NuGetPackageVersion)_$(System.TimelineId)
+      symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(mdsPackageVersion)_$(System.TimelineId)

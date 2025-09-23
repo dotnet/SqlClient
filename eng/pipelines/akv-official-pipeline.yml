@@ -113,7 +113,7 @@ extends:
             sbom:
                 enabled: ${{ parameters.runSdlTasks }}
                 packageName: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
-                packageVersion: ${{ variables.nugetPackageVersion }}
+                packageVersion: ${{ variables.akvPackageVersion }}
 
             tsa:
                 # OneBranch publishes all sdl results to TSA. If TSA is disabled all SDL tools will
@@ -131,8 +131,7 @@ extends:
                         apiScanPdbPath: '${{ variables.apiScanPdbPath }}'
                         assemblyFileVersion: '${{ variables.assemblyFileVersion }}'
                         buildConfiguration: '${{ parameters.buildConfiguration }}'
-                        nugetPackageVersion: '${{ variables.nugetPackageVersion }}'
-                        mdsPackageVersion: '${{ variables.mdsPackageVersion }}'
+                        akvPackageVersion: '${{ variables.akvPackageVersion }}'
                         publishSymbols: '${{ parameters.publishSymbols }}'
                         signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'
                         signingAppRegistrationTenantId: '$(SigningAppRegistrationTenantId)'

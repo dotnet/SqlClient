@@ -5,6 +5,9 @@
 #################################################################################
 
 parameters:
+    - name: akvPackageVersion
+      type: string
+
     - name: apiScanDllPath
       type: string
       
@@ -15,12 +18,6 @@ parameters:
       type: string
 
     - name: buildConfiguration
-      type: string
-
-    - name: nugetPackageVersion
-      type: string
-
-    - name: mdsPackageVersion
       type: string
 
     - name: publishSymbols
@@ -90,7 +87,7 @@ jobs:
             parameters:
                 assemblyFileVersion: '${{ parameters.assemblyFileVersion }}'
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
-                mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
+                akvPackageVersion: '${{ parameters.akvPackageVersion }}'
                 
           - ${{ each targetFramework in parameters.targetFrameworks }}:  
               - template: ../steps/compound-extract-akv-apiscan-files-step.yml
@@ -104,7 +101,7 @@ jobs:
           - template: ../steps/roslyn-analyzers-akv-step.yml@self
             parameters:
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
-                mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
+                akvPackageVersion: '${{ parameters.akvPackageVersion }}'
 
           - template: ../steps/compound-esrp-code-signing-step.yml@self
             parameters:
@@ -120,7 +117,7 @@ jobs:
             parameters:
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 generateSymbolsPackage: true    # Always generate symbols, even if they are not published
-                packageVersion: '${{ parameters.nugetPackageVersion }}'
+                packageVersion: '${{ parameters.akvPackageVersion }}'
                 nuspecPath: '$(REPO_ROOT)/tools/specs/add-ons/$(PACKAGE_NAME).nuspec'
                 outputDirectory: '$(ARTIFACT_PATH)'
                 referenceType: 'Package'
@@ -138,7 +135,7 @@ jobs:
           - ${{ if parameters.publishSymbols }}:
             - template: ../steps/compound-publish-symbols-step.yml@self
               parameters:
-                  artifactName: 'akv_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.nugetPackageVersion }}_$(System.TimelineId)'
+                  artifactName: 'akv_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.akvPackageVersion }}_$(System.TimelineId)'
                   azureSubscription: '${{ parameters.symbolsAzureSubscription }}'
                   publishProjectName: '${{ parameters.symbolsPublishProjectName }}'
                   packageName: '$(PACKAGE_NAME)'
@@ -151,4 +148,4 @@ jobs:
                       Windows_NT/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/$(PACKAGE_NAME).pdb
                       AnyOS/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/$(PACKAGE_NAME).pdb
                   uploadAccount: '${{ parameters.symbolsUploadAccount }}'
-                  version: '${{ parameters.nugetPackageVersion }}'
+                  version: '${{ parameters.akvPackageVersion }}'
