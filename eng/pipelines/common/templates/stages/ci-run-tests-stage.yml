@@ -42,13 +42,6 @@ parameters:
   - name: testConfigurations
     type: object
 
-  - name: prebuildSteps
-    type: stepList
-    default: []
-
-  - name: testConfigurations
-    type: object
-
   # The timeout, in minutes, for each test job.
   - name: testsTimeout
     type: string
