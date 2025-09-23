@@ -409,7 +409,7 @@ namespace Microsoft.Data.SqlClient
             AuthProviderInfo authInfo = new AuthProviderInfo();
             authInfo.flags = info;
             authInfo.tlsFirst = tlsFirst;
-            authInfo.serverCertFileName = serverCertificateFilename;
+            authInfo.serverCertFileName = string.IsNullOrEmpty(serverCertificateFilename) ? null : serverCertificateFilename;
 
             // Add SSL (Encryption) SNI provider.
             return SniNativeWrapper.SniAddProvider(Handle, Provider.SSL_PROV, ref authInfo);
