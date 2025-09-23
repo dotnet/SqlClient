@@ -288,7 +288,7 @@ namespace Microsoft.Data.SqlClient
         {
             SNIHandle handle = Handle ?? throw ADP.ClosedConnectionError();
             IntPtr readPacketPtr = IntPtr.Zero;
-            error = SniNativeWrapper.SniReadSyncOverAsync(handle, ref readPacketPtr, GetTimeoutRemaining());
+            error = SniNativeWrapper.SniReadSyncOverAsync(handle, ref readPacketPtr, timeoutRemaining);
             return PacketHandle.FromNativePointer(readPacketPtr);
         }
 
