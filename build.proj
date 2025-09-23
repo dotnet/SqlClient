@@ -52,13 +52,8 @@
 
   <!-- Populate all managed projects -->
   <ItemGroup>
-<<<<<<< HEAD
     <Abstractions Include="src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
     <AbstractionsTest Include="src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/Abstractions.Test.csproj" />
-=======
-    <AbstractionsPackage Include="src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
-    <AbstractionsTestPackage Include="src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/Abstractions.Test.csproj" />
->>>>>>> a597ce3a (Split the C# code/project changes out from the pipeline changes.)
     <SqlServerLib Include="**/Microsoft.SqlServer.Server.csproj" />
     <NetFxDriver Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledWindows)' == 'true'" />
     <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
