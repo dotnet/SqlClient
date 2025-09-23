@@ -493,25 +493,25 @@ namespace Microsoft.Data.SqlClient.Diagnostics
 
         private PerformanceCounter? CreatePerformanceCounter(string counterName, PerformanceCounterType counterType)
         {
-            PerformanceCounter? instance = null;
-
             _instanceName ??= GetInstanceName();
             try
             {
-                instance = new PerformanceCounter();
+                PerformanceCounter instance = new();
                 instance.CategoryName = PerformanceCounterCategoryName;
                 instance.CounterName = counterName;
                 instance.InstanceName = _instanceName;
                 instance.InstanceLifetime = PerformanceCounterInstanceLifetime.Process;
                 instance.ReadOnly = false;
                 instance.RawValue = 0;  // make sure we start out at zero
+
+                return instance;
             }
             catch (InvalidOperationException e)
             {
                 ADP.TraceExceptionWithoutRethrow(e);
-            }
 
-            return instance;
+                return null;
+            }
         }
 
         // SxS: this method uses GetCurrentProcessId to construct the instance name.
