@@ -148,10 +148,10 @@ namespace Microsoft.Data.SqlClient
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
             string serverSPN,
-            bool isIntegratedSecurity = false,
-            bool tlsFirst = false,
-            string hostNameInCertificate = "",
-            string serverCertificateFilename = "")
+            bool isIntegratedSecurity,
+            bool tlsFirst,
+            string hostNameInCertificate,
+            string serverCertificateFilename)
         {
             if (isIntegratedSecurity)
             {
