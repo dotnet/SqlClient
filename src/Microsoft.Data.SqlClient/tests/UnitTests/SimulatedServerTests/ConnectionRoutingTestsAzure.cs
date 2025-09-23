@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         public void TransientFaultAtRoutedLocation_ShouldReturnToGateway(uint errorCode)
         {
             // Arrange
-            using TransientTdsErrorTdsServer server = new TransientTdsErrorTdsServer(
+            using TransientTdsErrorTdsServer server = new(
                 new TransientTdsErrorTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
 
             server.Start();
 
-            using RoutingTdsServer router = new RoutingTdsServer(
+            using RoutingTdsServer router = new(
                 new RoutingTdsServerArguments()
                 {
                     //RoutingTCPHost = server.EndPoint.Address.ToString() == IPAddress.Any.ToString() ? IPAddress.Loopback.ToString() : server.EndPoint.Address.ToString(),
@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             router.Start();
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + router.EndPoint.Port,
                 ApplicationIntent = ApplicationIntent.ReadOnly,
@@ -88,7 +88,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         public void TransientFaultAtRoutedLocation_RetryDisabled_ShouldFail(uint errorCode)
         {
             // Arrange
-            using TransientTdsErrorTdsServer server = new TransientTdsErrorTdsServer(
+            using TransientTdsErrorTdsServer server = new(
                 new TransientTdsErrorTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
 
             server.Start();
 
-            using RoutingTdsServer router = new RoutingTdsServer(
+            using RoutingTdsServer router = new(
                 new RoutingTdsServerArguments()
                 {
                     //RoutingTCPHost = server.EndPoint.Address.ToString() == IPAddress.Any.ToString() ? IPAddress.Loopback.ToString() : server.EndPoint.Address.ToString(),
@@ -106,7 +106,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             router.Start();
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + router.EndPoint.Port,
                 ApplicationIntent = ApplicationIntent.ReadOnly,
@@ -124,7 +124,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         public void NetworkDelayAtRoutedLocation_RetryDisabled_ShouldSucceed()
         {
             // Arrange
-            using TransientDelayTdsServer server = new TransientDelayTdsServer(
+            using TransientDelayTdsServer server = new(
                 new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientDelay = true,
@@ -133,7 +133,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
 
             server.Start();
 
-            using RoutingTdsServer router = new RoutingTdsServer(
+            using RoutingTdsServer router = new(
                 new RoutingTdsServerArguments()
                 {
                     RoutingTCPHost = "localhost",
@@ -141,7 +141,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             router.Start();
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + router.EndPoint.Port,
                 ApplicationIntent = ApplicationIntent.ReadOnly,
@@ -165,7 +165,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         public void NetworkTimeoutAtRoutedLocation_RetryDisabled_ShouldFail()
         {
             // Arrange
-            using TransientDelayTdsServer server = new TransientDelayTdsServer(
+            using TransientDelayTdsServer server = new(
                 new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientDelay = true,
@@ -174,7 +174,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
 
             server.Start();
 
-            using RoutingTdsServer router = new RoutingTdsServer(
+            using RoutingTdsServer router = new(
                 new RoutingTdsServerArguments()
                 {
                     RoutingTCPHost = "localhost",
@@ -182,7 +182,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             router.Start();
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + router.EndPoint.Port,
                 ApplicationIntent = ApplicationIntent.ReadOnly,

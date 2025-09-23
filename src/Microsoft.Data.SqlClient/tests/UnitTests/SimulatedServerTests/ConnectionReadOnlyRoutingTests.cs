@@ -17,28 +17,28 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         [Fact]
         public void NonRoutedConnection()
         {
-            using TdsServer server = new TdsServer();
+            using TdsServer server = new();
             server.Start();
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder() {
+            SqlConnectionStringBuilder builder = new() {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 ApplicationIntent = ApplicationIntent.ReadOnly,
                 Encrypt = SqlConnectionEncryptOption.Optional
             };
-            using SqlConnection connection = new SqlConnection(builder.ConnectionString);
+            using SqlConnection connection = new(builder.ConnectionString);
             connection.Open();
         }
 
         [Fact]
         public async Task NonRoutedAsyncConnection()
         {
-            using TdsServer server = new TdsServer();
+            using TdsServer server = new();
             server.Start();
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder() {
+            SqlConnectionStringBuilder builder = new() {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 ApplicationIntent = ApplicationIntent.ReadOnly,
                 Encrypt = SqlConnectionEncryptOption.Optional
              };
-            using SqlConnection connection = new SqlConnection(builder.ConnectionString);
+            using SqlConnection connection = new(builder.ConnectionString);
             await connection.OpenAsync();
         }
 
@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         [InlineData(11)] // 11 layers of routing should succeed, 12 should fail
         public void RecursivelyRoutedConnection(int layers)
         {
-            using TdsServer innerServer = new TdsServer();
+            using TdsServer innerServer = new();
             innerServer.Start();
             IPEndPoint lastEndpoint = innerServer.EndPoint;
             Stack<RoutingTdsServer> routingLayers = new(layers + 1);
@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             {
                 for (int i = 0; i < layers; i++)
                 {
-                    RoutingTdsServer router = new RoutingTdsServer(
+                    RoutingTdsServer router = new(
                         new RoutingTdsServerArguments()
                     {
                         RoutingTCPHost = "localhost",
@@ -80,8 +80,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                     }).ConnectionString;
                 }
 
-                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(lastConnectionString) { ApplicationIntent = ApplicationIntent.ReadOnly };
-                using SqlConnection connection = new SqlConnection(builder.ConnectionString);
+                SqlConnectionStringBuilder builder = new(lastConnectionString) { ApplicationIntent = ApplicationIntent.ReadOnly };
+                using SqlConnection connection = new(builder.ConnectionString);
                 connection.Open();
             }
             finally
@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         [InlineData(11)] // 11 layers of routing should succeed, 12 should fail
         public async Task RecursivelyRoutedAsyncConnection(int layers)
         {
-            using TdsServer innerServer = new TdsServer();
+            using TdsServer innerServer = new();
             innerServer.Start();
             IPEndPoint lastEndpoint = innerServer.EndPoint;
             Stack<RoutingTdsServer> routingLayers = new(layers + 1);
@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             {
                 for (int i = 0; i < layers; i++)
                 {
-                    RoutingTdsServer router = new RoutingTdsServer(
+                    RoutingTdsServer router = new(
                         new RoutingTdsServerArguments()
                         {
                             RoutingTCPHost = "localhost",
@@ -123,11 +123,11 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                     }).ConnectionString;
                 }
 
-                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(lastConnectionString) {
+                SqlConnectionStringBuilder builder = new(lastConnectionString) {
                     ApplicationIntent = ApplicationIntent.ReadOnly,
                     Encrypt = false
                 };
-                using SqlConnection connection = new SqlConnection(builder.ConnectionString);
+                using SqlConnection connection = new(builder.ConnectionString);
                 await connection.OpenAsync();
             }
             finally

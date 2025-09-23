@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             // transient errors returned during the login ack should not clear the connection pool.
 
             // Arrange
-            using TdsServer failoverServer = new TdsServer(new TdsServerArguments
+            using TdsServer failoverServer = new(new TdsServerArguments
             {
                 // Doesn't need to point to a real endpoint, just needs a value specified
                 FailoverPartner = "localhost,1234"
@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             var failoverDataSource = $"localhost,{failoverServer.EndPoint.Port}";
 
             // Errors are off to start to allow the pool to warm up
-            using TransientTdsErrorTdsServer initialServer = new TransientTdsErrorTdsServer(new TransientTdsErrorTdsServerArguments
+            using TransientTdsErrorTdsServer initialServer = new(new TransientTdsErrorTdsServerArguments
             {
                 FailoverPartner = failoverDataSource
             });
@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             // network errors returned during prelogin should clear the connection pool.
 
             // Arrange
-            using TdsServer failoverServer = new TdsServer(new TdsServerArguments
+            using TdsServer failoverServer = new(new TdsServerArguments
             {
                 // Doesn't need to point to a real endpoint, just needs a value specified
                 FailoverPartner = "localhost,1234"
@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             var failoverDataSource = $"localhost,{failoverServer.EndPoint.Port}";
 
             // Errors are off to start to allow the pool to warm up
-            using TdsServer initialServer = new TdsServer(new TdsServerArguments
+            using TdsServer initialServer = new(new TdsServerArguments
             {
                 FailoverPartner = failoverDataSource
             });
@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         [Fact]
         public void NetworkTimeout_ShouldFail()
         {
-            using TdsServer failoverServer = new TdsServer(
+            using TdsServer failoverServer = new(
                 new TdsServerArguments
                 {
                     // Doesn't need to point to a real endpoint, just needs a value specified
@@ -154,7 +154,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             failoverServer.Start();
 
             // Arrange
-            using TransientDelayTdsServer server = new TransientDelayTdsServer(
+            using TransientDelayTdsServer server = new(
                 new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientDelay = true,
@@ -163,7 +163,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             server.Start();
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
                 InitialCatalog = "master",// Required for failover partner to work
@@ -191,7 +191,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         [Fact]
         public void NetworkDelay_ShouldConnectToPrimary()
         {
-            using TdsServer failoverServer = new TdsServer(
+            using TdsServer failoverServer = new(
                 new TdsServerArguments
                 {
                     // Doesn't need to point to a real endpoint, just needs a value specified
@@ -200,7 +200,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             failoverServer.Start();
 
             // Arrange
-            using TransientDelayTdsServer server = new TransientDelayTdsServer(
+            using TransientDelayTdsServer server = new(
                 new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientDelay = true,
@@ -209,7 +209,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             server.Start();
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
                 InitialCatalog = "master",// Required for failover partner to work
@@ -243,7 +243,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         [Fact]
         public void NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner()
         {
-            using TdsServer failoverServer = new TdsServer(
+            using TdsServer failoverServer = new(
                 new TdsServerArguments
                 {
                     // Doesn't need to point to a real endpoint, just needs a value specified
@@ -252,7 +252,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             failoverServer.Start();
 
             // Arrange
-            using TransientDelayTdsServer server = new TransientDelayTdsServer(
+            using TransientDelayTdsServer server = new(
                 new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientDelay = true,
@@ -261,7 +261,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             server.Start();
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
                 InitialCatalog = "master", // Required for failover partner to work
@@ -294,7 +294,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         [Fact]
         public void NetworkError_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner()
         {
-            using TdsServer failoverServer = new TdsServer(
+            using TdsServer failoverServer = new(
                 new TdsServerArguments
                 {
                     // Doesn't need to point to a real endpoint, just needs a value specified
@@ -303,7 +303,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             failoverServer.Start();
 
             // Arrange
-            using TransientDelayTdsServer server = new TransientDelayTdsServer(
+            using TransientDelayTdsServer server = new(
                 new TransientDelayTdsServerArguments()
                 {
                     IsEnabledTransientDelay = true,
@@ -312,7 +312,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             server.Start();
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
                 InitialCatalog = "master", // Required for failover partner to work
@@ -348,7 +348,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         public void TransientFault_ShouldConnectToPrimary(uint errorCode)
         {
             // Arrange
-            using TdsServer failoverServer = new TdsServer(
+            using TdsServer failoverServer = new(
                 new TdsServerArguments
                 {
                     // Doesn't need to point to a real endpoint, just needs a value specified
@@ -356,7 +356,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             failoverServer.Start();
 
-            using TransientTdsErrorTdsServer server = new TransientTdsErrorTdsServer(
+            using TransientTdsErrorTdsServer server = new(
                 new TransientTdsErrorTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
@@ -365,7 +365,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             server.Start();
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            SqlConnectionStringBuilder builder = new()
             {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 InitialCatalog = "master",
@@ -399,7 +399,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         public void TransientFault_RetryDisabled_ShouldFail(uint errorCode)
         {
             // Arrange
-            using TdsServer failoverServer = new TdsServer(
+            using TdsServer failoverServer = new(
                 new TdsServerArguments
                 {
                     // Doesn't need to point to a real endpoint, just needs a value specified
@@ -407,7 +407,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             failoverServer.Start();
 
-            using TransientTdsErrorTdsServer server = new TransientTdsErrorTdsServer(
+            using TransientTdsErrorTdsServer server = new(
                 new TransientTdsErrorTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
@@ -416,7 +416,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             server.Start();
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            SqlConnectionStringBuilder builder = new()
             {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 InitialCatalog = "master",
@@ -447,7 +447,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         public void TransientFault_WithUserProvidedPartner_ShouldConnectToPrimary(uint errorCode)
         {
             // Arrange
-            using TdsServer failoverServer = new TdsServer(
+            using TdsServer failoverServer = new(
                 new TdsServerArguments
                 {
                     // Doesn't need to point to a real endpoint, just needs a value specified
@@ -455,7 +455,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             failoverServer.Start();
 
-            using TransientTdsErrorTdsServer server = new TransientTdsErrorTdsServer(
+            using TransientTdsErrorTdsServer server = new(
                 new TransientTdsErrorTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
@@ -464,7 +464,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             server.Start();
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            SqlConnectionStringBuilder builder = new()
             {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 InitialCatalog = "master",
@@ -499,7 +499,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         public void TransientFault_WithUserProvidedPartner_RetryDisabled_ShouldFail(uint errorCode)
         {
             // Arrange
-            using TdsServer failoverServer = new TdsServer(
+            using TdsServer failoverServer = new(
                 new TdsServerArguments
                 {
                     // Doesn't need to point to a real endpoint, just needs a value specified
@@ -507,7 +507,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             failoverServer.Start();
 
-            using TransientTdsErrorTdsServer server = new TransientTdsErrorTdsServer(
+            using TransientTdsErrorTdsServer server = new(
                 new TransientTdsErrorTdsServerArguments()
                 {
                     IsEnabledTransientError = true,
@@ -516,7 +516,7 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 });
             server.Start();
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+            SqlConnectionStringBuilder builder = new()
             {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 InitialCatalog = "master",
