@@ -206,9 +206,18 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
+        /// <summary>
+        /// Fetches provided configuration section from app.config file.
+        /// Does not support reading from appsettings.json yet.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="name"></param>
+        /// <returns></returns>
         private static T FetchConfigurationSection<T>(string name)
         {
             Type t = typeof(T);
+
+            // TODO: Support reading configuration from appsettings.json for .NET runtime applications.
             object section = ConfigurationManager.GetSection(name);
             if (section != null)
             {

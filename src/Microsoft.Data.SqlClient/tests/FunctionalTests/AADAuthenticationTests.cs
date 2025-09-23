@@ -50,7 +50,13 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
-        [Fact]
+        /// <summary>
+        /// Tests whether SQL Auth provider is overridden using app.config file.
+        /// This use case is only supported for .NET Framework applications, as driver doesn't support reading configuration from appsettings.json file.
+        /// In future if need be, appsettings.json support can be added.
+        /// </summary>
+        /// <returns></returns>
+        [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsFullFramework))]
         public async Task IsDummySqlAuthenticationProviderSetByDefault()
         {
             var provider = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive);
