@@ -182,12 +182,16 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    // This will signal to the interop layer that we need to retrieve the SPN
+                    // Empty signifies to interop layer that SPN needs to be generated
                     serverSPN = string.Empty;
                 }
             }
 
             ConsumerInfo myInfo = CreateConsumerInfo(async);
+
+            // serverName : serverInfo.ExtendedServerName
+            // may not use this serverName as key
+
             SQLDNSInfo cachedDNSInfo;
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 

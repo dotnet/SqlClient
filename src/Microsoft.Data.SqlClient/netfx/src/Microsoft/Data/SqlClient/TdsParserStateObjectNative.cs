@@ -155,8 +155,10 @@ namespace Microsoft.Data.SqlClient
         {
             if (isIntegratedSecurity)
             {
+                // now allocate proper length of buffer
                 if (!string.IsNullOrEmpty(serverSPN))
                 {
+                    // Native SNI requires the Unicode encoding and any other encoding like UTF8 breaks the code.
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Server SPN `{0}` from the connection string is used.", serverSPN);
                 }
                 else
@@ -218,6 +220,7 @@ namespace Microsoft.Data.SqlClient
             SafeHandle packetHandle = _sniPacket;
             SafeHandle sessionHandle = _sessionHandle;
             SafeHandle asyncAttnPacket = _sniAsyncAttnPacket;
+
             _sniPacket = null;
             _sessionHandle = null;
             _sniAsyncAttnPacket = null;
@@ -226,11 +229,6 @@ namespace Microsoft.Data.SqlClient
 
             if (sessionHandle != null || packetHandle != null)
             {
-                // Comment CloseMARSSession
-                // UNDONE - if there are pending reads or writes on logical connections, we need to block
-                // here for the callbacks!!!  This only applies to async.  Should be fixed by async fixes for
-                // AD unload/exit.
-
                 if (packetHandle != null)
                 {
                     packetHandle.Dispose();
@@ -239,6 +237,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     asyncAttnPacket.Dispose();
                 }
+
                 if (sessionHandle != null)
                 {
                     sessionHandle.Dispose();
