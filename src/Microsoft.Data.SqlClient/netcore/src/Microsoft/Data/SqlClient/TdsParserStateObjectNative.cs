@@ -195,7 +195,11 @@ namespace Microsoft.Data.SqlClient
             SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out SQLDNSInfo cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, serverName, ref serverSPN, timeout.MillisecondsRemainingInt, out instanceName,
-                flushCache, !async, fParallel, iPAddressPreference, cachedDNSInfo, hostNameInCertificate);
+                flushCache, !async, fParallel,
+#if NETFRAMEWORK
+                transparentNetworkResolutionState, totalTimeout,
+#endif
+                iPAddressPreference, cachedDNSInfo, hostNameInCertificate);
             resolvedSpn = new(serverSPN.TrimEnd());
         }
 
@@ -291,7 +295,9 @@ namespace Microsoft.Data.SqlClient
 
         internal override PacketHandle ReadAsync(SessionHandle handle, out uint error)
         {
+#if NET
             Debug.Assert(handle.Type == SessionHandle.NativeHandleType, "unexpected handle type when requiring NativePointer");
+#endif
             IntPtr readPacketPtr = IntPtr.Zero;
             error = SniNativeWrapper.SniReadAsync(handle.NativeHandle, ref readPacketPtr);
             return PacketHandle.FromNativePointer(readPacketPtr);
