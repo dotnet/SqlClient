@@ -173,7 +173,7 @@ namespace Microsoft.Data.SqlClient
             // serverName : serverInfo.ExtendedServerName
             // may not use this serverName as key
 
-            _ = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out SQLDNSInfo cachedDNSInfo);
+            SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out SQLDNSInfo cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, serverName, ref serverSPN, timeout.MillisecondsRemainingInt,
                 out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout,
@@ -403,10 +403,6 @@ namespace Microsoft.Data.SqlClient
             AuthProviderInfo authInfo = new AuthProviderInfo();
             authInfo.flags = info;
             authInfo.tlsFirst = tlsFirst;
-            authInfo.certId = null;
-            authInfo.certHash = false;
-            authInfo.clientCertificateCallbackContext = IntPtr.Zero;
-            authInfo.clientCertificateCallback = null;
             authInfo.serverCertFileName = string.IsNullOrEmpty(serverCertificateFilename) ? null : serverCertificateFilename;
 
             // Add SSL (Encryption) SNI provider.

@@ -192,8 +192,7 @@ namespace Microsoft.Data.SqlClient
             // serverName : serverInfo.ExtendedServerName
             // may not use this serverName as key
 
-            SQLDNSInfo cachedDNSInfo;
-            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
+            SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out SQLDNSInfo cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, serverName, ref serverSPN, timeout.MillisecondsRemainingInt, out instanceName,
                 flushCache, !async, fParallel, iPAddressPreference, cachedDNSInfo, hostNameInCertificate);
