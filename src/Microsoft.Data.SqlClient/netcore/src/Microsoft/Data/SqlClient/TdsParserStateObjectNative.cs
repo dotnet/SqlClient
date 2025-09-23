@@ -17,25 +17,6 @@ namespace Microsoft.Data.SqlClient
 {
     internal class TdsParserStateObjectNative : TdsParserStateObject
     {
-        // protocol versions from native sni
-        [Flags]
-        private enum NativeProtocols
-        {
-            SP_PROT_SSL2_SERVER = 0x00000004,
-            SP_PROT_SSL2_CLIENT = 0x00000008,
-            SP_PROT_SSL3_SERVER = 0x00000010,
-            SP_PROT_SSL3_CLIENT = 0x00000020,
-            SP_PROT_TLS1_0_SERVER = 0x00000040,
-            SP_PROT_TLS1_0_CLIENT = 0x00000080,
-            SP_PROT_TLS1_1_SERVER = 0x00000100,
-            SP_PROT_TLS1_1_CLIENT = 0x00000200,
-            SP_PROT_TLS1_2_SERVER = 0x00000400,
-            SP_PROT_TLS1_2_CLIENT = 0x00000800,
-            SP_PROT_TLS1_3_SERVER = 0x00001000,
-            SP_PROT_TLS1_3_CLIENT = 0x00002000,
-            SP_PROT_NONE = 0x0
-        }
-
         private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
 
         private SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
@@ -440,42 +421,8 @@ namespace Microsoft.Data.SqlClient
         internal override uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion)
         {
             uint returnValue = SniNativeWrapper.SniWaitForSslHandshakeToComplete(Handle, GetTimeoutRemaining(), out uint nativeProtocolVersion);
-            var nativeProtocol = (NativeProtocols)nativeProtocolVersion;
 
-#pragma warning disable CA5398 // Avoid hardcoded SslProtocols values
-            if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_SERVER))
-            {
-                protocolVersion = SslProtocols.Tls12;
-            }
-            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_SERVER))
-            {
-                /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later */
-                protocolVersion = SslProtocols.Tls13;
-            }
-            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_SERVER))
-            {
-                protocolVersion = SslProtocols.Tls11;
-            }
-            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_SERVER))
-            {
-                protocolVersion = SslProtocols.Tls;
-            }
-            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_SERVER))
-            {
-                // SSL 2.0 and 3.0 are only referenced to log a warning, not explicitly used for connections
-#pragma warning disable CS0618, CA5397
-                protocolVersion = SslProtocols.Ssl3;
-            }
-            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_SERVER))
-            {
-                protocolVersion = SslProtocols.Ssl2;
-#pragma warning restore CS0618, CA5397
-            }
-            else //if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_NONE))
-            {
-                protocolVersion = SslProtocols.None;
-            }
-#pragma warning restore CA5398 // Avoid hardcoded SslProtocols values 
+            protocolVersion = (SslProtocols)nativeProtocolVersion;
             return returnValue;
         }
 
