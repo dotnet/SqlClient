@@ -1506,7 +1506,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             {
                                 // Obtain creation mutex so we're the only one creating objects
                                 // and we must have the wait result
-                                waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(withCreate: true), CreationTimeout);
+                                bool creationHandleObtained = _waitHandles.CreationSemaphore.WaitOne(CreationTimeout);
+                                waitResult = creationHandleObtained ? CREATION_HANDLE : WaitHandle.WaitTimeout;
+                                
                                 if (CREATION_HANDLE == waitResult)
                                 {
                                     DbConnectionInternal newObj;
@@ -1542,16 +1544,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                         }
                                     }
                                 }
-                                else if (WaitHandle.WaitTimeout == waitResult)
+                                else
                                 {
                                     // do not wait forever and potential block this worker thread
                                     // instead wait for a period of time and just requeue to try again
                                     QueuePoolCreateRequest();
-                                }
-                                else
-                                {
-                                    // trace waitResult and ignore the failure
-                                    SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PoolCreateRequest|RES|CPOOL> {0}, PoolCreateRequest called WaitForSingleObject failed {1}", Id, waitResult);
                                 }
                             }
                             catch (Exception e)
