@@ -213,10 +213,6 @@ namespace Microsoft.Data.SqlClient
             return IntPtr.Zero == ptr || IntPtr.Zero != ptr && source != null;
         }
 
-        public void ReadAsyncCallback(IntPtr key, IntPtr packet, uint error) => ReadAsyncCallback(key, packet, error);
-
-        public void WriteAsyncCallback(IntPtr key, IntPtr packet, uint sniError) => WriteAsyncCallback(key, packet, sniError);
-
         protected override void RemovePacketFromPendingList(PacketHandle ptr)
         {
             Debug.Assert(ptr.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
