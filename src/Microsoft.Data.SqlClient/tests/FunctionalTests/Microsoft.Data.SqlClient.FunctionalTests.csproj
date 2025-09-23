@@ -24,6 +24,7 @@
     <Compile Include="AlwaysEncryptedTests\Utility.cs" />
     <Compile Include="AssertExtensions.cs" />
     <Compile Include="DataCommon\AssemblyResourceManager.cs" />
+    <Compile Include="DataCommon\DummySqlAuthenticationProvider.cs" />
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
     <Compile Include="DataCommon\TestUtility.cs" />
     <Compile Include="LocalizationTest.cs" />
