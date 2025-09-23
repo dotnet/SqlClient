@@ -229,14 +229,8 @@ namespace Microsoft.Data.SqlClient
 
             if (sessionHandle != null || packetHandle != null)
             {
-                if (packetHandle != null)
-                {
-                    packetHandle.Dispose();
-                }
-                if (asyncAttnPacket != null)
-                {
-                    asyncAttnPacket.Dispose();
-                }
+                packetHandle?.Dispose();
+                asyncAttnPacket?.Dispose();
 
                 if (sessionHandle != null)
                 {
