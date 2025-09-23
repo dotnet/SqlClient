@@ -178,7 +178,7 @@ namespace Microsoft.Data.SqlClient
                 if (!string.IsNullOrEmpty(serverSPN))
                 {
                     // Native SNI requires the Unicode encoding and any other encoding like UTF8 breaks the code.
-                    SqlClientEventSource.Log.TryTraceEvent("<{0}.{1}|SEC> Server SPN `{2}` from the connection string is used.", nameof(TdsParserStateObjectNative), nameof(CreatePhysicalSNIHandle), serverSPN);
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Server SPN `{0}` from the connection string is used.", serverSPN);
                 }
                 else
                 {
@@ -269,6 +269,7 @@ namespace Microsoft.Data.SqlClient
         {
             if ((0 == remaining || release) && _gcHandle.IsAllocated)
             {
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, FREEING HANDLE!", ObjectID);
                 _gcHandle.Free();
             }
         }
