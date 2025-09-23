@@ -944,19 +944,8 @@ namespace Microsoft.Data.SqlClient
                 info |= TdsEnums.SNI_SSL_IGNORE_CHANNEL_BINDINGS;
             }
 
-            // Add SSL (Encryption) SNI provider.
-            AuthProviderInfo authInfo = new AuthProviderInfo();
-            authInfo.flags = info;
-            authInfo.tlsFirst = encrypt == SqlConnectionEncryptOption.Strict;
-            authInfo.certId = null;
-            authInfo.certHash = false;
-            authInfo.clientCertificateCallbackContext = IntPtr.Zero;
-            authInfo.clientCertificateCallback = null;
-            authInfo.serverCertFileName = string.IsNullOrEmpty(serverCertificateFilename) ? null : serverCertificateFilename;
-
             Debug.Assert((_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0, "Client certificate authentication support has been removed");
-
-            error = SniNativeWrapper.SniAddProvider(_physicalStateObj.Handle, Provider.SSL_PROV, authInfo);
+            error = _physicalStateObj.EnableSsl(ref info, encrypt == SqlConnectionEncryptOption.Strict, serverCertificateFilename);
 
             if (error != TdsEnums.SNI_SUCCESS)
             {
