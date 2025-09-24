@@ -10,15 +10,18 @@ trigger:
   branches:
     include:
     - main
+    - feat/*
     - internal/main
   paths:
     include:
+    - .azuredevops
+    - .config
     - src
     - eng
     - tools
-    - .config
+    - azurepipelines-coverage.yml
     - build.proj
-    - Nuget.config
+    - NuGet.config
 
 schedules:
 - cron: '0 5 * * Thu'

@@ -10,16 +10,18 @@ trigger:
   branches:
     include:
     - main
+    - feat/*
     - internal/main
   paths:
     include:
-    - src\Microsoft.Data.SqlClient\netcore\ref
-    - src\Microsoft.Data.SqlClient\netfx\ref
-    - src\Microsoft.Data.SqlClient\ref
+    - .azuredevops
+    - .config
+    - src
     - eng
     - tools
-    - .config
-    - Nuget.config
+    - azurepipelines-coverage.yml
+    - build.proj
+    - NuGet.config
 
 schedules:
 - cron: '0 4 * * Fri'
