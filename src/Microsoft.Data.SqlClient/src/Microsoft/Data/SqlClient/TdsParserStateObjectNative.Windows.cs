@@ -232,6 +232,11 @@ namespace Microsoft.Data.SqlClient
 
             if (sessionHandle != null || packetHandle != null)
             {
+                // Comment CloseMARSSession
+                // UNDONE - if there are pending reads or writes on logical connections, we need to block
+                // here for the callbacks!!!  This only applies to async.  Should be fixed by async fixes for
+                // AD unload/exit.
+
                 packetHandle?.Dispose();
                 asyncAttnPacket?.Dispose();
 
