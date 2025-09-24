@@ -8,7 +8,7 @@ using Microsoft.Data.Common;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.ScenarioTests
+namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
     [Trait("Category", "flaky")]
     [Collection("SimulatedServerTests")]

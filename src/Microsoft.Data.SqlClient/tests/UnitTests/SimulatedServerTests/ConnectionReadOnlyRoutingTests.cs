@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.ScenarioTests
+namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
     [Collection("SimulatedServerTests")]
     public class ConnectionReadOnlyRoutingTests
