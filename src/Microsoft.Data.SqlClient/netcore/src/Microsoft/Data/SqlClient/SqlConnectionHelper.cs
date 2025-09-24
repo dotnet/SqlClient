@@ -17,16 +17,6 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlConnection : DbConnection
     {
-        private static readonly SqlConnectionFactory s_connectionFactory = SqlConnectionFactory.Instance;
-
-        private DbConnectionOptions _userConnectionOptions;
-        private DbConnectionPoolGroup _poolGroup;
-        private DbConnectionInternal _innerConnection;
-        private int _closeCount;
-
-        private static int _objectTypeCount; // EventSource Counter
-        internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount);
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*' />
         public SqlConnection() : base()
         {

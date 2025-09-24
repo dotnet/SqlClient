@@ -18,17 +18,6 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlConnection : DbConnection
     {
-        private static readonly SqlConnectionFactory _connectionFactory = SqlConnectionFactory.Instance;
-        internal static readonly System.Security.CodeAccessPermission ExecutePermission = SqlConnection.CreateExecutePermission();
-
-        private DbConnectionOptions _userConnectionOptions;
-        private DbConnectionPoolGroup _poolGroup;
-        private DbConnectionInternal _innerConnection;
-        private int _closeCount;          // used to distinguish between different uses of this object, so we don't have to maintain a list of it's children
-
-        private static int _objectTypeCount; // EventSource Counter
-        internal readonly int ObjectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*' />
         public SqlConnection() : base()
         {
@@ -53,7 +42,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return _connectionFactory;
+                return s_connectionFactory;
             }
         }
 

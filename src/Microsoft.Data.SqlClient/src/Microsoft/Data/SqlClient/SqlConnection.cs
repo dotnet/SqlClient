@@ -43,7 +43,18 @@ namespace Microsoft.Data.SqlClient
     {
 #if NETFRAMEWORK
         private static readonly object EventInfoMessage = new object();
+
+        internal static readonly System.Security.CodeAccessPermission ExecutePermission = SqlConnection.CreateExecutePermission();
 #endif
+        private static readonly SqlConnectionFactory s_connectionFactory = SqlConnectionFactory.Instance;
+        private static int _objectTypeCount; // EventSource Counter
+
+        private DbConnectionOptions _userConnectionOptions;
+        private DbConnectionPoolGroup _poolGroup;
+        private DbConnectionInternal _innerConnection;
+        private int _closeCount;
+
+        internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount);
 
         private bool _AsyncCommandInProgress;
 
