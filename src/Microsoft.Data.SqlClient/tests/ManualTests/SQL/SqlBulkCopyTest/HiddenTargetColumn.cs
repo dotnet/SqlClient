@@ -14,8 +14,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SqlBulkCopyTests
         public void WriteToServer_CopyToHiddenTargetColumn_ThrowsSqlException()
         {
             string connectionString = DataTestUtility.TCPConnectionString;
-            string destinationTable = DataTestUtility.GetUniqueNameForSqlServer("HiddenTargetColumn");
-            string destinationHistoryTable = DataTestUtility.GetUniqueNameForSqlServer("HiddenTargetColumn_History");
+            string destinationTable = DataTestUtility.GetShortName("HiddenTargetColumn");
+            string destinationHistoryTable = DataTestUtility.GetShortName("HiddenTargetColumn_History");
 
             using (SqlConnection dstConn = new SqlConnection(connectionString))
             using (SqlCommand dstCmd = dstConn.CreateCommand())

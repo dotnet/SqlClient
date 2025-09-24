@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SqlBulkCopyTests
         public void WriteToServer_CopyToSqlGraphNodeTable_Succeeds()
         {
             string connectionString = DataTestUtility.TCPConnectionString;
-            string destinationTable = DataTestUtility.GetUniqueNameForSqlServer("SqlGraphNodeTable");
+            string destinationTable = DataTestUtility.GetShortName("SqlGraphNodeTable");
 
             using SqlConnection dstConn = new SqlConnection(connectionString);
             using DataTable nodes = new DataTable()
