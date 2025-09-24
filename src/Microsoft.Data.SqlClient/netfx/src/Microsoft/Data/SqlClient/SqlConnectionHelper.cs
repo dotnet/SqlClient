@@ -19,44 +19,6 @@ namespace Microsoft.Data.SqlClient
     public sealed partial class SqlConnection : DbConnection
     {
         partial void RepairInnerConnection();
-
-        // OpenBusy->Closed (previously opened)
-        // Connecting->Open
-        internal void SetInnerConnectionEvent(DbConnectionInternal to)
-        {
-            // Set's the internal connection without verifying that it's a specific value
-            Debug.Assert(_innerConnection != null, "null InnerConnection");
-            Debug.Assert(to != null, "to null InnerConnection");
-
-            ConnectionState originalState = _innerConnection.State & ConnectionState.Open;
-            ConnectionState currentState = to.State & ConnectionState.Open;
-
-            if ((originalState != currentState) && (ConnectionState.Closed == currentState))
-            {
-                // Increment the close count whenever we switch to Closed
-                unchecked
-                { _closeCount++; }
-            }
-
-            _innerConnection = to;
-
-            if (ConnectionState.Closed == originalState && ConnectionState.Open == currentState)
-            {
-                OnStateChange(DbConnectionInternal.StateChangeOpen);
-            }
-            else if (ConnectionState.Open == originalState && ConnectionState.Closed == currentState)
-            {
-                OnStateChange(DbConnectionInternal.StateChangeClosed);
-            }
-            else
-            {
-                Debug.Fail("unexpected state switch");
-                if (originalState != currentState)
-                {
-                    OnStateChange(new StateChangeEventArgs(originalState, currentState));
-                }
-            }
-        }
     }
 }
 
