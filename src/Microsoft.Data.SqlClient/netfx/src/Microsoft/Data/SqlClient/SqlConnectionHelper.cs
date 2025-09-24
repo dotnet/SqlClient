@@ -74,13 +74,6 @@ namespace Microsoft.Data.SqlClient
             return connectionOptions != null ? connectionOptions.UsersConnectionString(hidePassword) : "";
         }
 
-        private void ConnectionString_Set(string value)
-        {
-            DbConnectionPoolKey key = new DbConnectionPoolKey(value);
-
-            ConnectionString_Set(key);
-        }
-
         private void ConnectionString_Set(DbConnectionPoolKey key)
         {
             DbConnectionOptions connectionOptions = null;
@@ -279,21 +272,6 @@ namespace Microsoft.Data.SqlClient
             // while we're attempting to enlist; not sure how likely that is but
             // we should consider a GC.KeepAlive(this) here.
             GC.KeepAlive(this);
-        }
-
-        private DbMetaDataFactory GetMetaDataFactory(DbConnectionInternal internalConnection)
-        {
-            return ConnectionFactory.GetMetaDataFactory(_poolGroup, internalConnection);
-        }
-
-        internal DbMetaDataFactory GetMetaDataFactoryInternal(DbConnectionInternal internalConnection)
-        {
-            return GetMetaDataFactory(internalConnection);
-        }
-
-        internal void NotifyWeakReference(int message)
-        {
-            InnerConnection.NotifyWeakReference(message);
         }
 
         internal void PermissionDemand()

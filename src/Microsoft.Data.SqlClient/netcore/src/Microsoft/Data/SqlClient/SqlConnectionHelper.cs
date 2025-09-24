@@ -216,11 +216,6 @@ namespace Microsoft.Data.SqlClient
             GC.KeepAlive(this);
         }
 
-        internal void NotifyWeakReference(int message)
-        {
-            InnerConnection.NotifyWeakReference(message);
-        }
-
         internal void PermissionDemand()
         {
             Debug.Assert(DbConnectionClosedConnecting.SingletonInstance == _innerConnection, "not connecting");
