@@ -18,13 +18,6 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlConnection : DbConnection
     {
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*' />
-        public SqlConnection() : base()
-        {
-            GC.SuppressFinalize(this);
-            _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;
-        }
-
         /// <devdoc>We use the _closeCount to avoid having to know about all our
         ///  children; instead of keeping a collection of all the objects that
         ///  would be affected by a close, we simply increment the _closeCount

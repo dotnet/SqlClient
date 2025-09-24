@@ -17,13 +17,6 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlConnection : DbConnection
     {
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*' />
-        public SqlConnection() : base()
-        {
-            GC.SuppressFinalize(this);
-            _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;
-        }
-
         internal int CloseCount
         {
             get
