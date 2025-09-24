@@ -17,11 +17,6 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlConnection : DbConnection
     {
-        internal void AddWeakReference(object value, int tag)
-        {
-            InnerConnection.AddWeakReference(value, tag);
-        }
-
         partial void RepairInnerConnection();
 
         internal void PermissionDemand()
@@ -35,11 +30,6 @@ namespace Microsoft.Data.SqlClient
             }
             DbConnectionOptions userConnectionOptions = UserConnectionOptions;
             Debug.Assert(userConnectionOptions != null, "null UserConnectionOptions");
-        }
-
-        internal void RemoveWeakReference(object value)
-        {
-            InnerConnection.RemoveWeakReference(value);
         }
 
         internal void SetInnerConnectionEvent(DbConnectionInternal to)

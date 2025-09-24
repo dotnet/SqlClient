@@ -2292,6 +2292,16 @@ namespace Microsoft.Data.SqlClient
         // INTERNAL METHODS
         //
 
+        internal void AddWeakReference(object value, int tag)
+        {
+            InnerConnection.AddWeakReference(value, tag);
+        }
+
+        internal void RemoveWeakReference(object value)
+        {
+            InnerConnection.RemoveWeakReference(value);
+        }
+
         internal void ValidateConnectionForExecute(string method, SqlCommand command)
         {
             Task asyncWaitingForReconnection = _asyncWaitingForReconnection;

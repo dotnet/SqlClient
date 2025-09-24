@@ -18,11 +18,6 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlConnection : DbConnection
     {
-        internal void AddWeakReference(object value, int tag)
-        {
-            InnerConnection.AddWeakReference(value, tag);
-        }
-
         private static System.Security.CodeAccessPermission CreateExecutePermission()
         {
             DBDataPermission p = (DBDataPermission)SqlClientFactory.Instance.CreatePermission(System.Security.Permissions.PermissionState.None);
@@ -47,11 +42,6 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(userConnectionOptions != null, "null UserConnectionOptions");
 
             userConnectionOptions.DemandPermission();
-        }
-
-        internal void RemoveWeakReference(object value)
-        {
-            InnerConnection.RemoveWeakReference(value);
         }
 
         // OpenBusy->Closed (previously opened)
