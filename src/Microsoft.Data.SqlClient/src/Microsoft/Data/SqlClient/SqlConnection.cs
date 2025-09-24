@@ -2241,6 +2241,25 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
+        internal void PermissionDemand()
+        {
+            Debug.Assert(DbConnectionClosedConnecting.SingletonInstance == _innerConnection, "not connecting");
+
+            DbConnectionPoolGroup poolGroup = PoolGroup;
+            DbConnectionOptions connectionOptions = poolGroup != null ? poolGroup.ConnectionOptions : null;
+            if (connectionOptions == null || connectionOptions.IsEmpty)
+            {
+                throw ADP.NoConnectionString();
+            }
+
+            DbConnectionOptions userConnectionOptions = UserConnectionOptions;
+            Debug.Assert(userConnectionOptions != null, "null UserConnectionOptions");
+
+#if NETFRAMEWORK
+            userConnectionOptions.DemandPermission();
+#endif
+        }
+
 
         //
         // INTERNAL PROPERTIES

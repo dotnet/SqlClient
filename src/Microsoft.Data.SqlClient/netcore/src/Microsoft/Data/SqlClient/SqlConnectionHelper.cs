@@ -19,19 +19,6 @@ namespace Microsoft.Data.SqlClient
     {
         partial void RepairInnerConnection();
 
-        internal void PermissionDemand()
-        {
-            Debug.Assert(DbConnectionClosedConnecting.SingletonInstance == _innerConnection, "not connecting");
-            DbConnectionPoolGroup poolGroup = PoolGroup;
-            DbConnectionOptions connectionOptions = poolGroup != null ? poolGroup.ConnectionOptions : null;
-            if (connectionOptions == null || connectionOptions.IsEmpty)
-            {
-                throw ADP.NoConnectionString();
-            }
-            DbConnectionOptions userConnectionOptions = UserConnectionOptions;
-            Debug.Assert(userConnectionOptions != null, "null UserConnectionOptions");
-        }
-
         internal void SetInnerConnectionEvent(DbConnectionInternal to)
         {
             Debug.Assert(_innerConnection != null, "null InnerConnection");
