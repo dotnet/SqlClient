@@ -91,21 +91,6 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(to != null, "to null InnerConnection");
             _innerConnection = to;
         }
-
-        [ConditionalAttribute("DEBUG")]
-        internal static void VerifyExecutePermission()
-        {
-            try
-            {
-                // use this to help validate this code path is only used after the following permission has been previously demanded in the current codepath
-                SqlConnection.ExecutePermission.Demand();
-            }
-            catch (System.Security.SecurityException)
-            {
-                System.Diagnostics.Debug.Assert(false, "unexpected SecurityException for current codepath");
-                throw;
-            }
-        }
     }
 }
 
