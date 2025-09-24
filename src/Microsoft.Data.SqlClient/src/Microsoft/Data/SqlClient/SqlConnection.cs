@@ -1873,6 +1873,26 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_currentCompletion == null, "After waiting for an async call to complete, there should be no completion source");
         }
 
+        // Open->ClosedPreviouslyOpened. Also dooms the internal connection
+        internal void Abort(Exception e)
+        {
+            DbConnectionInternal innerConnection = _innerConnection;
+            if (ConnectionState.Open == innerConnection.State)
+            {
+                Interlocked.CompareExchange(ref _innerConnection, DbConnectionClosedPreviouslyOpened.SingletonInstance, innerConnection);
+                innerConnection.DoomThisConnection();
+            }
+
+            if (e is OutOfMemoryException)
+            {
+                SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: OutOfMemory", ObjectID);
+            }
+            else
+            {
+                SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: {1}", ObjectID, e);
+            }
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken) 
             => OpenAsync(SqlConnectionOverrides.None, cancellationToken);

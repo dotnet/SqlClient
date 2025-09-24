@@ -18,29 +18,6 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlConnection : DbConnection
     {
-        // Open->ClosedPreviouslyOpened, and doom the internal connection too...
-        internal void Abort(Exception e)
-        {
-            DbConnectionInternal innerConnection = _innerConnection;  // Should not cause memory allocation...
-            if (ConnectionState.Open == innerConnection.State)
-            {
-                Interlocked.CompareExchange(ref _innerConnection, DbConnectionClosedPreviouslyOpened.SingletonInstance, innerConnection);
-                innerConnection.DoomThisConnection();
-            }
-
-            // NOTE: we put the tracing last, because the ToString() calls (and
-            // the SqlClientEventSource.SqlClientEventSource.Log.Trace, for that matter) have no reliability contract and
-            // will end the reliable try...
-            if (e is OutOfMemoryException)
-            {
-                SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: {'OutOfMemory'}", ObjectID);
-            }
-            else
-            {
-                SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: {1}", ObjectID, e);
-            }
-        }
-
         internal void AddWeakReference(object value, int tag)
         {
             InnerConnection.AddWeakReference(value, tag);
