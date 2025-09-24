@@ -74,16 +74,6 @@ namespace Microsoft.Data.SqlClient
             bool result = (from == Interlocked.CompareExchange<DbConnectionInternal>(ref _innerConnection, to, from));
             return result;
         }
-
-        // ClosedBusy->Closed (never opened)
-        // Connecting->Closed (exception during open, return to previous closed state)
-        internal void SetInnerConnectionTo(DbConnectionInternal to)
-        {
-            // Set's the internal connection without verifying that it's a specific value
-            Debug.Assert(_innerConnection != null, "null InnerConnection");
-            Debug.Assert(to != null, "to null InnerConnection");
-            _innerConnection = to;
-        }
     }
 }
 

@@ -2344,6 +2344,15 @@ namespace Microsoft.Data.SqlClient
             InnerConnection.RemoveWeakReference(value);
         }
 
+        // ClosedBusy->Closed (never opened)
+        // Connecting->Closed (exception during open, return to previous closed state)
+        internal void SetInnerConnectionTo(DbConnectionInternal to)
+        {
+            Debug.Assert(_innerConnection != null, "null InnerConnection");
+            Debug.Assert(to != null, "to null InnerConnection");
+            _innerConnection = to;
+        }
+
         internal void ValidateConnectionForExecute(string method, SqlCommand command)
         {
             Task asyncWaitingForReconnection = _asyncWaitingForReconnection;
