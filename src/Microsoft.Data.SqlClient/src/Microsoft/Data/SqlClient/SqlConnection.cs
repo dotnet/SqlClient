@@ -1837,7 +1837,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // this is straightforward, but expensive method to do connection resiliency - it take locks and all preparations as for TDS request
-        partial void RepairInnerConnection()
+        private void RepairInnerConnection()
         {
             WaitForPendingReconnection();
             if (_connectRetryCount == 0)
