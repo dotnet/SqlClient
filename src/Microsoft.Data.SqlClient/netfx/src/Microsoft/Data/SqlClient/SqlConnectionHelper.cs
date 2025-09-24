@@ -18,36 +18,6 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlConnection : DbConnection
     {
-        /// <devdoc>We use the _closeCount to avoid having to know about all our
-        ///  children; instead of keeping a collection of all the objects that
-        ///  would be affected by a close, we simply increment the _closeCount
-        ///  and have each of our children check to see if they're "orphaned"
-        ///  </devdoc>
-        internal int CloseCount
-        {
-            get
-            {
-                return _closeCount;
-            }
-        }
-
-        internal SqlConnectionFactory ConnectionFactory
-        {
-            get
-            {
-                return s_connectionFactory;
-            }
-        }
-
-        internal DbConnectionOptions ConnectionOptions
-        {
-            get
-            {
-                DbConnectionPoolGroup poolGroup = PoolGroup;
-                return poolGroup != null ? poolGroup.ConnectionOptions : null;
-            }
-        }
-
         private string ConnectionString_Get()
         {
             SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.ConnectionString_Get|API> {0}", ObjectID);

@@ -17,31 +17,6 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlConnection : DbConnection
     {
-        internal int CloseCount
-        {
-            get
-            {
-                return _closeCount;
-            }
-        }
-
-        internal SqlConnectionFactory ConnectionFactory
-        {
-            get
-            {
-                return s_connectionFactory;
-            }
-        }
-
-        internal DbConnectionOptions ConnectionOptions
-        {
-            get
-            {
-                DbConnectionPoolGroup poolGroup = PoolGroup;
-                return poolGroup != null ? poolGroup.ConnectionOptions : null;
-            }
-        }
-
         private string ConnectionString_Get()
         {
             SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.ConnectionString_Get|API> {0}", ObjectID);

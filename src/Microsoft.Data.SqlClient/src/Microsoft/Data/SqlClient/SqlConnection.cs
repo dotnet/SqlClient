@@ -421,6 +421,18 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <remarks>
+        /// We use the _closeCount to avoid having to know about all our
+        /// children; instead of keeping a collection of all the objects that
+        /// would be affected by a close, we simply increment the _closeCount
+        /// and have each of our children check to see if they're "orphaned".
+        /// </remarks>
+        internal int CloseCount => _closeCount;
+
+        internal SqlConnectionFactory ConnectionFactory => s_connectionFactory;
+
+        internal DbConnectionOptions ConnectionOptions => PoolGroup?.ConnectionOptions;
+
         /// <summary>
         /// Get enclave attestation url to be used with enclave based Always Encrypted
         /// </summary>
