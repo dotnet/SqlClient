@@ -2262,6 +2262,34 @@ namespace Microsoft.Data.SqlClient
             return connectionOptions != null ? connectionOptions.UsersConnectionString(hidePassword) : "";
         }
 
+        private void ConnectionString_Set(DbConnectionPoolKey key)
+        {
+            DbConnectionOptions connectionOptions = null;
+            DbConnectionPoolGroup poolGroup = ConnectionFactory.GetConnectionPoolGroup(key, null, ref connectionOptions);
+            DbConnectionInternal connectionInternal = InnerConnection;
+            bool flag = connectionInternal.AllowSetConnectionString;
+            if (flag)
+            {
+                // Closed->Busy: prevent Open during set_ConnectionString
+                flag = SetInnerConnectionFrom(DbConnectionClosedBusy.SingletonInstance, connectionInternal);
+                if (flag)
+                {
+                    _userConnectionOptions = connectionOptions;
+                    _poolGroup = poolGroup;
+                    _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;
+                }
+            }
+            if (!flag)
+            {
+                throw ADP.OpenConnectionPropertySet(nameof(ConnectionString), connectionInternal.State);
+            }
+
+            if (SqlClientEventSource.Log.IsTraceEnabled())
+            {
+                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Set|API> {0}, '{1}'", ObjectID, connectionOptions?.UsersConnectionStringForTrace());
+            }
+        }
+
         internal SqlInternalConnectionTds GetOpenTdsConnection()
         {
             SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
