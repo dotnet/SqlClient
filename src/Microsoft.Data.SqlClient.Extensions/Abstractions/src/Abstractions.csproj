@@ -57,13 +57,6 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
-    <!--
-      The parent Directory.Build.props file unilaterally adds '.pdb' to the
-      file types that are included in application packages.  We don't want this
-      behaviour, so we must reset this NuGet property to its original value.
-    -->
-    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(OriginalAllowedOutputExtensions)</AllowedOutputExtensionsInPackageBuildOutputFolder>
-    
     <Authors>Microsoft Corporation</Authors>
     <Company>Microsoft Corporation</Company>
     <Description>Microsoft.Data.SqlClient Extensions Abstractions</Description>
