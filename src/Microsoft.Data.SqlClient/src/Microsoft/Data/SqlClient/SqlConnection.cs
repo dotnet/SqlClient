@@ -2261,6 +2261,13 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if NETFRAMEWORK
+        private static CodeAccessPermission CreateExecutePermission()
+        {
+            DBDataPermission p = (DBDataPermission)SqlClientFactory.Instance.CreatePermission(PermissionState.None);
+            p.Add(string.Empty, string.Empty, KeyRestrictionBehavior.AllowOnly);
+            return p;
+        }
+
         [Conditional("DEBUG")]
         internal static void VerifyExecutePermission()
         {

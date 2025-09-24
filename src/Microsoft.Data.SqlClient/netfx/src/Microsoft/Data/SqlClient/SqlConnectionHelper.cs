@@ -18,13 +18,6 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlConnection : DbConnection
     {
-        private static System.Security.CodeAccessPermission CreateExecutePermission()
-        {
-            DBDataPermission p = (DBDataPermission)SqlClientFactory.Instance.CreatePermission(System.Security.Permissions.PermissionState.None);
-            p.Add(string.Empty, string.Empty, KeyRestrictionBehavior.AllowOnly);
-            return p;
-        }
-
         partial void RepairInnerConnection();
 
         // OpenBusy->Closed (previously opened)
