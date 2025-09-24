@@ -17,14 +17,6 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlConnection : DbConnection
     {
-        private string ConnectionString_Get()
-        {
-            SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.ConnectionString_Get|API> {0}", ObjectID);
-            bool hidePassword = InnerConnection.ShouldHidePassword;
-            DbConnectionOptions connectionOptions = UserConnectionOptions;
-            return connectionOptions != null ? connectionOptions.UsersConnectionString(hidePassword) : "";
-        }
-
         private void ConnectionString_Set(DbConnectionPoolKey key)
         {
             DbConnectionOptions connectionOptions = null;

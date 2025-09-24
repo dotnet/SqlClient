@@ -2254,6 +2254,14 @@ namespace Microsoft.Data.SqlClient
         // PRIVATE METHODS
         //
 
+        private string ConnectionString_Get()
+        {
+            SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.ConnectionString_Get|API> {0}", ObjectID);
+            bool hidePassword = InnerConnection.ShouldHidePassword;
+            DbConnectionOptions connectionOptions = UserConnectionOptions;
+            return connectionOptions != null ? connectionOptions.UsersConnectionString(hidePassword) : "";
+        }
+
         internal SqlInternalConnectionTds GetOpenTdsConnection()
         {
             SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
