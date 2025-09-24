@@ -7076,7 +7076,7 @@ namespace Microsoft.Data.SqlClient
                         // Note: Better not come here with plp data!!
                         Debug.Assert(length <= TdsEnums.MAXSIZE);
                         byte[] b = new byte[length];
-                        result = stateObj.TryReadByteArray(b, length);
+                        result = stateObj.TryReadByteArrayWithContinue(length, isPlp: false, out b);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
