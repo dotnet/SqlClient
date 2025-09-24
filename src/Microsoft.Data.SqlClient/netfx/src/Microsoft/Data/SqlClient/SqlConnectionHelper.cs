@@ -57,23 +57,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
-
-        // this method is used to securely change state with the resource being
-        // the open connection protected by the connectionstring via a permission demand
-
-        // Closed->Connecting: prevent set_ConnectionString during Open
-        // Open->OpenBusy: guarantee internal connection is returned to correct pool
-        // Closed->ClosedBusy: prevent Open during set_ConnectionString
-        internal bool SetInnerConnectionFrom(DbConnectionInternal to, DbConnectionInternal from)
-        {
-            // Set's the internal connection, verifying that it's a specific value before doing so.
-            Debug.Assert(_innerConnection != null, "null InnerConnection");
-            Debug.Assert(from != null, "from null InnerConnection");
-            Debug.Assert(to != null, "to null InnerConnection");
-
-            bool result = (from == Interlocked.CompareExchange<DbConnectionInternal>(ref _innerConnection, to, from));
-            return result;
-        }
     }
 }
 

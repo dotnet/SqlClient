@@ -2353,6 +2353,19 @@ namespace Microsoft.Data.SqlClient
             _innerConnection = to;
         }
 
+        // Closed->Connecting: prevent set_ConnectionString during Open
+        // Open->OpenBusy: guarantee internal connection is returned to correct pool
+        // Closed->ClosedBusy: prevent Open during set_ConnectionString
+        internal bool SetInnerConnectionFrom(DbConnectionInternal to, DbConnectionInternal from)
+        {
+            Debug.Assert(_innerConnection != null, "null InnerConnection");
+            Debug.Assert(from != null, "from null InnerConnection");
+            Debug.Assert(to != null, "to null InnerConnection");
+
+            bool result = (from == Interlocked.CompareExchange<DbConnectionInternal>(ref _innerConnection, to, from));
+            return result;
+        }
+
         internal void ValidateConnectionForExecute(string method, SqlCommand command)
         {
             Task asyncWaitingForReconnection = _asyncWaitingForReconnection;

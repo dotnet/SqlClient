@@ -52,15 +52,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
-
-        internal bool SetInnerConnectionFrom(DbConnectionInternal to, DbConnectionInternal from)
-        {
-            Debug.Assert(_innerConnection != null, "null InnerConnection");
-            Debug.Assert(from != null, "from null InnerConnection");
-            Debug.Assert(to != null, "to null InnerConnection");
-            bool result = (from == Interlocked.CompareExchange<DbConnectionInternal>(ref _innerConnection, to, from));
-            return result;
-        }
     }
 }
 
