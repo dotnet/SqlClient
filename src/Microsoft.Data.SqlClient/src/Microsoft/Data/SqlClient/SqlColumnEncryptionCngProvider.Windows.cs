@@ -33,70 +33,6 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private const string RSAEncryptionAlgorithmWithOAEP = @"RSA_OAEP";
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/DecryptColumnEncryptionKey/*' />
-        public override byte[] DecryptColumnEncryptionKey(string? masterKeyPath, string? encryptionAlgorithm, byte[]? encryptedColumnEncryptionKey)
-        {
-            // Validate the input parameters
-            ValidateNonEmptyKeyPath(masterKeyPath, isSystemOp: true);
-
-            if (encryptedColumnEncryptionKey is null)
-            {
-                throw SQL.NullEncryptedColumnEncryptionKey();
-            }
-
-            if (encryptedColumnEncryptionKey.Length == 0)
-            {
-                throw SQL.EmptyEncryptedColumnEncryptionKey();
-            }
-
-            // Validate encryptionAlgorithm
-            ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: true);
-
-            // Create RSA Provider with the given CNG provider name and key name
-            RSA rsaProvider = CreateRSACngProvider(masterKeyPath, isSystemOp: true);
-            using EncryptedColumnEncryptionKeyParameters cekDecryptionParameters = new(rsaProvider, masterKeyPath, MasterKeyType, KeyPathReference);
-
-            return cekDecryptionParameters.Decrypt(encryptedColumnEncryptionKey);
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/EncryptColumnEncryptionKey/*' />
-        public override byte[] EncryptColumnEncryptionKey(string? masterKeyPath, string? encryptionAlgorithm, byte[]? columnEncryptionKey)
-        {
-            // Validate the input parameters
-            ValidateNonEmptyKeyPath(masterKeyPath, isSystemOp: false);
-
-            if (columnEncryptionKey is null)
-            {
-                throw SQL.NullColumnEncryptionKey();
-            }
-
-            if (columnEncryptionKey.Length == 0)
-            {
-                throw SQL.EmptyColumnEncryptionKey();
-            }
-
-            // Validate encryptionAlgorithm
-            ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: false);
-
-            // Create RSA Provider with the given CNG provider name and key name
-            RSA rsaProvider = CreateRSACngProvider(masterKeyPath, isSystemOp: false);
-            using EncryptedColumnEncryptionKeyParameters cekEncryptionParameters = new(rsaProvider, masterKeyPath, MasterKeyType, KeyPathReference);
-
-            return cekEncryptionParameters.Encrypt(columnEncryptionKey);
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/SignColumnMasterKeyMetadata/*' />
-        public override byte[] SignColumnMasterKeyMetadata(string? masterKeyPath, bool allowEnclaveComputations)
-        {
-            throw new NotSupportedException();
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/VerifyColumnMasterKeyMetadata/*' />
-        public override bool VerifyColumnMasterKeyMetadata(string? masterKeyPath, bool allowEnclaveComputations, byte[]? signature)
-        {
-            throw new NotSupportedException();
-        }
-
         /// <summary>
         /// This function validates that the encryption algorithm is RSA_OAEP and if it is not,
         /// then throws an exception.
@@ -207,6 +143,70 @@ namespace Microsoft.Data.SqlClient
             }
 
             keyIdentifier = keyPath.Substring(indexOfSlash + 1);
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/DecryptColumnEncryptionKey/*' />
+        public override byte[] DecryptColumnEncryptionKey(string? masterKeyPath, string? encryptionAlgorithm, byte[]? encryptedColumnEncryptionKey)
+        {
+            // Validate the input parameters
+            ValidateNonEmptyKeyPath(masterKeyPath, isSystemOp: true);
+
+            if (encryptedColumnEncryptionKey is null)
+            {
+                throw SQL.NullEncryptedColumnEncryptionKey();
+            }
+
+            if (encryptedColumnEncryptionKey.Length == 0)
+            {
+                throw SQL.EmptyEncryptedColumnEncryptionKey();
+            }
+
+            // Validate encryptionAlgorithm
+            ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: true);
+
+            // Create RSA Provider with the given CNG provider name and key name
+            RSA rsaProvider = CreateRSACngProvider(masterKeyPath, isSystemOp: true);
+            using EncryptedColumnEncryptionKeyParameters cekDecryptionParameters = new(rsaProvider, masterKeyPath, MasterKeyType, KeyPathReference);
+
+            return cekDecryptionParameters.Decrypt(encryptedColumnEncryptionKey);
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/EncryptColumnEncryptionKey/*' />
+        public override byte[] EncryptColumnEncryptionKey(string? masterKeyPath, string? encryptionAlgorithm, byte[]? columnEncryptionKey)
+        {
+            // Validate the input parameters
+            ValidateNonEmptyKeyPath(masterKeyPath, isSystemOp: false);
+
+            if (columnEncryptionKey is null)
+            {
+                throw SQL.NullColumnEncryptionKey();
+            }
+
+            if (columnEncryptionKey.Length == 0)
+            {
+                throw SQL.EmptyColumnEncryptionKey();
+            }
+
+            // Validate encryptionAlgorithm
+            ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: false);
+
+            // Create RSA Provider with the given CNG provider name and key name
+            RSA rsaProvider = CreateRSACngProvider(masterKeyPath, isSystemOp: false);
+            using EncryptedColumnEncryptionKeyParameters cekEncryptionParameters = new(rsaProvider, masterKeyPath, MasterKeyType, KeyPathReference);
+
+            return cekEncryptionParameters.Encrypt(columnEncryptionKey);
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/SignColumnMasterKeyMetadata/*' />
+        public override byte[] SignColumnMasterKeyMetadata(string? masterKeyPath, bool allowEnclaveComputations)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/VerifyColumnMasterKeyMetadata/*' />
+        public override bool VerifyColumnMasterKeyMetadata(string? masterKeyPath, bool allowEnclaveComputations, byte[]? signature)
+        {
+            throw new NotSupportedException();
         }
     }
 }
