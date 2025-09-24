@@ -46,17 +46,6 @@ namespace Microsoft.Data.SqlClient
             InnerConnection.AddWeakReference(value, tag);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*' />
-        override protected DbCommand CreateDbCommand()
-        {
-            using (TryEventScope.Create("<prov.DbConnectionHelper.CreateDbCommand|API> {0}", ObjectID))
-            {
-                DbCommand command = SqlClientFactory.Instance.CreateCommand();
-                command.Connection = this;
-                return command;
-            }
-        }
-
         private static System.Security.CodeAccessPermission CreateExecutePermission()
         {
             DBDataPermission p = (DBDataPermission)SqlClientFactory.Instance.CreatePermission(System.Security.Permissions.PermissionState.None);

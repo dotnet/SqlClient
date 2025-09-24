@@ -1469,6 +1469,17 @@ namespace Microsoft.Data.SqlClient
             return new SqlCommand(null, this);
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*' />
+        protected override DbCommand CreateDbCommand()
+        {
+            using (TryEventScope.Create("<prov.DbConnectionHelper.CreateDbCommand|API> {0}", ObjectID))
+            {
+                DbCommand command = SqlClientFactory.Instance.CreateCommand();
+                command.Connection = this;
+                return command;
+            }
+        }
+
         private void DisposeMe(bool disposing)
         {
             _credential = null;
