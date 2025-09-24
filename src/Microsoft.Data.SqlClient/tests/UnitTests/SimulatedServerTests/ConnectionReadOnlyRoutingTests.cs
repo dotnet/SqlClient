@@ -43,12 +43,10 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
         }
 
         [Fact]
-        public void RoutedConnection()
-            => RecursivelyRoutedConnection(1);
+        public void RoutedConnection() => RecursivelyRoutedConnection(1);
 
         [Fact]
-        public async Task RoutedAsyncConnection()
-            => await RecursivelyRoutedAsyncConnection(1);
+        public async Task RoutedAsyncConnection() => await RecursivelyRoutedAsyncConnection(1);
 
         [Theory]
         [InlineData(11)] // 11 layers of routing should succeed, 12 should fail

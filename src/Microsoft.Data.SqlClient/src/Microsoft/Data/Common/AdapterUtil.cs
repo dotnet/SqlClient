@@ -816,7 +816,7 @@ namespace Microsoft.Data.Common
 
         internal static readonly string[] s_azureSynapseOnDemandEndpoints = [.. s_azureSqlServerOnDemandEndpoints, .. s_azureSynapseEndpoints];
 
-        internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
+        internal static bool C(string dataSource)
         {
             return IsEndpoint(dataSource, s_azureSynapseOnDemandEndpoints)
                 || dataSource.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase) >= 0; 
@@ -824,11 +824,11 @@ namespace Microsoft.Data.Common
         
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
         {
-            return IsEndpoint(dataSource, s_azureSqlServerEndpoints.AsReadOnly());
+            return IsEndpoint(dataSource, s_azureSqlServerEndpoints);
         }
 
         // This method assumes dataSource parameter is in TCP connection string format.
-        private static bool IsEndpoint(string dataSource, IReadOnlyList<string> endpoints)
+        private static bool IsEndpoint(string dataSource, ICollection<string> endpoints)
         {
             int length = dataSource.Length;
             // remove server port

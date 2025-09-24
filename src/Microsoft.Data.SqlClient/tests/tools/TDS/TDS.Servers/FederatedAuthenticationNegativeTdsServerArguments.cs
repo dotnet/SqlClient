@@ -12,6 +12,6 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Type of the Fed Auth Negative TDS Server
         /// </summary>
-        public FederatedAuthenticationNegativeTdsScenarioType Scenario = FederatedAuthenticationNegativeTdsScenarioType.ValidScenario;
+        public FederatedAuthenticationNegativeTdsScenarioType Scenario { get; set; } = FederatedAuthenticationNegativeTdsScenarioType.ValidScenario;
     }
 }

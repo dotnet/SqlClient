@@ -46,7 +46,6 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             using RoutingTdsServer router = new(
                 new RoutingTdsServerArguments()
                 {
-                    //RoutingTCPHost = server.EndPoint.Address.ToString() == IPAddress.Any.ToString() ? IPAddress.Loopback.ToString() : server.EndPoint.Address.ToString(),
                     RoutingTCPHost = "localhost",
                     RoutingTCPPort = (ushort)server.EndPoint.Port,
                 });
@@ -100,7 +99,6 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
             using RoutingTdsServer router = new(
                 new RoutingTdsServerArguments()
                 {
-                    //RoutingTCPHost = server.EndPoint.Address.ToString() == IPAddress.Any.ToString() ? IPAddress.Loopback.ToString() : server.EndPoint.Address.ToString(),
                     RoutingTCPHost = "localhost",
                     RoutingTCPPort = (ushort)server.EndPoint.Port,
                 });
@@ -116,7 +114,6 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 Encrypt = false,
             };
             using SqlConnection connection = new(builder.ConnectionString);
-            //TODO validate exception type
             Assert.Throws<SqlException>(() => connection.Open());
         }
 

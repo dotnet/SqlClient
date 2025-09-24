@@ -17,9 +17,9 @@ namespace Microsoft.SqlServer.TDS.Servers
     {
         private int RequestCounter = 0;
 
-        public void SetErrorBehavior(bool isEnabledTransientFault, uint errorNumber, int repeatCount = 1, string message = null)
+        public void SetErrorBehavior(bool isEnabledTransientError, uint errorNumber, int repeatCount = 1, string message = null)
         {
-            Arguments.IsEnabledTransientError = isEnabledTransientFault;
+            Arguments.IsEnabledTransientError = isEnabledTransientError;
             Arguments.Number = errorNumber;
             Arguments.Message = message;
             Arguments.RepeatCount = repeatCount;

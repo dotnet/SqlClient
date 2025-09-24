@@ -103,7 +103,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 Encrypt = false,
             };
             using SqlConnection connection = new(builder.ConnectionString);
-            //TODO validate exception type
+
+            //Act and Assert
             Assert.Throws<SqlException>(() => connection.Open());
         }
 

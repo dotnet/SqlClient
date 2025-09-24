@@ -1712,12 +1712,12 @@ namespace Microsoft.Data.SqlClient
                         continue;
                     }
 
+                    // If state != closed, indicates that the parser encountered an error while processing the
+                    // login response (e.g. an explicit error token). Transient network errors that impact 
+                    // connectivity will result in parser state being closed.
                     if (_parser == null
+                        || _parser.State != TdsParserState.Closed
                         || IsDoNotRetryConnectError(sqlex)
-                        // If state != closed, indicates that the parser encountered an error while processing the
-                        // login response (e.g. an explicit error token). Transient network errors that impact 
-                        // connectivity will result in parser state being closed.
-                        || TdsParserState.Closed != _parser.State
                         || timeout.IsExpired)
                     {
                         // no more time to try again

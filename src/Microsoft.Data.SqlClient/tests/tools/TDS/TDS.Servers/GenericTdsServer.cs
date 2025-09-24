@@ -37,7 +37,6 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public delegate void OnLogin7ValidatedDelegate(
             TDSLogin7Token login7Token);
-        public OnLogin7ValidatedDelegate OnLogin7Validated { private get; set; }
 
         /// <summary>
         /// Delegate to be called when authentication is completed and TDSResponse
@@ -45,22 +44,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public delegate void OnAuthenticationCompletedDelegate(
             TDSMessage response);
-        public OnAuthenticationCompletedDelegate OnAuthenticationResponseCompleted { private get; set; }
 
         /// <summary>
         /// Default feature extension version supported on the server for vector support.
         /// </summary>
         public const byte DefaultSupportedVectorFeatureExtVersion = 0x01;
-
-        /// <summary>
-        /// Property for setting server version for vector feature extension.
-        /// </summary>
-        public bool EnableVectorFeatureExt { get; set; } = false;
-
-        /// <summary>
-        /// Property for setting server version for vector feature extension.
-        /// </summary>
-        public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
 
         /// <summary>
         /// Client version for vector FeatureExtension.
@@ -78,23 +66,6 @@ namespace Microsoft.SqlServer.TDS.Servers
         private int _preLoginCount = 0;
 
         private TDSServerEndPoint _endpoint;
-
-        public IPEndPoint EndPoint => _endpoint.ServerEndPoint;
-
-        /// <summary>
-        /// Server configuration
-        /// </summary>
-        protected T Arguments { get; set; }
-
-        /// <summary>
-        /// Query engine instance
-        /// </summary>
-        protected QueryEngine Engine { get; set; }
-
-        /// <summary>
-        /// Counts pre-login requests to the server.
-        /// </summary>
-        public int PreLoginCount => _preLoginCount;
 
         /// <summary>
         /// Initialization constructor
@@ -119,8 +90,44 @@ namespace Microsoft.SqlServer.TDS.Servers
             Engine.Log = Arguments.Log;
         }
 
+        public IPEndPoint EndPoint => _endpoint.ServerEndPoint;
+
+        /// <summary>
+        /// Server configuration
+        /// </summary>
+        protected T Arguments { get; set; }
+
+        /// <summary>
+        /// Query engine instance
+        /// </summary>
+        protected QueryEngine Engine { get; set; }
+
+        /// <summary>
+        /// Counts pre-login requests to the server.
+        /// </summary>
+        public int PreLoginCount => _preLoginCount;
+
+        /// <summary>
+        /// Property for setting server version for vector feature extension.
+        /// </summary>
+        public bool EnableVectorFeatureExt { get; set; } = false;
+
+        /// <summary>
+        /// Property for setting server version for vector feature extension.
+        /// </summary>
+        public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
+
+        public OnAuthenticationCompletedDelegate OnAuthenticationResponseCompleted { private get; set; }
+
+        public OnLogin7ValidatedDelegate OnLogin7Validated { private get; set; }
+
+
         public void Start([CallerMemberName] string methodName = "")
         {
+            if (_endpoint != null)
+            {
+                throw new InvalidOperationException("Server is already started");
+            }
             _endpoint = new TDSServerEndPoint(this) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
             _endpoint.EndpointName = methodName;
             _endpoint.EventLog = Arguments.Log;
@@ -674,7 +681,7 @@ namespace Microsoft.SqlServer.TDS.Servers
                 }
             }
 
-            if (!String.IsNullOrEmpty(Arguments.FailoverPartner))
+            if (!string.IsNullOrEmpty(Arguments.FailoverPartner))
             {
                 envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.RealTimeLogShipping, Arguments.FailoverPartner);
 
@@ -911,6 +918,10 @@ namespace Microsoft.SqlServer.TDS.Servers
             return left.SequenceEqual<byte>(right);
         }
 
-        public virtual void Dispose() => _endpoint?.Dispose();
+        public virtual void Dispose()
+        {
+            _endpoint?.Dispose();
+            _endpoint = null;
+        }
     }
 }

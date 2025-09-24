@@ -322,15 +322,8 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 Encrypt = false,
             };
             using SqlConnection connection = new(builder.ConnectionString);
-            try
-            {
-                // Act
-                connection.Open();
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
+            // Act
+            connection.Open();
 
             // Assert
             // On the first connection attempt, failover partner information is available in the connection string,
@@ -374,15 +367,9 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 Encrypt = false
             };
             using SqlConnection connection = new(builder.ConnectionString);
-            try
-            {
-                // Act
-                connection.Open();
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
+
+            // Act
+            connection.Open();
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
@@ -474,15 +461,9 @@ namespace Microsoft.Data.SqlClient.ScenarioTests
                 FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}", // User provided failover partner
             };
             using SqlConnection connection = new(builder.ConnectionString);
-            try
-            {
-                // Act
-                connection.Open();
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
+                
+            // Act
+            connection.Open();
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);

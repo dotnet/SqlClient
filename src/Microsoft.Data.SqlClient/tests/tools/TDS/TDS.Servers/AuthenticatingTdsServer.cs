@@ -38,178 +38,171 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Inflate login7 request from the message
             TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
 
-            // Check if arguments are of the authenticating TDS server
-            if (Arguments is AuthenticatingTdsServerArguments)
+            // Check if we're still processing normal login
+            if (Arguments.ApplicationIntentFilter != ApplicationIntentFilterType.All)
             {
-                // Cast to authenticating TDS server arguments
-                AuthenticatingTdsServerArguments ServerArguments = Arguments as AuthenticatingTdsServerArguments;
-
-                // Check if we're still processing normal login
-                if (ServerArguments.ApplicationIntentFilter != ApplicationIntentFilterType.All)
+                // Check filter
+                if ((Arguments.ApplicationIntentFilter == ApplicationIntentFilterType.ReadOnly && loginRequest.TypeFlags.ReadOnlyIntent != TDSLogin7TypeFlagsReadOnlyIntent.ReadOnly)
+                    || (Arguments.ApplicationIntentFilter == ApplicationIntentFilterType.None))
                 {
-                    // Check filter
-                    if ((ServerArguments.ApplicationIntentFilter == ApplicationIntentFilterType.ReadOnly && loginRequest.TypeFlags.ReadOnlyIntent != TDSLogin7TypeFlagsReadOnlyIntent.ReadOnly)
-                        || (ServerArguments.ApplicationIntentFilter == ApplicationIntentFilterType.None))
-                    {
-                        // Log request to which we're about to send a failure
-                        TDSUtilities.Log(Arguments.Log, "Request", loginRequest);
+                    // Log request to which we're about to send a failure
+                    TDSUtilities.Log(Arguments.Log, "Request", loginRequest);
 
-                        // Prepare ERROR token with the denial details
-                        TDSErrorToken errorToken = new TDSErrorToken(18456, 1, 14, "Received application intent: " + loginRequest.TypeFlags.ReadOnlyIntent.ToString(), Arguments.ServerName);
+                    // Prepare ERROR token with the denial details
+                    TDSErrorToken errorToken = new TDSErrorToken(18456, 1, 14, "Received application intent: " + loginRequest.TypeFlags.ReadOnlyIntent.ToString(), Arguments.ServerName);
 
-                        // Log response
-                        TDSUtilities.Log(Arguments.Log, "Response", errorToken);
+                    // Log response
+                    TDSUtilities.Log(Arguments.Log, "Response", errorToken);
 
-                        // Serialize the error token into the response packet
-                        TDSMessage responseMessage = new TDSMessage(TDSMessageType.Response, errorToken);
+                    // Serialize the error token into the response packet
+                    TDSMessage responseMessage = new TDSMessage(TDSMessageType.Response, errorToken);
 
-                        // Prepare ERROR token for the final decision
-                        errorToken = new TDSErrorToken(18456, 1, 14, "Connection is denied by application intent filter", Arguments.ServerName);
+                    // Prepare ERROR token for the final decision
+                    errorToken = new TDSErrorToken(18456, 1, 14, "Connection is denied by application intent filter", Arguments.ServerName);
 
-                        // Log response
-                        TDSUtilities.Log(Arguments.Log, "Response", errorToken);
+                    // Log response
+                    TDSUtilities.Log(Arguments.Log, "Response", errorToken);
 
-                        // Serialize the error token into the response packet
-                        responseMessage.Add(errorToken);
+                    // Serialize the error token into the response packet
+                    responseMessage.Add(errorToken);
 
-                        // Create DONE token
-                        TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
+                    // Create DONE token
+                    TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
 
-                        // Log response
-                        TDSUtilities.Log(Arguments.Log, "Response", doneToken);
+                    // Log response
+                    TDSUtilities.Log(Arguments.Log, "Response", doneToken);
 
-                        // Serialize DONE token into the response packet
-                        responseMessage.Add(doneToken);
+                    // Serialize DONE token into the response packet
+                    responseMessage.Add(doneToken);
 
-                        // Put a single message into the collection and return it
-                        return new TDSMessageCollection(responseMessage);
-                    }
+                    // Put a single message into the collection and return it
+                    return new TDSMessageCollection(responseMessage);
                 }
+            }
 
-                // Check if we're still processing normal login and there's a filter to check
-                if (ServerArguments.ServerNameFilterType != ServerNameFilterType.None)
+            // Check if we're still processing normal login and there's a filter to check
+            if (Arguments.ServerNameFilterType != ServerNameFilterType.None)
+            {
+                // Check each algorithm
+                if ((Arguments.ServerNameFilterType == ServerNameFilterType.Equals && string.Compare(Arguments.ServerNameFilter, loginRequest.ServerName, true) != 0)
+                    || (Arguments.ServerNameFilterType == ServerNameFilterType.StartsWith && !loginRequest.ServerName.StartsWith(Arguments.ServerNameFilter))
+                    || (Arguments.ServerNameFilterType == ServerNameFilterType.EndsWith && !loginRequest.ServerName.EndsWith(Arguments.ServerNameFilter))
+                    || (Arguments.ServerNameFilterType == ServerNameFilterType.Contains && !loginRequest.ServerName.Contains(Arguments.ServerNameFilter)))
                 {
-                    // Check each algorithm
-                    if ((ServerArguments.ServerNameFilterType == ServerNameFilterType.Equals && string.Compare(ServerArguments.ServerNameFilter, loginRequest.ServerName, true) != 0)
-                        || (ServerArguments.ServerNameFilterType == ServerNameFilterType.StartsWith && !loginRequest.ServerName.StartsWith(ServerArguments.ServerNameFilter))
-                        || (ServerArguments.ServerNameFilterType == ServerNameFilterType.EndsWith && !loginRequest.ServerName.EndsWith(ServerArguments.ServerNameFilter))
-                        || (ServerArguments.ServerNameFilterType == ServerNameFilterType.Contains && !loginRequest.ServerName.Contains(ServerArguments.ServerNameFilter)))
-                    {
-                        // Log request to which we're about to send a failure
-                        TDSUtilities.Log(Arguments.Log, "Request", loginRequest);
+                    // Log request to which we're about to send a failure
+                    TDSUtilities.Log(Arguments.Log, "Request", loginRequest);
 
-                        // Prepare ERROR token with the reason
-                        TDSErrorToken errorToken = new TDSErrorToken(18456, 1, 14, string.Format("Received server name \"{0}\", expected \"{1}\" using \"{2}\" algorithm", loginRequest.ServerName, ServerArguments.ServerNameFilter, ServerArguments.ServerNameFilterType), Arguments.ServerName);
+                    // Prepare ERROR token with the reason
+                    TDSErrorToken errorToken = new TDSErrorToken(18456, 1, 14, string.Format("Received server name \"{0}\", expected \"{1}\" using \"{2}\" algorithm", loginRequest.ServerName, Arguments.ServerNameFilter, Arguments.ServerNameFilterType), Arguments.ServerName);
 
-                        // Log response
-                        TDSUtilities.Log(Arguments.Log, "Response", errorToken);
+                    // Log response
+                    TDSUtilities.Log(Arguments.Log, "Response", errorToken);
 
-                        // Serialize the errorToken token into the response packet
-                        TDSMessage responseMessage = new TDSMessage(TDSMessageType.Response, errorToken);
+                    // Serialize the errorToken token into the response packet
+                    TDSMessage responseMessage = new TDSMessage(TDSMessageType.Response, errorToken);
 
-                        // Prepare ERROR token with the final errorToken
-                        errorToken = new TDSErrorToken(18456, 1, 14, "Connection is denied by server name filter", Arguments.ServerName);
+                    // Prepare ERROR token with the final errorToken
+                    errorToken = new TDSErrorToken(18456, 1, 14, "Connection is denied by server name filter", Arguments.ServerName);
 
-                        // Log response
-                        TDSUtilities.Log(Arguments.Log, "Response", errorToken);
+                    // Log response
+                    TDSUtilities.Log(Arguments.Log, "Response", errorToken);
 
-                        // Serialize the errorToken token into the response packet
-                        responseMessage.Add(errorToken);
+                    // Serialize the errorToken token into the response packet
+                    responseMessage.Add(errorToken);
 
-                        // Create DONE token
-                        TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
+                    // Create DONE token
+                    TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
 
-                        // Log response
-                        TDSUtilities.Log(Arguments.Log, "Response", doneToken);
+                    // Log response
+                    TDSUtilities.Log(Arguments.Log, "Response", doneToken);
 
-                        // Serialize DONE token into the response packet
-                        responseMessage.Add(doneToken);
+                    // Serialize DONE token into the response packet
+                    responseMessage.Add(doneToken);
 
-                        // Return only a single message with the collection
-                        return new TDSMessageCollection(responseMessage);
-                    }
+                    // Return only a single message with the collection
+                    return new TDSMessageCollection(responseMessage);
                 }
+            }
 
-                // Check if packet size filter is applied
-                if (ServerArguments.PacketSizeFilter != null)
+            // Check if packet size filter is applied
+            if (Arguments.PacketSizeFilter != null)
+            {
+                // Check if requested packet size is the same as the filter specified
+                if (loginRequest.PacketSize != Arguments.PacketSizeFilter.Value)
                 {
-                    // Check if requested packet size is the same as the filter specified
-                    if (loginRequest.PacketSize != ServerArguments.PacketSizeFilter.Value)
-                    {
-                        // Log request to which we're about to send a failure
-                        TDSUtilities.Log(Arguments.Log, "Request", loginRequest);
+                    // Log request to which we're about to send a failure
+                    TDSUtilities.Log(Arguments.Log, "Request", loginRequest);
 
-                        // Prepare ERROR token with the reason
-                        TDSErrorToken errorToken = new TDSErrorToken(1919, 1, 14, string.Format("Received packet size \"{0}\", expected \"{1}\"", loginRequest.PacketSize, ServerArguments.PacketSizeFilter.Value), Arguments.ServerName);
+                    // Prepare ERROR token with the reason
+                    TDSErrorToken errorToken = new TDSErrorToken(1919, 1, 14, string.Format("Received packet size \"{0}\", expected \"{1}\"", loginRequest.PacketSize, Arguments.PacketSizeFilter.Value), Arguments.ServerName);
 
-                        // Log response
-                        TDSUtilities.Log(Arguments.Log, "Response", errorToken);
+                    // Log response
+                    TDSUtilities.Log(Arguments.Log, "Response", errorToken);
 
-                        // Serialize the errorToken token into the response packet
-                        TDSMessage responseMessage = new TDSMessage(TDSMessageType.Response, errorToken);
+                    // Serialize the errorToken token into the response packet
+                    TDSMessage responseMessage = new TDSMessage(TDSMessageType.Response, errorToken);
 
-                        // Prepare ERROR token with the final errorToken
-                        errorToken = new TDSErrorToken(1919, 1, 14, "Connection is denied by packet size filter", Arguments.ServerName);
+                    // Prepare ERROR token with the final errorToken
+                    errorToken = new TDSErrorToken(1919, 1, 14, "Connection is denied by packet size filter", Arguments.ServerName);
 
-                        // Log response
-                        TDSUtilities.Log(Arguments.Log, "Response", errorToken);
+                    // Log response
+                    TDSUtilities.Log(Arguments.Log, "Response", errorToken);
 
-                        // Serialize the errorToken token into the response packet
-                        responseMessage.Add(errorToken);
+                    // Serialize the errorToken token into the response packet
+                    responseMessage.Add(errorToken);
 
-                        // Create DONE token
-                        TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
+                    // Create DONE token
+                    TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
 
-                        // Log response
-                        TDSUtilities.Log(Arguments.Log, "Response", doneToken);
+                    // Log response
+                    TDSUtilities.Log(Arguments.Log, "Response", doneToken);
 
-                        // Serialize DONE token into the response packet
-                        responseMessage.Add(doneToken);
+                    // Serialize DONE token into the response packet
+                    responseMessage.Add(doneToken);
 
-                        // Return only a single message with the collection
-                        return new TDSMessageCollection(responseMessage);
-                    }
+                    // Return only a single message with the collection
+                    return new TDSMessageCollection(responseMessage);
                 }
+            }
 
-                // If we have an application name filter
-                if (ServerArguments.ApplicationNameFilter != null)
+            // If we have an application name filter
+            if (Arguments.ApplicationNameFilter != null)
+            {
+                // If we are supposed to block this connection attempt
+                if (loginRequest.ApplicationName.Equals(Arguments.ApplicationNameFilter, System.StringComparison.OrdinalIgnoreCase))
                 {
-                    // If we are supposed to block this connection attempt
-                    if (loginRequest.ApplicationName.Equals(ServerArguments.ApplicationNameFilter, System.StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Log request to which we're about to send a failure
-                        TDSUtilities.Log(Arguments.Log, "Request", loginRequest);
+                    // Log request to which we're about to send a failure
+                    TDSUtilities.Log(Arguments.Log, "Request", loginRequest);
 
-                        // Prepare ERROR token with the denial details
-                        TDSErrorToken errorToken = new TDSErrorToken(18456, 1, 14, "Received application name: " + loginRequest.ApplicationName, Arguments.ServerName);
+                    // Prepare ERROR token with the denial details
+                    TDSErrorToken errorToken = new TDSErrorToken(18456, 1, 14, "Received application name: " + loginRequest.ApplicationName, Arguments.ServerName);
 
-                        // Log response
-                        TDSUtilities.Log(Arguments.Log, "Response", errorToken);
+                    // Log response
+                    TDSUtilities.Log(Arguments.Log, "Response", errorToken);
 
-                        // Serialize the error token into the response packet
-                        TDSMessage responseMessage = new TDSMessage(TDSMessageType.Response, errorToken);
+                    // Serialize the error token into the response packet
+                    TDSMessage responseMessage = new TDSMessage(TDSMessageType.Response, errorToken);
 
-                        // Prepare ERROR token for the final decision
-                        errorToken = new TDSErrorToken(18456, 1, 14, "Connection is denied by application name filter", Arguments.ServerName);
+                    // Prepare ERROR token for the final decision
+                    errorToken = new TDSErrorToken(18456, 1, 14, "Connection is denied by application name filter", Arguments.ServerName);
 
-                        // Log response
-                        TDSUtilities.Log(Arguments.Log, "Response", errorToken);
+                    // Log response
+                    TDSUtilities.Log(Arguments.Log, "Response", errorToken);
 
-                        // Serialize the error token into the response packet
-                        responseMessage.Add(errorToken);
+                    // Serialize the error token into the response packet
+                    responseMessage.Add(errorToken);
 
-                        // Create DONE token
-                        TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
+                    // Create DONE token
+                    TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
 
-                        // Log response
-                        TDSUtilities.Log(Arguments.Log, "Response", doneToken);
+                    // Log response
+                    TDSUtilities.Log(Arguments.Log, "Response", doneToken);
 
-                        // Serialize DONE token into the response packet
-                        responseMessage.Add(doneToken);
+                    // Serialize DONE token into the response packet
+                    responseMessage.Add(doneToken);
 
-                        // Put a single message into the collection and return it
-                        return new TDSMessageCollection(responseMessage);
-                    }
+                    // Put a single message into the collection and return it
+                    return new TDSMessageCollection(responseMessage);
                 }
             }
 

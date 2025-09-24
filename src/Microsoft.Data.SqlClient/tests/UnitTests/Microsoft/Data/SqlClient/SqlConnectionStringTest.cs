@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         [InlineData("my.test.server", true, Tristate.NotInitialized, true)]
         [InlineData("my.test.server", false, Tristate.NotInitialized, false)]
         [InlineData("my.test.server", null, Tristate.NotInitialized, true)]
-        public void TestDefaultTNIR(string dataSource, bool? tnirEnabledInConnString, Tristate tnirDisabledAppContext, bool expectedValue)
+        public void TestDefaultTnir(string dataSource, bool? tnirEnabledInConnString, Tristate tnirDisabledAppContext, bool expectedValue)
         {
             // Note: TNIR is only supported on .NET Framework.
             // Note: TNIR is disabled by default for Azure SQL Database servers (i.e. *.database.windows.net)

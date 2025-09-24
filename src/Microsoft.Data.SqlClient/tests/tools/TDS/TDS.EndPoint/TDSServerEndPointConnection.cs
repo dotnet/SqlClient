@@ -140,6 +140,14 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             {
                 Connection.Close();
                 Connection.Dispose();
+                Connection = null;
+            }
+
+            // TODO: there's a deadlock condition when awaiting the processor task
+            // only dispose of it if it's already completed
+            if (ProcessorTask.Status == TaskStatus.RanToCompletion)
+            {
+                ProcessorTask.Dispose();
             }
         }
 

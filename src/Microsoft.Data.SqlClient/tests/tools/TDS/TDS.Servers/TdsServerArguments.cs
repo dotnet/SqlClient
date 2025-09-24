@@ -28,56 +28,56 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Log to which send TDS conversation
         /// </summary>
-        public TextWriter Log = null;
+        public TextWriter Log { get; set; } = null;
 
         /// <summary>
         /// Server name
         /// </summary>
-        public string ServerName = Environment.MachineName;
+        public string ServerName { get; set; } = Environment.MachineName;
 
         /// <summary>
         /// Server version
         /// </summary>
-        public Version ServerVersion = new Version(11, 0, 1083);
+        public Version ServerVersion { get; set; } = new Version(11, 0, 1083);
 
         /// <summary>
         /// Server principal name
         /// </summary>
-        public string ServerPrincipalName = AzureADServicePrincipalName;
+        public string ServerPrincipalName { get; set; } = AzureADServicePrincipalName;
 
         /// <summary>
         /// Sts Url
         /// </summary>
-        public string StsUrl = AzureADProductionTokenEndpoint;
+        public string StsUrl { get; set; } = AzureADProductionTokenEndpoint;
 
         /// <summary>
         /// Size of the TDS packet server should operate with
         /// </summary>
-        public int PacketSize = 4096;
+        public int PacketSize { get; set; } = 4096;
 
         /// <summary>
         /// Transport encryption
         /// </summary>
-        public TDSPreLoginTokenEncryptionType Encryption = TDSPreLoginTokenEncryptionType.NotSupported;
+        public TDSPreLoginTokenEncryptionType Encryption { get; set; } = TDSPreLoginTokenEncryptionType.NotSupported;
 
         /// <summary>
         /// Specifies the FedAuthRequired option
         /// </summary>
-        public TdsPreLoginFedAuthRequiredOption FedAuthRequiredPreLoginOption = TdsPreLoginFedAuthRequiredOption.FedAuthNotRequired;
+        public TdsPreLoginFedAuthRequiredOption FedAuthRequiredPreLoginOption { get; set; } = TdsPreLoginFedAuthRequiredOption.FedAuthNotRequired;
 
         /// <summary>
         /// Certificate to use for transport encryption
         /// </summary>
-        public X509Certificate EncryptionCertificate = null;
+        public X509Certificate EncryptionCertificate { get; set; } = null;
 
         /// <summary>
         /// SSL/TLS protocols to use for transport encryption
         /// </summary>
-        public SslProtocols EncryptionProtocols = SslProtocols.Tls12;
+        public SslProtocols EncryptionProtocols { get; set; } = SslProtocols.Tls12;
 
         /// <summary>
         /// Routing destination protocol
         /// </summary>
-        public string FailoverPartner = string.Empty;
+        public string FailoverPartner { get; set; } = string.Empty;
     }
 }

@@ -15,29 +15,21 @@ namespace Microsoft.SqlServer.TDS.Servers
     {
         private int RequestCounter = 0;
 
-        public TransientDelayTdsServer(TransientDelayTdsServerArguments arguments) : base(arguments)
+        public TransientDelayTdsServer(TransientDelayTdsServerArguments arguments) 
+            : base(arguments)
         {
         }
 
-        public TransientDelayTdsServer(TransientDelayTdsServerArguments arguments, QueryEngine queryEngine) : base(arguments, queryEngine)
+        public TransientDelayTdsServer(TransientDelayTdsServerArguments arguments, QueryEngine queryEngine) 
+            : base(arguments, queryEngine)
         {
         }
 
-        public void ResetRequestCounter()
+        /// <inheritdoc/>
+        public override void Dispose()
         {
+            base.Dispose();
             RequestCounter = 0;
-        }
-
-        public void SetTransientTimeoutBehavior(bool isEnabledTransientTimeout, TimeSpan sleepDuration) 
-        {
-            SetTransientTimeoutBehavior(isEnabledTransientTimeout, false, sleepDuration);
-        }
-
-        public void SetTransientTimeoutBehavior(bool isEnabledTransientTimeout, bool isEnabledPermanentTimeout, TimeSpan sleepDuration)
-        {
-            Arguments.IsEnabledTransientDelay = isEnabledTransientTimeout;
-            Arguments.IsEnabledPermanentDelay = isEnabledPermanentTimeout;
-            Arguments.DelayDuration = sleepDuration;
         }
 
         /// <summary>
@@ -46,7 +38,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         public override TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
         {
             // Check if we're still going to raise transient error
-            if (Arguments.IsEnabledPermanentDelay || 
+            if (Arguments.IsEnabledPermanentDelay ||
                 (Arguments.IsEnabledTransientDelay && RequestCounter < Arguments.RepeatCount))
             {
                 Thread.Sleep(Arguments.DelayDuration);
@@ -72,11 +64,21 @@ namespace Microsoft.SqlServer.TDS.Servers
             return base.OnSQLBatchRequest(session, message);
         }
 
-        /// <inheritdoc/>
-        public override void Dispose()
+        public void ResetRequestCounter()
         {
-            base.Dispose();
             RequestCounter = 0;
+        }
+
+        public void SetTransientTimeoutBehavior(bool isEnabledTransientTimeout, TimeSpan sleepDuration) 
+        {
+            SetTransientTimeoutBehavior(isEnabledTransientTimeout, false, sleepDuration);
+        }
+
+        public void SetTransientTimeoutBehavior(bool isEnabledTransientTimeout, bool isEnabledPermanentTimeout, TimeSpan sleepDuration)
+        {
+            Arguments.IsEnabledTransientDelay = isEnabledTransientTimeout;
+            Arguments.IsEnabledPermanentDelay = isEnabledPermanentTimeout;
+            Arguments.DelayDuration = sleepDuration;
         }
     }
 }

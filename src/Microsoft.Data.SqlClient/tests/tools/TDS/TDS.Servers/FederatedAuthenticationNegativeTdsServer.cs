@@ -38,42 +38,35 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Get the collection from a valid On PreLogin Request
             TDSMessageCollection preLoginCollection = base.OnPreLoginRequest(session, request);
 
-            // Check if arguments are of the Federated Authentication server
-            if (Arguments is FederatedAuthenticationNegativeTdsServerArguments)
+            // Find the is token carrying on TDSPreLoginToken
+            TDSPreLoginToken preLoginToken = preLoginCollection.Find(message => message.Exists(packetToken => packetToken is TDSPreLoginToken)).
+                Find(packetToken => packetToken is TDSPreLoginToken) as TDSPreLoginToken;
+
+            switch (Arguments.Scenario)
             {
-                // Cast to federated authentication server arguments
-                FederatedAuthenticationNegativeTdsServerArguments ServerArguments = Arguments as FederatedAuthenticationNegativeTdsServerArguments;
-
-                // Find the is token carrying on TDSPreLoginToken
-                TDSPreLoginToken preLoginToken = preLoginCollection.Find(message => message.Exists(packetToken => packetToken is TDSPreLoginToken)).
-                    Find(packetToken => packetToken is TDSPreLoginToken) as TDSPreLoginToken;
-
-                switch (ServerArguments.Scenario)
-                {
-                    case FederatedAuthenticationNegativeTdsScenarioType.NonceMissingInFedAuthPreLogin:
+                case FederatedAuthenticationNegativeTdsScenarioType.NonceMissingInFedAuthPreLogin:
+                    {
+                        // If we have the prelogin token
+                        if (preLoginToken != null && preLoginToken.Nonce != null)
                         {
-                            // If we have the prelogin token
-                            if (preLoginToken != null && preLoginToken.Nonce != null)
-                            {
-                                // Nullify the nonce from the Token
-                                preLoginToken.Nonce = null;
-                            }
-
-                            break;
+                            // Nullify the nonce from the Token
+                            preLoginToken.Nonce = null;
                         }
 
-                    case FederatedAuthenticationNegativeTdsScenarioType.InvalidB_FEDAUTHREQUIREDResponse:
-                        {
-                            // If we have the prelogin token
-                            if (preLoginToken != null)
-                            {
-                                // Set an illegal value for B_FEDAUTHREQURED
-                                preLoginToken.FedAuthRequired = TdsPreLoginFedAuthRequiredOption.Illegal;
-                            }
+                        break;
+                    }
 
-                            break;
+                case FederatedAuthenticationNegativeTdsScenarioType.InvalidB_FEDAUTHREQUIREDResponse:
+                    {
+                        // If we have the prelogin token
+                        if (preLoginToken != null)
+                        {
+                            // Set an illegal value for B_FEDAUTHREQURED
+                            preLoginToken.FedAuthRequired = TdsPreLoginFedAuthRequiredOption.Illegal;
                         }
-                }
+
+                        break;
+                    }
             }
 
             // Return the collection
@@ -88,42 +81,35 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Get the collection from the normal behavior On Login7 Request
             TDSMessageCollection login7Collection = base.OnLogin7Request(session, request);
 
-            // Check if arguments are of the Federated Authentication server
-            if (Arguments is FederatedAuthenticationNegativeTdsServerArguments)
+            // Get the Federated Authentication ExtAck from Login 7
+            TDSFeatureExtAckFederatedAuthenticationOption fedAutExtAct = GetFeatureExtAckFederatedAuthenticationOptionFromLogin7(login7Collection);
+
+            // If not found, return the base collection intact
+            if (fedAutExtAct != null)
             {
-                // Cast to federated authentication server arguments
-                FederatedAuthenticationNegativeTdsServerArguments ServerArguments = Arguments as FederatedAuthenticationNegativeTdsServerArguments;
-
-                // Get the Federated Authentication ExtAck from Login 7
-                TDSFeatureExtAckFederatedAuthenticationOption fedAutExtAct = GetFeatureExtAckFederatedAuthenticationOptionFromLogin7(login7Collection);
-
-                // If not found, return the base collection intact
-                if (fedAutExtAct != null)
+                switch (Arguments.Scenario)
                 {
-                    switch (ServerArguments.Scenario)
-                    {
-                        case FederatedAuthenticationNegativeTdsScenarioType.NonceMissingInFedAuthFEATUREXTACK:
-                            {
-                                // Delete the nonce from the Token
-                                fedAutExtAct.ClientNonce = null;
+                    case FederatedAuthenticationNegativeTdsScenarioType.NonceMissingInFedAuthFEATUREXTACK:
+                        {
+                            // Delete the nonce from the Token
+                            fedAutExtAct.ClientNonce = null;
 
-                                break;
-                            }
-                        case FederatedAuthenticationNegativeTdsScenarioType.FedAuthMissingInFEATUREEXTACK:
-                            {
-                                // Remove the Fed Auth Ext Ack from the options list in the FeatureExtAckToken
-                                GetFeatureExtAckTokenFromLogin7(login7Collection).Options.Remove(fedAutExtAct);
+                            break;
+                        }
+                    case FederatedAuthenticationNegativeTdsScenarioType.FedAuthMissingInFEATUREEXTACK:
+                        {
+                            // Remove the Fed Auth Ext Ack from the options list in the FeatureExtAckToken
+                            GetFeatureExtAckTokenFromLogin7(login7Collection).Options.Remove(fedAutExtAct);
 
-                                break;
-                            }
-                        case FederatedAuthenticationNegativeTdsScenarioType.SignatureMissingInFedAuthFEATUREXTACK:
-                            {
-                                // Delete the signature from the Token
-                                fedAutExtAct.Signature = null;
+                            break;
+                        }
+                    case FederatedAuthenticationNegativeTdsScenarioType.SignatureMissingInFedAuthFEATUREXTACK:
+                        {
+                            // Delete the signature from the Token
+                            fedAutExtAct.Signature = null;
 
-                                break;
-                            }
-                    }
+                            break;
+                        }
                 }
             }
 
