@@ -46,45 +46,6 @@ namespace Microsoft.Data.SqlClient
 
         partial void RepairInnerConnection();
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistTransaction/*' />
-        public override void EnlistTransaction(Transaction transaction)
-        {
-            SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.EnlistTransaction|RES|TRAN> {0}, Connection enlisting in a transaction.", ObjectID);
-
-            // If we're currently enlisted in a transaction and we were called
-            // on the EnlistTransaction method (Whidbey) we're not allowed to
-            // enlist in a different transaction.
-
-            DbConnectionInternal innerConnection = InnerConnection;
-
-            // NOTE: since transaction enlistment involves round trips to the
-            // server, we don't want to lock here, we'll handle the race conditions
-            // elsewhere.
-            Transaction enlistedTransaction = innerConnection.EnlistedTransaction;
-            if (enlistedTransaction != null)
-            {
-                // Allow calling enlist if already enlisted (no-op)
-                if (enlistedTransaction.Equals(transaction))
-                {
-                    return;
-                }
-
-                // Allow enlisting in a different transaction if the enlisted transaction has completed.
-                if (enlistedTransaction.TransactionInformation.Status == TransactionStatus.Active)
-                {
-                    throw ADP.TransactionPresent();
-                }
-            }
-            RepairInnerConnection();
-            InnerConnection.EnlistTransaction(transaction);
-
-            // NOTE: If this outer connection were to be GC'd while we're
-            // enlisting, the pooler would attempt to reclaim the inner connection
-            // while we're attempting to enlist; not sure how likely that is but
-            // we should consider a GC.KeepAlive(this) here.
-            GC.KeepAlive(this);
-        }
-
         internal void PermissionDemand()
         {
             Debug.Assert(DbConnectionClosedConnecting.SingletonInstance == _innerConnection, "not connecting");
