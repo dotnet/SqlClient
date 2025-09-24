@@ -941,6 +941,9 @@ namespace Microsoft.Data.SqlClient
                 info |= TdsEnums.SNI_SSL_IGNORE_CHANNEL_BINDINGS;
             }
 
+#if NETFRAMEWORK
+            Debug.Assert((_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0, "Client certificate authentication support has been removed");
+#endif
             error = _physicalStateObj.EnableSsl(ref info, encrypt == SqlConnectionEncryptOption.Strict, serverCertificateFilename);
 
             if (error != TdsEnums.SNI_SUCCESS)
@@ -6663,6 +6666,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLVARBINARY:
                 case TdsEnums.SQLIMAGE:
                     byte[] b = null;
+
                     result = stateObj.TryReadByteArrayWithContinue(length, isPlp, out b);
                     if (result != TdsOperationStatus.Done)
                     {
@@ -9115,6 +9119,12 @@ namespace Microsoft.Data.SqlClient
                 {
                     WriteString(userName, _physicalStateObj);
 
+#if NETFRAMEWORK
+                    // Cache offset in packet for tracing.
+                    _physicalStateObj._tracePasswordOffset = _physicalStateObj._outBytesUsed;
+                    _physicalStateObj._tracePasswordLength = encryptedPasswordLengthInBytes;
+#endif
+
                     if (rec.credential != null)
                     {
                         _physicalStateObj.WriteSecureString(rec.credential.Password);
@@ -9150,6 +9160,11 @@ namespace Microsoft.Data.SqlClient
                 WriteString(rec.attachDBFilename, _physicalStateObj);
                 if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
                 {
+#if NETFRAMEWORK
+                    // Cache offset in packet for tracing.
+                    _physicalStateObj._traceChangePasswordOffset = _physicalStateObj._outBytesUsed;
+                    _physicalStateObj._traceChangePasswordLength = encryptedChangePasswordLengthInBytes;
+#endif
                     if (rec.newSecurePassword != null)
                     {
                         _physicalStateObj.WriteSecureString(rec.newSecurePassword);
