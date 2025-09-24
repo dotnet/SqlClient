@@ -4,15 +4,11 @@
 
 using System;
 using System.Buffers.Binary;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
-using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 
@@ -20,12 +16,6 @@ namespace Microsoft.Data.SqlClient
 {
     internal partial class TdsParserStateObject
     {
-        protected SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
-
-        // SNI variables                                                     // multiple resultsets in one batch.
-        protected SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
-        internal SNIPacket _sniAsyncAttnPacket = null;                // Packet to use to send Attn
-
         // Used for blanking out password in trace.
         internal int _tracePasswordOffset = 0;
         internal int _tracePasswordLength = 0;
@@ -68,22 +58,9 @@ namespace Microsoft.Data.SqlClient
             _lastSuccessfulIOTimer = parser._physicalStateObj._lastSuccessfulIOTimer;
         }
 
-        ////////////////
-        // Properties //
-        ////////////////
-        internal SNIHandle Handle
-        {
-            get
-            {
-                return _sessionHandle;
-            }
-        }
-
         /////////////////////
         // General methods //
         /////////////////////
-
-        internal uint CheckConnection() => SniNativeWrapper.SniCheckConnection(Handle);
 
         internal int DecrementPendingCallbacks(bool release)
         {
@@ -94,7 +71,7 @@ namespace Microsoft.Data.SqlClient
 
             // NOTE: TdsParserSessionPool may call DecrementPendingCallbacks on a TdsParserStateObject which is already disposed
             // This is not dangerous (since the stateObj is no longer in use), but we need to add a workaround in the assert for it
-            Debug.Assert((remaining == -1 && _sessionHandle == null) || (0 <= remaining && remaining < 3), $"_pendingCallbacks values is invalid after decrementing: {remaining}");
+            Debug.Assert((remaining == -1 && SessionHandle.IsNull) || (0 <= remaining && remaining < 3), $"_pendingCallbacks values is invalid after decrementing: {remaining}");
             return remaining;
         }
 
@@ -121,11 +98,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 Interlocked.Increment(ref _readingCount);
-                SNIHandle handle = Handle;
-                if (handle != null)
-                {
-                    error = SniNativeWrapper.SniCheckConnection(handle);
-                }
+                error = CheckConnection();
             }
             finally
             {
@@ -241,6 +214,47 @@ namespace Microsoft.Data.SqlClient
         private uint GetSniPacket(PacketHandle packet, ref uint dataSize)
         {
             return SniPacketGetData(packet, _inBuff, ref dataSize);
+        }
+
+        private bool TrySetBufferSecureStrings()
+        {
+            bool mustClearBuffer = false;
+
+            if (_securePasswords != null)
+            {
+                for (int i = 0; i < _securePasswords.Length; i++)
+                {
+                    if (_securePasswords[i] != null)
+                    {
+                        IntPtr str = IntPtr.Zero;
+                        try
+                        {
+                            str = Marshal.SecureStringToBSTR(_securePasswords[i]);
+                            byte[] data = new byte[_securePasswords[i].Length * 2];
+                            Marshal.Copy(str, data, 0, _securePasswords[i].Length * 2);
+                            if (!BitConverter.IsLittleEndian)
+                            {
+                                Span<byte> span = data.AsSpan();
+                                for (int ii = 0; ii < _securePasswords[i].Length * 2; ii += 2)
+                                {
+                                    short value = BinaryPrimitives.ReadInt16LittleEndian(span.Slice(ii));
+                                    BinaryPrimitives.WriteInt16BigEndian(span.Slice(ii), value);
+                                }
+                            }
+                            TdsParserStaticMethods.ObfuscatePassword(data);
+                            data.CopyTo(_outBuff, _securePasswordOffsetsInBuffer[i]);
+
+                            mustClearBuffer = true;
+                        }
+                        finally
+                        {
+                            Marshal.ZeroFreeBSTR(str);
+                        }
+                    }
+                }
+            }
+
+            return mustClearBuffer;
         }
 
         public void ReadAsyncCallback(IntPtr key, PacketHandle packet, uint error)
@@ -717,20 +731,17 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal PacketHandle CreateAndSetAttentionPacket()
-        {
-            SNIPacket attnPacket = new SNIPacket(Handle);
-            _sniAsyncAttnPacket = attnPacket;
-            SniNativeWrapper.SniPacketSetData(attnPacket, SQL.AttentionHeader, TdsEnums.HEADER_LEN, null, null);
-            return PacketHandle.FromNativePacket(attnPacket);
-        }
-
         private Task WriteSni(bool canAccumulate)
         {
             // Prepare packet, and write to packet.
             PacketHandle packet = GetResetWritePacket(_outBytesUsed);
-            SNIPacket nativePacket = packet.NativePacket;
-            SniNativeWrapper.SniPacketSetData(nativePacket, _outBuff, _outBytesUsed, _securePasswords, _securePasswordOffsetsInBuffer);
+            bool mustClearBuffer = TrySetBufferSecureStrings();
+
+            SetPacketData(packet, _outBuff, _outBytesUsed);
+            if (mustClearBuffer)
+            {
+                _outBuff.AsSpan(0, _outBytesUsed).Clear();
+            }
 
             Debug.Assert(Parser.Connection._parserLock.ThreadMayHaveLock(), "Thread is writing without taking the connection lock");
             Task task = SNIWritePacket(packet, out _, canAccumulate, callerHasConnectionLock: true);
