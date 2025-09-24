@@ -44,19 +44,6 @@ namespace Microsoft.Data.SqlClient
             InnerConnection.AddWeakReference(value, tag);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*' />
-        override protected void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _userConnectionOptions = null;
-                _poolGroup = null;
-                Close();
-            }
-            DisposeMe(disposing);
-            base.Dispose(disposing);
-        }
-
         partial void RepairInnerConnection();
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistTransaction/*' />

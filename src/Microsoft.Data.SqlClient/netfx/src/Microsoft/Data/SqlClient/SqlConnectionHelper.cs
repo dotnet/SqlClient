@@ -53,19 +53,6 @@ namespace Microsoft.Data.SqlClient
             return p;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*' />
-        override protected void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _userConnectionOptions = null;
-                _poolGroup = null;
-                Close();
-            }
-            DisposeMe(disposing);
-            base.Dispose(disposing); // notify base classes
-        }
-
         partial void RepairInnerConnection();
 
         // NOTE: This is just a private helper because OracleClient V1.1 shipped

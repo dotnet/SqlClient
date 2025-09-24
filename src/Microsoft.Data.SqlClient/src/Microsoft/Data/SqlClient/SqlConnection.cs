@@ -1480,6 +1480,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*' />
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _userConnectionOptions = null;
+                _poolGroup = null;
+                Close();
+            }
+            DisposeMe(disposing);
+            base.Dispose(disposing);
+        }
+
         private void DisposeMe(bool disposing)
         {
             _credential = null;
