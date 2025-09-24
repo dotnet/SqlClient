@@ -1517,8 +1517,33 @@ namespace Microsoft.Data.SqlClient
 
 #if NETFRAMEWORK
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistDistributedTransaction/*' />
-        public void EnlistDistributedTransaction(System.EnterpriseServices.ITransaction transaction) =>
-            EnlistDistributedTransactionHelper(transaction);
+        public void EnlistDistributedTransaction(System.EnterpriseServices.ITransaction transaction)
+        {
+            PermissionSet permissionSet = new PermissionSet(PermissionState.None);
+            permissionSet.AddPermission(SqlConnection.ExecutePermission); // MDAC 81476
+            permissionSet.AddPermission(new SecurityPermission(SecurityPermissionFlag.UnmanagedCode));
+            permissionSet.Demand();
+
+            SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.EnlistDistributedTransactionHelper|RES|TRAN> {0}, Connection enlisting in a transaction.", ObjectID);
+            System.Transactions.Transaction indigoTransaction = null;
+
+            if (transaction != null)
+            {
+                indigoTransaction = System.Transactions.TransactionInterop.GetTransactionFromDtcTransaction((System.Transactions.IDtcTransaction)transaction);
+            }
+
+            RepairInnerConnection();
+            // NOTE: since transaction enlistment involves round trips to the
+            // server, we don't want to lock here, we'll handle the race conditions
+            // elsewhere.
+            InnerConnection.EnlistTransaction(indigoTransaction);
+
+            // NOTE: If this outer connection were to be GC'd while we're
+            // enlisting, the pooler would attempt to reclaim the inner connection
+            // while we're attempting to enlist; not sure how likely that is but
+            // we should consider a GC.KeepAlive(this) here.
+            GC.KeepAlive(this);
+        }
 #endif
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Open/*' />
