@@ -8,7 +8,6 @@ using System.Diagnostics;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Authentication;
-using System.Text;
 using System.Threading.Tasks;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
@@ -52,14 +51,12 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        public TdsParserStateObjectNative(TdsParser parser)
+        internal TdsParserStateObjectNative(TdsParser parser)
             : base(parser)
         {
         }
 
-        ////////////////
-        // Properties //
-        ////////////////
+        #region Properties
 
         internal SNIHandle Handle => _sessionHandle;
 
@@ -70,6 +67,8 @@ namespace Microsoft.Data.SqlClient
         protected override PacketHandle EmptyReadPacket => PacketHandle.FromNativePointer(default);
 
         internal override Guid? SessionId => default;
+
+        #endregion
 
         protected override void CreateSessionHandle(TdsParserStateObject physicalConnection, bool async)
         {
@@ -83,6 +82,9 @@ namespace Microsoft.Data.SqlClient
             _sessionHandle = new SNIHandle(myInfo, nativeSNIObject.Handle, _parser.Connection.ConnectionOptions.IPAddressPreference, cachedDNSInfo);
         }
 
+        // Retrieve the IP and port number from native SNI for TCP protocol. The IP information is stored temporarily in the
+        // pendingSQLDNSObject but not in the DNS Cache at this point. We only add items to the DNS Cache after we receive the
+        // IsSupported flag as true in the feature ext ack from server.
         internal override void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo)
         {
             uint result;
@@ -155,11 +157,13 @@ namespace Microsoft.Data.SqlClient
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            out Microsoft.Data.SqlClient.ManagedSni.ResolvedServerSpn resolvedSpn,
+            out ManagedSni.ResolvedServerSpn resolvedSpn,
             bool flushCache,
             bool async,
             bool fParallel,
-            SqlConnectionIPAddressPreference ipPreference,
+            TransparentNetworkResolutionState transparentNetworkResolutionState,
+            int totalTimeout,
+            SqlConnectionIPAddressPreference iPAddressPreference,
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
             string serverSPN,
@@ -188,7 +192,7 @@ namespace Microsoft.Data.SqlClient
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, serverName, ref serverSPN, timeout.MillisecondsRemainingInt, out instanceName,
-                flushCache, !async, fParallel, ipPreference, cachedDNSInfo, hostNameInCertificate);
+                flushCache, !async, fParallel, iPAddressPreference, cachedDNSInfo, hostNameInCertificate);
             resolvedSpn = new(serverSPN.TrimEnd());
         }
 
@@ -303,10 +307,9 @@ namespace Microsoft.Data.SqlClient
 
         internal override PacketHandle CreateAndSetAttentionPacket()
         {
-            SNIHandle handle = Handle;
-            SNIPacket attnPacket = new SNIPacket(handle);
+            SNIPacket attnPacket = new SNIPacket(Handle);
             _sniAsyncAttnPacket = attnPacket;
-            SetPacketData(PacketHandle.FromNativePacket(attnPacket), SQL.AttentionHeader, TdsEnums.HEADER_LEN);
+            SniNativeWrapper.SniPacketSetData(attnPacket, SQL.AttentionHeader, TdsEnums.HEADER_LEN);
             return PacketHandle.FromNativePacket(attnPacket);
         }
 
@@ -394,28 +397,20 @@ namespace Microsoft.Data.SqlClient
             PacketHandle temp = default;
             uint error = TdsEnums.SNI_SUCCESS;
 
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-            try
-            { }
-            finally
+            IncrementPendingCallbacks();
+            SessionHandle handle = SessionHandle;
+            // we do not need to consider partial packets when making this read because we
+            // expect this read to pend. a partial packet should not exist at setup of the
+            // parser
+            Debug.Assert(physicalStateObject.PartialPacket == null);
+            temp = ReadAsync(handle, out error);
+
+            Debug.Assert(temp.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
+
+            if (temp.NativePointer != IntPtr.Zero)
             {
-                IncrementPendingCallbacks();
-                SessionHandle handle = SessionHandle;
-                // we do not need to consider partial packets when making this read because we
-                // expect this read to pend. a partial packet should not exist at setup of the
-                // parser
-                Debug.Assert(physicalStateObject.PartialPacket == null);
-                temp = ReadAsync(handle, out error);
-
-                Debug.Assert(temp.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
-
-                if (temp.NativePointer != IntPtr.Zero)
-                {
-                    // Be sure to release packet, otherwise it will be leaked by native.
-                    ReleasePacket(temp);
-                }
+                // Be sure to release packet, otherwise it will be leaked by native.
+                ReleasePacket(temp);
             }
 
             Debug.Assert(IntPtr.Zero == temp.NativePointer, "unexpected syncReadPacket without corresponding SNIPacketRelease");

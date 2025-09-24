@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             byte[] inputData = null;
             byte[] outputData = null;
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("data");
+            string tableName = DataTestUtility.GetLongName("data");
 
             using (SqlConnection connection = new(connectionString))
             {
@@ -556,7 +556,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void TimestampRead(string connectionString)
         {
-            string tempTable = DataTestUtility.GetUniqueNameForSqlServer("##Temp");
+            string tempTable = DataTestUtility.GetLongName("##Temp");
             tempTable = tempTable.Replace('-', '_');
 
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -1062,7 +1062,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void NumericRead(string connectionString)
         {
-            string tempTable = DataTestUtility.GetUniqueNameForSqlServer("##Temp");
+            string tempTable = DataTestUtility.GetLongName("##Temp");
             tempTable = tempTable.Replace('-', '_');
 
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -1892,8 +1892,8 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void VariantCollationsTest(string connectionString)
         {
-            string dbName = DataTestUtility.GetUniqueName("JPN");
-            string tableName = DataTestUtility.GetUniqueName("T");
+            string dbName = DataTestUtility.GetShortName("JPN");
+            string tableName = DataTestUtility.GetShortName("T");
 
             using (SqlConnection connection = new SqlConnection(connectionString))
             {

@@ -39,10 +39,11 @@ namespace Microsoft.Data.SqlClient
         {
             buffer = null;
 
-            (bool canContinue, bool isStarting, _) = stateObj.GetSnapshotStatuses();
+            stateObj.RequestContinue(true);
+            (bool canContinue, bool isStarting, bool isContinuing) = stateObj.GetSnapshotStatuses();
 
             List<byte[]> cachedBytes = null;
-            if (canContinue)
+            if (canContinue && isContinuing)
             {
                 cachedBytes = stateObj.TryTakeSnapshotStorage() as List<byte[]>;
                 if (isStarting)
@@ -88,6 +89,10 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
+                            if (canContinue)
+                            {
+                                stateObj.SetSnapshotStorage(cachedBytes);
+                            }
                             return result;
                         }
                     }

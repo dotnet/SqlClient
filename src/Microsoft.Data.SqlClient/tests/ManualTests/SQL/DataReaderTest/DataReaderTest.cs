@@ -131,7 +131,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("Georgian_Modern_Sort_CI_AS")]
         public static void CollatedDataReaderTest(string collation)
         {
-            string dbName = DataTestUtility.GetUniqueName("CollationTest", false);
+            string dbName = DataTestUtility.GetShortName("CollationTest", false);
 
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
@@ -1035,11 +1035,18 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                         }
                     }
 
-                    int counter = 0;
-                    while (counter < 10)
+                    SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+                    builder.PersistSecurityInfo = true;
+                    builder.Pooling = false;
+                    
+                    for (int packetSize = 512; packetSize<2048; packetSize+=3)
                     {
-                        using (var cmd = cn.CreateCommand())
+                        builder.PacketSize = packetSize;
+                        using (SqlConnection sizedConnection = new SqlConnection(builder.ToString()))
+                        using (SqlCommand cmd = sizedConnection.CreateCommand())
                         {
+                            sizedConnection.Open();
+
                             cmd.CommandText = $"SELECT [d].[Id], [d].[DocumentIdentificationId], [d].[Name], [d].[Value] FROM [{tableName}] AS [d]";
                             using (var reader = await cmd.ExecuteReaderAsync())
                             {
@@ -1063,7 +1070,6 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                                 }
                             }
                         }
-                        counter++;
                     }
                 }
                 finally

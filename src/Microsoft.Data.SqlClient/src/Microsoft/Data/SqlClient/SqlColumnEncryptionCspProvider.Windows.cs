@@ -19,6 +19,16 @@ namespace Microsoft.Data.SqlClient
         public const string ProviderName = @"MSSQL_CSP_PROVIDER";
 
         /// <summary>
+        /// This encryption keystore uses an asymmetric key as the column master key.
+        /// </summary>
+        internal const string MasterKeyType = @"asymmetric key";
+
+        /// <summary>
+        /// This encryption keystore uses the master key path to reference a CSP.
+        /// </summary>
+        internal const string KeyPathReference = @"Microsoft Cryptographic Service Provider (CSP)";
+
+        /// <summary>
         /// RSA_OAEP is the only algorithm supported for encrypting/decrypting column encryption keys using this provider.
         /// For now, we are keeping all the providers in sync.
         /// </summary>
@@ -121,7 +131,7 @@ namespace Microsoft.Data.SqlClient
             // Validate the signature
             if (!RSAVerifySignature(hash, signature, rsaProvider))
             {
-                throw SQL.InvalidSignature(masterKeyPath);
+                throw SQL.InvalidAsymmetricKeySignature(masterKeyPath);
             }
 
             // Decrypt the CEK

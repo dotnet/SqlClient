@@ -3955,13 +3955,13 @@
     <value>Ścieżka certyfikatu nie może mieć wartości null. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{2}&lt;certyfikat magazynu&gt;{2}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{0}” lub „{1}”.</value>
   </data>
   <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
-    <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+    <value>Ścieżka certyfikatu nie może mieć wartości null. Użyj następującego formatu: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, gdzie &lt;certificate location&gt; to „{0}”.</value>
   </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>Błąd wewnętrzny. Ścieżka certyfikatu nie może mieć wartości null. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{2}&lt;certyfikat magazynu&gt;{2}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{0}” lub „{1}”.</value>
   </data>
   <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
-    <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+    <value>Błąd wewnętrzny. Ścieżka certyfikatu nie może mieć wartości null. Użyj następującego formatu: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, gdzie &lt;certificate location&gt; to „{0}”.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Ścieżka klucza głównego kolumny nie może mieć wartości null. Użyj następującego formatu dla klucza przechowywanego u dostawcy usług kryptograficznych (CSP) firmy Microsoft: &lt;Nazwa dostawcy CSP&gt;{0}&lt;Identyfikator klucza&gt;.</value>
@@ -3979,13 +3979,13 @@
     <value>Nieprawidłowa ścieżka certyfikatu: „{0}”. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{3}&lt;certyfikat magazynu&gt;{3}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{1}” lub „{2}”.</value>
   </data>
   <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
-    <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+    <value>Nieprawidłowa ścieżka certyfikatu: „{0}”. Użyj następującego formatu: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, gdzie &lt;certificate location&gt; to „{1}”.</value>
   </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>Błąd wewnętrzny. Nieprawidłowa ścieżka certyfikatu: „{0}”. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{3}&lt;certyfikat magazynu&gt;{3}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{1}” lub „{2}”.</value>
   </data>
   <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
-    <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+    <value>Błąd wewnętrzny. Nieprawidłowa ścieżka certyfikatu: „{0}”. Użyj następującego formatu: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, gdzie &lt;certificate location&gt; to „{1}”.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Nieprawidłowa ścieżka klucza głównego kolumny: „{0}”. Użyj następującego formatu dla klucza przechowywanego u dostawcy usług kryptograficznych (CSP) firmy Microsoft: &lt;Nazwa dostawcy CSP&gt;{1}&lt;Identyfikator klucza&gt;.</value>
@@ -4003,13 +4003,13 @@
     <value>Nieprawidłowa lokalizacja certyfikatu „{0}” w ścieżce certyfikatu „{1}”. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{4}&lt;certyfikat magazynu&gt;{4}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{2}” lub „{3}”.</value>
   </data>
   <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
-    <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
+    <value>Nieprawidłowa lokalizacja certyfikatu „{0}” w ścieżce certyfikatu „{1}”. Użyj następującego formatu: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, gdzie &lt;certificate location&gt; to „{2}”.</value>
   </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>Błąd wewnętrzny. Nieprawidłowa lokalizacja certyfikatu „{0}” w ścieżce certyfikatu „{1}”. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{4}&lt;certyfikat magazynu&gt;{4}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{2}” lub „{3}”.</value>
   </data>
   <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
-    <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
+    <value>Błąd wewnętrzny. Nieprawidłowa lokalizacja certyfikatu „{0}” w ścieżce certyfikatu „{1}”. Użyj następującego formatu: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, gdzie &lt;certificate location&gt; to „{2}”.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>W ścieżce certyfikatu „{1}” określono nieprawidłowy magazyn certyfikatów „{0}”. Oczekiwana wartość: „{2}”.</value>
@@ -4075,6 +4075,9 @@
     <value>Określony zaszyfrowany klucz szyfrowania kolumny zawiera nieprawidłową wersję algorytmu szyfrowania „{0}”. Oczekiwana wersja to „{1}”.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
+    <value>Określona długość szyfrowanego klucza szyfrowania kolumny tekstu szyfrowanego: {0} nie jest zgodna z długością tekstu szyfrowanego: {1} w przypadku używania klucza głównego kolumny ({2}) w „{3}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka {4} może być nieprawidłowa.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
     <value>Określona długość szyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością tekstu szyfrowanego: {1} w przypadku używania klucza głównego kolumny (certyfikatu) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka certyfikatu może być nieprawidłowa.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
@@ -4084,6 +4087,9 @@
     <value>Określona długość szyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością tekstu szyfrowanego: {1} w przypadku używania klucza głównego kolumny (klucza asymetrycznego) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka dostawcy interfejsu API kryptografii firmy Microsoft: ścieżka dostawcy następnej generacji (CNG) może być niepoprawna.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
+    <value>Określona długość podpisu zaszyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością podpisu: {1} w przypadku używania klucza głównego kolumny ({2}) w „{3}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka {4} może być nieprawidłowa.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
     <value>Określona długość podpisu zaszyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością podpisu: {1} w przypadku używania klucza głównego kolumny (certyfikatu) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka certyfikatu może być nieprawidłowa.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
@@ -4092,10 +4098,13 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>Określona długość podpisu zaszyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością podpisu: {1} w przypadku używania klucza głównego kolumny (klucza asymetrycznego) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka dostawcy interfejsu API kryptografii firmy Microsoft: ścieżka dostawcy następnej generacji (CNG) może być niepoprawna.</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>Określony podpis zaszyfrowanego klucza szyfrowania kolumny jest niezgodny z podpisem obliczonym przy użyciu klucza głównego kolumny ({0}) w „{1}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka może być nieprawidłowa.</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>Określony podpis zaszyfrowanego klucza szyfrowania kolumny jest niezgodny z podpisem obliczonym przy użyciu klucza głównego kolumny (certyfikatu) w elemencie „{0}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka może być nieprawidłowa.</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
     <value>Określony zaszyfrowany podpis klucza szyfrowania kolumny nie jest zgodny z podpisem obliczonym przy użyciu klucza głównego kolumny (klucz asymetryczny) w elemencie „{0}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka może być nieprawidłowa.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">

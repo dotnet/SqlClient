@@ -4,6 +4,68 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 7.0.0-preview1.25257.1] - 2025-09-12
+
+This update brings the following changes since the [6.1.0](release-notes/6.1/6.1.0.md)
+release:
+
+### Breaking Changes
+
+- Removed `Constrained Execution Region` error handling blocks and associated
+  `SqlConnection` cleanup which may affect how potentially-broken connections
+  are expunged from the pool.
+  ([#3535](https://github.com/dotnet/SqlClient/pull/3535))
+
+### Bug Fixes
+
+- Packet multiplexing disabled by default, and several bug fixes.
+  ([#3534](https://github.com/dotnet/SqlClient/pull/3534),
+   [#3537](https://github.com/dotnet/SqlClient/pull/3537))
+
+### Added
+
+- `SqlColumnEncryptionCertificateStoreProvider` now works on Windows, Linux,
+  and macOS.
+  ([#3014](https://github.com/dotnet/SqlClient/pull/3014))
+
+### Changed
+
+- Updated `SqlVector.Null` to return a nullable `SqlVector` instance in the
+  reference API to match the implementation.
+  ([#3521](https://github.com/dotnet/SqlClient/pull/3521))
+
+- Performance improvements for all built-in
+  `SqlColumnEncryptionKeyStoreProvider` implementations.
+  ([#3554](https://github.com/dotnet/SqlClient/pull/3554))
+
+- Various test improvements.
+  ([#3456](https://github.com/dotnet/SqlClient/pull/3456),
+   [#2968](https://github.com/dotnet/SqlClient/pull/2968),
+   [#3458](https://github.com/dotnet/SqlClient/pull/3458),
+   [#3494](https://github.com/dotnet/SqlClient/pull/3494),
+   [#3559](https://github.com/dotnet/SqlClient/pull/3559),
+   [#3575](https://github.com/dotnet/SqlClient/pull/3575))
+
+- Codebase merge project and related cleanup.
+  ([#3436](https://github.com/dotnet/SqlClient/pull/3436),
+   [#3434](https://github.com/dotnet/SqlClient/pull/3434),
+   [#3448](https://github.com/dotnet/SqlClient/pull/3448),
+   [#3454](https://github.com/dotnet/SqlClient/pull/3454),
+   [#3462](https://github.com/dotnet/SqlClient/pull/3462),
+   [#3435](https://github.com/dotnet/SqlClient/pull/3435),
+   [#3492](https://github.com/dotnet/SqlClient/pull/3492),
+   [#3473](https://github.com/dotnet/SqlClient/pull/3473),
+   [#3469](https://github.com/dotnet/SqlClient/pull/3469),
+   [#3394](https://github.com/dotnet/SqlClient/pull/3394),
+   [#3493](https://github.com/dotnet/SqlClient/pull/3493),
+   [#3593](https://github.com/dotnet/SqlClient/pull/3593))
+
+- Documentation improvements.
+  ([#3490](https://github.com/dotnet/SqlClient/pull/3490))
+
+- Updated `Azure.Identity` dependency to v1.14.2.
+  ([#3538](https://github.com/dotnet/SqlClient/pull/3538))
+
 ## [Stable Release 6.1.1] - 2025-08-14
 
 This update includes the following changes since the [6.1.0](6.1.0.md) release:

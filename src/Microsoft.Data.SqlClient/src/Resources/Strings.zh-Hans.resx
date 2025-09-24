@@ -3955,13 +3955,13 @@
     <value>证书路径不能为空。使用以下格式: &lt;证书位置&gt;{2}&lt;证书存储库&gt;{2}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{0}”或“{1}”。</value>
   </data>
   <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
-    <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+    <value>证书路径不能为 null。使用以下格式: &lt;证书位置&gt;{1}&lt;证书存储&gt;{1}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 为 ‘{0}’。</value>
   </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>内部错误。证书路径不能为空。使用以下格式: &lt;证书位置&gt;{2}&lt;证书存储库&gt;{2}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{0}”或“{1}”。</value>
   </data>
   <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
-    <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+    <value>内部错误。证书路径不能为 null。使用以下格式: &lt;证书位置&gt;{1}&lt;证书存储&gt;{1}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 为 ‘{0}’。</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>列主密钥路径不可为 NULL。请对 Microsoft 加密服务提供程序(CSP)中存储的密钥使用以下格式: &lt;CSP 提供程序名称&gt;{0}&lt;密钥标识符&gt;。</value>
@@ -3979,13 +3979,13 @@
     <value>证书路径无效: {0}。使用以下格式: &lt;证书位置&gt;{3}&lt;证书存储库&gt;{3}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{1}”或“{2}”。</value>
   </data>
   <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
-    <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+    <value>证书路径无效: ‘{0}’。使用以下格式: &lt;证书位置&gt;{2}&lt;证书存储&gt;{2}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 为 ‘{1}’。</value>
   </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>内部错误。证书路径无效: {0}。使用以下格式: &lt;证书位置&gt;{3}&lt;证书存储库&gt;{3}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{1}”或“{2}”。</value>
   </data>
   <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
-    <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+    <value>内部错误。证书路径无效: ‘{0}’。使用以下格式: &lt;证书位置&gt;{2}&lt;证书存储&gt;{2}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 为 ‘{1}’。</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>无效的列主密钥路径:“{0}”。请对 Microsoft 加密服务提供程序(CSP)中存储的密钥使用以下格式: &lt;CSP 提供程序名称&gt;{1}&lt;密钥标识符&gt;。</value>
@@ -4003,13 +4003,13 @@
     <value>证书路径“{1}”中的证书位置“{0}”无效。使用以下格式: &lt;证书位置&gt;{4}&lt;证书存储库&gt;{4}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{2}”或“{3}”。</value>
   </data>
   <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
-    <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
+    <value>证书路径 ‘{1}’ 中的证书位置 ‘{0}’ 无效。使用以下格式: &lt;证书位置&gt;{3}&lt;证书存储&gt;{3}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 为 ‘{2}’。</value>
   </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>内部错误。证书路径“{1}”中的证书位置“{0}”无效。使用以下格式: &lt;证书位置&gt;{4}&lt;证书存储&gt;{4}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{2}”或“{3}”。</value>
   </data>
   <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
-    <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
+    <value>内部错误。证书路径 ‘{1}’ 中的证书位置 ‘{0}’ 无效。使用以下格式: &lt;证书位置&gt;{3}&lt;证书存储&gt;{3}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 为 ‘{2}’。</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>证书路径“{1}”中指定的证书存储库“{0}”无效。应为: {2}。</value>
@@ -4075,7 +4075,10 @@
     <value>指定的加密列的加密密钥包含无效的加密算法版本“{0}”。预期版本是“{1}”。</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>当在“{2}”中使用列主密钥(证书)时，指定的加密列加密密钥的密码文本长度“{0}”与密码文本长度“{1}”不匹配。加密列加密密钥可能已损坏，或指定的证书路径可能不正确。</value>
+    <value>指定的已加密列加密密钥的已加密文本长度 {0} 与使用“{3}”中的列主密钥({2})时的已加密文本长度 {1} 不一致。已加密列加密密钥可能已损坏，或者指定的 {4} 路径可能不正确。</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
+    <value>指定的已加密列加密密钥的已加密文本长度 {0} 与使用“{2}”中的列主密钥(证书)时的已加密文本长度 {1} 不一致。可能是因为已加密列加密密钥已损坏，或指定的证书路径有误。</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
     <value>使用 {2} 中的列主密钥(非对称密钥)时，指定的已加密列加密密钥的已加密文本长度 {0} 与已加密文本长度 {1} 不匹配。已加密列加密密钥可能已损坏，或指定的 Microsoft 加密服务提供程序(CSP)路径可能不正确。</value>
@@ -4084,7 +4087,10 @@
     <value>使用 {2} 中的列主密钥(非对称密钥)时，指定的已加密列加密密钥的已加密文本长度 {0} 与已加密文本长度 {1} 不匹配。已加密列加密密钥可能已损坏，或指定的 Microsoft API 下一代加密技术(CNG)提供程序路径可能不正确。</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>当在“{2}”中使用列主密钥(证书)时，指定的加密列加密密钥的签名长度“{0}”与签名长度“{1}”不匹配。加密列加密密钥可能已损坏，或指定的证书路径可能不正确。</value>
+    <value>指定的已加密列加密密钥的签名长度 {0} 与使用“{3}”中的列主密钥({2})时的签名长度 {1} 不一致。已加密列加密密钥可能已损坏，或者指定的 {4} 路径可能不正确。</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
+    <value>指定的已加密列加密密钥的签名长度 {0} 与使用“{2}”中的列主密钥(证书)时的签名长度 {1} 不一致。可能是因为已加密列加密密钥已损坏，或指定的证书路径有误。</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
     <value>使用 {2} 中的列主密钥(非对称密钥)时，指定的已加密列加密密钥的签名长度 {0} 与签名长度 {1} 不匹配。已加密列加密密钥可能已损坏，或指定的 Microsoft 加密服务提供程序(CSP)路径可能不正确。</value>
@@ -4092,11 +4098,14 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>使用 {2} 中的列主密钥(非对称密钥)时，指定的已加密列加密密钥的签名长度 {0} 与签名长度 {1} 不匹配。已加密列加密密钥可能已损坏，或指定的 Microsoft API 下一代加密技术(CNG)提供程序路径可能不正确。</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>指定的已加密列加密密钥签名与使用“{1}”中的列主密钥({0})计算得出的签名不一致。已加密列加密密钥可能已损坏，或者指定的路径可能不正确。</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>指定的加密列的加密密钥签名与“{0}”中使用的列的主密钥(证书)计算的签名不匹配。加密列的加密密钥可能已损坏，或指定的证书路径可能不正确。</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>指定的已加密列加密密钥签名与通过“{0}”中的列主密钥(非对称密钥)计算出的签名不匹配。已加密列加密密钥可能已损坏，或指定路径可能不正确。</value>
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
+    <value>指定的已加密列加密密钥签名与使用“{0}”中的列主密钥(非对称密钥)计算得出的签名不一致。已加密列加密密钥可能已损坏，或者指定的路径可能不正确。</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>密钥路径“{0}”中指定的证书没有用于加密列加密密钥的私钥。验证证书是否正确导入。</value>
