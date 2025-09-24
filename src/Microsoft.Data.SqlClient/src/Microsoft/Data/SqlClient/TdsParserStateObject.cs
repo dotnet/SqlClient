@@ -1568,45 +1568,67 @@ namespace Microsoft.Data.SqlClient
             return TdsOperationStatus.Done;
         }
 
-        public TdsOperationStatus TryReadByteArrayWithContinue(int length, out byte[] bytes)
+        internal TdsOperationStatus TryReadByteArrayWithContinue(int length, bool isPlp, out byte[] value)
         {
-            bytes = null;
-            int offset = 0;
-            byte[] temp = null;
-            (bool canContinue, bool isStarting, bool isContinuing) = GetSnapshotStatuses();
-            if (canContinue)
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+
+            byte[] buf = null;
+            RequestContinue(true);
+            (bool canContinue, bool _, bool isContinuing) = GetSnapshotStatuses();
+
+            if (isPlp)
             {
-                temp = TryTakeSnapshotStorage() as byte[];
-                Debug.Assert(temp != null || !isContinuing, "if continuing stored buffer must be present to contain previous data to continue from");
-                Debug.Assert(bytes == null || bytes.Length == length, "stored buffer length must be null or must have been created with the correct length");
-                
-                if (temp != null)
+                bool compatibilityMode = LocalAppContextSwitches.UseCompatibilityAsyncBehaviour;
+                TdsOperationStatus result = TryReadPlpBytes(ref buf, 0, int.MaxValue, out length, canContinue && !compatibilityMode, canContinue && !compatibilityMode, compatibilityMode);
+                if (result != TdsOperationStatus.Done)
                 {
-                    offset = GetSnapshotTotalSize();
+                    value = null;
+                    return result;
                 }
+
+                AssertValidState();
             }
-
-
-            if (temp == null)
+            else
             {
-                temp = new byte[length];
-            }
-
-            TdsOperationStatus result = TryReadByteArray(temp, length, out _, offset, isStarting || isContinuing);
-
-            if (result == TdsOperationStatus.Done)
-            {
-                bytes = temp;
-            }
-            else if (result == TdsOperationStatus.NeedMoreData)
-            {
+                int startOffset = 0;
                 if (canContinue)
                 {
-                    SetSnapshotStorage(temp);
+                    buf = TryTakeSnapshotStorage() as byte[];
+                    Debug.Assert(buf != null || !isContinuing, "if continuing stored buffer must be present to contain previous data to continue from");
+                    Debug.Assert(buf == null || buf.Length == length, "stored buffer length must be null or must have been created with the correct length");
+
+                    if (buf != null)
+                    {
+                        startOffset = GetSnapshotTotalSize();
+                    }
                 }
+
+                if (buf == null || buf.Length < length)
+                {
+                    buf = new byte[length];
+                }
+
+                TdsOperationStatus result = TryReadByteArray(buf, length, out _, startOffset, canContinue);
+
+                if (result != TdsOperationStatus.Done)
+                {
+                    if (result == TdsOperationStatus.NeedMoreData)
+                    {
+                        if (canContinue)
+                        {
+                            SetSnapshotStorage(buf);
+                        }
+                    }
+                    value = null;
+                    return result;
+                }
+
+                AssertValidState();
+
             }
 
-            return result;
+            value = buf;
+            return TdsOperationStatus.Done;
         }
 
         // Takes no arguments and returns a byte from the buffer.  If the buffer is empty, it is filled
@@ -1955,7 +1977,7 @@ namespace Microsoft.Data.SqlClient
 
             if (((_inBytesUsed + cBytes) > _inBytesRead) || (_inBytesPacket < cBytes))
             {
-                TdsOperationStatus result = TryReadByteArrayWithContinue(cBytes, out buf);
+                TdsOperationStatus result = TryReadByteArrayWithContinue(cBytes, isPlp: false, out buf);
                 if (result != TdsOperationStatus.Done)
                 {
                     value = null;
@@ -2849,7 +2871,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // previous buffer is in snapshot
-                _inBuff = new byte[_inBuff.Length];
+                NewBuffer(_inBuff.Length);
                 result = TdsOperationStatus.NeedMoreData;
             }
 
