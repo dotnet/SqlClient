@@ -18,37 +18,6 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlConnection : DbConnection
     {
-        internal DbConnectionInternal InnerConnection
-        {
-            get
-            {
-                return _innerConnection;
-            }
-        }
-
-        internal DbConnectionPoolGroup PoolGroup
-        {
-            get
-            {
-                return _poolGroup;
-            }
-            set
-            {
-                // when a poolgroup expires and the connection eventually activates, the pool entry will be replaced
-                Debug.Assert(value != null, "null poolGroup");
-                _poolGroup = value;
-            }
-        }
-
-
-        internal DbConnectionOptions UserConnectionOptions
-        {
-            get
-            {
-                return _userConnectionOptions;
-            }
-        }
-
         // Open->ClosedPreviouslyOpened, and doom the internal connection too...
         internal void Abort(Exception e)
         {

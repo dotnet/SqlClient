@@ -17,37 +17,6 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlConnection : DbConnection
     {
-        internal DbConnectionInternal InnerConnection
-        {
-            get
-            {
-                return _innerConnection;
-            }
-        }
-
-        internal DbConnectionPoolGroup PoolGroup
-        {
-            get
-            {
-                return _poolGroup;
-            }
-            set
-            {
-                Debug.Assert(value != null, "null poolGroup");
-                _poolGroup = value;
-            }
-        }
-
-
-        internal DbConnectionOptions UserConnectionOptions
-        {
-            get
-            {
-                return _userConnectionOptions;
-            }
-        }
-
-
         internal void Abort(Exception e)
         {
             DbConnectionInternal innerConnection = _innerConnection;

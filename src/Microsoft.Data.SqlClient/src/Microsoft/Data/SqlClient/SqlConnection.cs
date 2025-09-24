@@ -433,6 +433,21 @@ namespace Microsoft.Data.SqlClient
 
         internal DbConnectionOptions ConnectionOptions => PoolGroup?.ConnectionOptions;
 
+        internal DbConnectionOptions UserConnectionOptions => _userConnectionOptions;
+
+        internal DbConnectionInternal InnerConnection => _innerConnection;
+
+        internal DbConnectionPoolGroup PoolGroup
+        {
+            get => _poolGroup;
+            set
+            {
+                // When a poolgroup expires and the connection eventually activates, the pool entry will be replaced
+                Debug.Assert(value != null, "null poolGroup");
+                _poolGroup = value;
+            }
+        }
+
         /// <summary>
         /// Get enclave attestation url to be used with enclave based Always Encrypted
         /// </summary>
