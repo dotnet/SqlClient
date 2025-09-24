@@ -816,7 +816,7 @@ namespace Microsoft.Data.Common
 
         internal static readonly string[] s_azureSynapseOnDemandEndpoints = [.. s_azureSqlServerOnDemandEndpoints, .. s_azureSynapseEndpoints];
 
-        internal static bool C(string dataSource)
+        internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
         {
             return IsEndpoint(dataSource, s_azureSynapseOnDemandEndpoints)
                 || dataSource.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase) >= 0; 
