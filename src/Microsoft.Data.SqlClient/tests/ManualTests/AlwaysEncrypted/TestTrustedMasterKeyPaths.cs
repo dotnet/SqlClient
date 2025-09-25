@@ -12,46 +12,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private readonly string dummyThumbprint;
         private readonly string tableName;
         private readonly string columnMasterKeyPath;
-
-        private static void Log(
-            string message,
-            [CallerMemberName] string who = "")
-        {
-            StringBuilder builder = new();
-            builder.Append(DateTime.UtcNow.ToString("HH:mm:ss.fff"));
-            builder.Append(' ');
-            builder.Append(nameof(TestTrustedMasterKeyPaths));
-            builder.Append('.');
-            builder.Append(who);
-            builder.Append("(): ");
-            builder.Append(message);
-            Console.WriteLine(builder.ToString());
-        }
-    
-        private static void LogStart(
-            [CallerMemberName] string who = "")
-        {
-            Log("Start", who);
-        }
-        private static void LogEnd(
-            [CallerMemberName] string who = "")
-        {
-            Log("End", who);
-        }
-        
         public TestTrustedMasterKeyPaths(SQLSetupStrategyCertStoreProvider fixture)
         {
-            LogStart();
-
-            Log("Getting store location current user...");
-            var user = StoreLocation.CurrentUser.ToString();
-            Log($"Store location current user: {user}");
-
             dummyThumbprint = new string('F', fixture.ColumnMasterKeyCertificate.Thumbprint.Length);
             columnMasterKeyPath = fixture.ColumnMasterKeyPath;
             tableName = fixture.TrustedMasterKeyPathsTestTable.Name;
-
-            LogEnd();
         }
 
         /// <summary>
@@ -60,7 +25,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <param name="sqlDataReader"></param>
         private void ValidateResultSet(SqlDataReader sqlDataReader)
         {
-            LogStart();
             // Validate the result set
             int rowsFound = 0;
             while (sqlDataReader.Read())
@@ -79,7 +43,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 rowsFound++;
             }
             Assert.True(rowsFound == 1, "Incorrect number of rows returned in first execution.");
-            LogEnd();
         }
 
         [PlatformSpecific(TestPlatforms.Windows)]
@@ -87,7 +50,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithNullDictionary(string connection)
         {
-            LogStart();
             SqlConnectionStringBuilder connBuilder = new SqlConnectionStringBuilder(connection);
             connBuilder.ConnectTimeout = 10000;
             string connStringNow = connBuilder.ToString();
@@ -120,7 +82,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
             // Clear out trusted key paths
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Clear();
-            LogEnd();
         }
 
         [PlatformSpecific(TestPlatforms.Windows)]
@@ -128,7 +89,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithOneServer(string connection)
         {
-            LogStart();
             SqlConnectionStringBuilder connBuilder = new SqlConnectionStringBuilder(connection);
             connBuilder.ConnectTimeout = 10000;
             string connStringNow = connBuilder.ToString();
@@ -168,7 +128,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
             // Clear out trusted key paths
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Clear();
-            LogEnd();
         }
 
         [PlatformSpecific(TestPlatforms.Windows)]
@@ -176,7 +135,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithMultipleServers(string connection)
         {
-            LogStart();
             SqlConnectionStringBuilder connBuilder = new SqlConnectionStringBuilder(connection);
             connBuilder.ConnectTimeout = 10000;
             string connStringNow = connBuilder.ToString();
@@ -229,7 +187,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
             // Clear out trusted key paths
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Clear();
-            LogEnd();
         }
 
         [PlatformSpecific(TestPlatforms.Windows)]
@@ -237,7 +194,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithInvalidInputs(string connection)
         {
-            LogStart();
             SqlConnectionStringBuilder connBuilder = new SqlConnectionStringBuilder(connection);
             connBuilder.ConnectTimeout = 10000;
             string connStringNow = connBuilder.ToString();
@@ -343,7 +299,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             // Clear out trusted key paths
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Clear();
-            LogEnd();
         }
     }
 }
