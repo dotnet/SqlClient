@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient
     /// <content>
     /// This partial contains the methods related to ExecuteScalar public API.
     /// </content>
-    public partial class SqlCommand
+    public sealed partial class SqlCommand
     {
         #region Public/Internal Methods
 
@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient
             using var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction);
             #endif
 
-            using var _ = TryEventScope.Create($"SqlCommand.ExecuteScalar | API | Object Id {ObjectID}");
+            using var eventScope = TryEventScope.Create($"SqlCommand.ExecuteScalar | API | Object Id {ObjectID}");
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.ExecuteScalar | API | Correlation | " +
                 $"Object Id {ObjectID}, " +
