@@ -78,13 +78,3 @@ variables:
     value: $(Major).$(Minor).$(Patch).$(assemblyBuildNumber)
   - name: nuspecPath
     value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'
-
-  # TODO(ADO-38703): Remove these when the other pipeline changes arrive.
-  - name: baseBuildNumber
-    value: $[ split(variables['Build.BuildNumber'], '.')[0] ]
-  - name: abstractionsPackageVersion
-    value: 1.0.0.$(baseBuildNumber)
-  - name: mdsPackageVersion
-    value: $(NugetPackageVersion)
-  - name: akvPackageVersion
-    value: $(NugetPackageVersion)
