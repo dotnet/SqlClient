@@ -9,14 +9,12 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.FeatureExtAck;
 using Microsoft.SqlServer.TDS.Login7;
-using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
@@ -619,6 +617,79 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 Assert.Throws<InvalidOperationException>(() => connection.Open());
             }
+        }
+
+        // Test to verify that the client sends a UserAgent version
+        // and driver behaves correctly even if server sent an Ack
+        [Theory]
+        [InlineData(false)] // We do not force test server to send an Ack
+        [InlineData(true)] // Server is forced to send an Ack
+        public void TestConnWithUserAgentFeatureExtension(bool forceAck)
+        {
+            using var server = TestTdsServer.StartTestServer();
+
+            // Configure the server to support UserAgent version 0x01
+            server.ServerSupportedUserAgentFeatureExtVersion = 0x01;
+
+            // Opt in to forced ACK for UserAgentSupport (no negotiation)
+            server.EmitUserAgentFeatureExtAck = forceAck;
+
+            bool loginFound = false;
+
+            // Captured from LOGIN7 as parsed by the test server
+            byte observedVersion = 0;
+            byte[] observedJsonBytes = Array.Empty<byte>();
+
+            // Inspect what the client sends in the LOGIN7 packet
+            server.OnLogin7Validated = loginToken =>
+            {
+                var token = loginToken.FeatureExt
+                                      .OfType<TDSLogin7GenericOptionToken>()
+                                      .FirstOrDefault(t => t.FeatureID == TDSFeatureID.UserAgentSupport);
+                
+
+                // Test should fail if no UserAgent FE token is found
+                Assert.NotNull(token);
+
+                Assert.Equal((byte)TDSFeatureID.UserAgentSupport, (byte)token.FeatureID);
+
+                // Layout: [0] = version byte, rest = UTF-8 JSON blob
+                Assert.True(token.Data.Length >= 2, "UserAgent token is too short");
+                
+                observedVersion = token.Data[0];
+                Assert.Equal(0x1, observedVersion);
+
+                observedJsonBytes = token.Data.AsSpan(1).ToArray();
+                loginFound = true;
+            };
+
+            // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
+            using var connection = new SqlConnection(server.ConnectionString);
+            connection.Open();
+
+            // Verify client did offer UserAgent
+            Assert.True(loginFound, "Expected UserAgent extension in LOGIN7");
+
+            // Verify the connection itself succeeded
+            Assert.Equal(ConnectionState.Open, connection.State);
+
+            // Note: Accessing UserAgentInfo via Reflection.
+            // We cannot use InternalsVisibleTo here because making internals visible to FunctionalTests
+            // causes the *.TestHarness.cs stubs to clash with the real internal types in SqlClient.
+            var asm = typeof(SqlConnection).Assembly;
+            var userAgentInfoType =
+                asm.GetTypes().FirstOrDefault(t => string.Equals(t.Name, "UserAgentInfo", StringComparison.Ordinal)) ??
+                asm.GetTypes().FirstOrDefault(t => t.FullName?.EndsWith(".UserAgentInfo", StringComparison.Ordinal) == true);
+
+            Assert.NotNull(userAgentInfoType);
+            
+            // Try to get the property
+            var prop = userAgentInfoType.GetProperty("UserAgentCachedJsonPayload",
+                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            Assert.NotNull(prop);
+
+            ReadOnlyMemory<byte> cachedPayload = (ReadOnlyMemory<byte>)prop.GetValue(null)!;
+            Assert.Equal(cachedPayload.ToArray(), observedJsonBytes.ToArray());
         }
     }
 }
