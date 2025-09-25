@@ -426,7 +426,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionDatabase/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Xml)]
+        [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionDatabase
         {
             get => _xmlSchemaCollection?.Database ?? string.Empty;
@@ -434,7 +434,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionOwningSchema/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Xml)]
+        [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionOwningSchema
         {
             get => _xmlSchemaCollection?.OwningSchema ?? string.Empty;
@@ -442,7 +442,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionName/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Xml)]
+        [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionName
         {
             get => _xmlSchemaCollection?.Name ?? string.Empty;
@@ -452,7 +452,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ForceColumnEncryption/*' />
         [
         DefaultValue(false),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data)
+        ResCategory(nameof(Strings.DataCategory_Data))
         ]
         public bool ForceColumnEncryption
         {
@@ -479,7 +479,7 @@ namespace Microsoft.Data.SqlClient
         public override void ResetDbType() => ResetSqlDbType();
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ParameterName/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         public override string ParameterName
         {
             get => _parameterName ?? string.Empty;
@@ -540,7 +540,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Precision/*' />
         [
         DefaultValue((byte)0),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data)
+        ResCategory(nameof(Strings.DataCategory_Data))
         ]
         public new byte Precision
         {
@@ -553,7 +553,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Scale/*' />
         [
         DefaultValue((byte)0),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data)
+        ResCategory(nameof(Strings.DataCategory_Data))
         ]
         public new byte Scale
         {
@@ -600,7 +600,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlDbType/*' />
         [
         RefreshProperties(RefreshProperties.All),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data),
+        ResCategory(nameof(Strings.DataCategory_Data)),
         DbProviderSpecificTypeProperty(true)
         ]
         public SqlDbType SqlDbType
@@ -720,7 +720,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Value/*' />
         [
         RefreshProperties(RefreshProperties.All),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data),
+        ResCategory(nameof(Strings.DataCategory_Data)),
         TypeConverter(typeof(StringConverter)),
         ]
         public override object Value
@@ -790,7 +790,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Direction/*' />
         [
         RefreshProperties(RefreshProperties.All),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data),
+        ResCategory(nameof(Strings.DataCategory_Data)),
         ]
         public override ParameterDirection Direction
         {
@@ -837,7 +837,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Size/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         public override int Size
         {
             get
@@ -880,7 +880,7 @@ namespace Microsoft.Data.SqlClient
         private bool ShouldSerializeSize() => _size != 0;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumn/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Update)]
+        [ResCategory(nameof(Strings.DataCategory_Update))]
         public override string SourceColumn
         {
             get => _sourceColumn ?? string.Empty;
@@ -888,9 +888,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />   
-        [ResCategory("DataCategory_Update")]
+        [ResCategory(nameof(Strings.DataCategory_Update))]
 #if NET
-        [ResDescription(StringsHelper.ResourceNames.SqlParameter_SourceColumnNullMapping)]
+        [ResDescription(nameof(Strings.SqlParameter_SourceColumnNullMapping))]
 #endif
         public override bool SourceColumnNullMapping
         {
@@ -903,7 +903,7 @@ namespace Microsoft.Data.SqlClient
         public override string ToString() => ParameterName;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceVersion/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Update)]
+        [ResCategory(nameof(Strings.DataCategory_Update))]
         public override DataRowVersion SourceVersion
         {
             get
