@@ -1705,8 +1705,11 @@ namespace Microsoft.Data.SqlClient
                         continue;
                     }
 
+                    // If state != closed, indicates that the parser encountered an error while processing the
+                    // login response (e.g. an explicit error token). Transient network errors that impact 
+                    // connectivity will result in parser state being closed.
                     if (_parser == null
-                        || TdsParserState.Closed != _parser.State
+                        || _parser.State != TdsParserState.Closed
                         || IsDoNotRetryConnectError(sqlex)
                         || timeout.IsExpired)
                     {
@@ -1995,6 +1998,9 @@ namespace Microsoft.Data.SqlClient
                         throw;  // Caller will call LoginFailure()
                     }
 
+                    // TODO: It doesn't make sense to connect to an azure sql server instance with a failover partner
+                    // specified. Azure SQL Server does not support failover partners. Other availability technologies
+                    // like Failover Groups should be used instead.
                     if (!ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource) && IsConnectionDoomed)
                     {
                         throw;

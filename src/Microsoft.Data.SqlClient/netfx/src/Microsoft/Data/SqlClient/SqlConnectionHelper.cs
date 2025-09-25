@@ -36,26 +36,6 @@ namespace Microsoft.Data.SqlClient
             _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;
         }
 
-        // Copy Constructor
-        private void CopyFrom(SqlConnection connection)
-        { // V1.2.3300
-            ADP.CheckArgumentNull(connection, "connection");
-            _userConnectionOptions = connection.UserConnectionOptions;
-            _poolGroup = connection.PoolGroup;
-
-            // SQLBU 432115
-            //  Match the original connection's behavior for whether the connection was never opened,
-            //  but ensure Clone is in the closed state.
-            if (DbConnectionClosedNeverOpened.SingletonInstance == connection._innerConnection)
-            {
-                _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;
-            }
-            else
-            {
-                _innerConnection = DbConnectionClosedPreviouslyOpened.SingletonInstance;
-            }
-        }
-
         /// <devdoc>We use the _closeCount to avoid having to know about all our
         ///  children; instead of keeping a collection of all the objects that
         ///  would be affected by a close, we simply increment the _closeCount
@@ -309,27 +289,6 @@ namespace Microsoft.Data.SqlClient
         internal DbMetaDataFactory GetMetaDataFactoryInternal(DbConnectionInternal internalConnection)
         {
             return GetMetaDataFactory(internalConnection);
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchema2/*' />
-        override public DataTable GetSchema()
-        {
-            return this.GetSchema(DbMetaDataCollectionNames.MetaDataCollections, null);
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionName/*' />
-        override public DataTable GetSchema(string collectionName)
-        {
-            return this.GetSchema(collectionName, null);
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValues/*' />
-        override public DataTable GetSchema(string collectionName, string[] restrictionValues)
-        {
-            // NOTE: This is virtual because not all providers may choose to support
-            //       returning schema data
-            SqlConnection.ExecutePermission.Demand();
-            return InnerConnection.GetSchema(ConnectionFactory, PoolGroup, this, collectionName, restrictionValues);
         }
 
         internal void NotifyWeakReference(int message)
