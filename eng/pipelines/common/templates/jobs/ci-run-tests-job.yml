@@ -76,7 +76,6 @@ parameters:
   # The timeout, in minutes, for this job.
   - name: timeout
     type: string
-    default: 90
 
 jobs:
 - job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.image, 'unknown_image')) }}

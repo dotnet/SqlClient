@@ -83,9 +83,8 @@ parameters:
   default: false
 
 # The timeout, in minutes, for each test job.
-- name: testsTimeout
+- name: testJobTimeout
   type: string
-  default: 90
 
 variables:
   - template: libraries/ci-build-variables.yml@self
@@ -95,6 +94,14 @@ variables:
 
   - name: defaultHostedPoolName
     value: 'Azure Pipelines'
+
+  # If the build configuration is Debug, double the test job timeout value.
+  # Some of our tests currently take much longer to run in Debug mode.
+  - name: testJobTimeout
+    ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
+      value: $[ mul(parameters.testJobTimeout, 2) ]
+    ${{ else }}:
+      value: ${{ parameters.testJobTimeout }}
 
 stages:
   - stage: build_nugets
@@ -125,7 +132,7 @@ stages:
     parameters:
       debug: ${{ parameters.debug }}
       buildType: ${{ parameters.buildType }}
-      testsTimeout: ${{ parameters.testsTimeout }}
+      testJobTimeout: $(testJobTimeout)
       ${{ if eq(parameters.buildType, 'Package') }}:
         dependsOn: build_nugets
 

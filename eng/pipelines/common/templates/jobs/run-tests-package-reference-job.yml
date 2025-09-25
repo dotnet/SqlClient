@@ -23,7 +23,6 @@ parameters:
   # The timeout, in minutes, for this job.
   - name: timeout
     type: string
-    default: 90
 
 jobs:
 - job: run_tests_package_reference

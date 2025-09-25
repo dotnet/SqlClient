@@ -66,8 +66,8 @@ parameters:
   default: false
 
 # The timeout, in minutes, for each test job.
-- name: testsTimeout
-  displayName: 'Tests timeout (in minutes)'
+- name: testJobTimeout
+  displayName: 'Test job timeout (in minutes)'
   type: string
   default: 90
 
@@ -84,4 +84,4 @@ extends:
     buildType: ${{ parameters.buildType }}
     buildConfiguration: ${{ parameters.buildConfiguration }}
     enableStressTests: ${{ parameters.enableStressTests }}
-    testsTimeout: ${{ parameters.testsTimeout }}
+    testJobTimeout: ${{ parameters.testJobTimeout }}
