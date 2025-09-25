@@ -95,14 +95,6 @@ variables:
   - name: defaultHostedPoolName
     value: 'Azure Pipelines'
 
-  # If the build configuration is Debug, double the test job timeout value.
-  # Some of our tests currently take much longer to run in Debug mode.
-  - name: actualTestJobTimeout
-    ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
-      value: ${{ mul(parameters.testJobTimeout, 2) }}
-    ${{ else }}:
-      value: ${{ parameters.testJobTimeout }}
-
 stages:
   - stage: build_nugets
     displayName: 'Build NuGet Packages'
@@ -132,7 +124,7 @@ stages:
     parameters:
       debug: ${{ parameters.debug }}
       buildType: ${{ parameters.buildType }}
-      testJobTimeout: ${{ variables.actualTestJobTimeout }}
+      testJobTimeout: ${{ parameters.testJobTimeout }}
       ${{ if eq(parameters.buildType, 'Package') }}:
         dependsOn: build_nugets
 
