@@ -4,7 +4,7 @@
 
 namespace Microsoft.SqlServer.TDS.Servers
 {
-    public enum FederatedAuthenticationNegativeTDSScenarioType : int
+    public enum FederatedAuthenticationNegativeTdsScenarioType : int
     {
         /// <summary>
         /// Valid Scenario. Do not perform negative activity.

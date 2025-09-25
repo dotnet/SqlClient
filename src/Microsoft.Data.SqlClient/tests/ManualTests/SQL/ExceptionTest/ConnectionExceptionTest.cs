@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -23,8 +24,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsNotKerberos))]
         public void TestConnectionStateWithErrorClass20()
         {
-            using TestTdsServer server = TestTdsServer.StartTestServer();
-            using SqlConnection conn = new(server.ConnectionString);
+            using TdsServer server = new TdsServer();
+            server.Start();
+            using SqlConnection conn = new(
+                new SqlConnectionStringBuilder
+                {
+                    DataSource = $"localhost,{server.EndPoint.Port}",
+                    Encrypt = SqlConnectionEncryptOption.Optional
+                }.ConnectionString);
 
             conn.Open();
             SqlCommand cmd = conn.CreateCommand();
