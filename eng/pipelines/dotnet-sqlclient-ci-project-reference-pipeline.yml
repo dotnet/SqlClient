@@ -9,8 +9,12 @@ trigger:
   batch: true
   branches:
     include:
-    - main
+    # GitHub repo branch targets that will trigger CI builds.
+    - dev/*
     - feat/*
+    - main
+
+    # ADO repo branch targets that will trigger CI builds.
     - internal/main
   paths:
     include:
