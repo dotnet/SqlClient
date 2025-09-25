@@ -132,7 +132,7 @@ stages:
     parameters:
       debug: ${{ parameters.debug }}
       buildType: ${{ parameters.buildType }}
-      testJobTimeout: $(actualTestJobTimeout)
+      testJobTimeout: ${{ variables.actualTestJobTimeout }}
       ${{ if eq(parameters.buildType, 'Package') }}:
         dependsOn: build_nugets
 
