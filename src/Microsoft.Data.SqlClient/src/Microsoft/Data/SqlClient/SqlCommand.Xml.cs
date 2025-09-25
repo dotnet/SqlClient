@@ -17,6 +17,9 @@ using System.Security.Permissions;
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <content>
+    /// This partial contains the methods related to ExecuteXmlReader public API.
+    /// </content>
     public sealed partial class SqlCommand
     {
         #region Public/Internal Methods
