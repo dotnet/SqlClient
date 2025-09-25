@@ -435,8 +435,8 @@ namespace Microsoft.Data.SqlClient
         #if NETFRAMEWORK
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/NotificationAutoEnlist/*'/>
         [DefaultValue(true)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Notification)]
-        [ResDescription(StringsHelper.ResourceNames.SqlCommand_NotificationAutoEnlist)]
+        [ResCategory(nameof(Strings.DataCategory_Notification))]
+        [ResDescription(nameof(Strings.SqlCommand_NotificationAutoEnlist))]
         public bool NotificationAutoEnlist
         {
             get => _notificationAutoEnlist;

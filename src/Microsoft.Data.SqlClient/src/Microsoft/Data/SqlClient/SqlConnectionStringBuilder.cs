@@ -1833,8 +1833,8 @@ namespace Microsoft.Data.SqlClient
         [Browsable(false)]
         [DisplayName(DbConnectionStringKeywords.ConnectionReset)]
         [Obsolete("ConnectionReset has been deprecated. SqlConnection will ignore the 'connection reset' keyword and always reset the connection.")] // SQLPT 41700
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ConnectionReset)]
+        [ResCategory(nameof(Strings.DataCategory_Pooling))]
+        [ResDescription(nameof(Strings.DbConnectionString_ConnectionReset))]
         [RefreshProperties(RefreshProperties.All)]
         public bool ConnectionReset
         {
@@ -1848,8 +1848,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransparentNetworkIPResolution/*' />
         [DisplayName(DbConnectionStringKeywords.TransparentNetworkIpResolution)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_TransparentNetworkIPResolution)]
+        [ResCategory(nameof(Strings.DataCategory_Source))]
+        [ResDescription(nameof(Strings.DbConnectionString_TransparentNetworkIPResolution))]
         [RefreshProperties(RefreshProperties.All)]
         public bool TransparentNetworkIPResolution
         {
@@ -1863,8 +1863,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/NetworkLibrary/*' />
         [DisplayName(DbConnectionStringKeywords.NetworkLibrary)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Advanced)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_NetworkLibrary)]
+        [ResCategory(nameof(Strings.DataCategory_Advanced))]
+        [ResDescription(nameof(Strings.DbConnectionString_NetworkLibrary))]
         [RefreshProperties(RefreshProperties.All)]
         [TypeConverter(typeof(NetworkLibraryConverter))]
         public string NetworkLibrary
