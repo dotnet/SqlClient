@@ -22,7 +22,7 @@ parameters:
 
   # The timeout, in minutes, for this job.
   - name: timeout
-    type: string
+    type: number
 
 jobs:
 - job: run_tests_package_reference

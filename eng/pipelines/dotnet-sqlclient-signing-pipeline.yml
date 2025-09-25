@@ -65,7 +65,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 # The timeout, in minutes, for each test job.
 - name: testJobTimeout
   displayName: 'Test job timeout (in minutes)'
-  type: string
+  type: number
   default: 90
 
 variables:

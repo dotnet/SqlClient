@@ -78,9 +78,11 @@ stages:
     parameters:
       buildType: Project
       buildConfiguration: Release
+      testJobTimeout: 90
 
   # CI run using package references.
   - template: dotnet-sqlclient-ci-core.yml@self
     parameters:
       buildType: Package
       buildConfiguration: Release
+      testJobTimeout: 90

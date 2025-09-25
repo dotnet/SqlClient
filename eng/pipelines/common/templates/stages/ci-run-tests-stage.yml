@@ -32,7 +32,7 @@ parameters:
 
   # The timeout, in minutes, for each test job.
   - name: testJobTimeout
-    type: string
+    type: number
 
 stages:
 - ${{ each config in parameters.testConfigurations }}:
