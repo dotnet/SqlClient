@@ -99,7 +99,7 @@ variables:
   # Some of our tests currently take much longer to run in Debug mode.
   - name: actualTestJobTimeout
     ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
-      value: $[ mul(parameters.testJobTimeout, 2) ]
+      value: ${{ mul(parameters.testJobTimeout, 2) }}
     ${{ else }}:
       value: ${{ parameters.testJobTimeout }}
 
