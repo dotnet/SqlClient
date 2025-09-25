@@ -56,7 +56,7 @@ with (system_versioning = on(history_table = dbo.{destinationHistoryTable}));
                             SqlException sqlEx = Assert.Throws<SqlException>(() => bulkcopy.WriteToServer(reader));
 
                             Assert.Equal(13536, sqlEx.Number);
-                            Assert.StartsWith($"Cannot insert an explicit value into a GENERATED ALWAYS column in table, sqlEx.Message);
+                            Assert.StartsWith("Cannot insert an explicit value into a GENERATED ALWAYS column in table", sqlEx.Message);
                         }
                     }
                 }
