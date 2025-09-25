@@ -153,7 +153,7 @@ namespace Microsoft.Data.SqlClient
             EnclaveDHInfo = new EnclaveDiffieHellmanInfo(attestationInfo, offset);
             offset += Convert.ToInt32(EnclaveDHInfo.Size);
 
-            Debug.Assert(offset == attestationInfo.Length);
+            Debug.Assert(offset == attestationInfo.Length, $"{offset} == {attestationInfo.Length}");
         }
     }
 
