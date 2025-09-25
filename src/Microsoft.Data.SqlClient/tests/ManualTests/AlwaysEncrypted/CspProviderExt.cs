@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [MemberData(nameof(TestEncryptDecryptWithCsp_Data))]
         public void TestEncryptDecryptWithCsp(string connectionString, string providerName, int providerType)
         {
-            string keyIdentifier = DataTestUtility.GetUniqueNameForSqlServer("CSP");
+            string keyIdentifier = DataTestUtility.GetLongName("CSP");
             CspParameters namedCspParameters = new CspParameters(providerType, providerName, keyIdentifier);
             using SQLSetupStrategyCspProvider sqlSetupStrategyCsp = new SQLSetupStrategyCspProvider(namedCspParameters);
 
