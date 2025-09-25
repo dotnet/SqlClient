@@ -48,15 +48,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Encrypt = false,
             };
             using SqlConnection connection = new(builder.ConnectionString);
-            try
-            {
-                // Act
-                connection.Open();
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
+
+            // Act
+            connection.Open();
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);

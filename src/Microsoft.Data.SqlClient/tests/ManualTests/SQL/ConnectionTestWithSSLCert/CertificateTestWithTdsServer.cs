@@ -15,6 +15,7 @@ using Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon;
 using Microsoft.SqlServer.TDS.Servers;
 using Microsoft.Win32;
 using Xunit;
+#nullable enable
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -132,11 +133,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using TdsServer server = new TdsServer(new TdsServerArguments
             {
-                #if NET9_0_OR_GREATER
-                EncryptionCertificate = X509CertificateLoader.LoadPkcs12FromFile(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),
-                #else
-                EncryptionCertificate = new X509Certificate2(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),
-                #endif
+                EncryptionCertificate = GetEncryptionCertificate(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),
                 EncryptionProtocols = connectionTestParameters.EncryptionProtocols,
                 Encryption = connectionTestParameters.TdsEncryptionType,
             });
@@ -237,6 +234,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        /// <summary>
+        /// Loads the specified certificate.
+        /// </summary>
+        /// <param name="fileName">The full path of the certificate.</param>
+        /// <param name="password">The certificate's password.</param>
+        /// <param name="keyStorageFlags">Key storage flags to apply when loading the certificate</param>
+        /// <returns>An <see cref="X509Certificate2"/> instance.</returns>
+        private X509Certificate2 GetEncryptionCertificate(string fileName, string? password, X509KeyStorageFlags keyStorageFlags)
+        {
+#if NET9_0_OR_GREATER
+            return X509CertificateLoader.LoadPkcs12FromFile(fileName, password, keyStorageFlags);
+#else
+            return new X509Certificate2(fileName, password, keyStorageFlags);
+#endif
+        }
+
         private void RemoveCertificate()
         {
             string thumbprint = File.ReadAllText(s_fullPathTothumbprint);
@@ -255,7 +268,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void RemoveForceEncryptionFromRegistryPath(string registryPath)
         {
-            RegistryKey key = Registry.LocalMachine.OpenSubKey(registryPath, true);
+            RegistryKey? key = Registry.LocalMachine.OpenSubKey(registryPath, true);
             key?.SetValue("ForceEncryption", 0, RegistryValueKind.DWord);
             key?.SetValue("Certificate", "", RegistryValueKind.String);
             ServiceController sc = new($"{s_instanceNamePrefix}{s_instanceName}");

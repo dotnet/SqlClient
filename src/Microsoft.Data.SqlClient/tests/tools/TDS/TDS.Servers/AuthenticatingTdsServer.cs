@@ -17,8 +17,8 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public AuthenticatingTdsServer() :
-            this(new AuthenticatingTdsServerArguments())
+        public AuthenticatingTdsServer() 
+            : this(new AuthenticatingTdsServerArguments())
         {
         }
 
