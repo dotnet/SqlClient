@@ -132,6 +132,7 @@ extends:
                         assemblyFileVersion: '${{ variables.assemblyFileVersion }}'
                         buildConfiguration: '${{ parameters.buildConfiguration }}'
                         akvPackageVersion: '${{ variables.akvPackageVersion }}'
+                        mdsPackageVersion: '${{ variables.mdsPackageVersion }}'
                         publishSymbols: '${{ parameters.publishSymbols }}'
                         signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'
                         signingAppRegistrationTenantId: '$(SigningAppRegistrationTenantId)'

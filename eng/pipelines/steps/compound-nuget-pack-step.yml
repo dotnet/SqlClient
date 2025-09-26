@@ -20,11 +20,11 @@ parameters:
     - name: outputDirectory
       type: string
 
-    - name: referenceType
+    # Semi-colon separated properties to pass to nuget via the -properties
+    # argument.
+    - name: properties
       type: string
-      values:
-          - Package
-          - Project
+      default: ''
 
 steps:
     # This tool is failing on OneBranch pipelines, possibly due to new
@@ -60,7 +60,7 @@ steps:
                     -SymbolPackageFormat snupkg
                     -Version ${{ parameters.packageVersion }}
                     -OutputDirectory ${{ parameters.outputDirectory }}
-                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};ReferenceType=${{ parameters.referenceType }}"
+                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};${{ parameters.properties }}"
     - ${{ else }}:
           - task: NuGetCommand@2
             displayName: 'Generate NuGet Package'
@@ -71,4 +71,4 @@ steps:
                     ${{ parameters.nuspecPath }}
                     -Version ${{ parameters.packageVersion }}
                     -OutputDirectory ${{ parameters.outputDirectory }}
-                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};ReferenceType=${{ parameters.referenceType }}"
+                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};${{ parameters.properties }}"
