@@ -148,7 +148,7 @@ namespace Interop.Windows.Sni
         public uint SniTerminate() =>
             SNITerminate();
 
-        public uint SniWaitForSslHandshakeToComplete(SNIHandle pConn, int dwMilliseconds, out uint pProtocolVersion) =>
+        public uint SniWaitForSslHandshakeToComplete(SNIHandle pConn, int dwMilliseconds, out SniSslProtocols pProtocolVersion) =>
             SNIWaitForSSLHandshakeToCompleteWrapper(pConn, dwMilliseconds, out pProtocolVersion);
 
         public uint SniWriteAsyncWrapper(SNIHandle pConn, SNIPacket pPacket) =>
@@ -299,7 +299,7 @@ namespace Interop.Windows.Sni
         private static extern uint SNIWaitForSSLHandshakeToCompleteWrapper(
             [In] SNIHandle pConn,
             int dwMilliseconds,
-            out uint pProtocolVersion);
+            out SniSslProtocols pProtocolVersion);
 
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNIWriteAsyncWrapper(SNIHandle pConn, [In] SNIPacket pPacket);

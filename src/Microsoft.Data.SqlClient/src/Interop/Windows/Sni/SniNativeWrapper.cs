@@ -376,19 +376,67 @@ namespace Microsoft.Data.SqlClient
         
         internal static uint SniTerminate() =>
             s_nativeMethods.SniTerminate();
-        
+
         internal static uint SniWaitForSslHandshakeToComplete(
             SNIHandle pConn,
             int dwMilliseconds,
-            out uint pProtocolVersion) =>
-            s_nativeMethods.SniWaitForSslHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
+            out System.Security.Authentication.SslProtocols pProtocolVersion)
+        {
+            uint returnValue = s_nativeMethods.SniWaitForSslHandshakeToComplete(pConn, dwMilliseconds, out SniSslProtocols nativeProtocolVersion);
+
+#pragma warning disable CA5398 // Avoid hardcoded SslProtocols values
+            if ((nativeProtocolVersion & SniSslProtocols.SP_PROT_TLS1_2) != 0)
+            {
+                pProtocolVersion = System.Security.Authentication.SslProtocols.Tls12;
+            }
+            else if ((nativeProtocolVersion & SniSslProtocols.SP_PROT_TLS1_3) != 0)
+            {
+#if NET
+                pProtocolVersion = System.Security.Authentication.SslProtocols.Tls13;
+#else
+                // Only .NET Core supports SslProtocols.Tls13
+                pProtocolVersion = (System.Security.Authentication.SslProtocols)0x3000;
+#endif
+            }
+            else if ((nativeProtocolVersion & SniSslProtocols.SP_PROT_TLS1_1) != 0)
+            {
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
+#endif
+                pProtocolVersion = System.Security.Authentication.SslProtocols.Tls11;
+            }
+            else if ((nativeProtocolVersion & SniSslProtocols.SP_PROT_TLS1_0) != 0)
+            {
+                pProtocolVersion = System.Security.Authentication.SslProtocols.Tls;
+#if NET8_0_OR_GREATER
+#pragma warning restore SYSLIB0039 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
+#endif
+            }
+            else if ((nativeProtocolVersion & SniSslProtocols.SP_PROT_SSL3) != 0)
+            {
+                // SSL 2.0 and 3.0 are only referenced to log a warning, not explicitly used for connections
+#pragma warning disable CS0618, CA5397
+                pProtocolVersion = System.Security.Authentication.SslProtocols.Ssl3;
+            }
+            else if ((nativeProtocolVersion & SniSslProtocols.SP_PROT_SSL2) != 0)
+            {
+                pProtocolVersion = System.Security.Authentication.SslProtocols.Ssl2;
+#pragma warning restore CS0618, CA5397
+            }
+            else
+            {
+                pProtocolVersion = System.Security.Authentication.SslProtocols.None;
+            }
+#pragma warning restore CA5398 // Avoid hardcoded SslProtocols values
+            return returnValue;
+        }
 
         internal static uint SniWritePacket(SNIHandle pConn, SNIPacket packet, bool sync) =>
             sync
                 ? s_nativeMethods.SniWriteSyncOverAsync(pConn, packet)
                 : s_nativeMethods.SniWriteAsyncWrapper(pConn, packet);
         
-        #endregion
+#endregion
 
         #region Private Methods
 
