@@ -135,9 +135,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        public static TheoryData<string, SqlRetryLogicBaseProvider> RetryExecuteWithTransactionScope_Data =>
+            RetryLogicTestHelper.GetConnectionStringAndRetryProviders(
+                numberOfRetries: 5,
+                maxInterval: TimeSpan.FromMilliseconds(100));
+
         [ActiveIssue("14588")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
+        [MemberData(nameof(RetryExecuteWithTransactionScope_Data), DisableDiscoveryEnumeration = true)]
         public void RetryExecuteWithTransScope(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;

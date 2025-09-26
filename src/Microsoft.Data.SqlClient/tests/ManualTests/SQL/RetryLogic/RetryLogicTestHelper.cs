@@ -175,11 +175,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     yield return new object[] { cnn[0], item[0] };
         }
 
-        public static IEnumerable<object[]> GetConnectionAndRetryStrategyInvalidCatalog(int numberOfRetries)
-        {
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(1), FilterSqlStatements.None, null, 250, true);
-        }
-
         public static IEnumerable<object[]> GetConnectionAndRetryStrategyInvalidCommand(int numberOfRetries)
         {
             return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromMilliseconds(100), FilterSqlStatements.None, null);
