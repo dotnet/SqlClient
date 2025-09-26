@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -77,6 +78,64 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         internal static readonly string s_exceedErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryExceeded;
         internal static readonly string s_cancelErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryCanceled;
+
+        public static TheoryData<string, SqlRetryLogicBaseProvider> GetConnectionStringAndRetryProviders(
+            int numberOfRetries,
+            TimeSpan maxInterval,
+            TimeSpan? deltaTime = null,
+            IEnumerable<int> transientErrors = null,
+            FilterSqlStatements unauthorizedStatements = FilterSqlStatements.None)
+        {
+            var option = new SqlRetryLogicOption
+            {
+                NumberOfTries = numberOfRetries,
+                DeltaTime = deltaTime ?? TimeSpan.FromMilliseconds(10),
+                MaxTimeInterval = maxInterval,
+                TransientErrors = transientErrors ?? s_defaultTransientErrors,
+                AuthorizedSqlCondition = RetryPreConditon(unauthorizedStatements)
+            };
+
+            var result = new TheoryData<string, SqlRetryLogicBaseProvider>();
+            foreach (var connectionString in GetConnectionStringsTyped())
+            {
+                foreach (var retryProvider in GetRetryStrategiesTyped(option))
+                {
+                    result.Add(connectionString, retryProvider);
+                }
+            }
+
+            return result;
+        }
+
+        public static TheoryData<string, SqlRetryLogicBaseProvider> GetNonRetriableCases() =>
+            new TheoryData<string, SqlRetryLogicBaseProvider>
+            {
+                { DataTestUtility.TCPConnectionString, null },
+                { DataTestUtility.TCPConnectionString, SqlConfigurableRetryFactory.CreateNoneRetryProvider() }
+            };
+
+        private static IEnumerable<string> GetConnectionStringsTyped()
+        {
+            var builder = new SqlConnectionStringBuilder();
+            foreach (var connectionString in DataTestUtility.GetConnectionStrings(withEnclave: false))
+            {
+                builder.Clear();
+                builder.ConnectionString = connectionString;
+                builder.ConnectTimeout = 5;
+                builder.Pooling = false;
+                yield return builder.ConnectionString;
+
+                builder.Pooling = true;
+                yield return builder.ConnectionString;
+            }
+        }
+
+        private static IEnumerable<SqlRetryLogicBaseProvider> GetRetryStrategiesTyped(SqlRetryLogicOption option)
+        {
+            yield return SqlConfigurableRetryFactory.CreateExponentialRetryProvider(option);
+            yield return SqlConfigurableRetryFactory.CreateIncrementalRetryProvider(option);
+            yield return SqlConfigurableRetryFactory.CreateFixedRetryProvider(option);
+        }
 
         public static IEnumerable<object[]> GetConnectionStrings()
         {
