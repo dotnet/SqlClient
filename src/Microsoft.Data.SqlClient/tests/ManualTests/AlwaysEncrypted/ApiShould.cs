@@ -3157,7 +3157,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 bool unexpected = false;
                 foreach (Exception ex in aggregateException.InnerExceptions)
                 {
-                    if (ex is SqlException or OperationCanceledException)
+                    if (ex is SqlException or InvalidOperationException)
                     {
                         Assert.Equal("Operation cancelled by user.", ex.Message);
                     }
