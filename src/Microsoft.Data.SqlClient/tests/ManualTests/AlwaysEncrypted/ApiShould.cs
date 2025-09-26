@@ -3157,14 +3157,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 bool unexpected = false;
                 foreach (Exception ex in aggregateException.InnerExceptions)
                 {
-                    if (ex is not SqlException)
+                    if (ex is SqlException or OperationCanceledException)
                     {
-                        unexpected = true;
-                        Console.WriteLine($"Cancellation produced non-SqlException: {ex}");
+                        Assert.Equal("Operation cancelled by user.", ex.Message);
                     }
                     else
                     {
-                        Assert.True(@"Operation cancelled by user." == ex.Message, @"cancelling a command through cancellation token resulted in unexpected error message.");
+                        unexpected = true;
+                        Console.WriteLine($"Cancellation produced non-SqlException: {ex}");
                     }
                 }
                 if (unexpected)
