@@ -133,10 +133,10 @@ namespace Microsoft.Data.SqlClient
             Action onSuccess,
             Action<Exception> onFailure = null,
             Action onCancellation = null,
-#if NET
-            Func<Exception, Exception> exceptionConverter = null
-#else
             Func<Exception, Exception> exceptionConverter = null,
+#if NET
+            SqlInternalConnectionTds connectionToDoom = null
+#else
             SqlInternalConnectionTds connectionToDoom = null,
             SqlConnection connectionToAbort = null
 #endif
