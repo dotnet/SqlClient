@@ -450,9 +450,13 @@ namespace Microsoft.Data.SqlClient
             if (_connHandler.ConnectionOptions.TransparentNetworkIPResolution && !disableTnir)
             {
                 if (isFirstTransparentAttempt)
+                {
                     transparentNetworkResolutionState = TransparentNetworkResolutionState.SequentialMode;
+                }
                 else
+                {
                     transparentNetworkResolutionState = TransparentNetworkResolutionState.ParallelMode;
+                }
             }
             else
             {
@@ -1659,7 +1663,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         // If using Async & MARS and we do not own ResetEvent - grab it.  We need to not grab lock here
                         // for case where multiple packets are sent to server from one execute.
-                        stateObj._fResetEventOwned = _resetConnectionEvent.WaitOne(stateObj.GetTimeoutRemaining(), false);
+                        stateObj._fResetEventOwned = _resetConnectionEvent.WaitOne(stateObj.GetTimeoutRemaining(), exitContext: false);
 
                         if (stateObj._fResetEventOwned)
                         {
