@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Threading;
 using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.EndPoint;
 using Microsoft.SqlServer.TDS.Error;
@@ -59,38 +60,54 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Check if we're still going to raise transient error
             if (Arguments.IsEnabledTransientError && RequestCounter < Arguments.RepeatCount)
             {
-                uint errorNumber = Arguments.Number;
-                string errorMessage = Arguments.Message ?? GetErrorMessage(errorNumber);
-
-                // Log request to which we're about to send a failure
-                TDSUtilities.Log(Arguments.Log, "Request", loginRequest);
-
-                // Prepare ERROR token with the denial details
-                TDSErrorToken errorToken = new TDSErrorToken(errorNumber, 1, 20, errorMessage);
-
-                // Log response
-                TDSUtilities.Log(Arguments.Log, "Response", errorToken);
-
-                // Serialize the error token into the response packet
-                TDSMessage responseMessage = new TDSMessage(TDSMessageType.Response, errorToken);
-
-                // Create DONE token
-                TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
-
-                // Log response
-                TDSUtilities.Log(Arguments.Log, "Response", doneToken);
-
-                // Serialize DONE token into the response packet
-                responseMessage.Add(doneToken);
-
-                RequestCounter++;
-
-                // Put a single message into the collection and return it
-                return new TDSMessageCollection(responseMessage);
+                return GenerateErrorMessage(request);
             }
 
             // Return login response from the base class
             return base.OnLogin7Request(session, request);
+        }
+
+        /// <inheritdoc/>
+        public override TDSMessageCollection OnSQLBatchRequest(ITDSServerSession session, TDSMessage message)
+        {
+            if (Arguments.IsEnabledTransientError && RequestCounter < Arguments.RepeatCount)
+            {
+                return GenerateErrorMessage(message);
+            }
+
+            return base.OnSQLBatchRequest(session, message);
+        }
+
+        private TDSMessageCollection GenerateErrorMessage(TDSMessage request)
+        {
+            uint errorNumber = Arguments.Number;
+            string errorMessage = Arguments.Message ?? GetErrorMessage(errorNumber);
+
+            // Log request to which we're about to send a failure
+            TDSUtilities.Log(Arguments.Log, "Request", request);
+
+            // Prepare ERROR token with the denial details
+            TDSErrorToken errorToken = new TDSErrorToken(errorNumber, 1, 20, errorMessage);
+
+            // Log response
+            TDSUtilities.Log(Arguments.Log, "Response", errorToken);
+
+            // Serialize the error token into the response packet
+            TDSMessage responseMessage = new TDSMessage(TDSMessageType.Response, errorToken);
+
+            // Create DONE token
+            TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
+
+            // Log response
+            TDSUtilities.Log(Arguments.Log, "Response", doneToken);
+
+            // Serialize DONE token into the response packet
+            responseMessage.Add(doneToken);
+
+            RequestCounter++;
+
+            // Put a single message into the collection and return it
+            return new TDSMessageCollection(responseMessage);
         }
 
         public override void Dispose() {
