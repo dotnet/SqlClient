@@ -46,7 +46,7 @@ jobs:
     displayName: 'Build Tooling'
     inputs:
       solution: '**/build.proj'
-      configuration: ${{ parameters.configuration }}
+      configuration: $(Configuration)
       msbuildArguments: -t:BuildTools
 
   # GOTCHA: This analysis step must run _before_ the build (below) step because
