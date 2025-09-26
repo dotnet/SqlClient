@@ -133,8 +133,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
         }
 
+        public static TheoryData<string, SqlRetryLogicBaseProvider> DefaultOpenWithoutRetry_Data =>
+            RetryLogicTestHelper.GetNonRetriableCases();
+
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetNoneRetriableCondition), MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
+        [MemberData(nameof(DefaultOpenWithoutRetry_Data), DisableDiscoveryEnumeration = true)]
         public void DefaultOpenWithoutRetry(string connectionString, SqlRetryLogicBaseProvider cnnProvider)
         {
             var cnnString = new SqlConnectionStringBuilder(connectionString)

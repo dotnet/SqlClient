@@ -382,8 +382,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        public static TheoryData<string, SqlRetryLogicBaseProvider> NoneRetriableExecuteFail_Data =>
+            RetryLogicTestHelper.GetNonRetriableCases();
+
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetNoneRetriableCondition), MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
+        [MemberData(nameof(NoneRetriableExecuteFail_Data), DisableDiscoveryEnumeration = true)]
         public void NoneRetriableExecuteFail(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             string query = "SELECT bad command";

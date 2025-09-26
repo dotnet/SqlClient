@@ -208,12 +208,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromMilliseconds(100), FilterSqlStatements.None, null);
         }
 
-        public static IEnumerable<object[]> GetNoneRetriableCondition()
-        {
-            yield return new object[] { DataTestUtility.TCPConnectionString, null };
-            yield return new object[] { DataTestUtility.TCPConnectionString, SqlConfigurableRetryFactory.CreateNoneRetryProvider() };
-        }
-
         private static IEnumerable<object[]> GetRetryStrategies(SqlRetryLogicOption retryLogicOption)
         {
             yield return new object[] { SqlConfigurableRetryFactory.CreateExponentialRetryProvider(retryLogicOption) };
