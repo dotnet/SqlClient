@@ -15,8 +15,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void TestByteArrayParameters()
         {
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("CMD");
-            string procName = DataTestUtility.GetUniqueNameForSqlServer("CMD");
+            string tableName = DataTestUtility.GetLongName("CMD");
+            string procName = DataTestUtility.GetLongName("CMD");
             byte[] bArray = new byte[] { 1, 2, 3 };
 
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))

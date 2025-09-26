@@ -66,12 +66,14 @@
     <MicrosoftWin32RegistryVersion>5.0.0</MicrosoftWin32RegistryVersion>
     <NewtonsoftJsonVersion>13.0.1</NewtonsoftJsonVersion>
     <SystemDataOdbcVersion>6.0.1</SystemDataOdbcVersion>
+    <SystemFormatsAsn1Version>6.0.1</SystemFormatsAsn1Version>
     <SystemRuntimeInteropServicesRuntimeInformationVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationVersion>
+    <SystemSecurityCryptographyCngVersion>5.0.0</SystemSecurityCryptographyCngVersion>
     <SystemSecurityPrincipalWindowsVersion>5.0.0</SystemSecurityPrincipalWindowsVersion>
     <SystemServiceProcessServiceControllerVersion>6.0.0</SystemServiceProcessServiceControllerVersion>
     <SystemTextEncodingCodePagesVersion>6.0.0</SystemTextEncodingCodePagesVersion>
-    <XunitVersion>2.6.3</XunitVersion>
-    <XunitrunnervisualstudioVersion>2.5.5</XunitrunnervisualstudioVersion>
+    <XunitVersion>2.9.3</XunitVersion>
+    <XunitrunnervisualstudioVersion>2.8.2</XunitrunnervisualstudioVersion>
   </PropertyGroup>
   <PropertyGroup>
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>
