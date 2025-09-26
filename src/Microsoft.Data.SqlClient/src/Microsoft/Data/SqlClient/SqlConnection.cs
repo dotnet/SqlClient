@@ -43,7 +43,18 @@ namespace Microsoft.Data.SqlClient
     {
 #if NETFRAMEWORK
         private static readonly object EventInfoMessage = new object();
+
+        internal static readonly System.Security.CodeAccessPermission ExecutePermission = SqlConnection.CreateExecutePermission();
 #endif
+        private static readonly SqlConnectionFactory s_connectionFactory = SqlConnectionFactory.Instance;
+        private static int _objectTypeCount; // EventSource Counter
+
+        private DbConnectionOptions _userConnectionOptions;
+        private DbConnectionPoolGroup _poolGroup;
+        private DbConnectionInternal _innerConnection;
+        private int _closeCount;
+
+        internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount);
 
         private bool _AsyncCommandInProgress;
 
@@ -165,6 +176,13 @@ namespace Microsoft.Data.SqlClient
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
         [ResDescription(StringsHelper.ResourceNames.TCE_SqlConnection_TrustedColumnMasterKeyPaths)]
         public static IDictionary<string, IList<string>> ColumnEncryptionTrustedMasterKeyPaths => _ColumnEncryptionTrustedMasterKeyPaths;
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*' />
+        public SqlConnection() : base()
+        {
+            GC.SuppressFinalize(this);
+            _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionString/*' />
         public SqlConnection(string connectionString) : this()
@@ -400,6 +418,33 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.NullProviderValue(key);
                 }
+            }
+        }
+
+        /// <remarks>
+        /// We use the _closeCount to avoid having to know about all our
+        /// children; instead of keeping a collection of all the objects that
+        /// would be affected by a close, we simply increment the _closeCount
+        /// and have each of our children check to see if they're "orphaned".
+        /// </remarks>
+        internal int CloseCount => _closeCount;
+
+        internal SqlConnectionFactory ConnectionFactory => s_connectionFactory;
+
+        internal DbConnectionOptions ConnectionOptions => PoolGroup?.ConnectionOptions;
+
+        internal DbConnectionOptions UserConnectionOptions => _userConnectionOptions;
+
+        internal DbConnectionInternal InnerConnection => _innerConnection;
+
+        internal DbConnectionPoolGroup PoolGroup
+        {
+            get => _poolGroup;
+            set
+            {
+                // When a poolgroup expires and the connection eventually activates, the pool entry will be replaced
+                Debug.Assert(value != null, "null poolGroup");
+                _poolGroup = value;
             }
         }
 
@@ -1424,6 +1469,30 @@ namespace Microsoft.Data.SqlClient
             return new SqlCommand(null, this);
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*' />
+        protected override DbCommand CreateDbCommand()
+        {
+            using (TryEventScope.Create("<prov.DbConnectionHelper.CreateDbCommand|API> {0}", ObjectID))
+            {
+                DbCommand command = SqlClientFactory.Instance.CreateCommand();
+                command.Connection = this;
+                return command;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*' />
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _userConnectionOptions = null;
+                _poolGroup = null;
+                Close();
+            }
+            DisposeMe(disposing);
+            base.Dispose(disposing);
+        }
+
         private void DisposeMe(bool disposing)
         {
             _credential = null;
@@ -1448,9 +1517,76 @@ namespace Microsoft.Data.SqlClient
 
 #if NETFRAMEWORK
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistDistributedTransaction/*' />
-        public void EnlistDistributedTransaction(System.EnterpriseServices.ITransaction transaction) =>
-            EnlistDistributedTransactionHelper(transaction);
+        public void EnlistDistributedTransaction(System.EnterpriseServices.ITransaction transaction)
+        {
+            PermissionSet permissionSet = new PermissionSet(PermissionState.None);
+            permissionSet.AddPermission(SqlConnection.ExecutePermission); // MDAC 81476
+            permissionSet.AddPermission(new SecurityPermission(SecurityPermissionFlag.UnmanagedCode));
+            permissionSet.Demand();
+
+            SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.EnlistDistributedTransactionHelper|RES|TRAN> {0}, Connection enlisting in a transaction.", ObjectID);
+            System.Transactions.Transaction indigoTransaction = null;
+
+            if (transaction != null)
+            {
+                indigoTransaction = System.Transactions.TransactionInterop.GetTransactionFromDtcTransaction((System.Transactions.IDtcTransaction)transaction);
+            }
+
+            RepairInnerConnection();
+            // NOTE: since transaction enlistment involves round trips to the
+            // server, we don't want to lock here, we'll handle the race conditions
+            // elsewhere.
+            InnerConnection.EnlistTransaction(indigoTransaction);
+
+            // NOTE: If this outer connection were to be GC'd while we're
+            // enlisting, the pooler would attempt to reclaim the inner connection
+            // while we're attempting to enlist; not sure how likely that is but
+            // we should consider a GC.KeepAlive(this) here.
+            GC.KeepAlive(this);
+        }
 #endif
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistTransaction/*' />
+        public override void EnlistTransaction(System.Transactions.Transaction transaction)
+        {
+#if NETFRAMEWORK
+            SqlConnection.ExecutePermission.Demand();
+#endif
+            SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.EnlistTransaction|RES|TRAN> {0}, Connection enlisting in a transaction.", ObjectID);
+
+            // If we're currently enlisted in a transaction and we were called
+            // on the EnlistTransaction method (Whidbey) we're not allowed to
+            // enlist in a different transaction.
+
+            DbConnectionInternal innerConnection = InnerConnection;
+
+            // NOTE: since transaction enlistment involves round trips to the
+            // server, we don't want to lock here, we'll handle the race conditions
+            // elsewhere.
+            System.Transactions.Transaction enlistedTransaction = innerConnection.EnlistedTransaction;
+            if (enlistedTransaction != null)
+            {
+                // Allow calling enlist if already enlisted (no-op)
+                if (enlistedTransaction.Equals(transaction))
+                {
+                    return;
+                }
+
+                // Allow enlisting in a different transaction if the enlisted transaction has completed.
+                if (enlistedTransaction.TransactionInformation.Status == System.Transactions.TransactionStatus.Active)
+                {
+                    throw ADP.TransactionPresent();
+                }
+            }
+            RepairInnerConnection();
+            InnerConnection.EnlistTransaction(transaction);
+
+            // NOTE: If this outer connection were to be GC'd while we're
+            // enlisting, the pooler would attempt to reclaim the inner connection
+            // while we're attempting to enlist; not sure how likely that is but
+            // we should consider a GC.KeepAlive(this) here.
+            GC.KeepAlive(this);
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Open/*' />
         public override void Open() =>
@@ -1701,7 +1837,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // this is straightforward, but expensive method to do connection resiliency - it take locks and all preparations as for TDS request
-        partial void RepairInnerConnection()
+        private void RepairInnerConnection()
         {
             WaitForPendingReconnection();
             if (_connectRetryCount == 0)
@@ -1735,6 +1871,26 @@ namespace Microsoft.Data.SqlClient
                 ((IAsyncResult)completion.Item2).AsyncWaitHandle.WaitOne();
             }
             Debug.Assert(_currentCompletion == null, "After waiting for an async call to complete, there should be no completion source");
+        }
+
+        // Open->ClosedPreviouslyOpened. Also dooms the internal connection
+        internal void Abort(Exception e)
+        {
+            DbConnectionInternal innerConnection = _innerConnection;
+            if (ConnectionState.Open == innerConnection.State)
+            {
+                Interlocked.CompareExchange(ref _innerConnection, DbConnectionClosedPreviouslyOpened.SingletonInstance, innerConnection);
+                innerConnection.DoomThisConnection();
+            }
+
+            if (e is OutOfMemoryException)
+            {
+                SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: OutOfMemory", ObjectID);
+            }
+            else
+            {
+                SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: {1}", ObjectID, e);
+            }
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
@@ -2085,6 +2241,48 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
+        internal void PermissionDemand()
+        {
+            Debug.Assert(DbConnectionClosedConnecting.SingletonInstance == _innerConnection, "not connecting");
+
+            DbConnectionPoolGroup poolGroup = PoolGroup;
+            DbConnectionOptions connectionOptions = poolGroup != null ? poolGroup.ConnectionOptions : null;
+            if (connectionOptions == null || connectionOptions.IsEmpty)
+            {
+                throw ADP.NoConnectionString();
+            }
+
+            DbConnectionOptions userConnectionOptions = UserConnectionOptions;
+            Debug.Assert(userConnectionOptions != null, "null UserConnectionOptions");
+
+#if NETFRAMEWORK
+            userConnectionOptions.DemandPermission();
+#endif
+        }
+
+#if NETFRAMEWORK
+        private static CodeAccessPermission CreateExecutePermission()
+        {
+            DBDataPermission p = (DBDataPermission)SqlClientFactory.Instance.CreatePermission(PermissionState.None);
+            p.Add(string.Empty, string.Empty, KeyRestrictionBehavior.AllowOnly);
+            return p;
+        }
+
+        [Conditional("DEBUG")]
+        internal static void VerifyExecutePermission()
+        {
+            try
+            {
+                // use this to help validate this code path is only used after the following permission has been previously demanded in the current codepath
+                SqlConnection.ExecutePermission.Demand();
+            }
+            catch (System.Security.SecurityException)
+            {
+                System.Diagnostics.Debug.Assert(false, "unexpected SecurityException for current codepath");
+                throw;
+            }
+        }
+#endif
 
         //
         // INTERNAL PROPERTIES
@@ -2135,6 +2333,76 @@ namespace Microsoft.Data.SqlClient
         //
         // INTERNAL METHODS
         //
+
+        internal void AddWeakReference(object value, int tag)
+        {
+            InnerConnection.AddWeakReference(value, tag);
+        }
+
+        internal void RemoveWeakReference(object value)
+        {
+            InnerConnection.RemoveWeakReference(value);
+        }
+
+        // ClosedBusy->Closed (never opened)
+        // Connecting->Closed (exception during open, return to previous closed state)
+        internal void SetInnerConnectionTo(DbConnectionInternal to)
+        {
+            Debug.Assert(_innerConnection != null, "null InnerConnection");
+            Debug.Assert(to != null, "to null InnerConnection");
+            _innerConnection = to;
+        }
+
+        // Closed->Connecting: prevent set_ConnectionString during Open
+        // Open->OpenBusy: guarantee internal connection is returned to correct pool
+        // Closed->ClosedBusy: prevent Open during set_ConnectionString
+        internal bool SetInnerConnectionFrom(DbConnectionInternal to, DbConnectionInternal from)
+        {
+            Debug.Assert(_innerConnection != null, "null InnerConnection");
+            Debug.Assert(from != null, "from null InnerConnection");
+            Debug.Assert(to != null, "to null InnerConnection");
+
+            bool result = (from == Interlocked.CompareExchange<DbConnectionInternal>(ref _innerConnection, to, from));
+            return result;
+        }
+
+        // OpenBusy->Closed (previously opened)
+        // Connecting->Open
+        internal void SetInnerConnectionEvent(DbConnectionInternal to)
+        {
+            Debug.Assert(_innerConnection != null, "null InnerConnection");
+            Debug.Assert(to != null, "to null InnerConnection");
+
+            ConnectionState originalState = _innerConnection.State & ConnectionState.Open;
+            ConnectionState currentState = to.State & ConnectionState.Open;
+
+            if ((originalState != currentState) && (ConnectionState.Closed == currentState))
+            {
+                unchecked
+                {
+                    _closeCount++;
+                }
+            }
+
+            _innerConnection = to;
+
+            if (ConnectionState.Closed == originalState && ConnectionState.Open == currentState)
+            {
+                OnStateChange(DbConnectionInternal.StateChangeOpen);
+            }
+            else if (ConnectionState.Open == originalState && ConnectionState.Closed == currentState)
+            {
+                OnStateChange(DbConnectionInternal.StateChangeClosed);
+            }
+            else
+            {
+                Debug.Fail("unexpected state switch");
+                if (originalState != currentState)
+                {
+                    OnStateChange(new StateChangeEventArgs(originalState, currentState));
+                }
+            }
+        }
 
         internal void ValidateConnectionForExecute(string method, SqlCommand command)
         {
@@ -2223,6 +2491,42 @@ namespace Microsoft.Data.SqlClient
         //
         // PRIVATE METHODS
         //
+
+        private string ConnectionString_Get()
+        {
+            SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.ConnectionString_Get|API> {0}", ObjectID);
+            bool hidePassword = InnerConnection.ShouldHidePassword;
+            DbConnectionOptions connectionOptions = UserConnectionOptions;
+            return connectionOptions != null ? connectionOptions.UsersConnectionString(hidePassword) : "";
+        }
+
+        private void ConnectionString_Set(DbConnectionPoolKey key)
+        {
+            DbConnectionOptions connectionOptions = null;
+            DbConnectionPoolGroup poolGroup = ConnectionFactory.GetConnectionPoolGroup(key, null, ref connectionOptions);
+            DbConnectionInternal connectionInternal = InnerConnection;
+            bool flag = connectionInternal.AllowSetConnectionString;
+            if (flag)
+            {
+                // Closed->Busy: prevent Open during set_ConnectionString
+                flag = SetInnerConnectionFrom(DbConnectionClosedBusy.SingletonInstance, connectionInternal);
+                if (flag)
+                {
+                    _userConnectionOptions = connectionOptions;
+                    _poolGroup = poolGroup;
+                    _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;
+                }
+            }
+            if (!flag)
+            {
+                throw ADP.OpenConnectionPropertySet(nameof(ConnectionString), connectionInternal.State);
+            }
+
+            if (SqlClientEventSource.Log.IsTraceEnabled())
+            {
+                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Set|API> {0}, '{1}'", ObjectID, connectionOptions?.UsersConnectionStringForTrace());
+            }
+        }
 
         internal SqlInternalConnectionTds GetOpenTdsConnection()
         {

@@ -295,13 +295,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static FieldInfo GetConnectionFactoryField()
         {
-#if NET
             FieldInfo connectionFactoryField =
                 typeof(SqlConnection).GetField("s_connectionFactory", BindingFlags.Static | BindingFlags.NonPublic);
-#else
-            FieldInfo connectionFactoryField =
-                typeof(SqlConnection).GetField("_connectionFactory", BindingFlags.Static | BindingFlags.NonPublic);
-#endif
             Debug.Assert(connectionFactoryField != null);
             return connectionFactoryField;
         }
