@@ -25,14 +25,6 @@ parameters:
     - pdb
     - both
 
-  - name: assembly_file_version_netfx
-    type: string
-    default: $(mdsAssemblyFileVersion)
-
-  - name: assembly_file_version_core
-    type: string
-    default: $(mdsAssemblyFileVersion)
-
   - name: isPreview
     type: boolean
 
@@ -53,9 +45,6 @@ jobs:
   - name: pathToDownloadedNuget # path to the downloaded nuget files
     value: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
   
-  - name: ProductVersion    #MDS product version (MDS validation)
-    value: $(mdsPackageVersion)
-
   - name: BuildType
     value: $[ stageDependencies.buildMDS.build_signed_package.outputs['GetBuildType.CDP_BUILD_TYPE_COPY'] ]
 
@@ -63,8 +52,6 @@ jobs:
     - name: extractedNugetPath
       value: $(extractedNugetRootPath).$(previewMdsPackageVersion)
     - name: mdsPackageVersion
-      value: $(previewMdsPackageVersion)
-    - name: ProductVersion
       value: $(previewMdsPackageVersion)
 
   steps:
@@ -283,39 +270,29 @@ jobs:
     displayName: 'Verify all dlls status are Valid'
 
   - powershell: |
-      # This will check for ProductVersion and FileVersion.
-      #
-      # For NetFx we have a different FileVersion, but product versions are all
-      # the same.  Some may have extra numbering at the end.  We only check for
-      # the first parts.
+      # This will check each DLL's ProductVersion and FileVersion against
+      # expected values.
       $failed = 0
 
       foreach ( $pVersion in Get-ChildItem *.dll -Path $(extractedNugetPath)  -Recurse | ForEach-Object versioninfo ) 
       {
-          if ($pVersion.ProductVersion -Like '$(ProductVersion)*') 
+          if ($pVersion.ProductVersion -Like '$(mdsPackageVersion)*')
           {
               Write-Host -ForegroundColor Green "Correct ProductVersion detected for $($pVersion.FileName): $($pVersion.ProductVersion)"
           }
           else
           { 
-                Write-Host -ForegroundColor Red "Wrong ProductVersion detected for $($pVersion.FileName); expected: $(ProductVersion); found: $($pVersion.ProductVersion)"
+                Write-Host -ForegroundColor Red "Wrong ProductVersion detected for $($pVersion.FileName); expected: $(mdsPackageVersion); found: $($pVersion.ProductVersion)"
                 $failed = 1
           }
       
-          $expectedFileVersion = "${{parameters.assembly_file_version_core}}"
-
-          if ($pVersion.FileName -like '*lib\$(CurrentNetFxVersion)*')
-          {
-              $expectedFileVersion = "${{parameters.assembly_file_version_netfx}}"
-          }
-          
-          if ($pVersion.FileVersion -eq $expectedFileVersion)
+          if ($pVersion.FileVersion -eq '$(mdsAssemblyFileVersion)')
           {
               Write-Host -ForegroundColor Green "Correct FileVersion detected for $($pVersion.FileName): $($pVersion.FileVersion)"
           }
           else
           {
-              Write-Host -ForegroundColor Red "Wrong FileVersion detected for $($pVersion.FileName); expected $($expectedFileVersion); found: $($pVersion.FileVersion)"
+              Write-Host -ForegroundColor Red "Wrong FileVersion detected for $($pVersion.FileName); expected $(mdsAssemblyFileVersion); found: $($pVersion.FileVersion)"
               $failed = 1
           }
       }

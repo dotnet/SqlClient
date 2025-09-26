@@ -43,8 +43,10 @@ jobs:
   - template: ../steps/build-all-configurations-signed-dlls-step.yml@self
     parameters:
       # These values are sourced from common-variables.yml.
+      configuration: $(Configuration)
       abstractionsPackageVersion: $(abstractionsPackageVersion)
       abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
+      mdsPackageVersion: $(mdsPackageVersion)
       mdsAssemblyFileVersion: $(mdsAssemblyFileVersion)
 
   - template: ../steps/code-analyze-step.yml@self
