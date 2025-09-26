@@ -261,7 +261,9 @@ namespace Microsoft.Data.SqlClient
 
                 if (result == null)
                 {
+#pragma warning disable CS0618 // Type or member is obsolete
                     result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
+#pragma warning restore CS0618 // Type or member is obsolete
                        .WithCorrelationId(parameters.ConnectionId)
                        .ExecuteAsync(cancellationToken: cts.Token)
                        .ConfigureAwait(false);
@@ -584,7 +586,9 @@ namespace Microsoft.Data.SqlClient
                 if (tokenCredentialKey._clientId is not null)
                 {
                     defaultAzureCredentialOptions.ManagedIdentityClientId = tokenCredentialKey._clientId;
+#pragma warning disable CS0618 // Type or member is obsolete
                     defaultAzureCredentialOptions.SharedTokenCacheUsername = tokenCredentialKey._clientId;
+#pragma warning restore CS0618 // Type or member is obsolete
                     defaultAzureCredentialOptions.WorkloadIdentityClientId = tokenCredentialKey._clientId;
                 }
 
