@@ -20,6 +20,12 @@ parameters:
     - name: outputDirectory
       type: string
 
+    - name: referenceType
+      type: string
+      values:
+        - Package
+        - Project
+    
     # Semi-colon separated properties to pass to nuget via the -properties
     # argument.
     - name: properties
@@ -60,7 +66,7 @@ steps:
                     -SymbolPackageFormat snupkg
                     -Version ${{ parameters.packageVersion }}
                     -OutputDirectory ${{ parameters.outputDirectory }}
-                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};${{ parameters.properties }}"
+                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};ReferenceType=${{ parameters.referenceType }};${{ parameters.properties }}"
     - ${{ else }}:
           - task: NuGetCommand@2
             displayName: 'Generate NuGet Package'
@@ -71,4 +77,4 @@ steps:
                     ${{ parameters.nuspecPath }}
                     -Version ${{ parameters.packageVersion }}
                     -OutputDirectory ${{ parameters.outputDirectory }}
-                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};${{ parameters.properties }}"
+                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};ReferenceType=${{ parameters.referenceType }};${{ parameters.properties }}"
