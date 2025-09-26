@@ -9,17 +9,23 @@ trigger:
   batch: true
   branches:
     include:
+    # GitHub repo branch targets that will trigger CI builds.
+    - dev/*
+    - feat/*
     - main
+
+    # ADO repo branch targets that will trigger CI builds.
     - internal/main
   paths:
     include:
-    - src\Microsoft.Data.SqlClient\netcore\ref
-    - src\Microsoft.Data.SqlClient\netfx\ref
-    - src\Microsoft.Data.SqlClient\ref
+    - .azuredevops
+    - .config
+    - src
     - eng
     - tools
-    - .config
-    - Nuget.config
+    - azurepipelines-coverage.yml
+    - build.proj
+    - NuGet.config
 
 schedules:
 - cron: '0 4 * * Fri'
@@ -74,13 +80,6 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: object
   default: [net462, net8.0]
 
-- name: buildType
-  displayName: 'Build Type'
-  default: Package
-  values:
-    - Project
-    - Package
-
 - name: buildConfiguration
   displayName: 'Build Configuration'
   default: Release
@@ -109,7 +108,7 @@ extends:
     testSets: ${{ parameters.testSets }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
-    buildType: ${{ parameters.buildType }}
+    referenceType: Package
     buildConfiguration: ${{ parameters.buildConfiguration }}
     enableStressTests: ${{ parameters.enableStressTests }}
     testsTimeout: ${{ parameters.testsTimeout }}

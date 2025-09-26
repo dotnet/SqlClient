@@ -107,14 +107,14 @@ extends:
         softwareFolder: $(softwareFolder)
         symbolsFolder: $(symbolsFolder)
         softwarename: Microsoft.Data.SqlClient
-        versionNumber: $(AssemblyFileVersion)
+        versionNumber: $(mdsAssemblyFileVersion)
       codeql:
         compiled:
         enabled: ${{ not(parameters['isPreview']) }}
       sbom:
         enabled: ${{ not(parameters['isPreview']) }}
         packageName: Microsoft.Data.SqlClient
-        packageVersion: $(NugetPackageVersion)
+        packageVersion: $(mdsPackageVersion)
       policheck:
         enabled: ${{ not(parameters['isPreview']) }}
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'

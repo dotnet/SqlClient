@@ -9,16 +9,23 @@ trigger:
   batch: true
   branches:
     include:
+    # GitHub repo branch targets that will trigger CI builds.
+    - dev/*
+    - feat/*
     - main
+
+    # ADO repo branch targets that will trigger CI builds.
     - internal/main
   paths:
     include:
+    - .azuredevops
+    - .config
     - src
     - eng
     - tools
-    - .config
+    - azurepipelines-coverage.yml
     - build.proj
-    - Nuget.config
+    - NuGet.config
 
 schedules:
 - cron: '0 5 * * Thu'
@@ -66,13 +73,6 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: object
   default: [net462, net8.0]
 
-- name: buildType
-  displayName: 'Build Type'
-  default: Project
-  values:
-    - Project
-    - Package
-
 - name: buildConfiguration
   displayName: 'Build Configuration'
   default: Release
@@ -101,7 +101,7 @@ extends:
     testSets: ${{ parameters.testSets }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
-    buildType: ${{ parameters.buildType }}
+    referenceType: Project
     buildConfiguration: ${{ parameters.buildConfiguration }}
     enableStressTests: ${{ parameters.enableStressTests }}
     testsTimeout: ${{ parameters.testsTimeout }}
