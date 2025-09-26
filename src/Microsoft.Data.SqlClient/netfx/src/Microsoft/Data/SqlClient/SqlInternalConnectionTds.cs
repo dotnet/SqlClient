@@ -1767,7 +1767,12 @@ namespace Microsoft.Data.SqlClient
                 // We must wait for CompleteLogin to finish for to have the
                 // env change from the server to know its designated failover
                 // partner; save this information in ServerProvidedFailoverPartner.
-                PoolGroupProviderInfo.FailoverCheck(false, connectionOptions, ServerProvidedFailoverPartner);
+
+                // When ignoring server provided failover partner, we must pass in the original failover partner from the connection string.
+                // Otherwise the pool group's failover partner designation will be updated to point to the server provided value.
+                string actualFailoverPartner = LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner ? "" : ServerProvidedFailoverPartner;
+
+                PoolGroupProviderInfo.FailoverCheck(false, connectionOptions, actualFailoverPartner);
             }
             CurrentDataSource = originalServerInfo.UserServerName;
         }
