@@ -219,6 +219,9 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SqlDependencyProcessDispatcherStorage.netfx.cs">
       <Link>Interop\Windows\Sni\SqlDependencyProcessDispatcherStorage.netfx.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniSslProtocols.cs">
+      <Link>Interop\Windows\Sni\SniSslProtocols.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\TransparentNetworkResolutionMode.cs">
       <Link>Interop\Windows\Sni\TransparentNetworkResolutionMode.cs</Link>
     </Compile>
