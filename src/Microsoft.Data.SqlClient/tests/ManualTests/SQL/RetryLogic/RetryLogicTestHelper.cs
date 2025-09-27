@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int numberOfRetries,
             TimeSpan maxInterval,
             TimeSpan? deltaTime = null,
-            IEnumerable<int> transientErrors = null,
+            IEnumerable<int> transientErrorCodes = null,
             FilterSqlStatements unauthorizedStatements = FilterSqlStatements.None)
         {
             var option = new SqlRetryLogicOption
@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 NumberOfTries = numberOfRetries,
                 DeltaTime = deltaTime ?? TimeSpan.FromMilliseconds(10),
                 MaxTimeInterval = maxInterval,
-                TransientErrors = transientErrors ?? s_defaultTransientErrors,
+                TransientErrors = transientErrorCodes ?? s_defaultTransientErrors,
                 AuthorizedSqlCondition = RetryPreConditon(unauthorizedStatements)
             };
 
@@ -173,11 +173,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             foreach (var item in GetRetryStrategies(option))
                 foreach (var cnn in GetConnectionStrings())
                     yield return new object[] { cnn[0], item[0] };
-        }
-
-        public static IEnumerable<object[]> GetConnectionAndRetryStrategyFilterDMLStatements(int numberOfRetries)
-        {
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromMilliseconds(100), FilterSqlStatements.DML, new int[] { 207, 102, 2812 });
         }
 
         //40613:    Database '%.*ls' on server '%.*ls' is not currently available. Please retry the connection later. If the problem persists, contact customer support, and provide them the session tracing ID of '%.*ls'.

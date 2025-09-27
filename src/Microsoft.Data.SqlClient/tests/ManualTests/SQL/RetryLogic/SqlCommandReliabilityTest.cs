@@ -229,10 +229,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        public static TheoryData<string, SqlRetryLogicBaseProvider> RetryExecuteUnauthorizedSqlStatementDml_Data =>
+            RetryLogicTestHelper.GetConnectionStringAndRetryProviders(
+                numberOfRetries: 2,
+                maxInterval: TimeSpan.FromMilliseconds(100),
+                transientErrorCodes: [102, 207, 2812],
+                unauthorizedStatements: FilterSqlStatements.DML);
+
         // Synapse: Msg 103010, Level 16, State 1, Line 1 | Parse error at line: 1, column: 1: Incorrect syntax near 'command'
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyFilterDMLStatements), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
-        public void RetryExecuteUnauthorizedSqlStatementDML(string cnnString, SqlRetryLogicBaseProvider provider)
+        [MemberData(nameof(RetryExecuteUnauthorizedSqlStatementDml_Data), DisableDiscoveryEnumeration = true)]
+        public void RetryExecuteUnauthorizedSqlStatementDml(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
             int cancelAfterRetries = numberOfTries + 1;
@@ -242,7 +249,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection cnn = new SqlConnection(cnnString))
             using (SqlCommand cmd = CreateCommand(cnn, provider, cancelAfterRetries))
             {
-                #region unauthorized
+                // Unauthorized commands
                 cmd.CommandText = "UPDATE bad command";
                 Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
                 Assert.Equal(0, currentRetries);
@@ -258,8 +265,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 cmd.CommandText = "TRUNCATE TABLE bad command";
                 Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
                 Assert.Equal(0, currentRetries);
-                #endregion
 
+                // Authorized commands
                 cmd.CommandText = "SELECT bad command";
                 Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
                 Assert.Equal(numberOfTries, currentRetries + 1);
