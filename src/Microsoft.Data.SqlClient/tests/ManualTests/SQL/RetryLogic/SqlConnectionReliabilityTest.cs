@@ -64,10 +64,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        public static TheoryData<string, SqlRetryLogicBaseProvider> CreateDatabaseWhileTryingToConnect_Data =>
+            RetryLogicTestHelper.GetConnectionStringAndRetryProviders(
+                numberOfRetries: 10,
+                maxInterval: TimeSpan.FromSeconds(10),
+                deltaTime: TimeSpan.FromSeconds(1));
+
         [ActiveIssue("14590", TestPlatforms.Windows)]
         // avoid creating a new database in Azure
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyLongRunner), parameters: new object[] { 10 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
+        [MemberData(nameof(CreateDatabaseWhileTryingToConnect_Data), DisableDiscoveryEnumeration = true)]
         public void CreateDatabaseWhileTryingToConnect(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int currentRetries = 0;

@@ -175,12 +175,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     yield return new object[] { cnn[0], item[0] };
         }
 
-        //40613:    Database '%.*ls' on server '%.*ls' is not currently available. Please retry the connection later. If the problem persists, contact customer support, and provide them the session tracing ID of '%.*ls'.
-        public static IEnumerable<object[]> GetConnectionAndRetryStrategyLongRunner(int numberOfRetries)
-        {
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(120), FilterSqlStatements.None, null, 20 * 1000);
-        }
-
         public static IEnumerable<object[]> GetConnectionAndRetryStrategyDropDB(int numberOfRetries)
         {
             List<int> faults = s_defaultTransientErrors.ToList();
