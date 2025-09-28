@@ -8,17 +8,20 @@ name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 trigger:
   branches:
     include:
+
+    # This pipeline is intended to only run against the ADO dotnet-sqlclient
+    # repo.
     - internal/main
   paths:
     include:
+    - .azuredevops
+    - .config
     - src
     - eng
     - tools
-    - .config
+    - azurepipelines-coverage.yml
     - build.proj
-    - Nuget.config
-    - '*.cmd'
-    - '*.sh'
+    - NuGet.config
 
 schedules:
 - cron: '30 4 * * Mon'
