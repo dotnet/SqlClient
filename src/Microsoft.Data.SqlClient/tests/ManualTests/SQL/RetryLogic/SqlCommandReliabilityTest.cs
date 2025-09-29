@@ -233,7 +233,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 numberOfRetries: 2,
                 maxInterval: TimeSpan.FromMilliseconds(100),
                 transientErrorCodes: [102, 207, 2812],
-                unauthorizedStatements: FilterSqlStatements.DML);
+                unauthorizedStatementRegex: RetryLogicTestHelper.FilterDmlStatements);
 
         // Synapse: Msg 103010, Level 16, State 1, Line 1 | Parse error at line: 1, column: 1: Incorrect syntax near 'command'
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]

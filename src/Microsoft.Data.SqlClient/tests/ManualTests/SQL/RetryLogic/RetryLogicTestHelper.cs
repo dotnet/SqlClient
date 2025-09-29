@@ -11,38 +11,6 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    /// Define the SQL command type by filtering purpose.
-    [Flags]
-    public enum FilterSqlStatements
-    {
-        /// Don't filter any SQL commands
-        None = 0,
-        /// Filter INSERT or INSERT INTO
-        Insert = 1,
-        /// Filter UPDATE
-        Update = 2,
-        /// Filter DELETE
-        Delete = 1 << 2,
-        /// Filter EXECUTE or EXEC
-        Execute = 1 << 3,
-        /// Filter ALTER
-        Alter = 1 << 4,
-        /// Filter CREATE
-        Create = 1 << 5,
-        /// Filter DROP
-        Drop = 1 << 6,
-        /// Filter TRUNCATE
-        Truncate = 1 << 7,
-        /// Filter SELECT
-        Select = 1 << 8,
-        /// Filter data manipulation commands consist of INSERT, INSERT INTO, UPDATE, and DELETE
-        DML = Insert | Update | Delete | Truncate,
-        /// Filter data definition commands consist of ALTER, CREATE, and DROP
-        DDL = Alter | Create | Drop,
-        /// Filter any SQL command types
-        All = DML | DDL | Execute | Select
-    }
-
     public class RetryLogicTestHelper
     {
         private static readonly HashSet<int> s_defaultTransientErrors
@@ -76,6 +44,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     18456   // Using managed identity in Azure Sql Server throws 18456 for non-existent database instead of 4060. 
                };
 
+        public static readonly Regex FilterDmlStatements = new Regex(
+            @"\b(INSERT( +INTO)|UPDATE|DELETE|TRUNCATE)\b",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
         internal static readonly string s_exceedErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryExceeded;
         internal static readonly string s_cancelErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryCanceled;
 
@@ -84,7 +56,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TimeSpan maxInterval,
             TimeSpan? deltaTime = null,
             IEnumerable<int> transientErrorCodes = null,
-            FilterSqlStatements unauthorizedStatements = FilterSqlStatements.None)
+            Regex unauthorizedStatementRegex = null)
         {
             var option = new SqlRetryLogicOption
             {
@@ -92,7 +64,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DeltaTime = deltaTime ?? TimeSpan.FromMilliseconds(10),
                 MaxTimeInterval = maxInterval,
                 TransientErrors = transientErrorCodes ?? s_defaultTransientErrors,
-                AuthorizedSqlCondition = RetryPreConditon(unauthorizedStatements)
+                AuthorizedSqlCondition = RetryPreCondition(unauthorizedStatementRegex)
             };
 
             var result = new TheoryData<string, SqlRetryLogicBaseProvider>();
@@ -149,64 +121,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         /// Generate a predicate function to skip unauthorized SQL commands.
-        private static Predicate<string> RetryPreConditon(FilterSqlStatements unauthorizedSqlStatements)
+        private static Predicate<string> RetryPreCondition(Regex unauthorizedStatementRegex)
         {
-            var pattern = GetRegexPattern(unauthorizedSqlStatements);
-            return (commandText) => string.IsNullOrEmpty(pattern)
-                                    || !Regex.IsMatch(commandText, pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        }
-
-        /// Provide a regex pattern regarding to the SQL statement.
-        private static string GetRegexPattern(FilterSqlStatements sqlStatements)
-        {
-            if (sqlStatements == FilterSqlStatements.None)
-            {
-                return string.Empty;
-            }
-
-            var pattern = new StringBuilder();
-
-            if (sqlStatements.HasFlag(FilterSqlStatements.Insert))
-            {
-                pattern.Append(@"INSERT( +INTO){0,1}|");
-            }
-            if (sqlStatements.HasFlag(FilterSqlStatements.Update))
-            {
-                pattern.Append(@"UPDATE|");
-            }
-            if (sqlStatements.HasFlag(FilterSqlStatements.Delete))
-            {
-                pattern.Append(@"DELETE|");
-            }
-            if (sqlStatements.HasFlag(FilterSqlStatements.Execute))
-            {
-                pattern.Append(@"EXEC(UTE){0,1}|");
-            }
-            if (sqlStatements.HasFlag(FilterSqlStatements.Alter))
-            {
-                pattern.Append(@"ALTER|");
-            }
-            if (sqlStatements.HasFlag(FilterSqlStatements.Create))
-            {
-                pattern.Append(@"CREATE|");
-            }
-            if (sqlStatements.HasFlag(FilterSqlStatements.Drop))
-            {
-                pattern.Append(@"DROP|");
-            }
-            if (sqlStatements.HasFlag(FilterSqlStatements.Truncate))
-            {
-                pattern.Append(@"TRUNCATE|");
-            }
-            if (sqlStatements.HasFlag(FilterSqlStatements.Select))
-            {
-                pattern.Append(@"SELECT|");
-            }
-            if (pattern.Length > 0)
-            {
-                pattern.Remove(pattern.Length - 1, 1);
-            }
-            return string.Format(@"\b({0})\b", pattern.ToString());
+            return commandText => unauthorizedStatementRegex is null ||
+                                  !unauthorizedStatementRegex.IsMatch(commandText);
         }
     }
 }
