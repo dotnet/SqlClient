@@ -70,7 +70,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 maxInterval: TimeSpan.FromSeconds(10),
                 deltaTime: TimeSpan.FromSeconds(1));
 
-        [ActiveIssue("14590", TestPlatforms.Windows)]
         // avoid creating a new database in Azure
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(CreateDatabaseWhileTryingToConnect_Data), DisableDiscoveryEnumeration = true)]
@@ -125,7 +124,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 maxInterval: TimeSpan.FromSeconds(1),
                 deltaTime: TimeSpan.FromMilliseconds(250));
 
-        [ActiveIssue("25147")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConcurrentExecution_Data), DisableDiscoveryEnumeration = true)]
         public void ConcurrentExecution(string cnnString, SqlRetryLogicBaseProvider provider)

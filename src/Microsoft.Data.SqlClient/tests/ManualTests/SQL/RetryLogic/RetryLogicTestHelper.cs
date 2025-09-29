@@ -137,44 +137,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             yield return SqlConfigurableRetryFactory.CreateFixedRetryProvider(option);
         }
 
-        public static IEnumerable<object[]> GetConnectionStrings()
-        {
-            var builder = new SqlConnectionStringBuilder();
-
-            foreach (var cnnString in DataTestUtility.GetConnectionStrings(withEnclave: false))
-            {
-                builder.Clear();
-                builder.ConnectionString = cnnString;
-                builder.ConnectTimeout = 5;
-                builder.Pooling = false;
-                yield return new object[] { builder.ConnectionString };
-
-                builder.Pooling = true;
-                yield return new object[] { builder.ConnectionString };
-            }
-        }
-
-        public static IEnumerable<object[]> GetConnectionAndRetryStrategy(int numberOfRetries,
-                                                                          TimeSpan maxInterval,
-                                                                          FilterSqlStatements unauthorizedStatemets,
-                                                                          IEnumerable<int> transientErrors,
-                                                                          int deltaTimeMillisecond = 10,
-                                                                          bool custom = true)
-        {
-            var option = new SqlRetryLogicOption()
-            {
-                NumberOfTries = numberOfRetries,
-                DeltaTime = TimeSpan.FromMilliseconds(deltaTimeMillisecond),
-                MaxTimeInterval = maxInterval,
-                TransientErrors = transientErrors ?? (custom ? s_defaultTransientErrors : null),
-                AuthorizedSqlCondition = custom ? RetryPreConditon(unauthorizedStatemets) : null
-            };
-
-            foreach (var item in GetRetryStrategies(option))
-                foreach (var cnn in GetConnectionStrings())
-                    yield return new object[] { cnn[0], item[0] };
-        }
-
         public static IEnumerable<int> GetDefaultTransientErrorCodes(params int[] additionalCodes)
         {
             var transientErrorCodes = new HashSet<int>(s_defaultTransientErrors);
@@ -184,13 +146,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             return transientErrorCodes;
-        }
-
-        private static IEnumerable<object[]> GetRetryStrategies(SqlRetryLogicOption retryLogicOption)
-        {
-            yield return new object[] { SqlConfigurableRetryFactory.CreateExponentialRetryProvider(retryLogicOption) };
-            yield return new object[] { SqlConfigurableRetryFactory.CreateIncrementalRetryProvider(retryLogicOption) };
-            yield return new object[] { SqlConfigurableRetryFactory.CreateFixedRetryProvider(retryLogicOption) };
         }
 
         /// Generate a predicate function to skip unauthorized SQL commands.
