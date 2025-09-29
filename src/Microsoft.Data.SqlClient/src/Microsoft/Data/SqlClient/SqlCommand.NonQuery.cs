@@ -226,7 +226,7 @@ namespace Microsoft.Data.SqlClient
                             task: execNonQuery,
                             completion: localCompletion,
                             state: Tuple.Create(this, localCompletion),
-                            onSuccess: state =>
+                            onSuccess: static state =>
                             {
                                 var parameters = (Tuple<SqlCommand, TaskCompletionSource<object>>)state;
                                 parameters.Item1.BeginExecuteNonQueryInternalReadStage(parameters.Item2);
@@ -255,8 +255,6 @@ namespace Microsoft.Data.SqlClient
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.
-                // When we use query caching for parameter encryption we need to retry on specific errors.
-                // In these cases finalize the call internally and trigger a retry when needed.
                 // @TODO: store this method call in a variable, it's faaaaar too big to be used in an if statement 
                 if (
                     !TriggerInternalEndAndRetryIfNecessary(
@@ -276,18 +274,17 @@ namespace Microsoft.Data.SqlClient
                         {
                             return command.BeginExecuteNonQueryInternal(behavior, callback, stateObject, timeout, isRetry, asyncWrite);
                         },
-                        nameof(EndExecuteNonQuery)))
+                        endMethod: nameof(EndExecuteNonQuery)))
                 {
                     globalCompletion = localCompletion;
                 }
                 
                 // Add callback after work is done to avoid overlapping Begin/End methods
-                if (callback != null)
+                if (callback is not null)
                 {
                     globalCompletion.Task.ContinueWith(
                         static (task, state) => ((AsyncCallback)state)(task),
-                        state: callback
-                    );
+                        state: callback);
                 }
 
                 return globalCompletion.Task;
