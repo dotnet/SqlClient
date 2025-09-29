@@ -2236,7 +2236,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         Notification.Options = SqlDependency.GetDefaultComposedOptions(_activeConnection.DataSource,
-                                                             InternalTdsConnection.ServerProvidedFailOverPartner,
+                                                             InternalTdsConnection.ServerProvidedFailoverPartner,
                                                              identityUserName, _activeConnection.Database);
                     }
 

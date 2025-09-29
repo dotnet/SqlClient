@@ -4,6 +4,8 @@
 
 using System;
 using System.Data;
+using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
@@ -345,7 +347,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 new TdsServerArguments
                 {
                     // Doesn't need to point to a real endpoint, just needs a value specified
-                    FailoverPartner = "localhost:1234",
+                    FailoverPartner = "localhost,1234",
                 });
             failoverServer.Start();
 
@@ -354,7 +356,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,
-                    FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}",
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 });
             server.Start();
 
@@ -520,6 +522,69 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
 
             Assert.Fail();
+        }
+
+        [Fact]
+        public void TransientFault_IgnoreServerProvidedFailoverPartner_ShouldConnectToUserProvidedPartner()
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.IgnoreServerProvidedFailoverPartnerField = LocalAppContextSwitchesHelper.Tristate.True;
+
+            using TdsServer failoverServer = new(
+                new TdsServerArguments
+                {
+                    // Doesn't need to point to a real endpoint, just needs a value specified
+                    FailoverPartner = "localhost,1234",
+                });
+            failoverServer.Start();
+
+            using TdsServer server = new(
+                new TdsServerArguments()
+                {
+                    // Set an invalid failover partner to ensure that the connection fails if the
+                    // server provided failover partner is used.
+                    FailoverPartner = $"invalidhost",
+                });
+            server.Start();
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                InitialCatalog = "master",
+                Encrypt = false,
+                FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+                // Ensure pooling is enabled so that the failover partner information
+                // is persisted in the pool group. If pooling is disabled, the server
+                // provided failover partner will never be used.
+                Pooling = true
+            };
+            SqlConnection connection = new(builder.ConnectionString);
+
+            // Connect once to the primary to trigger it to send the failover partner
+            connection.Open();
+            Assert.Equal("invalidhost", (connection.InnerConnection as SqlInternalConnectionTds)!.ServerProvidedFailoverPartner);
+
+            // Close the connection to return it to the pool
+            connection.Close();
+
+
+            // Act
+            // Dispose of the server to trigger a failover
+            server.Dispose();
+
+            // Opening a new connection will use the failover partner stored in the pool group.
+            // This will fail if the server provided failover partner was stored to the pool group.
+            using SqlConnection failoverConnection = new(builder.ConnectionString);
+            failoverConnection.Open();
+
+            // Assert
+            Assert.Equal(ConnectionState.Open, failoverConnection.State);
+            Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", failoverConnection.DataSource);
+            // 1 for the initial connection
+            Assert.Equal(1, server.PreLoginCount);
+            // 1 for the failover connection
+            Assert.Equal(1, failoverServer.PreLoginCount);
         }
     }
 }

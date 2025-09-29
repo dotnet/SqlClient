@@ -31,7 +31,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly PropertyInfo _useCompatibilityAsyncBehaviourProperty;
     private readonly PropertyInfo _useConnectionPoolV2Property;
     private readonly PropertyInfo _truncateScaledDecimalProperty;
-    #if NET
+    private readonly PropertyInfo _ignoreServerProvidedFailoverPartner;
+#if NET
     private readonly PropertyInfo _globalizationInvariantModeProperty;
     private readonly PropertyInfo _useManagedNetworkingProperty;
     #else
@@ -57,7 +58,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly Tristate _useConnectionPoolV2Original;
     private readonly FieldInfo _truncateScaledDecimalField;
     private readonly Tristate _truncateScaledDecimalOriginal;
-    #if NET
+    private readonly FieldInfo _ignoreServerProvidedFailoverPartnerField;
+    private readonly Tristate _ignoreServerProvidedFailoverPartnerOriginal;
+#if NET
     private readonly FieldInfo _globalizationInvariantModeField;
     private readonly Tristate _globalizationInvariantModeOriginal;
     private readonly FieldInfo _useManagedNetworkingField;
@@ -155,6 +158,10 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             "TruncateScaledDecimal",
             out _truncateScaledDecimalProperty);
 
+        InitProperty(
+            "IgnoreServerProvidedFailoverPartner",
+            out _ignoreServerProvidedFailoverPartner);
+
         #if NET
         InitProperty(
             "GlobalizationInvariantMode",
@@ -229,7 +236,12 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             out _truncateScaledDecimalField,
             out _truncateScaledDecimalOriginal);
 
-        #if NET
+        InitField(
+            "s_ignoreServerProvidedFailoverPartner",
+            out _ignoreServerProvidedFailoverPartnerField,
+            out _ignoreServerProvidedFailoverPartnerOriginal);
+
+#if NET
         InitField(
             "s_globalizationInvariantMode",
             out _globalizationInvariantModeField,
@@ -307,7 +319,11 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             _truncateScaledDecimalField,
             _truncateScaledDecimalOriginal);
 
-        #if NET
+        RestoreField(
+            _ignoreServerProvidedFailoverPartnerField,
+            _ignoreServerProvidedFailoverPartnerOriginal);
+
+#if NET
         RestoreField(
             _globalizationInvariantModeField,
             _globalizationInvariantModeOriginal);
@@ -408,7 +424,12 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         get => (bool)_truncateScaledDecimalProperty.GetValue(null);
     }
 
-    #if NET
+    public bool IgnoreServerProvidedFailoverPartner
+    {
+        get => (bool)_ignoreServerProvidedFailoverPartner.GetValue(null);
+    }
+
+#if NET
     /// <summary>
     /// Access the LocalAppContextSwitches.GlobalizationInvariantMode property.
     /// </summary>
@@ -526,7 +547,13 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         set => SetValue(_truncateScaledDecimalField, value);
     }
 
-    #if NET
+    public Tristate IgnoreServerProvidedFailoverPartnerField
+    {
+        get => GetValue(_ignoreServerProvidedFailoverPartnerField);
+        set => SetValue(_ignoreServerProvidedFailoverPartnerField, value);
+    }
+
+#if NET
     /// <summary>
     /// Get or set the LocalAppContextSwitches.GlobalizationInvariantMode switch value.
     /// </summary>
