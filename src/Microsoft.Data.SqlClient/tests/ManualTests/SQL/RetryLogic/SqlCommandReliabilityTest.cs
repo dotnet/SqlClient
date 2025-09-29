@@ -358,11 +358,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        public static TheoryData<string, SqlRetryLogicBaseProvider> UpdateLockedTable_Data =>
+            RetryLogicTestHelper.GetConnectionStringAndRetryProviders(
+                numberOfRetries: 10,
+                maxInterval: TimeSpan.FromMilliseconds(100));
+
         // In Managed SNI by Named pipe connection, SqlCommand doesn't respect timeout. "ActiveIssue 12167"
         // Synapse: Does not support WAITFOR DELAY.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotUsingManagedSNIOnWindows), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyLockedTable), parameters: new object[] { 10 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
-        public void UpdateALockedTable(string cnnString, SqlRetryLogicBaseProvider provider)
+        [MemberData(nameof(UpdateLockedTable_Data), DisableDiscoveryEnumeration = true)]
+        public void UpdateLockedTable(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int currentRetries = 0;
             string tableName = DataTestUtility.GetLongName("Region");

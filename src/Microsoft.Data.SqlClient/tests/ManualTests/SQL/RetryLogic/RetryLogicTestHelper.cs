@@ -175,11 +175,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     yield return new object[] { cnn[0], item[0] };
         }
 
-        public static IEnumerable<object[]> GetConnectionAndRetryStrategyLockedTable(int numberOfRetries)
-        {
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromMilliseconds(100), FilterSqlStatements.None, null);
-        }
-
         public static IEnumerable<int> GetDefaultTransientErrorCodes(params int[] additionalCodes)
         {
             var transientErrorCodes = new HashSet<int>(s_defaultTransientErrors);
