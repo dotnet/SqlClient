@@ -94,7 +94,7 @@ desired.
 
 There are several ways that applications may consume MDS and its extensions:
 
-- MDS with without Azure features
+- MDS without Azure features
 - MDS with MDS-supplied Azure features
 - MDS with externally supplied Azure features
 
@@ -198,7 +198,7 @@ Both the main MDS package and the new `ConnectionPooling` package would depend
 on `Abstractions` v1.1.0.
 
 An application wishing to use the new `ConnectionPooling` v1.0.0 package must
-also update the main MDS package to v7.1.0.  The applictaion would not be able
+also update the main MDS package to v7.1.0.  The application would not be able
 to use `ConnectionPooling` v1.0.0 and MDS v7.0.0.
 
 ## Backwards Compatibility
