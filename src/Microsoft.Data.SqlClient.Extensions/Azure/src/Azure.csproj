@@ -5,8 +5,8 @@
     Additional project config is imported from parent Directory.Build.props
     files.
 
-    Abstractions versioning information found in our sibling file
-    AbstractionsVersions.props is imported via tools/props/Versions.props.
+    Azure versioning information found in our sibling file AzureVersions.props
+    is imported via tools/props/Versions.props.
   -->
 
   <!-- Target Config -->
@@ -22,18 +22,18 @@
 
   <!-- Build Config -->
   <PropertyGroup>
-    <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions</AssemblyName>
-    <RootNamespace>Microsoft.Data.SqlClient.Extensions.Abstractions</RootNamespace>
+    <AssemblyName>Microsoft.Data.SqlClient.Extensions.Azure</AssemblyName>
+    <RootNamespace>Microsoft.Data.SqlClient.Extensions.Azure</RootNamespace>
 
     <!--
       We pin the AssemblyVersion of our package to the default major version
       number, with all remaining parts set to 0.
     -->
-    <AssemblyVersion>$(AbstractionsDefaultMajorVersion).0.0.0</AssemblyVersion>
+    <AssemblyVersion>$(AzureDefaultMajorVersion).0.0.0</AssemblyVersion>
 
-    <AssemblyFileVersion>$(AbstractionsAssemblyFileVersion)</AssemblyFileVersion>
-    <FileVersion>$(AbstractionsAssemblyFileVersion)</FileVersion>
-    <Version>$(AbstractionsPackageVersion)</Version>
+    <AssemblyFileVersion>$(AzureAssemblyFileVersion)</AssemblyFileVersion>
+    <FileVersion>$(AzureAssemblyFileVersion)</FileVersion>
+    <Version>$(AzurePackageVersion)</Version>
   </PropertyGroup>
   <ItemGroup>
     <!-- Our API is CLS Compliant. -->
@@ -42,7 +42,7 @@
     </AssemblyAttribute>
 
     <!-- Our unit tests have access to our internal types. -->
-    <InternalsVisibleTo Include="Microsoft.Data.SqlClient.Extensions.Abstractions.Test" />
+    <InternalsVisibleTo Include="Microsoft.Data.SqlClient.Extensions.Azure.Test" />
   </ItemGroup>
 
   <!--
@@ -59,13 +59,31 @@
 
     <Authors>Microsoft Corporation</Authors>
     <Company>Microsoft Corporation</Company>
-    <Description>Microsoft.Data.SqlClient Extensions Abstractions</Description>
+    <Description>Microsoft.Data.SqlClient Extensions Azure</Description>
     <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>dotnet.png</PackageIcon>
   </PropertyGroup>
   <ItemGroup>
     <None Include="../../../../tools/icons/dotnet.png" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <!--
+    Refer to the Abstractions package via project or package reference
+    depending on our build parameters.
+  -->
+  <ItemGroup>
+    <ProjectReference
+      Include="../../Abstractions/src/Abstractions.csproj"
+      Condition="'$(ReferenceType)' == 'Project'" />
+    <PackageReference
+      Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
+      Condition="'$(ReferenceType)' == 'Package'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
   </ItemGroup>
 
 </Project>

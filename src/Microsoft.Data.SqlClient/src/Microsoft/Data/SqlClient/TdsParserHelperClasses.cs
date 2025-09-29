@@ -13,6 +13,7 @@ using System.Globalization;
 using System.Security;
 using System.Security.Authentication;
 using System.Text;
+using System.Text.Encodings;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 
@@ -147,6 +148,18 @@ namespace Microsoft.Data.SqlClient
         internal uint dataLen;
         internal byte[] accessToken;
         internal long expirationFileTime;
+
+        /// <summary>
+        /// Convert from a SqlAuthenticationToken.
+        /// </summary>
+        internal SqlFedAuthToken(SqlAuthenticationToken token)
+        {
+            var tokenBytes = Encoding.Unicode.GetBytes(token);
+
+            dataLen = (uint)tokenBytes.Length;
+            accessToken = tokenBytes;
+            expirationFileTime = token.ExpiresOn.ToFileTime();
+        }
     }
 
     internal sealed class _SqlMetaData : SqlMetaDataPriv

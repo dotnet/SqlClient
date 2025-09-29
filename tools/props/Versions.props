@@ -53,6 +53,9 @@
     <Version>$(MdsPackageVersion)</Version>
   </PropertyGroup>
 
+  <!-- Azure Package Properties -->
+  <Import Project="..\..\src\Microsoft.Data.SqlClient.Extensions\Azure\src\AzureVersions.props" />
+
   <!-- AKV Package Properties -->
   <PropertyGroup>
     <AkvVersionDefault>7.0.0</AkvVersionDefault>
