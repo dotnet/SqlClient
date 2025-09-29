@@ -8738,14 +8738,22 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
-        internal static int WriteEnhancedRoutingSupportFeatureRequest(bool write)
+        /// <summary>
+        /// Writes the Enhanced Routing Support feature request to the physical state object.
+        /// The request does not contain a payload.
+        /// </summary>
+        /// <param name="write">If true, writes the feature request to the physical state object.</param>
+        /// <returns>The length of the feature request in bytes.</returns>
+        internal int WriteEnhancedRoutingSupportFeatureRequest(bool write)
         {
-            const int len = 1;
+            const int len = 5;
 
             if (write)
             {
                 // Write Feature ID
                 _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT);
+                // We don't send any data
+                WriteInt(0, _physicalStateObj);
             }
 
             return len;

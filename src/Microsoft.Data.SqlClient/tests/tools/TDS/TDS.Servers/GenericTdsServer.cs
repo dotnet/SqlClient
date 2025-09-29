@@ -117,6 +117,8 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
 
+        public FeatureExtensionEnablementTriState EnableEnhancedRouting { get; set; } = FeatureExtensionEnablementTriState.Disabled;
+
         public OnAuthenticationCompletedDelegate OnAuthenticationResponseCompleted { private get; set; }
 
         public OnLogin7ValidatedDelegate OnLogin7Validated { private get; set; }
@@ -312,6 +314,12 @@ namespace Microsoft.SqlServer.TDS.Servers
                                     session.IsVectorSupportEnabled = true;
                                     _clientSupportedVectorFeatureExtVersion = ((TDSLogin7GenericOptionToken)option).Data[0];
                                 }
+                                break;
+                            }
+
+                        case TDSFeatureID.EnhancedRoutingSupport:
+                            {
+                                session.IsEnhancedRoutingSupportEnabled = true;
                                 break;
                             }
 
@@ -681,6 +689,40 @@ namespace Microsoft.SqlServer.TDS.Servers
                 }
             }
 
+            if (session.IsEnhancedRoutingSupportEnabled &&
+                EnableEnhancedRouting != FeatureExtensionEnablementTriState.DoNotAcknowledge)
+            {
+                // Create ack data (1 byte: IsEnabled)
+                byte[] data = new byte[1];
+
+                if (EnableEnhancedRouting == FeatureExtensionEnablementTriState.Enabled)
+                {
+                    data[0] = 1;
+                }
+                else
+                {
+                    data[0] = 0;
+                }
+
+                // Create enhanced routing support as a generic feature extension option
+                TDSFeatureExtAckGenericOption enhancedRoutingSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.EnhancedRoutingSupport, (uint)data.Length, data);
+
+                // Look for feature extension token
+                TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
+
+                if (featureExtAckToken == null)
+                {
+                    // Create feature extension ack token
+                    featureExtAckToken = new TDSFeatureExtAckToken(enhancedRoutingSupportOption);
+                    responseMessage.Add(featureExtAckToken);
+                }
+                else
+                {
+                    // Update the existing token
+                    featureExtAckToken.Options.Add(enhancedRoutingSupportOption);
+                }
+            }
+
             if (!string.IsNullOrEmpty(Arguments.FailoverPartner))
             {
                 envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.RealTimeLogShipping, Arguments.FailoverPartner);
@@ -893,7 +935,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             {
                 rng.GetBytes(randomBytes);
             }
-            
+
             return randomBytes;
         }
 

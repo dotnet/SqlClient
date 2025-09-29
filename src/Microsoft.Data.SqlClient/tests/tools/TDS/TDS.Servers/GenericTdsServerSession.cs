@@ -124,6 +124,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public bool IsVectorSupportEnabled { get; set; }
 
+        /// <summary>
+        /// Indicates whether this session supports enhanced routing
+        /// </summary>
+        public bool IsEnhancedRoutingSupportEnabled { get; set; }
+
         #region Session Options
 
         /// <summary>
