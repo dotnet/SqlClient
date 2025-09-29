@@ -208,11 +208,14 @@ namespace Microsoft.Data.SqlClient
         // Json Support Flag
         internal bool IsJsonSupportEnabled = false;
 
+        // Vector Support Flag
+        internal bool IsVectorSupportEnabled = false;
+
         // User Agent Flag
         internal bool IsUserAgentEnabled = true;
 
-        // Vector Support Flag
-        internal bool IsVectorSupportEnabled = false;
+        // Enhanced Routing Support Flag
+        internal bool IsEnhancedRoutingSupportEnabled = false;
 
         // TCE flags
         internal byte _tceVersionSupported;
@@ -1410,6 +1413,7 @@ namespace Microsoft.Data.SqlClient
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
             requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
+            requestedFeatures |= TdsEnums.FeatureExtension.EnhancedRoutingSupport;
 
         #if DEBUG
             requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
@@ -3011,6 +3015,19 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError();
                         }
                         IsVectorSupportEnabled = true;
+                        break;
+                    }
+
+                case TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT:
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for ENHANCEDROUTINGSUPPORT", ObjectID);
+                        if (data.Length != 1)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for ENHANCEDROUTINGSUPPORT", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+
+                        IsEnhancedRoutingSupportEnabled = data[0] == 1;
                         break;
                     }
 

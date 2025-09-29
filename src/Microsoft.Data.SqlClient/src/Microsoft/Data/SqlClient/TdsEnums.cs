@@ -241,8 +241,9 @@ namespace Microsoft.Data.SqlClient
         public const byte FEATUREEXT_SQLDNSCACHING = 0x0B;
         public const byte FEATUREEXT_JSONSUPPORT = 0x0D;
         public const byte FEATUREEXT_VECTORSUPPORT = 0x0E;
+        public const byte FEATUREEXT_ENHANCEDROUTINGSUPPORT = 0x0F;
         // TODO: re-verify if this byte competes with another feature
-        public const byte FEATUREEXT_USERAGENT = 0x0F;
+        public const byte FEATUREEXT_USERAGENT = 0x10;
 
         [Flags]
         public enum FeatureExtension : uint
@@ -258,6 +259,7 @@ namespace Microsoft.Data.SqlClient
             SQLDNSCaching = 1 << (TdsEnums.FEATUREEXT_SQLDNSCACHING - 1),
             JsonSupport = 1 << (TdsEnums.FEATUREEXT_JSONSUPPORT - 1),
             VectorSupport = 1 << (TdsEnums.FEATUREEXT_VECTORSUPPORT - 1),
+            EnhancedRoutingSupport = 1 << (TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT - 1),
             UserAgent = 1 << (TdsEnums.FEATUREEXT_USERAGENT - 1)
         }
 

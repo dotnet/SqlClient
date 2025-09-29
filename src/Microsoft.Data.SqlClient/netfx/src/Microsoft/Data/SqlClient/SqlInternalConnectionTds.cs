@@ -215,6 +215,9 @@ namespace Microsoft.Data.SqlClient
         // User Agent Flag
         internal bool IsUserAgentEnabled = true;
 
+        // Enhanced Routing Support Flag
+        internal bool IsEnhancedRoutingSupportEnabled = false;
+
         // TCE flags
         internal byte _tceVersionSupported;
 
@@ -1418,8 +1421,9 @@ namespace Microsoft.Data.SqlClient
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
             requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
+            requestedFeatures |= TdsEnums.FeatureExtension.EnhancedRoutingSupport;
 
-        #if DEBUG    
+        #if DEBUG
             requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
         #endif
 
@@ -3054,6 +3058,19 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
                         IsVectorSupportEnabled = true;
+                        break;
+                    }
+
+                case TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT:
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for ENHANCEDROUTINGSUPPORT", ObjectID);
+                        if (data.Length != 1)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for ENHANCEDROUTINGSUPPORT", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+
+                        IsEnhancedRoutingSupportEnabled = data[0] == 1;
                         break;
                     }
 

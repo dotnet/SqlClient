@@ -8738,6 +8738,19 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
+        internal static int WriteEnhancedRoutingSupportFeatureRequest(bool write)
+        {
+            const int len = 1;
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT);
+            }
+
+            return len;
+        }
+
         /// <summary>
         /// Writes the User Agent feature request to the physical state object.
         /// The request includes the feature ID, feature data length, version number and encoded JSON payload.
@@ -9107,6 +9120,11 @@ namespace Microsoft.Data.SqlClient
                 if ((requestedFeatures & TdsEnums.FeatureExtension.VectorSupport) != 0)
                 {
                     length += WriteVectorSupportFeatureRequest(write);
+                }
+
+                if ((requestedFeatures & TdsEnums.FeatureExtension.EnhancedRoutingSupport) != 0)
+                {
+                    length += WriteEnhancedRoutingSupportFeatureRequest(write);
                 }
 
                 length++; // for terminator
