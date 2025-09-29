@@ -219,6 +219,9 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SqlDependencyProcessDispatcherStorage.netfx.cs">
       <Link>Interop\Windows\Sni\SqlDependencyProcessDispatcherStorage.netfx.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniSslProtocols.cs">
+      <Link>Interop\Windows\Sni\SniSslProtocols.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\TransparentNetworkResolutionMode.cs">
       <Link>Interop\Windows\Sni\TransparentNetworkResolutionMode.cs</Link>
     </Compile>
@@ -927,6 +930,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectNative.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserStateObjectNative.Windows.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStaticMethods.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStaticMethods.cs</Link>
     </Compile>
@@ -999,7 +1005,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netfx.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
   </ItemGroup>
   <!-- Resources  -->
   <ItemGroup>

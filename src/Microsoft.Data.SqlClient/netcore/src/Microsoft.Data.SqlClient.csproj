@@ -931,6 +931,9 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniNativeWrapper.cs">
       <Link>Interop\Windows\Sni\SniNativeWrapper.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniSslProtocols.cs">
+      <Link>Interop\Windows\Sni\SniSslProtocols.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\TransparentNetworkResolutionMode.cs">
       <Link>Interop\Windows\Sni\TransparentNetworkResolutionMode.cs</Link>
     </Compile>
@@ -976,12 +979,13 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectNative.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserStateObjectNative.Windows.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
     
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
-
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\ILLink.Substitutions.Windows.xml">
       <LogicalName>ILLink.Substitutions.xml</LogicalName>
       <Link>Resources\ILLink.Substitutions.Windows.xml</Link>
