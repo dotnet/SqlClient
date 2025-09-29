@@ -289,10 +289,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        public static TheoryData<string, SqlRetryLogicBaseProvider> DropDatabaseWithActiveConnection_Data =>
+            RetryLogicTestHelper.GetConnectionStringAndRetryProviders(
+                numberOfRetries: 5,
+                maxInterval: TimeSpan.FromSeconds(2),
+                deltaTime: TimeSpan.FromMilliseconds(500),
+                transientErrorCodes: RetryLogicTestHelper.GetDefaultTransientErrorCodes(3702));
+
         [ActiveIssue("14325")]
         // avoid creating a new database in Azure
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyDropDB), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
+        [MemberData(nameof(DropDatabaseWithActiveConnection_Data), DisableDiscoveryEnumeration = true)]
         public void DropDatabaseWithActiveConnection(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int currentRetries = 0;

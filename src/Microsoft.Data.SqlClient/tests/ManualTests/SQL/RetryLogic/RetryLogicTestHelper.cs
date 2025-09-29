@@ -175,16 +175,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     yield return new object[] { cnn[0], item[0] };
         }
 
-        public static IEnumerable<object[]> GetConnectionAndRetryStrategyDropDB(int numberOfRetries)
-        {
-            List<int> faults = s_defaultTransientErrors.ToList();
-            faults.Add(3702);    // Cannot drop database because it is currently in use.
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromMilliseconds(2000), FilterSqlStatements.None, faults, 500);
-        }
-
         public static IEnumerable<object[]> GetConnectionAndRetryStrategyLockedTable(int numberOfRetries)
         {
             return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromMilliseconds(100), FilterSqlStatements.None, null);
+        }
+
+        public static IEnumerable<int> GetDefaultTransientErrorCodes(params int[] additionalCodes)
+        {
+            var transientErrorCodes = new HashSet<int>(s_defaultTransientErrors);
+            foreach (int additionalCode in additionalCodes)
+            {
+                transientErrorCodes.Add(additionalCode);
+            }
+
+            return transientErrorCodes;
         }
 
         private static IEnumerable<object[]> GetRetryStrategies(SqlRetryLogicOption retryLogicOption)
