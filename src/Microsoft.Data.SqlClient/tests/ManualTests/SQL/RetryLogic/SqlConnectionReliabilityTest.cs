@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Test relies on error 4060 for automatic retry, which is not reliable when using Azure or AAD auth
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(ConnectionCancelRetryOpenAsyncInvalidCatalog_Data), DisableDiscoveryEnumeration = true)]
+        [MemberData(nameof(ConnectionCancelRetryOpenInvalidCatalog_Data), DisableDiscoveryEnumeration = true)]
         public void ConnectionCancelRetryOpenInvalidCatalog(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int cancelAfterRetries = provider.RetryLogic.NumberOfTries - 1;
