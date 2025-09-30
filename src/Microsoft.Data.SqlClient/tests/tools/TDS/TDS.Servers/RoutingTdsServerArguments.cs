@@ -25,6 +25,12 @@ namespace Microsoft.SqlServer.TDS.Servers
         public string RoutingTCPHost { get; set; } = string.Empty;
 
         /// <summary>
+        /// Database name to use at the routed location.
+        /// Should only be set when doing enhanced routing.
+        /// </summary>
+        public string RoutingDatabaseName { get; set; } = string.Empty;
+
+        /// <summary>
         /// Packet on which routing should occur
         /// </summary>
         public TDSMessageType RouteOnPacket { get; set; } = TDSMessageType.TDS7Login;
