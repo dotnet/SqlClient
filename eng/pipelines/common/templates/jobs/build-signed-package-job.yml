@@ -27,8 +27,10 @@ jobs:
   variables:
   - template: ../../../libraries/variables.yml@self
   - ${{ if parameters.isPreview }}:
-    - name: NugetPackageVersion
-      value: $(PreviewNugetPackageVersion)
+    - name: abstrationsPackageVersion
+      value: $(abstractionsPackagePreviewVersion)
+    - name: mdsPackageVersion
+      value: $(previewMdsPackageVersion)
 
   steps:
   - script: SET
@@ -37,12 +39,27 @@ jobs:
   - powershell: |
       Write-Host "##vso[task.setvariable variable=CDP_BUILD_TYPE_COPY;isOutput=true]$($env:CDP_BUILD_TYPE)"
     name: GetBuildType
+
+  # Build our tooling, which is required by the analysis step below, but
+  # shouldn't be analyzed itself.
+  - task: MSBuild@1
+    displayName: 'Build Tooling'
+    inputs:
+      solution: '**/build.proj'
+      configuration: $(Configuration)
+      msbuildArguments: -t:BuildTools
+
+  # Perform analysis before building, since this step will clobber build output
+  - template: ../steps/code-analyze-step.yml@self
   
   - template: ../steps/build-all-configurations-signed-dlls-step.yml@self
-  
-  - template: ../steps/code-analyze-step.yml@self
     parameters:
-      analyzeType: all
+      # These values are sourced from common-variables.yml.
+      configuration: $(Configuration)
+      abstractionsPackageVersion: $(abstractionsPackageVersion)
+      abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
+      mdsPackageVersion: $(mdsPackageVersion)
+      mdsAssemblyFileVersion: $(mdsAssemblyFileVersion)
   
   - template: ../steps/esrp-code-signing-step.yml@self
     parameters:
@@ -50,7 +67,11 @@ jobs:
   
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:
-      OutputDirectory: $(artifactDirectory)
+      nuspecPath: $(nuspecPath)
+      packageVersion: $(mdsPackageVersion)
+      outputDirectory: $(artifactDirectory)
+      displayName: 'Create MDS NuGet Package'
+      referenceType: Package
       properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion)'
   
   - template: ../steps/esrp-code-signing-step.yml@self
@@ -65,4 +86,4 @@ jobs:
   - template: ../steps/publish-symbols-step.yml@self
     parameters:
       publishSymbols: ${{ parameters['PublishSymbols'] }}
-      symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(NuGetPackageVersion)_$(System.TimelineId)
+      symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(mdsPackageVersion)_$(System.TimelineId)
