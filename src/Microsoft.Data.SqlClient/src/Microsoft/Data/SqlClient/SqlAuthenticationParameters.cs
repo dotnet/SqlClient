@@ -13,7 +13,8 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/SqlAuthenticationParameters/*'/>
     public class SqlAuthenticationParameters : SqlAuthenticationParametersBase
     {
-        internal SqlAuthenticationParameters(
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ctor/*'/>
+        protected SqlAuthenticationParameters(
             SqlAuthenticationMethod authenticationMethod,
             string serverName,
             string databaseName,

@@ -5,7 +5,7 @@
 namespace Microsoft.Data.SqlClient;
 
 /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/SqlAuthenticationProvider/*'/>
-public abstract class SqlAuthenticationProvider
+public abstract class SqlAuthenticationProviderBase
 {
     /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/BeforeLoad/*'/>
     public virtual void BeforeLoad(SqlAuthenticationMethod authenticationMethod) { }
@@ -17,5 +17,5 @@ public abstract class SqlAuthenticationProvider
     public abstract bool IsSupported(SqlAuthenticationMethod authenticationMethod);
 
     /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/AcquireTokenAsync/*'/>
-    public abstract Task<SqlAuthenticationTokenBase> AcquireTokenAsync(SqlAuthenticationParameters parameters);
+    public abstract Task<SqlAuthenticationTokenBase> AcquireTokenAsync(SqlAuthenticationParametersBase parameters);
 }

@@ -149,12 +149,16 @@ namespace Microsoft.Data.SqlClient
         internal byte[] accessToken;
         internal long expirationFileTime;
 
-        /// <summary>
-        /// Convert from a SqlAuthenticationToken.
-        /// </summary>
-        internal SqlFedAuthToken(SqlAuthenticationToken token)
+        internal SqlFedAuthToken()
         {
-            var tokenBytes = Encoding.Unicode.GetBytes(token);
+        }
+
+        /// <summary>
+        /// Convert from a SqlAuthenticationTokenBase.
+        /// </summary>
+        internal SqlFedAuthToken(SqlAuthenticationTokenBase token)
+        {
+            var tokenBytes = Encoding.Unicode.GetBytes(token.AccessToken);
 
             dataLen = (uint)tokenBytes.Length;
             accessToken = tokenBytes;

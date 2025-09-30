@@ -15,7 +15,7 @@ using Microsoft.Identity.Client.Extensibility;
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ActiveDirectoryAuthenticationProvider/*'/>
-    public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationProvider
+    public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationProviderBase
     {
         /// <summary>
         /// This is a static cache instance meant to hold instances of "PublicClientApplication" mapping to information available in PublicClientAppKey.
@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient
         private static readonly string s_defaultScopeSuffix = "/.default";
         private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
         private readonly SqlClientLogger _logger = new();
-        private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
+        private Func<DeviceCodeResult, Task>? _deviceCodeFlowCallback;
         private ICustomWebUi? _customWebUI = null;
         private readonly string _applicationClientId = ActiveDirectoryAuthentication.AdoClientId;
 
@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor3/*'/>
-        public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod, string applicationClientId = null)
+        public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod, string? applicationClientId = null)
         {
             if (applicationClientId != null)
             {
@@ -113,7 +113,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
 
-        public override async Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
+        public override async Task<SqlAuthenticationTokenBase> AcquireTokenAsync(SqlAuthenticationParametersBase parameters)
         {
             using CancellationTokenSource cts = new();
 
@@ -146,7 +146,7 @@ namespace Microsoft.Data.SqlClient
             int separatorIndex = parameters.Authority.LastIndexOf('/');
             string authority = parameters.Authority.Remove(separatorIndex + 1);
             string audience = parameters.Authority.Substring(separatorIndex + 1);
-            string clientId = string.IsNullOrWhiteSpace(parameters.UserId) ? null : parameters.UserId;
+            string? clientId = string.IsNullOrWhiteSpace(parameters.UserId) ? null : parameters.UserId;
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDefault)
             {
@@ -209,7 +209,7 @@ namespace Microsoft.Data.SqlClient
 #endif
                 );
 
-            AuthenticationResult result = null;
+            AuthenticationResult? result = null;
             IPublicClientApplication app = await GetPublicClientAppInstanceAsync(pcaKey, cts.Token).ConfigureAwait(false);
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
@@ -311,12 +311,12 @@ namespace Microsoft.Data.SqlClient
         private static async Task<AuthenticationResult> TryAcquireTokenSilent(IPublicClientApplication app, SqlAuthenticationParameters parameters,
             string[] scopes, CancellationTokenSource cts)
         {
-            AuthenticationResult result = null;
+            AuthenticationResult? result = null;
 
             // Fetch available accounts from 'app' instance
             System.Collections.Generic.IEnumerator<IAccount> accounts = (await app.GetAccountsAsync().ConfigureAwait(false)).GetEnumerator();
 
-            IAccount account = default;
+            IAccount? account = default;
             if (accounts.MoveNext())
             {
                 if (!string.IsNullOrEmpty(parameters.UserId))
