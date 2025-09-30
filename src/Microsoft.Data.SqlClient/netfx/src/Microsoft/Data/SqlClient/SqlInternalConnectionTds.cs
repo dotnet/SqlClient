@@ -331,7 +331,6 @@ namespace Microsoft.Data.SqlClient
         private string _originalDatabase;
         private string _originalLanguage;
         private string _currentLanguage;
-        private int _currentPacketSize;
         private int _asyncCommandCount; // number of async Begins minus number of async Ends.
 
         // FOR SSE
@@ -454,9 +453,6 @@ namespace Microsoft.Data.SqlClient
         // OTHER STATE VARIABLES AND REFERENCES
         internal Guid _clientConnectionId = Guid.Empty;
 
-        // Routing information (ROR)
-        private Guid _originalClientConnectionId = Guid.Empty;
-        private string _routingDestination = null;
         private readonly TimeoutTimer _timeout;
 
         // although the new password is generally not used it must be passed to the ctor
@@ -618,21 +614,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal Guid OriginalClientConnectionId
-        {
-            get
-            {
-                return _originalClientConnectionId;
-            }
-        }
+        internal Guid OriginalClientConnectionId { get; private set; } = Guid.Empty;
 
-        internal string RoutingDestination
-        {
-            get
-            {
-                return _routingDestination;
-            }
-        }
+        internal string RoutingDestination { get; private set; }
 
         internal RoutingInfo RoutingInfo { get; private set; } = null;
 
@@ -700,13 +684,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal int PacketSize
-        {
-            get
-            {
-                return _currentPacketSize;
-            }
-        }
+        internal int PacketSize { get; private set; }
 
         internal TdsParser Parser
         {
@@ -1306,7 +1284,7 @@ namespace Microsoft.Data.SqlClient
             // gather all the settings the user set in the connection string or
             // properties and do the login
             CurrentDatabase = server.ResolvedDatabaseName;
-            _currentPacketSize = ConnectionOptions.PacketSize;
+            PacketSize = ConnectionOptions.PacketSize;
             _currentLanguage = ConnectionOptions.CurrentLanguage;
 
             int timeoutInSeconds = 0;
@@ -1353,7 +1331,7 @@ namespace Microsoft.Data.SqlClient
             login.useReplication = ConnectionOptions.Replication;
             login.useSSPI = ConnectionOptions.IntegratedSecurity  // Treat AD Integrated like Windows integrated when against a non-FedAuth endpoint
                                      || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && !_fedAuthRequired);
-            login.packetSize = _currentPacketSize;
+            login.packetSize = PacketSize;
             login.newPassword = newPassword;
             login.readOnlyIntent = ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly;
             login.credential = _credential;
@@ -1683,11 +1661,11 @@ namespace Microsoft.Data.SqlClient
 
                         serverInfo = new ServerInfo(ConnectionOptions, RoutingInfo, serverInfo.ResolvedServerName, serverInfo.ServerSPN);
                         _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
-                        _originalClientConnectionId = _clientConnectionId;
-                        _routingDestination = serverInfo.UserServerName;
+                        OriginalClientConnectionId = _clientConnectionId;
+                        RoutingDestination = serverInfo.UserServerName;
 
                         // restore properties that could be changed by the environment tokens
-                        _currentPacketSize = ConnectionOptions.PacketSize;
+                        PacketSize = ConnectionOptions.PacketSize;
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
                         CurrentDatabase = _originalDatabase = ConnectionOptions.InitialCatalog;
                         ServerProvidedFailoverPartner = null;
@@ -1974,11 +1952,11 @@ namespace Microsoft.Data.SqlClient
 
                         currentServerInfo = new ServerInfo(ConnectionOptions, RoutingInfo, currentServerInfo.ResolvedServerName, currentServerInfo.ServerSPN);
                         _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
-                        _originalClientConnectionId = _clientConnectionId;
-                        _routingDestination = currentServerInfo.UserServerName;
+                        OriginalClientConnectionId = _clientConnectionId;
+                        RoutingDestination = currentServerInfo.UserServerName;
 
                         // restore properties that could be changed by the environment tokens
-                        _currentPacketSize = connectionOptions.PacketSize;
+                        PacketSize = connectionOptions.PacketSize;
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
                         CurrentDatabase = _originalDatabase = connectionOptions.InitialCatalog;
                         ServerProvidedFailoverPartner = null;
@@ -2267,7 +2245,7 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case TdsEnums.ENV_PACKETSIZE:
-                    _currentPacketSize = int.Parse(rec._newValue, CultureInfo.InvariantCulture);
+                    PacketSize = int.Parse(rec._newValue, CultureInfo.InvariantCulture);
                     break;
 
                 case TdsEnums.ENV_COLLATION:
