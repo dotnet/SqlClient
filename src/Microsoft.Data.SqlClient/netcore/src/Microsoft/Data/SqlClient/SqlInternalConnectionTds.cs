@@ -3027,6 +3027,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
 
+                        // A value of 1 indicates that the server supports the feature.
                         IsEnhancedRoutingSupportEnabled = data[0] == 1;
                         break;
                     }

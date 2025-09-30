@@ -14,29 +14,30 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 [Collection("SimulatedServerTests")]
 public class FeatureExtensionNegotiationTests : IClassFixture<SimulatedServerFixture>
 {
-    TdsServer server;
-    string connectionString;
+    private TdsServer _server;
+    private string _connectionString;
 
     public FeatureExtensionNegotiationTests(SimulatedServerFixture fixture)
     {
-        server = fixture.TdsServer;
+        _server = fixture.TdsServer;
         SqlConnectionStringBuilder builder = new()
         {
-            DataSource = $"localhost,{server.EndPoint.Port}",
+            DataSource = $"localhost,{_server.EndPoint.Port}",
             Encrypt = SqlConnectionEncryptOption.Optional,
+            // Disable connection pooling to avoid recycling a connection that has already negotiated feature extensions
             Pooling = false
         };
-        connectionString = builder.ConnectionString;
+        _connectionString = builder.ConnectionString;
     }
 
     [Fact]
     public void EnhancedRouting_EnabledByServer_ShouldBeEnabled()
     {
         // Arrange
-        server.EnableEnhancedRouting = FeatureExtensionEnablementTriState.Enabled;
+        _server.EnableEnhancedRouting = FeatureExtensionEnablementTriState.Enabled;
 
         bool clientFeatureExtensionFound = false;
-        server.OnLogin7Validated = loginToken =>
+        _server.OnLogin7Validated = loginToken =>
         {
             var token = loginToken.FeatureExt
                                   .OfType<TDSLogin7GenericOptionToken>()
@@ -51,50 +52,47 @@ public class FeatureExtensionNegotiationTests : IClassFixture<SimulatedServerFix
             clientFeatureExtensionFound = true;
         };
 
-        using SqlConnection sqlConnection = new(connectionString);
+        using SqlConnection sqlConnection = new(_connectionString);
 
         // Act
         sqlConnection.Open();
 
 
         // Assert
-        Assert.True(clientFeatureExtensionFound, "Client did not request the Enhanced Routing feature extension.");
-        Assert.True(((SqlInternalConnectionTds)sqlConnection.InnerConnection).IsEnhancedRoutingSupportEnabled, 
-            "Enhanced Routing should be enabled when the server supports it.");
+        Assert.True(clientFeatureExtensionFound);
+        Assert.True(((SqlInternalConnectionTds)sqlConnection.InnerConnection).IsEnhancedRoutingSupportEnabled);
     }
 
     [Fact]
     public void EnhancedRouting_DisabledByServer_ShouldBeDisabled()
     {
         // Arrange
-        server.EnableEnhancedRouting = FeatureExtensionEnablementTriState.Disabled;
+        _server.EnableEnhancedRouting = FeatureExtensionEnablementTriState.Disabled;
 
-        using SqlConnection sqlConnection = new(connectionString);
+        using SqlConnection sqlConnection = new(_connectionString);
 
         // Act
         sqlConnection.Open();
 
 
         // Assert
-        Assert.False(((SqlInternalConnectionTds)sqlConnection.InnerConnection).IsEnhancedRoutingSupportEnabled,
-            "Enhanced Routing should be disabled when the server does not support it.");
+        Assert.False(((SqlInternalConnectionTds)sqlConnection.InnerConnection).IsEnhancedRoutingSupportEnabled);
     }
 
     [Fact]
     public void EnhancedRouting_NotAcknowledgedByServer_ShouldBeDisabled()
     {
         // Arrange
-        server.EnableEnhancedRouting = FeatureExtensionEnablementTriState.DoNotAcknowledge;
+        _server.EnableEnhancedRouting = FeatureExtensionEnablementTriState.DoNotAcknowledge;
 
-        using SqlConnection sqlConnection = new(connectionString);
+        using SqlConnection sqlConnection = new(_connectionString);
 
         // Act
         sqlConnection.Open();
 
 
         // Assert
-        Assert.False(((SqlInternalConnectionTds)sqlConnection.InnerConnection).IsEnhancedRoutingSupportEnabled,
-            "Enhanced Routing should be disabled when the server does not acknowledge it.");
+        Assert.False(((SqlInternalConnectionTds)sqlConnection.InnerConnection).IsEnhancedRoutingSupportEnabled);
     }
 }
 
