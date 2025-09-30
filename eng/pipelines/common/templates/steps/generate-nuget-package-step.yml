@@ -35,11 +35,11 @@ parameters:
     type: boolean
     default: true
 
-  - name: referenceType
-    default: project
-    values:
-    - project
-    - package
+  # Semi-colon separated properties to pass to nuget via the -properties
+  # argument.
+  - name: properties
+    type: string
+    default: ''
 
 steps:
 - ${{ if parameters.installNuget }}:
