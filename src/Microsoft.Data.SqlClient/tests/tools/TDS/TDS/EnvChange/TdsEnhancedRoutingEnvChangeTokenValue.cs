@@ -72,7 +72,7 @@ namespace Microsoft.SqlServer.TDS.EnvChange
                         // Read port
                         ProtocolProperty = TDSUtilities.ReadUShort(source);
                         AlternateServer = TDSUtilities.ReadString(source, (ushort)(TDSUtilities.ReadUShort(source) * 2));
-                        AlternateServer = TDSUtilities.ReadString(source, (ushort)(TDSUtilities.ReadUShort(source) * 2));
+                        AlternateDatabase = TDSUtilities.ReadString(source, (ushort)(TDSUtilities.ReadUShort(source) * 2));
 
                         break;
                     }
@@ -110,6 +110,8 @@ namespace Microsoft.SqlServer.TDS.EnvChange
                         // Write alternate server name
                         TDSUtilities.WriteString(destination, AlternateServer);
 
+                        // Write alternate database name length
+                        TDSUtilities.WriteUShort(destination, (ushort)(string.IsNullOrEmpty(AlternateDatabase) ? 0 : AlternateDatabase.Length));
                         TDSUtilities.WriteString(destination, AlternateDatabase);
 
                         break;
