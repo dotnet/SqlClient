@@ -1079,8 +1079,25 @@
     <PackageReference Include="System.ValueTuple" />
   </ItemGroup>
 
+  <!--
+    Refer to the Abstractions package via project or package reference
+    depending on our build parameters.
+  -->
+  <ItemGroup>
+    <ProjectReference
+      Include="../../../Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"
+      Condition="'$(ReferenceType)' == 'Project'" />
+    <!-- TODO(ADO-38703): Package ref requires pipeline changes TBD. -->
+    <!--
+    <PackageReference
+      Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
+      Condition="'$(ReferenceType)' == 'Package'" />
+    -->
+  </ItemGroup>
+
   <!-- CodeGen Targets ================================================= -->
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
+  <Import Project="$(CommonSourceRoot)tools\targets\GenerateResourceStringsSource.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyRef.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyInfo.targets" />
 </Project>

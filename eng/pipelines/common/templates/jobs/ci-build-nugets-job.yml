@@ -60,6 +60,7 @@ jobs:
       nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
       OutputDirectory: $(packagePath)
       generateSymbolsPackage: false
+      properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion)'
       displayName: 'Generate NuGet package M.D.SqlClient'
 
   - template: ../steps/generate-nuget-package-step.yml@self
@@ -69,6 +70,7 @@ jobs:
       nuspecPath: 'tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
       OutputDirectory: $(packagePath)
       generateSymbolsPackage: false
+      properties: 'MdsPackageVersion=$(mdsPackageVersion)'
       installNuget: false
       displayName: 'Generate NuGet package AKV Provider'
 

@@ -55,6 +55,7 @@ jobs:
       buildConfiguration: Release
       OutputDirectory: $(artifactDirectory)
       installNuget: false
+      properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion)'
   
   - template: ../steps/esrp-code-signing-step.yml@self
     parameters:

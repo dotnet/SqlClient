@@ -5,6 +5,14 @@
   </PropertyGroup>
   <!-- ===================================================================== -->
   <!-- Shared Dependencies -->
+
+  <!-- Sibling Packages -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageVersion
+      Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
+      Version="$(AbstractionsPackageVersion)" />
+  </ItemGroup>
+
   <!-- Published -->
   <ItemGroup>
     <!-- MDS and AKV -->
