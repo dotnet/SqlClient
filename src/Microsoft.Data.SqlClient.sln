@@ -1,6 +1,7 @@
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.0.31912.275
+VisualStudioVersion = 17.14.36203.30
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\netfx\src\Microsoft.Data.SqlClient.csproj", "{407890AC-9876-4FEF-A6F1-F36A876BAADE}"
 EndProject
@@ -314,6 +315,17 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlClient.Stress.Runner", "Microsoft.Data.SqlClient\tests\StressTests\SqlClient.Stress.Runner\SqlClient.Stress.Runner.csproj", "{4A9C11F4-9577-ABEC-C070-83A194746D9B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlClient.Stress.Tests", "Microsoft.Data.SqlClient\tests\StressTests\SqlClient.Stress.Tests\SqlClient.Stress.Tests.csproj", "{FAA1E517-581A-D3DC-BAC9-FAD1D5A5142C}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient.Extensions", "Microsoft.Data.SqlClient.Extensions", "{19F1F1E5-3013-7660-661A-2A15F7D606C1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Abstractions", "Abstractions", "{556B486E-F9B0-7EA9-6A25-DA560C312761}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{210228A5-979A-DE06-EE1F-B35C65E1583C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Abstractions", "Microsoft.Data.SqlClient.Extensions\Abstractions\src\Abstractions.csproj", "{B21E7C94-D805-427E-928A-8DE8EA2F08CC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{59667E4C-0BD2-9F48-FB50-9E55DD8B1011}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Abstractions.Test", "Microsoft.Data.SqlClient.Extensions\Abstractions\test\Abstractions.Test.csproj", "{04ACBF75-CFF2-41AB-B652-776BC0533490}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -643,6 +655,30 @@ Global
 		{FAA1E517-581A-D3DC-BAC9-FAD1D5A5142C}.Release|x64.Build.0 = Release|Any CPU
 		{FAA1E517-581A-D3DC-BAC9-FAD1D5A5142C}.Release|x86.ActiveCfg = Release|Any CPU
 		{FAA1E517-581A-D3DC-BAC9-FAD1D5A5142C}.Release|x86.Build.0 = Release|Any CPU
+		{B21E7C94-D805-427E-928A-8DE8EA2F08CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B21E7C94-D805-427E-928A-8DE8EA2F08CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B21E7C94-D805-427E-928A-8DE8EA2F08CC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B21E7C94-D805-427E-928A-8DE8EA2F08CC}.Debug|x64.Build.0 = Debug|Any CPU
+		{B21E7C94-D805-427E-928A-8DE8EA2F08CC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B21E7C94-D805-427E-928A-8DE8EA2F08CC}.Debug|x86.Build.0 = Debug|Any CPU
+		{B21E7C94-D805-427E-928A-8DE8EA2F08CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B21E7C94-D805-427E-928A-8DE8EA2F08CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B21E7C94-D805-427E-928A-8DE8EA2F08CC}.Release|x64.ActiveCfg = Release|Any CPU
+		{B21E7C94-D805-427E-928A-8DE8EA2F08CC}.Release|x64.Build.0 = Release|Any CPU
+		{B21E7C94-D805-427E-928A-8DE8EA2F08CC}.Release|x86.ActiveCfg = Release|Any CPU
+		{B21E7C94-D805-427E-928A-8DE8EA2F08CC}.Release|x86.Build.0 = Release|Any CPU
+		{04ACBF75-CFF2-41AB-B652-776BC0533490}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04ACBF75-CFF2-41AB-B652-776BC0533490}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04ACBF75-CFF2-41AB-B652-776BC0533490}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{04ACBF75-CFF2-41AB-B652-776BC0533490}.Debug|x64.Build.0 = Debug|Any CPU
+		{04ACBF75-CFF2-41AB-B652-776BC0533490}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{04ACBF75-CFF2-41AB-B652-776BC0533490}.Debug|x86.Build.0 = Debug|Any CPU
+		{04ACBF75-CFF2-41AB-B652-776BC0533490}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04ACBF75-CFF2-41AB-B652-776BC0533490}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04ACBF75-CFF2-41AB-B652-776BC0533490}.Release|x64.ActiveCfg = Release|Any CPU
+		{04ACBF75-CFF2-41AB-B652-776BC0533490}.Release|x64.Build.0 = Release|Any CPU
+		{04ACBF75-CFF2-41AB-B652-776BC0533490}.Release|x86.ActiveCfg = Release|Any CPU
+		{04ACBF75-CFF2-41AB-B652-776BC0533490}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -699,6 +735,11 @@ Global
 		{92D9C6D6-6925-1AD1-69FA-485F83943BD2} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{4A9C11F4-9577-ABEC-C070-83A194746D9B} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{FAA1E517-581A-D3DC-BAC9-FAD1D5A5142C} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{556B486E-F9B0-7EA9-6A25-DA560C312761} = {19F1F1E5-3013-7660-661A-2A15F7D606C1}
+		{210228A5-979A-DE06-EE1F-B35C65E1583C} = {556B486E-F9B0-7EA9-6A25-DA560C312761}
+		{B21E7C94-D805-427E-928A-8DE8EA2F08CC} = {210228A5-979A-DE06-EE1F-B35C65E1583C}
+		{59667E4C-0BD2-9F48-FB50-9E55DD8B1011} = {556B486E-F9B0-7EA9-6A25-DA560C312761}
+		{04ACBF75-CFF2-41AB-B652-776BC0533490} = {59667E4C-0BD2-9F48-FB50-9E55DD8B1011}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}
