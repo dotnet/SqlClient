@@ -5,7 +5,7 @@
 namespace Microsoft.Data.SqlClient;
 
 /// <include file='../doc/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/SqlAuthenticationMethod/*'/>
-public enum SqlAuthenticationMethod
+public enum SqlAuthenticationMethod : int
 {
     /// <include file='../doc/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/NotSpecified/*'/>
     NotSpecified = 0,

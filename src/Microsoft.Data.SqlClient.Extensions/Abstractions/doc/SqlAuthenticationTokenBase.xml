@@ -1,0 +1,15 @@
+﻿<docs>
+  <members name="SqlAuthenticationToken">
+    <SqlAuthenticationToken>
+      <summary>Represents an authentication token.</summary>
+    </SqlAuthenticationToken>
+    <ExpiresOn>
+      <summary>Gets the token expiration time.</summary>
+      <value>The token expiration time.</value>
+    </ExpiresOn>
+    <AccessToken>
+      <summary>Gets the token string.</summary>
+      <value>The token string.</value>
+    </AccessToken>
+  </members>
+</docs>

@@ -5,7 +5,7 @@
 namespace Microsoft.Data.SqlClient;
 
 /// <include file='../doc/SqlAuthenticationToken.xml' path='docs/members[@name="SqlAuthenticationToken"]/SqlAuthenticationToken/*'/>
-public class SqlAuthenticationToken
+public abstract class SqlAuthenticationTokenBase
 {
     /// <include file='../doc/SqlAuthenticationToken.xml' path='docs/members[@name="SqlAuthenticationToken"]/ExpiresOn/*'/>
     public DateTimeOffset ExpiresOn { get; }
@@ -13,16 +13,10 @@ public class SqlAuthenticationToken
     /// <include file='../doc/SqlAuthenticationToken.xml' path='docs/members[@name="SqlAuthenticationToken"]/AccessToken/*'/>
     public string AccessToken { get; }
 
-    /// <include file='../doc/SqlAuthenticationToken.xml' path='docs/members[@name="SqlAuthenticationToken"]/ctor/*'/>
-    public SqlAuthenticationToken(string accessToken, DateTimeOffset expiresOn)
+    protected SqlAuthenticationTokenBase(
+        string accessToken,
+        DateTimeOffset expiresOn)
     {
-        if (string.IsNullOrEmpty(accessToken))
-        {
-            // TODO: Throw an appropriate SqlException.
-            //throw SQL.ParameterCannotBeEmpty("AccessToken");
-            throw new ArgumentException("AccessToken cannot be null or empty", nameof(accessToken));
-        }
-
         AccessToken = accessToken;
         ExpiresOn = expiresOn;
     }
