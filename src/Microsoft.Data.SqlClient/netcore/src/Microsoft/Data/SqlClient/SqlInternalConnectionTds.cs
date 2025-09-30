@@ -2261,12 +2261,6 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.ENV_ENHANCEDROUTING:
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnEnvChange|ADV> {0}, Received enhanced routing info", ObjectID);
-                    
-                    if (!IsEnhancedRoutingSupportEnabled)
-                    {
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnEnvChange|ADV> {0}, Enhanced routing disabled, ignoring enhanced routing info", ObjectID);
-                        break;
-                    }
 
                     if (string.IsNullOrEmpty(rec._newRoutingInfo.ServerName) || 
                         string.IsNullOrEmpty(rec._newRoutingInfo.DatabaseName) ||
@@ -3151,10 +3145,19 @@ namespace Microsoft.Data.SqlClient
             {
                 UserServerName = string.Format(CultureInfo.InvariantCulture, "{0},{1}", routing.ServerName, routing.Port);
             }
+
+            if (routing == null || routing.DatabaseName == null)
+            {
+                ResolvedDatabaseName = userOptions.InitialCatalog;
+            } 
+            else
+            {
+                ResolvedDatabaseName = routing.DatabaseName;
+            }
+
             PreRoutingServerName = preRoutingServerName;
             UserProtocol = TdsEnums.TCP;
             SetDerivedNames(UserProtocol, UserServerName);
-            ResolvedDatabaseName = userOptions.InitialCatalog;
             ServerSPN = serverSPN;
         }
 
