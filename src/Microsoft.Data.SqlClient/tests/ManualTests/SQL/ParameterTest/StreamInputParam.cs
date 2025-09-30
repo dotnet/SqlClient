@@ -543,7 +543,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cmd.ExecuteNonQuery();
             StringBuilder sb = new();
             for (int i = 0; i < 1000000; i++)
+            {
                 sb.Append(i);
+            }
+
             // Include a delay to allow time for cancellation
             cmd.CommandText = "WAITFOR DELAY '00:00:05'; insert into #blobs (Id, blob) values (1, @blob)";
             cmd.Parameters.Add("@blob", SqlDbType.VarChar, -1);
