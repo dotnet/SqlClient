@@ -2281,6 +2281,27 @@ namespace Microsoft.Data.SqlClient
                     RoutingInfo = rec._newRoutingInfo;
                     break;
 
+                case TdsEnums.ENV_ENHANCEDROUTING:
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnEnvChange|ADV> {0}, Received enhanced routing info", ObjectID);
+                    
+                    if (!IsEnhancedRoutingSupportEnabled)
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnEnvChange|ADV> {0}, Enhanced routing disabled, ignoring enhanced routing info", ObjectID);
+                        break;
+                    }
+
+                    if (string.IsNullOrEmpty(rec._newRoutingInfo.ServerName) || 
+                        string.IsNullOrEmpty(rec._newRoutingInfo.DatabaseName) ||
+                        rec._newRoutingInfo.Protocol != 0 ||
+                        rec._newRoutingInfo.Port == 0)
+                    {
+                        throw SQL.ROR_InvalidEnhancedRoutingInfo(this);
+                    }
+
+                    RoutingInfo = rec._newRoutingInfo;
+
+                    break;
+
                 default:
                     Debug.Fail("Missed token in EnvChange!");
                     break;
