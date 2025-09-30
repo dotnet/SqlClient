@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Additional project config is imported from parent Directory.Build.props
+    files.
+
+    Abstractions versioning information found in our sibling file
+    AbstractionsVersions.props is imported via tools/props/Versions.props.
+  -->
+
+  <!-- Target Config -->
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <!-- Compiler Config -->
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!-- Build Config -->
+  <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions</AssemblyName>
+    <RootNamespace>Microsoft.Data.SqlClient.Extensions.Abstractions</RootNamespace>
+
+    <!--
+      We pin the AssemblyVersion of our package to the default major version
+      number, with all remaining parts set to 0.
+    -->
+    <AssemblyVersion>$(_DefaultMajorVersion).0.0.0</AssemblyVersion>
+
+    <AssemblyFileVersion>$(AbstractionsAssemblyFileVersion)</AssemblyFileVersion>
+    <FileVersion>$(AbstractionsAssemblyFileVersion)</FileVersion>
+    <Version>$(AbstractionsPackageVersion)</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Our API is CLS Compliant. -->
+    <AssemblyAttribute Include="System.CLSCompliantAttribute">
+      <_Parameter1>true</_Parameter1>
+    </AssemblyAttribute>
+
+    <!-- Our unit tests have access to our internal types. -->
+    <InternalsVisibleTo Include="Microsoft.Data.SqlClient.Extensions.Abstractions.Test" />
+  </ItemGroup>
+
+  <!--
+    NuGet Package Config
+
+    See: https://learn.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target
+  -->
+  <PropertyGroup>
+    <PackageId>$(AssemblyName)</PackageId>
+    <PackageVersion>$(AbstractionsPackageVersion)</PackageVersion>
+    <PackageOutputPath>$(PackagesDir)</PackageOutputPath>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <Authors>Microsoft Corporation</Authors>
+    <Company>Microsoft Corporation</Company>
+    <Description>Microsoft.Data.SqlClient Extensions Abstractions</Description>
+    <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>dotnet.png</PackageIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="../../../../tools/icons/dotnet.png" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>
