@@ -204,16 +204,32 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         protected TDSPacketToken CreateRoutingToken()
         {
-            // Construct routing token value
-            TDSRoutingEnvChangeTokenValue routingInfo = new TDSRoutingEnvChangeTokenValue();
+            if (string.IsNullOrEmpty(Arguments.RoutingDatabaseName))
+            {
+                // Construct routing token value
+                TDSRoutingEnvChangeTokenValue routingInfo = new TDSRoutingEnvChangeTokenValue();
 
-            // Read the values and populate routing info
-            routingInfo.Protocol = (TDSRoutingEnvChangeTokenValueType)Arguments.RoutingProtocol;
-            routingInfo.ProtocolProperty = Arguments.RoutingTCPPort;
-            routingInfo.AlternateServer = Arguments.RoutingTCPHost;
+                // Read the values and populate routing info
+                routingInfo.Protocol = (TDSRoutingEnvChangeTokenValueType)Arguments.RoutingProtocol;
+                routingInfo.ProtocolProperty = Arguments.RoutingTCPPort;
+                routingInfo.AlternateServer = Arguments.RoutingTCPHost;
 
-            // Construct routing token
-            return new TDSEnvChangeToken(TDSEnvChangeTokenType.Routing, routingInfo);
+                // Construct routing token
+                return new TDSEnvChangeToken(TDSEnvChangeTokenType.Routing, routingInfo);
+            } else
+            {
+                // Construct enhanced routing token value
+                TdsEnhancedRoutingEnvChangeTokenValue routingInfo = new TdsEnhancedRoutingEnvChangeTokenValue();
+
+                // Read the values and populate routing info
+                routingInfo.Protocol = (TDSRoutingEnvChangeTokenValueType)Arguments.RoutingProtocol;
+                routingInfo.ProtocolProperty = Arguments.RoutingTCPPort;
+                routingInfo.AlternateServer = Arguments.RoutingTCPHost;
+                routingInfo.AlternateDatabase = Arguments.RoutingDatabaseName;
+
+                // Construct routing token
+                return new TDSEnvChangeToken(TDSEnvChangeTokenType.EnhancedRouting, routingInfo);
+            }
         }
     }
 }
