@@ -70,7 +70,10 @@ public class Circle : INullable, IBinarySerialize
         }
 
         if (data.Length != 12)
+        {
             throw new ArgumentException();
+        }
+
         byte[] value = data.Value;
 
         //read x1,y1,x2,y2
@@ -84,7 +87,9 @@ public class Circle : INullable, IBinarySerialize
         if (fIsNull)
         {
             if (data.IsNull)
+            {
                 return;
+            }
             else
             {
                 data.SetNull();
@@ -103,7 +108,10 @@ public class Circle : INullable, IBinarySerialize
 
         int i;
         for (i = 0; i < bigbytes.Length; i++)
+        {
             data[i] = bigbytes[i];
+        }
+
         data.SetLength(i);
 
     }
@@ -114,7 +122,10 @@ public class Circle : INullable, IBinarySerialize
         string[] array = data.Value.Split(new char[] { ',' });
 
         if (array.Length != 3)
+        {
             throw new ArgumentException();
+        }
+
         Circle circ = new Circle();
 
         circ.center.X = int.Parse(array[0]);

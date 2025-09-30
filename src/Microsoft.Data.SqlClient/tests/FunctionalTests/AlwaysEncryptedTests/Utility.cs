@@ -330,7 +330,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             public override void Write(string message)
             {
                 if (!message.Contains("unreliable call to Read")) // ignore Pimod's complaints about lacking some environment variable
+                {
                     System.Console.WriteLine(@"ASSERT: {0}", message);
+                }
             }
 
             public override void WriteLine(string message)

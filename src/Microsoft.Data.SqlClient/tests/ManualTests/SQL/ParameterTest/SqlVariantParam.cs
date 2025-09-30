@@ -51,7 +51,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "select @p1 as f1";
             if (includeBaseType)
+            {
                 cmd.CommandText += ", sql_variant_property(@p1,'BaseType') as BaseType";
+            }
+
             cmd.Parameters.Add("@p1", SqlDbType.Variant);
             cmd.Parameters["@p1"].Value = paramValue;
             SqlDataReader dr = cmd.ExecuteReader(CommandBehavior.CloseConnection);

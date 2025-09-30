@@ -31,9 +31,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             get
             {
                 if (_eventLog == null)
+                {
                     _eventLog = new StringBuilder();
+                }
+
                 if (_eventLog.Length == 0)
+                {
                     _eventLog.Append(s_logHeader);
+                }
+
                 return _eventLog;
             }
             set
@@ -435,7 +441,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         // Poll the sockets
                         if ((IncomingConnection.Poll(100, SelectMode.SelectRead) && !inStream.DataAvailable) ||
                             (OutgoingConnection.Poll(100, SelectMode.SelectRead) && !outStream.DataAvailable))
+                        {
                             break;
+                        }
 
                         Thread.Sleep(10);
                     }

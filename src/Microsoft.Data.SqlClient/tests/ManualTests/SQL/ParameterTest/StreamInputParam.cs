@@ -82,6 +82,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     return 0;
                 }
+
                 int nRead;
                 if (_data.Length == _pos - 1)
                 {
@@ -91,8 +92,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     nRead = 1 + _r.Next(Math.Min(count, _data.Length - _pos) - 1);
                 }
+
                 if (_errorPos >= _pos && _errorPos < _pos + nRead)
+                {
                     throw new CustomStreamException();
+                }
+
                 Buffer.BlockCopy(_data, _pos, buffer, offset, nRead);
                 _pos += nRead;
                 return nRead;
@@ -131,12 +136,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static void AssertEqual(byte[] ret, byte[] val, int len)
         {
             if (len > 0)
+            {
                 len = Math.Min(len, val.Length);
+            }
             else
+            {
                 len = val.Length;
+            }
+
             Debug.Assert(ret != null && ret.Length == len, "Length not equal");
             for (int i = 0; i < len; i++)
+            {
                 Debug.Assert(val[i] == ret[i], "Data not equal");
+            }
         }
 
         private static void TestStream(int dataLen, bool sync, bool oldTypes, int paramLen, bool addWithValue = false)
@@ -250,7 +262,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     XmlDocument doc = new();
                     XmlNode root = doc.AppendChild(doc.CreateElement("root"));
                     for (int i = 0; i < N; i++)
+                    {
                         root.AppendChild(doc.CreateElement("e" + i.ToString()));
+                    }
+
                     s_xmlstr = doc.OuterXml;
                 }
                 return s_xmlstr;
@@ -267,7 +282,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             StringBuilder sb = new();
             for (int i = 0; i < dataLen; i++)
+            {
                 sb.Append((char)('A' + s_rand.Next(20)));
+            }
+
             string s = sb.ToString();
             TestTextWrite(s, new StringReader(s), sync, oldTypes, paramLen, nvarchar, false, addWithValue);
             Console.WriteLine("TestTextReader (Sync {0} DataLen {1} ParamLen {2} NVARCHAR {3} OLD {4} AVW {5}) is OK", sync, dataLen, paramLen, nvarchar, oldTypes, addWithValue);
@@ -277,7 +295,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             StringBuilder sb = new();
             for (int i = 0; i < dataLen; i++)
+            {
                 sb.Append((char)('A' + s_rand.Next(20)));
+            }
+
             string s = sb.ToString();
             TestTextWrite(s, new StreamReader(
                                     new CustomStream(Encoding.Unicode.GetBytes(s), sync || oldTypes, error ? dataLen : -1),
@@ -411,7 +432,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     comment.Append("<!-- ");
                     int N = s_rand.Next(100);
                     for (int i = 0; i < N; i++)
+                    {
                         comment.Append(i.ToString());
+                    }
+
                     comment.Append("-->");
                 }
                 XmlReader reader = XmlReader.Create(new StringReader(XmlStr + comment.ToString()));

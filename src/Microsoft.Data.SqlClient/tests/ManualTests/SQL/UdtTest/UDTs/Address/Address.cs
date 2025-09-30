@@ -101,7 +101,9 @@ public class Address : INullable, IBinarySerialize
         if (IsNull)
         {
             if (value.IsNull)
+            {
                 return;
+            }
             else
             {
                 value.SetNull();
@@ -111,7 +113,9 @@ public class Address : INullable, IBinarySerialize
 
         SqlString str;
         if ((object)m_secondline == null || m_secondline.IsNull)
+        {
             str = m_firstline;
+        }
         else
         {
             str = string.Concat(m_firstline, "|");
@@ -121,7 +125,10 @@ public class Address : INullable, IBinarySerialize
         byte[] stringData = str.GetUnicodeBytes();
         int i;
         for (i = 0; i < stringData.Length; i++)
+        {
             value[i] = stringData[i];
+        }
+
         value.SetLength(i);
 
         return;
@@ -130,15 +137,21 @@ public class Address : INullable, IBinarySerialize
     public override string ToString()
     {
         if (IsNull)
+        {
             return "Null";
+        }
         else
+        {
             return Value.ToString();
+        }
     }
 
     public static Address Parse(SqlString s)
     {
         if (s.IsNull)
+        {
             return Address.Null;
+        }
 
         string str = s.ToString();
         string[] twolines = new string[2];
@@ -150,9 +163,13 @@ public class Address : INullable, IBinarySerialize
         twolines = str.Split(separator);
 
         if (twolines.Length == 2)
+        {
             return new Address(twolines[0], twolines[1]);
+        }
         else
+        {
             return new Address(twolines[0], SqlString.Null);
+        }
     }
 
     //******************************************************
@@ -175,12 +192,18 @@ public class Address : INullable, IBinarySerialize
             if (m_fNotNull)
             {
                 if (m_secondline.IsNull)
+                {
                     return m_firstline;
+                }
                 else
+                {
                     return string.Concat(m_firstline, m_secondline);
+                }
             }
             else
+            {
                 throw new SqlNullValueException();
+            }
         }
     }
 

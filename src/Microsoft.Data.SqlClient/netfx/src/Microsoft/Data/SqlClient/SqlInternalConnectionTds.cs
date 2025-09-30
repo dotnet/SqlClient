@@ -97,7 +97,9 @@ namespace Microsoft.Data.SqlClient
             foreach (var state in _delta)
             {
                 if (state != null && !state._recoverable)
+                {
                     unrecoverableCount++;
+                }
             }
             Debug.Assert(unrecoverableCount == _unrecoverableStatesCount, "Unrecoverable count does not match");
         }
@@ -1635,7 +1637,9 @@ namespace Microsoft.Data.SqlClient
                 // Re-allocate parser each time to make sure state is known
                 // RFC 50002652 - if parser was created by previous attempt, dispose it to properly close the socket, if created
                 if (_parser != null)
+                {
                     _parser.Disconnect();
+                }
 
                 _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
                 Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, $"SniContext should be Undefined; actual Value: {Parser._physicalStateObj.SniContext}");
@@ -2566,7 +2570,9 @@ namespace Microsoft.Data.SqlClient
 
             SqlAuthenticationProvider authProvider = SqlAuthenticationProvider.GetProvider(ConnectionOptions.Authentication);
             if (authProvider == null && _accessTokenCallback == null)
+            {
                 throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication.ToString());
+            }
 
             // retry getting access token once if MsalException.error_code is unknown_error.
             // extra logic to deal with HTTP 429 (Retry after).
