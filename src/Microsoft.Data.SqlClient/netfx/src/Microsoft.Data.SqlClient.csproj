@@ -1,15 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <!--
+      Append an assembly name suffix, if necessary.  See the top-level
+      Directory.Build.props for more information.
+    -->
+    <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
+    <AssemblyName Condition="'$(ApplyMdsAssemblyNameSuffix)' == 'true'">$(AssemblyName).NetFx</AssemblyName>
+
+    <TargetFramework>net462</TargetFramework>
+
     <ProjectGuid>{407890AC-9876-4FEF-A6F1-F36A876BAADE}</ProjectGuid>
     <RootNamespace></RootNamespace>
-    <TargetFramework>net462</TargetFramework>
     <EnableLocalAppContext>true</EnableLocalAppContext>
-    <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <OutputPlatform>AnyCPU</OutputPlatform>
     <BinPath>$(BinFolder)$(Configuration).$(OutputPlatform)\</BinPath>
     <ObjPath>$(ObjFolder)$(Configuration).$(OutputPlatform)\</ObjPath>
     <OutputPath>$(BinPath)$(AssemblyName)\netfx\</OutputPath>
-    <DocumentationFile>$(OutputPath)\Microsoft.Data.SqlClient.xml</DocumentationFile>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
     <IntermediateOutputPath>$(ObjPath)$(AssemblyName)\netfx\</IntermediateOutputPath>
     <Product>Framework $(BaseProduct)</Product>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>

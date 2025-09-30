@@ -3,6 +3,12 @@
 
   <!-- We purposely do not include any parent Directory.Build.props files. -->
 
+  <!--
+    We do, however, include Versions.props to get some default version
+    numbers for dependent packages.
+  -->
+  <Import Project="../../../../tools/props/Versions.props" />
+
   <!-- Properties common to all projects in this solution. -->
   <PropertyGroup>
     <!-- Target all frameworks that MDS supports. -->
