@@ -1054,12 +1054,18 @@
     <ProjectReference
       Include="../../../Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"
       Condition="'$(ReferenceType)' == 'Project'" />
+<<<<<<< HEAD
     <!-- TODO(ADO-38703): Package ref requires pipeline changes TBD. -->
     <!--
     <PackageReference
       Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
       Condition="'$(ReferenceType)' == 'Package'" />
     -->
+=======
+    <PackageReference
+      Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
+      Condition="'$(ReferenceType)' == 'Package'" />
+>>>>>>> 75eb0849 (Abstractions Package - C# project changes (#3626))
   </ItemGroup>
 
   <Import Project="$(CommonSourceRoot)tools\targets\GenerateResourceStringsSource.targets" />

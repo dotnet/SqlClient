@@ -9,10 +9,10 @@
 #        affect >1 project at a time.
 
 parameters:
-    - name: buildConfiguration
+    - name: akvPackageVersion
       type: string
 
-    - name: mdsPackageVersion
+    - name: buildConfiguration
       type: string
 
 steps:
@@ -25,7 +25,7 @@ steps:
               $(REPO_ROOT)/build.proj
               -t:BuildAkv
               -p:Configuration=${{ parameters.buildConfiguration }}
-              -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }}
+              -p:AkvPackageVersion=${{ parameters.akvPackageVersion }}
               -p:ReferenceType=Package
           msBuildVersion: 17.0
           setupCommandLinePicker: vs2022

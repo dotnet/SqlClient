@@ -4,23 +4,21 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: AssemblyFileVersion
+
+  - name: abstractionsPackageVersion
     type: string
-    default: $(AssemblyFileVersion)
+
+  - name: abstractionsAssemblyFileVersion
+    type: string
   
-  - name: Configuration
+  - name: configuration
     type: string
-    default: '$(Configuration)'
 
-  - name: packageRefMdsVersion
+  - name: mdsPackageVersion
     type: string
-    default: ''
 
-  - name: product
-    default: MDS
-    values:
-    - MDS
-    - MSS
+  - name: mdsAssemblyFileVersion
+    type: string
 
 steps:
 - task: DownloadSecureFile@1
@@ -41,10 +39,9 @@ steps:
     packageType: runtime
     version: '8.x'
 
-- ${{ if eq(parameters.product, 'MDS') }}:
-  - task: MSBuild@1
-    displayName: 'BuildAllConfigurations using build.proj'
-    inputs:
-      solution: '**/build.proj'
-      configuration: '${{parameters.Configuration }}'
-      msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAllConfigurations -p:GenerateNuget=false -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'
+- task: MSBuild@1
+  displayName: 'BuildAllConfigurations using build.proj'
+  inputs:
+    solution: '**/build.proj'
+    configuration: '${{ parameters.configuration }}'
+    msbuildArguments: '-t:BuildAllConfigurations -p:GenerateNuget=false -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }} -p:AssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }} -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }} -p:AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }}'
