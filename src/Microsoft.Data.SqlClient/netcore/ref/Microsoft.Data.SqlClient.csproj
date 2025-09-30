@@ -52,6 +52,22 @@
     <PackageReference Include="System.Threading.Channels" />
   </ItemGroup>
    
+  <!--
+    Refer to the Abstractions package via project or package reference
+    depending on our build parameters.
+  -->
+  <ItemGroup>
+    <ProjectReference
+      Include="../../../Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"
+      Condition="'$(ReferenceType)' == 'Project'" />
+    <!-- TODO(ADO-38703): Package ref requires pipeline changes TBD. -->
+    <!--
+    <PackageReference
+      Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
+      Condition="'$(ReferenceType)' == 'Package'" />
+    -->
+  </ItemGroup>
+
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS' AND '$(TargetGroup)' != 'netcoreapp'" />
   <Import Project="$(ToolsDir)targets\NotSupported.targets" Condition="'$(OSGroup)' == 'AnyOS' AND '$(TargetGroup)' != 'netcoreapp'" />
   <!-- Trim docs for intellisense for ref folder (netcore/netstandard) but not when building for lib folder (only netstandard is built for lib from here) -->
