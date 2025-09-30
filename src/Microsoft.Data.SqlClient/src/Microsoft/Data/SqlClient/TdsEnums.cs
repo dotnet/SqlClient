@@ -190,6 +190,7 @@ namespace Microsoft.Data.SqlClient
         public const byte ENV_SPRESETCONNECTIONACK = 18; // SP_Reset_Connection ack
         public const byte ENV_USERINSTANCE = 19; // User Instance
         public const byte ENV_ROUTING = 20; // Routing (ROR) information
+        public const byte ENV_ENHANCEDROUTING = 21; // Enhanced Routing (ROR) information
 
         public enum EnvChangeType : byte
         {
