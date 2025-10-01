@@ -231,17 +231,11 @@
   <data name="ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity" xml:space="preserve">
     <value>Integrated Security anahtar sözcüğüyle Credential kullanılamaz.</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection" xml:space="preserve">
-    <value>Context Connection anahtar sözcüğüyle Credential kullanılamaz.</value>
-  </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword" xml:space="preserve">
     <value>'UserID', 'UID', 'Password' veya 'PWD' bağlantı dizesinde belirtilmişse AccessToken özelliği ayarlanamaz.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity" xml:space="preserve">
     <value>'Integrated Security' bağlantı dizesi anahtar sözcüğü 'true' veya 'SSPI' olarak ayarlanmışsa AccessToken özelliği ayarlanamaz.</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndContextConnection" xml:space="preserve">
-    <value>'Context Connection' anahtar sözcüğü ile AccessToken özelliği ayarlanamaz.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndCredential" xml:space="preserve">
     <value>Credential özelliği zaten ayarlanmışsa AccessToken özelliği ayarlanamaz.</value>
@@ -2073,9 +2067,6 @@
   <data name="ADP_InvalidDestinationBufferIndex" xml:space="preserve">
     <value>Geçersiz hedef arabellek (boyutu {0}) uzaklığı: {1}</value>
   </data>
-  <data name="ADP_DataReaderNoData" xml:space="preserve">
-    <value>Satır/sütun için hiç veri yok.</value>
-  </data>
   <data name="ADP_NumericToDecimalOverflow" xml:space="preserve">
     <value>Sayı değeri 96 bit ondalık basamağa sığmayacak kadar büyük.</value>
   </data>
@@ -2529,6 +2520,9 @@
   <data name="SQL_AsyncConnectionRequired" xml:space="preserve">
     <value>Bu komut, zaman uyumsuz bağlantı gerektiriyor. Bağlantı dizesinde “Asynchronous Processing=true” ayarını yapın.</value>
   </data>
+  <data name="SQL_ConnectTimeout" xml:space="preserve">
+    <value>Bağlantı denemesi zaman aşımına uğradı.</value>
+  </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>Zaman aşımı süresi sona erdi.  Sonuç olarak bağlantı kesildi.</value>
   </data>
@@ -2778,30 +2772,6 @@
   <data name="SQL_InvalidDataLength" xml:space="preserve">
     <value>Veri uzunluğu '{0}' 0'dan küçük.</value>
   </data>
-  <data name="SQL_SqlResultSetClosed" xml:space="preserve">
-    <value>SqlResultSet kapalıyken geçersiz bir {0} metodu çağırma girişimi.</value>
-  </data>
-  <data name="SQL_SqlResultSetClosed2" xml:space="preserve">
-    <value>SqlResultSet kapalı olduğundan işlem tamamlanamıyor.</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly" xml:space="preserve">
-    <value>Kayıt salt okunur olduğunda '{0}' çağrılamaz.</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly2" xml:space="preserve">
-    <value>Kayıt salt okunur olduğundan işlem tamamlanamıyor.</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted" xml:space="preserve">
-    <value>Geçerli satır silinmişken geçersiz bir {0} metodunu çağırma girişimi</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted2" xml:space="preserve">
-    <value>Geçerli satır silindiğinden işlem tamamlanamıyor</value>
-  </data>
-  <data name="SQL_SqlResultSetCommandNotInSameConnection" xml:space="preserve">
-    <value>SqlResultSet'i oluşturan komutun özgün bağlantıyla ilişkisi kesildiği için işlem tamamlanamıyor. SqlResultSet kapalı.</value>
-  </data>
-  <data name="SQL_SqlResultSetNoAcceptableCursor" xml:space="preserve">
-    <value>SqlResultSet, verilen sorgu için istenen seçeneklerle oluşturulamadı.</value>
-  </data>
   <data name="SQL_SqlUpdatableRecordReadOnly" xml:space="preserve">
     <value>SqlDataRecord salt okunur olduğunda '{0}' çağrılamaz.</value>
   </data>
@@ -2871,50 +2841,20 @@
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
     <value>Şu anda yüklü olan System.Transactions.dll, Genel İşlemleri desteklemiyor. Lütfen .NET Framework 4.6.2 veya sonraki bir sürüme yükseltin.</value>
   </data>
-  <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
-    <value>Güncelleştirmelerin toplu işlenmesi, içerik bağlantısında desteklenmiyor.</value>
-  </data>
-  <data name="SQL_ContextAllowsLimitedKeywords" xml:space="preserve">
-    <value>İçerik bağlantısı istenirken kullanılabilecek tek ek bağlantı dizesi anahtar sözcüğü, Type System Version anahtar sözcüğüdür.</value>
-  </data>
-  <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
-    <value>İçerik bağlantısı, Type System Version=SQL Server 2000 desteklemiyor.</value>
-  </data>
   <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
     <value>Microsoft.Data.SqlClient kullanarak bağlam bağlantısına bağlanma desteklenmiyor.</value>
-  </data>
-  <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
-    <value>İçerik bağlantısı zaten kullanılıyor.</value>
-  </data>
-  <data name="SQL_ContextUnavailableOutOfProc" xml:space="preserve">
-    <value>İstenen işlem, yalnızca Sql Server işleminde çalışılırken kullanılabilen bir SqlClr içeriği gerektiriyor.</value>
-  </data>
-  <data name="SQL_ContextUnavailableWhileInProc" xml:space="preserve">
-    <value>İstenen işlem bir Sql Server yürütme iş parçacığı gerektirir.  Geçerli iş parçacığı kullanıcı kodu veya diğer Sql Server motoru olmayan kodlar tarafından başlatılmıştır.</value>
   </data>
   <data name="SQL_NestedTransactionScopesNotSupported" xml:space="preserve">
     <value>İç içe TransactionScopes desteklenmiyor.</value>
   </data>
-  <data name="SQL_NotAvailableOnContextConnection" xml:space="preserve">
-    <value>İstenen işlem içerik bağlantısında kullanılamıyor.</value>
-  </data>
-  <data name="SQL_NotificationsNotAvailableOnContextConnection" xml:space="preserve">
-    <value>İçerik bağlantısında bildirim kullanılamıyor.</value>
-  </data>
   <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
     <value>Beklenmeyen sunucu olayı: {0}.</value>
-  </data>
-  <data name="SQL_UserInstanceNotAvailableInProc" xml:space="preserve">
-    <value>Sql Server işleminde çalışırken kullanıcı örneklerine izin verilmez.</value>
   </data>
   <data name="SQL_ArgumentLengthMismatch" xml:space="preserve">
     <value>‘{0}’ uzunluğu, ‘{1}’ uzunluğu ile aynı olmalıdır.</value>
   </data>
   <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
     <value>SqlDbType '{0}' {1} için geçersiz.  Yalnızca {2} desteklenir.</value>
-  </data>
-  <data name="SQL_PipeErrorRequiresSendEnd" xml:space="preserve">
-    <value>SqlPipe'a gönderilen önceki satırla ilgili bir hata oluştu.  Başka bir şey gönderilmeden önce SendResultsEnd çağrılmalıdır.</value>
   </data>
   <data name="SQL_TooManyValues" xml:space="preserve">
     <value>Çok fazla değer.</value>
@@ -3663,9 +3603,6 @@
   <data name="SQLNotify_AlreadyHasCommand" xml:space="preserve">
     <value>Bu SqlCommand nesnesi, zaten başka bir SqlDependency nesnesiyle ilişkilendirildi.</value>
   </data>
-  <data name="SqlNotify_SqlDepCannotBeCreatedInProc" xml:space="preserve">
-    <value>SqlDependency nesnesi, SQL Server işleminde çalışılırken oluşturulamaz.</value>
-  </data>
   <data name="SqlDependency_DatabaseBrokerDisabled" xml:space="preserve">
     <value>Geçerli veritabanı için SQL Server Hizmet Aracısı etkin değil ve sonuç olarak sorgu bildirimleri desteklenmiyor.  Bildirimleri kullanmak istiyorsanız lütfen bu veritabanı için Hizmet Aracısını etkinleştirin.</value>
   </data>
@@ -3725,21 +3662,6 @@
   </data>
   <data name="IEnumerableOfSqlDataRecordHasNoRows" xml:space="preserve">
     <value>SqlDataRecord numaralandırması içinde kayıt yok. Satır içermeyen tablo değerli bir parametre göndermek için değer olarak bunun yerine bir null başvuru kullanın.</value>
-  </data>
-  <data name="SqlPipe_CommandHookedUpToNonContextConnection" xml:space="preserve">
-    <value>SqlPipe, içerik bağlantısı olmayan bir bağlantıyla komut yürütmeyi desteklemez.</value>
-  </data>
-  <data name="SqlPipe_MessageTooLong" xml:space="preserve">
-    <value>İleti uzunluğu {0}, desteklenen en fazla uzunluk olan 4000'i aşıyor.</value>
-  </data>
-  <data name="SqlPipe_IsBusy" xml:space="preserve">
-    <value>Kanal, başka bir işlemle meşgulken kullanılamadı.</value>
-  </data>
-  <data name="SqlPipe_AlreadyHasAnOpenResultSet" xml:space="preserve">
-    <value>Şu anda kanala bir sonuç kümesi gönderiliyor. {0}‘i çağırmadan önce geçerli sonuç kümesini sonlandırın.</value>
-  </data>
-  <data name="SqlPipe_DoesNotHaveAnOpenResultSet" xml:space="preserve">
-    <value>Sonuç kümesi başlatılmadı.  {0}'i çağırmadan önce SendResultSetStart'ı çağırın.</value>
   </data>
   <data name="SNI_PN0" xml:space="preserve">
     <value>HTTP Sağlayıcısı</value>
@@ -4032,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>Sertifika yolu null olamaz. Şu biçimi kullanın: &lt;sertifika konumu&gt;{2}&lt;sertifika deposu&gt;{2}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{0}' veya '{1}' değerindedir.</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Sertifika yolu null olamaz. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{1}&lt;sertifika depolama alanı&gt;{1}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{0}'.</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>İç hata. Sertifika yolu null olamaz. Şu biçimi kullanın: &lt;sertifika konumu&gt;{2}&lt;sertifika deposu&gt;{2}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{0}' veya '{1}' değerindedir.</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>İç hata. Sertifika yolu null olamaz. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{1}&lt;sertifika depolama alanı&gt;{1}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{0}'.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Sütun ana anahtar yolu null olamaz. Microsoft şifreleme hizmeti sağlayıcısı (CSP) içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CSP Sağlayıcısı Adı&gt;{0}&lt;Anahtar Tanımlayıcısı&gt;.</value>
@@ -4050,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>Geçerli sertifika yolu: '{0}'. Şu biçimi kullanın: &lt;sertifika konumu&gt;{3}&lt;sertifika deposu&gt;{3}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{1}' veya '{2}' değerindedir.</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Geçerli sertifika yolu: '{0}'. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{2}&lt;sertifika depolama alanı&gt;{2}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{1}'.</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>İç hata. Geçerli sertifika yolu: '{0}'. Şu biçimi kullanın: &lt;sertifika konumu&gt;{3}&lt;sertifika deposu&gt;{3}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{1}' veya '{2}' değerindedir.</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>İç hata. Geçerli sertifika yolu: '{0}'. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{2}&lt;sertifika depolama alanı&gt;{2}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{1}'.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Geçersiz sütun ana anahtar yolu: '{0}'. Microsoft şifreleme hizmeti sağlayıcısı (CSP) içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CSP Sağlayıcısı Adı&gt;{1}&lt;Anahtar Tanımlayıcısı&gt;.</value>
@@ -4068,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>Sertifika yolu '{1}'de geçersiz sertifika konumu '{0}'. Şu biçimi kullanın: &lt;sertifika konumu&gt;{4}&lt;sertifika deposu&gt;{4}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{2}' veya '{3}' değerindedir.</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>Sertifika yolu '{1}'de geçersiz sertifika konumu '{0}'. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{3}&lt;sertifika depolama alanı&gt;{3}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{2}'.</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>İç hata. Sertifika yolu '{1}'de geçersiz sertifika konumu '{0}'. Şu biçimi kullanın: &lt;sertifika konumu&gt;{4}&lt;sertifika deposu&gt;{4}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{2}' veya '{3}' değerindedir.</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>İç hata. Sertifika yolu '{1}'de geçersiz sertifika konumu '{0}'. Aşağıdaki biçimi kullanın: &lt;sertifika konumu&gt;{3}&lt;sertifika depolama alanı&gt;{3}&lt;sertifika parmak izi&gt;, burada &lt;sertifika konumu&gt; '{2}'.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>Sertifika yolu '{1}'de belirtilen geçersiz sertifika deposu '{0}'. Beklenen değer: '{2}'.</value>
@@ -4135,6 +4075,9 @@
     <value>Belirtilen şifreli sütun şifreleme anahtarı, geçersiz bir şifreleme algoritması sürümü ('{0}') içeriyor. Beklenen sürüm: '{1}'.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
+    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının şifreli metin uzunluğu {0}, '{3}' konumundaki sütun ana anahtarı ({2}) kullanılırken şifreli metin uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen {4} yol hatalı olabilir.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının şifreli metin uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (sertifika) kullanılırken şifreli metin uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen sertifika yolu hatalı olabilir.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
@@ -4144,6 +4087,9 @@
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının şifreli metin uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (asimetrik anahtar) kullanılırken şifreli metin uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk olabilir veya belirtilen Microsoft Şifreleme API: Yeni Nesil (CNG) sağlayıcı yolu yanlış olabilir.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
+    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının imza uzunluğu {0}, '{3}' konumundaki sütun ana anahtarı ({2}) kullanılırken imza uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen {4} yol hatalı olabilir.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının imza uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (sertifika) kullanılırken imza uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen sertifika yolu hatalı olabilir.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
@@ -4152,10 +4098,13 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının imza uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (asimetrik anahtar) kullanılırken imza uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk olabilir veya belirtilen Microsoft Şifreleme API: Yeni Nesil (CNG) sağlayıcı yolu yanlış olabilir.</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarı imzası, '{1}' konumundaki sütun ana anahtarı ({0}) ile hesaplanan imzayla eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen yol hatalı olabilir.</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarı imzası, '{0}' konumundaki sütun ana anahtarı (sertifika) ile hesaplanan imzayla eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen yol hatalı olabilir.</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarı imzası, '{0}' konumundaki sütun ana anahtarı (asimetrik anahtar) ile hesaplanan imzayla eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen yol hatalı olabilir.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
@@ -4742,5 +4691,20 @@
   </data>
   <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
     <value>SqlBatchCommand listesi başlatılmadı.</value>
+  </data>
+  <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
+    <value>'{0}' sütunundan vektör verilerini alma  denemesi geçersiz. Vektörler yalnızca vektör türündeki sütunlar için desteklenir.</value>
+  </data>
+  <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
+    <value>'{0}' vektör türü desteklenmiyor.</value>
+  </data>
+  <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
+    <value>SqlDbType Vector'ın '{0}' çıkış parametresi için 'null' değeri desteklenmiyor.</value>
+  </data>
+  <data name="ADP_InvalidVectorHeader" xml:space="preserve">
+    <value>Geçersiz vektör başlığı alındı.</value>
+  </data>
+  <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
+    <value>Vektör JSON dizesi {0} geçersiz.</value>
   </data>
 </root>

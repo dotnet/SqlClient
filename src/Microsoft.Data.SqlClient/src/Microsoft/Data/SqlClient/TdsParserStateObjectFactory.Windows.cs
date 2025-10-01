@@ -13,28 +13,16 @@ namespace Microsoft.Data.SqlClient
     {
         public static readonly TdsParserStateObjectFactory Singleton = new TdsParserStateObjectFactory();
 
-        private const string UseManagedNetworkingOnWindows = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
-
-#if NET
-        private static bool s_shouldUseManagedSNI;
-
-        // If the appcontext switch is set then Use Managed SNI based on the value. Otherwise Native SNI.dll will be used by default.
-        public static bool UseManagedSNI =>
-            AppContext.TryGetSwitch(UseManagedNetworkingOnWindows, out s_shouldUseManagedSNI) ? s_shouldUseManagedSNI : false;
-#else
-        public const bool UseManagedSNI = false;
-#endif
-
         public EncryptionOptions EncryptionOptions =>
 #if NET
-            UseManagedSNI ? ManagedSni.SniLoadHandle.SingletonInstance.Options : SNILoadHandle.SingletonInstance.Options;
+            LocalAppContextSwitches.UseManagedNetworking ? ManagedSni.SniLoadHandle.SingletonInstance.Options : SNILoadHandle.SingletonInstance.Options;
 #else
             SNILoadHandle.SingletonInstance.Options;
 #endif
 
         public uint SNIStatus =>
 #if NET
-            UseManagedSNI ? ManagedSni.SniLoadHandle.SingletonInstance.Status : SNILoadHandle.SingletonInstance.Status;
+            LocalAppContextSwitches.UseManagedNetworking ? ManagedSni.SniLoadHandle.SingletonInstance.Status : SNILoadHandle.SingletonInstance.Status;
 #else
             SNILoadHandle.SingletonInstance.Status;
 #endif
@@ -44,7 +32,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         public bool ClientOSEncryptionSupport =>
 #if NET
-            UseManagedSNI ? ManagedSni.SniLoadHandle.SingletonInstance.ClientOSEncryptionSupport : SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
+            LocalAppContextSwitches.UseManagedNetworking ? ManagedSni.SniLoadHandle.SingletonInstance.ClientOSEncryptionSupport : SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
 #else
             SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
 #endif
@@ -52,16 +40,14 @@ namespace Microsoft.Data.SqlClient
         public TdsParserStateObject CreateTdsParserStateObject(TdsParser parser)
         {
 #if NET
-            if (UseManagedSNI)
+            if (LocalAppContextSwitches.UseManagedNetworking)
             {
-                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectFactory.CreateTdsParserStateObject | Info | Found AppContext switch '{0}' enabled, managed networking implementation will be used."
-                   , UseManagedNetworkingOnWindows);
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectFactory.CreateTdsParserStateObject | Info | Using managed networking implementation.");
                 return new TdsParserStateObjectManaged(parser);
             }
             else
             {
-                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectFactory.CreateTdsParserStateObject | Info | AppContext switch '{0}' not enabled, native networking implementation will be used."
-                   , UseManagedNetworkingOnWindows);
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectFactory.CreateTdsParserStateObject | Info | Using native networking implementation.");
                 return new TdsParserStateObjectNative(parser);
             }
 #else
@@ -72,7 +58,7 @@ namespace Microsoft.Data.SqlClient
         internal TdsParserStateObject CreateSessionObject(TdsParser tdsParser, TdsParserStateObject _pMarsPhysicalConObj, bool v)
         {
 #if NET
-            if (TdsParserStateObjectFactory.UseManagedSNI)
+            if (LocalAppContextSwitches.UseManagedNetworking)
             {
                 return new TdsParserStateObjectManaged(tdsParser, _pMarsPhysicalConObj, true);
             }

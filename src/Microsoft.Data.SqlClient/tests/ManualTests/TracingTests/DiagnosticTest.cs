@@ -21,7 +21,6 @@ using Microsoft.DotNet.RemoteExecutor;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
     public class DiagnosticTest
     {
         private const string BadConnectionString = "data source = bad; initial catalog = bad; integrated security = true; connection timeout = 1;";
@@ -241,8 +240,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
+#if NET
                     await using (SqlConnection conn = new SqlConnection(connectionString))
                     await using (SqlCommand cmd = new SqlCommand())
+#else
+                    using (SqlConnection conn = new SqlConnection(connectionString))
+                    using (SqlCommand cmd = new SqlCommand())
+#endif
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "SELECT [name], [state] FROM [sys].[databases] WHERE [name] = db_name();";
@@ -262,8 +266,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
+#if NET
                     await using (SqlConnection conn = new SqlConnection(connectionString))
                     await using (SqlCommand cmd = new SqlCommand())
+#else
+                    using (SqlConnection conn = new SqlConnection(connectionString))
+                    using (SqlCommand cmd = new SqlCommand())
+#endif
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "SELECT 1 / 0;";
@@ -283,8 +292,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
+#if NET
                     await using (SqlConnection conn = new SqlConnection(connectionString))
                     await using (SqlCommand cmd = new SqlCommand())
+#else
+                    using (SqlConnection conn = new SqlConnection(connectionString))
+                    using (SqlCommand cmd = new SqlCommand())
+#endif
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "SELECT [name], [state] FROM [sys].[databases] WHERE [name] = db_name();";
@@ -304,8 +318,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
+#if NET
                     await using (SqlConnection conn = new SqlConnection(connectionString))
                     await using (SqlCommand cmd = new SqlCommand())
+#else
+                    using (SqlConnection conn = new SqlConnection(connectionString))
+                    using (SqlCommand cmd = new SqlCommand())
+#endif
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "SELECT 1 / 0;";
@@ -325,8 +344,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
+#if NET
                     await using (SqlConnection conn = new SqlConnection(connectionString))
                     await using (SqlCommand cmd = new SqlCommand())
+#else
+                    using (SqlConnection conn = new SqlConnection(connectionString))
+                    using (SqlCommand cmd = new SqlCommand())
+#endif
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "SELECT [name], [state] FROM [sys].[databases] WHERE [name] = db_name();";
@@ -350,8 +374,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
+#if NET
                     await using (SqlConnection conn = new SqlConnection(connectionString))
                     await using (SqlCommand cmd = new SqlCommand())
+#else
+                    using (SqlConnection conn = new SqlConnection(connectionString))
+                    using (SqlCommand cmd = new SqlCommand())
+#endif
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "SELECT 1 / 0;";
@@ -374,8 +403,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
+#if NET
                     await using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                     await using (SqlCommand cmd = new SqlCommand())
+#else
+                    using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+                    using (SqlCommand cmd = new SqlCommand())
+#endif
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "SELECT TOP 10 * FROM sys.objects FOR xml auto, xmldata;";
@@ -401,8 +435,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
+#if NET
                     await using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                     await using (SqlCommand cmd = new SqlCommand())
+#else
+                    using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+                    using (SqlCommand cmd = new SqlCommand())
+#endif
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "select *, baddata = 1 / 0 from sys.objects for xml auto, xmldata;";
@@ -458,7 +497,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
+#if NET
                     await using (SqlConnection sqlConnection = new SqlConnection(connectionString))
+#else
+                    using (SqlConnection sqlConnection = new SqlConnection(connectionString))
+#endif
                     {
                         await sqlConnection.OpenAsync();
                     }
@@ -474,7 +517,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
+#if NET
                     await using (SqlConnection sqlConnection = new SqlConnection(BadConnectionString))
+#else
+                    using (SqlConnection sqlConnection = new SqlConnection(BadConnectionString))
+#endif
                     {
                         await Assert.ThrowsAsync<SqlException>(() => sqlConnection.OpenAsync());
                     }
@@ -483,7 +530,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }).Dispose();
         }
 
-        private static void CollectStatisticsDiagnostics(Action<string> sqlOperation, bool enableServerLogging = false, [CallerMemberName] string methodName = "")
+        private static void CollectStatisticsDiagnostics(Action<string> sqlOperation, [CallerMemberName] string methodName = "")
         {
             bool statsLogged = false;
             bool operationHasError = false;
@@ -670,10 +717,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
 
                 Console.WriteLine(string.Format("Test: {0} Enabled Listeners", methodName));
-                using (var server = TestTdsServer.StartServerWithQueryEngine(new DiagnosticsQueryEngine(), enableLog: enableServerLogging, methodName: methodName))
+
+                using (var server = new TdsServer(new DiagnosticsQueryEngine(), new TdsServerArguments()))
                 {
+                    server.Start(methodName);
                     Console.WriteLine(string.Format("Test: {0} Started Server", methodName));
-                    sqlOperation(server.ConnectionString);
+
+                    var connectionString = new SqlConnectionStringBuilder
+                    {
+                        DataSource = $"localhost,{server.EndPoint.Port}",
+                        Encrypt = SqlConnectionEncryptOption.Optional
+                    }.ConnectionString;
+
+                    sqlOperation(connectionString);
 
                     Console.WriteLine(string.Format("Test: {0} SqlOperation Successful", methodName));
 
@@ -859,11 +915,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (DiagnosticListener.AllListeners.Subscribe(diagnosticListenerObserver))
             {
                 Console.WriteLine(string.Format("Test: {0} Enabled Listeners", methodName));
-                using (var server = TestTdsServer.StartServerWithQueryEngine(new DiagnosticsQueryEngine(), methodName: methodName))
+                using (var server = new TdsServer(new DiagnosticsQueryEngine(), new TdsServerArguments()))
                 {
+                    server.Start(methodName);
                     Console.WriteLine(string.Format("Test: {0} Started Server", methodName));
 
-                    await sqlOperation(server.ConnectionString);
+                    var connectionString = new SqlConnectionStringBuilder
+                    {
+                        DataSource = $"localhost,{server.EndPoint.Port}",
+                        Encrypt = SqlConnectionEncryptOption.Optional
+                    }.ConnectionString;
+                    await sqlOperation(connectionString);
 
                     Console.WriteLine(string.Format("Test: {0} SqlOperation Successful", methodName));
 
@@ -890,7 +952,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
     public class DiagnosticsQueryEngine : QueryEngine
     {
-        public DiagnosticsQueryEngine() : base(new TDSServerArguments())
+        public DiagnosticsQueryEngine() : base(new TdsServerArguments())
         {
         }
 

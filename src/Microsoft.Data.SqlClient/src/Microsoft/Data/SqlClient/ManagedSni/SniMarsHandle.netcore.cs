@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Security.Authentication;
 using System.Threading;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
@@ -49,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         public override int ReserveHeaderSize => SniSmuxHeader.HEADER_LENGTH;
 
-        public override int ProtocolVersion => _connection.ProtocolVersion;
+        public override SslProtocols ProtocolVersion => _connection.ProtocolVersion;
 
         /// <summary>
         /// Dispose object

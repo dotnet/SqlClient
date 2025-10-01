@@ -16,6 +16,10 @@ namespace Microsoft.Data.SqlClient
 
         private protected TdsParserStateObject _physicalStateObj = null!;
 
+        protected SspiContextProvider()
+        {
+        }
+
 #if NET
         /// <remarks>
         /// <see cref="ManagedSni.ResolvedServerSpn"/> for details as to what <paramref name="primaryServerSpn"/> and <paramref name="secondaryServerSpn"/> means and why there are two.
@@ -58,7 +62,7 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        protected abstract bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams);
+        protected abstract bool GenerateContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams);
 
         internal void WriteSSPIContext(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter)
         {
@@ -94,9 +98,9 @@ namespace Microsoft.Data.SqlClient
         {
             try
             {
-                SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | SPN={1}", GetType().FullName, nameof(GenerateSspiClientContext), authParams.Resource);
+                SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | SPN={2}", GetType().FullName, nameof(GenerateContext), authParams.Resource);
 
-                return GenerateSspiClientContext(incomingBlob, outgoingBlobWriter, authParams);
+                return GenerateContext(incomingBlob, outgoingBlobWriter, authParams);
             }
             catch (Exception e)
             {
@@ -105,7 +109,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        protected void SSPIError(string error, string procedure)
+        private protected void SSPIError(string error, string procedure)
         {
             Debug.Assert(!string.IsNullOrEmpty(procedure), "TdsParser.SSPIError called with an empty or null procedure string");
             Debug.Assert(!string.IsNullOrEmpty(error), "TdsParser.SSPIError called with an empty or null error string");

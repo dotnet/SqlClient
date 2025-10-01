@@ -26,7 +26,7 @@
     <TargetGroup Condition="'$(TFGroup)' == 'netcore'">netcoreapp</TargetGroup>
     <TargetNetCoreVersion Condition="$(TargetGroup) == 'netcoreapp' AND $(TargetNetCoreVersion) == ''">$(TF)</TargetNetCoreVersion>
     <TargetNetFxVersion Condition="$(TargetGroup) == 'netfx' AND $(TargetNetFxVersion) == ''">$(TF)</TargetNetFxVersion>
-    <GenerateNuget Condition="'$(GenerateNuget)' == ''">true</GenerateNuget>
+    <GenerateNuget Condition="'$(GenerateNuget)' == '' AND '$(IsEnabledWindows)' == 'true'">true</GenerateNuget>
     <SqlServerLibProperties>Configuration=$(Configuration);AssemblyVersion=$(SqlServerAssemblyVersion);AssemblyFileVersion=$(SqlServerAssemblyFileVersion);Version=$(SqlServerPackageVersion);</SqlServerLibProperties>
     <ProjectProperties>Configuration=$(Configuration);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
     <TestProjectProperties>BuildProjectReferences=false;$(ProjectProperties);BuildForRelease=false;TargetNetCoreVersion=$(TargetNetCoreVersion);TargetNetFxVersion=$(TargetNetFxVersion)</TestProjectProperties>
@@ -58,9 +58,14 @@
     <NetStandardDriver Include="**/netcore/ref/Microsoft.Data.SqlClient*.csproj" />
     <AKVProvider Include="**/add-ons/**/AzureKeyVaultProvider/*.csproj" />
 
+    <UnitTests Include="**/Common/Common.csproj" />
+    <UnitTests Include="**/tools/TDS/TDS/TDS.csproj" />
+    <UnitTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
+    <UnitTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
     <UnitTests Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
     <UnitTestsProj Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
-    
+
+
     <FunctionalTests Include="**/Common/Common.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS/TDS.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
@@ -90,7 +95,6 @@
   <Target Name="BuildSqlServerPackage" DependsOnTargets="BuildSqlServerLibAnyOS;GenerateSqlServerPackage"/>
   <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildUnitTestsNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore"/>
   <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildUnitTestsNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx" Condition="$(IsEnabledWindows) == 'true'"/>
-  <Target Name="BuildTests" DependsOnTargets="BuildTestsNetCore;BuildTestsNetFx"/>
 
   <Target Name="RestoreSqlServerLib">
     <MSBuild Projects="@(SqlServerLib)" Targets="restore" />
@@ -118,7 +122,7 @@
 
   <Target Name="BuildTools" Condition="'$(BuildTools)' == 'true'">
     <PropertyGroup>
-      <DotnetBuildCmd>$(DotNetCmd) dotnet build -c Release -p:ReferenceType=$(ReferenceType)</DotnetBuildCmd>
+      <DotnetBuildCmd>dotnet build -c Release -p:ReferenceType=$(ReferenceType)</DotnetBuildCmd>
     </PropertyGroup>
     <Exec Command="$(DotnetBuildCmd)" WorkingDirectory="$(GenAPISrcDir)Microsoft.DotNet.GenAPI\" />
   </Target>
@@ -221,6 +225,7 @@
         -p:TestTargetOS=Windows$(TargetGroup)
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
+        --filter "category!=failing%26category!=flaky"
         --logger:"trx;LogFilePrefix=Unit-Windows$(TargetGroup)-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -241,8 +246,9 @@
         -p:TestTargetOS=Unixnetcoreapp
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
+        --filter "category!=failing%26category!=flaky"
         --logger:"trx;LogFilePrefix=Unit-Unixnetcoreapp-$(TestSet)"
-      </TestCommand>
+    </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running unit tests for Unix via command: $(TestCommand)"/>

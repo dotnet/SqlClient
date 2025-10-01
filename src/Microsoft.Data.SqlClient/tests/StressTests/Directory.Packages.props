@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- We purposely do not include any parent Directory.Packages.props files. -->
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+  
+  <!--
+    If the $(MdsPackageVersion) property is set, typically for CI builds, use
+    that as the MDS version.  Otherwise, use a specific nuget.org published
+    version.
+  -->
+  <Choose>
+    <When Condition="'$(MdsPackageVersion)' != ''">
+      <PropertyGroup>
+        <MdsVersion>$(MdsPackageVersion)</MdsVersion>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <!-- <MdsVersion>5.1.7</MdsVersion> -->
+        <!-- <MdsVersion>5.2.3</MdsVersion> -->
+        <!-- <MdsVersion>6.0.1</MdsVersion> -->
+        <!-- <MdsVersion>6.0.2</MdsVersion> -->
+        <!-- <MdsVersion>6.1.0-preview1.25120.4</MdsVersion> -->
+        <MdsVersion>6.1.0-preview2.25178.5</MdsVersion>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(MdsVersion)" />
+  </ItemGroup>
+
+</Project>

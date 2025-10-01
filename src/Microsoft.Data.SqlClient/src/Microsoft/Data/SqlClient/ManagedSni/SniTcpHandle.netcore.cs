@@ -98,13 +98,13 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
-        public override int ProtocolVersion
+        public override SslProtocols ProtocolVersion
         {
             get
             {
                 try
                 {
-                    return (int)_sslStream.SslProtocol;
+                    return _sslStream.SslProtocol;
                 }
                 catch
                 {
@@ -953,9 +953,30 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
                 finally
                 {
-                    // Reset the socket timeout to Timeout.Infinite after the receive operation is done
-                    // to avoid blocking the thread in case of a timeout error.
-                    _socket.ReceiveTimeout = Timeout.Infinite;
+                    const int resetTimeout = Timeout.Infinite;
+
+                    try
+                    {
+                        // Reset the socket timeout to Timeout.Infinite after
+                        // the receive operation is done to avoid blocking the
+                        // thread in case of a timeout error.
+                        _socket.ReceiveTimeout = resetTimeout;
+
+                    }
+                    catch (SocketException ex)
+                    {
+                        // We sometimes see setting the ReceiveTimeout fail
+                        // on macOS. There's isn't much we can do about it
+                        // though, so just log and move on.
+                        SqlClientEventSource.Log.TrySNITraceEvent(
+                            nameof(SniTcpHandle),
+                            EventType.ERR,
+                            "Connection Id {0}, Failed to reset socket " +
+                            "receive timeout to {1}: {2}",
+                            _connectionId,
+                            resetTimeout,
+                            ex.Message);
+                    }
                 }
             }
         }

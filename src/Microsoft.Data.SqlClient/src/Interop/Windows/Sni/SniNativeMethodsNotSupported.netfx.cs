@@ -142,7 +142,7 @@ namespace Interop.Windows.Sni
         public uint SniTerminate() =>
             throw ADP.SNIPlatformNotSupported(_architecture);
 
-        public uint SniWaitForSslHandshakeToComplete(SNIHandle pConn, int dwMilliseconds, out uint pProtocolVersion) =>
+        public uint SniWaitForSslHandshakeToComplete(SNIHandle pConn, int dwMilliseconds, out SniSslProtocols pProtocolVersion) =>
             throw ADP.SNIPlatformNotSupported(_architecture);
 
         public uint SniWriteAsyncWrapper(SNIHandle pConn, SNIPacket pPacket) =>

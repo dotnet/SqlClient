@@ -158,57 +158,49 @@ namespace Microsoft.Data.SqlClient
             string hostNameInCertificate)
             : base(IntPtr.Zero, true)
         {
-#if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-            try
-            { }
-            finally
-            {
-                _fSync = fSync;
-                instanceName = new byte[256]; // Size as specified by netlibs.
-                // Option ignoreSniOpenTimeout is no longer available
-                //if (ignoreSniOpenTimeout)
-                //{
-                //    // UNDONE: ITEM12001110 (DB Mirroring Reconnect) Old behavior of not truly honoring timeout presevered 
-                //    //  for non-failover scenarios to avoid breaking changes as part of a QFE.  Consider fixing timeout
-                //    //  handling in next full release and removing ignoreSniOpenTimeout parameter.
-                //    timeout = Timeout.Infinite; // -1 == native SNIOPEN_TIMEOUT_VALUE / INFINITE
-                //}
+            _fSync = fSync;
+            instanceName = new byte[256]; // Size as specified by netlibs.
+            // Option ignoreSniOpenTimeout is no longer available
+            //if (ignoreSniOpenTimeout)
+            //{
+            //    // UNDONE: ITEM12001110 (DB Mirroring Reconnect) Old behavior of not truly honoring timeout presevered
+            //    //  for non-failover scenarios to avoid breaking changes as part of a QFE.  Consider fixing timeout
+            //    //  handling in next full release and removing ignoreSniOpenTimeout parameter.
+            //    timeout = Timeout.Infinite; // -1 == native SNIOPEN_TIMEOUT_VALUE / INFINITE
+            //}
 
-                #if NETFRAMEWORK
-                int transparentNetworkResolutionStateNo = (int)transparentNetworkResolutionState;
-                _status = SniNativeWrapper.SniOpenSyncEx(
-                    myInfo,
-                    serverName,
-                    ref base.handle,
-                    ref spn,
-                    instanceName,
-                    flushCache,
-                    fSync,
-                    timeout,
-                    fParallel,
-                    transparentNetworkResolutionStateNo,
-                    totalTimeout,
-                    ipPreference,
-                    cachedDNSInfo,
-                    hostNameInCertificate);
-                #else
-                _status = SniNativeWrapper.SniOpenSyncEx(
-                    myInfo,
-                    serverName,
-                    ref base.handle,
-                    ref spn,
-                    instanceName,
-                    flushCache,
-                    fSync,
-                    timeout,
-                    fParallel,
-                    ipPreference,
-                    cachedDNSInfo,
-                    hostNameInCertificate);
-                #endif
-            }
+            #if NETFRAMEWORK
+            int transparentNetworkResolutionStateNo = (int)transparentNetworkResolutionState;
+            _status = SniNativeWrapper.SniOpenSyncEx(
+                myInfo,
+                serverName,
+                ref base.handle,
+                ref spn,
+                instanceName,
+                flushCache,
+                fSync,
+                timeout,
+                fParallel,
+                transparentNetworkResolutionStateNo,
+                totalTimeout,
+                ipPreference,
+                cachedDNSInfo,
+                hostNameInCertificate);
+            #else
+            _status = SniNativeWrapper.SniOpenSyncEx(
+                myInfo,
+                serverName,
+                ref base.handle,
+                ref spn,
+                instanceName,
+                flushCache,
+                fSync,
+                timeout,
+                fParallel,
+                ipPreference,
+                cachedDNSInfo,
+                hostNameInCertificate);
+            #endif
         }
 
         // constructs SNI Handle for MARS session
@@ -283,65 +275,6 @@ namespace Microsoft.Data.SqlClient
                 SniNativeWrapper.SniPacketRelease(ptr);
             }
             return true;
-        }
-    }
-
-    internal sealed class WritePacketCache : IDisposable
-    {
-        private bool _disposed;
-        private Stack<SNIPacket> _packets;
-
-        public WritePacketCache()
-        {
-            _disposed = false;
-            _packets = new Stack<SNIPacket>();
-        }
-
-        public SNIPacket Take(SNIHandle sniHandle)
-        {
-            SNIPacket packet;
-            if (_packets.Count > 0)
-            {
-                // Success - reset the packet
-                packet = _packets.Pop();
-                SniNativeWrapper.SniPacketReset(sniHandle, IoType.WRITE, packet, ConsumerNumber.SNI_Consumer_SNI);
-            }
-            else
-            {
-                // Failed to take a packet - create a new one
-                packet = new SNIPacket(sniHandle);
-            }
-            return packet;
-        }
-
-        public void Add(SNIPacket packet)
-        {
-            if (!_disposed)
-            {
-                _packets.Push(packet);
-            }
-            else
-            {
-                // If we're disposed, then get rid of any packets added to us
-                packet.Dispose();
-            }
-        }
-
-        public void Clear()
-        {
-            while (_packets.Count > 0)
-            {
-                _packets.Pop().Dispose();
-            }
-        }
-
-        public void Dispose()
-        {
-            if (!_disposed)
-            {
-                _disposed = true;
-                Clear();
-            }
         }
     }
 }

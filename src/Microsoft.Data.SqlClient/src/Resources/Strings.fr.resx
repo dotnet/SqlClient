@@ -231,17 +231,11 @@
   <data name="ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity" xml:space="preserve">
     <value>Impossible d'utiliser de Credential avec le mot-clé de chaîne de connexion de Integrated Security.</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection" xml:space="preserve">
-    <value>Impossible d'utiliser de Credential avec le mot clé de Context Connection.</value>
-  </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword" xml:space="preserve">
     <value>Impossible de définir la propriété AccessToken si « UserID », « UID », « Password » ou « PWD » a été spécifié dans la chaîne de connexion.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity" xml:space="preserve">
     <value>Impossible de définir la propriété AccessToken si le mot clé de chaîne de connexion « Integrated Security » a la valeur « true » ou « SSPI ».</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndContextConnection" xml:space="preserve">
-    <value>Impossible de définir la propriété AccessToken avec le mot clé « Context Connection ».</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndCredential" xml:space="preserve">
     <value>Impossible de définir la propriété AccessToken si la propriété Credential est déjà définie.</value>
@@ -2073,9 +2067,6 @@
   <data name="ADP_InvalidDestinationBufferIndex" xml:space="preserve">
     <value>Mémoire tampon de destination non valide (taille de {0}) offset : {1}</value>
   </data>
-  <data name="ADP_DataReaderNoData" xml:space="preserve">
-    <value>Aucune donnée n'existe pour la ligne/colonne.</value>
-  </data>
   <data name="ADP_NumericToDecimalOverflow" xml:space="preserve">
     <value>La valeur numérique est trop élevée pour tenir dans un décimal à 96 bits.</value>
   </data>
@@ -2529,6 +2520,9 @@
   <data name="SQL_AsyncConnectionRequired" xml:space="preserve">
     <value>Cette commande requiert une connexion asynchrone. Définissez "Asynchronous Processing=true" dans la chaîne de connexion.</value>
   </data>
+  <data name="SQL_ConnectTimeout" xml:space="preserve">
+    <value>La tentative de connexion a expiré.</value>
+  </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>Le délai d'attente est arrivé à expiration. Par conséquent, la connexion a été interrompue.</value>
   </data>
@@ -2778,30 +2772,6 @@
   <data name="SQL_InvalidDataLength" xml:space="preserve">
     <value>La longueur des données « {0} » est inférieure à 0.</value>
   </data>
-  <data name="SQL_SqlResultSetClosed" xml:space="preserve">
-    <value>Tentative d'appel de la méthode {0} non valide avec SqlResultSet fermé.</value>
-  </data>
-  <data name="SQL_SqlResultSetClosed2" xml:space="preserve">
-    <value>Opération impossible : le SqlResultSet est fermé.</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly" xml:space="preserve">
-    <value>'{0}' ne peut pas être appelé lorsque l'enregistrement est en lecture seule.</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly2" xml:space="preserve">
-    <value>Opération impossible : l'enregistrement est en lecture seule.</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted" xml:space="preserve">
-    <value>Tentative d'appel de la méthode {0} non valide si la ligne actuelle est supprimée</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted2" xml:space="preserve">
-    <value>Opération impossible : la ligne actuelle a été supprimée</value>
-  </data>
-  <data name="SQL_SqlResultSetCommandNotInSameConnection" xml:space="preserve">
-    <value>Opération impossible : la commande qui a créé le SqlResultSet est dissociée de la connexion d'origine. Le SqlResultSet est fermé.</value>
-  </data>
-  <data name="SQL_SqlResultSetNoAcceptableCursor" xml:space="preserve">
-    <value>Impossible de créer le SqlResultSet pour la requête fournie avec les options souhaitées.</value>
-  </data>
   <data name="SQL_SqlUpdatableRecordReadOnly" xml:space="preserve">
     <value>Impossible d'appeler '{0}' si le SqlDataRecord est en lecture seule.</value>
   </data>
@@ -2871,50 +2841,20 @@
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
     <value>Le fichier System.Transactions.dll actuellement chargé ne prend pas en charge les transactions globales. Effectuez une mise à niveau vers .NET Framework 4.6.2 ou ultérieur.</value>
   </data>
-  <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
-    <value>Le traitement par lots des mises à jour n'est pas pris en charge sur la connexion du contexte.</value>
-  </data>
-  <data name="SQL_ContextAllowsLimitedKeywords" xml:space="preserve">
-    <value>Le seul mot clé de chaîne de connexion supplémentaire qui peut être utilisé lors de la demande de la connexion du contexte est le mot clé Type System Version.</value>
-  </data>
-  <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
-    <value>La connexion du contexte ne prend pas en charge Type System Version=SQL Server 2000.</value>
-  </data>
   <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
     <value>La connexion à la connexion de contexte à l’aide de Microsoft.Data.SqlClient n’est pas prise en charge.</value>
-  </data>
-  <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
-    <value>La connexion du contexte est déjà en cours d'utilisation.</value>
-  </data>
-  <data name="SQL_ContextUnavailableOutOfProc" xml:space="preserve">
-    <value>L'opération demandée nécessite un contexte SqlClr, qui n'est disponible qu'en cas d'exécution dans le processus Sql Server.</value>
-  </data>
-  <data name="SQL_ContextUnavailableWhileInProc" xml:space="preserve">
-    <value>L'opération demandée nécessite un thread d'exécution Sql Server. Le thread en cours a été démarré par code d'utilisateur ou autre code de moteur non-Sql Server.</value>
   </data>
   <data name="SQL_NestedTransactionScopesNotSupported" xml:space="preserve">
     <value>Les TransactionScopes imbriquées ne sont pas prises en charge.</value>
   </data>
-  <data name="SQL_NotAvailableOnContextConnection" xml:space="preserve">
-    <value>L'opération demandée n'est pas disponible sur la connexion du contexte.</value>
-  </data>
-  <data name="SQL_NotificationsNotAvailableOnContextConnection" xml:space="preserve">
-    <value>Les notifications ne sont pas disponibles sur la connexion du contexte.</value>
-  </data>
   <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
     <value>Événement serveur inattendu : {0}.</value>
-  </data>
-  <data name="SQL_UserInstanceNotAvailableInProc" xml:space="preserve">
-    <value>Les instances d'utilisateur ne sont pas autorisées en cas d'exécution dans le processus Sql Server.</value>
   </data>
   <data name="SQL_ArgumentLengthMismatch" xml:space="preserve">
     <value>La longueur de '{0}' doit correspondre à celle de '{1}'.</value>
   </data>
   <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
     <value>Le type SqlDbType '{0}' n'est pas valide pour {1}. Seul {2} est pris en charge.</value>
-  </data>
-  <data name="SQL_PipeErrorRequiresSendEnd" xml:space="preserve">
-    <value>Une erreur s’est produite avec une ligne précédente envoyée au SqlPipe. SendResultsEnd doit être appelé avant que quoi que ce soit d’autre puisse être envoyé.</value>
   </data>
   <data name="SQL_TooManyValues" xml:space="preserve">
     <value>Trop de valeurs.</value>
@@ -3663,9 +3603,6 @@
   <data name="SQLNotify_AlreadyHasCommand" xml:space="preserve">
     <value>Cet objet SqlCommand est déjà associé à un autre objet SqlDependency.</value>
   </data>
-  <data name="SqlNotify_SqlDepCannotBeCreatedInProc" xml:space="preserve">
-    <value>L'objet SqlDependency ne peut pas être créé en cas d'exécution dans le processus SQL Server.</value>
-  </data>
   <data name="SqlDependency_DatabaseBrokerDisabled" xml:space="preserve">
     <value>Le SQL Server Service Broker de la base de données actuelle n'est pas activé. Par conséquent, les notifications de requête ne sont pas prises en charge. Activez le Service Broker pour cette base de données si vous souhaitez utiliser des notifications.</value>
   </data>
@@ -3725,21 +3662,6 @@
   </data>
   <data name="IEnumerableOfSqlDataRecordHasNoRows" xml:space="preserve">
     <value>Il n'existe aucun enregistrement dans l'énumération SqlDataRecord. Pour envoyer un table-valued parameter sans ligne, utilisez plutôt une référence null pour la valeur.</value>
-  </data>
-  <data name="SqlPipe_CommandHookedUpToNonContextConnection" xml:space="preserve">
-    <value>SqlPipe ne prend pas en charge l'exécution d'une commande avec une connexion qui n'est pas une connexion du contexte.</value>
-  </data>
-  <data name="SqlPipe_MessageTooLong" xml:space="preserve">
-    <value>La longueur de message {0} dépasse la longueur maximale prise en charge de 4000.</value>
-  </data>
-  <data name="SqlPipe_IsBusy" xml:space="preserve">
-    <value>Impossible d'utiliser le canal tant qu'il est occupé par une autre opération.</value>
-  </data>
-  <data name="SqlPipe_AlreadyHasAnOpenResultSet" xml:space="preserve">
-    <value>Une série de résultats est actuellement envoyée au canal. Terminez la série des résultats avant d'appeler {0}.</value>
-  </data>
-  <data name="SqlPipe_DoesNotHaveAnOpenResultSet" xml:space="preserve">
-    <value>La série de résultats n'a pas été initialisée. Appelez SendResultSetStart avant d'appeler {0}.</value>
   </data>
   <data name="SNI_PN0" xml:space="preserve">
     <value>Fournisseur HTTP</value>
@@ -4032,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>Le chemin d’accès de certificat ne peut pas avoir la valeur null. Utilisez le format suivant : &lt;emplacement de certificat&gt;{2}&lt;magasin de certificats&gt;{2}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; a la valeur « {0} » ou « {1} ».</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Le chemin d’accès du certificat ne peut pas être nul. Utilisez le format suivant : &lt;emplacement de certificat&gt;{1}&lt;magasin de certificats&gt;{1}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {0} ».</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>Erreur interne. Le chemin d’accès de certificat ne peut pas avoir la valeur null. Utilisez le format suivant : &lt;emplacement de certificat&gt;{2}&lt;magasin de certificats&gt;{2}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; a la valeur « {0} » ou « {1} ».</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Erreur interne. Le chemin d’accès du certificat ne peut pas être nul. Utilisez le format suivant : &lt;emplacement de certificat&gt;{1}&lt;magasin de certificats&gt;{1}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {0} ».</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Le chemin d'accès de la clé principale de la colonne ne peut pas être Null. Utilisez le format suivant pour une clé stockée dans un fournisseur de service de chiffrement Microsoft : &lt;Nom du fournisseur de service de chiffrement&gt;{0}&lt;Identificateur de clé&gt;.</value>
@@ -4050,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>Chemin d’accès de certificat non valide : « {0} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{3}&lt;magasin de certificats&gt;{3}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; a la valeur « {1} » ou « {2} ».</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Chemin d’accès du certificat non valide : « {0} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{2}&lt;magasin de certificats&gt;{2}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {1} ».</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>Erreur interne. Chemin d’accès de certificat non valide : « {0} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{3}&lt;magasin de certificats&gt;{3}&lt;empreinte de certificat&gt;, où &lt;emplacement du certificat&gt; a la valeur « {1} » ou « {2} ».</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Erreur interne. Chemin d’accès du certificat non valide : « {0} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{2}&lt;magasin de certificats&gt;{2}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {1} ».</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Le chemin d'accès de la clé principale de la colonne '{0}' n'est pas valide. Utilisez le format suivant pour une clé stockée dans un fournisseur de service de chiffrement Microsoft : &lt;Nom du fournisseur de service de chiffrement&gt;{1}&lt;Identificateur de clé&gt;.</value>
@@ -4068,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>L’emplacement de certificat « {0} » dans le chemin d’accès de certificat « {1} » n’est pas valide. Utilisez le format suivant : &lt;emplacement de certificat&gt;{4}&lt;magasin de certificats&gt;{4}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; a la valeur « {2} » ou « {3} ».</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>L’emplacement de certificat « {0} » n’est pas valide dans le chemin d’accès du certificat « {1} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{3}&lt;magasin de certificats&gt;{3}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {2} ».</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>Erreur interne. L’emplacement de certificat « {0} » dans le chemin d’accès de certificat « {1} » n’est pas valide. Utilisez le format suivant : &lt;emplacement de certificat&gt;{4}&lt;magasin de certificats&gt;{4}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; a la valeur « {2} » ou « {3} ».</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>Erreur interne. L’emplacement de certificat « {0} » n’est pas valide dans le chemin d’accès du certificat « {1} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{3}&lt;magasin de certificats&gt;{3}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {2} ».</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>Le magasin de certificats « {0} » spécifié dans le chemin d’accès de certificat « {1} » n’est pas valide. Valeur attendue : « {2} ».</value>
@@ -4135,7 +4075,10 @@
     <value>La clé de chiffrement de colonne chiffrée spécifiée contient une version d’algorithme de chiffrement non valide (« {0} »). La version attendue est « {1} ».</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>La longueur de texte de chiffrement spécifiée {0} pour la clé de chiffrement de colonne chiffrée ne correspond pas à la longueur de texte chiffré {1} quand la clé principale de colonne (certificat) est utilisée dans « {2} ». Il se peut que la clé de chiffrement de colonne chiffrée soit endommagée ou que le chemin d’accès de certificat spécifié soit incorrect.</value>
+    <value>La longueur de ciphertext spécifiée ({0}) pour la clé de chiffrement de colonne chiffrée ne correspond pas à la longueur de ciphertext ({1}) quand la clé principale de colonne ({2}) est utilisée dans « {3} ». La clé de chiffrement de colonne chiffrée est peut-être altérée ou le chemin spécifié {4} est incorrect.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
+    <value>La longueur de ciphertext spécifiée ({0}) pour la clé de chiffrement de colonne chiffrée ne correspond pas à la longueur de ciphertext ({1}) quand la clé principale de colonne (certificat) est utilisée dans « {2} ». Peut-être que la clé de chiffrement de colonne chiffrée est endommagée ou que le chemin de certificat spécifié est incorrect.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
     <value>La longueur du texte chiffré de la clé de chiffrement de la colonne chiffrée spécifiée {0} ne correspond pas à la longueur du texte chiffré {1} lors de l'utilisation de la clé principale de la colonne (clé asymétrique) dans '{2}'. La clé de chiffrement de la colonne chiffrée est peut-être endommagée ou le chemin d'accès du fournisseur de service de chiffrement Microsoft spécifié est peut-être incorrect.</value>
@@ -4144,7 +4087,10 @@
     <value>La longueur du texte chiffré de la clé de chiffrement de la colonne chiffrée spécifiée {0} ne correspond pas à la longueur du texte chiffré {1} lors de l'utilisation de la clé principale de la colonne (clé asymétrique) dans '{2}'. La clé de chiffrement de la colonne chiffrée est peut-être endommagée ou le chemin d'accès du fournisseur CNG de l'API de chiffrement Microsoft spécifié est peut-être incorrect.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>La longueur de signature spécifiée {0} pour la clé de chiffrement de colonne chiffrée ne correspond pas à la longueur de signature {1} quand la clé principale de colonne (certificat) est utilisée dans « {2} ». Il se peut que la clé de chiffrement de colonne chiffrée soit endommagée ou que le chemin d’accès de certificat spécifié soit incorrect.</value>
+    <value>La longueur de signature spécifiée ({0}) pour la clé de chiffrement de colonne chiffrée ne correspond pas à la longueur de signature ({1}) quand la clé principale de colonne ({2}) est utilisée dans « {3} ». La clé de chiffrement de colonne chiffrée est peut-être altérée ou le chemin spécifié {4} est incorrect.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
+    <value>La longueur de signature spécifiée ({0}) pour la clé de chiffrement de colonne chiffrée ne correspond pas à la longueur de signature ({1}) quand la clé principale de colonne (certificat) est utilisée dans « {2} ». Peut-être que la clé de chiffrement de colonne chiffrée est endommagée ou que le chemin de certificat spécifié est incorrect.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
     <value>La longueur de la signature de la clé de chiffrement de la colonne chiffrée spécifiée {0} ne correspond pas à la longueur de la signature {1} lors de l'utilisation de la clé principale de la colonne (clé asymétrique) dans '{2}'. La clé de chiffrement de la colonne chiffrée est peut-être endommagée ou le chemin d'accès du fournisseur de service de chiffrement Microsoft spécifié est peut-être incorrect.</value>
@@ -4152,11 +4098,14 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>La longueur de la signature de la clé de chiffrement de la colonne chiffrée spécifiée {0} ne correspond pas à la longueur de la signature {1} lors de l'utilisation de la clé principale de la colonne (clé asymétrique) dans '{2}'. La clé de chiffrement de la colonne chiffrée est peut-être endommagée ou le chemin d'accès du fournisseur CNG de l'API de chiffrement Microsoft spécifié est peut-être incorrect.</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>La signature de clé de chiffrement de colonne chiffrée spécifiée ne correspond pas à la signature calculée avec la clé principale de colonne ({0}) dans « {1} ». La clé de chiffrement de colonne chiffrée est peut-être altérée ou le chemin spécifié est incorrect.</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>La signature de clé de chiffrement de colonne chiffrée ne correspond pas à la signature calculée avec la clé principale de colonne (certificat) dans « {0} ». Il se peut que la clé de chiffrement de colonne chiffrée soit endommagée ou que le chemin d’accès spécifié soit incorrect.</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>La signature de la clé de chiffrement de la colonne chiffrée spécifiée ne correspond pas à la signature calculée avec la clé principale de la colonne (clé asymétrique) dans '{0}'. La clé de chiffrement de la colonne chiffrée est peut-être endommagée ou le chemin d'accès spécifié est peut-être incorrect.</value>
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
+    <value>La signature de clé de chiffrement de colonne chiffrée spécifiée ne correspond pas à la signature calculée avec la clé principale de colonne (clé asymétrique) dans « {0} ». La clé de chiffrement de colonne chiffrée est peut-être altérée ou le chemin spécifié est incorrect.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>Le certificat spécifié dans le chemin d’accès à la clé « {0} » ne dispose pas d’une clé privée permettant de chiffrer une clé de chiffrement de colonne. Assurez-vous que le certificat a été importé correctement.</value>
@@ -4742,5 +4691,20 @@
   </data>
   <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
     <value>La liste SqlBatchCommand n'a pas été initialisée.</value>
+  </data>
+  <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
+    <value>Tentative non valide d’obtention de données vectorielles à partir de la colonne « {0} ». Les vecteurs ne sont pris en charge que pour les colonnes de type vecteur.</value>
+  </data>
+  <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
+    <value>Type de vecteur « {0} » non pris en charge.</value>
+  </data>
+  <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
+    <value>Valeur « null » non prise en charge pour le paramètre de sortie « {0} » du vecteur SqlDbtype.</value>
+  </data>
+  <data name="ADP_InvalidVectorHeader" xml:space="preserve">
+    <value>En-tête de vecteur non valide reçu.</value>
+  </data>
+  <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
+    <value>Chaîne JSON {0} non valide pour le vecteur.</value>
   </data>
 </root>
