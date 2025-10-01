@@ -57,13 +57,14 @@ namespace Microsoft.Data.SqlClient.Tests
         /// </summary>
         /// <returns></returns>
         [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsFullFramework))]
+        [ActiveIssue("3648")] // Cannot enable on CI/CD pipeline due to limitation of loading app.config file for tests.
         public async Task IsDummySqlAuthenticationProviderSetByDefault()
         {
             var provider = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive);
-            
+
             Assert.NotNull(provider);
             Assert.Equal(typeof(DummySqlAuthenticationProvider), provider.GetType());
-            
+
             var token = await provider.AcquireTokenAsync(null);
             Assert.Equal(token.AccessToken, DummySqlAuthenticationProvider.DUMMY_TOKEN_STR);
         }
