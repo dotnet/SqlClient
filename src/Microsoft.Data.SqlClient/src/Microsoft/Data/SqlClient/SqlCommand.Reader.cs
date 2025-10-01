@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient
                     "SqlCommand.EndExecuteReader | API | Correlation | " +
                     $"Object Id {ObjectID}, " +
                     $"Activity Id {ActivityCorrelator.Current}, " +
-                    $"Client Connection Id {_activeConnection.ClientConnectionId}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
                     $"Command Text '{CommandText}'");
             }
         }
@@ -82,7 +82,7 @@ namespace Microsoft.Data.SqlClient
                 "SqlCommand.ExecuteReader | API | Correlation | " +
                 $"Object Id {ObjectID}, " +
                 $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection.ClientConnectionId}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
                 $"Command Text '{CommandText}'");
 
             SqlStatistics statistics = null;
@@ -1018,7 +1018,7 @@ namespace Microsoft.Data.SqlClient
                 #if NET
                 if (!_parentOperationStarted)
                 {
-                    s_diagnosticListener.WriteCommandBefore(operationId, this, _transaction, e);
+                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 }
                 #endif
 
@@ -1459,7 +1459,7 @@ namespace Microsoft.Data.SqlClient
                             "SqlCommand.RunExecuteReaderTds | Info | " +
                             $"Object Id {ObjectID}, " +
                             $"Activity Id {ActivityCorrelator.Current}, " +
-                            $"Client Connection Id {_activeConnection.ClientConnectionId}, " +
+                            $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
                             $"Command executed as RPC, " +
                             $"RPC Name '{rpc.rpcName}'");
                     }
