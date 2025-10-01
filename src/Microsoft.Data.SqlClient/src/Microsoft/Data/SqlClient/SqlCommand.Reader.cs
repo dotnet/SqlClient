@@ -435,7 +435,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <remarks>
         /// Prototype for sp_executesql is:
-        /// sqp_executesql(@batch_text nvarchar(4000), @batch_params nvarchar(4000), param1, param2, ...)
+        /// sp_executesql(@batch_text nvarchar(4000), @batch_params nvarchar(4000), param1, param2, ...)
         /// </remarks>
         // @TODO Does parameters need to be passed in or can _parameters be used?
         // @TODO: Can we return the RPC here like BuildExecute does?
@@ -648,7 +648,7 @@ namespace Microsoft.Data.SqlClient
                 "SqlCommand.EndExecuteReaderAsync | API | Correlation | " +
                 $"Object Id {ObjectID}, " +
                 $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection.ClientConnectionId}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
                 $"Command Text '{CommandText}'");
 
             Exception asyncException = ((Task)asyncResult).Exception;
@@ -802,7 +802,7 @@ namespace Microsoft.Data.SqlClient
                 _stateObj = null; // The reader now owns this...
                 ds.ResetOptionsString = resetOptionsString;
 
-                // Bind the reader to this connectio now
+                // Bind the reader to this connection now
                 _activeConnection.AddWeakReference(ds, SqlReferenceCollection.DataReaderTag);
 
                 // Force this command to start reading data off the wire.
@@ -1015,6 +1015,13 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
+                #if NET
+                if (!_parentOperationStarted)
+                {
+                    s_diagnosticListener.WriteCommandBefore(operationId, this, _transaction, e);
+                }
+                #endif
+
                 source.SetException(e);
                 context?.Dispose();
             }
@@ -1060,6 +1067,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // @TODO: We're passing way too many arguments around here... can we simplify this some?
+        // task is created in case of pending asynchronous write, returned SqlDataReader should not be utilized until that task is complete
         private SqlDataReader RunExecuteReader(
             CommandBehavior cmdBehavior,
             RunBehavior runBehavior,
@@ -1215,7 +1223,6 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // @TODO: Reminder, this is where we execute if transparent parameter encryption is not needed.
-                usedCache = false;
                 return RunExecuteReaderTds(
                     cmdBehavior,
                     runBehavior,
@@ -1516,7 +1523,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.SynchronousCallMayNotPend();
                         }
 
-                        // And turn OF Fwhen the ds exhausts the stream on Close()
+                        // And turn OFF when the ds exhausts the stream on Close()
                         optionSettings = GetResetOptionsString(cmdBehavior);
                     }
 
