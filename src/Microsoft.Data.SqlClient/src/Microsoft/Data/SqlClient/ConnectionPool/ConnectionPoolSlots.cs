@@ -138,7 +138,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 throw new InvalidOperationException("Couldn't find an empty slot.");
             }
-            catch (Exception e)
+            catch
             {
                 cleanupCallback(connection, cleanupState);
                 throw;

@@ -23,6 +23,31 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     /// <summary>
     /// A connection pool implementation based on the channel data structure.
     /// Provides methods to manage the pool of connections, including acquiring and releasing connections.
+    /// 
+    /// This implementation uses <see cref="System.Threading.Channels.Channel{T}"/> for managing idle connections,
+    /// which offers several advantages over the traditional <c>WaitHandleDbConnectionPool</c>:
+    /// 
+    /// <list type="bullet">
+    /// <item><description>
+    /// <strong>Better async performance:</strong> Channels provide native async/await support without blocking
+    /// threads, unlike wait handles which can block managed threads and potentially cause thread pool starvation.
+    /// </description></item>
+    /// <item><description>
+    /// <strong>FIFO fairness:</strong> Channels guarantee first-come, first-served ordering for connection requests,
+    /// ensuring fair access to connections under high contention scenarios.
+    /// </description></item>
+    /// <item><description>
+    /// <strong>Reduced lock contention:</strong> The channel-based approach minimizes lock usage compared to
+    /// traditional synchronization primitives, improving scalability under concurrent load.
+    /// </description></item>
+    /// <item><description>
+    /// <strong>Simplified state management:</strong> Eliminates complex wait handle coordination and reduces
+    /// the potential for race conditions in connection lifecycle management.
+    /// </description></item>
+    /// </list>
+    /// 
+    /// The trade-off is slightly higher memory overhead per pool instance due to the channel infrastructure,
+    /// but this is generally offset by the performance benefits in async-heavy workloads.
     /// </summary>
     internal sealed class ChannelDbConnectionPool : IDbConnectionPool
     {
@@ -201,7 +226,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public bool TryGetConnection(
             DbConnection owningObject, 
-            TaskCompletionSource<DbConnectionInternal> taskCompletionSource,
+            TaskCompletionSource<DbConnectionInternal>? taskCompletionSource,
             DbConnectionOptions userOptions, 
             out DbConnectionInternal? connection)
         {
