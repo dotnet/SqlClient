@@ -46,7 +46,11 @@ namespace Microsoft.Data.SqlClient
             bool processFinallyBlock = true;
             try
             {
+#if NET
+                Debug.Assert((packet.Type == 0 && PartialPacketContainsCompletePacket()) || (CheckPacket(packet, source) && source != null), "AsyncResult null on callback");
+#else
                 Debug.Assert(CheckPacket(packet, source), "AsyncResult null on callback");
+#endif
 
                 if (_parser.MARSOn)
                 {
