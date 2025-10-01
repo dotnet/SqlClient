@@ -96,13 +96,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             
             // Act
             var connection = poolSlots.Add(
-                createCallback: (state) => {
+                createCallback: () => {
                     createCallbackCount++;
                     return new MockDbConnectionInternal();
                 },
-                cleanupCallback: (conn, state) => Assert.Fail(),
-                createState: "test",
-                cleanupState: "cleanup");
+                cleanupCallback: (conn) => Assert.Fail());
 
             // Assert
             Assert.NotNull(connection);
@@ -119,13 +117,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Act
             var connection = poolSlots.Add(
-                createCallback: state => {
+                createCallback: () => {
                     createCallbackCount++;
                     return null;
                 },
-                cleanupCallback: (conn, state) => Assert.Fail(),
-                createState: "test",
-                cleanupState: "cleanup");
+                cleanupCallback: (conn) => Assert.Fail());
 
             // Assert
             Assert.Null(connection);
@@ -142,26 +138,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             
             // Act - Add first connection
             var connection1 = poolSlots.Add(
-                createCallback: state => {
+                createCallback: () => {
                     createCallbackCount++;
                     return new MockDbConnectionInternal();
                 },
-                cleanupCallback: (conn, state) => Assert.Fail(),
-                createState: "test",
-                cleanupState: "cleanup");
+                cleanupCallback: (conn) => Assert.Fail());
 
             // Act - Try to add second connection beyond capacity
             var connection2 = poolSlots.Add(
-                createCallback: state =>
+                createCallback: () =>
                 {
                     Assert.Fail();
                     return null;
                 },
-                cleanupCallback: (conn, state) => {
+                cleanupCallback: (conn) => {
                     Assert.Fail();
-                },
-                createState: "test",
-                cleanupState: "cleanup");
+                });
 
             // Assert
             Assert.NotNull(connection1);
@@ -181,16 +173,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Act & Assert
             var exception = Assert.Throws<Exception>(() =>
                 poolSlots.Add(
-                    createCallback: state => {
+                    createCallback: () => {
                         createCallbackCount++;
                         throw new InvalidOperationException("Test exception");
                     },
-                    cleanupCallback: (conn, state) => cleanupCallbackCount++,
-                    createState: "test",
-                    cleanupState: "cleanup"));
+                    cleanupCallback: (conn) => cleanupCallbackCount++));
 
             Assert.Contains("Failed to create or add connection", exception.Message);
-            Assert.Equal(1, cleanupCallbackCount);
             Assert.Equal(0, poolSlots.ReservationCount);
             Assert.Equal(1, createCallbackCount);
             Assert.Equal(1, cleanupCallbackCount);
@@ -206,24 +195,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Act
             var connection1 = poolSlots.Add(
-                createCallback: state =>
+                createCallback: () =>
                 {
                     createCallbackCount++;
                     return new MockDbConnectionInternal();
                 },
-                cleanupCallback: (conn, state) => Assert.Fail(),
-                createState: "test",
-                cleanupState: "cleanup");
+                cleanupCallback: (conn) => Assert.Fail());
 
             var connection2 = poolSlots.Add(
-                createCallback: state =>
+                createCallback: () =>
                 {
                     createCallbackCount2++;
                     return new MockDbConnectionInternal();
                 },
-                cleanupCallback: (conn, state) => Assert.Fail(),
-                createState: "test",
-                cleanupState: "cleanup");
+                cleanupCallback: (conn) => Assert.Fail());
 
             // Assert
             Assert.NotNull(connection1);
@@ -239,10 +224,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Arrange
             var poolSlots = new ConnectionPoolSlots(5);
             var connection = poolSlots.Add(
-                createCallback: state => new MockDbConnectionInternal(),
-                cleanupCallback: (conn, state) => { },
-                createState: "test",
-                cleanupState: "cleanup");
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { });
 
             var reservationCountBeforeRemove = poolSlots.ReservationCount;
 
@@ -262,10 +245,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var poolSlots = new ConnectionPoolSlots(5);
             var connection = new MockDbConnectionInternal();
             var connection2 = poolSlots.Add(
-                createCallback: state => new MockDbConnectionInternal(),
-                cleanupCallback: (conn, state) => { },
-                createState: "test",
-                cleanupState: "cleanup");
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { });
             var reservationCountBeforeRemove = poolSlots.ReservationCount;
 
             // Act
@@ -283,10 +264,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Arrange
             var poolSlots = new ConnectionPoolSlots(5);
             var connection = poolSlots.Add(
-                createCallback: state => new MockDbConnectionInternal(),
-                cleanupCallback: (conn, state) => { },
-                createState: "test",
-                cleanupState: "cleanup");
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { });
             var reservationCountBeforeRemove = poolSlots.ReservationCount;
 
             // Act
@@ -307,24 +286,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var poolSlots = new ConnectionPoolSlots(5);
             var commonConnection = new MockDbConnectionInternal();
             var connection = poolSlots.Add(
-                createCallback: state => commonConnection,
-                cleanupCallback: (conn, state) => { },
-                createState: "test",
-                cleanupState: "cleanup");
+                createCallback: () => commonConnection,
+                cleanupCallback: (conn) => { });
             var connection2 = poolSlots.Add(
-                createCallback: state => commonConnection,
-                cleanupCallback: (conn, state) => { },
-                createState: "test",
-                cleanupState: "cleanup");
+                createCallback: () => commonConnection,
+                cleanupCallback: (conn) => { });
             var reservationCountBeforeRemove = poolSlots.ReservationCount;
 
             // Act
             var firstRemove = poolSlots.TryRemove(connection!);
+            var reservationCountAfterFirstRemove = poolSlots.ReservationCount;
             var secondRemove = poolSlots.TryRemove(connection2!);
 
             // Assert
             Assert.Equal(2, reservationCountBeforeRemove);
             Assert.True(firstRemove);
+            Assert.Equal(1, reservationCountAfterFirstRemove);
             Assert.True(secondRemove);
             Assert.Equal(0, poolSlots.ReservationCount);
         }
@@ -335,16 +312,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Arrange
             var poolSlots = new ConnectionPoolSlots(5);
             var connection1 = poolSlots.Add(
-                createCallback: state => new MockDbConnectionInternal(),
-                cleanupCallback: (conn, state) => { },
-                createState: "test1",
-                cleanupState: "cleanup1");
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { });
                 
             var connection2 = poolSlots.Add(
-                createCallback: state => new MockDbConnectionInternal(),
-                cleanupCallback: (conn, state) => { },
-                createState: "test2",
-                cleanupState: "cleanup2");
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { });
 
             // Act
             var removed = poolSlots.TryRemove(connection1!);
@@ -384,10 +357,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 addTasks[i] = Task.Run(() =>
                 {
                     connections[index] = poolSlots.Add(
-                        createCallback: state => new MockDbConnectionInternal(),
-                        cleanupCallback: (conn, state) => { },
-                        createState: $"test{index}",
-                        cleanupState: $"cleanup{index}")!;
+                        createCallback: () => new MockDbConnectionInternal(),
+                        cleanupCallback: (conn) => { })!;
                 });
             }
 
@@ -431,19 +402,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             for (int i = 0; i < capacity; i++)
             {
                 connections[i] = poolSlots.Add(
-                    createCallback: state => new MockDbConnectionInternal(),
-                    cleanupCallback: (conn, state) => { },
-                    createState: $"test{i}",
-                    cleanupState: $"cleanup{i}")!;
+                    createCallback: () => new MockDbConnectionInternal(),
+                    cleanupCallback: (conn) => { })!;
                 Assert.NotNull(connections[i]);
             }
 
             // Try to add one more beyond capacity
             var extraConnection = poolSlots.Add(
-                createCallback: state => new MockDbConnectionInternal(),
-                cleanupCallback: (conn, state) => { },
-                createState: "overflow",
-                cleanupState: "overflow");
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { });
 
             // Assert
             Assert.Equal((int)capacity, poolSlots.ReservationCount);
@@ -461,24 +428,18 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Add 3 connections
             var conn1 = poolSlots.Add(
-                createCallback: state => new MockDbConnectionInternal(),
-                cleanupCallback: (conn, state) => { },
-                createState: "test1",
-                cleanupState: "cleanup1");
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { });
             Assert.Equal(1, poolSlots.ReservationCount);
 
             var conn2 = poolSlots.Add(
-                createCallback: state => new MockDbConnectionInternal(),
-                cleanupCallback: (conn, state) => { },
-                createState: "test2",
-                cleanupState: "cleanup2");
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { });
             Assert.Equal(2, poolSlots.ReservationCount);
 
             var conn3 = poolSlots.Add(
-                createCallback: state => new MockDbConnectionInternal(),
-                cleanupCallback: (conn, state) => { },
-                createState: "test3",
-                cleanupState: "cleanup3");
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { });
             Assert.Equal(3, poolSlots.ReservationCount);
 
             // Remove 1 connection
@@ -494,33 +455,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         [Fact]
-        public void Add_StateParametersPassedCorrectly_UsesProvidedState()
-        {
-            // Arrange
-            var poolSlots = new ConnectionPoolSlots(5);
-            string? receivedCreateState = null;
-            string? receivedCleanupState = null;
-
-            // Act
-            try
-            {
-                poolSlots.Add(
-                    createCallback: state => { receivedCreateState = state; throw new InvalidOperationException("Test"); },
-                    cleanupCallback: (conn, state) => { receivedCleanupState = state; },
-                    createState: "createState",
-                    cleanupState: "cleanupState");
-            }
-            catch
-            {
-                // Expected due to exception in create callback
-            }
-
-            // Assert
-            Assert.Equal("createState", receivedCreateState);
-            Assert.Equal("cleanupState", receivedCleanupState);
-        }
-
-        [Fact]
         public void Constructor_EdgeCase_CapacityOfOne_WorksCorrectly()
         {
             // Arrange & Act
@@ -528,20 +462,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Assert - Should be able to add one connection
             var connection = poolSlots.Add(
-                createCallback: state => new MockDbConnectionInternal(),
-                cleanupCallback: (conn, state) => { },
-                createState: "test",
-                cleanupState: "cleanup");
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { });
 
             Assert.NotNull(connection);
             Assert.Equal(1, poolSlots.ReservationCount);
 
             // Should not be able to add a second connection
             var connection2 = poolSlots.Add(
-                createCallback: state => new MockDbConnectionInternal(),
-                cleanupCallback: (conn, state) => { },
-                createState: "test2",
-                cleanupState: "cleanup2");
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { });
 
             Assert.Null(connection2);
             Assert.Equal(1, poolSlots.ReservationCount);

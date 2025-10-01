@@ -54,8 +54,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
-        internal delegate T CreateCallback<T, S>(S state);
-        internal delegate void CleanupCallback<T>(DbConnectionInternal? connection, T state);
+        internal delegate DbConnectionInternal? CreateCallback();
+        internal delegate void CleanupCallback(DbConnectionInternal? connection);
 
         private readonly DbConnectionInternal?[] _connections;
         private readonly uint _capacity;
@@ -97,19 +97,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// *must not* call any other ConnectionPoolSlots methods.</param>
         /// <param name="cleanupCallback">Callback to clean up resources if an exception occurs. This callback *must 
         /// not* call any other ConnectionPoolSlots methods. This callback *must not* throw exceptions.</param>
-        /// <param name="createState">State made available to the create callback.</param>
-        /// <param name="cleanupState">State made available to the cleanup callback.</param>
         /// <exception cref="Exception">
         /// Throws when createCallback throws an exception.
         /// Throws when a reservation is successfully made, but an empty slot cannot be found. This condition is 
         /// unexpected and indicates a bug.
         /// </exception>
         /// <returns>Returns the new connection, or null if there was not available space.</returns>
-        internal DbConnectionInternal? Add<T, S>(
-            CreateCallback<DbConnectionInternal?, T> createCallback, 
-            CleanupCallback<S> cleanupCallback, 
-            T createState,
-            S cleanupState)
+        internal DbConnectionInternal? Add(
+            CreateCallback createCallback, 
+            CleanupCallback cleanupCallback)
         {
             DbConnectionInternal? connection = null;
             try
@@ -120,7 +116,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     return null;
                 }
 
-                connection = createCallback(createState);
+                connection = createCallback();
 
                 if (connection is null)
                 {
@@ -140,7 +136,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             catch
             {
-                cleanupCallback(connection, cleanupState);
+                cleanupCallback(connection);
                 throw;
             }
         }

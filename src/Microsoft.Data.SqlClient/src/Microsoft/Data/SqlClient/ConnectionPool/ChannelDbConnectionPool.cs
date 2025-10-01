@@ -316,13 +316,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             return false;
         }
 
-        private struct CreateState
-        {
-            internal ChannelDbConnectionPool pool;
-            internal DbConnection? owningConnection;
-            internal DbConnectionOptions userOptions;
-        }
-
         /// <summary>
         /// Opens a new internal connection to the database.
         /// </summary>
@@ -345,7 +338,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // in case of an exception.
 
             return _connectionSlots.Add(
-                createCallback: static (state) =>
+                createCallback: () =>
                 {
                     // https://github.com/dotnet/SqlClient/issues/3459
                     // TODO: This blocks the thread for several network calls!
@@ -355,25 +348,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // DbConnectionInternal doesn't support an async open. It's better to block this thread and keep
                     // throughput high than to queue all of our opens onto a single worker thread. Add an async path 
                     // when this support is added to DbConnectionInternal.
-                    return state.pool.ConnectionFactory.CreatePooledConnection(
-                        state.owningConnection,
-                        state.pool,
-                        state.pool.PoolGroup.PoolKey,
-                        state.pool.PoolGroup.ConnectionOptions,
-                        state.userOptions);
+                    return ConnectionFactory.CreatePooledConnection(
+                        owningConnection,
+                        this,
+                        PoolGroup.PoolKey,
+                        PoolGroup.ConnectionOptions,
+                        userOptions);
                 },
-                cleanupCallback: static (newConnection, idleConnectionWriter) =>
+                cleanupCallback: (newConnection) =>
                 {
-                    idleConnectionWriter.TryWrite(null);
+                    // If we fail to open a connection, we need to write a null to the idle channel to
+                    // wake up any waiters
+                    _idleConnectionWriter?.TryWrite(null);
                     newConnection?.Dispose();
-                },
-                new CreateState
-                {
-                    pool = this,
-                    owningConnection = owningConnection,
-                    userOptions = userOptions
-                },
-                _idleConnectionWriter);
+                });
         }
 
         /// <summary>
