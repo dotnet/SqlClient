@@ -3144,6 +3144,67 @@ namespace Microsoft.Data.SqlClient
             return task;
         }
 
+        private Task WriteSni(bool canAccumulate)
+        {
+            // Prepare packet, and write to packet.
+            PacketHandle packet = GetResetWritePacket(_outBytesUsed);
+            bool mustClearBuffer = TrySetBufferSecureStrings();
+
+            SetPacketData(packet, _outBuff, _outBytesUsed);
+            if (mustClearBuffer)
+            {
+                _outBuff.AsSpan(0, _outBytesUsed).Clear();
+            }
+
+            Debug.Assert(Parser.Connection._parserLock.ThreadMayHaveLock(), "Thread is writing without taking the connection lock");
+            Task task = SNIWritePacket(packet, out _, canAccumulate, callerHasConnectionLock: true);
+
+            // Check to see if the timeout has occurred.  This time out code is special case code to allow BCP writes to timeout. Eventually we should make all writes timeout.
+            if (_bulkCopyOpperationInProgress && 0 == GetTimeoutRemaining())
+            {
+                _parser.Connection.ThreadHasParserLockForClose = true;
+                try
+                {
+                    Debug.Assert(_parser.Connection != null, "SqlConnectionInternalTds handler can not be null at this point.");
+                    AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
+                    _bulkCopyWriteTimeout = true;
+                    SendAttention();
+                    _parser.ProcessPendingAck(this);
+                    ThrowExceptionAndWarning();
+                }
+                finally
+                {
+                    _parser.Connection.ThreadHasParserLockForClose = false;
+                }
+            }
+
+            // Special case logic for encryption removal.
+            if (_parser.State == TdsParserState.OpenNotLoggedIn &&
+                (_parser.EncryptionOptions & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.LOGIN)
+            {
+                // If no error occurred, and we are Open but not logged in, and
+                // our encryptionOption state is login, remove the SSL Provider.
+                // We only need encrypt the very first packet of the login message to the server.
+
+                // We wanted to encrypt entire login channel, but there is
+                // currently no mechanism to communicate this.  Removing encryption post 1st packet
+                // is a hard-coded agreement between client and server.  We need some mechanism or
+                // common change to be able to make this change in a non-breaking fashion.
+                _parser.RemoveEncryption();                        // Remove the SSL Provider.
+                _parser.EncryptionOptions = EncryptionOptions.OFF | (_parser.EncryptionOptions & ~EncryptionOptions.OPTIONS_MASK); // Turn encryption off.
+
+                // Since this packet was associated with encryption, dispose and re-create.
+                ClearAllWritePackets();
+            }
+
+            SniWriteStatisticsAndTracing();
+
+            ResetBuffer();
+
+            AssertValidState();
+            return task;
+        }
+
         internal Task WaitForAccumulatedWrites()
         {
             // Checked for stored exceptions
