@@ -3281,6 +3281,11 @@ namespace Microsoft.Data.SqlClient
             return retval;
         }
 
+        private uint GetSniPacket(PacketHandle packet, ref uint dataSize)
+        {
+            return SniPacketGetData(packet, _inBuff, ref dataSize);
+        }
+
         internal void ReadSni(TaskCompletionSource<object> completion)
         {
             Debug.Assert(_networkPacketTaskSource == null || ((_asyncReadWithoutSnapshot) && (_networkPacketTaskSource.Task.IsCompleted)), "Pending async call or failed to replay snapshot when calling ReadSni");

@@ -16,11 +16,6 @@ namespace Microsoft.Data.SqlClient
 {
     internal abstract partial class TdsParserStateObject
     {
-        private uint GetSniPacket(PacketHandle packet, ref uint dataSize)
-        {
-            return SniPacketGetData(packet, _inBuff, ref dataSize);
-        }
-
         private bool TrySetBufferSecureStrings()
         {
             bool mustClearBuffer = false;
