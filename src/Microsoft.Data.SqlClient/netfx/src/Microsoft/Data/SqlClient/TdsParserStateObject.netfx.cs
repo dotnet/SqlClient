@@ -29,6 +29,7 @@ namespace Microsoft.Data.SqlClient
                 statistics.SafeAdd(ref statistics._bytesSent, _outBytesUsed);
                 statistics.RequestNetworkServerTimer();
             }
+#if NETFRAMEWORK
             if (SqlClientEventSource.Log.IsAdvancedTraceOn())
             {
                 // If we have tracePassword variables set, we are flushing TDSLogin and so we need to
@@ -60,6 +61,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
             SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParser.WritePacket | INFO | ADV | State Object Id {0}, Packet sent. Out buffer: {1}, Out Bytes Used: {2}", ObjectID, _outBuff, _outBytesUsed);
+#endif
         }
     }
 }
