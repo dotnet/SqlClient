@@ -1142,12 +1142,6 @@ namespace Microsoft.Data.SqlClient
         ParallelMode
     };
 
-    internal class ActiveDirectoryAuthentication
-    {
-        internal const string AdoClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
-        internal const string MSALGetAccessTokenFunctionName = "AcquireToken";
-    }
-
     // Fields in the first resultset of "sp_describe_parameter_encryption".
     // We expect the server to return the fields in the resultset in the same order as mentioned below.
     // If the server changes the below order, then transparent parameter encryption will break.

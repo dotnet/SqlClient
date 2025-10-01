@@ -14,7 +14,7 @@ public class SqlAuthenticationTokenBaseTest
 
     // Verify that the properties are set correctly.
     [Fact]
-    public void Constructor_Success()
+    public void Constructor()
     {
         var token = "test";
         var expiry = DateTimeOffset.UtcNow.AddHours(1);

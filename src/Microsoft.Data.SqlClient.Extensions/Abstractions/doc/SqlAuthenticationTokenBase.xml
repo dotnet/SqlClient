@@ -1,15 +1,23 @@
 ﻿<docs>
-  <members name="SqlAuthenticationToken">
-    <SqlAuthenticationToken>
+  <members name="SqlAuthenticationTokenBase">
+    <SqlAuthenticationTokenBase>
       <summary>Represents an authentication token.</summary>
-    </SqlAuthenticationToken>
-    <ExpiresOn>
-      <summary>Gets the token expiration time.</summary>
-      <value>The token expiration time.</value>
-    </ExpiresOn>
+    </SqlAuthenticationTokenBase>
+    <ctor>
+      <summary>
+        Protected construction for derived classes to supply values for all
+        public properties.
+      </summary>
+      <param name="accessToken">The token string.</param>
+      <param name="expiresOn">The token expiration time.</param>
+    </ctor>
     <AccessToken>
       <summary>Gets the token string.</summary>
       <value>The token string.</value>
     </AccessToken>
+    <ExpiresOn>
+      <summary>Gets the token expiration time.</summary>
+      <value>The token expiration time.</value>
+    </ExpiresOn>
   </members>
 </docs>

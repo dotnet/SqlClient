@@ -34,6 +34,7 @@ public abstract class SqlAuthenticationParametersBase
     /// <include file='../doc/SqlAuthenticationParametersBase.xml' path='docs/members[@name="SqlAuthenticationParametersBase"]/ConnectionTimeout/*'/>
     public int ConnectionTimeout { get; }
 
+    /// <include file='../doc/SqlAuthenticationParametersBase.xml' path='docs/members[@name="SqlAuthenticationParametersBase"]/ctor/*'/>
     protected SqlAuthenticationParametersBase(
         SqlAuthenticationMethod authenticationMethod,
         string serverName,

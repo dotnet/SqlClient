@@ -6,6 +6,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
+using System.Reflection;
+
+#nullable enable
 
 namespace Microsoft.Data.SqlClient
 {
@@ -26,7 +30,7 @@ namespace Microsoft.Data.SqlClient
 
         static SqlAuthenticationProviderManager()
         {
-            SqlAuthenticationProviderConfigurationSection configurationSection = null;
+            SqlAuthenticationProviderConfigurationSection? configurationSection = null;
 
             try
             {
@@ -45,50 +49,110 @@ namespace Microsoft.Data.SqlClient
             }
 
             Instance = new SqlAuthenticationProviderManager(configurationSection);
-            SetDefaultAuthProviders(Instance);
-        }
 
-        /// <summary>
-        /// Sets default supported Active Directory Authentication providers by the driver 
-        /// on the SqlAuthenticationProviderManager instance.
-        /// </summary>
-        private static void SetDefaultAuthProviders(SqlAuthenticationProviderManager instance)
-        {
-            if (instance != null)
+            // If our Azure extensions package is present, use its
+            // authentication provider as our default.
+            const string assemblyName = "Microsoft.Data.SqlClient.Extensions.Azure";
+
+            try
             {
-                // TODO(paul): Look for the Azure package, and load its provider if present.
-                /*
-                var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider(instance._applicationClientId);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, activeDirectoryAuthProvider);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, activeDirectoryAuthProvider);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, activeDirectoryAuthProvider);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, activeDirectoryAuthProvider);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, activeDirectoryAuthProvider);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity, activeDirectoryAuthProvider);
-                */
+                // Try to load our Azure extension.
+                var assembly = Assembly.Load(assemblyName);
+
+                // TODO: Verify the assembly is signed by us?
+
+                SqlClientEventSource.Log.TryTraceEvent(
+                    nameof(SqlAuthenticationProviderManager) +
+                    $": Azure extension assembly={assemblyName} found; " +
+                    "attempting to set as default provider for all Active " +
+                    "Directory authentication methods");
+
+                // Look for the authentication provider class.
+                const string className = "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider";
+                var type = assembly.GetType(className);
+
+                if (type is null)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        nameof(SqlAuthenticationProviderManager) +
+                        $": Azure extension does not contain class={className}; " +
+                        "no default Active Directory provider installed");
+
+                    return;
+                }
+
+                // Try to instantiate it.
+                var instance = Activator.CreateInstance(
+                    type,
+                    [Instance._applicationClientId])
+                    as SqlAuthenticationProvider;
+
+                if (instance is null)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        nameof(SqlAuthenticationProviderManager) +
+                        $": Failed to instantiate Azure extension class={className}; " +
+                        "no default Active Directory provider installed");
+
+                    return;
+                }
+
+                // We successfully instantiated the provider, so set it as the
+                // default for all Active Directory authentication methods.
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, instance);
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, instance);
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, instance);
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, instance);
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, instance);
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, instance);
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, instance);
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, instance);
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity, instance);
+
+                SqlClientEventSource.Log.TryTraceEvent(
+                    nameof(SqlAuthenticationProviderManager) +
+                    $": Azure extension class={className} installed as " +
+                    "provider for all Active Directory authentication methods");
             }
+            // All of these exceptions mean we couldn't find or instantiate the
+            // Azure extension's authentication provider, in which case we
+            // simply have no default and the app must provide one if they
+            // attempt to use Active Directory authentication.
+            catch (Exception ex)
+            when (ex is ArgumentNullException ||
+                  ex is ArgumentException ||
+                  ex is BadImageFormatException ||
+                  ex is FileLoadException ||
+                  ex is FileNotFoundException ||
+                  ex is MemberAccessException ||
+                  ex is MethodAccessException ||
+                  ex is MissingMethodException ||
+                  ex is NotSupportedException ||
+                  ex is TargetInvocationException ||
+                  ex is TypeLoadException)
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    nameof(SqlAuthenticationProviderManager) +
+                    $": Azure extension assembly={assemblyName} not found or " +
+                    "not usable; no default provider installed; " +
+                    $"{ex.GetType().Name}: {ex.Message}");
+            }
+            // Any other exceptions are fatal.
         }
 
         public static readonly SqlAuthenticationProviderManager Instance;
 
-        private readonly SqlAuthenticationInitializer _initializer;
-        private readonly IReadOnlyCollection<SqlAuthenticationMethod> _authenticationsWithAppSpecifiedProvider;
-        private readonly ConcurrentDictionary<SqlAuthenticationMethod, SqlAuthenticationProvider> _providers;
+        private readonly HashSet<SqlAuthenticationMethod> _authenticationsWithAppSpecifiedProvider = new();
+        private readonly ConcurrentDictionary<SqlAuthenticationMethod, SqlAuthenticationProvider> _providers = new();
         private readonly SqlClientLogger _sqlAuthLogger = new SqlClientLogger();
-        private readonly string _applicationClientId = ActiveDirectoryAuthentication.AdoClientId;
+        private readonly string? _applicationClientId = null;
 
         /// <summary>
         /// Constructor.
         /// </summary>
-        public SqlAuthenticationProviderManager(SqlAuthenticationProviderConfigurationSection configSection = null)
+        public SqlAuthenticationProviderManager(SqlAuthenticationProviderConfigurationSection? configSection)
         {
             var methodName = "Ctor";
-            _providers = new ConcurrentDictionary<SqlAuthenticationMethod, SqlAuthenticationProvider>();
-            var authenticationsWithAppSpecifiedProvider = new HashSet<SqlAuthenticationMethod>();
-            _authenticationsWithAppSpecifiedProvider = authenticationsWithAppSpecifiedProvider;
 
             if (configSection == null)
             {
@@ -112,8 +176,14 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     var initializerType = Type.GetType(configSection.InitializerType, true);
-                    _initializer = (SqlAuthenticationInitializer)Activator.CreateInstance(initializerType);
-                    _initializer.Initialize();
+                    if (initializerType is not null)
+                    {
+                        var initializer = (SqlAuthenticationInitializer?)Activator.CreateInstance(initializerType);
+                        if (initializer is not null)
+                        {
+                            initializer.Initialize();
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
@@ -132,15 +202,23 @@ namespace Microsoft.Data.SqlClient
                 foreach (ProviderSettings providerSettings in configSection.Providers)
                 {
                     SqlAuthenticationMethod authentication = AuthenticationEnumFromString(providerSettings.Name);
-                    SqlAuthenticationProvider provider;
+                    SqlAuthenticationProvider? provider;
                     try
                     {
                         var providerType = Type.GetType(providerSettings.Type, true);
-                        provider = (SqlAuthenticationProvider)Activator.CreateInstance(providerType);
+                        if (providerType is null)
+                        {
+                            continue;
+                        }
+                        provider = (SqlAuthenticationProvider?)Activator.CreateInstance(providerType);
                     }
                     catch (Exception e)
                     {
                         throw SQL.CannotCreateAuthProvider(authentication.ToString(), providerSettings.Type, e);
+                    }
+                    if (provider is null)
+                    {
+                        continue;
                     }
                     if (!provider.IsSupported(authentication))
                     {
@@ -148,7 +226,7 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     _providers[authentication] = provider;
-                    authenticationsWithAppSpecifiedProvider.Add(authentication);
+                    _authenticationsWithAppSpecifiedProvider.Add(authentication);
                     _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, string.Format("Added user-defined auth provider: {0} for authentication {1}.", providerSettings?.Type, authentication));
                 }
             }
@@ -163,9 +241,9 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="authenticationMethod">Authentication method.</param>
         /// <returns>Authentication provider or null if not found.</returns>
-        public SqlAuthenticationProvider GetProvider(SqlAuthenticationMethod authenticationMethod)
+        public SqlAuthenticationProvider? GetProvider(SqlAuthenticationMethod authenticationMethod)
         {
-            SqlAuthenticationProvider value;
+            SqlAuthenticationProvider? value;
             return _providers.TryGetValue(authenticationMethod, out value) ? value : null;
         }
 
@@ -193,23 +271,25 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-            _providers.AddOrUpdate(authenticationMethod, provider, (key, oldProvider) =>
-            {
-                if (oldProvider != null)
+            _providers.AddOrUpdate(
+                authenticationMethod,
+                provider,
+                (SqlAuthenticationMethod key, SqlAuthenticationProvider oldProvider) =>
                 {
-                    oldProvider.BeforeUnload(authenticationMethod);
-                }
-                if (provider != null)
-                {
+                    if (oldProvider != null)
+                    {
+                        oldProvider.BeforeUnload(authenticationMethod);
+                    }
+
                     provider.BeforeLoad(authenticationMethod);
-                }
-                _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, $"Added auth provider {GetProviderType(provider)}, overriding existed provider {GetProviderType(oldProvider)} for authentication {authenticationMethod}.");
-                return provider;
-            });
+
+                    _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, $"Added auth provider {GetProviderType(provider)}, overriding existed provider {GetProviderType(oldProvider)} for authentication {authenticationMethod}.");
+                    return provider;
+                });
             return true;
         }
 
-        private static T FetchConfigurationSection<T>(string name)
+        private static T? FetchConfigurationSection<T>(string name) where T : class
         {
             Type t = typeof(T);
             object section = ConfigurationManager.GetSection(name);
@@ -254,11 +334,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static string GetProviderType(SqlAuthenticationProvider provider)
+        private static string GetProviderType(SqlAuthenticationProvider? provider)
         {
-            if (provider == null)
+            if (provider is null)
+            {
                 return "null";
-            return provider.GetType().FullName;
+            }
+            return provider.GetType().FullName ?? "unknown";
         }
     }
 
@@ -279,13 +361,13 @@ namespace Microsoft.Data.SqlClient
         /// User-defined initializer.
         /// </summary>
         [ConfigurationProperty("initializerType")]
-        public string InitializerType => this["initializerType"] as string;
+        public string InitializerType => this["initializerType"] as string ?? string.Empty;
 
         /// <summary>
         /// Application Client Id
         /// </summary>
         [ConfigurationProperty("applicationClientId", IsRequired = false)]
-        public string ApplicationClientId => this["applicationClientId"] as string;
+        public string ApplicationClientId => this["applicationClientId"] as string ?? string.Empty;
     }
 
     /// <summary>

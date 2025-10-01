@@ -1,0 +1,56 @@
+<docs>
+  <members name="SqlAuthenticationProviderException">
+    <SqlAuthenticationProviderException>
+      <summary>
+        Represents an error that occurs during the authentication process.
+      </summary>
+    </SqlAuthenticationProviderException>
+    <ctor1>
+      <summary>
+        Protected construction for derived classes to supply a minimal set of
+        values.
+
+        Action will be "Unknown".
+        FailureCode will be "Unknown".
+        ShouldRetry will be false.
+        RetryPeriod will be 0.
+      </summary>
+      <param name="message">The error message.</param>
+      <param name="causedBy">The exception that caused this exception, if any.</param>
+    </ctor1>
+    <ctor2>
+      <summary>
+        Protected construction for derived classes to supply values for all
+        public properties.
+      </summary>
+      <param name="action">The name of the authentication action that failed, or "Unknown" if not known.</param>
+      <param name="failureCode">The failure code, or "Unknown" if not known.</param>
+      <param name="message">The error message.</param>
+      <param name="shouldRetry">True if the action should be retried, false otherwise.</param>
+      <param name="retryPeriod">The period of time, in milliseconds, to wait before retrying the action. Never negative. Undefined if ShouldRetry is false.</param>
+      <param name="causedBy">The exception that caused this exception, if any.</param>
+    </ctor2>
+    <Action>
+      <summary>
+        The name of the authentication action that failed, or "Unknown" if not
+        known.
+      </summary>
+    </Action>
+    <FailureCode>
+      <summary>
+        The failure code, or "Unknown" if not known.
+      </summary>
+    </FailureCode>
+    <ShouldRetry>
+      <summary>
+        True if the action should be retried, false otherwise.
+      </summary>
+    </ShouldRetry>
+    <RetryPeriod>
+      <summary>
+        The period of time, in milliseconds, to wait before retrying the action.
+        Never negative. Undefined if ShouldRetry is false.
+      </summary>
+    </RetryPeriod>
+  </members>
+</docs>

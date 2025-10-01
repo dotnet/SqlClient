@@ -4,18 +4,18 @@
 
 namespace Microsoft.Data.SqlClient;
 
-/// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/SqlAuthenticationProvider/*'/>
+/// <include file='../doc/SqlAuthenticationProviderBase.xml' path='docs/members[@name="SqlAuthenticationProviderBase"]/SqlAuthenticationProviderBase/*'/>
 public abstract class SqlAuthenticationProviderBase
 {
-    /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/BeforeLoad/*'/>
+    /// <include file='../doc/SqlAuthenticationProviderBase.xml' path='docs/members[@name="SqlAuthenticationProviderBase"]/BeforeLoad/*'/>
     public virtual void BeforeLoad(SqlAuthenticationMethod authenticationMethod) { }
 
-    /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/BeforeUnload/*'/>
+    /// <include file='../doc/SqlAuthenticationProviderBase.xml' path='docs/members[@name="SqlAuthenticationProviderBase"]/BeforeUnload/*'/>
     public virtual void BeforeUnload(SqlAuthenticationMethod authenticationMethod) { }
 
-    /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/IsSupported/*'/>
+    /// <include file='../doc/SqlAuthenticationProviderBase.xml' path='docs/members[@name="SqlAuthenticationProviderBase"]/IsSupported/*'/>
     public abstract bool IsSupported(SqlAuthenticationMethod authenticationMethod);
 
-    /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/AcquireTokenAsync/*'/>
+    /// <include file='../doc/SqlAuthenticationProviderBase.xml' path='docs/members[@name="SqlAuthenticationProviderBase"]/AcquireTokenAsync/*'/>
     public abstract Task<SqlAuthenticationTokenBase> AcquireTokenAsync(SqlAuthenticationParametersBase parameters);
 }

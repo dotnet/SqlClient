@@ -23,7 +23,7 @@
   <!-- Build Config -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Azure</AssemblyName>
-    <RootNamespace>Microsoft.Data.SqlClient.Extensions.Azure</RootNamespace>
+    <RootNamespace>$(AssemblyName)</RootNamespace>
 
     <!--
       We pin the AssemblyVersion of our package to the default major version
@@ -34,6 +34,8 @@
     <AssemblyFileVersion>$(AzureAssemblyFileVersion)</AssemblyFileVersion>
     <FileVersion>$(AzureAssemblyFileVersion)</FileVersion>
     <Version>$(AzurePackageVersion)</Version>
+
+    <DocumentationFile>$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <!-- Our API is CLS Compliant. -->
@@ -85,5 +87,29 @@
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
   </ItemGroup>
+
+  <!--
+    Generate ThisAssembly.cs which contains some version information that is
+    used at runtime and otherwise would not be available.
+
+    We must specify a unique namespace for ThisAssembly since MDS puts its
+    ThisAssembly class in the System namespace, and we cannot have two
+    classes with the same name in the same namespace.
+  -->
+  <PropertyGroup>
+    <!--
+      We already set CLS Compliance above, so don't duplicate that in the
+      ThisAssembly.cs file.
+    -->
+    <ThisAssemblyClsCompliant>false</ThisAssemblyClsCompliant>
+
+    <!--
+      We must specify a unique namespace for ThisAssembly since MDS puts its
+      ThisAssembly class in the System namespace, and we cannot have two
+      classes with the same name in the same namespace.
+    -->
+    <ThisAssemblyNamespace>$(AssemblyName)</ThisAssemblyNamespace>
+  </PropertyGroup>
+  <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
 
 </Project>

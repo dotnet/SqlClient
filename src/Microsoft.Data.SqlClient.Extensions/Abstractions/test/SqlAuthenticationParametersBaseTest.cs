@@ -33,7 +33,7 @@ public class SqlAuthenticationParametersBaseTest
     // Verify that the properties are set correctly when nullable arguments are
     // null.
     [Fact]
-    public void Constructor_Success_WithNulls()
+    public void Constructor_WithNulls()
     {
         var method = SqlAuthenticationMethod.ActiveDirectoryPassword;
         var server = "server";
@@ -70,7 +70,7 @@ public class SqlAuthenticationParametersBaseTest
     // Verify that the properties are set correctly when nullable arguments
     // are non-null.
     [Fact]
-    public void Constructor_Success_WithoutNulls()
+    public void Constructor_WithoutNulls()
     {
         var method = SqlAuthenticationMethod.ActiveDirectoryPassword;
         var server = "server";

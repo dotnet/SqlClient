@@ -23,7 +23,7 @@
   <!-- Build Config -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions</AssemblyName>
-    <RootNamespace>Microsoft.Data.SqlClient.Extensions.Abstractions</RootNamespace>
+    <RootNamespace>$(AssemblyName)</RootNamespace>
 
     <!--
       We pin the AssemblyVersion of our package to the default major version
@@ -34,6 +34,8 @@
     <AssemblyFileVersion>$(AbstractionsAssemblyFileVersion)</AssemblyFileVersion>
     <FileVersion>$(AbstractionsAssemblyFileVersion)</FileVersion>
     <Version>$(AbstractionsPackageVersion)</Version>
+
+    <DocumentationFile>$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <!-- Our API is CLS Compliant. -->

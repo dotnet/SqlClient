@@ -4,7 +4,7 @@ public class SqlAuthenticationMethodTest
 {
     // Verify the number of expected enum members.
     [Fact]
-    public void Enum_Member_Count()
+    public void Member_Count()
     {
 #if NET
         Assert.Equal(11, Enum.GetNames<SqlAuthenticationMethod>().Length);
@@ -15,7 +15,7 @@ public class SqlAuthenticationMethodTest
 
     // Verify each of the enum member numeric values.
     [Fact]
-    public void Enum_Member_Values()
+    public void Member_Values()
     {
         Assert.Equal(0, (int)SqlAuthenticationMethod.NotSpecified);
         Assert.Equal(1, (int)SqlAuthenticationMethod.SqlPassword);
