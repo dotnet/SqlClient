@@ -231,17 +231,11 @@
   <data name="ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity" xml:space="preserve">
     <value>Нельзя использовать слово Credential с ключевым словом строки соединения Integrated Security.</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection" xml:space="preserve">
-    <value>Нельзя использовать слово Credential с ключевым словом Context Connection.</value>
-  </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword" xml:space="preserve">
     <value>Невозможно задать свойство AccessToken, если в строке подключения указаны ключевые слова "UserID", "UID", "Password" или "PWD".</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity" xml:space="preserve">
     <value>Невозможно задать свойство AccessToken, если для ключевого слова строки подключения "Integrated Security" заданы значения "true" или "SSPI".</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndContextConnection" xml:space="preserve">
-    <value>Невозможно задать свойство AccessToken с ключевым словом "Context Connection".</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndCredential" xml:space="preserve">
     <value>Невозможно задать свойство AccessToken, если свойство Credential уже задано.</value>
@@ -2073,9 +2067,6 @@
   <data name="ADP_InvalidDestinationBufferIndex" xml:space="preserve">
     <value>Недопустимое смещение в конечном буфере (размер: {0}): {1}</value>
   </data>
-  <data name="ADP_DataReaderNoData" xml:space="preserve">
-    <value>Отсутствуют данные для строки или столбца.</value>
-  </data>
   <data name="ADP_NumericToDecimalOverflow" xml:space="preserve">
     <value>Численное значение не умещается в 96-разрядном десятичном числе.</value>
   </data>
@@ -2529,6 +2520,9 @@
   <data name="SQL_AsyncConnectionRequired" xml:space="preserve">
     <value>Для этой команды необходимо асинхронное подключение. Укажите в строке подключения «Asynchronous Processing=true».</value>
   </data>
+  <data name="SQL_ConnectTimeout" xml:space="preserve">
+    <value>Истекло время ожидания для попытки подключения.</value>
+  </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>Истекло время ожидания. Подключение разорвано.</value>
   </data>
@@ -2778,30 +2772,6 @@
   <data name="SQL_InvalidDataLength" xml:space="preserve">
     <value>Длина данных "{0}" меньше 0.</value>
   </data>
-  <data name="SQL_SqlResultSetClosed" xml:space="preserve">
-    <value>Недопустимая попытка вызвать метод {0}, когда закрыт SqlResultSet.</value>
-  </data>
-  <data name="SQL_SqlResultSetClosed2" xml:space="preserve">
-    <value>Невозможно завершить операцию, поскольку SqlResultSet закрыт.</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly" xml:space="preserve">
-    <value>Нельзя вызвать "{0}", если запись доступна только для чтения.</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly2" xml:space="preserve">
-    <value>Невозможно завершить операцию, поскольку запись доступна только для чтения.</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted" xml:space="preserve">
-    <value>Недопустимая попытка вызвать метод {0}, когда текущая строка удалена.</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted2" xml:space="preserve">
-    <value>Невозможно завершить операцию, поскольку текущая строка удалена.</value>
-  </data>
-  <data name="SQL_SqlResultSetCommandNotInSameConnection" xml:space="preserve">
-    <value>Невозможно завершить операцию, поскольку команда, создавшая SqlResultSet, отделена от исходного подключения. SqlResultSet закрыт.</value>
-  </data>
-  <data name="SQL_SqlResultSetNoAcceptableCursor" xml:space="preserve">
-    <value>Для данного запроса не удалось создать SqlResultSet с нужными параметрами.</value>
-  </data>
   <data name="SQL_SqlUpdatableRecordReadOnly" xml:space="preserve">
     <value>Нельзя вызвать "{0}", если SqlDataRecord доступна только для чтения.</value>
   </data>
@@ -2871,50 +2841,20 @@
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
     <value>Загруженная библиотека System.Transactions.dll не поддерживает глобальные транзакции. Перейдите на .NET Framework 4.6.2 или более позднюю версию.</value>
   </data>
-  <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
-    <value>Группировка обновлений для контекстного подключения не поддерживается.</value>
-  </data>
-  <data name="SQL_ContextAllowsLimitedKeywords" xml:space="preserve">
-    <value>Единственным дополнительным ключевым словом строки подключения, которое может использоваться при запросе контекстного подключения, является ключевое слово Type System Version.</value>
-  </data>
-  <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
-    <value>Контекстное подключение не поддерживает Type System Version=SQL Server 2000.</value>
-  </data>
   <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
     <value>Подключение к контексту с помощью Microsoft.Data.SqlClient не поддерживается.</value>
-  </data>
-  <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
-    <value>Контекстное подключение уже используется.</value>
-  </data>
-  <data name="SQL_ContextUnavailableOutOfProc" xml:space="preserve">
-    <value>Для затребованной операции необходим контекст SqlClr, который доступен только при выполнении в процессе Sql Server.</value>
-  </data>
-  <data name="SQL_ContextUnavailableWhileInProc" xml:space="preserve">
-    <value>Для затребованной операции необходим поток выполнения Sql Server. Текущий поток был запущен кодом пользователя или другим кодом, который не является кодом модуля Sql Server.</value>
   </data>
   <data name="SQL_NestedTransactionScopesNotSupported" xml:space="preserve">
     <value>Вложенные TransactionScopes не поддерживаются.</value>
   </data>
-  <data name="SQL_NotAvailableOnContextConnection" xml:space="preserve">
-    <value>Для контекстного подключения затребованная операция не доступна.</value>
-  </data>
-  <data name="SQL_NotificationsNotAvailableOnContextConnection" xml:space="preserve">
-    <value>Для контекстного подключения уведомления не доступны.</value>
-  </data>
   <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
     <value>Недопустимое серверное событие: {0}.</value>
-  </data>
-  <data name="SQL_UserInstanceNotAvailableInProc" xml:space="preserve">
-    <value>Пользовательские экземпляры не разрешены при выполнении в процессе Sql Server.</value>
   </data>
   <data name="SQL_ArgumentLengthMismatch" xml:space="preserve">
     <value>Длина "{0}" должна соответствовать длине "{1}".</value>
   </data>
   <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
     <value>SqlDbType "{0}" недопустим для {1}. Поддерживается только {2}.</value>
-  </data>
-  <data name="SQL_PipeErrorRequiresSendEnd" xml:space="preserve">
-    <value>Произошла ошибка, связанная с предыдущей строкой, отправленной в SqlPipe. Перед отправкой других строк необходимо вызвать SendResultsEnd.</value>
   </data>
   <data name="SQL_TooManyValues" xml:space="preserve">
     <value>Слишком много значений.</value>
@@ -3663,9 +3603,6 @@
   <data name="SQLNotify_AlreadyHasCommand" xml:space="preserve">
     <value>Этот объект SqlCommand уже связан с другим объектом SqlDependency.</value>
   </data>
-  <data name="SqlNotify_SqlDepCannotBeCreatedInProc" xml:space="preserve">
-    <value>Объект SqlDependency не может быть создан при выполнении внутри процесса SQL Server.</value>
-  </data>
   <data name="SqlDependency_DatabaseBrokerDisabled" xml:space="preserve">
     <value>SQL Server Service Broker для текущей базы данных не включен, поэтому оповещения не поддерживаются. Включите Service Broker для этой базы данных, чтобы использовать оповещения.</value>
   </data>
@@ -3725,21 +3662,6 @@
   </data>
   <data name="IEnumerableOfSqlDataRecordHasNoRows" xml:space="preserve">
     <value>В перечислении SqlDataRecord нет записей. Чтобы передать имеющий табличное значение параметр table-valued parameter, который не содержит строк, используйте неопределенную ссылку null на значение.</value>
-  </data>
-  <data name="SqlPipe_CommandHookedUpToNonContextConnection" xml:space="preserve">
-    <value>SqlPipe не поддерживает выполнения команды с подключением, которое не является контекстным.</value>
-  </data>
-  <data name="SqlPipe_MessageTooLong" xml:space="preserve">
-    <value>Длина сообщения {0} превышает максимальное поддерживаемое значение 4000.</value>
-  </data>
-  <data name="SqlPipe_IsBusy" xml:space="preserve">
-    <value>Не удалось использовать канал, поскольку он занят другой операцией.</value>
-  </data>
-  <data name="SqlPipe_AlreadyHasAnOpenResultSet" xml:space="preserve">
-    <value>Результирующий набор данных сейчас отправляется в канал. Перед вызовом {0} необходимо завершить текущий результирующий набор данных.</value>
-  </data>
-  <data name="SqlPipe_DoesNotHaveAnOpenResultSet" xml:space="preserve">
-    <value>Результирующий набор данных не инициализирован. Вызовите SendResultSetStart перед вызовом {0}.</value>
   </data>
   <data name="SNI_PN0" xml:space="preserve">
     <value>Поставщик HTTP</value>
@@ -4032,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>Путь к сертификату не может иметь значение Null. Используйте следующий формат: &lt;расположение_сертификата&gt;{2}&lt;хранилище_сертификатов&gt;{2}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {0} или {1}.</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Путь к сертификату не может быть равен null. Используйте следующий формат: &lt;расположение_сертификата&gt;{1}&lt;хранилище_сертификатов&gt;{1}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение "{0}".</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>Внутренняя ошибка. Путь к сертификату не может иметь значение Null. Используйте следующий формат: &lt;расположение_сертификата&gt;{2}&lt;хранилище_сертификатов&gt;{2}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {0} или {1}.</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Внутренняя ошибка. Путь к сертификату не может быть равен null. Используйте следующий формат: &lt;расположение_сертификата&gt;{1}&lt;хранилище_сертификатов&gt;{1}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение "{0}".</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Путь к главному ключу столбца не может иметь значение NULL. Используйте следующий формат для ключа, хранимого в поставщике служб шифрования Microsoft (CSP): &lt;имя поставщика CNG&gt;{0}&lt;идентификатор ключа&gt;.</value>
@@ -4050,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>Недействительный путь к сертификату: "{0}". Используйте следующий формат: &lt;расположение_сертификата&gt;{3}&lt;хранилище_сертификатов&gt;{3}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {1} или {2}.</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Недействительный путь к сертификату: "{0}". Используйте следующий формат: &lt;расположение_сертификата&gt;{2}&lt;хранилище_сертификатов&gt;{2}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение "{1}".</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>Внутренняя ошибка. Недействительный путь к сертификату: "{0}". Используйте следующий формат: &lt;расположение_сертификата&gt;{3}&lt;хранилище_сертификатов&gt;{3}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {1} или {2}.</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Внутренняя ошибка. Недействительный путь к сертификату: "{0}". Используйте следующий формат: &lt;расположение_сертификата&gt;{2}&lt;хранилище_сертификатов&gt;{2}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение "{1}".</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Недопустимый путь к главному ключу столбца: "{0}". Используйте следующий формат для ключа, хранимого в поставщике служб шифрования Microsoft (CSP): &lt;имя поставщика CSP&gt;{1}&lt;идентификатор ключа&gt;.</value>
@@ -4068,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>Недействительное расположение сертификата "{0}" в пути к сертификату "{1}". Используйте следующий формат: &lt;расположение_сертификата&gt;{4}&lt;хранилище_сертификатов&gt;{4}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {2} или {3}.</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>Недопустимое расположение сертификата "{0}" в пути к сертификату "{1}". Используйте следующий формат: &lt;расположение_сертификата&gt;{3}&lt;хранилище_сертификатов&gt;{3}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение "{2}".</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>Внутренняя ошибка. Недействительное расположение сертификата "{0}" в пути к сертификату "{1}". Используйте следующий формат: &lt;расположение_сертификата&gt;{4}&lt;хранилище_сертификатов&gt;{4}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение {2} или {3}.</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>Внутренняя ошибка. Недопустимое расположение сертификата "{0}" в пути к сертификату "{1}". Используйте следующий формат: &lt;расположение_сертификата&gt;{3}&lt;хранилище_сертификатов&gt;{3}&lt;отпечаток_сертификата&gt;, где &lt;расположение_сертификата&gt; имеет значение "{2}".</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>В пути к сертификату "{1}" указано недействительное хранилище сертификатов "{0}". Ожидается значение "{2}".</value>
@@ -4135,7 +4075,10 @@
     <value>Указанный ключ шифрования зашифрованного столбца содержит недействительную версию алгоритма шифрования "{0}". Ожидается версия "{1}".</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>Длина зашифрованных данных указанного ключа шифрования зашифрованного столбца {0} не совпадает с длиной зашифрованных данных {1} при использовании главного ключа столбца (сертификата) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден или неверно указан путь к сертификату.</value>
+    <value>Указанная длина зашифрованных данных ciphertext ключа шифрования зашифрованного столбца ({0}) не совпадает с длиной зашифрованных данных ({1}) при использовании главного ключа столбца ({2}) в "{3}". Возможно, ключ шифрования для шифруемых столбцов поврежден или путь {4} указан неверно.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
+    <value>Указанная длина зашифрованных данных ciphertext ключа шифрования зашифрованного столбца ({0}) не совпадает с длиной зашифрованных данных ({1}) при использовании главного ключа столбца (сертификата) в "{2}". Возможно, ключ шифрования зашифрованного столбца поврежден или путь к сертификату указан неверно.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
     <value>Длина зашифрованных данных ({0}) указанного ключа шифрования зашифрованного столбца не соответствует длине зашифрованных данных ({1}) при использовании главного ключа (асимметричного ключа) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден, или указанный путь к поставщику служб шифрования Microsoft (CSP) может быть неверным.</value>
@@ -4144,7 +4087,10 @@
     <value>Длина зашифрованных данных ({0}) указанного ключа шифрования зашифрованного столбца не соответствует длине зашифрованных данных ({1}) при использовании главного ключа (асимметричного ключа) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден, или указанный путь к поставщику Microsoft Cryptography API: Next Generation (CNG) может быть неверным.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>Длина подписи указанного ключа шифрования зашифрованного столбца ({0}) не совпадает с длиной подписи ({1}) при использовании главного ключа столбца (сертификата) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден или неверно указан путь к сертификату.</value>
+    <value>Указанная длина подписи ключа шифрования зашифрованного столбца {0} не совпадает с длиной {1} при использовании главного ключа столбца ({2}) в "{3}". Возможно, ключ шифрования для шифруемых столбцов поврежден или путь {4} указан неверно.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
+    <value>Указанная длина подписи ключа шифрования зашифрованного столбца {0} не совпадает с длиной {1} при использовании главного ключа столбца (сертификата) в "{2}". Возможно, ключ шифрования зашифрованного столбца поврежден или путь к сертификату указан неверно.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
     <value>Указанная длина подписи ({0}) ключа шифрования зашифрованного столбца не соответствует длине подписи ({1}) при использовании главного ключа столбца (асимметричного ключа) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден, или указанный путь к поставщику служб шифрования Microsoft (CSP) может быть неверным.</value>
@@ -4152,11 +4098,14 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>Указанная длина подписи ({0}) ключа шифрования зашифрованного столбца не соответствует длине подписи ({1}) при использовании главного ключа столбца (асимметричного ключа) в "{2}". Ключ шифрования зашифрованного столбца может быть поврежден, или указанный путь к поставщику Microsoft Cryptography API: Next Generation (CNG) может быть неверным.</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>Указанная подпись ключа шифрования зашифрованного столбца не совпадает с подписью, вычисленной с помощью главного ключа столбца ({0}) в "{1}". Возможно, ключ шифрования для шифруемых столбцов поврежден или путь указан неверно.</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>Подпись указанного ключа шифрования зашифрованного столбца не совпадает с подписью, вычисленной с помощью главного ключа столбца (сертификата) в "{0}". Ключ шифрования зашифрованного столбца может быть поврежден или неверно указан путь.</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>Указанная подпись ключа шифрования зашифрованного столбца не соответствует подписи, вычисленной с помощью главного ключа шифрования (асимметричного ключа) в "{0}". Ключ шифрования зашифрованного столбца может быть поврежден, или указанный путь может быть неверным.</value>
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
+    <value>Указанная подпись ключа шифрования зашифрованного столбца не совпадает с подписью, вычисленной с помощью главного ключа столбца (асимметричного ключа) в "{0}". Возможно, ключ шифрования для шифруемых столбцов поврежден или путь указан неверно.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>У сертификата, указанного в пути ключа "{0}", отсутствует закрытый ключ для шифрования ключа шифрования столбца. Убедитесь, что сертификат был импортирован правильно.</value>
@@ -4742,5 +4691,20 @@
   </data>
   <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
     <value>Список SqlBatchCommand не инициализирован.</value>
+  </data>
+  <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
+    <value>Недопустимая попытка получить векторные данные из столбца "{0}". Векторы поддерживаются только для столбцов векторного типа.</value>
+  </data>
+  <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
+    <value>Неподдерживаемый тип вектора "{0}".</value>
+  </data>
+  <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
+    <value>Значение null не поддерживается для выходного параметра "{0}" вектора SqlDbType.</value>
+  </data>
+  <data name="ADP_InvalidVectorHeader" xml:space="preserve">
+    <value>Получен недопустимый заголовок вектора.</value>
+  </data>
+  <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
+    <value>{0} Недопустимая строка JSON для вектора.</value>
   </data>
 </root>

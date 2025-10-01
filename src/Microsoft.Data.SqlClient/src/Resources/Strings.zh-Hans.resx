@@ -231,17 +231,11 @@
   <data name="ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity" xml:space="preserve">
     <value>无法使用含有 Integrated Security 连接字符串关键字的 Credential。</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection" xml:space="preserve">
-    <value>无法使用含有 Context Connection 关键字的 Credential。</value>
-  </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword" xml:space="preserve">
     <value>如果在连接字符串中指定了 "UserID"、"UID"、"Password" 或 "PWD"，则无法设置 AccessToken 属性。</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity" xml:space="preserve">
     <value>如果 "Integrated Security" 连接字符串关键字设置为 "true" 或 "SSPI"，则无法设置 AccessToken 属性。</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndContextConnection" xml:space="preserve">
-    <value>无法设置使用 "Context Connection" 关键字的 AccessToken 属性。</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndCredential" xml:space="preserve">
     <value>如果已设置 Credential 属性，则无法设置 AccessToken 属性。</value>
@@ -2073,9 +2067,6 @@
   <data name="ADP_InvalidDestinationBufferIndex" xml:space="preserve">
     <value>无效的目标缓冲区(大小为 {0})偏移量: {1}</value>
   </data>
-  <data name="ADP_DataReaderNoData" xml:space="preserve">
-    <value>不存在此行/列的数据。</value>
-  </data>
   <data name="ADP_NumericToDecimalOverflow" xml:space="preserve">
     <value>枚举值太大，不能适应 96 位十进制。</value>
   </data>
@@ -2529,6 +2520,9 @@
   <data name="SQL_AsyncConnectionRequired" xml:space="preserve">
     <value>此命令要求异步连接。请在连接字符串中设置“Asynchronous Processing=true”。</value>
   </data>
+  <data name="SQL_ConnectTimeout" xml:space="preserve">
+    <value>连接尝试超时。</value>
+  </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>超时时间已到。因此，连接被中断。</value>
   </data>
@@ -2778,30 +2772,6 @@
   <data name="SQL_InvalidDataLength" xml:space="preserve">
     <value>数据长度“{0}”小于 0。</value>
   </data>
-  <data name="SQL_SqlResultSetClosed" xml:space="preserve">
-    <value>SqlResultSet 关闭时，调用方法 {0} 的尝试无效。</value>
-  </data>
-  <data name="SQL_SqlResultSetClosed2" xml:space="preserve">
-    <value>不能完成操作，因为 SqlResultSet 已关闭。</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly" xml:space="preserve">
-    <value>记录为只读时不能调用“{0}”。</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly2" xml:space="preserve">
-    <value>不能完成操作，因为记录为只读。</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted" xml:space="preserve">
-    <value>当前列被删除时，调用方法 {0} 的尝试无效</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted2" xml:space="preserve">
-    <value>不能完成操作，因为当前列已被删除。</value>
-  </data>
-  <data name="SQL_SqlResultSetCommandNotInSameConnection" xml:space="preserve">
-    <value>不能完成操作，因为创建 SqlResultSet 的命令已经与原始连接取消关联。SqlResultSet 已关闭。</value>
-  </data>
-  <data name="SQL_SqlResultSetNoAcceptableCursor" xml:space="preserve">
-    <value>不能使用期望选项为给定查询创建 SqlResultSet。</value>
-  </data>
   <data name="SQL_SqlUpdatableRecordReadOnly" xml:space="preserve">
     <value>SqlDataRecord 为只读时，不能调用“{0}”。</value>
   </data>
@@ -2871,50 +2841,20 @@
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
     <value>当前加载的 System.Transactions.dll 不支持全局事务。请升级到 .NET Framework 4.6.2 或更高版本。</value>
   </data>
-  <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
-    <value>在上下文连接上不支持批处理更新。</value>
-  </data>
-  <data name="SQL_ContextAllowsLimitedKeywords" xml:space="preserve">
-    <value>在请求上下文连接时唯一可以使用的其他连接字符串关键字是 Type System Version 关键字。</value>
-  </data>
-  <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
-    <value>上下文连接不支持 Type System Version=SQL Server 2000。</value>
-  </data>
   <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
     <value>不支持使用 Microsoft.Data.SqlClient 连接到上下文连接。</value>
-  </data>
-  <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
-    <value>上下文连接已经在使用。</value>
-  </data>
-  <data name="SQL_ContextUnavailableOutOfProc" xml:space="preserve">
-    <value>所请求的操作需要使用 SqlClr 上下文，该上下文只有在 Sql Server 进程中运行时才可用。</value>
-  </data>
-  <data name="SQL_ContextUnavailableWhileInProc" xml:space="preserve">
-    <value>所请求的操作需要使用 Sql Server 执行线程。当前线程由用户代码或其他非 Sql Server 引擎代码启动。</value>
   </data>
   <data name="SQL_NestedTransactionScopesNotSupported" xml:space="preserve">
     <value>不支持嵌套的 TransactionScopes。</value>
   </data>
-  <data name="SQL_NotAvailableOnContextConnection" xml:space="preserve">
-    <value>所请求的操作在上下文连接上不可用。</value>
-  </data>
-  <data name="SQL_NotificationsNotAvailableOnContextConnection" xml:space="preserve">
-    <value>通知在上下文连接上不可用。</value>
-  </data>
   <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
     <value>意外的服务器事件: {0}。</value>
-  </data>
-  <data name="SQL_UserInstanceNotAvailableInProc" xml:space="preserve">
-    <value>在 Sql Server 进程中运行时不允许使用用户实例。</value>
   </data>
   <data name="SQL_ArgumentLengthMismatch" xml:space="preserve">
     <value>“{0}”的长度必须与“{1}”的长度匹配。</value>
   </data>
   <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
     <value>SqlDbType“{0}”对于 {1} 无效。只支持 {2}。</value>
-  </data>
-  <data name="SQL_PipeErrorRequiresSendEnd" xml:space="preserve">
-    <value>以前发送到 SqlPipe 的某行出错。必须先调用 SendResultsEnd，才能发送其他内容。</value>
   </data>
   <data name="SQL_TooManyValues" xml:space="preserve">
     <value>值太多。</value>
@@ -3663,9 +3603,6 @@
   <data name="SQLNotify_AlreadyHasCommand" xml:space="preserve">
     <value>此 SqlCommand 对象已与另一 SqlDependency 对象关联。</value>
   </data>
-  <data name="SqlNotify_SqlDepCannotBeCreatedInProc" xml:space="preserve">
-    <value>在 SQL Server 进程内运行时，无法创建 SqlDependency 对象。</value>
-  </data>
   <data name="SqlDependency_DatabaseBrokerDisabled" xml:space="preserve">
     <value>未启用当前数据库的 SQL Server Service Broker，因此查询通知不受支持。如果希望使用通知，请为此数据库启用 Service Broker。</value>
   </data>
@@ -3725,21 +3662,6 @@
   </data>
   <data name="IEnumerableOfSqlDataRecordHasNoRows" xml:space="preserve">
     <value>SqlDataRecord 枚举中没有记录。要发送不包含行的 table-valued parameter，请对该值改用 null 引用。</value>
-  </data>
-  <data name="SqlPipe_CommandHookedUpToNonContextConnection" xml:space="preserve">
-    <value>SqlPipe 不支持使用非上下文连接执行命令。</value>
-  </data>
-  <data name="SqlPipe_MessageTooLong" xml:space="preserve">
-    <value>消息长度 {0} 超过支持的最大长度 4000。</value>
-  </data>
-  <data name="SqlPipe_IsBusy" xml:space="preserve">
-    <value>无法使用该管道，该管道正在处理其他操作。</value>
-  </data>
-  <data name="SqlPipe_AlreadyHasAnOpenResultSet" xml:space="preserve">
-    <value>结果集当前正在发送到该管道。在调用 {0} 之前结束当前结果集。</value>
-  </data>
-  <data name="SqlPipe_DoesNotHaveAnOpenResultSet" xml:space="preserve">
-    <value>结果集尚未启动。在调用 {0} 之前调用 SendResultSetStart。</value>
   </data>
   <data name="SNI_PN0" xml:space="preserve">
     <value>HTTP 提供程序</value>
@@ -4032,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>证书路径不能为空。使用以下格式: &lt;证书位置&gt;{2}&lt;证书存储库&gt;{2}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{0}”或“{1}”。</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>证书路径不能为 null。使用以下格式: &lt;证书位置&gt;{1}&lt;证书存储&gt;{1}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 为 ‘{0}’。</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>内部错误。证书路径不能为空。使用以下格式: &lt;证书位置&gt;{2}&lt;证书存储库&gt;{2}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{0}”或“{1}”。</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>内部错误。证书路径不能为 null。使用以下格式: &lt;证书位置&gt;{1}&lt;证书存储&gt;{1}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 为 ‘{0}’。</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>列主密钥路径不可为 NULL。请对 Microsoft 加密服务提供程序(CSP)中存储的密钥使用以下格式: &lt;CSP 提供程序名称&gt;{0}&lt;密钥标识符&gt;。</value>
@@ -4050,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>证书路径无效: {0}。使用以下格式: &lt;证书位置&gt;{3}&lt;证书存储库&gt;{3}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{1}”或“{2}”。</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>证书路径无效: ‘{0}’。使用以下格式: &lt;证书位置&gt;{2}&lt;证书存储&gt;{2}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 为 ‘{1}’。</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>内部错误。证书路径无效: {0}。使用以下格式: &lt;证书位置&gt;{3}&lt;证书存储库&gt;{3}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{1}”或“{2}”。</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>内部错误。证书路径无效: ‘{0}’。使用以下格式: &lt;证书位置&gt;{2}&lt;证书存储&gt;{2}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 为 ‘{1}’。</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>无效的列主密钥路径:“{0}”。请对 Microsoft 加密服务提供程序(CSP)中存储的密钥使用以下格式: &lt;CSP 提供程序名称&gt;{1}&lt;密钥标识符&gt;。</value>
@@ -4068,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>证书路径“{1}”中的证书位置“{0}”无效。使用以下格式: &lt;证书位置&gt;{4}&lt;证书存储库&gt;{4}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{2}”或“{3}”。</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>证书路径 ‘{1}’ 中的证书位置 ‘{0}’ 无效。使用以下格式: &lt;证书位置&gt;{3}&lt;证书存储&gt;{3}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 为 ‘{2}’。</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>内部错误。证书路径“{1}”中的证书位置“{0}”无效。使用以下格式: &lt;证书位置&gt;{4}&lt;证书存储&gt;{4}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 是“{2}”或“{3}”。</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>内部错误。证书路径 ‘{1}’ 中的证书位置 ‘{0}’ 无效。使用以下格式: &lt;证书位置&gt;{3}&lt;证书存储&gt;{3}&lt;证书指纹&gt;，其中 &lt;证书位置&gt; 为 ‘{2}’。</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>证书路径“{1}”中指定的证书存储库“{0}”无效。应为: {2}。</value>
@@ -4135,7 +4075,10 @@
     <value>指定的加密列的加密密钥包含无效的加密算法版本“{0}”。预期版本是“{1}”。</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>当在“{2}”中使用列主密钥(证书)时，指定的加密列加密密钥的密码文本长度“{0}”与密码文本长度“{1}”不匹配。加密列加密密钥可能已损坏，或指定的证书路径可能不正确。</value>
+    <value>指定的已加密列加密密钥的已加密文本长度 {0} 与使用“{3}”中的列主密钥({2})时的已加密文本长度 {1} 不一致。已加密列加密密钥可能已损坏，或者指定的 {4} 路径可能不正确。</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
+    <value>指定的已加密列加密密钥的已加密文本长度 {0} 与使用“{2}”中的列主密钥(证书)时的已加密文本长度 {1} 不一致。可能是因为已加密列加密密钥已损坏，或指定的证书路径有误。</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
     <value>使用 {2} 中的列主密钥(非对称密钥)时，指定的已加密列加密密钥的已加密文本长度 {0} 与已加密文本长度 {1} 不匹配。已加密列加密密钥可能已损坏，或指定的 Microsoft 加密服务提供程序(CSP)路径可能不正确。</value>
@@ -4144,7 +4087,10 @@
     <value>使用 {2} 中的列主密钥(非对称密钥)时，指定的已加密列加密密钥的已加密文本长度 {0} 与已加密文本长度 {1} 不匹配。已加密列加密密钥可能已损坏，或指定的 Microsoft API 下一代加密技术(CNG)提供程序路径可能不正确。</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>当在“{2}”中使用列主密钥(证书)时，指定的加密列加密密钥的签名长度“{0}”与签名长度“{1}”不匹配。加密列加密密钥可能已损坏，或指定的证书路径可能不正确。</value>
+    <value>指定的已加密列加密密钥的签名长度 {0} 与使用“{3}”中的列主密钥({2})时的签名长度 {1} 不一致。已加密列加密密钥可能已损坏，或者指定的 {4} 路径可能不正确。</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
+    <value>指定的已加密列加密密钥的签名长度 {0} 与使用“{2}”中的列主密钥(证书)时的签名长度 {1} 不一致。可能是因为已加密列加密密钥已损坏，或指定的证书路径有误。</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
     <value>使用 {2} 中的列主密钥(非对称密钥)时，指定的已加密列加密密钥的签名长度 {0} 与签名长度 {1} 不匹配。已加密列加密密钥可能已损坏，或指定的 Microsoft 加密服务提供程序(CSP)路径可能不正确。</value>
@@ -4152,11 +4098,14 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>使用 {2} 中的列主密钥(非对称密钥)时，指定的已加密列加密密钥的签名长度 {0} 与签名长度 {1} 不匹配。已加密列加密密钥可能已损坏，或指定的 Microsoft API 下一代加密技术(CNG)提供程序路径可能不正确。</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>指定的已加密列加密密钥签名与使用“{1}”中的列主密钥({0})计算得出的签名不一致。已加密列加密密钥可能已损坏，或者指定的路径可能不正确。</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>指定的加密列的加密密钥签名与“{0}”中使用的列的主密钥(证书)计算的签名不匹配。加密列的加密密钥可能已损坏，或指定的证书路径可能不正确。</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>指定的已加密列加密密钥签名与通过“{0}”中的列主密钥(非对称密钥)计算出的签名不匹配。已加密列加密密钥可能已损坏，或指定路径可能不正确。</value>
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
+    <value>指定的已加密列加密密钥签名与使用“{0}”中的列主密钥(非对称密钥)计算得出的签名不一致。已加密列加密密钥可能已损坏，或者指定的路径可能不正确。</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>密钥路径“{0}”中指定的证书没有用于加密列加密密钥的私钥。验证证书是否正确导入。</value>
@@ -4742,5 +4691,20 @@
   </data>
   <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
     <value>SqlBatchCommand 列表尚未初始化。</value>
+  </data>
+  <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
+    <value>从列“{0}”获取矢量数据的尝试无效。仅矢量类型的列支持矢量。</value>
+  </data>
+  <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
+    <value>矢量类型“{0}”不受支持。</value>
+  </data>
+  <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
+    <value>SqlDbtype 向量的输出参数“{0}”不支持 "null" 值。</value>
+  </data>
+  <data name="ADP_InvalidVectorHeader" xml:space="preserve">
+    <value>收到的矢量标头无效。</value>
+  </data>
+  <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
+    <value>{0} 矢量的 JSON 字符串无效。</value>
   </data>
 </root>

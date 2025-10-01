@@ -7,9 +7,11 @@
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
     <IsTestProject>true</IsTestProject>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <!-- Common references -->
   <ItemGroup>
+    <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Condition="$(TargetGroup) == 'netfx'">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -25,6 +27,11 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
+    <ProjectReference Include="$(TestsPath)Common\Common.csproj" />
   </ItemGroup>
   <!-- .NET Framework references -->
   <ItemGroup Condition="$(TargetGroup) == 'netfx'">

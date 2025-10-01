@@ -16,22 +16,11 @@ namespace Microsoft.Data.SqlClient
 {
     internal abstract partial class TdsParserStateObject
     {
-        private struct RuntimeHelpers
-        {
-            /// <summary>
-            /// This is a no-op in netcore version. Only needed for merging with netfx codebase.
-            /// </summary>
-            [Conditional("NETFRAMEWORK")]
-            internal static void PrepareConstrainedRegions()
-            {
-            }
-        }
-
         //////////////////
         // Constructors //
         //////////////////
 
-        internal TdsParserStateObject(TdsParser parser, TdsParserStateObject physicalConnection, bool async)
+        protected TdsParserStateObject(TdsParser parser, TdsParserStateObject physicalConnection, bool async)
         {
             // Construct a MARS session
             Debug.Assert(parser != null, "no parser?");
@@ -55,7 +44,7 @@ namespace Microsoft.Data.SqlClient
                 AddError(parser.ProcessSNIError(this));
                 ThrowExceptionAndWarning();
             }
-                       
+
             // we post a callback that represents the call to dispose; once the
             // object is disposed, the next callback will cause the GC Handle to
             // be released.
@@ -67,42 +56,13 @@ namespace Microsoft.Data.SqlClient
         // General methods //
         /////////////////////
 
-        internal abstract void CreatePhysicalSNIHandle(
-            string serverName,
-            TimeoutTimer timeout,
-            out byte[] instanceName,
-            ref string[] spns,
-            bool flushCache,
-            bool async,
-            bool fParallel,
-            SqlConnectionIPAddressPreference iPAddressPreference,
-            string cachedFQDN,
-            ref SQLDNSInfo pendingDNSInfo,
-            string serverSPN,
-            bool isIntegratedSecurity = false,
-            bool tlsFirst = false,
-            string hostNameInCertificate = "",
-            string serverCertificateFilename = "");
-
-        internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
-
-        protected abstract void CreateSessionHandle(TdsParserStateObject physicalConnection, bool async);
-
-        protected abstract void FreeGcHandle(int remaining, bool release);
-
-        internal abstract uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename);
-
-        internal abstract uint WaitForSSLHandShakeToComplete(out int protocolVersion);
-
-        internal abstract void Dispose();
-
-        internal abstract uint CheckConnection();
-
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
             SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.DecrementPendingCallbacks | ADV | State Object Id {0}, after decrementing _pendingCallbacks: {1}", _objectID, _pendingCallbacks);
+            
             FreeGcHandle(remaining, release);
+
             // NOTE: TdsParserSessionPool may call DecrementPendingCallbacks on a TdsParserStateObject which is already disposed
             // This is not dangerous (since the stateObj is no longer in use), but we need to add a workaround in the assert for it
             Debug.Assert((remaining == -1 && SessionHandle.IsNull) || (0 <= remaining && remaining < 3), $"_pendingCallbacks values is invalid after decrementing: {remaining}");
@@ -167,7 +127,6 @@ namespace Microsoft.Data.SqlClient
 
                             PacketHandle syncReadPacket = default;
                             bool readFromNetwork = true;
-                            RuntimeHelpers.PrepareConstrainedRegions();
                             bool shouldDecrement = false;
                             try
                             {
@@ -251,8 +210,10 @@ namespace Microsoft.Data.SqlClient
             return SniPacketGetData(packet, _inBuff, ref dataSize);
         }
 
-        private void SetBufferSecureStrings()
+        private bool TrySetBufferSecureStrings()
         {
+            bool mustClearBuffer = false;
+
             if (_securePasswords != null)
             {
                 for (int i = 0; i < _securePasswords.Length; i++)
@@ -276,6 +237,8 @@ namespace Microsoft.Data.SqlClient
                             }
                             TdsParserStaticMethods.ObfuscatePassword(data);
                             data.CopyTo(_outBuff, _securePasswordOffsetsInBuffer[i]);
+
+                            mustClearBuffer = true;
                         }
                         finally
                         {
@@ -284,6 +247,8 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
+
+            return mustClearBuffer;
         }
 
         public void ReadAsyncCallback(PacketHandle packet, uint error) =>
@@ -316,7 +281,6 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
-            RuntimeHelpers.PrepareConstrainedRegions();
             bool processFinallyBlock = true;
             try
             {
@@ -598,13 +562,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Async operation completion may be delayed (success pending).
-            try
-            {
-            }
-            finally
-            {
-                sniError = WritePacket(packet, sync);
-            }
+            sniError = WritePacket(packet, sync);
 
             if (sniError == TdsEnums.SNI_SUCCESS_IO_PENDING)
             {
@@ -710,7 +668,6 @@ namespace Microsoft.Data.SqlClient
 
                 PacketHandle attnPacket = CreateAndSetAttentionPacket();
 
-                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
                     // Dev11 #344723: SqlClient stress test suspends System_Data!Tcp::ReadSync via a call to SqlDataReader::Close
@@ -768,17 +725,17 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal abstract PacketHandle CreateAndSetAttentionPacket();
-
-        internal abstract void SetPacketData(PacketHandle packet, byte[] buffer, int bytesUsed);
-
         private Task WriteSni(bool canAccumulate)
         {
             // Prepare packet, and write to packet.
             PacketHandle packet = GetResetWritePacket(_outBytesUsed);
+            bool mustClearBuffer = TrySetBufferSecureStrings();
 
-            SetBufferSecureStrings();
             SetPacketData(packet, _outBuff, _outBytesUsed);
+            if (mustClearBuffer)
+            {
+                _outBuff.AsSpan(0, _outBytesUsed).Clear();
+            }
 
             Debug.Assert(Parser.Connection._parserLock.ThreadMayHaveLock(), "Thread is writing without taking the connection lock");
             Task task = SNIWritePacket(packet, out _, canAccumulate, callerHasConnectionLock: true);

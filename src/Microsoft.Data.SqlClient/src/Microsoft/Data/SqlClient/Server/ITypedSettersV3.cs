@@ -73,6 +73,10 @@ namespace Microsoft.Data.SqlClient.Server
 
         // valid for UniqueIdentifier
         void SetGuid(int ordinal, Guid value);
+        // valid for SqlDbType.Time
+        void SetTimeSpan(int ordinal, TimeSpan value);
+        // valid for DateTimeOffset
+        void SetDateTimeOffset(int ordinal, DateTimeOffset value);
     }
 }
 

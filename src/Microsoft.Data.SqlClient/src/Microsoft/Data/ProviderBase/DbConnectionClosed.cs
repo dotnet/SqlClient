@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
+using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.ConnectionPool;
 
 namespace Microsoft.Data.ProviderBase
@@ -28,7 +29,7 @@ namespace Microsoft.Data.ProviderBase
 
         public override void ChangeDatabase(string database) => throw ADP.ClosedConnectionError();
 
-        internal override void CloseConnection(DbConnection owningObject, DbConnectionFactory connectionFactory)
+        internal override void CloseConnection(DbConnection owningObject, SqlConnectionFactory connectionFactory)
         {
             // not much to do here...
         }
@@ -37,16 +38,33 @@ namespace Microsoft.Data.ProviderBase
 
         public override void EnlistTransaction(System.Transactions.Transaction transaction) => throw ADP.ClosedConnectionError();
 
-        protected internal override DataTable GetSchema(DbConnectionFactory factory, DbConnectionPoolGroup poolGroup, DbConnection outerConnection, string collectionName, string[] restrictions)
-            => throw ADP.ClosedConnectionError();
+        protected internal override DataTable GetSchema(
+            SqlConnectionFactory factory,
+            DbConnectionPoolGroup poolGroup,
+            DbConnection outerConnection,
+            string collectionName,
+            string[] restrictions)
+        {
+            throw ADP.ClosedConnectionError();
+        }
 
-        protected internal override Task<DataTable> GetSchemaAsync(DbConnectionFactory factory, DbConnectionPoolGroup poolGroup, DbConnection outerConnection, string collectionName, string[] restrictions, CancellationToken cancellationToken)
+        protected internal override Task<DataTable> GetSchemaAsync(
+            SqlConnectionFactory factory,
+            DbConnectionPoolGroup poolGroup,
+            DbConnection outerConnection,
+            string collectionName,
+            string[] restrictions,
+            CancellationToken cancellationToken)
             => throw ADP.ClosedConnectionError();
 
         protected override DbReferenceCollection CreateReferenceCollection() => throw ADP.ClosedConnectionError();
 
-        internal override bool TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
-            => base.TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
+        internal override bool TryOpenConnection(
+            DbConnection outerConnection,
+            SqlConnectionFactory connectionFactory,
+            TaskCompletionSource<DbConnectionInternal> retry,
+            DbConnectionOptions userOptions) =>
+            TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
     }
 
     internal abstract class DbConnectionBusy : DbConnectionClosed
@@ -55,7 +73,11 @@ namespace Microsoft.Data.ProviderBase
         {
         }
 
-        internal override bool TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
+        internal override bool TryOpenConnection(
+            DbConnection outerConnection,
+            SqlConnectionFactory connectionFactory,
+            TaskCompletionSource<DbConnectionInternal> retry,
+            DbConnectionOptions userOptions)
             => throw ADP.ConnectionAlreadyOpen(State);
     }
 
@@ -88,15 +110,23 @@ namespace Microsoft.Data.ProviderBase
         {
         }
 
-        internal override void CloseConnection(DbConnection owningObject, DbConnectionFactory connectionFactory)
+        internal override void CloseConnection(DbConnection owningObject, SqlConnectionFactory connectionFactory)
         {
             connectionFactory.SetInnerConnectionTo(owningObject, DbConnectionClosedPreviouslyOpened.SingletonInstance);
         }
 
-        internal override bool TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
-            => TryOpenConnection(outerConnection, connectionFactory, retry, userOptions);
+        internal override bool TryReplaceConnection(
+            DbConnection outerConnection,
+            SqlConnectionFactory connectionFactory,
+            TaskCompletionSource<DbConnectionInternal> retry,
+            DbConnectionOptions userOptions) =>
+            TryOpenConnection(outerConnection, connectionFactory, retry, userOptions);
 
-        internal override bool TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
+        internal override bool TryOpenConnection(
+            DbConnection outerConnection,
+            SqlConnectionFactory connectionFactory,
+            TaskCompletionSource<DbConnectionInternal> retry,
+            DbConnectionOptions userOptions)
         {
             if (retry == null || !retry.Task.IsCompleted)
             {
@@ -141,7 +171,11 @@ namespace Microsoft.Data.ProviderBase
         {
         }
 
-        internal override bool TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
-            => TryOpenConnection(outerConnection, connectionFactory, retry, userOptions);
+        internal override bool TryReplaceConnection(
+            DbConnection outerConnection,
+            SqlConnectionFactory connectionFactory,
+            TaskCompletionSource<DbConnectionInternal> retry,
+            DbConnectionOptions userOptions) =>
+            TryOpenConnection(outerConnection, connectionFactory, retry, userOptions);
     }
 }

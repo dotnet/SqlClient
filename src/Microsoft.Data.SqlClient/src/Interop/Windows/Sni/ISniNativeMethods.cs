@@ -92,7 +92,7 @@ namespace Interop.Windows.Sni
 
         uint SniTerminate();
 
-        uint SniWaitForSslHandshakeToComplete(SNIHandle pConn, int dwMilliseconds, out uint pProtocolVersion);
+        uint SniWaitForSslHandshakeToComplete(SNIHandle pConn, int dwMilliseconds, out SniSslProtocols pProtocolVersion);
 
         uint SniWriteAsyncWrapper(SNIHandle pConn, SNIPacket pPacket);
 

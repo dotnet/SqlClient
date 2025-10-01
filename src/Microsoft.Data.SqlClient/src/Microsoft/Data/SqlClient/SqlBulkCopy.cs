@@ -1377,11 +1377,8 @@ namespace Microsoft.Data.SqlClient
             internalConnection.ThreadHasParserLockForClose = true;
             try
             {
-                #if NETFRAMEWORK
-                _parser.RunReliably(RunBehavior.UntilDone, null, null, bulkCopyHandler, _stateObj);                
-                #else
-                _parser.Run(RunBehavior.UntilDone, null, null, bulkCopyHandler, _stateObj);
-                #endif
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
+                _parser.Run(RunBehavior.UntilDone, null, null, bulkCopyHandler, _stateObj);                
             }
             finally
             {
@@ -1641,7 +1638,7 @@ namespace Microsoft.Data.SqlClient
                         // in byte[] form.
                         if (!(value is byte[]))
                         {
-                            value = _connection.GetBytes(value, out _, out _);
+                            value = _connection.GetBytes(value, out _);
                             typeChanged = true;
                         }
                         break;
@@ -2064,14 +2061,8 @@ namespace Microsoft.Data.SqlClient
             _parserLock = internalConnection._parserLock;
             _parserLock.Wait(canReleaseFromAnyThread: _isAsyncBulkCopy);
 
-            TdsParser bestEffortCleanupTarget = null;
-
-            #if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-            #endif
             try
             {
-                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
                 WriteRowSourceToServerCommon(columnCount); // This is common in both sync and async
                 Task resultTask = WriteToServerInternalAsync(ctoken); // resultTask is null for sync, but Task for async.
                 if (resultTask != null)
@@ -2107,26 +2098,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 return null;
             }
-            catch (System.OutOfMemoryException e)
-            {
-                _connection.Abort(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                _connection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                _connection.Abort(e);
-
-                #if NETFRAMEWORK
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                #endif
-
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             finally
             {
                 _columnMappings.ReadOnly = false;
@@ -2791,41 +2763,19 @@ namespace Microsoft.Data.SqlClient
         // Takes care of cleaning up the parser, stateObj and transaction when CopyBatchesAsync fails.
         private void CopyBatchesAsyncContinuedOnError(bool cleanupParser)
         {
-            SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+            if ((cleanupParser) && (_parser != null) && (_stateObj != null))
+            {
+                _parser._asyncWrite = false;
+                Task task = _parser.WriteBulkCopyDone(_stateObj);
+                Debug.Assert(task == null, "Write should not pend when error occurs");
+                RunParser();
+            }
 
-            #if NETFRAMEWORK
-            RuntimeHelpers.PrepareConstrainedRegions();
-            #endif
-            try
+            if (_stateObj != null)
             {
-                if ((cleanupParser) && (_parser != null) && (_stateObj != null))
-                {
-                    _parser._asyncWrite = false;
-                    Task task = _parser.WriteBulkCopyDone(_stateObj);
-                    Debug.Assert(task == null, "Write should not pend when error occurs");
-                    RunParser();
-                }
-
-                if (_stateObj != null)
-                {
-                    CleanUpStateObject();
-                }
+                CleanUpStateObject();
             }
-            catch (OutOfMemoryException)
-            {
-                internalConnection.DoomThisConnection();
-                throw;
-            }
-            catch (StackOverflowException)
-            {
-                internalConnection.DoomThisConnection();
-                throw;
-            }
-            catch (ThreadAbortException)
-            {
-                internalConnection.DoomThisConnection();
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
 
             AbortTransaction();
         }

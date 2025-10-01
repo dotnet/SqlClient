@@ -8,6 +8,7 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
@@ -80,10 +81,12 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            ref string[] spns,
+            out ResolvedServerSpn resolvedSpn,
             bool flushCache,
             bool async,
             bool parallel,
+            TransparentNetworkResolutionState transparentNetworkResolutionState,
+            int totalTimeout,
             SqlConnectionIPAddressPreference iPAddressPreference,
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
@@ -93,7 +96,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             string hostNameInCertificate,
             string serverCertificateFilename)
         {
-            SniHandle? sessionHandle = SniProxy.CreateConnectionHandle(serverName, timeout, out instanceName, ref spns, serverSPN,
+            SniHandle? sessionHandle = SniProxy.CreateConnectionHandle(serverName, timeout, out instanceName, out resolvedSpn, serverSPN,
                 flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
                 hostNameInCertificate, serverCertificateFilename);
 
@@ -365,6 +368,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return TdsEnums.SNI_ERROR;
         }
 
+        internal override uint PostReadAsyncForMars(TdsParserStateObject physicalStateObject) => TdsEnums.SNI_SUCCESS_IO_PENDING;
+
         internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename)
         {
             SniHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
@@ -386,10 +391,19 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return TdsEnums.SNI_SUCCESS;
         }
 
-        internal override uint WaitForSSLHandShakeToComplete(out int protocolVersion)
+        internal override uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion)
         {
             protocolVersion = GetSessionSNIHandleHandleOrThrow().ProtocolVersion;
-            return 0;
+            return TdsEnums.SNI_SUCCESS;
+        }
+
+        internal override SniErrorDetails GetErrorDetails()
+        {
+            SniError sniError = SniProxy.Instance.GetLastError();
+
+            return new SniErrorDetails(sniError.errorMessage, sniError.nativeError, sniError.sniError,
+                (int)sniError.provider, sniError.lineNumber, sniError.function,
+                sniError.exception);
         }
 
         private SniHandle GetSessionSNIHandleHandleOrThrow()

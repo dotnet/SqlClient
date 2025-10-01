@@ -142,6 +142,14 @@ namespace Microsoft.Data.SqlClient
             _inBytesRead = inBytesRead;
         }
 
+        [DebuggerStepThrough]
+        internal void NewBuffer(int size)
+        {
+            _inBuff = new byte[size];
+            _inBytesUsed = 0;
+            _inBytesRead = 0;
+        }
+
         //  stubs
         private LastIOTimer _lastSuccessfulIOTimer = new LastIOTimer();
         private Parser _parser = new Parser();

@@ -8,6 +8,7 @@
     <!-- Not supported sources are created from the ref assembly, we currently don't produce finalizers in dummmy assemblies, so we disable ApiCompat to not fail. -->
     <RunApiCompat>false</RunApiCompat>
     <GenerateDocumentationFile Condition="'$(OSGroup)' != 'Windows_NT'">false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true' OR '$(GeneratePlatformNotSupportedAssemblyMessage)' != ''">
@@ -42,7 +43,7 @@
       <GenAPIArgs>$(GenAPIArgs) -o:"$(NotSupportedSourceFile)"</GenAPIArgs>
       <GenAPIArgs Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true' OR '$(GeneratePlatformNotSupportedAssemblyMessage)' != ''">$(GenAPIArgs) -t:"$(GeneratePlatformNotSupportedAssemblyMessage)"</GenAPIArgs>
       <GenAPIArgs Condition="'$(GeneratePlatformNotSupportedAssemblyWithGlobalPrefix)' == 'true'">$(GenAPIArgs) -global</GenAPIArgs>
-      <GenAPIPath Condition="'$(MSBuildRuntimeType)' == 'core'"> "$(DotNetCmd) $(ToolsArtifactsDir)$(TargetFramework)\Microsoft.DotNet.GenAPI.dll"</GenAPIPath>
+      <GenAPIPath Condition="'$(MSBuildRuntimeType)' == 'core'"> "$(DotnetPath)dotnet" "$(ToolsArtifactsDir)net8.0/Microsoft.DotNet.GenAPI.dll"</GenAPIPath>
       <GenAPIPath Condition="'$(MSBuildRuntimeType)' != 'core'"> "$(ToolsArtifactsDir)net472\Microsoft.DotNet.GenAPI.exe"</GenAPIPath>
     </PropertyGroup>
     <Exec Command="$(GenAPIPath) $(GenAPIArgs)" WorkingDirectory="$(ToolRuntimePath)"/>

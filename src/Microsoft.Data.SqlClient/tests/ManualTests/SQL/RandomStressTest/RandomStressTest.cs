@@ -8,6 +8,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -70,8 +71,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 for (int tcount = 0; tcount < ThreadCountDefault; tcount++)
                 {
-                    Thread t = new Thread(TestThread);
-                    t.Start();
+                    _ = Task.Factory.StartNew(TestThread, TaskCreationOptions.LongRunning);
                 }
             }
 

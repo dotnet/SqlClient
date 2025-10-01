@@ -231,17 +231,11 @@
   <data name="ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity" xml:space="preserve">
     <value>Cannot use Credential with Integrated Security connection string keyword.</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection" xml:space="preserve">
-    <value>Cannot use Credential with Context Connection keyword.</value>
-  </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword" xml:space="preserve">
     <value>Cannot set the AccessToken property if 'UserID', 'UID', 'Password', or 'PWD' has been specified in connection string.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity" xml:space="preserve">
     <value>Cannot set the AccessToken property if the 'Integrated Security' connection string keyword has been set to 'true' or 'SSPI'.</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndContextConnection" xml:space="preserve">
-    <value>Cannot set the AccessToken property with the 'Context Connection' keyword.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndCredential" xml:space="preserve">
     <value>Cannot set the AccessToken property if the Credential property is already set.</value>
@@ -2073,9 +2067,6 @@
   <data name="ADP_InvalidDestinationBufferIndex" xml:space="preserve">
     <value>Invalid destination buffer (size of {0}) offset: {1}</value>
   </data>
-  <data name="ADP_DataReaderNoData" xml:space="preserve">
-    <value>No data exists for the row/column.</value>
-  </data>
   <data name="ADP_NumericToDecimalOverflow" xml:space="preserve">
     <value>The numerical value is too large to fit into a 96 bit decimal.</value>
   </data>
@@ -2529,6 +2520,9 @@
   <data name="SQL_AsyncConnectionRequired" xml:space="preserve">
     <value>This command requires an asynchronous connection. Set "Asynchronous Processing=true" in the connection string.</value>
   </data>
+  <data name="SQL_ConnectTimeout" xml:space="preserve">
+    <value>The connection attempt timed out.</value>
+  </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>Timeout expired.  The connection has been broken as a result.</value>
   </data>
@@ -2778,30 +2772,6 @@
   <data name="SQL_InvalidDataLength" xml:space="preserve">
     <value>Data length '{0}' is less than 0.</value>
   </data>
-  <data name="SQL_SqlResultSetClosed" xml:space="preserve">
-    <value>Invalid attempt to call method {0} when SqlResultSet is closed.</value>
-  </data>
-  <data name="SQL_SqlResultSetClosed2" xml:space="preserve">
-    <value>Operation cannot be completed because the SqlResultSet is closed.</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly" xml:space="preserve">
-    <value>'{0}' cannot be called when the record is read only.</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly2" xml:space="preserve">
-    <value>Operation cannot be completed because the record is read only.</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted" xml:space="preserve">
-    <value>Invalid attempt to call method {0} when the current row is deleted</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted2" xml:space="preserve">
-    <value>Operation cannot be completed because the current row is deleted</value>
-  </data>
-  <data name="SQL_SqlResultSetCommandNotInSameConnection" xml:space="preserve">
-    <value>Operation cannot be completed because the command that created the SqlResultSet has been dissociated from the original connection. SqlResultSet is closed.</value>
-  </data>
-  <data name="SQL_SqlResultSetNoAcceptableCursor" xml:space="preserve">
-    <value>SqlResultSet could not be created for the given query with the desired options.</value>
-  </data>
   <data name="SQL_SqlUpdatableRecordReadOnly" xml:space="preserve">
     <value>'{0}' cannot be called when the SqlDataRecord is read only.</value>
   </data>
@@ -2871,50 +2841,20 @@
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
     <value>The currently loaded System.Transactions.dll does not support Global Transactions. Please upgrade to .NET Framework 4.6.2 or later.</value>
   </data>
-  <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
-    <value>Batching updates is not supported on the context connection.</value>
-  </data>
-  <data name="SQL_ContextAllowsLimitedKeywords" xml:space="preserve">
-    <value>The only additional connection string keyword that may be used when requesting the context connection is the Type System Version keyword.</value>
-  </data>
-  <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
-    <value>The context connection does not support Type System Version=SQL Server 2000.</value>
-  </data>
   <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
     <value>Connecting to the context connection using Microsoft.Data.SqlClient is not supported.</value>
-  </data>
-  <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
-    <value>The context connection is already in use.</value>
-  </data>
-  <data name="SQL_ContextUnavailableOutOfProc" xml:space="preserve">
-    <value>The requested operation requires a SqlClr context, which is only available when running in the Sql Server process.</value>
-  </data>
-  <data name="SQL_ContextUnavailableWhileInProc" xml:space="preserve">
-    <value>The requested operation requires a Sql Server execution thread.  The current thread was started by user code or other non-Sql Server engine code.</value>
   </data>
   <data name="SQL_NestedTransactionScopesNotSupported" xml:space="preserve">
     <value>Nested TransactionScopes are not supported.</value>
   </data>
-  <data name="SQL_NotAvailableOnContextConnection" xml:space="preserve">
-    <value>The requested operation is not available on the context connection.</value>
-  </data>
-  <data name="SQL_NotificationsNotAvailableOnContextConnection" xml:space="preserve">
-    <value>Notifications are not available on the context connection.</value>
-  </data>
   <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
     <value>Unexpected server event: {0}.</value>
-  </data>
-  <data name="SQL_UserInstanceNotAvailableInProc" xml:space="preserve">
-    <value>User instances are not allowed when running in the Sql Server process.</value>
   </data>
   <data name="SQL_ArgumentLengthMismatch" xml:space="preserve">
     <value>The length of '{0}' must match the length of '{1}'.</value>
   </data>
   <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
     <value>The SqlDbType '{0}' is invalid for {1}.  Only {2} is supported.</value>
-  </data>
-  <data name="SQL_PipeErrorRequiresSendEnd" xml:space="preserve">
-    <value>An error occurred with a prior row sent to the SqlPipe.  SendResultsEnd must be called before anything else can be sent.</value>
   </data>
   <data name="SQL_TooManyValues" xml:space="preserve">
     <value>Too many values.</value>
@@ -3663,9 +3603,6 @@
   <data name="SQLNotify_AlreadyHasCommand" xml:space="preserve">
     <value>This SqlCommand object is already associated with another SqlDependency object.</value>
   </data>
-  <data name="SqlNotify_SqlDepCannotBeCreatedInProc" xml:space="preserve">
-    <value>SqlDependency object cannot be created when running inside the SQL Server process.</value>
-  </data>
   <data name="SqlDependency_DatabaseBrokerDisabled" xml:space="preserve">
     <value>The SQL Server Service Broker for the current database is not enabled, and as a result query notifications are not supported.  Please enable the Service Broker for this database if you wish to use notifications.</value>
   </data>
@@ -3725,21 +3662,6 @@
   </data>
   <data name="IEnumerableOfSqlDataRecordHasNoRows" xml:space="preserve">
     <value>There are no records in the SqlDataRecord enumeration. To send a table-valued parameter with no rows, use a null reference for the value instead.</value>
-  </data>
-  <data name="SqlPipe_CommandHookedUpToNonContextConnection" xml:space="preserve">
-    <value>SqlPipe does not support executing a command with a connection that is not a context connection.</value>
-  </data>
-  <data name="SqlPipe_MessageTooLong" xml:space="preserve">
-    <value>Message length {0} exceeds maximum length supported of 4000.</value>
-  </data>
-  <data name="SqlPipe_IsBusy" xml:space="preserve">
-    <value>Could not use the pipe while it is busy with another operation.</value>
-  </data>
-  <data name="SqlPipe_AlreadyHasAnOpenResultSet" xml:space="preserve">
-    <value>A result set is currently being sent to the pipe. End the current result set before calling {0}.</value>
-  </data>
-  <data name="SqlPipe_DoesNotHaveAnOpenResultSet" xml:space="preserve">
-    <value>Result set has not been initiated.  Call SendResultSetStart before calling {0}.</value>
   </data>
   <data name="SNI_PN0" xml:space="preserve">
     <value>HTTP Provider</value>
@@ -4032,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{0}' or '{1}'.</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{0}' or '{1}'.</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Column master key path cannot be null. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
@@ -4050,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{1}' or '{2}'.</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{1}' or '{2}'.</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
@@ -4068,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{2}' or '{3}'.</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{2}' or '{3}'.</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{2}'.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>Invalid certificate store '{0}' specified in certificate path '{1}'. Expected value: '{2}'.</value>
@@ -4135,6 +4075,9 @@
     <value>Specified encrypted column encryption key contains an invalid encryption algorithm version '{0}'. Expected version is '{1}'.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
     <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
@@ -4144,6 +4087,9 @@
     <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key ({2}) in '{3}'. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
     <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
@@ -4152,10 +4098,13 @@
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
     <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect.</value>
   </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key ({0}) in '{1}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+  </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (certificate) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
   </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
+  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
     <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
