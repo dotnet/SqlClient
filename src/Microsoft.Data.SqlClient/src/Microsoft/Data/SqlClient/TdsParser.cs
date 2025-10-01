@@ -29,6 +29,7 @@ using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.Utilities;
 #if NETFRAMEWORK
 using Microsoft.Data.SqlTypes;
 #endif
@@ -83,6 +84,7 @@ namespace Microsoft.Data.SqlClient
 
         private int _defaultLCID;
 
+        private static readonly Encoding s_utf8EncodingWithoutBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
         internal Encoding _defaultEncoding = null;                  // for sql character data
 
         private static EncryptionOptions s_sniSupportedEncryptionOption = TdsParserStateObjectFactory.Singleton.EncryptionOptions;
