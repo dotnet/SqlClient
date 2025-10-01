@@ -783,6 +783,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObject.Multiplexer.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStateObject.Multiplexer.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectManaged.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserStateObjectManaged.netcore.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStaticMethods.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStaticMethods.cs</Link>
     </Compile>
@@ -835,7 +838,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netcore.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
   </ItemGroup>
 
