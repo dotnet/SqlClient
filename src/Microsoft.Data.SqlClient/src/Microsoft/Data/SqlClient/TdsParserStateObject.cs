@@ -3132,6 +3132,113 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        public void ReadAsyncCallback(PacketHandle packet, uint error) =>
+            ReadAsyncCallback(IntPtr.Zero, packet, error);
+
+        public void ReadAsyncCallback(IntPtr key, PacketHandle packet, uint error)
+        {
+            // Key never used.
+            // Note - it's possible that when native calls managed that an asynchronous exception
+            // could occur in the native->managed transition, which would
+            // have two impacts:
+            // 1) user event not called
+            // 2) DecrementPendingCallbacks not called, which would mean this object would be leaked due
+            //    to the outstanding GCRoot until AppDomain.Unload.
+            // We live with the above for the time being due to the constraints of the current
+            // reliability infrastructure provided by the CLR.
+
+            TaskCompletionSource<object> source = _networkPacketTaskSource;
+#if DEBUG
+            if ((s_forcePendingReadsToWaitForUser) && (_realNetworkPacketTaskSource != null))
+            {
+                source = _realNetworkPacketTaskSource;
+            }
+#endif
+
+            // The mars physical connection can get a callback
+            // with a packet but no result after the connection is closed.
+            if (source == null && _parser._pMarsPhysicalConObj == this)
+            {
+                return;
+            }
+
+            bool processFinallyBlock = true;
+            try
+            {
+#if NET
+                Debug.Assert((packet.Type == 0 && PartialPacketContainsCompletePacket()) || (CheckPacket(packet, source) && source != null), "AsyncResult null on callback");
+#else
+                Debug.Assert(CheckPacket(packet, source), "AsyncResult null on callback");
+#endif
+
+                if (_parser.MARSOn)
+                {
+                    // Only take reset lock on MARS and Async.
+                    CheckSetResetConnectionState(error, CallbackType.Read);
+                }
+
+                ChangeNetworkPacketTimeout(Timeout.Infinite, Timeout.Infinite);
+
+                // The timer thread may be unreliable under high contention scenarios. It cannot be
+                // assumed that the timeout has happened on the timer thread callback. Check the timeout
+                // synchronously and then call OnTimeoutSync to force an atomic change of state.
+                if (TimeoutHasExpired)
+                {
+                    OnTimeoutSync(asyncClose: true);
+                }
+
+                // try to change to the stopped state but only do so if currently in the running state
+                // and use cmpexch so that all changes out of the running state are atomic
+                int previousState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Stopped, TimeoutState.Running);
+
+                // if the state is anything other than running then this query has reached an end so
+                // set the correlation _timeoutIdentityValue to 0 to prevent late callbacks executing
+                if (_timeoutState != TimeoutState.Running)
+                {
+                    _timeoutIdentityValue = 0;
+                }
+
+                ProcessSniPacket(packet, error);
+            }
+            catch (Exception e)
+            {
+                processFinallyBlock = ADP.IsCatchableExceptionType(e);
+                throw;
+            }
+            finally
+            {
+                // pendingCallbacks may be 2 after decrementing, this indicates that a fatal timeout is occurring, and therefore we shouldn't complete the task
+                int pendingCallbacks = DecrementPendingCallbacks(false); // may dispose of GC handle.
+                if ((processFinallyBlock) && (source != null) && (pendingCallbacks < 2))
+                {
+                    if (error == 0)
+                    {
+                        if (_executionContext != null)
+                        {
+                            ExecutionContext.Run(_executionContext, s_readAsyncCallbackComplete, source);
+                        }
+                        else
+                        {
+                            source.TrySetResult(null);
+                        }
+                    }
+                    else
+                    {
+                        if (_executionContext != null)
+                        {
+                            ExecutionContext.Run(_executionContext, state => ReadAsyncCallbackCaptureException((TaskCompletionSource<object>)state), source);
+                        }
+                        else
+                        {
+                            ReadAsyncCallbackCaptureException(source);
+                        }
+                    }
+                }
+
+                AssertValidState();
+            }
+        }
+
         internal void OnConnectionClosed()
         {
             // the stateObj is not null, so the async invocation that registered this callback
