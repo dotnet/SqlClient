@@ -6,6 +6,7 @@ using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Authentication;
 using System.Security.Cryptography;
@@ -1384,6 +1385,47 @@ namespace Microsoft.Data.SqlClient
             _inBuff = buffer;
             _inBytesUsed = inBytesUsed;
             _inBytesRead = inBytesRead;
+        }
+
+        private bool TrySetBufferSecureStrings()
+        {
+            bool mustClearBuffer = false;
+
+            if (_securePasswords != null)
+            {
+                for (int i = 0; i < _securePasswords.Length; i++)
+                {
+                    if (_securePasswords[i] != null)
+                    {
+                        IntPtr str = IntPtr.Zero;
+                        try
+                        {
+                            str = Marshal.SecureStringToBSTR(_securePasswords[i]);
+                            byte[] data = new byte[_securePasswords[i].Length * 2];
+                            Marshal.Copy(str, data, 0, _securePasswords[i].Length * 2);
+                            if (!BitConverter.IsLittleEndian)
+                            {
+                                Span<byte> span = data.AsSpan();
+                                for (int ii = 0; ii < _securePasswords[i].Length * 2; ii += 2)
+                                {
+                                    short value = BinaryPrimitives.ReadInt16LittleEndian(span.Slice(ii));
+                                    BinaryPrimitives.WriteInt16BigEndian(span.Slice(ii), value);
+                                }
+                            }
+                            TdsParserStaticMethods.ObfuscatePassword(data);
+                            data.CopyTo(_outBuff, _securePasswordOffsetsInBuffer[i]);
+
+                            mustClearBuffer = true;
+                        }
+                        finally
+                        {
+                            Marshal.ZeroFreeBSTR(str);
+                        }
+                    }
+                }
+            }
+
+            return mustClearBuffer;
         }
 
         internal void NewBuffer(int size)
