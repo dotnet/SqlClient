@@ -16,12 +16,6 @@ namespace Microsoft.Data.SqlClient
 {
     internal partial class TdsParserStateObject
     {
-        // Used for blanking out password in trace.
-        internal int _tracePasswordOffset = 0;
-        internal int _tracePasswordLength = 0;
-        internal int _traceChangePasswordOffset = 0;
-        internal int _traceChangePasswordLength = 0;
-
         //////////////////
         // Constructors //
         //////////////////

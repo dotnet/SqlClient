@@ -290,6 +290,14 @@ namespace Microsoft.Data.SqlClient
         // as the error handling may end up calling Dispose.
         private int _readingCount;
 
+#if NETFRAMEWORK
+        // Used for blanking out password in trace.
+        internal int _tracePasswordOffset = 0;
+        internal int _tracePasswordLength = 0;
+        internal int _traceChangePasswordOffset = 0;
+        internal int _traceChangePasswordLength = 0;
+#endif
+
         // Test hooks
 #if DEBUG
         // This is a test hook to enable testing of the retry paths.
