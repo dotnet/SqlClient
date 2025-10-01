@@ -12703,24 +12703,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect..
-        /// </summary>
-        internal static string TCE_InvalidCiphertextLengthInEncryptedCEKCng {
-            get {
-                return ResourceManager.GetString("TCE_InvalidCiphertextLengthInEncryptedCEKCng", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptographic Service provider (CSP) path may be incorrect..
-        /// </summary>
-        internal static string TCE_InvalidCiphertextLengthInEncryptedCEKCsp {
-            get {
-                return ResourceManager.GetString("TCE_InvalidCiphertextLengthInEncryptedCEKCsp", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Specified ciphertext has an invalid size of {0} bytes, which is below the minimum {1} bytes required for decryption..
         /// </summary>
         internal static string TCE_InvalidCipherTextSize {
@@ -12919,15 +12901,6 @@ namespace System {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in &apos;{0}&apos;. The encrypted column encryption key may be corrupt, or the specified path may be incorrect..
-        /// </summary>
-        internal static string TCE_InvalidAsymmetricKeySignature {
-            get {
-                return ResourceManager.GetString("TCE_InvalidAsymmetricKeySignature", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s signature length: {0} does not match the signature length: {1} when using column master key ({2}) in &apos;{3}&apos;. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect..
         /// </summary>
         internal static string TCE_InvalidSignatureInEncryptedCEK {
@@ -12942,24 +12915,6 @@ namespace System {
         internal static string TCE_InvalidSignatureInEncryptedCEKCertificate {
             get {
                 return ResourceManager.GetString("TCE_InvalidSignatureInEncryptedCEKCertificate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect..
-        /// </summary>
-        internal static string TCE_InvalidSignatureInEncryptedCEKCng {
-            get {
-                return ResourceManager.GetString("TCE_InvalidSignatureInEncryptedCEKCng", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft cryptographic service provider (CSP) path may be incorrect..
-        /// </summary>
-        internal static string TCE_InvalidSignatureInEncryptedCEKCsp {
-            get {
-                return ResourceManager.GetString("TCE_InvalidSignatureInEncryptedCEKCsp", resourceCulture);
             }
         }
         
