@@ -93,7 +93,12 @@ namespace Microsoft.Data.SqlClient
                                 // For DbMirroring Failover during login, never break the connection, just close the TdsParser
                                 _parser.Disconnect();
                             }
-                            else if ((_parser.State == TdsParserState.OpenNotLoggedIn) && (_parser.Connection.ConnectionOptions.MultiSubnetFailover || _parser.Connection.ConnectionOptions.TransparentNetworkIPResolution))
+                            else if ((_parser.State == TdsParserState.OpenNotLoggedIn)
+#if NETFRAMEWORK
+                                && (_parser.Connection.ConnectionOptions.MultiSubnetFailover || _parser.Connection.ConnectionOptions.TransparentNetworkIPResolution))
+#else
+                                && (_parser.Connection.ConnectionOptions.MultiSubnetFailover))
+#endif
                             {
                                 // For MultiSubnet Failover during login, never break the connection, just close the TdsParser
                                 _parser.Disconnect();
