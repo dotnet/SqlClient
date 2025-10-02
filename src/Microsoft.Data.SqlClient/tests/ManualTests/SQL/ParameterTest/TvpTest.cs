@@ -53,34 +53,42 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        [ActiveIssue("5531")]
-        public void TestPacketNumberWraparound()
+        public async Task TestPacketNumberWraparound()
         {
-            // this test uses a specifically crafted sql record enumerator and data to put the TdsParserStateObject.WritePacket(byte,bool)
-            // into a state where it can't differentiate between a packet in the middle of a large packet-set after a byte counter wraparound
-            // and the first packet of the connection and in doing so trips over a check for packet length from the input which has been 
-            // forced to tell it that there is no output buffer space left, this causes an uncancellable infinite loop
+            // This test uses a specifically crafted SQL record enumerator and data to put the
+            // TdsParserStateObject.WritePacket(byte,bool) into a state where it can't
+            // differentiate between a packet in the middle of a large packet-set after a byte
+            // counter wraparound and the first packet of the connection and in doing so trips over
+            // a check for packet length from the input which has been forced to tell it that there
+            // is no output buffer space left, this causes an uncancellable infinite loop.
+            //
+            // If the enumerator is completely read to the end then the bug is no longer present
+            // and the packet creation task returns, if the timeout occurs it is probable (but not
+            // absolute) that the write operation is stuck.
 
-            // if the enumerator is completely read to the end then the bug is no longer present and the packet creation task returns,
-            // if the timeout occurs it is probable (but not absolute) that the write is stuck
-
+            // Arrange
             var enumerator = new WraparoundRowEnumerator(1000000);
+            using var cancellationTokenSource = new CancellationTokenSource();
 
+            // Act
             Stopwatch stopwatch = new();
             stopwatch.Start();
-            int returned = Task.WaitAny(
-                Task.Factory.StartNew(
-                    () => RunPacketNumberWraparound(enumerator),
-                    TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning
-                ),
-                Task.Delay(TimeSpan.FromSeconds(60))
-            );
+
+            Task actionTask = Task.Factory.StartNew(
+                async () => await RunPacketNumberWraparound(enumerator, cancellationTokenSource.Token),
+                TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning);
+            Task timeoutTask = Task.Delay(TimeSpan.FromSeconds(60), cancellationTokenSource.Token);
+            await Task.WhenAny(actionTask, timeoutTask);
+
             stopwatch.Stop();
-            if (enumerator.MaxCount != enumerator.Count)
-            {
-                Console.WriteLine($"enumerator.Count={enumerator.Count}, enumerator.MaxCount={enumerator.MaxCount}, elapsed={stopwatch.Elapsed.TotalSeconds}");
-            }
-            Assert.True(enumerator.MaxCount == enumerator.Count);
+            cancellationTokenSource.Cancel();
+
+            // Assert
+            Assert.True(
+                enumerator.MaxCount == enumerator.Count,
+                $"enumerator.Count={enumerator.Count}, " +
+                $"enumerator.MaxCount={enumerator.MaxCount}, " +
+                $"elapsed={stopwatch.Elapsed}");
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
@@ -694,23 +702,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static async Task RunPacketNumberWraparound(WraparoundRowEnumerator enumerator)
+        private static async Task RunPacketNumberWraparound(
+            WraparoundRowEnumerator enumerator,
+            CancellationToken cancellationToken)
         {
             using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
-            using var cmd = new SqlCommand("unimportant")
-            {
-                CommandType = CommandType.StoredProcedure,
-                Connection = connection,
-            };
-            await cmd.Connection.OpenAsync();
-            cmd.Parameters.Add(new SqlParameter("@rows", SqlDbType.Structured)
+            await connection.OpenAsync(cancellationToken);
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.CommandText = "unimportant";
+
+            var parameter = new SqlParameter("@rows", SqlDbType.Structured)
             {
                 TypeName = "unimportant",
-                Value = enumerator,
-            });
+                Value = enumerator
+            };
+            cmd.Parameters.Add(parameter);
+
             try
             {
-                await cmd.ExecuteNonQueryAsync();
+                await cmd.ExecuteNonQueryAsync(cancellationToken);
             }
             catch (Exception)
             {
