@@ -171,7 +171,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var cleanupCallbackCount = 0;
             
             // Act & Assert
-            var exception = Assert.Throws<Exception>(() =>
+            var exception = Assert.Throws<InvalidOperationException>(() =>
                 poolSlots.Add(
                     createCallback: () => {
                         createCallbackCount++;
@@ -179,7 +179,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     },
                     cleanupCallback: (conn) => cleanupCallbackCount++));
 
-            Assert.Contains("Failed to create or add connection", exception.Message);
+            Assert.Contains("Test exception", exception.Message);
             Assert.Equal(0, poolSlots.ReservationCount);
             Assert.Equal(1, createCallbackCount);
             Assert.Equal(1, cleanupCallbackCount);

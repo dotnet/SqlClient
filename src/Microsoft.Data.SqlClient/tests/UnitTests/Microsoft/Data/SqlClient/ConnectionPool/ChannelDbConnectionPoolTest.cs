@@ -447,7 +447,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPool(TimeoutConnectionFactory);
 
             // Act & Assert
-            var ex = Assert.Throws<Exception>(() =>
+            var ex = Assert.Throws<InvalidOperationException>(() =>
             {
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
@@ -457,9 +457,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 );
             });
 
-            Assert.IsType<InvalidOperationException>(ex.InnerException);
-
-            Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.InnerException.Message);
+            Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.Message);
         }
 
         [Fact]
@@ -470,7 +468,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new();
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<Exception>(async () =>
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             {
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
@@ -482,9 +480,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 await taskCompletionSource.Task;
             });
 
-            Assert.IsType<InvalidOperationException>(ex.InnerException);
-
-            Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.InnerException.Message);
+            Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.Message);
         }
 
         [Fact]
