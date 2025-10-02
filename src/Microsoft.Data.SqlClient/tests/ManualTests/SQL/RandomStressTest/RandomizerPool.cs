@@ -77,12 +77,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // at least one repro state must present in repro file
             // thus, root scopes will be generated the first state, and not with seed
             if (_reproStates != null)
+            {
                 throw new InvalidOperationException("");
+            }
 
             if (_rootScopeNextSeedUsed)
+            {
                 return Interlocked.Increment(ref _rootScopeNextSeed);
+            }
             else
+            {
                 return Randomizer.CreateSeed();
+            }
         }
 
         /// <summary>
@@ -110,7 +116,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public RandomizerPool(string reproFile)
         {
             if (string.IsNullOrEmpty(reproFile))
+            {
                 throw new ArgumentNullException("Invalid repro file");
+            }
 
             _rootScopeNextSeedUsed = false;
 
@@ -242,7 +250,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 get
                 {
                     if (_current == null)
+                    {
                         throw new ObjectDisposedException(GetType().FullName);
+                    }
+
                     return _current;
                 }
             }
@@ -308,9 +319,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 IScope newScope;
 
                 if (typeof(NestedRandomizerType) == typeof(Randomizer))
+                {
                     newScope = new Scope(_pool, this); // to ensure later casting works fine
+                }
                 else
+                {
                     newScope = new Scope<NestedRandomizerType>(_pool, this);
+                }
 
                 return (Scope<NestedRandomizerType>)newScope;
             }

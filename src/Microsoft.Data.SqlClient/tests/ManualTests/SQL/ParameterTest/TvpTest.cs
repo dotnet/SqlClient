@@ -156,12 +156,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         static internal void AddCommandParameters(SqlCommand command, IEnumerable parameters)
         {
             if (parameters == null)
+            {
                 return;
+            }
 
             foreach (SqlParameter p in parameters)
             {
                 if (p == null)
+                {
                     continue;
+                }
 
                 if (p.Value == null)
                 {
@@ -273,7 +277,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             var startIndex = findDiffLength - 1;
             if (startIndex < 0)
+            {
                 startIndex = 0;
+            }
 
             if (findDiffLength < expectedLength)
             {

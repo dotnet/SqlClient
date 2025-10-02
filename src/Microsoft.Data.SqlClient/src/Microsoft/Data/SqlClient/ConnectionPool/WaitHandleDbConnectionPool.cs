@@ -505,15 +505,21 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             get
             {
                 if (State is not Running) // Don't allow connection create when not running.
+                {
                     return false;
+                }
 
                 int totalObjects = Count;
 
                 if (totalObjects >= MaxPoolSize)
+                {
                     return false;
+                }
 
                 if (totalObjects < MinPoolSize)
+                {
                     return true;
+                }
 
                 int freeObjects = _stackNew.Count + _stackOld.Count;
                 int waitingRequests = _waitCount;
@@ -641,7 +647,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     DbConnectionInternal obj;
 
                     if (!_stackNew.TryPop(out obj))
+                    {
                         break;
+                    }
 
                     Debug.Assert(obj != null, "null connection is not expected");
                     SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.CleanupCallback|RES|INFO|CPOOL> {0}, ChangeStacks={1}", Id, obj.ObjectID);
@@ -1118,7 +1126,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 // Set the wait timeout to INFINITE (-1) if the SQL connection timeout is 0 (== infinite)
                 if (waitForMultipleObjectsTimeout == 0)
+                {
                     waitForMultipleObjectsTimeout = unchecked((uint)Timeout.Infinite);
+                }
 
                 allowCreate = true;
             }
@@ -1700,7 +1710,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         finally
                         {
                             if (locked)
+                            {
                                 Monitor.Exit(obj);
+                            }
                         }
                     }
                 }
@@ -1794,7 +1806,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                     // TODO: Consider implement a control knob here; why do we only check for dead objects ever other time?  why not every 10th time or every time?
                     if ((oldConnection != null) || (Count & 0x1) == 0x1 || !ReclaimEmancipatedObjects())
+                    {
                         obj = CreateObject(owningObject, userOptions, oldConnection);
+                    }
                 }
                 return obj;
             }

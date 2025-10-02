@@ -182,11 +182,17 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 {
                     SsrpResult response = SendUDPRequest(new IPAddress[] { address }, port, requestPacket, allIPsInParallel);
                     if (response != null && response.ResponsePacket != null)
+                    {
                         return response.ResponsePacket;
+                    }
                     else if (response != null && response.Error != null)
+                    {
                         throw response.Error;
+                    }
                     else
+                    {
                         return null;
+                    }
                 }
 
                 IPAddress[] ipAddresses = timeout.IsInfinite
@@ -285,7 +291,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private static SsrpResult SendUDPRequest(IPAddress[] ipAddresses, int port, byte[] requestPacket, bool allIPsInParallel)
         {
             if (ipAddresses.Length == 0)
+            {
                 return null;
+            }
 
             if (allIPsInParallel) // Used for MultiSubnetFailover
             {

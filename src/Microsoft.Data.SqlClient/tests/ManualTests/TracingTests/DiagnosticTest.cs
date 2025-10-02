@@ -575,7 +575,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         statistics = GetPropertyValueFromType<IDictionary>(kvp.Value, "Statistics");
                         if (!operationHasError)
+                        {
                             Assert.NotNull(statistics);
+                        }
 
                         string operation = GetPropertyValueFromType<string>(kvp.Value, "Operation");
                         Assert.False(string.IsNullOrWhiteSpace(operation));
@@ -783,7 +785,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     statistics = GetPropertyValueFromType<IDictionary>(kvp.Value, "Statistics");
                     if (!operationHasError)
+                    {
                         Assert.NotNull(statistics);
+                    }
 
                     string operation = GetPropertyValueFromType<string>(kvp.Value, "Operation");
                     Assert.False(string.IsNullOrWhiteSpace(operation));

@@ -97,9 +97,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -137,9 +141,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -182,9 +190,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -229,9 +241,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -277,9 +293,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -329,9 +349,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -409,9 +433,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -491,9 +519,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -551,9 +583,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -607,9 +643,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -680,9 +720,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -759,9 +803,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -870,9 +918,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -970,9 +1022,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -1105,15 +1161,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 case "date":
                     if (((DateTime)expectedValue).ToString("M/d/yyyy").Equals(((DateTime)actualValue).ToString("M/d/yyyy")))
+                    {
                         return true;
+                    }
                     else
+                    {
                         return false;
+                    }
                 case "datetime":
                     if ((((DateTime)expectedValue).Ticks == 3155378975999999999) &&
                         (((DateTime)actualValue).Ticks == 3155378975999970000))
+                    {
                         return true;
+                    }
                     else
+                    {
                         return false;
+                    }
                 default:
                     return false;
             }
@@ -1205,7 +1269,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Make them the same for the purposes of comparing test output.
             if (e is InvalidCastException &&
                 e.Message.Equals("Unable to cast object of type 'System.TimeSpan' to type 'System.DateTime'."))
+            {
                 ExceptionMessage = string.Format(">>> EXCEPTION: [{0}] {1}", e.GetType(), "Specified cast is not valid.");
+            }
 
             if (e is ArgumentOutOfRangeException &&
                 e.Message.Equals("The added or subtracted value results in an un-representable DateTime. (Parameter 'value')"))
@@ -1226,9 +1292,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Console.WriteLine(string.Format("Type        => Expected : Actual == {0} : {1}", expectedTypeName, actualTypeName));
             Console.WriteLine(string.Format("Base Type   => Expected : Actual == {0} : {1}", expectedBaseTypeName, actualBaseTypeName));
             if (expectedTypeName == "System.DateTimeOffset")
+            {
                 Console.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTimeOffset)expectedValue).Ticks.ToString(), ((DateTimeOffset)actualValue).Ticks.ToString()));
+            }
             else if (expectedTypeName == "System.DateTime")
+            {
                 Console.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTime)expectedValue).Ticks.ToString(), ((DateTime)actualValue).Ticks.ToString()));
+            }
         }
     }
 }

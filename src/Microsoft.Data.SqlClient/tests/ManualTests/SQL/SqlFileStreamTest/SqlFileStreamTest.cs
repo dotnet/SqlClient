@@ -59,7 +59,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                                 // Reverse the byte array, if the system architecture is little-endian.
                                 if (BitConverter.IsLittleEndian)
+                                {
                                     Array.Reverse(retrievedValue);
+                                }
 
                                 // Compare inserted and retrieved values.
                                 Assert.Equal(s_insertedValues[nRow], BitConverter.ToInt32(retrievedValue, 0));
@@ -99,7 +101,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 // Reverse the byte array, if the system architecture is little-endian.
                 if (BitConverter.IsLittleEndian)
+                {
                     Array.Reverse(insertedValue);
+                }
+
                 try
                 {
                     using SqlConnection connection = new(connString);
@@ -161,7 +166,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 // Reverse the byte array, if the system architecture is little-endian.
                 if (BitConverter.IsLittleEndian)
+                {
                     Array.Reverse(insertedValue);
+                }
 
                 try
                 {
