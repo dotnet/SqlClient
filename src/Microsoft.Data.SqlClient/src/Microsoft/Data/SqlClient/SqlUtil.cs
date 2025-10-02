@@ -1315,6 +1315,15 @@ namespace Microsoft.Data.SqlClient
             return exc;
         }
 
+        internal static Exception ROR_InvalidEnhancedRoutingInfo(SqlInternalConnectionTds internalConnection)
+        {
+            SqlErrorCollection errors = new SqlErrorCollection();
+            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_InvalidEnhancedRoutingInfo)), "", 0));
+            SqlException exc = SqlException.CreateException(errors, null, internalConnection, innerException: null, batchCommand: null);
+            exc._doNotReconnect = true;
+            return exc;
+        }
+
         internal static Exception ROR_TimeoutAfterRoutingInfo(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();

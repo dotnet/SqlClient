@@ -3073,51 +3073,63 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case TdsEnums.ENV_ROUTING:
-                        ushort newLength;
-                        result = stateObj.TryReadUInt16(out newLength);
-                        if (result != TdsOperationStatus.Done)
                         {
-                            return result;
+                            ushort newLength;
+                            result = stateObj.TryReadUInt16(out newLength);
+                            if (result != TdsOperationStatus.Done)
+                            {
+                                return result;
+                            }
+                            env._newLength = newLength;
+                            byte protocol;
+                            result = stateObj.TryReadByte(out protocol);
+                            if (result != TdsOperationStatus.Done)
+                            {
+                                return result;
+                            }
+                            ushort port;
+                            result = stateObj.TryReadUInt16(out port);
+                            if (result != TdsOperationStatus.Done)
+                            {
+                                return result;
+                            }
+                            ushort serverLen;
+                            result = stateObj.TryReadUInt16(out serverLen);
+                            if (result != TdsOperationStatus.Done)
+                            {
+                                return result;
+                            }
+                            string serverName;
+                            result = stateObj.TryReadString(serverLen, out serverName);
+                            if (result != TdsOperationStatus.Done)
+                            {
+                                return result;
+                            }
+                            env._newRoutingInfo = new RoutingInfo(protocol, port, serverName);
+                            ushort oldLength;
+                            result = stateObj.TryReadUInt16(out oldLength);
+                            if (result != TdsOperationStatus.Done)
+                            {
+                                return result;
+                            }
+                            result = stateObj.TrySkipBytes(oldLength);
+                            if (result != TdsOperationStatus.Done)
+                            {
+                                return result;
+                            }
+                            env._length = env._newLength + oldLength + 5; // 5=2*sizeof(UInt16)+sizeof(byte) [token+newLength+oldLength]
+                            break;
                         }
-                        env._newLength = newLength;
-                        byte protocol;
-                        result = stateObj.TryReadByte(out protocol);
-                        if (result != TdsOperationStatus.Done)
+
+                    case TdsEnums.ENV_ENHANCEDROUTING:
                         {
-                            return result;
+                            result = TryProcessEnhancedRoutingToken(stateObj, env);
+                            if (result != TdsOperationStatus.Done)
+                            {
+                                return result;
+                            }
+                            break;
                         }
-                        ushort port;
-                        result = stateObj.TryReadUInt16(out port);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
-                        ushort serverLen;
-                        result = stateObj.TryReadUInt16(out serverLen);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
-                        string serverName;
-                        result = stateObj.TryReadString(serverLen, out serverName);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
-                        env._newRoutingInfo = new RoutingInfo(protocol, port, serverName);
-                        ushort oldLength;
-                        result = stateObj.TryReadUInt16(out oldLength);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
-                        result = stateObj.TrySkipBytes(oldLength);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
-                        env._length = env._newLength + oldLength + 5; // 5=2*sizeof(UInt16)+sizeof(byte) [token+newLength+oldLength]
-                        break;
 
                     default:
                         Debug.Fail("Unknown environment change token: " + env._type);
@@ -3127,6 +3139,91 @@ namespace Microsoft.Data.SqlClient
             }
 
             sqlEnvChange = head;
+            return TdsOperationStatus.Done;
+        }
+
+        /// <summary>
+        /// Reads an enhanced routing token from the stream and populates the provided <see cref="SqlEnvChange"/> object.
+        /// </summary>
+        /// <param name="stateObj">The state object containing the stream.</param>
+        /// <param name="env">The object to populate.</param>
+        /// <returns>Returns a <see cref="TdsOperationStatus"/> to indicate the status of the operation.</returns>
+        private TdsOperationStatus TryProcessEnhancedRoutingToken(TdsParserStateObject stateObj, SqlEnvChange env)
+        {
+            ushort newLength;
+            TdsOperationStatus result = stateObj.TryReadUInt16(out newLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            env._newLength = newLength;
+
+            byte protocol;
+            result = stateObj.TryReadByte(out protocol);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            ushort port;
+            result = stateObj.TryReadUInt16(out port);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            ushort serverLen;
+            result = stateObj.TryReadUInt16(out serverLen);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            string serverName;
+            result = stateObj.TryReadString(serverLen, out serverName);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            ushort databaseLen;
+            result = stateObj.TryReadUInt16(out databaseLen);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            string databaseName;
+            result = stateObj.TryReadString(databaseLen, out databaseName);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            env._newRoutingInfo = new RoutingInfo(protocol, port, serverName, databaseName);
+
+            // The enhanced routing token does not include an old value payload
+            // read/skip as necessary to clear the required length field and any data.
+            ushort oldLength;
+            result = stateObj.TryReadUInt16(out oldLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            // oldLength should be 0, but skip any data if present
+            result = stateObj.TrySkipBytes(oldLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            // Set the total length of the token
+            // total = headers + size of new value + size of old value
+            // headers = token id+newLengthHeader+oldLengthHeader = sizeof(byte) + 2*sizeof(UInt16) = 5 
+            env._length = 5 + env._newLength + oldLength;
+
             return TdsOperationStatus.Done;
         }
 
