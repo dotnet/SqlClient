@@ -73,8 +73,8 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Packet.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
-    <None Update="App.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Update="app.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <!-- XUnit and XUnit extensions -->
@@ -149,10 +149,5 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>xunit.runner.json</TargetPath>
     </ContentWithTargetPath>
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="app.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 </Project>
