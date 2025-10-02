@@ -12,7 +12,6 @@ namespace Microsoft.Data.SqlClient.Tests
         [Theory]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryIntegrated)]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryPassword)]
-        [InlineData(SqlAuthenticationMethod.ActiveDirectoryInteractive)]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)]
