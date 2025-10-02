@@ -22,7 +22,7 @@ trigger:
 
 schedules:
 - cron: '0 5 * * Fri'
-  displayName: Weekly Thursday 10:00 PM (UTC - 7) Build
+  displayName: Weekly Friday 5:00 AM (UTC) / Thursday 10:00 PM (UTC - 7) Build
   branches:
     include:
     - internal/release/6.0
