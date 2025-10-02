@@ -56,6 +56,9 @@ variables:
   - name: abstractionsAssemblyFileVersion
     value: 1.0.0.$(assemblyBuildNumber)
 
+  # ----------------------------------------------------------------------------
+  # MDS Package Versions
+
   # Update this after every release. This is used to generate the MDS NuGet package version.
   - name: Major
     value: '7'
@@ -78,13 +81,3 @@ variables:
     value: $(Major).$(Minor).$(Patch).$(assemblyBuildNumber)
   - name: nuspecPath
     value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'
-
-  # TODO(ADO-38703): Remove these when the other pipeline changes arrive.
-  - name: baseBuildNumber
-    value: $[ split(variables['Build.BuildNumber'], '.')[0] ]
-  - name: abstractionsPackageVersion
-    value: 1.0.0.$(baseBuildNumber)
-  - name: mdsPackageVersion
-    value: $(NugetPackageVersion)
-  - name: akvPackageVersion
-    value: $(NugetPackageVersion)
