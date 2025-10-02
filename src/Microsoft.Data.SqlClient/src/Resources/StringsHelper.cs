@@ -34,7 +34,9 @@ namespace Microsoft.Data
         {
             StringsHelper sys = GetLoader();
             if (sys is null)
+            {
                 return null;
+            }
 
             // If "res" is a resource id, temp will not be null, "res" will contain the retrieved resource string.
             // If "res" is not a resource id, temp will be null.

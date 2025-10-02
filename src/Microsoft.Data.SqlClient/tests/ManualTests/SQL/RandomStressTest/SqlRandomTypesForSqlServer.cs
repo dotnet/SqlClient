@@ -227,7 +227,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             ValidateReadType(typeof(long), asType);
             if (reader.IsDBNull(ordinal))
+            {
                 return DBNull.Value;
+            }
+
             return reader.GetInt64(ordinal);
         }
 
@@ -266,7 +269,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             ValidateReadType(typeof(int), asType);
             if (reader.IsDBNull(ordinal))
+            {
                 return DBNull.Value;
+            }
+
             return reader.GetInt32(ordinal);
         }
 
@@ -305,7 +311,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             ValidateReadType(typeof(short), asType);
             if (reader.IsDBNull(ordinal))
+            {
                 return DBNull.Value;
+            }
+
             return reader.GetInt16(ordinal);
         }
 
@@ -344,7 +353,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             ValidateReadType(typeof(byte), asType);
             if (reader.IsDBNull(ordinal))
+            {
                 return DBNull.Value;
+            }
+
             return reader.GetByte(ordinal);
         }
 
@@ -491,7 +503,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             int size = columnInfo.StorageSize.HasValue ? columnInfo.StorageSize.Value : DefaultSize;
             if (size < 1 || size > MaxStorageSize)
+            {
                 throw new NotSupportedException("wrong size");
+            }
 
             return size;
         }
@@ -546,7 +560,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             int size = columnInfo.StorageSize.HasValue ? columnInfo.StorageSize.Value : DefaultCharSize;
             if (size < 1 || size > MaxCharSize)
+            {
                 throw new NotSupportedException("wrong size");
+            }
 
             return size;
         }
@@ -601,7 +617,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             int charSize = columnInfo.StorageSize.HasValue ? columnInfo.StorageSize.Value / 2 : DefaultCharSize;
             if (charSize < 1 || charSize > MaxCharSize)
+            {
                 throw new NotSupportedException("wrong size");
+            }
 
             return charSize;
         }
@@ -666,7 +684,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             ValidateReadType(typeof(bool), asType);
             if (reader.IsDBNull(ordinal))
+            {
                 return DBNull.Value;
+            }
+
             return reader.GetBoolean(ordinal);
         }
 
@@ -730,7 +751,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             ValidateReadType(typeof(decimal), asType);
             if (reader.IsDBNull(ordinal))
+            {
                 return DBNull.Value;
+            }
+
             return reader.GetDecimal(ordinal);
         }
 
@@ -769,7 +793,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             ValidateReadType(typeof(decimal), asType);
             if (reader.IsDBNull(ordinal))
+            {
                 return DBNull.Value;
+            }
+
             return reader.GetDecimal(ordinal);
         }
 
@@ -808,7 +835,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             ValidateReadType(typeof(decimal), asType);
             if (reader.IsDBNull(ordinal))
+            {
                 return DBNull.Value;
+            }
+
             return reader.GetDecimal(ordinal);
         }
 
@@ -854,7 +884,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             ValidateReadType(typeof(float), asType);
             if (reader.IsDBNull(ordinal))
+            {
                 return DBNull.Value;
+            }
+
             return reader.GetFloat(ordinal);
         }
 
@@ -890,7 +923,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 int precision = columnInfo.Precision.Value;
                 if (precision != RealPrecision && precision != MaxFloatPrecision)
+                {
                     throw new ArgumentException("wrong precision");
+                }
+
                 return (precision <= RealPrecision) ? 4 : 8;
             }
         }
@@ -899,7 +935,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             int precision = columnInfo.Precision.HasValue ? columnInfo.Precision.Value : MaxFloatPrecision;
             if (precision != RealPrecision && precision != MaxFloatPrecision)
+            {
                 throw new ArgumentException("wrong precision");
+            }
+
             int mantissaBits = (precision <= RealPrecision) ? 24 : 53;
             return string.Format("{0}({1})", TypePrefix, mantissaBits);
         }
@@ -913,16 +952,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             int precision = columnInfo.Precision.HasValue ? columnInfo.Precision.Value : MaxFloatPrecision;
             if (precision <= RealPrecision)
+            {
                 return rand.NextDouble(float.MinValue, float.MaxValue, precision);
+            }
             else
+            {
                 return rand.NextDouble(double.MinValue, double.MaxValue, precision);
+            }
         }
 
         protected override object ReadInternal(DbDataReader reader, int ordinal, SqlRandomTableColumn columnInfo, Type asType)
         {
             ValidateReadType(typeof(double), asType);
             if (reader.IsDBNull(ordinal))
+            {
                 return DBNull.Value;
+            }
+
             return reader.GetDouble(ordinal);
         }
 
@@ -1006,7 +1052,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             ValidateReadType(typeof(Guid), asType);
             if (reader.IsDBNull(ordinal))
+            {
                 return DBNull.Value;
+            }
+
             return reader.GetGuid(ordinal);
         }
 
@@ -1099,7 +1148,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 precision = columnInfo.Precision.Value;
                 if (precision < 0 || precision > 7)
+                {
                     throw new ArgumentOutOfRangeException("columnInfo.Precision");
+                }
             }
             else
             {
@@ -1113,18 +1164,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             int precision = GetPrecision(columnInfo);
             if (precision < 3)
+            {
                 return 6;
+            }
             else if (precision < 5)
+            {
                 return 7;
+            }
             else
+            {
                 return 8;
+            }
         }
 
         protected override string GetTSqlTypeDefinitionInternal(SqlRandomTableColumn columnInfo)
         {
             int precision = GetPrecision(columnInfo);
             if (precision == DefaultPrecision)
+            {
                 return "datetime2";
+            }
             else
             {
                 Debug.Assert(precision > 0, "wrong precision");
@@ -1184,7 +1243,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             ValidateReadType(typeof(DateTimeOffset), asType);
             if (reader.IsDBNull(ordinal))
+            {
                 return DBNull.Value;
+            }
+
             return ((Microsoft.Data.SqlClient.SqlDataReader)reader).GetDateTimeOffset(ordinal);
         }
 
@@ -1258,7 +1320,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             ValidateReadType(typeof(TimeSpan), asType);
             if (reader.IsDBNull(ordinal))
+            {
                 return DBNull.Value;
+            }
+
             return ((Microsoft.Data.SqlClient.SqlDataReader)reader).GetTimeSpan(ordinal);
         }
 
@@ -1396,7 +1461,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 byte[] bval = val as byte[];
                 if (bval != null)
+                {
                     Debug.Assert(bval.Length < 8000, "byte array length cannot be greater than 8000");
+                }
             }
 
             return val;
@@ -1411,7 +1478,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             bool bothDbNull;
             if (!CompareDbNullAndType(null, expected, actual, out bothDbNull) || bothDbNull)
+            {
                 return bothDbNull;
+            }
 
             Type expectedType = expected.GetType();
 
@@ -1427,9 +1496,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 // special handling for strings, only in variant
                 if (actual.GetType() == typeof(string))
+                {
                     return string.Equals((string)expected, (string)actual, StringComparison.Ordinal);
+                }
                 else
+                {
                     return false;
+                }
             }
             else
             {

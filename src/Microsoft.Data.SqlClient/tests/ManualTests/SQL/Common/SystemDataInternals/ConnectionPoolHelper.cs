@@ -79,7 +79,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         public static object ConnectionPoolFromString(string connectionString)
         {
             if (connectionString == null)
+            {
                 throw new ArgumentNullException(nameof(connectionString));
+            }
 
             object pool = null;
             object factorySingleton = s_sqlConnectionFactorySingleton.GetValue(null);
@@ -126,9 +128,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         private static void VerifyObjectIsPool(object pool)
         {
             if (pool == null)
+            {
                 throw new ArgumentNullException(nameof(pool));
+            }
+
             if (!s_dbConnectionPool.IsInstanceOfType(pool))
+            {
                 throw new ArgumentException("Object provided was not a DbConnectionPool", "pool");
+            }
         }
     }
 }

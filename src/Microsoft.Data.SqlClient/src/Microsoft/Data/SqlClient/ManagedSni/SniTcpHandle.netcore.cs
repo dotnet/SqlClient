@@ -496,7 +496,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     finally
                     {
                         if (!isSocketSelected)
+                        {
                             socket?.Dispose();
+                        }
                     }
                 }
 

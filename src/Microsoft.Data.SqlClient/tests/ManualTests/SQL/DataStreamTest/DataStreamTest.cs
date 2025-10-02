@@ -890,7 +890,9 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                     di += cb;
                                     cbTotal += cb;
                                     if ((int)cb < size)
+                                    {
                                         break;
+                                    }
                                 } while (cb > 0);
                                 di = 0;
                             }
@@ -1239,9 +1241,13 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
         private static void SeqAccessFailureWrapper<TException>(Action action, CommandBehavior behavior) where TException : Exception
         {
             if (behavior == CommandBehavior.SequentialAccess)
+            {
                 DataTestUtility.AssertThrowsWrapper<TException>(action);
+            }
             else
+            {
                 action();
+            }
         }
 
         private static void GetStream(string connectionString)
@@ -1964,7 +1970,9 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 // Don't send data on the first read because there is already data in the buffer. 
                                 // Don't send data on the last iteration. We will not be reading that data.
                                 if (i == 0 || i == streamXeventCount - 1)
+                                {
                                     continue;
+                                }
 
                                 using (SqlConnection xEventWriteConnection = new SqlConnection(connectionString))
                                 {

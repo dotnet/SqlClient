@@ -199,7 +199,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void AddRange(SqlRandomTypeInfo[] types)
         {
             for (int i = 0; i < types.Length; i++)
+            {
                 Add(types[i]);
+            }
         }
 
         /// <summary>

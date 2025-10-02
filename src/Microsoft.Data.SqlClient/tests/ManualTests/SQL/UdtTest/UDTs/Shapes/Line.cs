@@ -74,7 +74,10 @@ public class Line : INullable, IBinarySerialize
         }
 
         if (data.Length != 16)
+        {
             throw new ArgumentException();
+        }
+
         byte[] value = data.Value;
 
         //read x1,y1,x2,y2
@@ -89,7 +92,9 @@ public class Line : INullable, IBinarySerialize
         if (fIsNull)
         {
             if (data.IsNull)
+            {
                 return;
+            }
             else
             {
                 data.SetNull();
@@ -110,7 +115,10 @@ public class Line : INullable, IBinarySerialize
 
         int i;
         for (i = 0; i < bigbytes.Length; i++)
+        {
             data[i] = bigbytes[i];
+        }
+
         data.SetLength(i);
     }
 
@@ -120,7 +128,10 @@ public class Line : INullable, IBinarySerialize
         string[] array = data.Value.Split(new char[] { ',' });
 
         if (array.Length != 4)
+        {
             throw new ArgumentException();
+        }
+
         Line line = new Line();
         line.start.X = int.Parse(array[0]);
         line.start.Y = int.Parse(array[1]);

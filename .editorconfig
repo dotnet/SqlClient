@@ -35,6 +35,9 @@ csharp_indent_case_contents = true
 csharp_indent_switch_labels = true
 csharp_indent_labels = one_less_than_current
 
+# Require braces around if/for/while/etc
+csharp_prefer_braces = true:warning
+
 # avoid this. unless absolutely necessary
 dotnet_style_qualification_for_field = false:suggestion
 dotnet_style_qualification_for_property = false:suggestion

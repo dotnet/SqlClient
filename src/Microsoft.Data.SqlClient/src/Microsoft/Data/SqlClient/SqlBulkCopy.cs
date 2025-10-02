@@ -1441,7 +1441,10 @@ namespace Microsoft.Data.SqlClient
         private string UnquotedName(string name)
         {
             if (string.IsNullOrEmpty(name))
+            {
                 return null;
+            }
+
             if (name[0] == '[')
             {
                 int l = name.Length;
@@ -2311,7 +2314,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     task = ReadWriteColumnValueAsync(i); //First reads and then writes one cell value. Task 'task' is completed when reading task and writing task both are complete.
                     if (task != null)
+                    {
                         break; //task != null means we have a pending read/write Task.
+                    }
                 }
                 if (task != null)
                 {

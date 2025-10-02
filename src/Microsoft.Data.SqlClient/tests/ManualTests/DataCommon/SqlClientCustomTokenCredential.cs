@@ -77,12 +77,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string Bearer = "Bearer ";
             if (string.IsNullOrEmpty(challenge))
+            {
                 throw new ArgumentNullException(nameof(challenge));
+            }
 
             string trimmedChallenge = challenge.Trim();
 
             if (!trimmedChallenge.StartsWith(Bearer, StringComparison.Ordinal))
+            {
                 throw new ArgumentException("Challenge is not Bearer", nameof(challenge));
+            }
 
             return trimmedChallenge.Substring(Bearer.Length);
         }

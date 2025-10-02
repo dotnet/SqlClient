@@ -318,7 +318,10 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 if (disposing && _cachedBytes != null)
+                {
                     _cachedBytes.Clear();
+                }
+
                 _cachedBytes = null;
                 _currentPosition = 0;
                 _currentArrayIndex = 0;
@@ -378,7 +381,9 @@ namespace Microsoft.Data.SqlClient
                 }
                 cb = _cachedBytes[_currentArrayIndex].Length - _currentPosition;
                 if (cb > count)
+                {
                     cb = count;
+                }
 
                 Buffer.BlockCopy(_cachedBytes[_currentArrayIndex], _currentPosition, buffer, offset, cb);
                 _currentPosition += cb;
@@ -447,7 +452,9 @@ namespace Microsoft.Data.SqlClient
                 }
             }
             if (pos > 0)
+            {
                 throw new ArgumentOutOfRangeException(argumentName);
+            }
         }
 
         private long TotalLength
@@ -579,7 +586,9 @@ namespace Microsoft.Data.SqlClient
         private void WriteXmlElement()
         {
             if (_xmlReader.EOF)
+            {
                 return;
+            }
 
             bool canReadChunk = _xmlReader.CanReadValueChunk;
             char[] writeNodeBuffer = null;

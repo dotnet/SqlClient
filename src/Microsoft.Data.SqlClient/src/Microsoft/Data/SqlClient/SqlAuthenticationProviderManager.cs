@@ -254,7 +254,10 @@ namespace Microsoft.Data.SqlClient
         private static string GetProviderType(SqlAuthenticationProvider provider)
         {
             if (provider == null)
+            {
                 return "null";
+            }
+
             return provider.GetType().FullName;
         }
     }

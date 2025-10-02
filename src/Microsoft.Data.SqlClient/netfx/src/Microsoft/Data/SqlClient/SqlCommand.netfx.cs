@@ -184,7 +184,9 @@ namespace Microsoft.Data.SqlClient
                 if (activeConnection != null && !parser.MARSOn)
                 {
                     if (activeConnection.AsyncCommandInProgress)
+                    {
                         throw SQL.MARSUnsupportedOnConnection();
+                    }
                 }
                 _cachedAsyncConnection = activeConnection;
 
@@ -2478,11 +2480,15 @@ namespace Microsoft.Data.SqlClient
         internal void OnReturnStatus(int status)
         {
             if (_inPrepare)
+            {
                 return;
+            }
 
             // Don't set the return status if this is the status for sp_describe_parameter_encryption.
             if (IsDescribeParameterEncryptionRPCCurrentlyInProgress)
+            {
                 return;
+            }
 
             SqlParameterCollection parameters = _parameters;
             if (_batchRPCMode)
@@ -2747,10 +2753,15 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
+
             if (foundParam)
+            {
                 return thisParam;
+            }
             else
+            {
                 return null;
+            }
         }
 
         private void GetRPCObject(int systemParamCount, int userParamCount, ref _SqlRPC rpc, bool forSpDescribeParameterEncryption = false)
@@ -3071,7 +3082,9 @@ namespace Microsoft.Data.SqlClient
                 sqlParam.Validate(i, CommandType.StoredProcedure == CommandType);
                 // skip ReturnValue parameters; we never send them to the server
                 if (!ShouldSendParameter(sqlParam, includeReturnValue))
+                {
                     continue;
+                }
 
                 // add our separator for the ith parameter
                 if (fAddSeparator)
@@ -3093,7 +3106,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     string fullTypeName = sqlParam.UdtTypeName;
                     if (string.IsNullOrEmpty(fullTypeName))
+                    {
                         throw SQL.MustSetUdtTypeNameForUdtParams();
+                    }
 
                     paramList.Append(ParseAndQuoteIdentifier(fullTypeName, true /* is UdtTypeName */));
                 }
@@ -3189,7 +3204,9 @@ namespace Microsoft.Data.SqlClient
                             int actualBytes = parser.GetEncodingCharLength(s, sqlParam.GetActualSize(), sqlParam.Offset, null);
                             // if actual number of bytes is greater than the user given number of chars, use actual bytes
                             if (actualBytes > size)
+                            {
                                 size = actualBytes;
+                            }
                         }
                     }
 
@@ -3208,7 +3225,9 @@ namespace Microsoft.Data.SqlClient
 
                 // set the output bit for Output or InputOutput parameters
                 if (sqlParam.Direction != ParameterDirection.Input)
+                {
                     paramList.Append(" " + TdsEnums.PARAM_OUTPUT);
+                }
             }
 
             return paramList.ToString();

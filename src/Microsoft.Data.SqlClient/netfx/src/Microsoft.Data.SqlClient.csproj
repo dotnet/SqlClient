@@ -444,6 +444,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParser.cs">
       <Link>Microsoft\Data\SqlClient\TdsParser.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParser.SSPI.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParser.SSPI.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.cs</Link>
     </Compile>
@@ -999,6 +1002,9 @@
     <Compile Include="$(CommonSourceRoot)System\Buffers\ArrayBufferWriter.netfx.cs">
       <Link>System\Buffers\ArrayBufferWriter.netfx.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)System\Diagnostics\CodeAnalysis.cs">
+      <Link>System\Diagnostics\CodeAnalysis.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)System\IO\StreamExtensions.netfx.cs">
       <Link>System\IO\StreamExtensions.netfx.cs</Link>
     </Compile>
@@ -1007,9 +1013,7 @@
     </Compile>
     
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.netfx.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netfx.cs" />
   </ItemGroup>
   <!-- Resources  -->

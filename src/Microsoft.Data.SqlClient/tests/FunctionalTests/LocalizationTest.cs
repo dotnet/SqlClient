@@ -74,9 +74,14 @@ namespace Microsoft.Data.SqlClient.Tests
 
             // Restore saved culture if necessary
             if (Thread.CurrentThread.CurrentCulture != savedCulture)
+            {
                 Thread.CurrentThread.CurrentCulture = savedCulture;
+            }
+
             if (Thread.CurrentThread.CurrentUICulture != savedUICulture)
+            {
                 Thread.CurrentThread.CurrentUICulture = savedUICulture;
+            }
 
             return localized;
         }
