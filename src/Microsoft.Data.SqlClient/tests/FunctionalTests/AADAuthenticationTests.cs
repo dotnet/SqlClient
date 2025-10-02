@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
         
-#if NETFRAMEWORK
+        #if NETFRAMEWORK
         // This test is only valid for .NET Framework
 
         /// <summary>
@@ -59,7 +59,6 @@ namespace Microsoft.Data.SqlClient.Tests
         /// In future if need be, appsettings.json support can be added.
         /// </summary>
         [Fact]
-        [ActiveIssue("3648")] // Cannot enable on CI/CD pipeline due to limitation of loading app.config file for tests.
         public async Task IsDummySqlAuthenticationProviderSetByDefault()
         {
             var provider = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive);
@@ -70,7 +69,7 @@ namespace Microsoft.Data.SqlClient.Tests
             var token = await provider.AcquireTokenAsync(null);
             Assert.Equal(token.AccessToken, DummySqlAuthenticationProvider.DUMMY_TOKEN_STR);
         }
-#endif
+        #endif
 
         [Fact]
         public void CustomActiveDirectoryProviderTest()
