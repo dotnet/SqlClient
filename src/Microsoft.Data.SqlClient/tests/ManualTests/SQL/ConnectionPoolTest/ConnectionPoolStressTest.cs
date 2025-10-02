@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region Connection Dooming
 
         // Reflection fields for accessing internal connection properties
-        private static readonly FieldInfo _msDataInternalConnectionField;
+        private static readonly FieldInfo _internalConnectionField;
 
         static ConnectionPoolStressTest()
         {
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 // Cache reflection info for Microsoft.Data.SqlClient
                 Type msDataConnectionType = typeof(SqlConnection);
-                _msDataInternalConnectionField = msDataConnectionType.GetField("_innerConnection", BindingFlags.NonPublic | BindingFlags.Instance);
+                _internalConnectionField = msDataConnectionType.GetField("_innerConnection", BindingFlags.NonPublic | BindingFlags.Instance);
             }
             catch (Exception ex)
             {
@@ -67,131 +67,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        #region Tests
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [TestCategory("LongRunning")] // Takes around 13 seconds.
-        public async Task ConnectionPoolStress_Sync()
-        {
-            var test = new ConnectionPoolStressTest
-            {
-                MaxPoolSize = 100,
-                ConcurrentConnections = 10,
-                WaitForDelay = "00:00:00.100",
-                OperationsPerThread = 100,
-            };
-
-            test.SetConnectionString(DataTestUtility.TCPConnectionString);
-
-            // Run the stress tests
-            if (!RunSingleStressTest(test.ConnectionPoolStress_MsData_Sync))
-            {
-                // fail the test
-                Assert.Fail("ConnectionPoolStress_MsData_Sync failed");
-            }
-
-            if(!await TestConnectionPoolExhaustion(test, false))
-            {
-                // fail the test
-                Assert.Fail("ConnectionPoolStress_MsData_Sync failed");
-            }
-        }
-
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [TestCategory("LongRunning")]// Takes around 11 seconds.
-        public async Task ConnectionPoolStress_Async()
-        {
-            var test = new ConnectionPoolStressTest
-            {
-                MaxPoolSize = 100,
-                ConcurrentConnections = 10,
-                WaitForDelay = "00:00:00.100",
-                OperationsPerThread = 100,
-            };
-
-            test.SetConnectionString(DataTestUtility.TCPConnectionString);
-
-            // Test Microsoft.Data.SqlClient Async
-            if (!RunSingleStressTest(test.ConnectionPoolStress_MsData_Async))
-            {
-                // fail the test
-                Assert.Fail("ConnectionPoolStress_MsData_Async failed");
-            }
-
-            // Test connection pool exhaustion
-            if(!await TestConnectionPoolExhaustion(test, true))
-            {
-                // fail the test
-                Assert.Fail("ConnectionPoolStress_MsData_Async failed");
-            }
-        }
-
-        #endregion
-
-        #region Helpers
-
-        private static bool RunSingleStressTest(Action testAction)
-        {
-            try
-            {
-                var stopwatch = Stopwatch.StartNew();
-                testAction();
-                stopwatch.Stop();
-            }
-            catch (Exception ex)
-            {
-                if (ex.InnerException != null)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private static async Task<bool> TestConnectionPoolExhaustion(ConnectionPoolStressTest test, bool async)
-        {
-            // Test Microsoft.Data.SqlClient
-            return await TestConnectionPoolExhaustionForProvider(test.ConnectionString, test.MaxPoolSize, "Microsoft.Data.SqlClient", async,
-                cs => new SqlConnection(cs));
-        }
-
-        private static async Task<bool> TestConnectionPoolExhaustionForProvider(string connectionString, int maxPoolSize, string providerName, bool async, Func<string, DbConnection> connectionFactory)
-        {
-            var connections = new List<DbConnection>();
-
-            try
-            {
-                for (int i = 0; i < maxPoolSize; i++)
-                {
-                    var conn = connectionFactory(connectionString);
-                    if (async)
-                    {
-                        await conn.OpenAsync();
-                    }
-                    else
-                        conn.Open();
-                    connections.Add(conn);
-                }
-
-            }
-            catch
-            {
-                return false;
-            }
-            finally
-            {
-                // Clean up all connections
-                foreach (var conn in connections)
-                {
-                    conn?.Dispose();
-                }
-            }
-
-            return true;
-        }
-
-        #endregion
-        
         /// <summary>
         /// Dooms a Microsoft.Data.SqlClient connection by calling DoomThisConnection on its internal connection
         /// </summary>
@@ -199,7 +74,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             try
             {
-                if (_msDataInternalConnectionField?.GetValue(connection) is object internalConnection)
+                if (_internalConnectionField?.GetValue(connection) is object internalConnection)
                 {
                     var doomMethod = internalConnection.GetType().GetMethod("DoomThisConnection", BindingFlags.NonPublic | BindingFlags.Instance);
                     if (doomMethod != null)
@@ -425,6 +300,131 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception ex)
             {
                 Console.WriteLine($"Command execution failed: {ex.Message}");
+            }
+        }
+
+        #endregion
+        
+        #region Helpers
+
+        private static bool RunSingleStressTest(Action testAction)
+        {
+            try
+            {
+                var stopwatch = Stopwatch.StartNew();
+                testAction();
+                stopwatch.Stop();
+            }
+            catch (Exception ex)
+            {
+                if (ex.InnerException != null)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static async Task<bool> TestConnectionPoolExhaustion(ConnectionPoolStressTest test, bool async)
+        {
+            // Test Microsoft.Data.SqlClient
+            return await TestConnectionPoolExhaustionForProvider(test.ConnectionString, test.MaxPoolSize, "Microsoft.Data.SqlClient", async,
+                cs => new SqlConnection(cs));
+        }
+
+        private static async Task<bool> TestConnectionPoolExhaustionForProvider(string connectionString, int maxPoolSize, string providerName, bool async, Func<string, DbConnection> connectionFactory)
+        {
+            var connections = new List<DbConnection>();
+
+            try
+            {
+                for (int i = 0; i < maxPoolSize; i++)
+                {
+                    var conn = connectionFactory(connectionString);
+                    if (async)
+                    {
+                        await conn.OpenAsync();
+                    }
+                    else
+                        conn.Open();
+                    connections.Add(conn);
+                }
+
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                // Clean up all connections
+                foreach (var conn in connections)
+                {
+                    conn?.Dispose();
+                }
+            }
+
+            return true;
+        }
+
+        #endregion
+
+        #region Pool Exhaustion Tests
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [TestCategory("LongRunning")] // Takes around 13 seconds.
+        public async Task ConnectionPoolStress_Sync()
+        {
+            var test = new ConnectionPoolStressTest
+            {
+                MaxPoolSize = 100,
+                ConcurrentConnections = 10,
+                WaitForDelay = "00:00:00.100",
+                OperationsPerThread = 100,
+            };
+
+            test.SetConnectionString(DataTestUtility.TCPConnectionString);
+
+            // Run the stress tests
+            if (!RunSingleStressTest(test.ConnectionPoolStress_MsData_Sync))
+            {
+                // fail the test
+                Assert.Fail("ConnectionPoolStress_MsData_Sync failed");
+            }
+
+            if(!await TestConnectionPoolExhaustion(test, false))
+            {
+                // fail the test
+                Assert.Fail("ConnectionPoolStress_MsData_Sync failed");
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [TestCategory("LongRunning")] // Takes around 11 seconds.
+        public async Task ConnectionPoolStress_Async()
+        {
+            var test = new ConnectionPoolStressTest
+            {
+                MaxPoolSize = 100,
+                ConcurrentConnections = 10,
+                WaitForDelay = "00:00:00.100",
+                OperationsPerThread = 100,
+            };
+
+            test.SetConnectionString(DataTestUtility.TCPConnectionString);
+
+            // Test Microsoft.Data.SqlClient Async
+            if (!RunSingleStressTest(test.ConnectionPoolStress_MsData_Async))
+            {
+                // fail the test
+                Assert.Fail("ConnectionPoolStress_MsData_Async failed");
+            }
+
+            // Test connection pool exhaustion
+            if(!await TestConnectionPoolExhaustion(test, true))
+            {
+                // fail the test
+                Assert.Fail("ConnectionPoolStress_MsData_Async failed");
             }
         }
 
