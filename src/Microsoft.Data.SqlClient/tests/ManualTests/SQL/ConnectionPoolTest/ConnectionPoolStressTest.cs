@@ -76,7 +76,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (_internalConnectionField?.GetValue(connection) is object internalConnection)
                 {
-                    var doomMethod = internalConnection.GetType().GetMethod("DoomThisConnection", BindingFlags.NonPublic | BindingFlags.Instance);
+                    MethodInfo doomMethod = internalConnection.GetType().GetMethod("DoomThisConnection", BindingFlags.NonPublic | BindingFlags.Instance);
                     if (doomMethod != null)
                     {
                         doomMethod.Invoke(internalConnection, null);
@@ -163,36 +163,41 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var barrier = new Barrier(ConcurrentConnections);
             var countdown = new CountdownEvent(ConcurrentConnections);
 
-            var command = string.IsNullOrWhiteSpace(WaitForDelay)
-                ? "SELECT GETDATE()"
-                : $"WAITFOR DELAY '{WaitForDelay}'; SELECT GETDATE()";
-
-            // Create regular threads (don't doom connections)
-            for (int i = 0; i < ConcurrentConnections - 1; i++)
+            try
             {
-                threads[i] = CreateWorkerThread(
-                    connectionString, command, barrier, countdown, doomConnections: false, async);
-            }
+                var command = string.IsNullOrWhiteSpace(WaitForDelay)
+                    ? "SELECT GETDATE()"
+                    : $"WAITFOR DELAY '{WaitForDelay}'; SELECT GETDATE()";
 
-            // Create special thread that dooms connections (if we have multiple threads)
-            if (ConcurrentConnections > 1)
+                // Create regular threads (don't doom connections)
+                for (int i = 0; i < ConcurrentConnections - 1; i++)
+                {
+                    threads[i] = CreateWorkerThread(
+                        connectionString, command, barrier, countdown, doomConnections: false, async);
+                }
+
+                // Create special thread that dooms connections (if we have multiple threads)
+                if (ConcurrentConnections > 1)
+                {
+                    threads[ConcurrentConnections - 1] = CreateWorkerThread(
+                        connectionString, command, barrier, countdown, doomConnections: true, async, doomAction);
+                }
+
+                // Start all threads
+                foreach (Thread thread in threads.Where(t => t != null))
+                {
+                    thread.Start();
+                }
+
+                // Wait for completion
+                countdown.Wait();
+            }
+            finally
             {
-                threads[ConcurrentConnections - 1] = CreateWorkerThread(
-                    connectionString, command, barrier, countdown, doomConnections: true, async, doomAction);
+                // Clean up synchronization objects
+                barrier?.Dispose();
+                countdown?.Dispose();
             }
-
-            // Start all threads
-            foreach (var thread in threads.Where(t => t != null))
-            {
-                thread.Start();
-            }
-
-            // Wait for completion
-            countdown.Wait();
-
-            // Clean up synchronization objects
-            barrier?.Dispose();
-            countdown?.Dispose();
         }
 
         /// <summary>
@@ -218,29 +223,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         if (doomConnections && doomAction != null)
                         {
                             // Dooming thread - barriers inside using block to doom before disposal
-                            using (var conn = new SqlConnection(connectionString))
+                            using var conn = new SqlConnection(connectionString);
+                            if (async)
                             {
-                                if (async)
-                                {
-                                    await conn.OpenAsync();
-                                }
-                                else
-                                    conn.Open();
-
-                                await ExecuteCommand(command, async, conn);
-
-                                // Synchronize after command execution, before dooming
-                                barrier.SignalAndWait();
-
-                                // Doom connection before it gets disposed/returned to pool
-                                if (!doomAction(conn))
-                                {
-                                    // fail test here.
-                                }
-
-                                // Synchronize after dooming - ensures all threads see the effect
-                                barrier.SignalAndWait();
+                                await conn.OpenAsync();
                             }
+                            else
+                                conn.Open();
+
+                            await ExecuteCommand(command, async, conn);
+
+                            // Synchronize after command execution, before dooming
+                            barrier.SignalAndWait();
+
+                            // Doom connection before it gets disposed/returned to pool
+                            if (!doomAction(conn))
+                            {
+                                throw new Exception("Unable to doom connection");
+                            }
+
+                            // Synchronize after dooming - ensures all threads see the effect
+                            barrier.SignalAndWait();
                         }
                         else
                         {
@@ -266,10 +269,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Thread execution failed: {ex.Message}");
-                }
                 finally
                 {
                     countdown.Signal();
@@ -287,15 +286,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             try
             {
-                using (var cmd = new SqlCommand(command, conn))
+                using var cmd = new SqlCommand(command, conn);
+                if (async)
                 {
-                    if (async)
-                    {
-                        await cmd.ExecuteScalarAsync();
-                    }
-                    else
-                        cmd.ExecuteScalar();
+                    await cmd.ExecuteScalarAsync();
                 }
+                else
+                    cmd.ExecuteScalar();
             }
             catch (Exception ex)
             {
@@ -326,22 +323,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return true;
         }
 
-        private static async Task<bool> TestConnectionPoolExhaustion(ConnectionPoolStressTest test, bool async)
+        private static async Task<bool> TestConnectionPoolExhaustion(string connectionString, int maxPoolSize, bool async)
         {
-            // Test Microsoft.Data.SqlClient
-            return await TestConnectionPoolExhaustionForProvider(test.ConnectionString, test.MaxPoolSize, "Microsoft.Data.SqlClient", async,
-                cs => new SqlConnection(cs));
-        }
-
-        private static async Task<bool> TestConnectionPoolExhaustionForProvider(string connectionString, int maxPoolSize, string providerName, bool async, Func<string, DbConnection> connectionFactory)
-        {
-            var connections = new List<DbConnection>();
+            var connections = new List<SqlConnection>();
 
             try
             {
                 for (int i = 0; i < maxPoolSize; i++)
                 {
-                    var conn = connectionFactory(connectionString);
+                    SqlConnection conn = new(connectionString);
                     if (async)
                     {
                         await conn.OpenAsync();
@@ -350,7 +340,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         conn.Open();
                     connections.Add(conn);
                 }
-
+                Assert.Equal(maxPoolSize, connections.Count);
             }
             catch
             {
@@ -359,7 +349,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             finally
             {
                 // Clean up all connections
-                foreach (var conn in connections)
+                foreach (SqlConnection conn in connections)
                 {
                     conn?.Dispose();
                 }
@@ -392,7 +382,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Fail("ConnectionPoolStress_MsData_Sync failed");
             }
 
-            if(!await TestConnectionPoolExhaustion(test, false))
+            if(!await TestConnectionPoolExhaustion(test.ConnectionString, test.MaxPoolSize, false))
             {
                 // fail the test
                 Assert.Fail("ConnectionPoolStress_MsData_Sync failed");
@@ -420,8 +410,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Fail("ConnectionPoolStress_MsData_Async failed");
             }
 
-            // Test connection pool exhaustion
-            if(!await TestConnectionPoolExhaustion(test, true))
+            // Test connection pool exhaustion (async)
+            if(!await TestConnectionPoolExhaustion(test.ConnectionString, test.MaxPoolSize, true))
             {
                 // fail the test
                 Assert.Fail("ConnectionPoolStress_MsData_Async failed");
