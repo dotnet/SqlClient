@@ -1749,7 +1749,11 @@ namespace Microsoft.Data.SqlClient
                     onCancellation: static state =>
                     {
                         ((SqlCommand)state).CachedAsyncState?.ResetAsyncState();
-                    });
+                    }
+                    #if NETFRAMEWORK
+                    , connectionToAbort: _activeConnection
+                    #endif
+                );
 
                 task = completion.Task;
                 return ds;
