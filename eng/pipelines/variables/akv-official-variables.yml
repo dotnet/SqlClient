@@ -37,7 +37,5 @@ variables:
     # Compound Variables ---------------------------------------------------
     - name: assemblyFileVersion
       value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}${{ variables.versionPatch }}.$(Build.BuildNumber)'
-    - name: nugetPackageVersion
+    - name: akvPackageVersion
       value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}.${{ variables.versionPatch }}${{ variables.versionPreview }}'
-
-

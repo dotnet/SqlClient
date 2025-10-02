@@ -34,7 +34,7 @@
     -->
 
     <!--
-      GOTCHA: These two Assembly properties must appear in the second
+      GOTCHA: These two Assembly properties must appear in the third
       <PropertyGroup> in this file due to hardcoded XML processing in:
 
       eng/pipelines/common/templates/jobs/validate-signed-package-job.yml
