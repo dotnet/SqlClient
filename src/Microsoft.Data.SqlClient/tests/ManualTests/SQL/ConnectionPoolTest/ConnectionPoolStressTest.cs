@@ -160,44 +160,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool async = false)
         {
             var threads = new Thread[ConcurrentConnections];
-            var barrier = new Barrier(ConcurrentConnections);
-            var countdown = new CountdownEvent(ConcurrentConnections);
+            using Barrier barrier = new(ConcurrentConnections);
+            using CountdownEvent countdown = new(ConcurrentConnections);
 
-            try
+            var command = string.IsNullOrWhiteSpace(WaitForDelay)
+                ? "SELECT GETDATE()"
+                : $"WAITFOR DELAY '{WaitForDelay}'; SELECT GETDATE()";
+
+            // Create regular threads (don't doom connections)
+            for (int i = 0; i < ConcurrentConnections - 1; i++)
             {
-                var command = string.IsNullOrWhiteSpace(WaitForDelay)
-                    ? "SELECT GETDATE()"
-                    : $"WAITFOR DELAY '{WaitForDelay}'; SELECT GETDATE()";
-
-                // Create regular threads (don't doom connections)
-                for (int i = 0; i < ConcurrentConnections - 1; i++)
-                {
-                    threads[i] = CreateWorkerThread(
-                        connectionString, command, barrier, countdown, doomConnections: false, async);
-                }
-
-                // Create special thread that dooms connections (if we have multiple threads)
-                if (ConcurrentConnections > 1)
-                {
-                    threads[ConcurrentConnections - 1] = CreateWorkerThread(
-                        connectionString, command, barrier, countdown, doomConnections: true, async, doomAction);
-                }
-
-                // Start all threads
-                foreach (Thread thread in threads.Where(t => t != null))
-                {
-                    thread.Start();
-                }
-
-                // Wait for completion
-                countdown.Wait();
+                threads[i] = CreateWorkerThread(
+                    connectionString, command, barrier, countdown, doomConnections: false, async);
             }
-            finally
+
+            // Create special thread that dooms connections (if we have multiple threads)
+            if (ConcurrentConnections > 1)
             {
-                // Clean up synchronization objects
-                barrier?.Dispose();
-                countdown?.Dispose();
+                threads[ConcurrentConnections - 1] = CreateWorkerThread(
+                    connectionString, command, barrier, countdown, doomConnections: true, async, doomAction);
             }
+
+            // Start all threads
+            foreach (Thread thread in threads.Where(t => t != null))
+            {
+                thread.Start();
+            }
+
+            // Wait for completion
+            countdown.Wait();
         }
 
         /// <summary>
