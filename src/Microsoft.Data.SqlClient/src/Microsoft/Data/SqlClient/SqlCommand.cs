@@ -10,10 +10,7 @@ using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
-
-#if NET
 using Microsoft.Data.SqlClient.Diagnostics;
-#endif
 
 namespace Microsoft.Data.SqlClient
 {
@@ -51,6 +48,18 @@ namespace Microsoft.Data.SqlClient
         /// Number of instances of SqlCommand that have been created. Used to generate ObjectId
         /// </summary>
         private static int _objectTypeCount = 0;
+
+        /// <summary>
+        /// Static instance of the <see cref="SqlDiagnosticListener"/> used for capturing and emitting
+        /// diagnostic events related to SqlCommand operations.
+        /// </summary>
+        private static readonly SqlDiagnosticListener s_diagnosticListener = new();
+
+        /// <summary>
+        /// Prevents the completion events for ExecuteReader from being fired if ExecuteReader is being
+        /// called as part of a parent operation (e.g. ExecuteScalar, or SqlBatch.ExecuteScalar.)
+        /// </summary>
+        private bool _parentOperationStarted = false;
 
         /// <summary>
         /// Connection that will be used to process the current instance.
@@ -571,12 +580,8 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_activeConnection is not null)
                 {
-                    #if NET
                     bool isStatisticsEnabled = _activeConnection.StatisticsEnabled ||
                                                s_diagnosticListener.IsEnabled(SqlClientCommandAfter.Name);
-                    #else
-                    bool isStatisticsEnabled = _activeConnection.StatisticsEnabled;
-                    #endif
 
                     if (isStatisticsEnabled)
                     {
