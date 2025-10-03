@@ -12,6 +12,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
+#nullable enable
+
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     /// <summary>
@@ -24,7 +26,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Connection string
         /// </summary>
-        internal string ConnectionString { get; set; }
+        internal string? ConnectionString { get; set; }
 
         /// <summary>
         /// Maximum number of connections in the pool
@@ -51,9 +53,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region Connection Dooming
 
         // Reflection fields for accessing internal connection properties
-        private static readonly FieldInfo _internalConnectionField;
+        private readonly FieldInfo? _internalConnectionField;
 
-        static ConnectionPoolStressTest()
+        internal ConnectionPoolStressTest()
         {
             try
             {
@@ -70,13 +72,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Dooms a Microsoft.Data.SqlClient connection by calling DoomThisConnection on its internal connection
         /// </summary>
-        private static bool DoomMicrosoftDataConnection(SqlConnection connection)
+        private bool DoomMicrosoftDataConnection(SqlConnection connection)
         {
             try
             {
-                if (_internalConnectionField?.GetValue(connection) is object internalConnection)
+                if(_internalConnectionField == null)
                 {
-                    MethodInfo doomMethod = internalConnection.GetType().GetMethod("DoomThisConnection", BindingFlags.NonPublic | BindingFlags.Instance);
+                    // Fail the test if reflection setup failed
+                    return false;
+                }
+
+                if (_internalConnectionField.GetValue(connection) is object internalConnection)
+                {
+                    MethodInfo? doomMethod = internalConnection.GetType().GetMethod("DoomThisConnection", BindingFlags.NonPublic | BindingFlags.Instance);
                     if (doomMethod != null)
                     {
                         doomMethod.Invoke(internalConnection, null);
@@ -103,7 +111,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region Configuration
 
         /// <summary>
-        /// Sets up connection strings for both SQL client libraries with optimized settings
+        /// Sets up connection string 
         /// </summary>
         /// <param name="connectionString">Connection string to be set.</param>
         internal void SetConnectionString(string connectionString)
@@ -132,6 +140,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         internal void ConnectionPoolStress_MsData_Sync()
         {
+            if (ConnectionString == null)
+            {
+                throw new InvalidOperationException("ConnectionString is not set. Call SetConnectionString() before running the test.");
+            }
+
             RunStressTest(
                 connectionString: ConnectionString,
                 doomAction: conn => DoomMicrosoftDataConnection((SqlConnection)conn),
@@ -144,6 +157,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         internal void ConnectionPoolStress_MsData_Async()
         {
+            if (ConnectionString == null)
+            {
+                throw new InvalidOperationException("ConnectionString is not set. Call SetConnectionString() before running the test.");
+            }
+
             RunStressTest(
                 connectionString: ConnectionString,
                 doomAction: conn => DoomMicrosoftDataConnection((SqlConnection)conn),
@@ -201,7 +219,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             CountdownEvent countdown,
             bool doomConnections,
             bool async,
-            Func<DbConnection, bool> doomAction = null)
+            Func<DbConnection, bool>? doomAction = null)
         {
             return new Thread(async () =>
             {
@@ -220,7 +238,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 await conn.OpenAsync();
                             }
                             else
+                            {
                                 conn.Open();
+                            }
 
                             await ExecuteCommand(command, async, conn);
 
@@ -246,7 +266,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                     await conn.OpenAsync();
                                 }
                                 else
+                                {
                                     conn.Open();
+                                }
 
                                 await ExecuteCommand(command, async, conn);
 
@@ -283,7 +305,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     await cmd.ExecuteScalarAsync();
                 }
                 else
+                {
                     cmd.ExecuteScalar();
+                }
             }
             catch (Exception ex)
             {
@@ -292,7 +316,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         #endregion
-        
+
         #region Helpers
 
         private static bool RunSingleStressTest(Action testAction)
@@ -328,7 +352,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         await conn.OpenAsync();
                     }
                     else
+                    {
                         conn.Open();
+                    }
                     connections.Add(conn);
                 }
                 Assert.Equal(maxPoolSize, connections.Count);
@@ -373,7 +399,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Fail("ConnectionPoolStress_MsData_Sync failed");
             }
 
-            if(!await TestConnectionPoolExhaustion(test.ConnectionString, test.MaxPoolSize, false))
+            if (!await TestConnectionPoolExhaustion(test.ConnectionString!, test.MaxPoolSize, false))
             {
                 // fail the test
                 Assert.Fail("ConnectionPoolStress_MsData_Sync failed");
@@ -402,7 +428,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             // Test connection pool exhaustion (async)
-            if(!await TestConnectionPoolExhaustion(test.ConnectionString, test.MaxPoolSize, true))
+            if (!await TestConnectionPoolExhaustion(test.ConnectionString!, test.MaxPoolSize, true))
             {
                 // fail the test
                 Assert.Fail("ConnectionPoolStress_MsData_Async failed");
