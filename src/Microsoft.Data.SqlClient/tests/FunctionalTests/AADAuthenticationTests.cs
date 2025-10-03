@@ -5,6 +5,7 @@
 using System;
 using System.Security;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.FunctionalTests.DataCommon;
 using Microsoft.Identity.Client;
 using Xunit;
 
@@ -49,6 +50,27 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Throws<InvalidOperationException>(() => connection.AccessToken = "SampleAccessToken");
             }
         }
+        
+        #if NETFRAMEWORK
+        // This test is only valid for .NET Framework
+
+        /// <summary>
+        /// Tests whether SQL Auth provider is overridden using app.config file.
+        /// This use case is only supported for .NET Framework applications, as driver doesn't support reading configuration from appsettings.json file.
+        /// In future if need be, appsettings.json support can be added.
+        /// </summary>
+        [Fact]
+        public async Task IsDummySqlAuthenticationProviderSetByDefault()
+        {
+            var provider = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive);
+
+            Assert.NotNull(provider);
+            Assert.Equal(typeof(DummySqlAuthenticationProvider), provider.GetType());
+
+            var token = await provider.AcquireTokenAsync(null);
+            Assert.Equal(token.AccessToken, DummySqlAuthenticationProvider.DUMMY_TOKEN_STR);
+        }
+        #endif
 
         [Fact]
         public void CustomActiveDirectoryProviderTest()
