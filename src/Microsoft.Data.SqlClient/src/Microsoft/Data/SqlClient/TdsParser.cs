@@ -10556,7 +10556,7 @@ namespace Microsoft.Data.SqlClient
             AsyncHelper.ContinueTask(
                 writeParamTask,
                 completion,
-                () => TdsExecuteRPC(
+                onSuccess: () => TdsExecuteRPC(
                     cmd,
                     rpcArray,
                     timeout,
@@ -10569,8 +10569,7 @@ namespace Microsoft.Data.SqlClient
                     startRpc,
                     startParam
                 ),
-                onFailure: exc => TdsExecuteRPC_OnFailure(exc, stateObj),
-                connectionToDoom: _connHandler
+                onFailure: exc => TdsExecuteRPC_OnFailure(exc, stateObj)
             );
         }
 

@@ -133,18 +133,8 @@ namespace Microsoft.Data.SqlClient
             Action onSuccess,
             Action<Exception> onFailure = null,
             Action onCancellation = null,
-            Func<Exception, Exception> exceptionConverter = null,
-#if NET
-            SqlInternalConnectionTds connectionToDoom = null
-#else
-            SqlInternalConnectionTds connectionToDoom = null,
-            SqlConnection connectionToAbort = null
-#endif
-        )
+            Func<Exception, Exception> exceptionConverter = null)
         {
-#if NETFRAMEWORK
-            Debug.Assert((connectionToAbort == null) || (connectionToDoom == null), "Should not specify both connectionToDoom and connectionToAbort");
-#endif
             task.ContinueWith(
                 tsk =>
                 {
@@ -177,42 +167,16 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-#if NETFRAMEWORK
-                        if (connectionToDoom != null || connectionToAbort != null)
-                        {
-                            try
-                            {
-                                onSuccess();
-                            }
-                            // @TODO: CER Exception Handling was removed here (see GH#3581)
-                            catch (Exception e)
-                            {
-                                completion.SetException(e);
-                            }
-                        }
-                        else
-                        { // no connection to doom - reliability section not required
-                            try
-                            {
-                                onSuccess();
-                            }
-                            catch (Exception e)
-                            {
-                                completion.SetException(e);
-                            }
-                        }
-                    }
-#else
                         try
                         {
                             onSuccess();
                         }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
                         catch (Exception e)
                         {
                             completion.SetException(e);
                         }
                     }
-#endif
                 }, TaskScheduler.Default
             );
         }
@@ -226,12 +190,10 @@ namespace Microsoft.Data.SqlClient
             Action<Exception, object> onFailure = null,
             Action<object> onCancellation = null,
 #if NET
-            Func<Exception, Exception> exceptionConverter = null,
+            Func<Exception, Exception> exceptionConverter = null
 #else
-            Func<Exception, object, Exception> exceptionConverter = null,
+            Func<Exception, object, Exception> exceptionConverter = null
 #endif
-            SqlInternalConnectionTds connectionToDoom = null,
-            SqlConnection connectionToAbort = null
         )
         {
             task.ContinueWith(
