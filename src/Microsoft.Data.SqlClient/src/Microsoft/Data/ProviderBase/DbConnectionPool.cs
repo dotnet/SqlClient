@@ -362,7 +362,42 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        private const int MAX_Q_SIZE = (int)0x00100000;
+        /// <summary>
+        /// Helper class to obtain and release a semaphore.
+        /// </summary>
+        internal class SemaphoreHolder : IDisposable
+        {
+            private readonly Semaphore _semaphore;
+
+            /// <summary>
+            /// Whether the semaphore was successfully obtained within the timeout.
+            /// </summary>
+            internal bool Obtained { get; private set; }
+
+            /// <summary>
+            /// Obtains the semaphore, waiting up to the specified timeout.
+            /// </summary>
+            /// <param name="semaphore"></param>
+            /// <param name="timeout"></param>
+            internal SemaphoreHolder(Semaphore semaphore, int timeout)
+            {
+                _semaphore = semaphore;
+                Obtained = _semaphore.WaitOne(timeout);
+            }
+
+            /// <summary>
+            /// Releases the semaphore if it was successfully obtained.
+            /// </summary>
+            public void Dispose()
+            {
+                if (Obtained)
+                {
+                    _semaphore.Release(1);
+                }
+            }
+        }
+
+        private const int MAX_Q_SIZE = 0x00100000;
 
         // The order of these is important; we want the WaitAny call to be signaled
         // for a free object before a creation signal.  Only the index first signaled
@@ -1414,20 +1449,14 @@ namespace Microsoft.Data.ProviderBase
 
                                     if (onlyOneCheckConnection)
                                     {
-                                        if (_waitHandles.CreationSemaphore.WaitOne(unchecked((int)waitForMultipleObjectsTimeout)))
+                                        using SemaphoreHolder semaphoreHolder = new(_waitHandles.CreationSemaphore, unchecked((int)waitForMultipleObjectsTimeout));
+                                        if (semaphoreHolder.Obtained)
                                         {
 #if NETFRAMEWORK
                                             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
-                                            try
-                                            {
-                                                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Creating new connection.", ObjectID);
-                                                obj = UserCreateRequest(owningObject, userOptions);
-                                            }
-                                            finally
-                                            {
-                                                _waitHandles.CreationSemaphore.Release(1);
-                                            }
+                                            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Creating new connection.", ObjectID);
+                                            obj = UserCreateRequest(owningObject, userOptions);
                                         }
                                         else
                                         {
@@ -1657,7 +1686,6 @@ namespace Microsoft.Data.ProviderBase
                             {
                                 return;
                             }
-                            int waitResult = BOGUS_HANDLE;
 
 #if NETFRAMEWORK
                             RuntimeHelpers.PrepareConstrainedRegions();
@@ -1665,18 +1693,13 @@ namespace Microsoft.Data.ProviderBase
                             try
                             {
                                 // Obtain creation mutex so we're the only one creating objects
-                                // and we must have the wait result
+                                using SemaphoreHolder semaphoreHolder = new(_waitHandles.CreationSemaphore, CreationTimeout);
+
+                                if (semaphoreHolder.Obtained)
+                                {
 #if NETFRAMEWORK
                                 RuntimeHelpers.PrepareConstrainedRegions();
 #endif
-                                try
-                                { }
-                                finally
-                                {
-                                    waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(withCreate: true), CreationTimeout);
-                                }
-                                if (CREATION_HANDLE == waitResult)
-                                {
                                     DbConnectionInternal newObj;
 
                                     // Check ErrorOccurred again after obtaining mutex
@@ -1710,16 +1733,11 @@ namespace Microsoft.Data.ProviderBase
                                         }
                                     }
                                 }
-                                else if (WaitHandle.WaitTimeout == waitResult)
+                                else
                                 {
                                     // do not wait forever and potential block this worker thread
                                     // instead wait for a period of time and just requeue to try again
                                     QueuePoolCreateRequest();
-                                }
-                                else
-                                {
-                                    // trace waitResult and ignore the failure
-                                    SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PoolCreateRequest|RES|CPOOL> {0}, PoolCreateRequest called WaitForSingleObject failed {1}", ObjectID, waitResult);
                                 }
                             }
                             catch (Exception e)
@@ -1732,15 +1750,7 @@ namespace Microsoft.Data.ProviderBase
                                 // Now that CreateObject can throw, we need to catch the exception and discard it.
                                 // There is no further action we can take beyond tracing.  The error will be 
                                 // thrown to the user the next time they request a connection.
-                                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PoolCreateRequest|RES|CPOOL> {0}, PoolCreateRequest called CreateConnection which threw an exception: {1}", ObjectID, e);
-                            }
-                            finally
-                            {
-                                if (CREATION_HANDLE == waitResult)
-                                {
-                                    // reuse waitResult and ignore its value
-                                    _waitHandles.CreationSemaphore.Release(1);
-                                }
+                                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PoolCreateRequest|RES|CPOOL> {0}, PoolCreateRequest called CreateConnection which threw an exception: {1}", Id, e);
                             }
                         }
                     }
