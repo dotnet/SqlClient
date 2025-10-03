@@ -1750,7 +1750,7 @@ namespace Microsoft.Data.ProviderBase
                                 // Now that CreateObject can throw, we need to catch the exception and discard it.
                                 // There is no further action we can take beyond tracing.  The error will be 
                                 // thrown to the user the next time they request a connection.
-                                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PoolCreateRequest|RES|CPOOL> {0}, PoolCreateRequest called CreateConnection which threw an exception: {1}", Id, e);
+                                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PoolCreateRequest|RES|CPOOL> {0}, PoolCreateRequest called CreateConnection which threw an exception: {1}", ObjectID, e);
                             }
                         }
                     }
