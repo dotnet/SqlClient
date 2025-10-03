@@ -25,6 +25,7 @@
     <Compile Include="AlwaysEncryptedTests\Utility.cs" />
     <Compile Include="AssertExtensions.cs" />
     <Compile Include="DataCommon\AssemblyResourceManager.cs" />
+    <Compile Include="DataCommon\DummySqlAuthenticationProvider.cs" />
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
     <Compile Include="DataCommon\TestUtility.cs" />
     <Compile Include="LocalizationTest.cs" />
@@ -70,6 +71,11 @@
     <Compile Include="TestRoutingTdsServer.cs" />
     <Compile Include="SqlHelperTest.cs" />
     <Compile Include="..\..\src\Microsoft\Data\Common\MultipartIdentifier.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
+    <None Update="app.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <!-- XUnit and XUnit extensions -->
   <ItemGroup>
