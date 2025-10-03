@@ -23,7 +23,7 @@ trigger:
 
 schedules:
 - cron: '0 4 * * Sat'
-  displayName: Weekly Saturday 4:00 AM (UTC - 7) Build
+  displayName: Weekly Saturday 4:00 AM (UTC) Build
   branches:
     include:
     - internal/release/6.1
