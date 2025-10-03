@@ -25,7 +25,6 @@ schedules:
   displayName: Weekly Friday 10:00 PM (UTC - 7) Build
   branches:
     include:
-    - release/6.0
     - internal/release/6.0
   always: true
 
