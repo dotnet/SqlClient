@@ -10569,8 +10569,7 @@ namespace Microsoft.Data.SqlClient
                     startRpc,
                     startParam
                 ),
-                onFailure: exc => TdsExecuteRPC_OnFailure(exc, stateObj)
-            );
+                onFailure: exc => TdsExecuteRPC_OnFailure(exc, stateObj));
         }
 
         // This is in its own method to avoid always allocating the lambda in TDSExecuteRPCParameter

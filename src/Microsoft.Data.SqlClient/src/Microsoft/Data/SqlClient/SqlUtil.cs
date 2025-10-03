@@ -51,11 +51,10 @@ namespace Microsoft.Data.SqlClient
 
     internal static class AsyncHelper
     {
-        internal static Task CreateContinuationTask(Task task, Action onSuccess,
-#if NETFRAMEWORK
-            SqlInternalConnectionTds connectionToDoom = null,
-#endif
-             Action<Exception> onFailure = null)
+        internal static Task CreateContinuationTask(
+            Task task,
+            Action onSuccess,
+            Action<Exception> onFailure = null)
         {
             if (task == null)
             {
@@ -65,8 +64,9 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
-#if NET
-                ContinueTaskWithState(task, completion,
+                ContinueTaskWithState(
+                    task,
+                    completion,
                     state: Tuple.Create(onSuccess, onFailure, completion),
                     onSuccess: static (object state) =>
                     {
@@ -82,16 +82,6 @@ namespace Microsoft.Data.SqlClient
                         Action<Exception> failure = parameters.Item2;
                         failure?.Invoke(exception);
                     }
-#else
-                ContinueTask(task, completion,
-                    onSuccess: () =>
-                    {
-                        onSuccess();
-                        completion.SetResult(null);
-                    },
-                    onFailure: onFailure,
-                    connectionToDoom: connectionToDoom
-#endif
                 );
                 return completion.Task;
             }
@@ -121,11 +111,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static Task CreateContinuationTask<T1, T2>(Task task, Action<T1, T2> onSuccess, T1 arg1, T2 arg2, SqlInternalConnectionTds connectionToDoom = null, Action<Exception> onFailure = null)
         {
-            return CreateContinuationTask(task, () => onSuccess(arg1, arg2),
-#if NETFRAMEWORK
-                connectionToDoom,
-#endif
-                onFailure);
+            return CreateContinuationTask(task, () => onSuccess(arg1, arg2), onFailure);
         }
 
         internal static void ContinueTask(Task task,
