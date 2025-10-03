@@ -80,8 +80,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/DataAdapter/*'/>
         [
         DefaultValue(null),
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlCommandBuilder_DataAdapter),
+        ResCategoryAttribute(nameof(Strings.DataCategory_Update)),
+        ResDescriptionAttribute(nameof(Strings.SqlCommandBuilder_DataAdapter)),
         ]
         public new SqlDataAdapter DataAdapter
         {
