@@ -83,10 +83,9 @@ namespace Microsoft.Data.SqlClient
             ValidateCertificatePathLength(masterKeyPath, isSystemOp: true);
 
             // Parse the path and get the X509 cert
-            X509Certificate2 certificate = GetCertificateByPath(masterKeyPath, isSystemOp: true);
+            RSA rsaPrivateKey = GetCertificatePrivateKeyByPath(masterKeyPath, isSystemOp: true);
             
-            RSA RSAPublicKey = certificate.GetRSAPublicKey();
-            int keySizeInBytes= RSAPublicKey.KeySize / 8;
+            int keySizeInBytes= rsaPrivateKey.KeySize / 8;
 
             // Validate and decrypt the EncryptedColumnEncryptionKey
             // Format is 
@@ -148,13 +147,13 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(hash != null, @"hash should not be null while decrypting encrypted column encryption key.");
 
             // Validate the signature
-            if (!RSAVerifySignature(hash, signature, certificate))
+            if (!RSAVerifySignature(hash, signature, rsaPrivateKey))
             {
                 throw SQL.InvalidCertificateSignature(masterKeyPath);
             }
 
             // Decrypt the CEK
-            return RSADecrypt(cipherText, certificate);
+            return RSADecrypt(cipherText, rsaPrivateKey);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/EncryptColumnEncryptionKey/*' />
@@ -178,10 +177,9 @@ namespace Microsoft.Data.SqlClient
             ValidateCertificatePathLength(masterKeyPath, isSystemOp: false);
 
             // Parse the certificate path and get the X509 cert
-            X509Certificate2 certificate = GetCertificateByPath(masterKeyPath, isSystemOp: false);
+            RSA rsaPrivateKey = GetCertificatePrivateKeyByPath(masterKeyPath, isSystemOp: false);
             
-            RSA RSAPublicKey = certificate.GetRSAPublicKey();
-            int keySizeInBytes = RSAPublicKey.KeySize / 8;
+            int keySizeInBytes = rsaPrivateKey.KeySize / 8;
 
             // Construct the encryptedColumnEncryptionKey
             // Format is 
@@ -195,7 +193,7 @@ namespace Microsoft.Data.SqlClient
             byte[] keyPathLength = BitConverter.GetBytes((short)masterKeyPathBytes.Length);
 
             // Encrypt the plain text
-            byte[] cipherText = RSAEncrypt(columnEncryptionKey, certificate);
+            byte[] cipherText = RSAEncrypt(columnEncryptionKey, rsaPrivateKey);
             byte[] cipherTextLength = BitConverter.GetBytes((short)cipherText.Length);
             Debug.Assert(cipherText.Length == keySizeInBytes, @"cipherText length does not match the RSA key size");
 
@@ -213,9 +211,9 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Sign the hash
-            byte[] signedHash = RSASignHashedData(hash, certificate);
+            byte[] signedHash = RSASignHashedData(hash, rsaPrivateKey);
             Debug.Assert(signedHash.Length == keySizeInBytes, @"signed hash length does not match the RSA key size");
-            Debug.Assert(RSAVerifySignature(hash, signedHash, certificate), @"Invalid signature of the encrypted column encryption key computed.");
+            Debug.Assert(RSAVerifySignature(hash, signedHash, rsaPrivateKey), @"Invalid signature of the encrypted column encryption key computed.");
 
             // Construct the encrypted column encryption key
             // EncryptedColumnEncryptionKey = version + keyPathLength + ciphertextLength + keyPath + ciphertext +  signature
@@ -255,9 +253,9 @@ namespace Microsoft.Data.SqlClient
             byte[] hash = ComputeMasterKeyMetadataHash(masterKeyPath, allowEnclaveComputations, isSystemOp: false);
 
             // Parse the certificate path and get the X509 cert
-            X509Certificate2 certificate = GetCertificateByPath(masterKeyPath, isSystemOp: false);
+            RSA rsaPrivateKey = GetCertificatePrivateKeyByPath(masterKeyPath, isSystemOp: false);
 
-            byte[] signature = RSASignHashedData(hash, certificate);
+            byte[] signature = RSASignHashedData(hash, rsaPrivateKey);
 
             return signature;
         }
@@ -268,10 +266,10 @@ namespace Microsoft.Data.SqlClient
             byte[] hash = ComputeMasterKeyMetadataHash(masterKeyPath, allowEnclaveComputations, isSystemOp: true);
 
             // Parse the certificate path and get the X509 cert
-            X509Certificate2 certificate = GetCertificateByPath(masterKeyPath, isSystemOp: true);
+            RSA rsaPrivateKey = GetCertificatePrivateKeyByPath(masterKeyPath, isSystemOp: true);
 
             // Validate the signature
-            return RSAVerifySignature(hash, signature, certificate);
+            return RSAVerifySignature(hash, signature, rsaPrivateKey);
         }
 
         private byte[] ComputeMasterKeyMetadataHash(string masterKeyPath, bool allowEnclaveComputations, bool isSystemOp)
@@ -358,14 +356,14 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Parses the given certificate path, searches in certificate store and returns a matching certificate
+        /// Parses the given certificate path, searches in certificate store and returns a matching certificate's private key
         /// </summary>
         /// <param name="keyPath">
         /// Certificate key path. Format of the path is [LocalMachine|CurrentUser]/[storename]/thumbprint
         /// </param>
         /// <param name="isSystemOp"></param>
-        /// <returns>Returns the certificate identified by the certificate path</returns>
-        private X509Certificate2 GetCertificateByPath(string keyPath, bool isSystemOp)
+        /// <returns>Returns the private key of the certificate identified by the certificate path</returns>
+        private RSA GetCertificatePrivateKeyByPath(string keyPath, bool isSystemOp)
         {
             Debug.Assert(!string.IsNullOrEmpty(keyPath));
 
@@ -423,106 +421,85 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Find the certificate and return
-            return GetCertificate(storeLocation, storeName, keyPath, thumbprint, isSystemOp);
+            return GetCertificatePrivateKey(storeLocation, storeName, keyPath, thumbprint, isSystemOp);
         }
 
         /// <summary>
-        /// Searches for a certificate in certificate store and returns the matching certificate
+        /// Searches for a certificate in certificate store and returns the matching certificate's private key
         /// </summary>
         /// <param name="storeLocation">Store Location: This can be one of LocalMachine or UserName</param>
         /// <param name="storeName">Store Location: Currently this can only be My store.</param>
         /// <param name="masterKeyPath"></param>
         /// <param name="thumbprint">Certificate thumbprint</param>
         /// <param name="isSystemOp"></param>
-        /// <returns>Matching certificate</returns>
-        private X509Certificate2 GetCertificate(StoreLocation storeLocation, StoreName storeName, string masterKeyPath, string thumbprint, bool isSystemOp)
+        /// <returns>Matching certificate's private key</returns>
+        private static RSA GetCertificatePrivateKey(StoreLocation storeLocation, StoreName storeName, string masterKeyPath, string thumbprint, bool isSystemOp)
         {
             // Open specified certificate store
-            X509Store certificateStore = null;
+            using X509Store certificateStore = new(storeName, storeLocation);
+            certificateStore.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
 
-            try
+            // Search for the specified certificate
+            X509Certificate2Collection matchingCertificates =
+                        certificateStore.Certificates.Find(X509FindType.FindByThumbprint,
+                        thumbprint,
+                        false);
+
+            // Throw an exception if a cert with the specified thumbprint is not found
+            if (matchingCertificates == null || matchingCertificates.Count == 0)
             {
-                certificateStore = new X509Store(storeName, storeLocation);
-                certificateStore.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
-
-                // Search for the specified certificate
-                X509Certificate2Collection matchingCertificates =
-                            certificateStore.Certificates.Find(X509FindType.FindByThumbprint,
-                            thumbprint,
-                            false);
-
-                // Throw an exception if a cert with the specified thumbprint is not found
-                if (matchingCertificates == null || matchingCertificates.Count == 0)
-                {
-                    throw SQL.CertificateNotFound(thumbprint, storeName.ToString(), storeLocation.ToString(), isSystemOp);
-                }
-
-                X509Certificate2 certificate = matchingCertificates[0];
-                if (!certificate.HasPrivateKey)
-                {
-                    // ensure the certificate has private key
-                    throw SQL.CertificateWithNoPrivateKey(masterKeyPath, isSystemOp);
-                }
-
-                // return the matching certificate
-                return certificate;
+                throw SQL.CertificateNotFound(thumbprint, storeName.ToString(), storeLocation.ToString(), isSystemOp);
             }
-            finally
+
+            using X509Certificate2 certificate = matchingCertificates[0];
+            if (!certificate.HasPrivateKey)
             {
-                // Close the certificate store
-                certificateStore?.Close();
+                // Ensure the certificate has private key
+                throw SQL.CertificateWithNoPrivateKey(masterKeyPath, isSystemOp);
             }
+
+            // Return the matching certificate's private key
+            return certificate.GetRSAPrivateKey()
+                ?? throw SQL.CertificateWithNoPrivateKey(masterKeyPath, isSystemOp);
         }
 
         /// <summary>
-        /// Encrypt the text using specified certificate.
+        /// Encrypt the text using specified RSA key.
         /// </summary>
         /// <param name="plainText">Text to encrypt.</param>
-        /// <param name="certificate">Certificate object.</param>
+        /// <param name="rsa">RSA key.</param>
         /// <returns>Returns an encrypted blob or throws an exception if there are any errors.</returns>
-        private byte[] RSAEncrypt(byte[] plainText, X509Certificate2 certificate)
+        private byte[] RSAEncrypt(byte[] plainText, RSA rsa)
         {
             Debug.Assert(plainText != null);
-            Debug.Assert(certificate != null);
-            Debug.Assert(certificate.HasPrivateKey, "Attempting to encrypt with cert without privatekey");
-
-            RSA rsa = certificate.GetRSAPublicKey();
             
             // CodeQL [SM03796] Required for an external standard: Always Encrypted only supports encrypting column encryption keys with RSA_OAEP(SHA1) (https://learn.microsoft.com/en-us/sql/t-sql/statements/create-column-encryption-key-transact-sql?view=sql-server-ver16)
             return rsa.Encrypt(plainText, RSAEncryptionPadding.OaepSHA1);
         }
 
         /// <summary>
-        /// Decrypt the data using specified certificate.
+        /// Decrypt the data using specified RSA key.
         /// </summary>
         /// <param name="cipherText">Text to decrypt.</param>
-        /// <param name="certificate">Certificate object.</param>
+        /// <param name="rsa">RSA key.</param>
         /// <returns>Returns a decrypted blob or throws an exception if there are any errors.</returns>
-        private byte[] RSADecrypt(byte[] cipherText, X509Certificate2 certificate)
+        private byte[] RSADecrypt(byte[] cipherText, RSA rsa)
         {
             Debug.Assert((cipherText != null) && (cipherText.Length != 0));
-            Debug.Assert(certificate != null);
-            Debug.Assert(certificate.HasPrivateKey, "Attempting to decrypt with cert without privatekey");
-
-            RSA rsa = certificate.GetRSAPrivateKey();
             
             // CodeQL [SM03796] Required for an external standard: Always Encrypted only supports encrypting column encryption keys with RSA_OAEP(SHA1) (https://learn.microsoft.com/en-us/sql/t-sql/statements/create-column-encryption-key-transact-sql?view=sql-server-ver16)
             return rsa.Decrypt(cipherText, RSAEncryptionPadding.OaepSHA1);
         }
 
         /// <summary>
-        /// Generates signature based on RSA PKCS#v1.5 scheme using a specified certificate. 
+        /// Generates signature based on RSA PKCS#v1.5 scheme using a specified RSA key. 
         /// </summary>
         /// <param name="dataToSign">Text to sign.</param>
-        /// <param name="certificate">Certificate object.</param>
+        /// <param name="rsa">RSA key.</param>
         /// <returns>Signature</returns>
-        private byte[] RSASignHashedData(byte[] dataToSign, X509Certificate2 certificate)
+        private byte[] RSASignHashedData(byte[] dataToSign, RSA rsa)
         {
             Debug.Assert((dataToSign != null) && (dataToSign.Length != 0));
-            Debug.Assert(certificate != null);
-            Debug.Assert(certificate.HasPrivateKey, "Attempting to sign with cert without privatekey");
-
-            RSA rsa = certificate.GetRSAPrivateKey();
 
             // Prepare RSAPKCS1SignatureFormatter for signing the passed in hash
             RSAPKCS1SignatureFormatter rsaFormatter = new RSAPKCS1SignatureFormatter(rsa);
@@ -538,16 +515,12 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="dataToVerify"></param>
         /// <param name="signature"></param>
-        /// <param name="certificate"></param>
+        /// <param name="rsa"></param>
         /// <returns>true if signature is valid, false if it is not valid</returns>
-        private bool RSAVerifySignature(byte[] dataToVerify, byte[] signature, X509Certificate2 certificate)
+        private bool RSAVerifySignature(byte[] dataToVerify, byte[] signature, RSA rsa)
         {
             Debug.Assert((dataToVerify != null) && (dataToVerify.Length != 0));
             Debug.Assert((signature != null) && (signature.Length != 0));
-            Debug.Assert(certificate != null);
-            Debug.Assert(certificate.HasPrivateKey, "Attempting to sign with cert without privatekey");
-
-            RSA rsa = certificate.GetRSAPrivateKey();
 
             // Prepare RSAPKCS1SignatureFormatter for signing the passed in hash
             RSAPKCS1SignatureDeformatter rsaDeFormatter = new RSAPKCS1SignatureDeformatter(rsa);
