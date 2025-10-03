@@ -143,10 +143,12 @@
     <Compile Include="SQL\SqlBulkCopyTest\CopyWithEventAsync.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\FireTrigger.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Helpers.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\HiddenTargetColumn.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\MissingTargetColumn.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\MissingTargetColumns.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\MissingTargetTable.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\SqlBulkCopyTest.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\SqlGraphTables.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\TestBulkCopyWithUTF8.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Transaction.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Transaction1.cs" />
