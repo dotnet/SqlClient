@@ -109,7 +109,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static Task CreateContinuationTask<T1, T2>(Task task, Action<T1, T2> onSuccess, T1 arg1, T2 arg2, SqlInternalConnectionTds connectionToDoom = null, Action<Exception> onFailure = null)
+        internal static Task CreateContinuationTask<T1, T2>(
+            Task task,
+            Action<T1, T2> onSuccess,
+            T1 arg1,
+            T2 arg2,
+            Action<Exception> onFailure = null)
         {
             return CreateContinuationTask(task, () => onSuccess(arg1, arg2), onFailure);
         }
