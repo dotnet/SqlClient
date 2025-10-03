@@ -180,12 +180,7 @@ namespace Microsoft.Data.SqlClient
             Action<object> onSuccess,
             Action<Exception, object> onFailure = null,
             Action<object> onCancellation = null,
-#if NET
-            Func<Exception, Exception> exceptionConverter = null
-#else
-            Func<Exception, object, Exception> exceptionConverter = null
-#endif
-        )
+            Func<Exception, Exception> exceptionConverter = null)
         {
             task.ContinueWith(
                 (Task tsk, object state2) =>
@@ -195,12 +190,9 @@ namespace Microsoft.Data.SqlClient
                         Exception exc = tsk.Exception.InnerException;
                         if (exceptionConverter != null)
                         {
-                            exc = exceptionConverter(exc
-#if NETFRAMEWORK
-                                , state2
-#endif
-                                );
+                            exc = exceptionConverter(exc);
                         }
+
                         try
                         {
                             onFailure?.Invoke(exc, state2);
