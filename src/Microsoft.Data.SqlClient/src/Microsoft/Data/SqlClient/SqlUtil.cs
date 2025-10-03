@@ -234,9 +234,6 @@ namespace Microsoft.Data.SqlClient
             SqlConnection connectionToAbort = null
         )
         {
-#if NETFRAMEWORK
-            Debug.Assert((connectionToAbort == null) || (connectionToDoom == null), "Should not specify both connectionToDoom and connectionToAbort");
-#endif
             task.ContinueWith(
                 (Task tsk, object state2) =>
                 {
@@ -271,24 +268,13 @@ namespace Microsoft.Data.SqlClient
                             completion.TrySetCanceled();
                         }
                     }
-                    else if (connectionToDoom != null || connectionToAbort != null)
-                    {
-                        try
-                        {
-                            onSuccess(state2);
-                        }
-                        // @TODO: CER Exception Handling was removed here (see GH#3581)
-                        catch (Exception e)
-                        {
-                            completion.SetException(e);
-                        }
-                    }
                     else
                     {
                         try
                         {
                             onSuccess(state2);
                         }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
                         catch (Exception e)
                         {
                             completion.SetException(e);
