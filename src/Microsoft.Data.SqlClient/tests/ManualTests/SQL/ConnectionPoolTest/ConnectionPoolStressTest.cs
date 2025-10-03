@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // Reflection fields for accessing internal connection properties
         private readonly FieldInfo? _internalConnectionField;
 
-        internal ConnectionPoolStressTest()
+        public ConnectionPoolStressTest()
         {
             try
             {
