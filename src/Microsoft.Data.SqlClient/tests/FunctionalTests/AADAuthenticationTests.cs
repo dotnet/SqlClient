@@ -6,6 +6,7 @@ using System;
 using System.Security;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.FunctionalTests.DataCommon;
+using Microsoft.Identity.Client;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
