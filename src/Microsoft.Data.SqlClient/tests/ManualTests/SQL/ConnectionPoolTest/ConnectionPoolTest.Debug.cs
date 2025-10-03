@@ -46,7 +46,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         // One task should have a timeout exception
                         if ((!taskWithCorrectException) && (item.Exception.InnerException is InvalidOperationException) && (item.Exception.InnerException.Message.StartsWith(SystemDataResourceManager.Instance.ADP_PooledOpenTimeout)))
+                        {
                             taskWithCorrectException = true;
+                        }
                         else if (!taskWithCorrectException)
                         {
                             // Rethrow the unknown exception
@@ -60,13 +62,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         if (item.Result.Equals(liveConnectionInternal))
                         {
                             if (!taskWithLiveConnection)
+                            {
                                 taskWithLiveConnection = true;
+                            }
                         }
                         else if (!item.Result.Equals(deadConnectionInternal) && !taskWithNewConnection)
+                        {
                             taskWithNewConnection = true;
+                        }
                     }
                     else
+                    {
                         Console.WriteLine("ERROR: Task in unknown state: {0}", item.Status);
+                    }
                 }
             });
 

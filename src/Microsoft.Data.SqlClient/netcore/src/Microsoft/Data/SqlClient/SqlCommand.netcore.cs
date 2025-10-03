@@ -212,7 +212,9 @@ namespace Microsoft.Data.SqlClient
                 if (!parser.MARSOn)
                 {
                     if (activeConnection.AsyncCommandInProgress)
+                    {
                         throw SQL.MARSUnsupportedOnConnection();
+                    }
                 }
                 _cachedAsyncConnection = activeConnection;
 
@@ -3066,7 +3068,9 @@ namespace Microsoft.Data.SqlClient
 
             string enclaveType = this._activeConnection.Parser.EnclaveType;
             if (string.IsNullOrWhiteSpace(enclaveType))
+            {
                 throw SQL.EnclaveTypeNullForEnclaveBasedQuery();
+            }
 
             SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
             if (attestationProtocol == SqlConnectionAttestationProtocol.NotSpecified)
@@ -4043,10 +4047,15 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
+
             if (foundParam)
+            {
                 return thisParam;
+            }
             else
+            {
                 return null;
+            }
         }
 
         private void GetRPCObject(int systemParamCount, int userParamCount, ref _SqlRPC rpc, bool forSpDescribeParameterEncryption = false)
@@ -4507,7 +4516,9 @@ namespace Microsoft.Data.SqlClient
                 sqlParam.Validate(i, CommandType.StoredProcedure == CommandType);
                 // skip ReturnValue parameters; we never send them to the server
                 if (!ShouldSendParameter(sqlParam, includeReturnValue))
+                {
                     continue;
+                }
 
                 // add our separator for the ith parameter
                 if (fAddSeparator)
@@ -4529,7 +4540,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     string fullTypeName = sqlParam.UdtTypeName;
                     if (string.IsNullOrEmpty(fullTypeName))
+                    {
                         throw SQL.MustSetUdtTypeNameForUdtParams();
+                    }
 
                     paramList.Append(ParseAndQuoteIdentifier(fullTypeName, true /* is UdtTypeName */));
                 }
@@ -4625,14 +4638,18 @@ namespace Microsoft.Data.SqlClient
                             int actualBytes = parser.GetEncodingCharLength(s, sqlParam.GetActualSize(), sqlParam.Offset, null);
                             // if actual number of bytes is greater than the user given number of chars, use actual bytes
                             if (actualBytes > size)
+                            {
                                 size = actualBytes;
+                            }
                         }
                     }
 
                     // If the user specifies a 0-sized parameter for a variable len field
                     // pass over max size (8000 bytes or 4000 characters for wide types)
                     if (0 == size)
+                    {
                         size = mt.IsSizeInCharacters ? (TdsEnums.MAXSIZE >> 1) : TdsEnums.MAXSIZE;
+                    }
 
                     paramList.Append(size);
                     paramList.Append(')');

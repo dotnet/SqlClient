@@ -49,7 +49,9 @@ namespace System.Buffers
         public ArrayBufferWriter(int initialCapacity)
         {
             if (initialCapacity <= 0)
+            {
                 throw new ArgumentException(null, nameof(initialCapacity));
+            }
 
             _buffer = new T[initialCapacity];
             _index = 0;
@@ -129,10 +131,14 @@ namespace System.Buffers
         public void Advance(int count)
         {
             if (count < 0)
+            {
                 throw new ArgumentException(null, nameof(count));
+            }
 
             if (_index > _buffer.Length - count)
+            {
                 ThrowInvalidOperationException_AdvancedTooFar(_buffer.Length);
+            }
 
             _index += count;
         }
@@ -204,7 +210,9 @@ namespace System.Buffers
         private void CheckAndResizeBuffer(int sizeHint)
         {
             if (sizeHint < 0)
+            {
                 throw new ArgumentException(nameof(sizeHint));
+            }
 
             if (sizeHint == 0)
             {

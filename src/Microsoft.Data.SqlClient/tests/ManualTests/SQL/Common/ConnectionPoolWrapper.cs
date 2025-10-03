@@ -20,13 +20,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public ConnectionPoolWrapper(SqlConnection connection)
         {
             if (connection == null)
+            {
                 throw new ArgumentNullException(nameof(connection));
+            }
 
             _connectionPool = ConnectionHelper.GetConnectionPool(connection.GetInternalConnection());
             ConnectionString = connection.ConnectionString;
 
             if (_connectionPool == null)
+            {
                 throw new ArgumentException("Provided connection does not have a connection pool", "connection");
+            }
         }
 
         /// <summary>
@@ -37,12 +41,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public ConnectionPoolWrapper(string connectionString)
         {
             if (connectionString == null)
+            {
                 throw new ArgumentNullException(nameof(connectionString));
+            }
 
             ConnectionString = connectionString;
             _connectionPool = ConnectionPoolHelper.ConnectionPoolFromString(connectionString);
             if (_connectionPool == null)
+            {
                 throw new ArgumentException("No pool exists for the provided connection string", "connectionString");
+            }
         }
 
         /// <summary>
@@ -55,7 +63,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ConnectionString = connectionString;
 
             if (_connectionPool == null)
+            {
                 throw new ArgumentException("Provided internal connection does not have a connection pool", "internalConnection");
+            }
         }
 
         private ConnectionPoolWrapper()
@@ -105,7 +115,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public bool ContainsConnection(SqlConnection connection)
         {
             if (connection == null)
+            {
                 throw new ArgumentNullException(nameof(connection));
+            }
 
             return (_connectionPool == ConnectionHelper.GetConnectionPool(connection.GetInternalConnection()));
         }

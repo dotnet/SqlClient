@@ -215,7 +215,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     string spInsertCustomerNoBrackets = spInsertCustomer;
                     if (spInsertCustomer.StartsWith("[", StringComparison.Ordinal) && spInsertCustomer.EndsWith("]", StringComparison.Ordinal))
+                    {
                         spInsertCustomerNoBrackets = spInsertCustomer.Substring(1, spInsertCustomer.Length - 2);
+                    }
+
                     string errorMsg = "Procedure or function '" + spInsertCustomerNoBrackets + "' expects parameter '@addr', which was not supplied.";
 
                     DataTestUtility.AssertThrowsWrapper<SqlException>(

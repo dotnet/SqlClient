@@ -65,7 +65,9 @@ public class Point : INullable, IBinarySerialize
     public void FillFromBytesInternal(byte[] data)
     {
         if (data.Length != 9)
+        {
             throw new ArgumentException();
+        }
 
         x = BitConverter.ToInt32(data, 0);
         y = BitConverter.ToInt32(data, 4);
@@ -91,7 +93,9 @@ public class Point : INullable, IBinarySerialize
         if (fIsNull)
         {
             if (value.IsNull)
+            {
                 return;
+            }
             else
             {
                 value.SetNull();
@@ -107,7 +111,10 @@ public class Point : INullable, IBinarySerialize
 
         int i;
         for (i = 0; i < bigbytes.Length; i++)
+        {
             value[i] = bigbytes[i];
+        }
+
         value.SetLength(i);
 
         return;
@@ -120,7 +127,10 @@ public class Point : INullable, IBinarySerialize
         int y;
 
         if (array.Length != 2)
+        {
             throw new ArgumentException();
+        }
+
         x = int.Parse(array[0]);
         y = int.Parse(array[1]);
 

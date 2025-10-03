@@ -48,7 +48,9 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             var resourceName = binder.Name;
             if (resourceName.StartsWith("Get_", StringComparison.Ordinal))
+            {
                 resourceName = resourceName.Remove(0, 4);
+            }
 
             return TryGetResourceValue(resourceName, args, out result);
         }

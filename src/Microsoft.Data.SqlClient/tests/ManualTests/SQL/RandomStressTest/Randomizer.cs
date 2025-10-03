@@ -68,7 +68,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public override string ToString()
             {
                 if (_binState == null && _randomizerType == null)
+                {
                     return string.Empty;
+                }
 
                 return string.Format("{0}{1}{2}", _randomizerType.FullName, Separator, Convert.ToBase64String(_binState));
             }
@@ -79,7 +81,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public static State Parse(string strState)
             {
                 if (string.IsNullOrEmpty(strState))
+                {
                     return State.Empty;
+                }
 
                 string[] items = strState.Split(new char[] { Separator }, 2);
                 return new State(
@@ -184,7 +188,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private void Deserialize(State state)
         {
             if (state._randomizerType != GetType())
+            {
                 throw new ArgumentException("Type mismatch!");
+            }
 
             Deserialize(state._binState, out _);
         }
@@ -198,9 +204,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         protected internal virtual void Deserialize(byte[] binState, out int nextOffset)
         {
             if (binState == null)
+            {
                 throw new ArgumentNullException("empty state should not be used to create an instance of randomizer!");
+            }
+
             if (binState.Length != BinaryStateSize)
+            {
                 throw new ArgumentNullException("wrong size of the state binary data");
+            }
 
             nextOffset = 0;
             _inext = DeserializeInt(binState, ref nextOffset);
@@ -298,7 +309,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 _seedArray[ii] = mk;
                 mk = mj - mk;
                 if (mk < 0)
+                {
                     mk += MBIG;
+                }
+
                 mj = _seedArray[ii];
             }
             for (int k = 1; k < 5; k++)
@@ -307,7 +321,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     _seedArray[i] -= _seedArray[1 + (i + 30) % 55];
                     if (_seedArray[i] < 0)
+                    {
                         _seedArray[i] += MBIG;
+                    }
                 }
             }
             _inext = 0;
@@ -339,16 +355,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int locINextp = _inextp;
 
             if (++locINext >= 56)
+            {
                 locINext = 1;
+            }
+
             if (++locINextp >= 56)
+            {
                 locINextp = 1;
+            }
 
             retVal = _seedArray[locINext] - _seedArray[locINextp];
 
             if (retVal == MBIG)
+            {
                 retVal--;
+            }
+
             if (retVal < 0)
+            {
                 retVal += MBIG;
+            }
 
             _seedArray[locINext] = retVal;
 
@@ -454,7 +480,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public virtual void NextBytes(byte[] buffer)
         {
             if (buffer == null)
+            {
                 throw new ArgumentNullException(nameof(buffer));
+            }
+
             for (int i = 0; i < buffer.Length; i++)
             {
                 buffer[i] = (byte)(InternalSample() % (byte.MaxValue + 1));

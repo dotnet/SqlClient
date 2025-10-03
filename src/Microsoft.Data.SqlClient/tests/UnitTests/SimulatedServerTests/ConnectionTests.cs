@@ -587,9 +587,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 // Restore saved cultures if necessary
                 if (Thread.CurrentThread.CurrentCulture != savedCulture)
+                {
                     Thread.CurrentThread.CurrentCulture = savedCulture;
+                }
+
                 if (Thread.CurrentThread.CurrentUICulture != savedUICulture)
+                {
                     Thread.CurrentThread.CurrentUICulture = savedUICulture;
+                }
             }
         }
 

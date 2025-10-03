@@ -49,9 +49,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using WindowsIdentity identity = WindowsIdentity.GetCurrent();
                 WindowsPrincipal principal = new(identity);
                 if (principal.IsInRole(WindowsBuiltInRole.Administrator))
+                {
                     s_windowsAdmin = true;
+                }
                 else
+                {
                     s_windowsAdmin = false;
+                }
             }
 
             if (!Directory.Exists(s_fullPathToClientCert))

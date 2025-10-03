@@ -1637,11 +1637,17 @@ namespace Microsoft.Data.SqlClient.Server
             if (typeCode == ExtendedClrTypeCode.DateTime)
             {
                 if (storageType == SqlBuffer.StorageType.DateTime2)
+                {
                     SetDateTime2_Checked(setters, ordinal, metaData, (DateTime)value);
+                }
                 else if (storageType == SqlBuffer.StorageType.Date)
+                {
                     SetDate_Checked(setters, ordinal, metaData, (DateTime)value);
+                }
                 else
+                {
                     SetDateTime_Checked(setters, ordinal, metaData, (DateTime)value);
+                }
             }
             else
             {
