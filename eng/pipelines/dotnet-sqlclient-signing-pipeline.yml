@@ -8,7 +8,7 @@ name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 trigger:
   branches:
     include:
-    - internal/main
+    - internal/release/6.0
   paths:
     include:
     - src
@@ -21,18 +21,12 @@ trigger:
     - '*.sh'
 
 schedules:
-- cron: '30 4 * * Mon'
-  displayName: Weekly Sunday 9:30 PM (UTC - 7) Build
+- cron: '0 5 * * Mon'
+  displayName: Weekly Sunday 10:00 PM (UTC - 7) Build
   branches:
     include:
-    - internal/main
+    - internal/release/6.0
   always: true
-
-- cron: '30 3 * * Mon-Fri'
-  displayName: Mon-Fri 8:30 PM (UTC - 7) Build
-  branches:
-    include:
-    - internal/main
 
 parameters: # parameters are shown up in ADO UI in a build queue time
 - name: 'debug'

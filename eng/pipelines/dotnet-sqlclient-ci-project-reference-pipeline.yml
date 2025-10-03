@@ -21,10 +21,11 @@ trigger:
     - Nuget.config
 
 schedules:
-- cron: '0 5 * * Fri'
-  displayName: Weekly Thursday 10:00 PM (UTC - 7) Build
+- cron: '0 5 * * Sat'
+  displayName: Weekly Friday 10:00 PM (UTC - 7) Build
   branches:
     include:
+    - release/6.0
     - internal/release/6.0
   always: true
 
