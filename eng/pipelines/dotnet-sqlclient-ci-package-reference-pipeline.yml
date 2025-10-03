@@ -9,8 +9,8 @@ trigger:
   batch: true
   branches:
     include:
-    - main
-    - internal/main
+    - release/6.1
+    - internal/release/6.1
   paths:
     include:
     - src\Microsoft.Data.SqlClient\netcore\ref
@@ -22,18 +22,11 @@ trigger:
     - Nuget.config
 
 schedules:
-- cron: '0 4 * * Fri'
-  displayName: Weekly Thursday 9:00 PM (UTC - 7) Build
+- cron: '0 5 * * Sun'
+  displayName: Weekly Saturday 10:00 PM (UTC - 7) Build
   branches:
     include:
-    - internal/main
-  always: true
-
-- cron: '0 0 * * Mon-Fri'
-  displayName: Daily build 5:00 PM (UTC - 7) Build
-  branches:
-    include:
-    - main
+    - internal/release/6.1
   always: true
 
 parameters: # parameters are shown up in ADO UI in a build queue time
