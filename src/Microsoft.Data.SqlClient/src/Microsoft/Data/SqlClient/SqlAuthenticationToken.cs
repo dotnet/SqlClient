@@ -20,7 +20,9 @@ namespace Microsoft.Data.SqlClient
         public SqlAuthenticationToken(string accessToken, DateTimeOffset expiresOn)
         {
             if (string.IsNullOrEmpty(accessToken))
+            {
                 throw SQL.ParameterCannotBeEmpty("AccessToken");
+            }
 
             AccessToken = accessToken;
             ExpiresOn = expiresOn;

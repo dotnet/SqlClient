@@ -996,6 +996,9 @@
     <Compile Include="$(CommonSourceRoot)System\Buffers\ArrayBufferWriter.netfx.cs">
       <Link>System\Buffers\ArrayBufferWriter.netfx.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)System\Diagnostics\CodeAnalysis.cs">
+      <Link>System\Diagnostics\CodeAnalysis.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)System\IO\StreamExtensions.netfx.cs">
       <Link>System\IO\StreamExtensions.netfx.cs</Link>
     </Compile>

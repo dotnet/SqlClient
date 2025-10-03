@@ -205,28 +205,47 @@ namespace Microsoft.Data.SqlClient.Server
                 {
                     case SqlDbType.BigInt:
                         if (value.GetType() == typeof(long))
+                        {
                             extendedCode = ExtendedClrTypeCode.Int64;
+                        }
                         else if (value.GetType() == typeof(SqlInt64))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlInt64;
+                        }
+
                         break;
                     case SqlDbType.Binary:
                     case SqlDbType.VarBinary:
                     case SqlDbType.Image:
                     case SqlDbType.Timestamp:
                         if (value.GetType() == typeof(byte[]))
+                        {
                             extendedCode = ExtendedClrTypeCode.ByteArray;
+                        }
                         else if (value.GetType() == typeof(SqlBinary))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlBinary;
+                        }
                         else if (value.GetType() == typeof(SqlBytes))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlBytes;
+                        }
                         else if (value.GetType() == typeof(StreamDataFeed))
+                        {
                             extendedCode = ExtendedClrTypeCode.Stream;
+                        }
+
                         break;
                     case SqlDbType.Bit:
                         if (value.GetType() == typeof(bool))
+                        {
                             extendedCode = ExtendedClrTypeCode.Boolean;
+                        }
                         else if (value.GetType() == typeof(SqlBoolean))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlBoolean;
+                        }
+
                         break;
                     case SqlDbType.Char:
                     case SqlDbType.NChar:
@@ -235,26 +254,46 @@ namespace Microsoft.Data.SqlClient.Server
                     case SqlDbType.Text:
                     case SqlDbType.VarChar:
                         if (value.GetType() == typeof(string))
+                        {
                             extendedCode = ExtendedClrTypeCode.String;
+                        }
+
                         if (value.GetType() == typeof(TextDataFeed))
+                        {
                             extendedCode = ExtendedClrTypeCode.TextReader;
+                        }
                         else if (value.GetType() == typeof(SqlString))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlString;
+                        }
                         else if (value.GetType() == typeof(char[]))
+                        {
                             extendedCode = ExtendedClrTypeCode.CharArray;
+                        }
                         else if (value.GetType() == typeof(SqlChars))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlChars;
+                        }
                         else if (value.GetType() == typeof(char))
+                        {
                             extendedCode = ExtendedClrTypeCode.Char;
+                        }
+
                         break;
                     case SqlDbType.Date:
 #if NET
                         if (value.GetType() == typeof(DateOnly))
+                        {
                             extendedCode = ExtendedClrTypeCode.DateOnly;
+                        }
                         else if (value.GetType() == typeof(DateTime))
+                        {
                             extendedCode = ExtendedClrTypeCode.DateTime;
+                        }
                         else if (value.GetType() == typeof(SqlDateTime))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlDateTime;
+                        }
 
                         break;
 #endif
@@ -262,58 +301,103 @@ namespace Microsoft.Data.SqlClient.Server
                     case SqlDbType.DateTime2:
                     case SqlDbType.SmallDateTime:
                         if (value.GetType() == typeof(DateTime))
+                        {
                             extendedCode = ExtendedClrTypeCode.DateTime;
+                        }
                         else if (value.GetType() == typeof(SqlDateTime))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlDateTime;
+                        }
+
                         break;
                     case SqlDbType.Decimal:
                         if (value.GetType() == typeof(decimal))
+                        {
                             extendedCode = ExtendedClrTypeCode.Decimal;
+                        }
                         else if (value.GetType() == typeof(SqlDecimal))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlDecimal;
+                        }
+
                         break;
                     case SqlDbType.Real:
                         if (value.GetType() == typeof(float))
+                        {
                             extendedCode = ExtendedClrTypeCode.Single;
+                        }
                         else if (value.GetType() == typeof(SqlSingle))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlSingle;
+                        }
+
                         break;
                     case SqlDbType.Int:
                         if (value.GetType() == typeof(int))
+                        {
                             extendedCode = ExtendedClrTypeCode.Int32;
+                        }
                         else if (value.GetType() == typeof(SqlInt32))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlInt32;
+                        }
+
                         break;
                     case SqlDbType.Money:
                     case SqlDbType.SmallMoney:
                         if (value.GetType() == typeof(SqlMoney))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlMoney;
+                        }
                         else if (value.GetType() == typeof(decimal))
+                        {
                             extendedCode = ExtendedClrTypeCode.Decimal;
+                        }
+
                         break;
                     case SqlDbType.Float:
                         if (value.GetType() == typeof(SqlDouble))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlDouble;
+                        }
                         else if (value.GetType() == typeof(double))
+                        {
                             extendedCode = ExtendedClrTypeCode.Double;
+                        }
+
                         break;
                     case SqlDbType.UniqueIdentifier:
                         if (value.GetType() == typeof(SqlGuid))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlGuid;
+                        }
                         else if (value.GetType() == typeof(Guid))
+                        {
                             extendedCode = ExtendedClrTypeCode.Guid;
+                        }
+
                         break;
                     case SqlDbType.SmallInt:
                         if (value.GetType() == typeof(short))
+                        {
                             extendedCode = ExtendedClrTypeCode.Int16;
+                        }
                         else if (value.GetType() == typeof(SqlInt16))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlInt16;
+                        }
+
                         break;
                     case SqlDbType.TinyInt:
                         if (value.GetType() == typeof(byte))
+                        {
                             extendedCode = ExtendedClrTypeCode.Byte;
+                        }
                         else if (value.GetType() == typeof(SqlByte))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlByte;
+                        }
+
                         break;
                     case SqlDbType.Variant:
                         // SqlDbType doesn't help us here, call general-purpose function
@@ -340,27 +424,46 @@ namespace Microsoft.Data.SqlClient.Server
 #if NET
                     case SqlDbType.Time:
                         if (value.GetType() == typeof(TimeOnly))
+                        {
                             extendedCode = ExtendedClrTypeCode.TimeOnly;
+                        }
                         else if (value.GetType() == typeof(TimeSpan))
+                        {
                             extendedCode = ExtendedClrTypeCode.TimeSpan;
+                        }
+
                         break;
 #else
                     case SqlDbType.Time:
                         if (value.GetType() == typeof(TimeSpan))
+                        {
                             extendedCode = ExtendedClrTypeCode.TimeSpan;
+                        }
+
                         break;
 #endif
                     case SqlDbType.DateTimeOffset:
                         if (value.GetType() == typeof(DateTimeOffset))
+                        {
                             extendedCode = ExtendedClrTypeCode.DateTimeOffset;
+                        }
+
                         break;
                     case SqlDbType.Xml:
                         if (value.GetType() == typeof(SqlXml))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlXml;
+                        }
+
                         if (value.GetType() == typeof(XmlDataFeed))
+                        {
                             extendedCode = ExtendedClrTypeCode.XmlReader;
+                        }
                         else if (value.GetType() == typeof(string))
+                        {
                             extendedCode = ExtendedClrTypeCode.String;
+                        }
+
                         break;
                     case SqlDbType.Structured:
                         if (isMultiValued)

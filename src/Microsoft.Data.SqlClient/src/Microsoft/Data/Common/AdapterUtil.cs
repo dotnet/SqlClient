@@ -622,7 +622,9 @@ namespace Microsoft.Data.Common
             foreach (Delegate del in mcd?.GetInvocationList())
             {
                 if (del.Target is DbCommandBuilder)
+                {
                     return del;
+                }
             }
 
             return null;

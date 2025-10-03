@@ -4080,32 +4080,17 @@
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
     <value>指定的已加密列加密密钥的已加密文本长度 {0} 与使用“{2}”中的列主密钥(证书)时的已加密文本长度 {1} 不一致。可能是因为已加密列加密密钥已损坏，或指定的证书路径有误。</value>
   </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
-    <value>使用 {2} 中的列主密钥(非对称密钥)时，指定的已加密列加密密钥的已加密文本长度 {0} 与已加密文本长度 {1} 不匹配。已加密列加密密钥可能已损坏，或指定的 Microsoft 加密服务提供程序(CSP)路径可能不正确。</value>
-  </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCng" xml:space="preserve">
-    <value>使用 {2} 中的列主密钥(非对称密钥)时，指定的已加密列加密密钥的已加密文本长度 {0} 与已加密文本长度 {1} 不匹配。已加密列加密密钥可能已损坏，或指定的 Microsoft API 下一代加密技术(CNG)提供程序路径可能不正确。</value>
-  </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
     <value>指定的已加密列加密密钥的签名长度 {0} 与使用“{3}”中的列主密钥({2})时的签名长度 {1} 不一致。已加密列加密密钥可能已损坏，或者指定的 {4} 路径可能不正确。</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
     <value>指定的已加密列加密密钥的签名长度 {0} 与使用“{2}”中的列主密钥(证书)时的签名长度 {1} 不一致。可能是因为已加密列加密密钥已损坏，或指定的证书路径有误。</value>
   </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
-    <value>使用 {2} 中的列主密钥(非对称密钥)时，指定的已加密列加密密钥的签名长度 {0} 与签名长度 {1} 不匹配。已加密列加密密钥可能已损坏，或指定的 Microsoft 加密服务提供程序(CSP)路径可能不正确。</value>
-  </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
-    <value>使用 {2} 中的列主密钥(非对称密钥)时，指定的已加密列加密密钥的签名长度 {0} 与签名长度 {1} 不匹配。已加密列加密密钥可能已损坏，或指定的 Microsoft API 下一代加密技术(CNG)提供程序路径可能不正确。</value>
-  </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
     <value>指定的已加密列加密密钥签名与使用“{1}”中的列主密钥({0})计算得出的签名不一致。已加密列加密密钥可能已损坏，或者指定的路径可能不正确。</value>
   </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>指定的加密列的加密密钥签名与“{0}”中使用的列的主密钥(证书)计算的签名不匹配。加密列的加密密钥可能已损坏，或指定的证书路径可能不正确。</value>
-  </data>
-  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
-    <value>指定的已加密列加密密钥签名与使用“{0}”中的列主密钥(非对称密钥)计算得出的签名不一致。已加密列加密密钥可能已损坏，或者指定的路径可能不正确。</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>密钥路径“{0}”中指定的证书没有用于加密列加密密钥的私钥。验证证书是否正确导入。</value>

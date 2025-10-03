@@ -4152,7 +4152,9 @@ namespace Microsoft.Data.SqlClient
                                 _parser.Disconnect();
                             }
                             else
+                            {
                                 fail = true; // We aren't yet logged in - just fail.
+                            }
                         }
                     }
                 }

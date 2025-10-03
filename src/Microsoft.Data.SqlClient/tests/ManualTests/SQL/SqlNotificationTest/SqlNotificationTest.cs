@@ -59,9 +59,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // just change something that doesn't impact the dependency dispatcher
             if (cb.ShouldSerialize("connect timeout"))
+            {
                 cb.ConnectTimeout = cb.ConnectTimeout + 1;
+            }
             else
+            {
                 cb.ConnectTimeout = 50;
+            }
 
             Assert.True(SqlDependency.Start(_startConnectionString), "Failed to start listener.");
 

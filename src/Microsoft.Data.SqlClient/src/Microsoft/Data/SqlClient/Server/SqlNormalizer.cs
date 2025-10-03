@@ -150,27 +150,49 @@ namespace Microsoft.Data.SqlClient.Server
             if (t.IsPrimitive)
             {
                 if (t == typeof(byte))
+                {
                     n = new ByteNormalizer();
+                }
                 else if (t == typeof(sbyte))
+                {
                     n = new SByteNormalizer();
+                }
                 else if (t == typeof(bool))
+                {
                     n = new BooleanNormalizer();
+                }
                 else if (t == typeof(short))
+                {
                     n = new ShortNormalizer();
+                }
                 else if (t == typeof(ushort))
+                {
                     n = new UShortNormalizer();
+                }
                 else if (t == typeof(int))
+                {
                     n = new IntNormalizer();
+                }
                 else if (t == typeof(uint))
+                {
                     n = new UIntNormalizer();
+                }
                 else if (t == typeof(float))
+                {
                     n = new FloatNormalizer();
+                }
                 else if (t == typeof(double))
+                {
                     n = new DoubleNormalizer();
+                }
                 else if (t == typeof(long))
+                {
                     n = new LongNormalizer();
+                }
                 else if (t == typeof(ulong))
+                {
                     n = new ULongNormalizer();
+                }
             }
             else if (t.IsValueType)
             {

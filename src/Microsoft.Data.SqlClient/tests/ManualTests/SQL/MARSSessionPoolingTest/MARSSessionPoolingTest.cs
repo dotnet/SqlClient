@@ -150,7 +150,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             break;
                         case ExecuteType.ExecuteReader:
                             if (readerTestType != ReaderTestType.ReaderGC)
+                            {
                                 gch[i] = cmd[i].ExecuteReader();
+                            }
 
                             switch (readerTestType)
                             {

@@ -35,7 +35,9 @@ namespace Microsoft.Data.SqlClient
                         uint maxLength = 0;
 
                         if (0 != SniNativeWrapper.SniSecInitPackage(ref maxLength))
+                        {
                             SSPIError(SQLMessage.SSPIInitializeError(), TdsEnums.INIT_SSPI_PACKAGE);
+                        }
 
                         s_maxSSPILength = maxLength;
                         s_fSSPILoaded = true;

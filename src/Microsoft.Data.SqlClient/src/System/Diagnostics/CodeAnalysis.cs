@@ -38,5 +38,10 @@ namespace System.Diagnostics.CodeAnalysis
 
         public string[] Members { get; }
     }
+
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue, Inherited = false)]
+    internal sealed class NotNullAttribute : Attribute
+    {
+    }
 #endif
 }

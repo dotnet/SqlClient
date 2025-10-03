@@ -4080,32 +4080,17 @@
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
     <value>Délka šifrovaného textu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce šifrovaného textu {1} při použití hlavního klíče sloupce (certifikát) v {2}. Šifrovací klíč šifrovaného sloupce může být poškozený nebo zadaná cesta k certifikátu není správná.</value>
   </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
-    <value>Délka šifrovaného textu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce šifrovaného textu {1} při použití hlavního klíče sloupce (asymetrický klíč) v {2}. Důvodem může být poškozený šifrovací klíč zašifrovaného sloupce nebo zadaná nesprávná cesta zprostředkovatele kryptografických služeb Microsoft (CSP).</value>
-  </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCng" xml:space="preserve">
-    <value>Délka šifrovaného textu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce šifrovaného textu {1} při použití hlavního klíče sloupce (asymetrický klíč) v {2}. Důvodem může být poškozený šifrovací klíč zašifrovaného sloupce nebo zadaná nesprávná cesta zprostředkovatele rozhraní API kryptografických služeb Microsoft nové generace (CNG).</value>
-  </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
     <value>Délka podpisu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce podpisu {1} při použití hlavního klíče sloupce ({2}) v: „{3}“. Šifrovací klíč šifrovaného sloupce může být poškozený nebo zadaná cesta {4} není správná.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
     <value>Délka podpisu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce podpisu {1} při použití hlavního klíče sloupce (certifikát) v {2}. Šifrovací klíč šifrovaného sloupce může být poškozený nebo zadaná cesta k certifikátu není správná.</value>
   </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
-    <value>Délka podpisu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce podpisu {1} při použití hlavního klíče sloupce (asymetrický klíč) v {2}. Důvodem může být poškozený šifrovací klíč zašifrovaného sloupce nebo zadaná nesprávná cesta zprostředkovatele kryptografických služeb Microsoft (CSP).</value>
-  </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
-    <value>Délka podpisu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce podpisu {1} při použití hlavního klíče sloupce (asymetrický klíč) v {2}. Důvodem může být poškozený šifrovací klíč zašifrovaného sloupce nebo zadaná nesprávná cesta zprostředkovatele rozhraní API kryptografických služeb Microsoft nové generace (CNG).</value>
-  </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
     <value>Zadaný podpis šifrovacího klíče šifrovaného sloupce se neshoduje s podpisem vypočítaným s hlavním klíčem sloupce ({0}) v: „{1}“. Šifrovací klíč šifrovaného sloupce může být poškozený nebo zadaná cesta není správná.</value>
   </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>Zadaný podpis šifrovacího klíče šifrovaného sloupce se neshoduje s podpisem vypočítaným s hlavním klíčem sloupce (certifikátem) v {0}. Šifrovací klíč šifrovaného sloupce může být poškozený nebo zadaná cesta není správná.</value>
-  </data>
-  <data name="TCE_InvalidAsymmetricKeySignature" xml:space="preserve">
-    <value>Zadaný podpis šifrovacího klíče šifrovaného sloupce neodpovídá podpisu vypočítanému pomocí hlavního klíče sloupce (asymetrický klíč) v {0}. Šifrovací klíč šifrovaného sloupce může být poškozený nebo zadaná cesta není správná.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>Certifikát zadaný v cestě ke klíči {0} nemá privátní klíč k šifrování šifrovacího klíče sloupce. Zkontrolujte, že je certifikát správně naimportovaný.</value>

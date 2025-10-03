@@ -46,15 +46,30 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlCompareOptions options = SqlCompareOptions.None;
                 if (0 != (_info & IgnoreCase))
+                {
                     options |= SqlCompareOptions.IgnoreCase;
+                }
+
                 if (0 != (_info & IgnoreNonSpace))
+                {
                     options |= SqlCompareOptions.IgnoreNonSpace;
+                }
+
                 if (0 != (_info & IgnoreWidth))
+                {
                     options |= SqlCompareOptions.IgnoreWidth;
+                }
+
                 if (0 != (_info & IgnoreKanaType))
+                {
                     options |= SqlCompareOptions.IgnoreKanaType;
+                }
+
                 if (0 != (_info & BinarySort))
+                {
                     options |= SqlCompareOptions.BinarySort;
+                }
+
                 return options;
             }
         }
