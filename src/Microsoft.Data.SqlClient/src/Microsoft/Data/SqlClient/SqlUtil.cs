@@ -1783,29 +1783,14 @@ namespace Microsoft.Data.SqlClient
             return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCiphertextLengthInEncryptedCEK, actual, expected, keyType, masterKeyPath, keyPathReference), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
         }
 
-        internal static Exception InvalidCiphertextLengthInEncryptedCEKCertificate(int actual, int expected, string certificateName)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCiphertextLengthInEncryptedCEKCertificate, actual, expected, certificateName), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
-        }
-
         internal static Exception InvalidSignatureInEncryptedCEK(string keyType, string keyPathReference, int actual, int expected, string masterKeyPath)
         {
             return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidSignatureInEncryptedCEK, actual, expected, keyType, masterKeyPath, keyPathReference), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
         }
 
-        internal static Exception InvalidSignatureInEncryptedCEKCertificate(int actual, int expected, string masterKeyPath)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidSignatureInEncryptedCEKCertificate, actual, expected, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
-        }
-
         internal static Exception InvalidSignature(string masterKeyPath, string keyType)
         {
             return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidSignature, keyType, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
-        }
-
-        internal static Exception InvalidCertificateSignature(string certificatePath)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateSignature, certificatePath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
         }
 
         internal static Exception CertificateWithNoPrivateKey(string keyPath, bool isSystemOp)
