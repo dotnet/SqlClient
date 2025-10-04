@@ -12656,15 +12656,6 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCertificatePathSysErr_Unix", resourceCulture);
             }
         }
-
-        /// <summary>
-        ///   Looks up a localized string similar to The specified encrypted column encryption key signature does not match the signature computed with the column master key (certificate) in &apos;{0}&apos;. The encrypted column encryption key may be corrupt, or the specified path may be incorrect..
-        /// </summary>
-        internal static string TCE_InvalidCertificateSignature {
-            get {
-                return ResourceManager.GetString("TCE_InvalidCertificateSignature", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Looks up a localized string similar to Invalid certificate store &apos;{0}&apos; specified in certificate path &apos;{1}&apos;. Expected value: &apos;{2}&apos;..
@@ -12690,15 +12681,6 @@ namespace System {
         internal static string TCE_InvalidCiphertextLengthInEncryptedCEK {
             get {
                 return ResourceManager.GetString("TCE_InvalidCiphertextLengthInEncryptedCEK", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect..
-        /// </summary>
-        internal static string TCE_InvalidCiphertextLengthInEncryptedCEKCertificate {
-            get {
-                return ResourceManager.GetString("TCE_InvalidCiphertextLengthInEncryptedCEKCertificate", resourceCulture);
             }
         }
         
@@ -12906,15 +12888,6 @@ namespace System {
         internal static string TCE_InvalidSignatureInEncryptedCEK {
             get {
                 return ResourceManager.GetString("TCE_InvalidSignatureInEncryptedCEK", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s signature length: {0} does not match the signature length: {1} when using column master key (certificate) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect..
-        /// </summary>
-        internal static string TCE_InvalidSignatureInEncryptedCEKCertificate {
-            get {
-                return ResourceManager.GetString("TCE_InvalidSignatureInEncryptedCEKCertificate", resourceCulture);
             }
         }
         
