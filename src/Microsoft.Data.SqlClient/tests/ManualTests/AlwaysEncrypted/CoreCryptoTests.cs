@@ -1,10 +1,11 @@
-﻿using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Microsoft.Data.SqlClient;
-using System.Diagnostics;
+using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
@@ -49,6 +50,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void TestRsaCryptoWithNativeBaseline()
         {
+            SqlColumnEncryptionCertificateStoreProvider rsaProvider = new();
+
             // Initialize the reader for resource text file which has the native code generated baseline.
             CryptoNativeBaselineReader cryptoNativeBaselineReader = new CryptoNativeBaselineReader();
 
@@ -64,23 +67,48 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             byte[] rsaKeyPair = cryptoParametersListForTest[0].RsaKeyPair;
             byte[] rsaPfx = cryptoParametersListForTest[1].RsaKeyPair;
 
-            // For each crypto vector, run the test to compare the output generated through sqlclient's code and the native code.
-            foreach (CryptoVector cryptoParameter in cryptoParametersListForTest)
+            // Convert the PFX into a certificate and install it into the local user's certificate store.
+            // We can only do this cross-platform on the CurrentUser store, which matches the baseline data we have.
+            Debug.Assert(rsaPfx != null && rsaPfx.Length > 0);
+
+            X509Store store = null;
+            bool addedToStore = false;
+#if NET9_0_OR_GREATER
+            using X509Certificate2 x509 = X509CertificateLoader.LoadPkcs12(rsaPfx, @"P@zzw0rD!SqlvN3x+");
+#else
+            using X509Certificate2 x509 = new(rsaPfx, @"P@zzw0rD!SqlvN3x+");
+#endif
+            Debug.Assert(x509.HasPrivateKey);
+
+            try
             {
-                if (cryptoParameter.CryptNativeTestVectorTypeVal == CryptNativeTestVectorType.Rsa)
+                store = new(StoreName.My, StoreLocation.CurrentUser);
+                store.Open(OpenFlags.ReadWrite);
+
+                store.Add(x509);
+                addedToStore = true;
+
+                // For each crypto vector, run the test to compare the output generated through sqlclient's code and the native code.
+                foreach (CryptoVector cryptoParameter in cryptoParametersListForTest)
                 {
-                    // Verify that we are using the right padding scheme for RSA encryption
-                    byte[] plaintext = CertificateUtility.DecryptRsaDirectly(rsaPfx, cryptoParameter.CiphertextCek, @"Test");
-                    Assert.True(cryptoParameter.PlaintextCek.SequenceEqual(plaintext), "Plaintext CEK Value does not match with the native code baseline.");
+                    if (cryptoParameter.CryptNativeTestVectorTypeVal == CryptNativeTestVectorType.Rsa)
+                    {
+                        Debug.Assert(cryptoParameter.PathCek != null && cryptoParameter.PathCek.StartsWith("CurrentUser/My"));
 
-                    // Verify that the signed blob is conforming to our envelope (SHA-256, PKCS 1 padding)
-                    bool signatureVerified = CertificateUtility.VerifyRsaSignatureDirectly(cryptoParameter.HashedCek, cryptoParameter.SignedCek, rsaPfx);
-                    Assert.True(signatureVerified, "Plaintext CEK signature scheme does not match with the native code baseline.");
-
-                    //// TODO:  Programmatically install the in-memory PFX into the right store (based on path) & use the public API
-                    //plaintext = Utility.VerifyRsaSignature(cryptoParameter.PathCek, cryptoParameter.FinalcellCek, rsaPfx);
-                    //CError.Compare(cryptoParameter.PlaintextCek.SequenceEqual(plaintext), "Plaintext CEK Value does not match with the native code baseline (end to end).");
+                        // Decrypt the supplied final cell CEK, and ensure that the plaintext CEK value matches the native code baseline.
+                        byte[] plaintext = rsaProvider.DecryptColumnEncryptionKey(cryptoParameter.PathCek, "RSA_OAEP", cryptoParameter.FinalcellCek);
+                        Assert.Equal(cryptoParameter.PlaintextCek, plaintext);
+                    }
                 }
+            }
+            finally
+            {
+                if (addedToStore)
+                {
+                    store.Remove(x509);
+                }
+
+                store?.Dispose();
             }
         }
 
