@@ -21,9 +21,11 @@ pr:
   branches:
     include:
     # GitHub repo branch targets that will trigger PR validation builds.
-    - dev/*
-    - feat/*
-    - main
+    # TODO: Temporarily restricting to my ci-debug branches only.
+    - dev/paul/ci-debug-*
+    # - dev/*
+    # - feat/*
+    # - main
 
   paths:
     include:
