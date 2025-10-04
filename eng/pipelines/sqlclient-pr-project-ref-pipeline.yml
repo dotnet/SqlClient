@@ -11,51 +11,30 @@
 #   - Microsoft.Data.SqlClient
 #   - Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 #
-# It runs via CI push triggers and schedules:
+# It is triggered by pushes to PRs for dev/topic/feature branches in GitHub.
 #
-#   - Commits to GitHub main
-#   - Commits to ADO internal/main
-#   - Weekdays at 01:00 UTC on GitHub main
-#   - Thursdays at 03:00 UTC on ADO internal/main
+# It maps to the "PR-SqlClient-Project" pipeline in the Public project:
 #
-# GOTCHA: This pipeline definition is triggered by GitHub _and_ ADO CI.  We are
-# able to define different triggers and schedules using branch filters:
-#
-#   - Only the GitHub repo has a 'main' branch, so its presence indicates that
-#     the pipeline run was triggered via GitHub.
-#
-#   - Only the ADO repo has an 'internal/main' branch.
-#
-# Changes are batched together to ensure that the pipline never runs
-# concurrently.
-#
-# This pipeline definition is mapped to the following Azure DevOps pipelines:
-#
-# - CI-SqlClient in the Public project:
-#
-#   https://sqlclientdrivers.visualstudio.com/public/_build?definitionId=1879
-#
-# - MDS Main CI in the ADO.net project:
-#
-#   https://sqlclientdrivers.visualstudio.com/ADO.Net/_build?definitionId=1825
+# TODO: Add link to ADO pipeline.
 
 # Set the pipeline run name to the day-of-year and the daily run counter.
 name: $(DayOfYear)$(Rev:rr)
 
-# Trigger this pipeline on commits to certain branches.
-trigger:
-  
-  # Don't trigger a new run until the previous one completes.
-  batch: true
-  
+# Trigger PR validation runs for all pushes to PRs that target the specified
+# branches.
+#
+# https://learn.microsoft.com/en-us/azure/devops/pipelines/repos/github?view=azure-devops&tabs=yaml#pr-triggers
+#
+pr:
   branches:
     include:
-    # GitHub main branch.
-    - main
+    # GitHub repo branch targets that will trigger PR validation builds.
+    # TODO: Temporarily restricting to my ci-debug branches only.
+    - dev/paul/ci-debug*
+    # - dev/*
+    # - feat/*
+    # - main
 
-    # ADO internal/main branch.
-    - internal/main
-  
   paths:
     include:
     - .azuredevops
@@ -67,33 +46,14 @@ trigger:
     - build.proj
     - NuGet.config
 
-# Trigger this pipline on a schedule.
-schedules:
-
-  # GitHub main on weekdays
-  - cron: '0 1 * * Mon-Fri'
-    displayName: Weekday Release Build
-    branches:
-      include:
-      - main
-    always: true
-
-  # ADO internal/main on Thursdays.
-  - cron: '0 3 * * Thu'
-    displayName: Thursday Release Build
-    branches:
-      include:
-      - internal/main
-    always: true
-
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
 
-  # The build configuration to use; defaults to Release.
+  # The build configuration to use; defaults to Debug.
   - name: buildConfiguration
     displayName: Build Configuration
     type: string
-    default: Release
+    default: Debug
     values:
       - Debug
       - Release
@@ -151,7 +111,7 @@ extends:
   parameters:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
-    buildType: Package
+    buildType: Project
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
     debug: ${{ parameters.debug }}
     enableStressTests: ${{ parameters.enableStressTests }}
