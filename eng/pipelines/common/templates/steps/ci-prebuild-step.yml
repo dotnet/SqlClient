@@ -11,9 +11,14 @@ parameters:
   - name: artifactName
     type: string
     default: Artifacts
+
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
   
   - name: buildType
-    displayName: 'Build Type'
     default: Project
     values:
       - Project
@@ -55,3 +60,4 @@ steps:
   - template: ci-project-build-step.yml@self
     parameters:
       build: allNoDocs
+      buildConfiguration: ${{ parameters.buildConfiguration }}
