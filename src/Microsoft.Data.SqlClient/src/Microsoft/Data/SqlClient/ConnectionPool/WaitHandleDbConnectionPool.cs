@@ -1320,10 +1320,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                                     if (onlyOneCheckConnection)
                                     {
+                                        bool obtained = false;
 #if NETFRAMEWORK
                                         RuntimeHelpers.PrepareConstrainedRegions();
 #endif
-                                        bool obtained = false;
                                         try
                                         {
                                             obtained = _waitHandles.CreationSemaphore.WaitOne(unchecked((int)waitForMultipleObjectsTimeout));
