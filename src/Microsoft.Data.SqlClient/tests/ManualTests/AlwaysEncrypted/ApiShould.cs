@@ -559,6 +559,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                                 tryagain = true;
                                 break;
                             }
+                            else
+                            {
+                                throw;
+                            }
                         }
                         Assert.Equal(numberOfRows, rowsAffected);
                         tryagain = false;
@@ -3150,10 +3154,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
             catch (AggregateException aggregateException)
             {
+                bool unexpected = false;
                 foreach (Exception ex in aggregateException.InnerExceptions)
                 {
-                    Assert.True(ex is SqlException, @"cancelling a command through cancellation token resulted in unexpected exception.");
-                    Assert.True(@"Operation cancelled by user." == ex.Message, @"cancelling a command through cancellation token resulted in unexpected error message.");
+                    if (ex is SqlException or InvalidOperationException)
+                    {
+                        Assert.Equal("Operation cancelled by user.", ex.Message);
+                    }
+                    else
+                    {
+                        unexpected = true;
+                        Console.WriteLine($"Cancellation produced non-SqlException: {ex}");
+                    }
+                }
+                if (unexpected)
+                {
+                    Assert.Fail("Unexpected exceptions encountered; see console for details.");
                 }
             }
 

@@ -16,11 +16,16 @@ parameters:
     default: ''
 
   - name: buildType
-    displayName: 'Build Type'
     default: Project
     values:
       - Project
       - Package
+
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
 
   - name: prebuildSteps
     type: stepList
@@ -31,9 +36,8 @@ parameters:
     default: []
 
   # The timeout, in minutes, for each test job.
-  - name: testsTimeout
-    type: string
-    default: 90
+  - name: testJobTimeout
+    type: number
 
 stages:
 - ${{ each config in parameters.testConfigurations }}:
@@ -51,8 +55,9 @@ stages:
               - template: ../jobs/ci-run-tests-job.yml@self
                 parameters:
                   debug: ${{ parameters.debug }}
+                  buildConfiguration: ${{ parameters.buildConfiguration }}
                   buildType: ${{ parameters.buildType }}
-                  timeout: ${{ parameters.testsTimeout }}
+                  timeout: ${{ parameters.testJobTimeout }}
                   poolName: ${{ config.value.pool }}
                   hostedPool: ${{ eq(config.value.hostedPool, true) }}
                   image: ${{ image.value }}
@@ -77,8 +82,9 @@ stages:
                 - template: ../jobs/ci-run-tests-job.yml@self
                   parameters:
                     debug: ${{ parameters.debug }}
+                    buildConfiguration: ${{ parameters.buildConfiguration }}
                     buildType: ${{ parameters.buildType }}
-                    timeout: ${{ parameters.testsTimeout }}
+                    timeout: ${{ parameters.testJobTimeout }}
                     poolName: ${{ config.value.pool }}
                     hostedPool: ${{ eq(config.value.hostedPool, true) }}
                     image: ${{ image.value }}

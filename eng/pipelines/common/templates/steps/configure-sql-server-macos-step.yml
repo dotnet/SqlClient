@@ -62,6 +62,7 @@ steps:
 
     while [ $attempt -le $maxAttempts ]
     do
+
       echo "Waiting for SQL Server to start (attempt #$attempt of $maxAttempts)..."
     
       sqlcmd -S 127.0.0.1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" >> $SQLCMD_ERRORS 2>&1
@@ -77,6 +78,7 @@ steps:
     
       # Wait before trying again.
       sleep $delay
+
     done
 
     # Is the SQL Server ready?
