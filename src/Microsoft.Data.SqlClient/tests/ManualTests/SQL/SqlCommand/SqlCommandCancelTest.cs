@@ -152,15 +152,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Synapse: WAITFOR not supported + ';' not supported.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        public static void TimeoutCancel()
+        public static void TimeoutCancelTcp()
         {
             TimeoutCancel(tcp_connStr);
         }
 
-        [ActiveIssue("12167")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void TimeoutCancelNP()
+        public static void TimeoutCancelNamedPipe()
         {
             TimeoutCancel(np_connStr);
         }
@@ -178,17 +177,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             CancelAndDisposePreparedCommand(np_connStr);
         }
 
-        [ActiveIssue("5541")]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void TimeOutDuringRead()
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotNamedInstance))]
+        public static void TimeOutDuringReadTcp()
         {
             TimeOutDuringRead(tcp_connStr);
         }
 
-        [ActiveIssue("5541")]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotNamedInstance))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void TimeOutDuringReadNP()
+        public static void TimeOutDuringReadNamedPipe()
         {
             TimeOutDuringRead(np_connStr);
         }
