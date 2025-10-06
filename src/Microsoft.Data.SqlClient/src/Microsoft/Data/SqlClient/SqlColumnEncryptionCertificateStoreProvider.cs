@@ -114,6 +114,9 @@ namespace Microsoft.Data.SqlClient
         {
             StoreLocation storeLocation;
             StoreName storeName;
+            // Convert keyPath to a span and slice based on the existence/position of separators. While string.Split('/') would also
+            // suffice, using Span.Slice avoids allocating a string[] and its contents - the first two components will be mapped to
+            // an enum value anyway.
             ReadOnlySpan<char> keyPathSpan = keyPath.AsSpan();
             int firstSeparator = keyPathSpan.IndexOf('/');
             ReadOnlySpan<char> trailingFirstSeparator = firstSeparator == -1 ? default : keyPathSpan.Slice(firstSeparator + 1);
@@ -198,11 +201,9 @@ namespace Microsoft.Data.SqlClient
                 // An empty thumbprint specified
                 throw SQL.EmptyCertificateThumbprint(keyPath, isSystemOp);
             }
-            else
-            {
-                // Find the certificate and return
-                return GetCertificatePrivateKey(storeLocation, storeName, keyPath, thumbprintSpan, isSystemOp);
-            }
+
+            // Find the certificate and return
+            return GetCertificatePrivateKey(storeLocation, storeName, keyPath, thumbprintSpan, isSystemOp);
         }
 
         /// <summary>

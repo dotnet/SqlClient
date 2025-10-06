@@ -69,7 +69,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             // Convert the PFX into a certificate and install it into the local user's certificate store.
             // We can only do this cross-platform on the CurrentUser store, which matches the baseline data we have.
-            Debug.Assert(rsaPfx != null && rsaPfx.Length > 0);
+            Assert.NotNull(rsaPfx);
+            Assert.NotEmpty(rsaPfx);
 
             X509Store store = null;
             bool addedToStore = false;
@@ -78,7 +79,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 #else
             using X509Certificate2 x509 = new(rsaPfx, @"P@zzw0rD!SqlvN3x+");
 #endif
-            Debug.Assert(x509.HasPrivateKey);
+            Assert.True(x509.HasPrivateKey);
 
             try
             {
@@ -93,7 +94,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     if (cryptoParameter.CryptNativeTestVectorTypeVal == CryptNativeTestVectorType.Rsa)
                     {
-                        Debug.Assert(cryptoParameter.PathCek != null && cryptoParameter.PathCek.StartsWith("CurrentUser/My"));
+                        Assert.NotNull(cryptoParameter.PathCek);
+                        Assert.StartsWith("CurrentUser/My", cryptoParameter.PathCek);
 
                         // Decrypt the supplied final cell CEK, and ensure that the plaintext CEK value matches the native code baseline.
                         byte[] plaintext = rsaProvider.DecryptColumnEncryptionKey(cryptoParameter.PathCek, "RSA_OAEP", cryptoParameter.FinalcellCek);
