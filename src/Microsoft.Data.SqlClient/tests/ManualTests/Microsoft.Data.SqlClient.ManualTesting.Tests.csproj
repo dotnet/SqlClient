@@ -21,6 +21,7 @@
     <Compile Include="AlwaysEncrypted\ApiShould.cs" />
     <Compile Include="AlwaysEncrypted\AKVTests.cs" />
     <Compile Include="AlwaysEncrypted\AKVUnitTests.cs" />
+    <Compile Include="AlwaysEncrypted\AlwaysEncryptedCollectionDefinition.cs" />
     <Compile Include="AlwaysEncrypted\BulkCopyAE.cs" />
     <Compile Include="AlwaysEncrypted\BulkCopyAEErrorMessage.cs" />
     <Compile Include="AlwaysEncrypted\ColumnDecryptErrorTests.cs" />
@@ -275,7 +276,6 @@
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.Debug.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AlwaysEncrypted\AlwaysEncryptedCollectionDefinition.cs" />
     <Compile Include="DataCommon\AADUtility.cs" />
     <Compile Include="DataCommon\AssemblyResourceManager.cs" />
     <Compile Include="DataCommon\ConnectionTestParameters.cs" />
