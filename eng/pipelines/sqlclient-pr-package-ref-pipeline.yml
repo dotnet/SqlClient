@@ -15,7 +15,7 @@
 #
 # It maps to the "PR-SqlClient-Package" pipeline in the Public project:
 #
-# TODO: Add link to ADO pipeline.
+# https://dev.azure.com/SqlClientDrivers/public/_build?definitionId=2198
 
 # Set the pipeline run name to the day-of-year and the daily run counter.
 name: $(DayOfYear)$(Rev:rr)
