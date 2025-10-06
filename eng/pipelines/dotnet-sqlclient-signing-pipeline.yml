@@ -63,9 +63,9 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   default: false
 
 # The timeout, in minutes, for each test job.
-- name: testsTimeout
-  displayName: 'Tests timeout (in minutes)'
-  type: string
+- name: testJobTimeout
+  displayName: 'Test job timeout (in minutes)'
+  type: number
   default: 90
 
 variables:
@@ -168,7 +168,7 @@ extends:
 #        parameters:
 #          packageFolderName: $(packageFolderName)
 #          isPreview: ${{ parameters['isPreview'] }}
-#          timeout: ${{ parameters.testsTimeout }}
+#          timeout: ${{ parameters.testJobTimeout }}
 #          downloadPackageStep:
 #            download: current
 #            artifact: $(packageFolderName)
