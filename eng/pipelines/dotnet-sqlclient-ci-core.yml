@@ -138,6 +138,7 @@ stages:
               debug: ${{ parameters.debug }}
               artifactName: $(artifactName)
               buildType: ${{ parameters.buildType }}
+              buildConfiguration: ${{ parameters.buildConfiguration }}
       ${{else}}:
         prebuildSteps: # steps to run prior to building and running tests on each job
           - template: common/templates/steps/ci-prebuild-step.yml@self
@@ -145,6 +146,7 @@ stages:
               debug: ${{ parameters.debug }}
               artifactName: $(artifactName)
               buildType: ${{ parameters.buildType }}
+              buildConfiguration: ${{ parameters.buildConfiguration }}
 
       ${{ if eq(parameters.buildType, 'Project') }}: # only run the code coverage job if the build type is project
         postTestJobs: # jobs to run after the tests are done
