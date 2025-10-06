@@ -11,7 +11,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// <summary>
     /// Always Encrypted public API Manual tests.
     /// </summary>
-    public class BulkCopyAEErrorMessage : IClassFixture<SQLSetupStrategyCertStoreProvider>
+    [Collection("AlwaysEncrypted")]
+    public class BulkCopyAEErrorMessage
     {
         private SQLSetupStrategy _fixture;
 

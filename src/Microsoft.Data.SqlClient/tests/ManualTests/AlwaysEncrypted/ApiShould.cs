@@ -21,7 +21,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// <summary>
     /// Always Encrypted public API Manual tests.
     /// </summary>
-    public sealed class ApiShould : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
+    [Collection("AlwaysEncrypted")]
+    public sealed class ApiShould : IDisposable
     {
         private SQLSetupStrategy _fixture;
 

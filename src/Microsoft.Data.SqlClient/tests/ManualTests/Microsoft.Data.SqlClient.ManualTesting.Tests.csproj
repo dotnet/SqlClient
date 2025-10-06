@@ -275,6 +275,7 @@
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.Debug.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AlwaysEncrypted\AlwaysEncryptedCollectionDefinition.cs" />
     <Compile Include="DataCommon\AADUtility.cs" />
     <Compile Include="DataCommon\AssemblyResourceManager.cs" />
     <Compile Include="DataCommon\ConnectionTestParameters.cs" />
