@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Stable Release 6.1.2] - 2025-10-07
 
-This update includes the following changes since the [6.1.1](6.1.1.md) release:
+This update includes the following changes since the [6.1.1](release-notes/6.1/6.1.1.md) release:
 
 ### Fixed
 
