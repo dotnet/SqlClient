@@ -382,42 +382,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return withCreate ? _handlesWithCreate : _handlesWithoutCreate;
             }
         }
-
-        /// <summary>
-        /// Helper class to obtain and release a semaphore.
-        /// </summary>
-        internal class SemaphoreHolder : IDisposable
-        {
-            private readonly Semaphore _semaphore;
-
-            /// <summary>
-            /// Whether the semaphore was successfully obtained within the timeout.
-            /// </summary>
-            internal bool Obtained { get; private set; }
-
-            /// <summary>
-            /// Obtains the semaphore, waiting up to the specified timeout.
-            /// </summary>
-            /// <param name="semaphore"></param>
-            /// <param name="timeout"></param>
-            internal SemaphoreHolder(Semaphore semaphore, int timeout)
-            {
-                _semaphore = semaphore;
-                Obtained = _semaphore.WaitOne(timeout);
-            }
-
-            /// <summary>
-            /// Releases the semaphore if it was successfully obtained.
-            /// </summary>
-            public void Dispose()
-            {
-                if (Obtained)
-                {
-                    _semaphore.Release(1);
-                }
-            }
-        }
-
         private const int MAX_Q_SIZE = 0x00100000;
 
         // The order of these is important; we want the WaitAny call to be signaled
@@ -1356,26 +1320,36 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                                     if (onlyOneCheckConnection)
                                     {
-                                        using SemaphoreHolder semaphoreHolder = new(_waitHandles.CreationSemaphore, unchecked((int)waitForMultipleObjectsTimeout));
-                                        if (semaphoreHolder.Obtained)
-                                        {
 #if NETFRAMEWORK
-                                            RuntimeHelpers.PrepareConstrainedRegions();
+                                        RuntimeHelpers.PrepareConstrainedRegions();
 #endif
-                                            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Creating new connection.", Id);
-                                            obj = UserCreateRequest(owningObject, userOptions);
-                                        }
-                                        else
+                                        bool obtained = false;
+                                        try
                                         {
-                                            // Timeout waiting for creation semaphore - return null
-                                            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Wait timed out.", Id);
-                                            connection = null;
-                                            return false;
+                                            obtained = _waitHandles.CreationSemaphore.WaitOne(unchecked((int)waitForMultipleObjectsTimeout));
+                                            if (obtained)
+                                            {
+                                                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Creating new connection.", Id);
+                                                obj = UserCreateRequest(owningObject, userOptions);
+                                            }
+                                            else
+                                            {
+                                                // Timeout waiting for creation semaphore - return null
+                                                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Wait timed out.", Id);
+                                                connection = null;
+                                                return false;
+                                            }
+                                        }
+                                        finally
+                                        {
+                                            if (obtained)
+                                            {
+                                                _waitHandles.CreationSemaphore.Release(1);
+                                            }
                                         }
                                     }
                                 }
                                 break;
-
                             case WAIT_ABANDONED + SEMAPHORE_HANDLE:
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Semaphore handle abandonded.", Id);
                                 Interlocked.Decrement(ref _waitCount);
@@ -1582,20 +1556,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             {
                                 return;
                             }
-
 #if NETFRAMEWORK
                             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
+                            bool obtained = false;
                             try
                             {
                                 // Obtain creation mutex so we're the only one creating objects
-                                using SemaphoreHolder semaphoreHolder = new(_waitHandles.CreationSemaphore, CreationTimeout);
+                                obtained = _waitHandles.CreationSemaphore.WaitOne(CreationTimeout);
 
-                                if (semaphoreHolder.Obtained)
+                                if (obtained)
                                 {
-#if NETFRAMEWORK
-                                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
                                     DbConnectionInternal newObj;
 
                                     // Check ErrorOccurred again after obtaining mutex
@@ -1647,6 +1618,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 // There is no further action we can take beyond tracing.  The error will be 
                                 // thrown to the user the next time they request a connection.
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PoolCreateRequest|RES|CPOOL> {0}, PoolCreateRequest called CreateConnection which threw an exception: {1}", Id, e);
+                            }
+                            finally
+                            {
+                                if (obtained)
+                                {
+                                    _waitHandles.CreationSemaphore.Release(1);
+                                }
                             }
                         }
                     }
