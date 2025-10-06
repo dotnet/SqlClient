@@ -48,7 +48,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithNullDictionary(string connection)
         {
-            SqlConnectionStringBuilder connBuilder = new SqlConnectionStringBuilder(connection);
+            SqlConnectionStringBuilder connBuilder = new SqlConnectionStringBuilder(connection)
+            {
+                ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled
+            };
 
             // 1. Default should succeed.
             if (SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Count != 0)
@@ -56,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Clear();
             }
 
-            using (SqlConnection sqlConnection = new SqlConnection(string.Concat(connection, @";Column Encryption Setting = Enabled;")))
+            using (SqlConnection sqlConnection = new SqlConnection(connBuilder.ConnectionString))
             {
                 sqlConnection.Open();
 
@@ -84,7 +87,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithOneServer(string connection)
         {
-            SqlConnectionStringBuilder connBuilder = new SqlConnectionStringBuilder(connection);
+            SqlConnectionStringBuilder connBuilder = new SqlConnectionStringBuilder(connection)
+            {
+                ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled
+            };
 
             // 2.. Test with valid key path
             //
@@ -99,7 +105,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             trustedKeyPaths.Add(columnMasterKeyPath);
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Add(connBuilder.DataSource, trustedKeyPaths);
 
-            using (SqlConnection sqlConnection = new SqlConnection(string.Concat(connection, @";Column Encryption Setting = Enabled;")))
+            using (SqlConnection sqlConnection = new SqlConnection(connBuilder.ConnectionString))
             {
                 sqlConnection.Open();
 
@@ -127,8 +133,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithMultipleServers(string connection)
         {
-            SqlConnectionStringBuilder connBuilder = new SqlConnectionStringBuilder(connection);
-            string connStringNow = connBuilder.ToString();
+            SqlConnectionStringBuilder connBuilder = new SqlConnectionStringBuilder(connection)
+            {
+                ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled
+            };
 
             // 3. Test with multiple servers with multiple key paths
             //
@@ -156,7 +164,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             server2TrustedKeyPaths.Add(@"https://balneetestkeyvault.vault.azure.net/keys/CryptoTest4/f4eb1dbbe6a9446599efe3c952614e70");
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Add(@"randomeserver", server2TrustedKeyPaths);
 
-            using (SqlConnection sqlConnection = new SqlConnection(string.Concat(connStringNow, @";Column Encryption Setting = Enabled;")))
+            using (SqlConnection sqlConnection = new SqlConnection(connBuilder.ConnectionString))
             {
                 sqlConnection.Open();
 
@@ -184,7 +192,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithInvalidInputs(string connection)
         {
-            SqlConnectionStringBuilder connBuilder = new SqlConnectionStringBuilder(connection);
+            SqlConnectionStringBuilder connBuilder = new SqlConnectionStringBuilder(connection)
+            {
+                ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled
+            };
 
             // 1. Test with null List
             //
@@ -200,7 +211,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             // Prepare a dictionary with null list.
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Add(connBuilder.DataSource, (List<string>)null);
 
-            using (SqlConnection sqlConnection = new SqlConnection(string.Concat(connection, @";Column Encryption Setting = Enabled;")))
+            using (SqlConnection sqlConnection = new SqlConnection(connBuilder.ConnectionString))
             {
                 sqlConnection.Open();
 
@@ -232,7 +243,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             List<string> emptyKeyPathList = new List<string>();
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Add(connBuilder.DataSource, emptyKeyPathList);
 
-            using (SqlConnection sqlConnection = new SqlConnection(string.Concat(connection, @";Column Encryption Setting = Enabled;")))
+            using (SqlConnection sqlConnection = new SqlConnection(connBuilder.ConnectionString))
             {
                 sqlConnection.Open();
 
@@ -266,7 +277,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             invalidKeyPathList.Add(invalidKeyPath);
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Add(connBuilder.DataSource, invalidKeyPathList);
 
-            using (SqlConnection sqlConnection = new SqlConnection(string.Concat(connection, @";Column Encryption Setting = Enabled;")))
+            using (SqlConnection sqlConnection = new SqlConnection(connBuilder.ConnectionString))
             {
                 sqlConnection.Open();
 
