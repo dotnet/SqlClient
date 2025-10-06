@@ -1303,7 +1303,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                         finally
                                         {
                                             // Ensure that semaphore is released in finally block for .NET Framework applications.
-                                            if(obtained)
+                                            if (obtained)
                                             {
                                                 _waitHandles.CreationSemaphore.Release(1);
                                             }
