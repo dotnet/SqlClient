@@ -9,8 +9,8 @@ trigger:
   batch: true
   branches:
     include:
-    - main
-    - internal/main
+    - release/6.0
+    - internal/release/6.0
   paths:
     include:
     - src
@@ -21,11 +21,11 @@ trigger:
     - Nuget.config
 
 schedules:
-- cron: '0 5 * * Thu'
-  displayName: Weekly Wednesday 10:00 PM (UTC - 7) Build
+- cron: '0 5 * * Sat'
+  displayName: Weekly Friday 10:00 PM (UTC - 7) Build
   branches:
     include:
-    - internal/main
+    - internal/release/6.0
   always: true
 
 parameters: # parameters are shown up in ADO UI in a build queue time
