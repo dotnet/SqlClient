@@ -1413,11 +1413,11 @@ namespace Microsoft.Data.ProviderBase
                                     obj = null;     // Setting to null in case creating a new object fails
 
                                     bool obtained = false;
-#if NETFRAMEWORK
-                                            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
                                     if (onlyOneCheckConnection)
                                     {
+#if NETFRAMEWORK
+                                        RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                                         try
                                         {
                                             obtained = _waitHandles.CreationSemaphore.WaitOne((int)waitForMultipleObjectsTimeout);

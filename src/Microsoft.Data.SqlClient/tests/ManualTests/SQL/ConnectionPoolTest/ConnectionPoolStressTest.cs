@@ -18,6 +18,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     /// <summary>
     /// Connection pool stress test to validate pool behavior under various concurrent load scenarios.
+    /// TODO: Move this test to a more appropriate location once we have a better structure for connection pooling tests 
+    /// that cover reliability and stress conditions designed specifically for connection pool.
     /// </summary>
     public class ConnectionPoolStressTest
     {
