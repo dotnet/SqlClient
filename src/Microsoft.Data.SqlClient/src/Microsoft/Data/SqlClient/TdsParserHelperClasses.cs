@@ -32,10 +32,10 @@ namespace Microsoft.Data.SqlClient
         REQ,
         LOGIN,
         OPTIONS_MASK = 0x3f,
-#if NETFRAMEWORK
+        //#if NETFRAMEWORK //why this if condition for NETFRAMEWORK?
         CTAIP = 0x40,
         CLIENT_CERT = 0x80,
-#endif
+//#endif
     }
 
     internal enum PreLoginHandshakeStatus

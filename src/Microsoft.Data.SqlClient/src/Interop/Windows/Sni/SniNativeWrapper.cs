@@ -6,6 +6,8 @@ using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
@@ -63,7 +65,7 @@ namespace Microsoft.Data.SqlClient
         internal static uint SniAddProvider(SNIHandle pConn, Provider provNum, ref AuthProviderInfo pInfo) =>
             s_nativeMethods.SniAddProvider(pConn, provNum, ref pInfo);
         
-        #if NETFRAMEWORK
+        #if NETFRAMEWORK // why this? need to check with Ben
         [ResourceExposure(ResourceScope.None)]
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
         internal static uint SniAddProvider(SNIHandle pConn,
@@ -162,6 +164,38 @@ namespace Microsoft.Data.SqlClient
                 fSync,
                 ipPreference,
                 pDnsCacheInfo: ref nativeCachedDnsInfo);
+        }
+
+        [ResourceExposure(ResourceScope.None)]
+        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
+        internal static uint SNIAddProvider(SNIHandle pConn,
+                                   Provider provider,
+                                  [In] CTAIPProviderInfo authInfo)
+        {
+            uint ret;
+            uint ERROR_SUCCESS = 0;
+
+            SNICTAIPProviderInfo ctaipInfo = new SNICTAIPProviderInfo();
+            unsafe
+            {
+                fixed (byte* rgbAddress = &authInfo._originalNetworkAddress[0])
+                {
+                    ctaipInfo._rgbAddress = rgbAddress;
+                    ctaipInfo._cbAddress = (uint)authInfo._originalNetworkAddress.Length;
+                    ctaipInfo._fFromDataSecurityProxy = authInfo._fromDataSecurityProxy;
+                    ctaipInfo._fDestIpIsFromVnetSvcEndpointsAdapter = authInfo._isVnetAddress;
+                    ret = s_nativeMethods.SniAddProvider(pConn, provider, ref ctaipInfo);
+                }
+            }
+
+            if (ret == ERROR_SUCCESS)
+            {
+                //// added a provider, need to requery for sync over async support
+                //ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out bool fSupportsSyncOverAsync);
+                //Debug.Assert(ret == ERROR_SUCCESS, "SNIGetInfo cannot fail with this QType");
+            }
+
+            return ret;
         }
 
         internal static unsafe uint SniOpenSyncEx(

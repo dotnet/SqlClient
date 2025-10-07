@@ -139,6 +139,11 @@ namespace Microsoft.Data.SqlClient
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
 
+        // Certificate auth calbacks.
+        readonly ServerCertificateValidationCallback _serverCallback;
+        readonly ClientCertificateRetrievalCallback _clientCallback;
+        SqlClientOriginalNetworkAddressInfo _originalNetworkAddressInfo;
+
         internal bool _cleanSQLDNSCaching = false;
         private bool _serverSupportsDNSCaching = false;
 
@@ -457,11 +462,14 @@ namespace Microsoft.Data.SqlClient
             bool redirectedUserInstance,
             SqlConnectionString userConnectionOptions = null, // NOTE: userConnectionOptions may be different to connectionOptions if the connection string has been expanded (see SqlConnectionString.Expand)
             SessionData reconnectSessionData = null,
+            ServerCertificateValidationCallback serverCallback = null,
+            ClientCertificateRetrievalCallback clientCallback = null,
             bool applyTransientFaultHandling = false,
             string accessToken = null,
             IDbConnectionPool pool = null,
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null,
-            SspiContextProvider sspiContextProvider = null) : base(connectionOptions)
+            SspiContextProvider sspiContextProvider = null,
+            SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo = null) : base(connectionOptions)
         {
 #if DEBUG
             if (reconnectSessionData != null)
@@ -515,6 +523,9 @@ namespace Microsoft.Data.SqlClient
 
             _accessTokenCallback = accessTokenCallback;
             _sspiContextProvider = sspiContextProvider;
+            _serverCallback = serverCallback;
+            _clientCallback = clientCallback;
+            _originalNetworkAddressInfo = originalNetworkAddressInfo;
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
 
@@ -621,6 +632,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal SqlClientOriginalNetworkAddressInfo OriginalNetWorkAddressInfo => _originalNetworkAddressInfo;
         internal RoutingInfo RoutingInfo { get; private set; } = null;
 
         internal override SqlInternalTransaction CurrentTransaction
@@ -1415,7 +1427,7 @@ namespace Microsoft.Data.SqlClient
             requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
         #endif
 
-            _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
+            _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, _originalNetworkAddressInfo, encrypt);
         }
 
         private void LoginFailure()
@@ -2064,7 +2076,10 @@ namespace Microsoft.Data.SqlClient
                             this,
                             timeout,
                             ConnectionOptions,
-                            withFailover);
+                            withFailover,
+                            _serverCallback,
+                            _clientCallback,
+                            _originalNetworkAddressInfo != null);
 
             _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
             _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);

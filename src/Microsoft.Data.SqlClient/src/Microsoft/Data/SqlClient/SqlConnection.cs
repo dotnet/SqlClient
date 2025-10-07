@@ -69,6 +69,9 @@ namespace Microsoft.Data.SqlClient
         private CancellationTokenSource _reconnectionCancellationSource;
         internal SessionData _recoverySessionData;
         internal bool _suppressStateChangeForReconnection;
+        private ServerCertificateValidationCallback _serverCertificateValidationCallback;
+        private ClientCertificateRetrievalCallback _clientCertificateRetrievalCallback;
+        private SqlClientOriginalNetworkAddressInfo _originalNetworkAddressInfo;
 #if NETFRAMEWORK
         internal WindowsIdentity _lastIdentity;
         internal WindowsIdentity _impersonateIdentity;
@@ -241,6 +244,9 @@ namespace Microsoft.Data.SqlClient
 
             _accessToken = connection._accessToken;
             _accessTokenCallback = connection._accessTokenCallback;
+            _serverCertificateValidationCallback = connection._serverCertificateValidationCallback;
+            _clientCertificateRetrievalCallback = connection._clientCertificateRetrievalCallback;
+            _originalNetworkAddressInfo = connection._originalNetworkAddressInfo;
             CacheConnectionStringProperties();
         }
 
@@ -661,7 +667,7 @@ namespace Microsoft.Data.SqlClient
                         CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(connectionOptions);
                     }
                 }
-                ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken, _accessTokenCallback, _sspiContextProvider));
+                ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken, _accessTokenCallback, _sspiContextProvider, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
                 _connectionString = value;  // Change _connectionString value only after value is validated
                 CacheConnectionStringProperties();
             }
@@ -721,7 +727,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: value, accessTokenCallback: null, sspiContextProvider: null));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: value, accessTokenCallback: null, sspiContextProvider: null, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
                 _accessToken = value;
             }
         }
@@ -744,7 +750,7 @@ namespace Microsoft.Data.SqlClient
                     CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback((SqlConnectionString)ConnectionOptions);
                 }
 
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: value, sspiContextProvider: null));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: value, sspiContextProvider: null, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
                 _accessTokenCallback = value;
             }
         }
@@ -754,7 +760,7 @@ namespace Microsoft.Data.SqlClient
             get { return _sspiContextProvider; }
             set
             {
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: value));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: value, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
                 _sspiContextProvider = value;
             }
         }
@@ -1059,7 +1065,7 @@ namespace Microsoft.Data.SqlClient
                 _credential = value;
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, accessToken: _accessToken, accessTokenCallback: _accessTokenCallback, sspiContextProvider: null));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, accessToken: _accessToken, accessTokenCallback: _accessTokenCallback, sspiContextProvider: null, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
             }
         }
 
@@ -1173,6 +1179,49 @@ namespace Microsoft.Data.SqlClient
         {
             get => _fireInfoMessageEventOnUserErrors;
             set => _fireInfoMessageEventOnUserErrors = value;
+        }
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerCertificateValidationCallback/*' />
+        public ServerCertificateValidationCallback ServerCertificateValidationCallback
+        {
+            get
+            {
+                return _serverCertificateValidationCallback;
+            }
+            set
+            {
+                _serverCertificateValidationCallback = value;
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _accessTokenCallback, _sspiContextProvider, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
+            }
+        }
+
+        // The exceptions from client certificate callback are not rethrown and instead an SSL
+        // exchange fails with CRYPT_E_NOT_FOUND = 0x80092004
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClientCertificateRetrievalCallback/*' />
+        public ClientCertificateRetrievalCallback ClientCertificateRetrievalCallback
+        {
+            get
+            {
+                return _clientCertificateRetrievalCallback;
+            }
+            set
+            {
+                _clientCertificateRetrievalCallback = value;
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _accessTokenCallback, _sspiContextProvider, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
+            }
+        }
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OriginalNetworkAddressInfo/*' />
+        public SqlClientOriginalNetworkAddressInfo OriginalNetworkAddressInfo
+        {
+            get
+            {
+                return _originalNetworkAddressInfo;
+            }
+            set
+            {
+                _originalNetworkAddressInfo = value;
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _accessTokenCallback, _sspiContextProvider, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
+            }
         }
 
         // Approx. number of times that the internal connection has been reconnected
@@ -2302,7 +2351,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength(nameof(newPassword), TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null);
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null);
 
                 SqlConnectionString connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
                 if (connectionOptions.IntegratedSecurity || connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
@@ -2356,7 +2405,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength(nameof(newSecurePassword), TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: null);
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null);
 
                 SqlConnectionString connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
 
@@ -2399,7 +2448,7 @@ namespace Microsoft.Data.SqlClient
             {
                 con?.Dispose();
             }
-            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: null);
+            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null);
 
             SqlConnectionFactory.Instance.ClearPool(key);
         }

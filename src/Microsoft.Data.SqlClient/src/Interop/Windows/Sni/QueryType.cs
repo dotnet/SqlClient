@@ -43,7 +43,7 @@ namespace Interop.Windows.Sni
         SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC,
         
         #if NETFRAMEWORK
-        SNI_QUERY_CONN_SSL_SECCTXTHANDLE,
+        SNI_QUERY_CONN_SSL_SECCTXTHANDLE, //why if condition for NETFRAMEWORK?
         #endif
     }
 }

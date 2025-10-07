@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Interop.Windows.Sni
@@ -17,9 +18,36 @@ namespace Interop.Windows.Sni
         public string certId;
         [MarshalAs(UnmanagedType.Bool)]
         public bool certHash;
+        [MarshalAs(UnmanagedType.IUnknown)]
         public object clientCertificateCallbackContext;
+        [MarshalAs(UnmanagedType.FunctionPtr)]
         public SqlClientCertificateDelegate clientCertificateCallback;
         [MarshalAs(UnmanagedType.LPWStr)]
         public string serverCertFileName;
+    }
+    internal struct CTAIPProviderInfo
+    {
+        internal byte[] _originalNetworkAddress;
+        internal bool _fromDataSecurityProxy;
+        internal bool _isVnetAddress;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SNIAuthProviderInfoWrapper
+    {
+        public IntPtr pDelegateContext;
+        internal SqlClientCertificateDelegate pSqlClientCertificateDelegate;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal unsafe struct SNICTAIPProviderInfo
+    {
+        public IntPtr pConn;
+        public byte* _rgbAddress;
+        public uint _cbAddress;
+        [MarshalAs(UnmanagedType.Bool)]
+        public bool _fFromDataSecurityProxy;
+        [MarshalAs(UnmanagedType.Bool)]
+        public bool _fDestIpIsFromVnetSvcEndpointsAdapter;
     }
 }

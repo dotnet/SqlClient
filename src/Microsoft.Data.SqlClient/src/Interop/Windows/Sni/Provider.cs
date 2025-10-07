@@ -17,7 +17,7 @@ namespace Interop.Windows.Sni
         VIA_PROV,
         
         #if NETFRAMEWORK
-        CTAIP_PROV,
+        CTAIP_PROV, //why if condition for NETFRAMEWORK?
         #endif
         
         MAX_PROVS,

@@ -1048,6 +1048,8 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
+    <Compile Include="Microsoft\Data\SqlClient\SqlCertificateCallback.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlClientOriginalNetworkAddressInfo.cs" />
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
       <Link>Resources\Strings.resx</Link>
       <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
@@ -1080,6 +1082,9 @@
 
     <!-- Transitive dependencies that would otherwise bring in older, vulnerable versions. -->
     <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="microsoft.data.sqlclient\netcore\src\microsoft\data\sqlclient\" />
   </ItemGroup>
 
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />

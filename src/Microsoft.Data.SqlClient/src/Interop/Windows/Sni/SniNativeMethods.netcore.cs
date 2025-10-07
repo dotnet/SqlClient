@@ -20,6 +20,9 @@ namespace Interop.Windows.Sni
         public uint SniAddProvider(SNIHandle pConn, Provider provider, ref AuthProviderInfo pInfo) =>
             SNIAddProviderWrapper(pConn, provider, ref pInfo);
 
+        public uint SniAddProvider(SNIHandle pConn, Provider provider, ref SNICTAIPProviderInfo pInfo) =>
+            SNIAddProviderWrapper(pConn, provider, ref pInfo);
+
         public uint SniAddProvider(SNIHandle pConn, Provider provider, ref uint pInfo) =>
             SNIAddProviderWrapper(pConn, provider, ref pInfo);
 
@@ -169,9 +172,18 @@ namespace Interop.Windows.Sni
             SNIHandle pConn,
             Provider provider,
             [In] ref AuthProviderInfo pInfo);
+        
+        [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern uint SNIAddProviderWrapper(
+            SNIHandle pConn, 
+            Provider provider, 
+            [In] ref SNICTAIPProviderInfo pInfo);
 
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNIAddProviderWrapper(SNIHandle pConn, Provider provider, [In] ref uint pInfo);
+
+        [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern uint SNIClientCertificateFallbackWrapper([In] SNIAuthProviderInfoWrapper pCallBackContext);
 
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNICheckConnectionWrapper([In] SNIHandle pConn);
@@ -291,6 +303,9 @@ namespace Interop.Windows.Sni
 
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNISetInfoWrapper(SNIHandle pConn, QueryType queryType, [In] ref uint pbQueryInfo);
+
+        [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType queryType, ref IntPtr pbQueryInfo);
 
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNITerminate();

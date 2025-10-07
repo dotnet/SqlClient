@@ -692,11 +692,14 @@ namespace Microsoft.Data.SqlClient
                 redirectedUserInstance,
                 userOpt,
                 recoverySessionData,
+                key.ServerCertificateValidationCallback, 
+                key.ClientCertificateRetrievalCallback,
                 applyTransientFaultHandling,
                 key.AccessToken,
                 pool,
                 key.AccessTokenCallback,
-                key.SspiContextProvider);
+                key.SspiContextProvider,
+                key.OriginalNetworkAddressInfo);
         }
 
         private static DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(SqlConnectionString connectionOptions)

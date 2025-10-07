@@ -1,6 +1,7 @@
 using System;
 using System.Buffers;
 using System.Diagnostics;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Microsoft.Data.SqlClient.Utilities;
 
@@ -63,6 +64,23 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.SniContext = outerContext;
         }
 
+        private void ValidateServerCertificate(ServerCertificateValidationCallback serverCallback)
+        {
+            X509Certificate2 serverCert = null;
+            uint error = _physicalStateObj.GetServerCertificate(ref serverCert);
+            if (error != TdsEnums.SNI_SUCCESS)
+            {
+                _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                ThrowExceptionAndWarning(_physicalStateObj);
+            }
+
+            bool valid = serverCallback(serverCert);
+            if (!valid)
+            {
+                throw SQL.InvalidServerCertificate();
+            }
+        }
+
 #nullable disable
 
         internal void TdsLogin(
@@ -70,6 +88,7 @@ namespace Microsoft.Data.SqlClient
             TdsEnums.FeatureExtension requestedFeatures,
             SessionData recoverySessionData,
             FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
+            SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo,
             SqlConnectionEncryptOption encrypt)
         {
             _physicalStateObj.SetTimeoutSeconds(rec.timeout);
@@ -99,6 +118,44 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_connHandler != null, "SqlConnectionInternalTds handler can not be null at this point.");
             _connHandler!.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth);
+
+            // Add CTAIP Provider
+            if (originalNetworkAddressInfo is not null)
+            {
+
+                uint error = _physicalStateObj.AddCTAIPProvider(originalNetworkAddressInfo);
+                if (error != TdsEnums.SNI_SUCCESS)
+                {
+                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
+
+                try
+                { } // EmptyTry/Finally to avoid FXCop violation
+                finally
+                {
+                    _physicalStateObj.ClearAllWritePackets();
+                }
+
+                _physicalStateObj._afterPacketWrite = new Action(() =>
+                {
+                    // Only remove the SNI provider once.
+                    _physicalStateObj._afterPacketWrite = null;
+                    uint error = _physicalStateObj.RemoveCTAIPProvider();
+                    if (error != TdsEnums.SNI_SUCCESS)
+                    {
+                        _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                        ThrowExceptionAndWarning(_physicalStateObj);
+                    }
+
+                    try
+                    { } // EmptyTry/Finally to avoid FXCop violation
+                    finally
+                    {
+                        _physicalStateObj.ClearAllWritePackets();
+                    }
+                });
+            }
 
             // get the password up front to use in sspi logic below
             byte[] encryptedPassword = null;
@@ -191,6 +248,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 int feOffset = length;
+
                 // calculate and reserve the required bytes for the featureEx
                 length = ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, useFeatureExt, length);
 

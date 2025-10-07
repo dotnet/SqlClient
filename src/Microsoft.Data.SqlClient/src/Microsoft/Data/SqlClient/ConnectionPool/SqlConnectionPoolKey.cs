@@ -20,6 +20,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
         private SspiContextProvider _sspiContextProvider;
 
+        public ServerCertificateValidationCallback _serverCertificateValidationCallback;
+        public ClientCertificateRetrievalCallback _clientCertificateRetrievalCallback;
+        public SqlClientOriginalNetworkAddressInfo _originalNetworkAddressInfo;
+
         internal SqlCredential Credential => _credential;
         internal string AccessToken => _accessToken;
         internal Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback => _accessTokenCallback;
@@ -35,18 +39,33 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
+        internal ServerCertificateValidationCallback ServerCertificateValidationCallback
+            => _serverCertificateValidationCallback;
+
+        internal ClientCertificateRetrievalCallback ClientCertificateRetrievalCallback
+            => _clientCertificateRetrievalCallback;
+
+        internal SqlClientOriginalNetworkAddressInfo OriginalNetworkAddressInfo
+            => _originalNetworkAddressInfo;
+
         internal SqlConnectionPoolKey(
             string connectionString,
             SqlCredential credential,
             string accessToken,
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback,
-            SspiContextProvider sspiContextProvider) : base(connectionString)
+            SspiContextProvider sspiContextProvider,
+            ServerCertificateValidationCallback serverCertificateValidationCallback,
+            ClientCertificateRetrievalCallback clientCertificateRetrievalCallback,
+            SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo) : base(connectionString)
         {
             Debug.Assert(credential == null || accessToken == null || accessTokenCallback == null, "Credential, AccessToken, and Callback can't have a value at the same time.");
             _credential = credential;
             _accessToken = accessToken;
             _accessTokenCallback = accessTokenCallback;
             _sspiContextProvider = sspiContextProvider;
+            _serverCertificateValidationCallback = serverCertificateValidationCallback;
+            _clientCertificateRetrievalCallback = clientCertificateRetrievalCallback;
+            _originalNetworkAddressInfo = originalNetworkAddressInfo;
             CalculateHashCode();
         }
 
@@ -72,7 +91,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 && ConnectionString == key.ConnectionString
                 && _accessTokenCallback == key._accessTokenCallback
                 && string.CompareOrdinal(_accessToken, key._accessToken) == 0
-                && _sspiContextProvider == key._sspiContextProvider);
+                && _sspiContextProvider == key._sspiContextProvider
+                && _serverCertificateValidationCallback == key._serverCertificateValidationCallback
+                && _clientCertificateRetrievalCallback == key._clientCertificateRetrievalCallback
+                && _originalNetworkAddressInfo == key._originalNetworkAddressInfo);
         }
 
         public override int GetHashCode()
