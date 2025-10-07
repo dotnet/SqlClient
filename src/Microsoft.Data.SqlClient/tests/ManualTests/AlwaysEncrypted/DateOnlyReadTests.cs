@@ -10,7 +10,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    [Collection("AlwaysEncrypted")]
+    [Collection("AlwaysEncryptedCertStore")]
     public sealed class DateOnlyReadTests : IDisposable
     {
         private SQLSetupStrategy fixture;

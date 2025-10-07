@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    [Collection("AlwaysEncrypted")]
+    [Collection("AlwaysEncryptedCertStore")]
     public class CoreCryptoTests
     {
         // Synapse: Always Encrypted not supported in Azure Synapse.

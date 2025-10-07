@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    [Collection("AlwaysEncrypted")]
+    [Collection("AlwaysEncryptedCertStore")]
     public class TestTrustedMasterKeyPaths
     {
         private readonly string dummyThumbprint;

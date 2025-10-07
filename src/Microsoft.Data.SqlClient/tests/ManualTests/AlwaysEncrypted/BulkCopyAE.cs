@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// <summary>
     /// Always Encrypted public API Manual tests.
     /// </summary>
-    [Collection("AlwaysEncrypted")]
+    [Collection("AlwaysEncryptedCertStore")]
     public sealed class BulkCopyAE : IDisposable
     {
         private SQLSetupStrategy fixture;
