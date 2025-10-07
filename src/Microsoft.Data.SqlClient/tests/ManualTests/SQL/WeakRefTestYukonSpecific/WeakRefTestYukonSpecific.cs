@@ -112,9 +112,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     cmd[i] = con.CreateCommand();
                     cmd[i].CommandText = COMMAND_TEXT_1;
                     if ((testType != ReaderTestType.ReaderGC) && (testType != ReaderTestType.ReaderGCConnectionClose))
+                    {
                         gch[i] = cmd[i].ExecuteReader();
+                    }
                     else
+                    {
                         gch[i] = null;
+                    }
                 }
 
                 for (int i = 0; i < CONCURRENT_COMMANDS; i++)
@@ -207,7 +211,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 SqlTransaction gch = null;
                 if ((testType != TransactionTestType.TransactionGC) && (testType != TransactionTestType.TransactionGCConnectionClose))
+                {
                     gch = con.BeginTransaction();
+                }
 
                 switch (testType)
                 {

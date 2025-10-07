@@ -582,8 +582,23 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommand.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommand.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommand.NonQuery.cs">
+      <Link>Microsoft\Data\SqlClient\SqlCommand.NonQuery.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommand.Reader.cs">
+      <Link>Microsoft\Data\SqlClient\SqlCommand.Reader.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommand.Scalar.cs">
+      <Link>Microsoft\Data\SqlClient\SqlCommand.Scalar.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommand.Xml.cs">
+      <Link>Microsoft\Data\SqlClient\SqlCommand.Xml.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommandSet.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommandSet.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnection.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnection.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionEncryptOption.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionEncryptOption.cs</Link>
@@ -759,6 +774,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParser.cs">
       <Link>Microsoft\Data\SqlClient\TdsParser.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParser.SSPI.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParser.SSPI.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserHelperClasses.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserHelperClasses.cs</Link>
     </Compile>
@@ -818,11 +836,7 @@
     </Compile>
     
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.netcore.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
@@ -923,6 +937,9 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniNativeWrapper.cs">
       <Link>Interop\Windows\Sni\SniNativeWrapper.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniSslProtocols.cs">
+      <Link>Interop\Windows\Sni\SniSslProtocols.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\TransparentNetworkResolutionMode.cs">
       <Link>Interop\Windows\Sni\TransparentNetworkResolutionMode.cs</Link>
     </Compile>
@@ -968,12 +985,13 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectNative.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserStateObjectNative.Windows.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
     
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
-
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\ILLink.Substitutions.Windows.xml">
       <LogicalName>ILLink.Substitutions.xml</LogicalName>
       <Link>Resources\ILLink.Substitutions.Windows.xml</Link>

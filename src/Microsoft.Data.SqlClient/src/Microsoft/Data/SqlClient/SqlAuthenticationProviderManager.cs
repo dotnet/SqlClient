@@ -186,7 +186,7 @@ namespace Microsoft.Data.SqlClient
                     if (candidateMethod == authenticationMethod)
                     {
                         _sqlAuthLogger.LogError(nameof(SqlAuthenticationProviderManager), methodName, $"Failed to add provider {GetProviderType(provider)} because a user-defined provider with type {GetProviderType(_providers[authenticationMethod])} already existed for authentication {authenticationMethod}.");
-                        break;
+                        return false; // return here to avoid replacing user-defined provider
                     }
                 }
             }
@@ -206,9 +206,18 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
+        /// <summary>
+        /// Fetches provided configuration section from app.config file.
+        /// Does not support reading from appsettings.json yet.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="name"></param>
+        /// <returns></returns>
         private static T FetchConfigurationSection<T>(string name)
         {
             Type t = typeof(T);
+
+            // TODO: Support reading configuration from appsettings.json for .NET runtime applications.
             object section = ConfigurationManager.GetSection(name);
             if (section != null)
             {
@@ -254,7 +263,10 @@ namespace Microsoft.Data.SqlClient
         private static string GetProviderType(SqlAuthenticationProvider provider)
         {
             if (provider == null)
+            {
                 return "null";
+            }
+
             return provider.GetType().FullName;
         }
     }

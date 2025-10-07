@@ -126,10 +126,6 @@ namespace Microsoft.Data.SqlClient
         internal byte minorVersion;
         internal short buildNum;
         internal uint tdsVersion;
-
-        #if NETFRAMEWORK
-        internal string programName;
-        #endif
     }
 
     internal sealed class SqlFedAuthInfo

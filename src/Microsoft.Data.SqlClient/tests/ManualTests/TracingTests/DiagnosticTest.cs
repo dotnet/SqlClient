@@ -530,7 +530,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }).Dispose();
         }
 
-        private static void CollectStatisticsDiagnostics(Action<string> sqlOperation, bool enableServerLogging = false, [CallerMemberName] string methodName = "")
+        private static void CollectStatisticsDiagnostics(Action<string> sqlOperation, [CallerMemberName] string methodName = "")
         {
             bool statsLogged = false;
             bool operationHasError = false;
@@ -575,7 +575,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         statistics = GetPropertyValueFromType<IDictionary>(kvp.Value, "Statistics");
                         if (!operationHasError)
+                        {
                             Assert.NotNull(statistics);
+                        }
 
                         string operation = GetPropertyValueFromType<string>(kvp.Value, "Operation");
                         Assert.False(string.IsNullOrWhiteSpace(operation));
@@ -717,10 +719,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
 
                 Console.WriteLine(string.Format("Test: {0} Enabled Listeners", methodName));
-                using (var server = TestTdsServer.StartServerWithQueryEngine(new DiagnosticsQueryEngine(), enableLog: enableServerLogging, methodName: methodName))
+
+                using (var server = new TdsServer(new DiagnosticsQueryEngine(), new TdsServerArguments()))
                 {
+                    server.Start(methodName);
                     Console.WriteLine(string.Format("Test: {0} Started Server", methodName));
-                    sqlOperation(server.ConnectionString);
+
+                    var connectionString = new SqlConnectionStringBuilder
+                    {
+                        DataSource = $"localhost,{server.EndPoint.Port}",
+                        Encrypt = SqlConnectionEncryptOption.Optional
+                    }.ConnectionString;
+
+                    sqlOperation(connectionString);
 
                     Console.WriteLine(string.Format("Test: {0} SqlOperation Successful", methodName));
 
@@ -774,7 +785,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     statistics = GetPropertyValueFromType<IDictionary>(kvp.Value, "Statistics");
                     if (!operationHasError)
+                    {
                         Assert.NotNull(statistics);
+                    }
 
                     string operation = GetPropertyValueFromType<string>(kvp.Value, "Operation");
                     Assert.False(string.IsNullOrWhiteSpace(operation));
@@ -906,11 +919,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (DiagnosticListener.AllListeners.Subscribe(diagnosticListenerObserver))
             {
                 Console.WriteLine(string.Format("Test: {0} Enabled Listeners", methodName));
-                using (var server = TestTdsServer.StartServerWithQueryEngine(new DiagnosticsQueryEngine(), methodName: methodName))
+                using (var server = new TdsServer(new DiagnosticsQueryEngine(), new TdsServerArguments()))
                 {
+                    server.Start(methodName);
                     Console.WriteLine(string.Format("Test: {0} Started Server", methodName));
 
-                    await sqlOperation(server.ConnectionString);
+                    var connectionString = new SqlConnectionStringBuilder
+                    {
+                        DataSource = $"localhost,{server.EndPoint.Port}",
+                        Encrypt = SqlConnectionEncryptOption.Optional
+                    }.ConnectionString;
+                    await sqlOperation(connectionString);
 
                     Console.WriteLine(string.Format("Test: {0} SqlOperation Successful", methodName));
 
@@ -937,7 +956,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
     public class DiagnosticsQueryEngine : QueryEngine
     {
-        public DiagnosticsQueryEngine() : base(new TDSServerArguments())
+        public DiagnosticsQueryEngine() : base(new TdsServerArguments())
         {
         }
 

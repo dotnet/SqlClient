@@ -53,7 +53,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // Test case not supported on Azure Synapse.
             if (DataTestUtility.TCPConnectionString == null || DataTestUtility.IsAzureSynapse)
+            {
                 return false;
+            }
 
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = conn.CreateCommand())
@@ -148,7 +150,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     && e1.Errors[i].Procedure == e2.Errors[i].Procedure
                     && e1.Errors[i].Source == e2.Errors[i].Source;
                 if (!equal)
+                {
                     break;
+                }
             }
 
             IDictionaryEnumerator enum1 = e1.Data.GetEnumerator();
@@ -156,9 +160,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             while (equal)
             {
                 if (!enum1.MoveNext())
+                {
                     break;
+                }
+
                 enum2.MoveNext();
-                equal = (enum1.Key == enum2.Key) && (enum2.Value == enum2.Value);
+                equal = (enum1.Key == enum2.Key) && (enum2.Value == enum2.Value); // @TODO: 2nd condition compares the same values!
             }
 
             Assert.True(equal, string.Format("FAILED: exceptions do not contain the same data (besides call stack):\nFirst: {0}\nSecond: {1}\n", e1, e2));

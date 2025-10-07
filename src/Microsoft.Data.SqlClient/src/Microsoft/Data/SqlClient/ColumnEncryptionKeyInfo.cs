@@ -110,13 +110,24 @@ namespace Microsoft.Data.SqlClient
         {
 
             if (null == bytePackage)
+            {
                 throw SQL.NullArgumentInternal(_bytePackageName, _className, _serializeToBufferMethodName);
+            }
+
             if (0 == bytePackage.Length)
+            {
                 throw SQL.EmptyArgumentInternal(_bytePackageName, _className, _serializeToBufferMethodName);
+            }
+
             if (!(startOffset < bytePackage.Length))
+            {
                 throw SQL.OffsetOutOfBounds(_startOffsetName, _className, _serializeToBufferMethodName);
+            }
+
             if ((bytePackage.Length - startOffset) < GetLengthForSerialization())
+            {
                 throw SQL.InsufficientBuffer(_bytePackageName, _className, _serializeToBufferMethodName);
+            }
 
             Buffer.BlockCopy(DatabaseIdBytes, 0, bytePackage, startOffset, DatabaseIdBytes.Length);
             startOffset += DatabaseIdBytes.Length;

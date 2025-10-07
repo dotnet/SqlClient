@@ -17,25 +17,6 @@ namespace Microsoft.Data.SqlClient
 {
     internal class TdsParserStateObjectNative : TdsParserStateObject
     {
-        // protocol versions from native sni
-        [Flags]
-        private enum NativeProtocols
-        {
-            SP_PROT_SSL2_SERVER = 0x00000004,
-            SP_PROT_SSL2_CLIENT = 0x00000008,
-            SP_PROT_SSL3_SERVER = 0x00000010,
-            SP_PROT_SSL3_CLIENT = 0x00000020,
-            SP_PROT_TLS1_0_SERVER = 0x00000040,
-            SP_PROT_TLS1_0_CLIENT = 0x00000080,
-            SP_PROT_TLS1_1_SERVER = 0x00000100,
-            SP_PROT_TLS1_1_CLIENT = 0x00000200,
-            SP_PROT_TLS1_2_SERVER = 0x00000400,
-            SP_PROT_TLS1_2_CLIENT = 0x00000800,
-            SP_PROT_TLS1_3_SERVER = 0x00001000,
-            SP_PROT_TLS1_3_CLIENT = 0x00002000,
-            SP_PROT_NONE = 0x0
-        }
-
         private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
 
         private SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
@@ -178,21 +159,28 @@ namespace Microsoft.Data.SqlClient
                 if (!string.IsNullOrEmpty(serverSPN))
                 {
                     // Native SNI requires the Unicode encoding and any other encoding like UTF8 breaks the code.
-                    SqlClientEventSource.Log.TryTraceEvent("<{0}.{1}|SEC> Server SPN `{2}` from the connection string is used.", nameof(TdsParserStateObjectNative), nameof(CreatePhysicalSNIHandle), serverSPN);
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Server SPN `{0}` from the connection string is used.", serverSPN);
                 }
                 else
                 {
-                    // This will signal to the interop layer that we need to retrieve the SPN
+                    // Empty signifies to interop layer that SPN needs to be generated
                     serverSPN = string.Empty;
                 }
             }
 
             ConsumerInfo myInfo = CreateConsumerInfo(async);
-            SQLDNSInfo cachedDNSInfo;
-            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
+
+            // serverName : serverInfo.ExtendedServerName
+            // may not use this serverName as key
+
+            SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out SQLDNSInfo cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, serverName, ref serverSPN, timeout.MillisecondsRemainingInt, out instanceName,
-                flushCache, !async, fParallel, iPAddressPreference, cachedDNSInfo, hostNameInCertificate);
+                flushCache, !async, fParallel,
+#if NETFRAMEWORK
+                transparentNetworkResolutionState, totalTimeout,
+#endif
+                iPAddressPreference, cachedDNSInfo, hostNameInCertificate);
             resolvedSpn = new(serverSPN.TrimEnd());
         }
 
@@ -208,10 +196,6 @@ namespace Microsoft.Data.SqlClient
             IntPtr ptr = packet.NativePointer;
             return IntPtr.Zero == ptr || IntPtr.Zero != ptr && source != null;
         }
-
-        public void ReadAsyncCallback(IntPtr key, IntPtr packet, uint error) => ReadAsyncCallback(key, packet, error);
-
-        public void WriteAsyncCallback(IntPtr key, IntPtr packet, uint sniError) => WriteAsyncCallback(key, packet, sniError);
 
         protected override void RemovePacketFromPendingList(PacketHandle ptr)
         {
@@ -248,6 +232,11 @@ namespace Microsoft.Data.SqlClient
 
             if (sessionHandle != null || packetHandle != null)
             {
+                // Comment CloseMARSSession
+                // UNDONE - if there are pending reads or writes on logical connections, we need to block
+                // here for the callbacks!!!  This only applies to async.  Should be fixed by async fixes for
+                // AD unload/exit.
+
                 packetHandle?.Dispose();
                 asyncAttnPacket?.Dispose();
 
@@ -265,6 +254,7 @@ namespace Microsoft.Data.SqlClient
         {
             if ((0 == remaining || release) && _gcHandle.IsAllocated)
             {
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, FREEING HANDLE!", ObjectID);
                 _gcHandle.Free();
             }
         }
@@ -291,7 +281,9 @@ namespace Microsoft.Data.SqlClient
 
         internal override PacketHandle ReadAsync(SessionHandle handle, out uint error)
         {
+#if NET
             Debug.Assert(handle.Type == SessionHandle.NativeHandleType, "unexpected handle type when requiring NativePointer");
+#endif
             IntPtr readPacketPtr = IntPtr.Zero;
             error = SniNativeWrapper.SniReadAsync(handle.NativeHandle, ref readPacketPtr);
             return PacketHandle.FromNativePointer(readPacketPtr);
@@ -301,7 +293,7 @@ namespace Microsoft.Data.SqlClient
         {
             SNIHandle handle = Handle ?? throw ADP.ClosedConnectionError();
             IntPtr readPacketPtr = IntPtr.Zero;
-            error = SniNativeWrapper.SniReadSyncOverAsync(handle, ref readPacketPtr, GetTimeoutRemaining());
+            error = SniNativeWrapper.SniReadSyncOverAsync(handle, ref readPacketPtr, timeoutRemaining);
             return PacketHandle.FromNativePointer(readPacketPtr);
         }
 
@@ -422,7 +414,7 @@ namespace Microsoft.Data.SqlClient
             AuthProviderInfo authInfo = new AuthProviderInfo();
             authInfo.flags = info;
             authInfo.tlsFirst = tlsFirst;
-            authInfo.serverCertFileName = serverCertificateFilename;
+            authInfo.serverCertFileName = string.IsNullOrEmpty(serverCertificateFilename) ? null : serverCertificateFilename;
 
             // Add SSL (Encryption) SNI provider.
             return SniNativeWrapper.SniAddProvider(Handle, Provider.SSL_PROV, ref authInfo);
@@ -431,47 +423,8 @@ namespace Microsoft.Data.SqlClient
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
             => SniNativeWrapper.SniSetInfo(Handle, QueryType.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
 
-        internal override uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion)
-        {
-            uint returnValue = SniNativeWrapper.SniWaitForSslHandshakeToComplete(Handle, GetTimeoutRemaining(), out uint nativeProtocolVersion);
-            var nativeProtocol = (NativeProtocols)nativeProtocolVersion;
-
-#pragma warning disable CA5398 // Avoid hardcoded SslProtocols values
-            if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_SERVER))
-            {
-                protocolVersion = SslProtocols.Tls12;
-            }
-            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_SERVER))
-            {
-                /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later */
-                protocolVersion = SslProtocols.Tls13;
-            }
-            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_SERVER))
-            {
-                protocolVersion = SslProtocols.Tls11;
-            }
-            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_SERVER))
-            {
-                protocolVersion = SslProtocols.Tls;
-            }
-            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_SERVER))
-            {
-                // SSL 2.0 and 3.0 are only referenced to log a warning, not explicitly used for connections
-#pragma warning disable CS0618, CA5397
-                protocolVersion = SslProtocols.Ssl3;
-            }
-            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_SERVER))
-            {
-                protocolVersion = SslProtocols.Ssl2;
-#pragma warning restore CS0618, CA5397
-            }
-            else //if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_NONE))
-            {
-                protocolVersion = SslProtocols.None;
-            }
-#pragma warning restore CA5398 // Avoid hardcoded SslProtocols values 
-            return returnValue;
-        }
+        internal override uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion) =>
+            SniNativeWrapper.SniWaitForSslHandshakeToComplete(Handle, GetTimeoutRemaining(), out protocolVersion);
 
         internal override SniErrorDetails GetErrorDetails()
         {
@@ -492,7 +445,7 @@ namespace Microsoft.Data.SqlClient
 
         internal override SspiContextProvider CreateSspiContextProvider() => new NativeSspiContextProvider();
 
-        internal sealed class WritePacketCache : IDisposable
+        private sealed class WritePacketCache : IDisposable
         {
             private bool _disposed;
             private Stack<SNIPacket> _packets;

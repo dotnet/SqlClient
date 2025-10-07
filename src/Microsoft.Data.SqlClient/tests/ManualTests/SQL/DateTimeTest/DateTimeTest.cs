@@ -492,7 +492,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                             for (int otherValNum = 0; otherValNum < valueStrList.Length; otherValNum++)
                                             {
                                                 if (valNum == otherValNum)
+                                                {
                                                     continue;
+                                                }
 
                                                 Assert.True(currValueStr.Equals(valueStrList[otherValNum]),
                                                     string.Format("FAILED: Value from {0} not equivalent to {1} result", valueNameList[valNum], valueNameList[otherValNum]));

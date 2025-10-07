@@ -26,12 +26,12 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Server configuration
         /// </summary>
-        public TDSServerArguments ServerArguments { get; private set; }
+        public TdsServerArguments ServerArguments { get; private set; }
 
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public QueryEngine(TDSServerArguments arguments)
+        public QueryEngine(TdsServerArguments arguments)
         {
             ServerArguments = arguments;
         }
@@ -1308,7 +1308,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSRowToken rowToken = new TDSRowToken(metadataToken);
 
             // Read the value from the session
-            rowToken.Data.Add((session as GenericTDSServerSession).AnsiDefaults);
+            rowToken.Data.Add((session as GenericTdsServerSession).AnsiDefaults);
 
             // Log response
             TDSUtilities.Log(Log, "Response", rowToken);
@@ -1347,7 +1347,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSRowToken rowToken = new TDSRowToken(metadataToken);
 
             // Read the value from the session
-            rowToken.Data.Add((session as GenericTDSServerSession).AnsiNullDefaultOn);
+            rowToken.Data.Add((session as GenericTdsServerSession).AnsiNullDefaultOn);
 
             // Log response
             TDSUtilities.Log(Log, "Response", rowToken);
@@ -1386,7 +1386,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSRowToken rowToken = new TDSRowToken(metadataToken);
 
             // Read the value from the session
-            rowToken.Data.Add((session as GenericTDSServerSession).AnsiNulls);
+            rowToken.Data.Add((session as GenericTdsServerSession).AnsiNulls);
 
             // Log response
             TDSUtilities.Log(Log, "Response", rowToken);
@@ -1425,7 +1425,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSRowToken rowToken = new TDSRowToken(metadataToken);
 
             // Read the value from the session
-            rowToken.Data.Add((session as GenericTDSServerSession).AnsiPadding);
+            rowToken.Data.Add((session as GenericTdsServerSession).AnsiPadding);
 
             // Log response
             TDSUtilities.Log(Log, "Response", rowToken);
@@ -1464,7 +1464,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSRowToken rowToken = new TDSRowToken(metadataToken);
 
             // Read the value from the session
-            rowToken.Data.Add((session as GenericTDSServerSession).AnsiWarnings);
+            rowToken.Data.Add((session as GenericTdsServerSession).AnsiWarnings);
 
             // Log response
             TDSUtilities.Log(Log, "Response", rowToken);
@@ -1503,7 +1503,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSRowToken rowToken = new TDSRowToken(metadataToken);
 
             // Read the value from the session
-            rowToken.Data.Add((session as GenericTDSServerSession).ArithAbort);
+            rowToken.Data.Add((session as GenericTdsServerSession).ArithAbort);
 
             // Log response
             TDSUtilities.Log(Log, "Response", rowToken);
@@ -1542,7 +1542,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSRowToken rowToken = new TDSRowToken(metadataToken);
 
             // Read the value from the session
-            rowToken.Data.Add((session as GenericTDSServerSession).ConcatNullYieldsNull);
+            rowToken.Data.Add((session as GenericTdsServerSession).ConcatNullYieldsNull);
 
             // Log response
             TDSUtilities.Log(Log, "Response", rowToken);
@@ -1581,7 +1581,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSRowToken rowToken = new TDSRowToken(metadataToken);
 
             // Read the value from the session
-            rowToken.Data.Add((short)(session as GenericTDSServerSession).DateFirst);
+            rowToken.Data.Add((short)(session as GenericTdsServerSession).DateFirst);
 
             // Log response
             TDSUtilities.Log(Log, "Response", rowToken);
@@ -1622,7 +1622,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSRowToken rowToken = new TDSRowToken(metadataToken);
 
             // Generate a date format string
-            rowToken.Data.Add(DateFormatString.ToString((session as GenericTDSServerSession).DateFormat));
+            rowToken.Data.Add(DateFormatString.ToString((session as GenericTdsServerSession).DateFormat));
 
             // Log response
             TDSUtilities.Log(Log, "Response", rowToken);
@@ -1661,7 +1661,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSRowToken rowToken = new TDSRowToken(metadataToken);
 
             // Serialize the value from the session
-            rowToken.Data.Add((session as GenericTDSServerSession).DeadlockPriority);
+            rowToken.Data.Add((session as GenericTdsServerSession).DeadlockPriority);
 
             // Log response
             TDSUtilities.Log(Log, "Response", rowToken);
@@ -1702,7 +1702,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSRowToken rowToken = new TDSRowToken(metadataToken);
 
             // Generate a date format string
-            rowToken.Data.Add(LanguageString.ToString((session as GenericTDSServerSession).Language));
+            rowToken.Data.Add(LanguageString.ToString((session as GenericTdsServerSession).Language));
 
             // Log response
             TDSUtilities.Log(Log, "Response", rowToken);
@@ -1741,7 +1741,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSRowToken rowToken = new TDSRowToken(metadataToken);
 
             // Serialize the value from the session
-            rowToken.Data.Add((session as GenericTDSServerSession).LockTimeout);
+            rowToken.Data.Add((session as GenericTdsServerSession).LockTimeout);
 
             // Log response
             TDSUtilities.Log(Log, "Response", rowToken);
@@ -1780,7 +1780,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSRowToken rowToken = new TDSRowToken(metadataToken);
 
             // Read the value from the session
-            rowToken.Data.Add((session as GenericTDSServerSession).QuotedIdentifier);
+            rowToken.Data.Add((session as GenericTdsServerSession).QuotedIdentifier);
 
             // Log response
             TDSUtilities.Log(Log, "Response", rowToken);
@@ -1819,7 +1819,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSRowToken rowToken = new TDSRowToken(metadataToken);
 
             // Read the value from the session
-            rowToken.Data.Add((session as GenericTDSServerSession).TextSize);
+            rowToken.Data.Add((session as GenericTdsServerSession).TextSize);
 
             // Log response
             TDSUtilities.Log(Log, "Response", rowToken);
@@ -1858,7 +1858,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSRowToken rowToken = new TDSRowToken(metadataToken);
 
             // Read the value from the session
-            rowToken.Data.Add((short)(session as GenericTDSServerSession).TransactionIsolationLevel);
+            rowToken.Data.Add((short)(session as GenericTdsServerSession).TransactionIsolationLevel);
 
             // Log response
             TDSUtilities.Log(Log, "Response", rowToken);
@@ -1897,7 +1897,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSRowToken rowToken = new TDSRowToken(metadataToken);
 
             // Convert to generic session
-            GenericTDSServerSession genericSession = session as GenericTDSServerSession;
+            GenericTdsServerSession genericSession = session as GenericTdsServerSession;
 
             // Serialize the options into the bit mask
             int options = 0;
@@ -2029,13 +2029,13 @@ namespace Microsoft.SqlServer.TDS.Servers
             byte[] contextInfo = null;
 
             // Check if session has a context info
-            if ((session as GenericTDSServerSession).ContextInfo != null)
+            if ((session as GenericTdsServerSession).ContextInfo != null)
             {
                 // Allocate a container
                 contextInfo = new byte[128];
 
                 // Copy context info into the container
-                Array.Copy((session as GenericTDSServerSession).ContextInfo, contextInfo, (session as GenericTDSServerSession).ContextInfo.Length);
+                Array.Copy((session as GenericTdsServerSession).ContextInfo, contextInfo, (session as GenericTdsServerSession).ContextInfo.Length);
             }
 
             // Set context info

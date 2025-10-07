@@ -39,7 +39,10 @@ namespace Microsoft.Data.SqlClient
         public bool LogAssert(bool value, string type, string method, string message)
         {
             if (!value)
+            {
                 LogError(type, method, message);
+            }
+
             return value;
         }
 

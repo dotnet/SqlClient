@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
+using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -55,9 +56,11 @@ namespace Microsoft.Data.SqlClient.Tests
             Thread.CurrentThread.CurrentCulture = new CultureInfo(culture);
             Thread.CurrentThread.CurrentUICulture = new CultureInfo(culture);
 
-            using TestTdsServer server = TestTdsServer.StartTestServer();
-            var connStr = server.ConnectionString;
-            connStr = connStr.Replace("localhost", "dummy");
+            using TdsServer server = new TdsServer(new TdsServerArguments());
+            server.Start();
+            var connStr = new SqlConnectionStringBuilder() { 
+                DataSource = $"dummy,{server.EndPoint.Port}" 
+            }.ConnectionString;
             using SqlConnection connection = new SqlConnection(connStr);
 
             try
@@ -71,9 +74,14 @@ namespace Microsoft.Data.SqlClient.Tests
 
             // Restore saved culture if necessary
             if (Thread.CurrentThread.CurrentCulture != savedCulture)
+            {
                 Thread.CurrentThread.CurrentCulture = savedCulture;
+            }
+
             if (Thread.CurrentThread.CurrentUICulture != savedUICulture)
+            {
                 Thread.CurrentThread.CurrentUICulture = savedUICulture;
+            }
 
             return localized;
         }

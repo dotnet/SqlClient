@@ -18,6 +18,13 @@ using Microsoft.Data.SqlClient.Diagnostics;
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/SqlCommand/*'/>
+    /// <content>
+    /// This partial contains the general-purpose public API methods and shared components of the
+    /// SqlCommand class: constants, member variables, properties, and helper methods that are used
+    /// across the other partials.
+    /// The class is split into multiple partials to separate related functionality such that the
+    /// files are small enough to be digestible by engineers.
+    /// </content>
     [DefaultEvent("RecordsAffected")]
     [DesignerCategory("")]
     [ToolboxItem(true)]

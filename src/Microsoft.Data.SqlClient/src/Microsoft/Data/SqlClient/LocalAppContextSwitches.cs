@@ -24,6 +24,7 @@ namespace Microsoft.Data.SqlClient
         private const string UseCompatibilityAsyncBehaviourString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour";
         private const string UseConnectionPoolV2String = @"Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
         private const string TruncateScaledDecimalString = @"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal";
+        private const string IgnoreServerProvidedFailoverPartnerString = @"Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner";
 #if NET
         private const string GlobalizationInvariantModeString = @"System.Globalization.Invariant";
         private const string GlobalizationInvariantModeEnvironmentVariable = "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT";
@@ -43,6 +44,7 @@ namespace Microsoft.Data.SqlClient
         private static Tristate s_useCompatibilityAsyncBehaviour;
         private static Tristate s_useConnectionPoolV2;
         private static Tristate s_truncateScaledDecimal;
+        private static Tristate s_ignoreServerProvidedFailoverPartner;
 #if NET
         private static Tristate s_globalizationInvariantMode;
         private static Tristate s_useManagedNetworking;
@@ -231,7 +233,7 @@ namespace Microsoft.Data.SqlClient
         /// When set to 'true' this will output a scale value of 7 (DEFAULT_VARTIME_SCALE) when the scale 
         /// is explicitly set to zero for VarTime data types ('datetime2', 'datetimeoffset' and 'time')
         /// If no scale is set explicitly it will continue to output scale of 7 (DEFAULT_VARTIME_SCALE)
-        /// regardsless of switch value.
+        /// regardless of switch value.
         /// This app context switch defaults to 'true'.
         /// </summary>
         public static bool LegacyVarTimeZeroScaleBehaviour
@@ -296,6 +298,34 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
                 return s_truncateScaledDecimal == Tristate.True;
+            }
+        }
+
+        /// <summary>
+        /// When set to true, the failover partner provided by the server during connection
+        /// will be ignored. This is useful in scenarios where the application wants to
+        /// control the failover behavior explicitly (e.g. using a custom port). The application 
+        /// must be kept up to date with the failover configuration of the server. 
+        /// The application will not automatically discover a newly configured failover partner.
+        /// 
+        /// This app context switch defaults to 'false'.
+        /// </summary>
+        public static bool IgnoreServerProvidedFailoverPartner
+        {
+            get
+            {
+                if (s_ignoreServerProvidedFailoverPartner == Tristate.NotInitialized)
+                {
+                    if (AppContext.TryGetSwitch(IgnoreServerProvidedFailoverPartnerString, out bool returnedValue) && returnedValue)
+                    {
+                        s_ignoreServerProvidedFailoverPartner = Tristate.True;
+                    }
+                    else
+                    {
+                        s_ignoreServerProvidedFailoverPartner = Tristate.False;
+                    }
+                }
+                return s_ignoreServerProvidedFailoverPartner == Tristate.True;
             }
         }
 
