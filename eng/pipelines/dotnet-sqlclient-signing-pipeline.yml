@@ -95,9 +95,9 @@ extends:
         # The OneBranch template will set 'break' to false for the other SDL
         # tools when TSA is enabled.  This allows TSA to gather the results
         # and publish them for downstream analysis.
-        enabled: ${{parameters.enableAllSdlTools }}
+        enabled: true
       apiscan:
-        enabled: ${{parameters.enableAllSdlTools }}
+        enabled: true
         # For non-official builds, the OneBranch template seems to set APIScan's
         # 'break' to true even when TSA is enabled.  We don't want APIScan to
         # break non-official builds, so we explicitly set 'break' to false here.
