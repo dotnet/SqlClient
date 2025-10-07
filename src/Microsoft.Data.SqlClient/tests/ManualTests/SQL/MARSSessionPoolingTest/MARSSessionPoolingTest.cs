@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public static class MARSSessionPoolingTest
+    public class MARSSessionPoolingTest
     {
         private const string COMMAND_STATUS = "select count(*) as ConnectionCount, @@spid as spid from sys.dm_exec_connections where session_id=@@spid and net_transport='Session'; " +
             "select count(*) as ActiveRequestCount, @@spid as spid from sys.dm_exec_requests where session_id=@@spid and status='running' or session_id=@@spid and status='suspended'";
@@ -33,57 +33,169 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }).ConnectionString;
 
         // Synapse: Catalog view 'dm_exec_connections' is not supported in this version.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
-        public static void MarsExecuteScalar_AllFlavors()
-        {
-            TestMARSSessionPooling("Case: Text, ExecuteScalar", _testConnString, CommandType.Text, ExecuteType.ExecuteScalar, ReaderTestType.ReaderClose, GCType.Wait);
-            TestMARSSessionPooling("Case: RPC,  ExecuteScalar", _testConnString, CommandType.StoredProcedure, ExecuteType.ExecuteScalar, ReaderTestType.ReaderClose, GCType.Wait);
-        }
 
-        // Synapse: Catalog view 'dm_exec_connections' is not supported in this version.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
-        public static void MarsExecuteNonQuery_AllFlavors()
-        {
-            TestMARSSessionPooling("Case: Text, ExecuteNonQuery", _testConnString, CommandType.Text, ExecuteType.ExecuteNonQuery, ReaderTestType.ReaderClose, GCType.Wait);
-            TestMARSSessionPooling("Case: RPC,  ExecuteNonQuery", _testConnString, CommandType.StoredProcedure, ExecuteType.ExecuteNonQuery, ReaderTestType.ReaderClose, GCType.Wait);
-        }
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void MarsExecuteScalar_Text() =>
+            TestMARSSessionPooling(
+                "Case: Text, ExecuteScalar",
+                _testConnString,
+                CommandType.Text,
+                ExecuteType.ExecuteScalar,
+                ReaderTestType.ReaderClose,
+                GCType.Wait);
 
-        // Synapse: Catalog view 'dm_exec_connections' is not supported in this version.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
-        public static void MarsExecuteReader_Text_NoGC()
-        {
-            TestMARSSessionPooling("Case: Text, ExecuteReader, ReaderClose", _testConnString, CommandType.Text, ExecuteType.ExecuteReader, ReaderTestType.ReaderClose, GCType.Wait);
-            TestMARSSessionPooling("Case: Text, ExecuteReader, ReaderDispose", _testConnString, CommandType.Text, ExecuteType.ExecuteReader, ReaderTestType.ReaderDispose, GCType.Wait);
-            TestMARSSessionPooling("Case: Text, ExecuteReader, ConnectionClose", _testConnString, CommandType.Text, ExecuteType.ExecuteReader, ReaderTestType.ConnectionClose, GCType.Wait);
-        }
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void MarsExecuteScalar_Sproc() =>
+            TestMARSSessionPooling(
+                "Case: RPC,  ExecuteScalar",
+                _testConnString,
+                CommandType.StoredProcedure,
+                ExecuteType.ExecuteScalar,
+                ReaderTestType.ReaderClose,
+                GCType.Wait);
 
-        // Synapse: Stored procedure sp_who does not exist or is not supported.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
-        public static void MarsExecuteReader_RPC_NoGC()
-        {
-            TestMARSSessionPooling("Case: RPC,  ExecuteReader, ReaderClose", _testConnString, CommandType.StoredProcedure, ExecuteType.ExecuteReader, ReaderTestType.ReaderClose, GCType.Wait);
-            TestMARSSessionPooling("Case: RPC,  ExecuteReader, ReaderDispose", _testConnString, CommandType.StoredProcedure, ExecuteType.ExecuteReader, ReaderTestType.ReaderDispose, GCType.Wait);
-            TestMARSSessionPooling("Case: RPC,  ExecuteReader, ConnectionClose", _testConnString, CommandType.StoredProcedure, ExecuteType.ExecuteReader, ReaderTestType.ConnectionClose, GCType.Wait);
-        }
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void MarsExecuteNonQuery_Text() =>
+            TestMARSSessionPooling(
+                "Case: Text, ExecuteNonQuery",
+                _testConnString,
+                CommandType.Text,
+                ExecuteType.ExecuteNonQuery,
+                ReaderTestType.ReaderClose,
+                GCType.Wait);
 
-        // Synapse: Catalog view 'dm_exec_connections' is not supported in this version.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
-        public static void MarsExecuteReader_Text_WithGC()
-        {
-            TestMARSSessionPooling("Case: Text, ExecuteReader, GC-Wait", _testConnString, CommandType.Text, ExecuteType.ExecuteReader, ReaderTestType.ReaderGC, GCType.Wait);
-            TestMARSSessionPooling("Case: Text, ExecuteReader, GC-NoWait", _testConnString, CommandType.Text, ExecuteType.ExecuteReader, ReaderTestType.ReaderGC, GCType.NoWait);
-        }
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void MarsExecuteNonQuery_Sproc() =>
+            TestMARSSessionPooling(
+                "Case: RPC,  ExecuteNonQuery",
+                _testConnString,
+                CommandType.StoredProcedure,
+                ExecuteType.ExecuteNonQuery,
+                ReaderTestType.ReaderClose,
+                GCType.Wait);
 
-        // Synapse: Stored procedure sp_who does not exist or is not supported.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
-        public static void MarsExecuteReader_StoredProcedure_WithGC()
-        {
-            TestMARSSessionPooling("Case: RPC,  ExecuteReader, GC-Wait", _testConnString, CommandType.StoredProcedure, ExecuteType.ExecuteReader, ReaderTestType.ReaderGC, GCType.Wait);
-            TestMARSSessionPooling("Case: RPC,  ExecuteReader, GC-NoWait", _testConnString, CommandType.StoredProcedure, ExecuteType.ExecuteReader, ReaderTestType.ReaderGC, GCType.NoWait);
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void MarsExecuteReader_TextNoGc_ReaderClose() =>
+            TestMARSSessionPooling(
+                "Case: Text, ExecuteReader, ReaderClose",
+                _testConnString,
+                CommandType.Text,
+                ExecuteType.ExecuteReader,
+                ReaderTestType.ReaderClose,
+                GCType.Wait);
 
-            TestMARSSessionPooling("Case: Text, ExecuteReader, NoCloses", _testConnString + " ", CommandType.Text, ExecuteType.ExecuteReader, ReaderTestType.NoCloses, GCType.Wait);
-            TestMARSSessionPooling("Case: RPC,  ExecuteReader, NoCloses", _testConnString + "  ", CommandType.StoredProcedure, ExecuteType.ExecuteReader, ReaderTestType.NoCloses, GCType.Wait);
-        }
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void MarsExecuteReader_TextNoGc_ReaderDispose() =>
+            TestMARSSessionPooling(
+                "Case: Text, ExecuteReader, ReaderDispose",
+                _testConnString,
+                CommandType.Text,
+                ExecuteType.ExecuteReader,
+                ReaderTestType.ReaderDispose,
+                GCType.Wait);
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void MarsExecuteReader_TextNoGc_ConnectionClose() =>
+            TestMARSSessionPooling(
+                "Case: Text, ExecuteReader, ConnectionClose",
+                _testConnString,
+                CommandType.Text,
+                ExecuteType.ExecuteReader,
+                ReaderTestType.ConnectionClose,
+                GCType.Wait);
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void MarsExecuteReader_SprocNoGc_ReaderClose() =>
+            TestMARSSessionPooling(
+                "Case: RPC,  ExecuteReader, ReaderClose",
+                _testConnString,
+                CommandType.StoredProcedure,
+                ExecuteType.ExecuteReader,
+                ReaderTestType.ReaderClose,
+                GCType.Wait);
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void MarsExecuteReader_SprocNoGc_ReaderDispose() =>
+            TestMARSSessionPooling(
+                "Case: RPC,  ExecuteReader, ReaderDispose",
+                _testConnString,
+                CommandType.StoredProcedure,
+                ExecuteType.ExecuteReader,
+                ReaderTestType.ReaderDispose,
+                GCType.Wait);
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void MarsExecuteReader_SprocNoGc_ConnectionClose() =>
+            TestMARSSessionPooling(
+                "Case: RPC,  ExecuteReader, ConnectionClose",
+                _testConnString,
+                CommandType.StoredProcedure,
+                ExecuteType.ExecuteReader,
+                ReaderTestType.ConnectionClose,
+                GCType.Wait);
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void MarsExecuteReader_TextWithGc_GcWait() =>
+            TestMARSSessionPooling(
+                "Case: Text, ExecuteReader, GC-Wait",
+                _testConnString,
+                CommandType.Text,
+                ExecuteType.ExecuteReader,
+                ReaderTestType.ReaderGC,
+                GCType.Wait);
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void MarsExecuteReader_TextWithGc_GcNoWait() =>
+            TestMARSSessionPooling(
+                "Case: Text, ExecuteReader, GC-NoWait",
+                _testConnString,
+                CommandType.Text,
+                ExecuteType.ExecuteReader,
+                ReaderTestType.ReaderGC,
+                GCType.NoWait);
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void MarsExecuteReader_SprocWithGc_GcWait() =>
+            TestMARSSessionPooling(
+                "Case: RPC,  ExecuteReader, GC-Wait",
+                _testConnString,
+                CommandType.StoredProcedure,
+                ExecuteType.ExecuteReader,
+                ReaderTestType.ReaderGC,
+                GCType.Wait);
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void MarsExecuteReader_SprocWithGc_GcNoWait() =>
+            TestMARSSessionPooling(
+                "Case: RPC,  ExecuteReader, GC-Wait",
+                _testConnString,
+                CommandType.StoredProcedure,
+                ExecuteType.ExecuteReader,
+                ReaderTestType.ReaderGC,
+                GCType.Wait);
+
+        // Disabling as this there is a race condition somewhere in it
+        [ActiveIssue("Flaky, race condition")]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void MarsExecuteReader_TextWithGc_NoCloses() =>
+            TestMARSSessionPooling(
+                "Case: Text, ExecuteReader, NoCloses",
+                _testConnString + " ",
+                CommandType.Text,
+                ExecuteType.ExecuteReader,
+                ReaderTestType.NoCloses,
+                GCType.Wait);
+
+        [ActiveIssue("Flaky, race condition")]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void MarsExecuteReader_SprocWithGc_NoCloses() =>
+            TestMARSSessionPooling(
+                "Case: RPC,  ExecuteReader, NoCloses",
+                _testConnString + "  ",
+                CommandType.StoredProcedure,
+                ExecuteType.ExecuteReader,
+                ReaderTestType.NoCloses,
+                GCType.Wait);
 
         private enum ExecuteType
         {

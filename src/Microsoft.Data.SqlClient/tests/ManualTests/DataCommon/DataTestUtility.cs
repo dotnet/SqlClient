@@ -409,6 +409,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(NPConnectionString) && !string.IsNullOrEmpty(TCPConnectionString);
         }
 
+        public static bool AreConnStringsNotAzureSynapse() =>
+            AreConnStringsSetup() && IsNotAzureSynapse();
+
         public static bool IsSQL2022() => string.Equals("16", SQLServerVersion.Trim());
 
         public static bool IsSQL2019() => string.Equals("15", SQLServerVersion.Trim());
