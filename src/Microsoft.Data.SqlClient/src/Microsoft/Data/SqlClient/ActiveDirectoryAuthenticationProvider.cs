@@ -85,7 +85,9 @@ namespace Microsoft.Data.SqlClient
         public override bool IsSupported(SqlAuthenticationMethod authentication)
         {
             return authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated
+            #pragma warning disable 0618 // Type or member is obsolete
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
+            #pragma warning restore 0618 // Type or member is obsolete
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
@@ -245,7 +247,9 @@ namespace Microsoft.Data.SqlClient
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Integrated auth mode. Expiry Time: {0}", result?.ExpiresOn);
                 }
             }
+            #pragma warning disable 0618 // Type or member is obsolete
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
+            #pragma warning restore 0618 // Type or member is obsolete
             {
                 string pwCacheKey = GetAccountPwCacheKey(parameters);
                 object previousPw = s_accountPwCache.Get(pwCacheKey);
@@ -275,7 +279,8 @@ namespace Microsoft.Data.SqlClient
                     {
                         entry.Value = GetHash(parameters.Password);
                         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(s_accountPwCacheTtlInHours);
-                    };
+                    }
+                    ;
 
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Password auth mode. Expiry Time: {0}", result?.ExpiresOn);
                 }

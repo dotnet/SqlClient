@@ -11,7 +11,9 @@ namespace Microsoft.Data.SqlClient.Tests
     {
         [Theory]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryIntegrated)]
+        #pragma warning disable 0618 // Type or member is obsolete
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryPassword)]
+        #pragma warning restore 0618 // Type or member is obsolete
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)]
