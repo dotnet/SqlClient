@@ -646,20 +646,19 @@ namespace Microsoft.Data.SqlClient.Tests
                 var token = loginToken.FeatureExt
                                       .OfType<TDSLogin7GenericOptionToken>()
                                       .FirstOrDefault(t => t.FeatureID == TDSFeatureID.UserAgentSupport);
-                
+                if (token == null)
+                {
+                    return;
+                }
 
-                // Test should fail if no UserAgent FE token is found
-                Assert.NotNull(token);
+                var data = token.Data;
+                if (data == null || data.Length < 2)
+                {
+                    return;                
+                }
 
-                Assert.Equal((byte)TDSFeatureID.UserAgentSupport, (byte)token.FeatureID);
-
-                // Layout: [0] = version byte, rest = UTF-8 JSON blob
-                Assert.True(token.Data.Length >= 2, "UserAgent token is too short");
-                
-                observedVersion = token.Data[0];
-                Assert.Equal(0x1, observedVersion);
-
-                observedJsonBytes = token.Data.AsSpan(1).ToArray();
+                observedVersion = data[0];
+                observedJsonBytes = data.AsSpan(1).ToArray();
                 loginFound = true;
             };
 
@@ -667,11 +666,12 @@ namespace Microsoft.Data.SqlClient.Tests
             using var connection = new SqlConnection(server.ConnectionString);
             connection.Open();
 
-            // Verify client did offer UserAgent
-            Assert.True(loginFound, "Expected UserAgent extension in LOGIN7");
-
             // Verify the connection itself succeeded
             Assert.Equal(ConnectionState.Open, connection.State);
+
+            // Verify client did offer UserAgent
+            Assert.True(loginFound, "Expected UserAgent extension in LOGIN7");
+            Assert.Equal(0x1, observedVersion);
 
             // Note: Accessing UserAgentInfo via Reflection.
             // We cannot use InternalsVisibleTo here because making internals visible to FunctionalTests
