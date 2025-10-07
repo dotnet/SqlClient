@@ -60,12 +60,11 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
             rnd.NextBytes(passwordBytes);
             password = Convert.ToBase64String(passwordBytes);
 #if NET
-            X500DistinguishedNameBuilder subjectBuilder = new X500DistinguishedNameBuilder();
+            X500DistinguishedName subject = new X500DistinguishedName(subjectName);
             SubjectAlternativeNameBuilder sanBuilder = new SubjectAlternativeNameBuilder();
             RSA rsaKey = CreateRSA(forceCsp);
             bool hasSans = false;
 
-            subjectBuilder.AddCommonName(subjectName);
             foreach (string dnsName in dnsNames)
             {
                 sanBuilder.AddDnsName(dnsName);
@@ -77,7 +76,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
                 hasSans = true;
             }
 
-            CertificateRequest request = new CertificateRequest(subjectBuilder.Build(), rsaKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            CertificateRequest request = new CertificateRequest(subject, rsaKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 
             request.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(request.PublicKey, false));
             request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment, false));
