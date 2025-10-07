@@ -60,7 +60,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
             rnd.NextBytes(passwordBytes);
             password = Convert.ToBase64String(passwordBytes);
 #if NET
-            X500DistinguishedName subject = new X500DistinguishedName(subjectName);
+            X500DistinguishedName subject = new X500DistinguishedName($"CN={subjectName}");
             SubjectAlternativeNameBuilder sanBuilder = new SubjectAlternativeNameBuilder();
             RSA rsaKey = CreateRSA(forceCsp);
             bool hasSans = false;
