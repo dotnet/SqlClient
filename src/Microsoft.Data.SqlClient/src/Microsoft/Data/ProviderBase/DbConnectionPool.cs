@@ -362,7 +362,7 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        private const int MAX_Q_SIZE = (int)0x00100000;
+        private const int MAX_Q_SIZE = 0x00100000;
 
         // The order of these is important; we want the WaitAny call to be signaled
         // for a free object before a creation signal.  Only the index first signaled
@@ -1412,29 +1412,36 @@ namespace Microsoft.Data.ProviderBase
                                     DestroyObject(obj);
                                     obj = null;     // Setting to null in case creating a new object fails
 
+                                    bool obtained = false;
                                     if (onlyOneCheckConnection)
                                     {
-                                        if (_waitHandles.CreationSemaphore.WaitOne(unchecked((int)waitForMultipleObjectsTimeout)))
-                                        {
 #if NETFRAMEWORK
-                                            RuntimeHelpers.PrepareConstrainedRegions();
+                                        RuntimeHelpers.PrepareConstrainedRegions();
 #endif
-                                            try
+                                        try
+                                        {
+                                            obtained = _waitHandles.CreationSemaphore.WaitOne((int)waitForMultipleObjectsTimeout);
+                                            if (obtained)
                                             {
                                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Creating new connection.", ObjectID);
                                                 obj = UserCreateRequest(owningObject, userOptions);
                                             }
-                                            finally
+                                            else
                                             {
-                                                _waitHandles.CreationSemaphore.Release(1);
+                                                // Timeout waiting for creation semaphore - return null
+                                                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Wait timed out.", ObjectID);
+                                                connection = null;
+                                                return false;
                                             }
                                         }
-                                        else
+                                        finally
                                         {
-                                            // Timeout waiting for creation semaphore - return null
-                                            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Wait timed out.", ObjectID);
-                                            connection = null;
-                                            return false;
+                                            if (obtained)
+                                            {
+                                                // Ensure that we release this waiter, regardless
+                                                // of any exceptions that may be thrown.
+                                                _waitHandles.CreationSemaphore.Release(1);
+                                            }
                                         }
                                     }
                                 }
@@ -1657,25 +1664,17 @@ namespace Microsoft.Data.ProviderBase
                             {
                                 return;
                             }
-                            int waitResult = BOGUS_HANDLE;
 
+                            bool obtained = false;
 #if NETFRAMEWORK
                             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
                             try
                             {
                                 // Obtain creation mutex so we're the only one creating objects
-                                // and we must have the wait result
-#if NETFRAMEWORK
-                                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                                try
-                                { }
-                                finally
-                                {
-                                    waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(withCreate: true), CreationTimeout);
-                                }
-                                if (CREATION_HANDLE == waitResult)
+                                obtained = _waitHandles.CreationSemaphore.WaitOne(CreationTimeout);
+
+                                if (obtained)
                                 {
                                     DbConnectionInternal newObj;
 
@@ -1710,16 +1709,11 @@ namespace Microsoft.Data.ProviderBase
                                         }
                                     }
                                 }
-                                else if (WaitHandle.WaitTimeout == waitResult)
+                                else
                                 {
                                     // do not wait forever and potential block this worker thread
                                     // instead wait for a period of time and just requeue to try again
                                     QueuePoolCreateRequest();
-                                }
-                                else
-                                {
-                                    // trace waitResult and ignore the failure
-                                    SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PoolCreateRequest|RES|CPOOL> {0}, PoolCreateRequest called WaitForSingleObject failed {1}", ObjectID, waitResult);
                                 }
                             }
                             catch (Exception e)
@@ -1736,9 +1730,10 @@ namespace Microsoft.Data.ProviderBase
                             }
                             finally
                             {
-                                if (CREATION_HANDLE == waitResult)
+                                if (obtained)
                                 {
-                                    // reuse waitResult and ignore its value
+                                    // Ensure that we release this waiter, regardless
+                                    // of any exceptions that may be thrown.
                                     _waitHandles.CreationSemaphore.Release(1);
                                 }
                             }
