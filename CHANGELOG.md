@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable Release 6.1.2] - 2025-10-07
+
+This update brings the below changes over the previous stable release:
+
+### Fixed
+
+- Fixed an issue where initializing PerformanceCounters would throw `System.InvalidOperationException` [#3629](https://github.com/dotnet/sqlclient/pull/3629)
+- Fixed an issue where a Custom SqlClientAuthenticationProvider was being overwritten by default implementation. [#3651](https://github.com/dotnet/SqlClient/pull/3651)
+- Fixed a concurrency issue in connection pooling where the number of active connections could be lower than the configured maximum pool size. [#3653](https://github.com/dotnet/SqlClient/pull/3653)
+
 ## [Stable release 6.0.3] - 2025-10-07
 
 This update brings the below changes over the previous stable release:
