@@ -56,9 +56,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         private static RSA CopyKey(RSA rsa)
         {
-#if NET8_0
-            // In .NET Framework, the key is exportable in plaintext. In .NET 9.0+, we use X509CertificateLoader2 to maintain this functionality.
-            // We need to manually handle this in .NET 8.0 with an non-plaintext export.
+#if NET
+            // In .NET Framework, the key is exportable in plaintext.
+            // We need to manually handle this in .NET 6.0 and 8.0 with a non-plaintext export.
             RSA replacementKey = RSA.Create(rsa.KeySize);
             Span<byte> passwordBytes = stackalloc byte[32];
             PbeParameters pbeParameters = new PbeParameters(PbeEncryptionAlgorithm.Aes256Cbc, HashAlgorithmName.SHA256, 10000);
