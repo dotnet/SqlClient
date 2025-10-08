@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Stable Release 6.1.2] - 2025-10-07
 
-This update includes the following changes since the [6.1.1](release-notes/6.1/6.1.1.md) release:
+This update brings the below changes over the previous stable release:
 
 ### Fixed
 
@@ -14,6 +14,20 @@ This update includes the following changes since the [6.1.1](release-notes/6.1/6
 - Fixed an issue where a Custom SqlClientAuthenticationProvider was being overwritten by default implementation. [#3651](https://github.com/dotnet/SqlClient/pull/3651)
 - Fixed a concurrency issue in connection pooling where the number of active connections could be lower than the configured maximum pool size. [#3653](https://github.com/dotnet/SqlClient/pull/3653)
 
+## [Stable release 6.0.3] - 2025-10-07
+
+This update brings the below changes over the previous stable release:
+
+### Fixed
+
+- Fixed an issue where a Custom SqlClientAuthenticationProvider was being overwritten by default implementation. [#3652](https://github.com/dotnet/SqlClient/pull/3652)
+- Fixed a concurrency issue in connection pooling where the number of active connections could be lower than the configured maximum pool size. [#3654](https://github.com/dotnet/SqlClient/pull/3654)
+
+### Changed
+
+- Updated MSAL usage as per code compliance requirements [#3360](https://github.com/dotnet/SqlClient/pull/3360)
+- Updated `SqlDecimal` implementation to improve code compliance [#3466](https://github.com/dotnet/SqlClient/pull/3466)
+- Updated Azure.Identity and related dependencies [#3553](https://github.com/dotnet/SqlClient/pull/3553)
 
 ## [Preview Release 7.0.0-preview1.25257.1] - 2025-09-12
 
