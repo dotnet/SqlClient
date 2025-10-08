@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- We purposely do not include any parent Directory.Build.props files. -->
+
+  <!-- Properties common to all projects in this solution. -->
+  <PropertyGroup>
+    <!-- Target all frameworks that MDS supports. -->
+    <TargetFrameworks>net462;net47;net471;net472;net48;net481;net8.0;net9.0</TargetFrameworks>
+
+    <!--
+      Use the latest C# language version, regardless of what a particular
+      target framework claims to support.
+    -->
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+</Project>

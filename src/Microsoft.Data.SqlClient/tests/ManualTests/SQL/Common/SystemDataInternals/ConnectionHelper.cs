@@ -59,17 +59,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         private static void VerifyObjectIsInternalConnection(object internalConnection)
         {
             if (internalConnection == null)
+            {
                 throw new ArgumentNullException(nameof(internalConnection));
+            }
+
             if (!s_dbConnectionInternal.IsInstanceOfType(internalConnection))
+            {
                 throw new ArgumentException("Object provided was not a DbConnectionInternal", nameof(internalConnection));
+            }
         }
 
         private static void VerifyObjectIsConnection(object connection)
         {
             if (connection == null)
+            {
                 throw new ArgumentNullException(nameof(connection));
+            }
+
             if (!s_sqlConnection.IsInstanceOfType(connection))
+            {
                 throw new ArgumentException("Object provided was not a SqlConnection", nameof(connection));
+            }
         }
 
         public static bool IsEnlistedInTransaction(object internalConnection)

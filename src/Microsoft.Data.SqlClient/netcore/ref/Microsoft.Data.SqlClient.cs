@@ -131,7 +131,7 @@ namespace Microsoft.Data.SqlTypes
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/IsNull/*' />
         public bool IsNull => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Null/*' />
-        public static SqlVector<T> Null => throw null;
+        public static SqlVector<T>? Null => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Length/*' />
         public int Length { get { throw null; } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Memory/*' />
@@ -919,6 +919,9 @@ namespace Microsoft.Data.SqlClient
         public int CommandTimeout { get { throw null; } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionString/*'/>
         [System.ComponentModel.DefaultValueAttribute("")]
+#pragma warning disable CS0618
+        [System.ComponentModel.RecommendedAsConfigurableAttribute(true)]
+#pragma warning restore CS0618
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         [System.ComponentModel.SettingsBindableAttribute(true)]
         public override string ConnectionString { get { throw null; } set { } }

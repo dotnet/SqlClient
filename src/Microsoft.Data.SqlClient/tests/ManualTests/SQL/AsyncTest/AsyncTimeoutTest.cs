@@ -192,16 +192,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (SqlException e)
             {
                 if (!timeoutExExpected)
+                {
                     throw new Exception("Index " + index + " failed with: " + e.Message);
+                }
                 else
+                {
                     Assert.True(timeoutExExpected && e.Class == 11 && e.Number == -2);
+                }
             }
             finally
             {
                 if (cn != null)
                 {
                     if (useTransaction)
+                    {
                         tx.Commit();
+                    }
+
                     cn.Close();
                 }
             }

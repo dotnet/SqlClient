@@ -385,11 +385,17 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             if (_dataSourceAfterTrimmingProtocol.Contains(Slash)) // Pipe paths only allow back slashes
             {
                 if (ResolvedProtocol == Protocol.None)
+                {
                     ReportSNIError(SniProviders.INVALID_PROV);
+                }
                 else if (ResolvedProtocol == Protocol.NP)
+                {
                     ReportSNIError(SniProviders.NP_PROV);
+                }
                 else if (ResolvedProtocol == Protocol.TCP)
+                {
                     ReportSNIError(SniProviders.TCP_PROV);
+                }
             }
         }
 

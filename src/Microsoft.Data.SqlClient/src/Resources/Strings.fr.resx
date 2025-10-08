@@ -3954,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>Le chemin d’accès de certificat ne peut pas avoir la valeur null. Utilisez le format suivant : &lt;emplacement de certificat&gt;{2}&lt;magasin de certificats&gt;{2}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; a la valeur « {0} » ou « {1} ».</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Le chemin d’accès du certificat ne peut pas être nul. Utilisez le format suivant : &lt;emplacement de certificat&gt;{1}&lt;magasin de certificats&gt;{1}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {0} ».</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>Erreur interne. Le chemin d’accès de certificat ne peut pas avoir la valeur null. Utilisez le format suivant : &lt;emplacement de certificat&gt;{2}&lt;magasin de certificats&gt;{2}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; a la valeur « {0} » ou « {1} ».</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Erreur interne. Le chemin d’accès du certificat ne peut pas être nul. Utilisez le format suivant : &lt;emplacement de certificat&gt;{1}&lt;magasin de certificats&gt;{1}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {0} ».</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Le chemin d'accès de la clé principale de la colonne ne peut pas être Null. Utilisez le format suivant pour une clé stockée dans un fournisseur de service de chiffrement Microsoft : &lt;Nom du fournisseur de service de chiffrement&gt;{0}&lt;Identificateur de clé&gt;.</value>
@@ -3972,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>Chemin d’accès de certificat non valide : « {0} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{3}&lt;magasin de certificats&gt;{3}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; a la valeur « {1} » ou « {2} ».</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Chemin d’accès du certificat non valide : « {0} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{2}&lt;magasin de certificats&gt;{2}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {1} ».</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>Erreur interne. Chemin d’accès de certificat non valide : « {0} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{3}&lt;magasin de certificats&gt;{3}&lt;empreinte de certificat&gt;, où &lt;emplacement du certificat&gt; a la valeur « {1} » ou « {2} ».</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Erreur interne. Chemin d’accès du certificat non valide : « {0} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{2}&lt;magasin de certificats&gt;{2}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {1} ».</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Le chemin d'accès de la clé principale de la colonne '{0}' n'est pas valide. Utilisez le format suivant pour une clé stockée dans un fournisseur de service de chiffrement Microsoft : &lt;Nom du fournisseur de service de chiffrement&gt;{1}&lt;Identificateur de clé&gt;.</value>
@@ -3990,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>L’emplacement de certificat « {0} » dans le chemin d’accès de certificat « {1} » n’est pas valide. Utilisez le format suivant : &lt;emplacement de certificat&gt;{4}&lt;magasin de certificats&gt;{4}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; a la valeur « {2} » ou « {3} ».</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>L’emplacement de certificat « {0} » n’est pas valide dans le chemin d’accès du certificat « {1} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{3}&lt;magasin de certificats&gt;{3}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {2} ».</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>Erreur interne. L’emplacement de certificat « {0} » dans le chemin d’accès de certificat « {1} » n’est pas valide. Utilisez le format suivant : &lt;emplacement de certificat&gt;{4}&lt;magasin de certificats&gt;{4}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; a la valeur « {2} » ou « {3} ».</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>Erreur interne. L’emplacement de certificat « {0} » n’est pas valide dans le chemin d’accès du certificat « {1} ». Utilisez le format suivant : &lt;emplacement de certificat&gt;{3}&lt;magasin de certificats&gt;{3}&lt;empreinte de certificat&gt;, où &lt;emplacement de certificat&gt; est « {2} ».</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>Le magasin de certificats « {0} » spécifié dans le chemin d’accès de certificat « {1} » n’est pas valide. Valeur attendue : « {2} ».</value>
@@ -4057,28 +4075,22 @@
     <value>La clé de chiffrement de colonne chiffrée spécifiée contient une version d’algorithme de chiffrement non valide (« {0} »). La version attendue est « {1} ».</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>La longueur de texte de chiffrement spécifiée {0} pour la clé de chiffrement de colonne chiffrée ne correspond pas à la longueur de texte chiffré {1} quand la clé principale de colonne (certificat) est utilisée dans « {2} ». Il se peut que la clé de chiffrement de colonne chiffrée soit endommagée ou que le chemin d’accès de certificat spécifié soit incorrect.</value>
+    <value>La longueur de ciphertext spécifiée ({0}) pour la clé de chiffrement de colonne chiffrée ne correspond pas à la longueur de ciphertext ({1}) quand la clé principale de colonne ({2}) est utilisée dans « {3} ». La clé de chiffrement de colonne chiffrée est peut-être altérée ou le chemin spécifié {4} est incorrect.</value>
   </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
-    <value>La longueur du texte chiffré de la clé de chiffrement de la colonne chiffrée spécifiée {0} ne correspond pas à la longueur du texte chiffré {1} lors de l'utilisation de la clé principale de la colonne (clé asymétrique) dans '{2}'. La clé de chiffrement de la colonne chiffrée est peut-être endommagée ou le chemin d'accès du fournisseur de service de chiffrement Microsoft spécifié est peut-être incorrect.</value>
-  </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCng" xml:space="preserve">
-    <value>La longueur du texte chiffré de la clé de chiffrement de la colonne chiffrée spécifiée {0} ne correspond pas à la longueur du texte chiffré {1} lors de l'utilisation de la clé principale de la colonne (clé asymétrique) dans '{2}'. La clé de chiffrement de la colonne chiffrée est peut-être endommagée ou le chemin d'accès du fournisseur CNG de l'API de chiffrement Microsoft spécifié est peut-être incorrect.</value>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
+    <value>La longueur de ciphertext spécifiée ({0}) pour la clé de chiffrement de colonne chiffrée ne correspond pas à la longueur de ciphertext ({1}) quand la clé principale de colonne (certificat) est utilisée dans « {2} ». Peut-être que la clé de chiffrement de colonne chiffrée est endommagée ou que le chemin de certificat spécifié est incorrect.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>La longueur de signature spécifiée {0} pour la clé de chiffrement de colonne chiffrée ne correspond pas à la longueur de signature {1} quand la clé principale de colonne (certificat) est utilisée dans « {2} ». Il se peut que la clé de chiffrement de colonne chiffrée soit endommagée ou que le chemin d’accès de certificat spécifié soit incorrect.</value>
+    <value>La longueur de signature spécifiée ({0}) pour la clé de chiffrement de colonne chiffrée ne correspond pas à la longueur de signature ({1}) quand la clé principale de colonne ({2}) est utilisée dans « {3} ». La clé de chiffrement de colonne chiffrée est peut-être altérée ou le chemin spécifié {4} est incorrect.</value>
   </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
-    <value>La longueur de la signature de la clé de chiffrement de la colonne chiffrée spécifiée {0} ne correspond pas à la longueur de la signature {1} lors de l'utilisation de la clé principale de la colonne (clé asymétrique) dans '{2}'. La clé de chiffrement de la colonne chiffrée est peut-être endommagée ou le chemin d'accès du fournisseur de service de chiffrement Microsoft spécifié est peut-être incorrect.</value>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
+    <value>La longueur de signature spécifiée ({0}) pour la clé de chiffrement de colonne chiffrée ne correspond pas à la longueur de signature ({1}) quand la clé principale de colonne (certificat) est utilisée dans « {2} ». Peut-être que la clé de chiffrement de colonne chiffrée est endommagée ou que le chemin de certificat spécifié est incorrect.</value>
   </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
-    <value>La longueur de la signature de la clé de chiffrement de la colonne chiffrée spécifiée {0} ne correspond pas à la longueur de la signature {1} lors de l'utilisation de la clé principale de la colonne (clé asymétrique) dans '{2}'. La clé de chiffrement de la colonne chiffrée est peut-être endommagée ou le chemin d'accès du fournisseur CNG de l'API de chiffrement Microsoft spécifié est peut-être incorrect.</value>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>La signature de clé de chiffrement de colonne chiffrée spécifiée ne correspond pas à la signature calculée avec la clé principale de colonne ({0}) dans « {1} ». La clé de chiffrement de colonne chiffrée est peut-être altérée ou le chemin spécifié est incorrect.</value>
   </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>La signature de clé de chiffrement de colonne chiffrée ne correspond pas à la signature calculée avec la clé principale de colonne (certificat) dans « {0} ». Il se peut que la clé de chiffrement de colonne chiffrée soit endommagée ou que le chemin d’accès spécifié soit incorrect.</value>
-  </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>La signature de la clé de chiffrement de la colonne chiffrée spécifiée ne correspond pas à la signature calculée avec la clé principale de la colonne (clé asymétrique) dans '{0}'. La clé de chiffrement de la colonne chiffrée est peut-être endommagée ou le chemin d'accès spécifié est peut-être incorrect.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>Le certificat spécifié dans le chemin d’accès à la clé « {0} » ne dispose pas d’une clé privée permettant de chiffrer une clé de chiffrement de colonne. Assurez-vous que le certificat a été importé correctement.</value>

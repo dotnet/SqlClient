@@ -102,9 +102,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>
         /// Release the lock which was obtained through LockToUpdate.
         /// </summary>
-#if NETFRAMEWORK
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-#endif
         internal void ReleaseLockToUpdate()
         {
             int oldValue = Interlocked.CompareExchange(ref _isUpdateInProgress, STATUS_UNLOCKED, STATUS_LOCKED);

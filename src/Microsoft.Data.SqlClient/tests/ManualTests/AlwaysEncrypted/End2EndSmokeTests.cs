@@ -11,15 +11,15 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public sealed class End2EndSmokeTests : IClassFixture<PlatformSpecificTestContext>, IDisposable
+    public sealed class End2EndSmokeTests : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
         private SQLSetupStrategy fixture;
 
         private readonly string tableName;
 
-        public End2EndSmokeTests(PlatformSpecificTestContext context)
+        public End2EndSmokeTests(SQLSetupStrategyCertStoreProvider context)
         {
-            fixture = context.Fixture;
+            fixture = context;
             tableName = fixture.End2EndSmokeTable.Name;
         }
 

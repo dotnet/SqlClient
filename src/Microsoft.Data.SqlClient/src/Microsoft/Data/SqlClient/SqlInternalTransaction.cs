@@ -376,7 +376,9 @@ namespace Microsoft.Data.SqlClient
                 // the same name, and ROLLBACK will simply rollback to the most recent save point with the
                 // save point name.
                 if (string.IsNullOrEmpty(transactionName))
+                {
                     throw SQL.NullEmptyTransactionName();
+                }
 
                 try
                 {
@@ -406,7 +408,9 @@ namespace Microsoft.Data.SqlClient
                 // exception from the server.  So, an overload for SaveTransaction without an arg doesn't make
                 // sense to have.  Save Transaction does not affect the transaction level.
                 if (string.IsNullOrEmpty(savePointName))
+                {
                     throw SQL.NullEmptyTransactionName();
+                }
 
                 try
                 {

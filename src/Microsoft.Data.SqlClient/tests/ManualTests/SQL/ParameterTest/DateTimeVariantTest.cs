@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSimpleParameter_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string procName = DataTestUtility.GetUniqueNameForSqlServer("paramProc1");
+            string procName = DataTestUtility.GetLongName("paramProc1");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -97,9 +97,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -115,7 +119,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSimpleParameter_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string procName = DataTestUtility.GetUniqueNameForSqlServer("paramProc2");
+            string procName = DataTestUtility.GetLongName("paramProc2");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -137,9 +141,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -153,7 +161,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSqlDataRecordParameterToTVP_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpType");
+            string tvpTypeName = DataTestUtility.GetLongName("tvpType");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -182,9 +190,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -200,7 +212,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSqlDataRecordParameterToTVP_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpVariant");
+            string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -229,9 +241,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -245,7 +261,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSqlDataReaderParameterToTVP_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpType");
+            string tvpTypeName = DataTestUtility.GetLongName("tvpType");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -277,9 +293,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -295,7 +315,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSqlDataReaderParameterToTVP_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpVariant");
+            string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -329,9 +349,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -347,10 +371,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSqlDataReader_TVP_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpType");
-            string InputTableName = DataTestUtility.GetUniqueNameForSqlServer("InputTable");
-            string OutputTableName = DataTestUtility.GetUniqueNameForSqlServer("OutputTable");
-            string ProcName = DataTestUtility.GetUniqueNameForSqlServer("spTVPProc");
+            string tvpTypeName = DataTestUtility.GetLongName("tvpType");
+            string InputTableName = DataTestUtility.GetLongName("InputTable");
+            string OutputTableName = DataTestUtility.GetLongName("OutputTable");
+            string ProcName = DataTestUtility.GetLongName("spTVPProc");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -409,9 +433,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -428,10 +456,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSqlDataReader_TVP_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpVariant_DRdrTVPVar");
-            string InputTableName = DataTestUtility.GetUniqueNameForSqlServer("InputTable");
-            string OutputTableName = DataTestUtility.GetUniqueNameForSqlServer("OutputTable");
-            string ProcName = DataTestUtility.GetUniqueNameForSqlServer("spTVPProc_DRdrTVPVar");
+            string tvpTypeName = DataTestUtility.GetLongName("tvpVariant_DRdrTVPVar");
+            string InputTableName = DataTestUtility.GetLongName("InputTable");
+            string OutputTableName = DataTestUtility.GetLongName("OutputTable");
+            string ProcName = DataTestUtility.GetLongName("spTVPProc_DRdrTVPVar");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -491,9 +519,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -512,8 +544,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSimpleDataReader_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string inputTable = DataTestUtility.GetUniqueNameForSqlServer("inputTable");
-            string procName = DataTestUtility.GetUniqueNameForSqlServer("paramProc3");
+            string inputTable = DataTestUtility.GetLongName("inputTable");
+            string procName = DataTestUtility.GetLongName("paramProc3");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -551,9 +583,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -568,8 +604,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "TestSimpleDataReader_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string inputTable = DataTestUtility.GetUniqueNameForSqlServer("inputTable");
-            string procName = DataTestUtility.GetUniqueNameForSqlServer("paramProc4");
+            string inputTable = DataTestUtility.GetLongName("inputTable");
+            string procName = DataTestUtility.GetLongName("paramProc4");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -607,9 +643,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -624,8 +664,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "SqlBulkCopySqlDataReader_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string bulkCopySrcTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkSrcTable");
-            string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestTable");
+            string bulkCopySrcTableName = DataTestUtility.GetLongName("bulkSrcTable");
+            string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestTable");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -680,9 +720,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -698,8 +742,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "SqlBulkCopySqlDataReader_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string bulkCopySrcTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkSrcTable");
-            string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestTable");
+            string bulkCopySrcTableName = DataTestUtility.GetLongName("bulkSrcTable");
+            string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestTable");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -759,9 +803,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -776,7 +824,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "SqlBulkCopyDataTable_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestType");
+            string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestType");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -836,7 +884,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "SqlBulkCopyDataTable_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestVariant");
+            string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestVariant");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -870,9 +918,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -886,7 +938,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "SqlBulkCopyDataRow_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestType");
+            string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestType");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -941,7 +993,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tag = "SqlBulkCopyDataRow_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
-            string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestVariant");
+            string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestVariant");
             try
             {
                 using SqlConnection conn = new(s_connStr);
@@ -970,9 +1022,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -1105,15 +1161,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 case "date":
                     if (((DateTime)expectedValue).ToString("M/d/yyyy").Equals(((DateTime)actualValue).ToString("M/d/yyyy")))
+                    {
                         return true;
+                    }
                     else
+                    {
                         return false;
+                    }
                 case "datetime":
                     if ((((DateTime)expectedValue).Ticks == 3155378975999999999) &&
                         (((DateTime)actualValue).Ticks == 3155378975999970000))
+                    {
                         return true;
+                    }
                     else
+                    {
                         return false;
+                    }
                 default:
                     return false;
             }
@@ -1205,7 +1269,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Make them the same for the purposes of comparing test output.
             if (e is InvalidCastException &&
                 e.Message.Equals("Unable to cast object of type 'System.TimeSpan' to type 'System.DateTime'."))
+            {
                 ExceptionMessage = string.Format(">>> EXCEPTION: [{0}] {1}", e.GetType(), "Specified cast is not valid.");
+            }
 
             if (e is ArgumentOutOfRangeException &&
                 e.Message.Equals("The added or subtracted value results in an un-representable DateTime. (Parameter 'value')"))
@@ -1226,9 +1292,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Console.WriteLine(string.Format("Type        => Expected : Actual == {0} : {1}", expectedTypeName, actualTypeName));
             Console.WriteLine(string.Format("Base Type   => Expected : Actual == {0} : {1}", expectedBaseTypeName, actualBaseTypeName));
             if (expectedTypeName == "System.DateTimeOffset")
+            {
                 Console.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTimeOffset)expectedValue).Ticks.ToString(), ((DateTimeOffset)actualValue).Ticks.ToString()));
+            }
             else if (expectedTypeName == "System.DateTime")
+            {
                 Console.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTime)expectedValue).Ticks.ToString(), ((DateTime)actualValue).Ticks.ToString()));
+            }
         }
     }
 }

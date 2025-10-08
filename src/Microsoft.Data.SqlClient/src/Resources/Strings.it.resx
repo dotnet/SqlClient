@@ -3954,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>Il percorso certificato non può essere Null. Usare il formato seguente: &lt;posizione certificato&gt;{2}&lt;archivio certificati&gt;{2}&lt;identificazione personale certificato&gt;, dove &lt;posizione certificato&gt; è '{0}' o '{1}'.</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Il percorso del certificato non può essere null. Usare il formato seguente: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, in cui &lt;certificate location&gt; è "{0}".</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>Errore interno. Il percorso certificato non può essere Null. Usare il formato seguente: &lt;posizione certificato&gt;{2}&lt;archivio certificati&gt;{2}&lt;identificazione personale certificato&gt;, dove &lt;posizione certificato&gt; è '{0}' o '{1}'.</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Errore interno. Il percorso del certificato non può essere null. Usare il formato seguente: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, in cui &lt;certificate location&gt; è "{0}".</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Il percorso della chiave master di colonna non può essere Null. Usare il formato seguente per una chiave archiviata in un provider del servizio di crittografia Microsoft (CSP): &lt;nome provider CSP&gt;{0}&lt;identificatore chiave&gt;.</value>
@@ -3972,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>Il percorso certificato '{0}' non è valido. Usare il formato seguente: &lt;posizione certificato&gt;{3}&lt;archivio certificati&gt;{3}&lt;identificazione personale certificato&gt;, dove &lt;posizione certificato&gt; è '{1}' o '{2}'.</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Percorso del certificato non valido: "{0}". Usare il formato seguente: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, in cui &lt;certificate location&gt; è "{1}".</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>Errore interno. Il percorso certificato '{0}' non è valido. Usare il formato seguente: &lt;posizione certificato&gt;{3}&lt;archivio certificati&gt;{3}&lt;identificazione personale certificato&gt;, dove &lt;posizione certificato&gt; è '{1}' o '{2}'.</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Errore interno. Percorso del certificato non valido: "{0}". Usare il formato seguente: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, in cui &lt;certificate location&gt; è "{1}".</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Il percorso della chiave master di colonna non è valido: '{0}'. Usare il formato seguente per una chiave archiviata in un provider del servizio di crittografia Microsoft (CSP): &lt;nome provider CSP&gt;{1}&lt;identificatore chiave&gt;.</value>
@@ -3990,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>La posizione del certificato '{0}' non è valida nel percorso certificato '{1}'. Usare il formato seguente: &lt;posizione certificato&gt;{4}&lt;archivio certificati&gt;{4}&lt;identificazione personale certificato&gt;, dove &lt;posizione certificato&gt; è '{2}' o '{3}'.</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>Posizione certificato non valida "{0}" nel percorso del certificato "{1}". Usare il formato seguente: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, in cui &lt;certificate location&gt; è "{2}".</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>Errore interno. La posizione del certificato '{0}' non è valida nel percorso certificato '{1}'. Usare il formato seguente: &lt;posizione certificato&gt;{4}&lt;archivio certificati&gt;{4}&lt;identificazione personale certificato&gt;, dove &lt;posizione certificato&gt; è '{2}' o '{3}'.</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>Errore interno. Posizione certificato non valida "{0}" nel percorso del certificato "{1}". Usare il formato seguente: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, in cui &lt;certificate location&gt; è "{2}".</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>L'archivio certificati '{0}' specificato nel percorso certificato '{1}' non è valido. Valore previsto: '{2}'.</value>
@@ -4057,28 +4075,22 @@
     <value>La chiave di crittografia di colonna crittografata specificata contiene una versione non valida '{0}' dell'algoritmo di crittografia. La versione prevista è '{1}'.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>La lunghezza {0} del testo crittografato della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} del testo crittografato quando si usa la chiave master di colonna (certificato) in '{2}'. La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato per il certificato potrebbe essere errato.</value>
+    <value>La lunghezza {0} del testo crittografato della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} del testo crittografato quando si usa la chiave master di colonna ({2}) in "{3}". La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato {4} potrebbe essere errato.</value>
   </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
-    <value>La lunghezza {0} del testo crittografato della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} del testo crittografato quando si usa la chiave master di colonna (chiave asimmetrica) in '{2}'. La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato per il provider del servizio di crittografia (CSP) Microsoft potrebbe essere errato.</value>
-  </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCng" xml:space="preserve">
-    <value>La lunghezza {0} del testo crittografato della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} del testo crittografato quando si usa la chiave master di colonna (chiave asimmetrica) in '{2}'. La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato per il provider dell'API Criptography Next Generation (CNG) Microsoft potrebbe essere errato.</value>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
+    <value>La lunghezza {0} del testo crittografato della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} del testo crittografato quando si usa la chiave master di colonna (certificato) in "{2}". La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato per il certificato potrebbe essere errato.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>La lunghezza {0} della firma della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} della firma quando si usa la chiave master di colonna (certificato) in '{2}'. La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato per il certificato potrebbe essere errato.</value>
+    <value>La lunghezza {0} della firma della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} della firma quando si usa la chiave master di colonna ({2}) in "{3}". La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato {4} potrebbe essere errato.</value>
   </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
-    <value>La lunghezza {0} della firma della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} della firma quando si usa la chiave master di colonna (chiave asimmetrica) in '{2}'. La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato per il provider del servizio di crittografia (CSP) Microsoft potrebbe essere errato.</value>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
+    <value>La lunghezza {0} della firma della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} della firma quando si usa la chiave master di colonna (certificato) in "{2}". La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato per il certificato potrebbe essere errato.</value>
   </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
-    <value>La lunghezza {0} della firma della chiave di crittografia di colonna crittografata specificata non corrisponde alla lunghezza {1} della firma quando si usa la chiave master di colonna (chiave asimmetrica) in '{2}'. La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato per il provider dell'API Criptography Next Generation (CNG) Microsoft potrebbe essere errato.</value>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>La firma della chiave di crittografia di colonna crittografata specificata non corrisponde a quella calcolata con la chiave master di colonna ({0}) in "{1}". La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato potrebbe essere errato.</value>
   </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>La firma della chiave di crittografia di colonna crittografata specificata non corrisponde a quella calcolata con la chiave master di colonna (certificato) in '{0}'. La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato potrebbe essere errato.</value>
-  </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>La firma della chiave di crittografia di colonna crittografata specificata non corrisponde a quella calcolata con la chiave master di colonna (chiave asimmetrica) in '{0}'. La chiave di crittografia di colonna crittografata potrebbe essere danneggiata oppure il percorso specificato potrebbe essere errato.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>Il certificato specificato nel percorso chiave '{0}' non include una chiave privata per crittografare una chiave di crittografia di colonna. Verificare che il certificato sia stato importato correttamente.</value>

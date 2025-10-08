@@ -56,16 +56,24 @@ namespace Microsoft.Data.Common
             if (value is string svalue)
             {
                 if (StringComparer.OrdinalIgnoreCase.Equals(svalue, "sspi") || StringComparer.OrdinalIgnoreCase.Equals(svalue, "true") || StringComparer.OrdinalIgnoreCase.Equals(svalue, "yes"))
+                {
                     return true;
+                }
                 else if (StringComparer.OrdinalIgnoreCase.Equals(svalue, "false") || StringComparer.OrdinalIgnoreCase.Equals(svalue, "no"))
+                {
                     return false;
+                }
                 else
                 {
                     string tmp = svalue.Trim();  // Remove leading & trailing white space.
                     if (StringComparer.OrdinalIgnoreCase.Equals(tmp, "sspi") || StringComparer.OrdinalIgnoreCase.Equals(tmp, "true") || StringComparer.OrdinalIgnoreCase.Equals(tmp, "yes"))
+                    {
                         return true;
+                    }
                     else if (StringComparer.OrdinalIgnoreCase.Equals(tmp, "false") || StringComparer.OrdinalIgnoreCase.Equals(tmp, "no"))
+                    {
                         return false;
+                    }
                 }
                 return bool.Parse(svalue);
             }

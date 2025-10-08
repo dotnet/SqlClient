@@ -80,7 +80,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public BitArray NextBitmap(int bitCount)
         {
             if (bitCount <= 0)
+            {
                 throw new ArgumentOutOfRangeException("bitCount");
+            }
 
             // optimize for any number of bits
             byte[] randValues = new byte[(bitCount + 7) / 8];
@@ -97,10 +99,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public BitArray NextBitmap(int bitCount, int nullOdds)
         {
             if (bitCount <= 0)
+            {
                 throw new ArgumentOutOfRangeException("bitCount");
+            }
 
             if (nullOdds < 0 || nullOdds > 100)
+            {
                 throw new ArgumentOutOfRangeException("nullOdds");
+            }
 
             // optimize for any number of bits
             BitArray bitMap = new BitArray(bitCount, false);
@@ -119,7 +125,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public int[] NextIndices(int count)
         {
             if (count <= 0)
+            {
                 throw new ArgumentOutOfRangeException("count");
+            }
 
             int[] indices = new int[count];
             for (int c = 0; c < count; c++)
@@ -140,7 +148,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void Shuffle<T>(T[] values, int? valuesToSet = null)
         {
             if (values == null)
+            {
                 throw new ArgumentNullException(nameof(values));
+            }
 
             int count = values.Length;
             int selectValues = count;
@@ -148,7 +158,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 selectValues = valuesToSet.Value;
                 if (selectValues < 0 || selectValues > count)
+                {
                     throw new ArgumentOutOfRangeException("valuesToShuffle");
+                }
             }
 
             for (int i = 0; i < selectValues; i++)
@@ -181,13 +193,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private int NextAllocationUnit(int minSize, int maxSize, LowValueEnforcementLevel lowValuesLevel)
         {
             if (minSize < 0 || maxSize < 0 || minSize > maxSize)
+            {
                 throw new ArgumentOutOfRangeException("minSize or maxSize are out of range");
+            }
 
             if (lowValuesLevel < LowValueEnforcementLevel.VeryStrong || lowValuesLevel > LowValueEnforcementLevel.Uniform)
+            {
                 throw new ArgumentOutOfRangeException("lowValuesLevel");
+            }
 
             if (minSize == maxSize)
+            {
                 return minSize; // shortcut for fixed size
+            }
 
             long longRange = (long)maxSize - (long)minSize + 1;
 
@@ -216,9 +234,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public int NextAllocationSizeBytes(int minSize = 0, int? maxSize = null)
         {
             if (minSize > _maxDataSize)
+            {
                 throw new ArgumentOutOfRangeException("minSize cannot be greater than a maximum defined data size");
+            }
+
             if (!maxSize.HasValue || maxSize.Value > _maxDataSize)
+            {
                 maxSize = _maxDataSize;
+            }
+
             return NextAllocationUnit(minSize, maxSize.Value, LowValueEnforcementLevel.Strong);
         }
 
@@ -263,7 +287,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // complete the last (partial) chunk in the end, if any
             if (remainder > 0)
+            {
                 Array.Copy(result, 0, result, offset, remainder);
+            }
         }
 
         /// <summary>
@@ -273,15 +299,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void FillByteArray(byte[] result)
         {
             if (result == null)
+            {
                 throw new ArgumentNullException(nameof(result));
+            }
 
             if (result.Length == 0)
+            {
                 return;
+            }
 
             // generate the first chunk of the array with true random values
             int trueRandomCount = base.Next(1, Math.Min(result.Length, RepeatThreshold));
             for (int i = 0; i < trueRandomCount; i++)
+            {
                 result[i] = unchecked((byte)base.Next());
+            }
 
             Repeat(result, trueRandomCount);
         }
@@ -293,15 +325,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void FillAnsiCharArray(char[] result)
         {
             if (result == null)
+            {
                 throw new ArgumentNullException(nameof(result));
+            }
 
             if (result.Length == 0)
+            {
                 return;
+            }
 
             // generate the first chunk of the array with true random values
             int trueRandomCount = base.Next(1, Math.Min(result.Length, RepeatThreshold));
             for (int i = 0; i < trueRandomCount; i++)
+            {
                 result[i] = (char)NextIntInclusive(0, maxValueInclusive: 127);
+            }
 
             Repeat(result, trueRandomCount);
         }
@@ -313,15 +351,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void FillUcs2CharArray(char[] result)
         {
             if (result == null)
+            {
                 throw new ArgumentNullException(nameof(result));
+            }
 
             if (result.Length == 0)
+            {
                 return;
+            }
 
             // generate the first chunk of the array with true random values
             int trueRandomCount = base.Next(1, Math.Min(result.Length, RepeatThreshold));
             for (int i = 0; i < trueRandomCount; i++)
+            {
                 result[i] = (char)NextIntInclusive(0, maxValueInclusive: 0xD800 - 1); // do not include surrogates
+            }
 
             Repeat(result, trueRandomCount);
         }
@@ -344,7 +388,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // enforce max data in characters
             if (!maxByteSize.HasValue || maxByteSize.Value > _maxDataSize)
+            {
                 maxByteSize = _maxDataSize;
+            }
 
             int charSize = NextAllocationSizeBytes(minSize, maxByteSize) / 2;
             char[] resArray = new char[charSize];
@@ -359,7 +405,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // enforce max allocation size for char array
             if (!maxSize.HasValue || maxSize.Value > _maxDataSize / 2)
+            {
                 maxSize = _maxDataSize / 2;
+            }
 
             int size = NextAllocationSizeBytes(minSize, maxSize);
             char[] resArray = new char[size];
@@ -406,11 +454,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             long totalMilliseconds = dt.Ticks / TimeSpan.TicksPerMillisecond;
             int lastDigit = (int)(totalMilliseconds % 10);
             if (lastDigit < 3)
+            {
                 lastDigit = 0;
+            }
             else if (lastDigit < 7)
+            {
                 lastDigit = 3;
+            }
             else
+            {
                 lastDigit = 7;
+            }
 
             totalMilliseconds = (totalMilliseconds / 10) * 10 + lastDigit;
             return new DateTime(totalMilliseconds * TimeSpan.TicksPerMillisecond);
@@ -482,7 +536,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             double res;
             if (minValue >= maxValueExclusive)
+            {
                 throw new ArgumentException("minValue >= maxValueExclusive");
+            }
 
             double rand01 = base.NextDouble();
 
@@ -551,7 +607,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public int NextIntInclusive(int minValue = int.MinValue, int maxValueInclusive = int.MaxValue)
         {
             if (minValue == maxValueInclusive)
+            {
                 return minValue;
+            }
 
             int res;
             if (maxValueInclusive == int.MaxValue)

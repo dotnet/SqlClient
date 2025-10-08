@@ -22,7 +22,9 @@ namespace Microsoft.Samples.SqlServer
         public static Utf8String Parse(SqlString sqlString)
         {
             if (sqlString.IsNull)
+            {
                 return Utf8String.Null;
+            }
 
             return new Utf8String(sqlString.Value);
         }
@@ -35,10 +37,14 @@ namespace Microsoft.Samples.SqlServer
             get
             {
                 if (this.IsNull)
+                {
                     return SqlBinary.Null;
+                }
 
                 if (this.m_Bytes != null)
+                {
                     return this.m_Bytes;
+                }
 
                 if (this.m_String != null)
                 {
@@ -70,10 +76,14 @@ namespace Microsoft.Samples.SqlServer
         public override string ToString()
         {
             if (this.IsNull)
+            {
                 return null;
+            }
 
             if (this.m_String != null)
+            {
                 return this.m_String;
+            }
 
             if (this.m_Bytes != null)
             {
@@ -90,7 +100,9 @@ namespace Microsoft.Samples.SqlServer
         public SqlString ToSqlString()
         {
             if (this.IsNull)
+            {
                 return SqlString.Null;
+            }
 
             return new SqlString(this.ToString());
         }
@@ -99,17 +111,25 @@ namespace Microsoft.Samples.SqlServer
             bool ignoreNonSpace, bool ignoreWidth)
         {
             if (this.IsNull)
+            {
                 return SqlString.Null;
+            }
 
             SqlCompareOptions compareOptions = SqlCompareOptions.None;
             if (ignoreCase)
+            {
                 compareOptions = compareOptions | SqlCompareOptions.IgnoreCase;
+            }
 
             if (ignoreNonSpace)
+            {
                 compareOptions = compareOptions | SqlCompareOptions.IgnoreNonSpace;
+            }
 
             if (ignoreWidth)
+            {
                 compareOptions = compareOptions | SqlCompareOptions.IgnoreWidth;
+            }
 
             return new SqlString(this.ToString(), culture.LCID, compareOptions);
         }
@@ -119,9 +139,11 @@ namespace Microsoft.Samples.SqlServer
         {
             CultureInfo culture = CultureInfo.CreateSpecificCulture(cultureName);
             if (culture == null)
+            {
                 throw new ArgumentException(string.Format(
                     CultureInfo.InvariantCulture,
                     "Culture {0} not recognized.", cultureName));
+            }
 
             return this.GetSortKeyUsingCultureInternal(culture, ignoreCase,
                 ignoreNonSpace, ignoreWidth);
@@ -165,16 +187,26 @@ namespace Microsoft.Samples.SqlServer
         {
             // By definition
             if (other == null)
+            {
                 return 1;
+            }
 
             if (this.IsNull)
+            {
                 if (other.IsNull)
+                {
                     return 0;
+                }
                 else
+                {
                     return -1;
+                }
+            }
 
             if (other.IsNull)
+            {
                 return 1;
+            }
 
             return this.GetSortKeyUsingCultureInternal(culture, ignoreCase, ignoreNonSpace,
                 ignoreWidth).CompareTo(other.GetSortKeyUsingCultureInternal(culture, ignoreCase,
@@ -186,9 +218,11 @@ namespace Microsoft.Samples.SqlServer
         {
             CultureInfo culture = CultureInfo.CreateSpecificCulture(cultureName);
             if (culture == null)
+            {
                 throw new ArgumentException(string.Format(
                     CultureInfo.InvariantCulture,
                     "Culture {0} not recognized.", cultureName));
+            }
 
             return this.CompareUsingCultureInternal(other, culture, ignoreCase,
                 ignoreNonSpace, ignoreWidth);
@@ -204,7 +238,9 @@ namespace Microsoft.Samples.SqlServer
         public override int GetHashCode()
         {
             if (this.IsNull)
+            {
                 return 0;
+            }
 
             return this.ToString().GetHashCode();
         }
@@ -212,23 +248,31 @@ namespace Microsoft.Samples.SqlServer
         public int CompareTo(object obj)
         {
             if (obj == null)
+            {
                 return 1; //by definition
+            }
 
             Utf8String s = obj as Utf8String;
 
             if (s == null)
+            {
                 throw new ArgumentException("the argument to compare is not a Utf8String");
+            }
 
             if (this.IsNull)
             {
                 if (s.IsNull)
+                {
                     return 0;
+                }
 
                 return -1;
             }
 
             if (s.IsNull)
+            {
                 return 1;
+            }
 
             return string.Compare(this.ToString(), s.ToString(), StringComparison.Ordinal);
         }
@@ -283,7 +327,9 @@ namespace Microsoft.Samples.SqlServer
 
             w.Write(header);
             if (header == 1)
+            {
                 return;
+            }
 
             byte[] bytes = this.Utf8Bytes.Value;
 

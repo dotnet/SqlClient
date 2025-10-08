@@ -305,122 +305,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
         
-        #if NETFRAMEWORK
-        // Notes on SecureString: Writing out security sensitive information to managed buffer
-        //    should be avoided as these can be moved around by GC. There are two set of
-        //    information which falls into this category: passwords and new changed password which
-        //    are passed in as SecureString by a user. Writing out clear passwords information is
-        //    delayed until this layer to ensure that the information is written out to buffer
-        //    which is pinned in this method already. This also ensures that processing a clear
-        //    password is done right before it is written out to SNI_Packet where gets encrypted
-        //    properly. TdsParserStaticMethods.EncryptPassword operation is also done here to
-        //    minimize the time the clear password is held in memory. Any time loose encryption
-        //    algorithms are changed it should be done in both in this method and
-        //    TdsParserStaticMethods.EncryptPassword.
-        //    Up to current release, it is also guaranteed that both password and new change
-        //    password will fit into a single login packet whose size is fixed to 4096 So, no
-        //    splitting logic is needed.
-        internal static void SniPacketSetData(
-            SNIPacket packet,
-            byte[] data,
-            int length,
-            SecureString[] passwords, // pointer to the passwords which need to be written out to SNI Packet
-            int[] passwordOffsets)    // Offset into data buffer where the password to be written out to
-        {
-            Debug.Assert(passwords is null || (passwordOffsets is not null && passwords.Length == passwordOffsets.Length), "The number of passwords does not match the number of password offsets");
-
-            bool mustRelease = false;
-            bool mustClearBuffer = false;
-            IntPtr clearPassword = IntPtr.Zero;
-
-            // provides a guaranteed finally block – without this it isn’t guaranteed – non-
-            // interruptible by fatal exceptions
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-                unsafe
-                {
-                    if (passwords != null)
-                    {
-                        // Process SecureString
-                        for (int i = 0; i < passwords.Length; ++i)
-                        {
-                            // SecureString is used
-                            if (passwords[i] != null)
-                            {
-                                // provides a guaranteed finally block – without this it isn’t
-                                // guaranteed – non-interruptible by fatal exceptions
-                                RuntimeHelpers.PrepareConstrainedRegions();
-                                try
-                                {
-                                    // ============================================================
-                                    // Get the clear text of secure string without converting it
-                                    // to string type
-                                    // ============================================================
-                                    clearPassword = Marshal.SecureStringToCoTaskMemUnicode(passwords[i]);
-
-                                    // ============================================================
-                                    // Loosely encrypt the clear text - The encryption algorithm
-                                    // should exactly match the TdsParserStaticMethods.EncryptPassword
-                                    // ============================================================
-                                    char* pwChar = (char*)clearPassword.ToPointer();
-                                    byte* pByte = (byte*)clearPassword.ToPointer();
-
-                                    int passwordsLength = passwords[i].Length;
-                                    for (int j = 0; j < passwordsLength; ++j)
-                                    {
-                                        int s = *pwChar;
-                                        byte bLo = (byte)(s & 0xff);
-                                        byte bHi = (byte)((s >> 8) & 0xff);
-                                        *(pByte++) = (byte)((((bLo & 0x0f) << 4) | (bLo >> 4)) ^ 0xa5);
-                                        *(pByte++) = (byte)((((bHi & 0x0f) << 4) | (bHi >> 4)) ^ 0xa5);
-                                        ++pwChar;
-                                    }
-
-                                    // ============================================================
-                                    //  Write out the loosely encrypted passwords to data buffer
-                                    // ============================================================
-                                    mustClearBuffer = true;
-                                    Marshal.Copy(clearPassword, data, passwordOffsets[i], passwordsLength * 2);
-                                }
-                                finally
-                                {
-                                    // Make sure that we clear the security sensitive information
-                                    if (clearPassword != IntPtr.Zero)
-                                    {
-                                        Marshal.ZeroFreeCoTaskMemUnicode(clearPassword);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    packet.DangerousAddRef(ref mustRelease);
-                    Debug.Assert(mustRelease, "AddRef Failed!");
-
-                    SniPacketSetData(packet, data, length);
-                }
-            }
-            finally
-            {
-                if (mustRelease)
-                {
-                    packet.DangerousRelease();
-                }
-
-                // Make sure that we clear the security sensitive information
-                // data->Initialize() is not safe to call under CER
-                if (mustClearBuffer)
-                {
-                    for (int i = 0; i < data.Length; ++i)
-                    {
-                        data[i] = 0;
-                    }
-                }
-            }
-        }
-        #endif
-        
         internal static void SniPacketReset(SNIHandle pConn, IoType ioType, SNIPacket pPacket, ConsumerNumber consNum) =>
             s_nativeMethods.SniPacketReset(pConn, ioType, pPacket, consNum);
         
@@ -492,19 +376,67 @@ namespace Microsoft.Data.SqlClient
         
         internal static uint SniTerminate() =>
             s_nativeMethods.SniTerminate();
-        
+
         internal static uint SniWaitForSslHandshakeToComplete(
             SNIHandle pConn,
             int dwMilliseconds,
-            out uint pProtocolVersion) =>
-            s_nativeMethods.SniWaitForSslHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
+            out System.Security.Authentication.SslProtocols pProtocolVersion)
+        {
+            uint returnValue = s_nativeMethods.SniWaitForSslHandshakeToComplete(pConn, dwMilliseconds, out SniSslProtocols nativeProtocolVersion);
+
+#pragma warning disable CA5398 // Avoid hardcoded SslProtocols values
+            if ((nativeProtocolVersion & SniSslProtocols.SP_PROT_TLS1_2) != 0)
+            {
+                pProtocolVersion = System.Security.Authentication.SslProtocols.Tls12;
+            }
+            else if ((nativeProtocolVersion & SniSslProtocols.SP_PROT_TLS1_3) != 0)
+            {
+#if NET
+                pProtocolVersion = System.Security.Authentication.SslProtocols.Tls13;
+#else
+                // Only .NET Core supports SslProtocols.Tls13
+                pProtocolVersion = (System.Security.Authentication.SslProtocols)0x3000;
+#endif
+            }
+            else if ((nativeProtocolVersion & SniSslProtocols.SP_PROT_TLS1_1) != 0)
+            {
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
+#endif
+                pProtocolVersion = System.Security.Authentication.SslProtocols.Tls11;
+            }
+            else if ((nativeProtocolVersion & SniSslProtocols.SP_PROT_TLS1_0) != 0)
+            {
+                pProtocolVersion = System.Security.Authentication.SslProtocols.Tls;
+#if NET8_0_OR_GREATER
+#pragma warning restore SYSLIB0039 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
+#endif
+            }
+            else if ((nativeProtocolVersion & SniSslProtocols.SP_PROT_SSL3) != 0)
+            {
+                // SSL 2.0 and 3.0 are only referenced to log a warning, not explicitly used for connections
+#pragma warning disable CS0618, CA5397
+                pProtocolVersion = System.Security.Authentication.SslProtocols.Ssl3;
+            }
+            else if ((nativeProtocolVersion & SniSslProtocols.SP_PROT_SSL2) != 0)
+            {
+                pProtocolVersion = System.Security.Authentication.SslProtocols.Ssl2;
+#pragma warning restore CS0618, CA5397
+            }
+            else
+            {
+                pProtocolVersion = System.Security.Authentication.SslProtocols.None;
+            }
+#pragma warning restore CA5398 // Avoid hardcoded SslProtocols values
+            return returnValue;
+        }
 
         internal static uint SniWritePacket(SNIHandle pConn, SNIPacket packet, bool sync) =>
             sync
                 ? s_nativeMethods.SniWriteSyncOverAsync(pConn, packet)
                 : s_nativeMethods.SniWriteAsyncWrapper(pConn, packet);
         
-        #endregion
+#endregion
 
         #region Private Methods
 

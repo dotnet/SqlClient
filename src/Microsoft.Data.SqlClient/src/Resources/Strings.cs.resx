@@ -3954,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>Cesta k certifikátu nemůže být null. Použijte následující formát: &lt;umístění certifikátu&gt;{2}&lt;úložiště certifikátu&gt;{2}&lt;kryptografický otisk certifikátu&gt;, kde &lt;umístění certifikátu&gt; je {0} nebo {1}.</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Cesta k certifikátu nemůže být null. Použijte následující formát: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, kde &lt;certificate location&gt; je „{0}“.</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>Vnitřní chyba. Cesta k certifikátu nemůže být null. Použijte následující formát: &lt;umístění certifikátu&gt;{2}&lt;úložiště certifikátu&gt;{2}&lt;kryptografický otisk certifikátu&gt;, kde &lt;umístění certifikátu&gt; je {0} nebo {1}.</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Vnitřní chyba. Cesta k certifikátu nemůže být null. Použijte následující formát: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, kde &lt;certificate location&gt; je „{0}“.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Cesta k hlavnímu klíči sloupce nemůže být null. Pro klíč uložený ve zprostředkovateli kryptografických služeb Microsoft (CSP) použijte tento formát: &lt;Název zprostředkovatele CSP&gt;{0}&lt;Identifikátor klíče&gt;.</value>
@@ -3972,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>Neplatná cesta k certifikátu: {0}. Použijte následující formát: &lt;umístění certifikátu&gt;{3}&lt;úložiště certifikátu&gt;{3}&lt;kryptografický otisk certifikátu&gt;, kde &lt;umístění certifikátu&gt; je {1} nebo {2}.</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Neplatná cesta k certifikátu: {0}. Použijte následující formát: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, kde &lt;certificate location&gt; je „{1}“.</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>Vnitřní chyba. Neplatná cesta k certifikátu: {0}. Použijte následující formát: &lt;umístění certifikátu&gt;{3}&lt;úložiště certifikátu&gt;{3}&lt;kryptografický otisk certifikátu&gt;, kde &lt;umístění certifikátu&gt; je {1} nebo {2}.</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Vnitřní chyba. Neplatná cesta k certifikátu: {0}. Použijte následující formát: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, kde &lt;certificate location&gt; je „{1}“.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Neplatná cesta k hlavnímu klíči sloupce: {0}. Pro klíč uložený ve zprostředkovateli kryptografických služeb Microsoft (CSP) použijte tento formát: &lt;Název zprostředkovatele CSP&gt;{1}&lt;Identifikátor klíče&gt;.</value>
@@ -3990,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>Umístění certifikátu {0} v cestě k certifikátu {1} není platné. Použijte následující formát: &lt;umístění certifikátu&gt;{4}&lt;úložiště certifikátu&gt;{4}&lt;kryptografický otisk certifikátu&gt;, kde &lt;umístění certifikátu&gt; je {2} nebo {3}.</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>Umístění certifikátu {0} v cestě k certifikátu {1} není platné. Použijte následující formát: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, kde &lt;certificate location&gt; je „{2}“.</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>Vnitřní chyba. Umístění certifikátu {0} v cestě k certifikátu {1} není platné. Použijte následující formát: &lt;umístění certifikátu&gt;{4}&lt;úložiště certifikátu&gt;{4}&lt;kryptografický otisk certifikátu&gt;, kde &lt;umístění certifikátu&gt; je {2} nebo {3}.</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>Vnitřní chyba. Umístění certifikátu {0} v cestě k certifikátu {1} není platné. Použijte následující formát: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, kde &lt;certificate location&gt; je „{2}“.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>V cestě k certifikátu {0} je zadané neplatné úložiště certifikátů {1}. Očekávaná hodnota: {2}.</value>
@@ -4057,28 +4075,22 @@
     <value>Zadaný šifrovací klíč zašifrovaného sloupce obsahuje neplatnou verzi šifrovacího algoritmu „{0}“. Očekávaná verze je „{1}“.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
+    <value>Délka šifrovaného textu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce šifrovaného textu {1} při použití hlavního klíče sloupce ({2}) v: „{3}“. Šifrovací klíč šifrovaného sloupce může být poškozený nebo zadaná cesta {4} není správná.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
     <value>Délka šifrovaného textu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce šifrovaného textu {1} při použití hlavního klíče sloupce (certifikát) v {2}. Šifrovací klíč šifrovaného sloupce může být poškozený nebo zadaná cesta k certifikátu není správná.</value>
   </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
-    <value>Délka šifrovaného textu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce šifrovaného textu {1} při použití hlavního klíče sloupce (asymetrický klíč) v {2}. Důvodem může být poškozený šifrovací klíč zašifrovaného sloupce nebo zadaná nesprávná cesta zprostředkovatele kryptografických služeb Microsoft (CSP).</value>
-  </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCng" xml:space="preserve">
-    <value>Délka šifrovaného textu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce šifrovaného textu {1} při použití hlavního klíče sloupce (asymetrický klíč) v {2}. Důvodem může být poškozený šifrovací klíč zašifrovaného sloupce nebo zadaná nesprávná cesta zprostředkovatele rozhraní API kryptografických služeb Microsoft nové generace (CNG).</value>
-  </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
+    <value>Délka podpisu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce podpisu {1} při použití hlavního klíče sloupce ({2}) v: „{3}“. Šifrovací klíč šifrovaného sloupce může být poškozený nebo zadaná cesta {4} není správná.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
     <value>Délka podpisu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce podpisu {1} při použití hlavního klíče sloupce (certifikát) v {2}. Šifrovací klíč šifrovaného sloupce může být poškozený nebo zadaná cesta k certifikátu není správná.</value>
   </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
-    <value>Délka podpisu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce podpisu {1} při použití hlavního klíče sloupce (asymetrický klíč) v {2}. Důvodem může být poškozený šifrovací klíč zašifrovaného sloupce nebo zadaná nesprávná cesta zprostředkovatele kryptografických služeb Microsoft (CSP).</value>
-  </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
-    <value>Délka podpisu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce podpisu {1} při použití hlavního klíče sloupce (asymetrický klíč) v {2}. Důvodem může být poškozený šifrovací klíč zašifrovaného sloupce nebo zadaná nesprávná cesta zprostředkovatele rozhraní API kryptografických služeb Microsoft nové generace (CNG).</value>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>Zadaný podpis šifrovacího klíče šifrovaného sloupce se neshoduje s podpisem vypočítaným s hlavním klíčem sloupce ({0}) v: „{1}“. Šifrovací klíč šifrovaného sloupce může být poškozený nebo zadaná cesta není správná.</value>
   </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
     <value>Zadaný podpis šifrovacího klíče šifrovaného sloupce se neshoduje s podpisem vypočítaným s hlavním klíčem sloupce (certifikátem) v {0}. Šifrovací klíč šifrovaného sloupce může být poškozený nebo zadaná cesta není správná.</value>
-  </data>
-  <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>Zadaný podpis šifrovacího klíče šifrovaného sloupce neodpovídá podpisu vypočítanému pomocí hlavního klíče sloupce (asymetrický klíč) v {0}. Šifrovací klíč šifrovaného sloupce může být poškozený nebo zadaná cesta není správná.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>Certifikát zadaný v cestě ke klíči {0} nemá privátní klíč k šifrování šifrovacího klíče sloupce. Zkontrolujte, že je certifikát správně naimportovaný.</value>

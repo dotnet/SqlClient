@@ -58,7 +58,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public InternalConnectionWrapper(SqlConnection connection, bool supportKillByTSql = false, string originalConnectionString = "")
         {
             if (connection == null)
+            {
                 throw new ArgumentNullException(nameof(connection));
+            }
 
             _internalConnection = connection.GetInternalConnection();
             ConnectionString = connection.ConnectionString;
@@ -98,7 +100,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public bool IsInternalConnectionOf(SqlConnection connection)
         {
             if (connection == null)
+            {
                 throw new ArgumentNullException(nameof(connection));
+            }
 
             return (_internalConnection == connection.GetInternalConnection());
         }
@@ -230,7 +234,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             InternalConnectionWrapper objAsWrapper = obj as InternalConnectionWrapper;
             if ((objAsWrapper != null) && (objAsWrapper._internalConnection == _internalConnection))
+            {
                 areEquals = true;
+            }
 
             return areEquals;
         }

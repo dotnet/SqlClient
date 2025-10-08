@@ -24,6 +24,7 @@ using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Identity.Client;
 using Microsoft.SqlServer.Server;
 using System.Security.Authentication;
+using System.Collections.Generic;
 
 #if NETFRAMEWORK
 using System.Reflection;
@@ -621,13 +622,22 @@ namespace Microsoft.Data.Common
             foreach (Delegate del in mcd?.GetInvocationList())
             {
                 if (del.Target is DbCommandBuilder)
+                {
                     return del;
+                }
             }
 
             return null;
         }
 
         internal static long TimerCurrent() => DateTime.UtcNow.ToFileTimeUtc();
+
+        internal static long FastTimerCurrent() => Environment.TickCount;
+
+        internal static uint CalculateTickCountElapsed(long startTick, long endTick)
+        {
+            return (uint)(endTick - startTick);
+        }
 
         internal static long TimerFromSeconds(int seconds)
         {
@@ -780,7 +790,7 @@ namespace Microsoft.Data.Common
         /// <remarks>This array includes endpoint URLs for Azure SQL in global, Germany, US Government,
         /// China, and Fabric environments. These endpoints are used to identify and interact with Azure SQL services 
         /// in their respective regions or environments.</remarks>
-        internal static readonly string[] s_azureSqlServerEndpoints = { AZURE_SQL,
+        internal static readonly List<string> s_azureSqlServerEndpoints = new() { AZURE_SQL,
                                                                         AZURE_SQL_GERMANY,
                                                                         AZURE_SQL_USGOV,
                                                                         AZURE_SQL_CHINA,
@@ -820,7 +830,7 @@ namespace Microsoft.Data.Common
         }
 
         // This method assumes dataSource parameter is in TCP connection string format.
-        private static bool IsEndpoint(string dataSource, string[] endpoints)
+        private static bool IsEndpoint(string dataSource, ICollection<string> endpoints)
         {
             int length = dataSource.Length;
             // remove server port
@@ -1166,6 +1176,9 @@ namespace Microsoft.Data.Common
             => DataAdapter(StringsHelper.GetString(Strings.ADP_DeriveParametersNotSupported, value.GetType().Name, value.CommandType.ToString()));
 
         internal static Exception NoStoredProcedureExists(string sproc) => InvalidOperation(StringsHelper.GetString(Strings.ADP_NoStoredProcedureExists, sproc));
+
+        internal static Exception InvalidCommandTimeout(int value, [CallerMemberName] string property = "")
+            => Argument(StringsHelper.GetString(Strings.ADP_InvalidCommandTimeout, value.ToString(CultureInfo.InvariantCulture)), property);
 #endregion
 
 #region DbMetaDataFactory
@@ -1497,15 +1510,7 @@ namespace Microsoft.Data.Common
         }
 
         //
-        // : IDbCommand
-        //
-        internal static Exception InvalidCommandTimeout(int value, string name)
-        {
-            return Argument(StringsHelper.GetString(Strings.ADP_InvalidCommandTimeout, value.ToString(CultureInfo.InvariantCulture)), name);
-        }
-
-        //
-        // : DbDataAdapter
+        // DbDataAdapter
         //
         internal static InvalidOperationException ComputerNameEx(int lastError)
         {
@@ -1513,7 +1518,7 @@ namespace Microsoft.Data.Common
         }
 
         //
-        // : SNI
+        // SNI
         //
         internal static PlatformNotSupportedException SNIPlatformNotSupported(string platform) => new(StringsHelper.GetString(Strings.SNI_PlatformNotSupportedNetFx, platform));
 
@@ -1575,7 +1580,6 @@ namespace Microsoft.Data.Common
             return value;
         }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         internal static IntPtr IntPtrOffset(IntPtr pbase, int offset)
         {
             if (4 == ADP.s_ptrSize)
@@ -1634,12 +1638,6 @@ namespace Microsoft.Data.Common
 #endif
             return InvalidEnumerationValue(typeof(ParameterDirection), (int)value);
         }
-
-        //
-        // : IDbCommand
-        //
-        internal static Exception InvalidCommandTimeout(int value, [CallerMemberName] string property = "")
-            => Argument(StringsHelper.GetString(Strings.ADP_InvalidCommandTimeout, value.ToString(CultureInfo.InvariantCulture)), property);
 #endregion
 #endif
     }

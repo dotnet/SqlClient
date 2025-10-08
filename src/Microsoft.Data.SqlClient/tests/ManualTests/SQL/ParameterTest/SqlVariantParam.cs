@@ -51,7 +51,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "select @p1 as f1";
             if (includeBaseType)
+            {
                 cmd.CommandText += ", sql_variant_property(@p1,'BaseType') as BaseType";
+            }
+
             cmd.Parameters.Add("@p1", SqlDbType.Variant);
             cmd.Parameters["@p1"].Value = paramValue;
             SqlDataReader dr = cmd.ExecuteReader(CommandBehavior.CloseConnection);
@@ -108,7 +111,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         private static void SendVariantBulkCopy(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
-            string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDest");
+            string bulkCopyTableName = DataTestUtility.GetLongName("bulkDest");
 
             // Fetch reader using type.
             using SqlDataReader dr = GetReaderForVariant(paramValue, false);
@@ -194,7 +197,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         private static void SendVariantTvp(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
-            string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpVariant");
+            string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
 
             using SqlConnection connTvp = new(s_connStr);
             connTvp.Open();

@@ -383,6 +383,41 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
+        /// <summary>
+        /// Helper class to obtain and release a semaphore.
+        /// </summary>
+        internal class SemaphoreHolder : IDisposable
+        {
+            private readonly Semaphore _semaphore;
+
+            /// <summary>
+            /// Whether the semaphore was successfully obtained within the timeout.
+            /// </summary>
+            internal bool Obtained { get; private set; }
+
+            /// <summary>
+            /// Obtains the semaphore, waiting up to the specified timeout.
+            /// </summary>
+            /// <param name="semaphore"></param>
+            /// <param name="timeout"></param>
+            internal SemaphoreHolder(Semaphore semaphore, int timeout)
+            {
+                _semaphore = semaphore;
+                Obtained = _semaphore.WaitOne(timeout);
+            }
+
+            /// <summary>
+            /// Releases the semaphore if it was successfully obtained.
+            /// </summary>
+            public void Dispose()
+            {
+                if (Obtained)
+                {
+                    _semaphore.Release(1);
+                }
+            }
+        }
+
         private const int MAX_Q_SIZE = 0x00100000;
 
         // The order of these is important; we want the WaitAny call to be signaled
@@ -505,15 +540,21 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             get
             {
                 if (State is not Running) // Don't allow connection create when not running.
+                {
                     return false;
+                }
 
                 int totalObjects = Count;
 
                 if (totalObjects >= MaxPoolSize)
+                {
                     return false;
+                }
 
                 if (totalObjects < MinPoolSize)
+                {
                     return true;
+                }
 
                 int freeObjects = _stackNew.Count + _stackOld.Count;
                 int waitingRequests = _waitCount;
@@ -641,7 +682,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     DbConnectionInternal obj;
 
                     if (!_stackNew.TryPop(out obj))
+                    {
                         break;
+                    }
 
                     Debug.Assert(obj != null, "null connection is not expected");
                     SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.CleanupCallback|RES|INFO|CPOOL> {0}, ChangeStacks={1}", Id, obj.ObjectID);
@@ -806,27 +849,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 _resError = e;
 
                 // Make sure the timer starts even if ThreadAbort occurs after setting the ErrorEvent.
-
-                // timer allocation has to be done out of CER block
                 Timer t = new Timer(new TimerCallback(this.ErrorCallback), null, Timeout.Infinite, Timeout.Infinite);
 
                 bool timerIsNotDisposed;
-#if NETFRAMEWORK
-                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                try
-                { }
-                finally
-                {
-                    _waitHandles.ErrorEvent.Set();
-                    _errorOccurred = true;
+                
+                _waitHandles.ErrorEvent.Set();
+                _errorOccurred = true;
 
-                    // Enable the timer.
-                    // Note that the timer is created to allow periodic invocation. If ThreadAbort occurs in the middle of ErrorCallback,
-                    // the timer will restart. Otherwise, the timer callback (ErrorCallback) destroys the timer after resetting the error to avoid second callback.
-                    _errorTimer = t;
-                    timerIsNotDisposed = t.Change(_errorWait, _errorWait);
-                }
+                // Enable the timer.
+                // Note that the timer is created to allow periodic invocation. If ThreadAbort occurs in the middle of ErrorCallback,
+                // the timer will restart. Otherwise, the timer callback (ErrorCallback) destroys the timer after resetting the error to avoid second callback.
+                _errorTimer = t;
+                timerIsNotDisposed = t.Change(_errorWait, _errorWait);
 
                 Debug.Assert(timerIsNotDisposed, "ErrorCallback timer has been disposed");
 
@@ -1040,22 +1074,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             do
             {
                 bool started = false;
-
-#if NETFRAMEWORK
-                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
+                
                 try
                 {
-#if NETFRAMEWORK
-                    RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                    try
-                    { }
-                    finally
-                    {
-                        started = Interlocked.CompareExchange(ref _pendingOpensWaiting, 1, 0) == 0;
-                    }
-
+                    started = Interlocked.CompareExchange(ref _pendingOpensWaiting, 1, 0) == 0;
                     if (!started)
                     {
                         return;
@@ -1081,10 +1103,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         DbConnectionInternal connection = null;
                         bool timeout = false;
                         Exception caughtException = null;
-
-#if NETFRAMEWORK
-                        RuntimeHelpers.PrepareConstrainedRegions();
-#endif
+                        
                         try
                         {
                             ADP.SetCurrentTransaction(next.Completion.Task.AsyncState as Transaction);
@@ -1096,24 +1115,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 next.UserOptions,
                                 out connection);
                         }
-                        catch (System.OutOfMemoryException)
-                        {
-                            if (connection != null)
-                            { connection.DoomThisConnection(); }
-                            throw;
-                        }
-                        catch (System.StackOverflowException)
-                        {
-                            if (connection != null)
-                            { connection.DoomThisConnection(); }
-                            throw;
-                        }
-                        catch (System.Threading.ThreadAbortException)
-                        {
-                            if (connection != null)
-                            { connection.DoomThisConnection(); }
-                            throw;
-                        }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
                         catch (Exception e)
                         {
                             caughtException = e;
@@ -1159,7 +1161,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 // Set the wait timeout to INFINITE (-1) if the SQL connection timeout is 0 (== infinite)
                 if (waitForMultipleObjectsTimeout == 0)
+                {
                     waitForMultipleObjectsTimeout = unchecked((uint)Timeout.Infinite);
+                }
 
                 allowCreate = true;
             }
@@ -1228,23 +1232,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 do
                 {
                     int waitResult = BOGUS_HANDLE;
-#if NETFRAMEWORK
-                    RuntimeHelpers.PrepareConstrainedRegions();
-#endif
                     try
                     {
-#if NETFRAMEWORK
-                        // We absolutely must have the value of waitResult set, 
-                        // or we may leak the mutex in async abort cases.
-                        RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                        try
-                        {
-                        }
-                        finally
-                        {
-                            waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(allowCreate), unchecked((int)waitForMultipleObjectsTimeout));
-                        }
+                        waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(allowCreate), unchecked((int)waitForMultipleObjectsTimeout));
 
                         // From the WaitAny docs: "If more than one object became signaled during
                         // the call, this is the array index of the signaled object with the
@@ -1326,20 +1316,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                                     if (onlyOneCheckConnection)
                                     {
-                                        if (_waitHandles.CreationSemaphore.WaitOne(unchecked((int)waitForMultipleObjectsTimeout)))
+                                        using SemaphoreHolder semaphoreHolder = new(_waitHandles.CreationSemaphore, unchecked((int)waitForMultipleObjectsTimeout));
+                                        if (semaphoreHolder.Obtained)
                                         {
-#if NETFRAMEWORK
-                                            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                                            try
-                                            {
-                                                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Creating new connection.", Id);
-                                                obj = UserCreateRequest(owningObject, userOptions);
-                                            }
-                                            finally
-                                            {
-                                                _waitHandles.CreationSemaphore.Release(1);
-                                            }
+                                            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Creating new connection.", Id);
+                                            obj = UserCreateRequest(owningObject, userOptions);
                                         }
                                         else
                                         {
@@ -1558,25 +1539,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             {
                                 return;
                             }
-                            int waitResult = BOGUS_HANDLE;
 
-#if NETFRAMEWORK
-                            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
                             try
                             {
                                 // Obtain creation mutex so we're the only one creating objects
-                                // and we must have the wait result
-#if NETFRAMEWORK
-                                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                                try
-                                { }
-                                finally
-                                {
-                                    waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(withCreate: true), CreationTimeout);
-                                }
-                                if (CREATION_HANDLE == waitResult)
+                                using SemaphoreHolder semaphoreHolder = new(_waitHandles.CreationSemaphore, CreationTimeout);
+
+                                if (semaphoreHolder.Obtained)
                                 {
                                     DbConnectionInternal newObj;
 
@@ -1611,16 +1580,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                         }
                                     }
                                 }
-                                else if (WaitHandle.WaitTimeout == waitResult)
+                                else
                                 {
                                     // do not wait forever and potential block this worker thread
                                     // instead wait for a period of time and just requeue to try again
                                     QueuePoolCreateRequest();
-                                }
-                                else
-                                {
-                                    // trace waitResult and ignore the failure
-                                    SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PoolCreateRequest|RES|CPOOL> {0}, PoolCreateRequest called WaitForSingleObject failed {1}", Id, waitResult);
                                 }
                             }
                             catch (Exception e)
@@ -1634,14 +1598,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 // There is no further action we can take beyond tracing.  The error will be 
                                 // thrown to the user the next time they request a connection.
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PoolCreateRequest|RES|CPOOL> {0}, PoolCreateRequest called CreateConnection which threw an exception: {1}", Id, e);
-                            }
-                            finally
-                            {
-                                if (CREATION_HANDLE == waitResult)
-                                {
-                                    // reuse waitResult and ignore its value
-                                    _waitHandles.CreationSemaphore.Release(1);
-                                }
                             }
                         }
                     }
@@ -1687,8 +1643,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // means, is that we're now responsible for this connection:
                 // it won't get reclaimed if it gets lost.
                 obj.PrePush(owningObject);
-
-                // TODO: Consider using a Cer to ensure that we mark the object for reclaimation in the event something bad happens?
             }
 
             DeactivateObject(obj);
@@ -1771,7 +1725,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         finally
                         {
                             if (locked)
+                            {
                                 Monitor.Exit(obj);
+                            }
                         }
                     }
                 }
@@ -1865,7 +1821,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                     // TODO: Consider implement a control knob here; why do we only check for dead objects ever other time?  why not every 10th time or every time?
                     if ((oldConnection != null) || (Count & 0x1) == 0x1 || !ReclaimEmancipatedObjects())
+                    {
                         obj = CreateObject(owningObject, userOptions, oldConnection);
+                    }
                 }
                 return obj;
             }

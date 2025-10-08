@@ -105,7 +105,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     SqlDataReader gch = null;
                     if ((testType != ReaderTestType.ReaderGC) && (testType != ReaderTestType.ReaderGCConnectionClose))
+                    {
                         gch = cmd.ExecuteReader();
+                    }
 
                     switch (testType)
                     {
@@ -188,7 +190,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 SqlTransaction gch = null;
                 if ((testType != TransactionTestType.TransactionGC) && (testType != TransactionTestType.TransactionGCConnectionClose))
+                {
                     gch = con.BeginTransaction();
+                }
 
                 switch (testType)
                 {

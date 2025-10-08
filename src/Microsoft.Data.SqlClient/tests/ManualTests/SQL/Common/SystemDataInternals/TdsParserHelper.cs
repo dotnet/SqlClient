@@ -16,9 +16,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         private static void VerifyObjectIsTdsParser(object parser)
         {
             if (parser == null)
+            {
                 throw new ArgumentNullException("stateObject");
+            }
+
             if (!s_tdsParser.IsInstanceOfType(parser))
+            {
                 throw new ArgumentException("Object provided was not a TdsParser", nameof(parser));
+            }
         }
 
         internal static object GetStateObject(object parser)

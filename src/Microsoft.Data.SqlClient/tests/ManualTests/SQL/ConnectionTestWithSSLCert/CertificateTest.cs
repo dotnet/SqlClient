@@ -18,6 +18,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [PlatformSpecific(TestPlatforms.Windows)]
     public class CertificateTest : IDisposable
     {
         #region Private Fields
@@ -75,10 +76,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SlashInstanceName = $"\\{InstanceName}";
             }
 
-            Assert.True(DataTestUtility.IsAdmin, "CertificateTest class needs to be run in Admin mode.");
-
-            CreateValidCertificate(s_fullPathToPowershellScript);
-            _thumbprint = Environment.GetEnvironmentVariable(ThumbPrintEnvName, EnvironmentVariableTarget.Machine);
+            if (IsAdmin())
+            {
+                CreateValidCertificate(s_fullPathToPowershellScript);
+                _thumbprint = Environment.GetEnvironmentVariable(ThumbPrintEnvName, EnvironmentVariableTarget.Machine);
+            }
         }
 
         private static bool IsLocalHost()
@@ -89,19 +91,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         private static bool AreConnStringsSetup() => DataTestUtility.AreConnStringsSetup();
+        private static bool IsAdmin() => DataTestUtility.IsAdmin;
         private static bool IsNotAzureServer() => DataTestUtility.IsNotAzureServer();
         private static bool UseManagedSNIOnWindows() => DataTestUtility.UseManagedSNIOnWindows;
 
-        [ActiveIssue("31754")]
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
-        [PlatformSpecific(TestPlatforms.Windows)]
-        public void OpenningConnectionWithGoodCertificateTest()
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost), nameof(IsAdmin))]
+        public void OpeningConnectionWithGoodCertificateTest()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
 
             // confirm that ForceEncryption is enabled
-            using SqlConnection notEncryptedConnection = new(builder.ConnectionString);
             builder.Encrypt = SqlConnectionEncryptOption.Optional;
+            using SqlConnection notEncryptedConnection = new(builder.ConnectionString);
             notEncryptedConnection.Open();
             Assert.Equal(ConnectionState.Open, notEncryptedConnection.State);
 
@@ -122,10 +123,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Provided hostname in certificate are:
         // localhost, FQDN, Loopback IPv4: 127.0.0.1, IPv6: ::1
-        [ActiveIssue("31754")]
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
-        [PlatformSpecific(TestPlatforms.Windows)]
-        public void OpeningConnectionWitHNICTest()
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost), nameof(IsAdmin))]
+        public void OpeningConnectionWithNicTest()
         {
             // Mandatory
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
@@ -143,7 +142,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(ConnectionState.Open, connection.State);
 
             // Ipv6 however causes name mistmatch error
-            // In net6 Manged SNI does not check for SAN. Therefore Application using Net6 have to use FQDN as HNIC
+            // In net6 Manged SNI does not check for SAN. Therefore, Application using Net6 have to use FQDN as HNIC
             // According to above no other hostname in certificate than FQDN will work in net6 which is same as SubjectName in case of RemoteCertificateNameMismatch
             // Net7.0 the new API added by dotnet runtime will check SANS and then SubjectName
 
@@ -166,8 +165,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(UseManagedSNIOnWindows), nameof(IsNotAzureServer), nameof(IsLocalHost))]
-        [PlatformSpecific(TestPlatforms.Windows)]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(UseManagedSNIOnWindows), nameof(IsNotAzureServer), nameof(IsLocalHost), nameof(IsAdmin))]
         public void RemoteCertificateNameMismatchErrorTest()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)

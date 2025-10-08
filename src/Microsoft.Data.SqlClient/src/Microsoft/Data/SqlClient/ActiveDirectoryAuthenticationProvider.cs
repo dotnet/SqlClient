@@ -223,7 +223,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (!string.IsNullOrEmpty(parameters.UserId))
                     {
+                        // The AcquireTokenByIntegratedWindowsAuth method is marked as obsolete in MSAL.NET
+                        // but it is still a supported way to acquire tokens for Active Directory Integrated authentication.
+#pragma warning disable CS0618 // Type or member is obsolete
                         result = await app.AcquireTokenByIntegratedWindowsAuth(scopes)
+#pragma warning restore CS0618 // Type or member is obsolete
                             .WithCorrelationId(parameters.ConnectionId)
                             .WithUsername(parameters.UserId)
                             .ExecuteAsync(cancellationToken: cts.Token)
@@ -231,7 +235,9 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
+#pragma warning disable CS0618 // Type or member is obsolete
                         result = await app.AcquireTokenByIntegratedWindowsAuth(scopes)
+#pragma warning restore CS0618 // Type or member is obsolete
                             .WithCorrelationId(parameters.ConnectionId)
                             .ExecuteAsync(cancellationToken: cts.Token)
                             .ConfigureAwait(false);
@@ -255,7 +261,9 @@ namespace Microsoft.Data.SqlClient
 
                 if (result == null)
                 {
+#pragma warning disable CS0618 // Type or member is obsolete
                     result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
+#pragma warning restore CS0618 // Type or member is obsolete
                        .WithCorrelationId(parameters.ConnectionId)
                        .ExecuteAsync(cancellationToken: cts.Token)
                        .ConfigureAwait(false);
@@ -578,7 +586,9 @@ namespace Microsoft.Data.SqlClient
                 if (tokenCredentialKey._clientId is not null)
                 {
                     defaultAzureCredentialOptions.ManagedIdentityClientId = tokenCredentialKey._clientId;
+#pragma warning disable CS0618 // Type or member is obsolete
                     defaultAzureCredentialOptions.SharedTokenCacheUsername = tokenCredentialKey._clientId;
+#pragma warning restore CS0618 // Type or member is obsolete
                     defaultAzureCredentialOptions.WorkloadIdentityClientId = tokenCredentialKey._clientId;
                 }
 
@@ -587,14 +597,23 @@ namespace Microsoft.Data.SqlClient
                 // specify 'Authentication = Active Directory Default' in
                 // connection string.
                 //
-                // CodeQL Suppression - do not modify this comment:
-                //
-                // CodeQL [SM05137] Default Azure Credential is instantiated by
-                // the calling application when using "Active Directory Default"
+                // Default Azure Credential is instantiated by the calling
+                // application when using "Active Directory Default"
                 // authentication code to connect to Azure SQL instance.
                 // SqlClient is a library, doesn't instantiate the credential
                 // without running application instructions.
-                return new TokenCredentialData(new DefaultAzureCredential(defaultAzureCredentialOptions), GetHash(secret));
+                //
+                // Note that CodeQL suppression support can only detect
+                // suppression comments that appear immediately above the
+                // flagged statement, or appended to the end of the statement.
+                // Multi-line justifications are not supported.
+                //
+                // https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/codeql/codeql-semmle#guidance-on-suppressions
+                //
+                // CodeQL [SM05137] See above for justification.
+                DefaultAzureCredential cred = new(defaultAzureCredentialOptions);
+
+                return new TokenCredentialData(cred, GetHash(secret));
             }
 
             TokenCredentialOptions tokenCredentialOptions = new() { AuthorityHost = new Uri(tokenCredentialKey._authority) };

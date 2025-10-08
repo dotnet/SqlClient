@@ -84,8 +84,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void UDTParams_Invalid2()
         {
-            string spInsertCustomer = DataTestUtility.GetUniqueNameForSqlServer("spUdtTest2_InsertCustomer");
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("UdtTest2");
+            string spInsertCustomer = DataTestUtility.GetLongName("spUdtTest2_InsertCustomer");
+            string tableName = DataTestUtility.GetLongName("UdtTest2");
 
             using (SqlConnection conn = new SqlConnection(_connStr))
             using (SqlCommand cmd = conn.CreateCommand())
@@ -143,8 +143,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void UDTParams_TypedNull()
         {
-            string spInsertCustomer = DataTestUtility.GetUniqueNameForSqlServer("spUdtTest2_InsertCustomer");
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("UdtTest2_Customer");
+            string spInsertCustomer = DataTestUtility.GetLongName("spUdtTest2_InsertCustomer");
+            string tableName = DataTestUtility.GetLongName("UdtTest2_Customer");
 
             using (SqlConnection conn = new SqlConnection(_connStr))
             using (SqlCommand cmd = conn.CreateCommand())
@@ -188,8 +188,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void UDTParams_NullInput()
         {
-            string spInsertCustomer = DataTestUtility.GetUniqueNameForSqlServer("spUdtTest2_InsertCustomer");
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("UdtTest2_Customer");
+            string spInsertCustomer = DataTestUtility.GetLongName("spUdtTest2_InsertCustomer");
+            string tableName = DataTestUtility.GetLongName("UdtTest2_Customer");
 
             using (SqlConnection conn = new SqlConnection(_connStr))
             using (SqlCommand cmd = conn.CreateCommand())
@@ -215,7 +215,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     string spInsertCustomerNoBrackets = spInsertCustomer;
                     if (spInsertCustomer.StartsWith("[", StringComparison.Ordinal) && spInsertCustomer.EndsWith("]", StringComparison.Ordinal))
+                    {
                         spInsertCustomerNoBrackets = spInsertCustomer.Substring(1, spInsertCustomer.Length - 2);
+                    }
+
                     string errorMsg = "Procedure or function '" + spInsertCustomerNoBrackets + "' expects parameter '@addr', which was not supplied.";
 
                     DataTestUtility.AssertThrowsWrapper<SqlException>(
@@ -232,8 +235,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void UDTParams_InputOutput()
         {
-            string spInsertCity = DataTestUtility.GetUniqueNameForSqlServer("spUdtTest2_InsertCity");
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("UdtTest2");
+            string spInsertCity = DataTestUtility.GetLongName("spUdtTest2_InsertCity");
+            string tableName = DataTestUtility.GetLongName("UdtTest2");
 
             using (SqlConnection conn = new SqlConnection(_connStr))
             {
@@ -525,7 +528,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     foreach (DataRow row in t.Rows)
                     {
                         foreach (DataColumn col in t.Columns)
+                        {
                             builder.Append(row[col] + ", ");
+                        }
 
                         builder.AppendLine();
                     }

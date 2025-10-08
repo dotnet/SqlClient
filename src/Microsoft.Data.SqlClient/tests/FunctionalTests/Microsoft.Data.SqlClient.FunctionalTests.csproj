@@ -24,6 +24,7 @@
     <Compile Include="AlwaysEncryptedTests\Utility.cs" />
     <Compile Include="AssertExtensions.cs" />
     <Compile Include="DataCommon\AssemblyResourceManager.cs" />
+    <Compile Include="DataCommon\DummySqlAuthenticationProvider.cs" />
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
     <Compile Include="DataCommon\TestUtility.cs" />
     <Compile Include="LocalizationTest.cs" />
@@ -36,8 +37,6 @@
     <Compile Include="SqlBulkCopyTest.cs" />
     <Compile Include="SqlClientMetaDataCollectionNamesTest.cs" />
     <Compile Include="SqlDataAdapterTest.cs" />
-    <Compile Include="SqlConnectionBasicTests.cs" />
-    <Compile Include="SqlConnectionReadOnlyRoutingTests.cs" />
     <Compile Include="SqlCommandTest.cs" />
     <Compile Include="SqlConnectionTest.cs" />
     <Compile Include="AADAuthenticationTests.cs" />
@@ -64,12 +63,15 @@
     <Compile Include="SqlConnectionStringBuilderTest.cs" />
     <Compile Include="SerializeSqlTypesTest.cs" />
     <Compile Include="TdsParserStateObject.TestHarness.cs" />
-    <Compile Include="TestTdsServer.cs" />
-    <Compile Include="TestRoutingTdsServer.cs" />
     <Compile Include="SqlHelperTest.cs" />
     <Compile Include="..\..\src\Microsoft\Data\Common\MultipartIdentifier.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserStateObject.Multiplexer.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Packet.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
+    <None Update="app.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <!-- XUnit and XUnit extensions -->
   <ItemGroup>
@@ -91,6 +93,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
     <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
