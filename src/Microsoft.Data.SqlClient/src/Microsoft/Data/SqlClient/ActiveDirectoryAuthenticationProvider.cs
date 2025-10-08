@@ -280,8 +280,6 @@ namespace Microsoft.Data.SqlClient
                         entry.Value = GetHash(parameters.Password);
                         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(s_accountPwCacheTtlInHours);
                     }
-                    ;
-
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Password auth mode. Expiry Time: {0}", result?.ExpiresOn);
                 }
             }
