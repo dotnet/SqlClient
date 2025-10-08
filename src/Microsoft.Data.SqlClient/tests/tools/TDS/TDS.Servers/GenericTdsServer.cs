@@ -132,16 +132,6 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public int PreLoginCount => _preLoginCount;
 
-        /// <summary>
-        /// Property for setting server version for vector feature extension.
-        /// </summary>
-        public bool EnableVectorFeatureExt { get; set; } = false;
-
-        /// <summary>
-        /// Property for setting server version for vector feature extension.
-        /// </summary>
-        public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
-
         public OnAuthenticationCompletedDelegate OnAuthenticationResponseCompleted { private get; set; }
 
         public OnLogin7ValidatedDelegate OnLogin7Validated { private get; set; }

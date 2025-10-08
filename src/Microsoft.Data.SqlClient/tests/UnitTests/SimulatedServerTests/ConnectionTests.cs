@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.FeatureExtAck;
 using Microsoft.SqlServer.TDS.Login7;
+using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
@@ -835,7 +836,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(true)] // Server is forced to send an Ack
         public void TestConnWithUserAgentFeatureExtension(bool forceAck)
         {
-            using var server = TestTdsServer.StartTestServer();
+            using var server = new TdsServer();
+            server.Start();
 
             // Configure the server to support UserAgent version 0x01
             server.ServerSupportedUserAgentFeatureExtVersion = 0x01;
@@ -863,7 +865,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 var data = token.Data;
                 if (data == null || data.Length < 2)
                 {
-                    return;                
+                    return;
                 }
 
                 observedVersion = data[0];
@@ -871,8 +873,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 loginFound = true;
             };
 
+            // Connect to the test TDS server.
+            var connStr = new SqlConnectionStringBuilder
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+            }.ConnectionString;
+            
             // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
-            using var connection = new SqlConnection(server.ConnectionString);
+            using var connection = new SqlConnection(connStr);
             connection.Open();
 
             // Verify the connection itself succeeded
