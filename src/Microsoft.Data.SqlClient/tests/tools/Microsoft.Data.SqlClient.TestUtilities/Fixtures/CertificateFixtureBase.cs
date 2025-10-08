@@ -63,6 +63,9 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
             X500DistinguishedName subject = new X500DistinguishedName($"CN={subjectName}");
             SubjectAlternativeNameBuilder sanBuilder = new SubjectAlternativeNameBuilder();
             RSA rsaKey = CreateRSA(forceCsp);
+            Console.WriteLine(rsaKey.GetType().FullName);
+            // Expected: System.Security.Cryptography.RSACng on Windows
+
             bool hasSans = false;
 
             foreach (string dnsName in dnsNames)
