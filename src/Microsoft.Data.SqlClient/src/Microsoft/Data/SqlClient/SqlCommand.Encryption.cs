@@ -531,15 +531,11 @@ namespace Microsoft.Data.SqlClient
                     "_activeConnection should not be null at this time, in PrepareDescribeParameterEncryptionRequest.");
 
                 // @TODO: Shouldn't there be a way to do all this straight from the connection itself?
-                TdsParser tdsParser = null;
-                if (_activeConnection.Parser is not null)
+                TdsParser tdsParser = _activeConnection.Parser;
+                if (tdsParser is null || tdsParser.State is TdsParserState.Broken or TdsParserState.Closed)
                 {
-                    tdsParser = _activeConnection.Parser;
-                    if (tdsParser?.State is TdsParserState.Broken or TdsParserState.Closed)
-                    {
-                        // Connection's parser is null as well, therefore we must be closed
-                        throw ADP.ClosedConnectionError();
-                    }
+                    // Connection's parser is null as well, therefore we must be closed
+                    throw ADP.ClosedConnectionError();
                 }
 
                 parameterList = BuildParamList(tdsParser, tempCollection, includeReturnValue: true);
@@ -590,9 +586,9 @@ namespace Microsoft.Data.SqlClient
                          || (_columnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && _activeConnection.IsColumnEncryptionSettingEnabled),
                 "ColumnEncryption setting should be enabled for input parameter encryption.");
             Debug.Assert(isAsync == (completion != null),
-                "completion should can be null if and only if mode is async.");
+                "completion should be null if and only if mode is async.");
 
-            // Fetch reader witn input params
+            // Fetch reader with input params
             Task fetchInputParameterEncryptionInfoTask = null;
             bool describeParameterEncryptionNeeded = false;
             SqlDataReader describeParameterEncryptionDataReader = null;
@@ -1078,7 +1074,7 @@ namespace Microsoft.Data.SqlClient
                     // @TODO: Invert if statement based on answer to above TODO
                     if (SqlParameter.ParameterNamesEqual(sqlParameter.ParameterName, parameterName))
                     {
-                        Debug.Assert(sqlParameter.CipherMetadata is not null, "param.CipherMetaData should not be null.");
+                        Debug.Assert(sqlParameter.CipherMetadata is null, "param.CipherMetadata should be null.");
 
                         sqlParameter.HasReceivedMetadata = true;
                         receivedMetadataCount++;
