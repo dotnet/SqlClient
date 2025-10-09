@@ -55,7 +55,7 @@ jobs:
   # Update the root NuGet.config to use the packages/ directory as a source.
   # When we build MDS in Package mode, it depends on the Abstractions package,
   # which we will build and package into packages/.
-  - template: ../steps/update-nuget-config-step.yml@self
+  - template: ../steps/update-nuget-config-local-feed-step.yml
     parameters:
       packagePath: $(REPOROOT)/packages
   
