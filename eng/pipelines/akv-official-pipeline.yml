@@ -128,11 +128,11 @@ extends:
               jobs:
                   - template: /eng/pipelines/jobs/build-akv-official-job.yml@self
                     parameters:
+                        akvAssemblyFileVersion: '${{ variables.assemblyFileVersion }}'
+                        akvPackageVersion: '${{ variables.akvPackageVersion }}'
                         apiScanDllPath: '${{ variables.apiScanDllPath }}'
                         apiScanPdbPath: '${{ variables.apiScanPdbPath }}'
-                        assemblyFileVersion: '${{ variables.assemblyFileVersion }}'
                         buildConfiguration: '${{ parameters.buildConfiguration }}'
-                        akvPackageVersion: '${{ variables.akvPackageVersion }}'
                         mdsPackageVersion: '${{ variables.mdsPackageVersion }}'
                         publishSymbols: '${{ parameters.publishSymbols }}'
                         signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'
