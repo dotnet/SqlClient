@@ -54,13 +54,14 @@ jobs:
   
   - template: ../steps/build-all-configurations-signed-dlls-step.yml@self
     parameters:
-      # These values are sourced from common-variables.yml.
-      configuration: $(Configuration)
-      abstractionsPackageVersion: $(abstractionsPackageVersion)
+      # These variables are sourced from common-variables.yml.
       abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
-      mdsPackageVersion: $(mdsPackageVersion)
+      abstractionsPackageVersion: $(abstractionsPackageVersion)
+      configuration: $(Configuration)
       mdsAssemblyFileVersion: $(mdsAssemblyFileVersion)
-  
+      mdsPackageVersion: $(mdsPackageVersion)
+      referenceType: Package
+
   - template: ../steps/esrp-code-signing-step.yml@self
     parameters:
       artifactType: dll
