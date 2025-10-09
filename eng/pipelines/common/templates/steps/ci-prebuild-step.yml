@@ -35,5 +35,5 @@ steps:
 - ${{if eq(parameters.referenceType, 'Package')}}:
   - template: update-nuget-config-local-feed-step.yml@self
     parameters:
-      downloadedNugetPath: $(Build.SourcesDirectory)/packages
       debug: ${{ parameters.debug }}
+      packagePath: $(Build.SourcesDirectory)/packages

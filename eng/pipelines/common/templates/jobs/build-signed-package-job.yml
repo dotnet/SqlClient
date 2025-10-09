@@ -27,7 +27,7 @@ jobs:
   variables:
   - template: ../../../libraries/variables.yml@self
   - ${{ if parameters.isPreview }}:
-    - name: abstrationsPackageVersion
+    - name: abstractionsPackageVersion
       value: $(abstractionsPackagePreviewVersion)
     - name: mdsPackageVersion
       value: $(previewMdsPackageVersion)
@@ -52,6 +52,22 @@ jobs:
   # Perform analysis before building, since this step will clobber build output
   - template: ../steps/code-analyze-step.yml@self
   
+  # Update the root NuGet.config to use the packages/ directory as a source.
+  # When we build MDS in Package mode, it depends on the Abstractions package,
+  # which we will build and package into packages/.
+  - template: ../steps/update-nuget-config-step.yml@self
+    parameters:
+      packagePath: $(REPOROOT)/packages
+  
+  # Build the Abstractions package.
+  - task: MSBuild@1
+    displayName: Build Abstractions
+    inputs:
+      solution: '**/build.proj'
+      configuration: $(Configuration)
+      msbuildArguments: -t:BuildAbstractions
+
+  # Build MDS in Package mode, producing signed DLLs.
   - template: ../steps/build-all-configurations-signed-dlls-step.yml@self
     parameters:
       # These variables are sourced from common-variables.yml.

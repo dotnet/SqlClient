@@ -51,7 +51,7 @@ jobs:
 
   - template: ../steps/update-nuget-config-local-feed-step.yml
     parameters:
-      downloadedNugetPath: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
+      packagePath: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
 
   - template: ../steps/update-config-file-step.yml
     parameters: 
