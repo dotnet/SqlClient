@@ -56,6 +56,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         public bool EnableVectorFeatureExt { get; set; } = false;
 
         /// <summary>
+        /// Property for setting server flag for user agent feature extension.
+        /// </summary>
+        public bool EnableUserAgentFeatureExt { get; set; } = false;
+
+        /// <summary>
         /// Property for setting server version for vector feature extension.
         /// </summary>
         public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
@@ -326,6 +331,15 @@ namespace Microsoft.SqlServer.TDS.Servers
                                     // Enable Vector Support
                                     session.IsVectorSupportEnabled = true;
                                     _clientSupportedVectorFeatureExtVersion = ((TDSLogin7GenericOptionToken)option).Data[0];
+                                }
+                                break;
+                            }
+                        case TDSFeatureID.UserAgentSupport:
+                            {
+                                if (EnableUserAgentFeatureExt)
+                                {
+                                    // Enable User Agent Support
+                                    session.IsUserAgentSupportEnabled = true;
                                 }
                                 break;
                             }
@@ -631,7 +645,45 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Serialize the login token into the response packet
             responseMessage.Add(loginResponseToken);
 
-            // TODO: Split the conditional blocks below into separate virtual methods
+            CheckSessionRecovery(session, responseMessage);
+            CheckJsonSupported(session, responseMessage);
+            CheckVectorSupport(session, responseMessage);
+            CheckUserAgentSupport(session, responseMessage);
+
+            if (!string.IsNullOrEmpty(Arguments.FailoverPartner))
+            {
+                envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.RealTimeLogShipping, Arguments.FailoverPartner);
+
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", envChange);
+
+                responseMessage.Add(envChange);
+            }
+
+            // Create DONE token
+            TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final);
+
+            // Log response
+            TDSUtilities.Log(Arguments.Log, "Response", doneToken);
+
+            // Serialize DONE token into the response packet
+            responseMessage.Add(doneToken);
+
+            // Invoke delegate for response validation
+            OnAuthenticationResponseCompleted?.Invoke(responseMessage);
+
+            // Wrap a single message in a collection
+            return new TDSMessageCollection(responseMessage);
+        }
+
+
+        /// <summary>
+        /// Check if session recovery is enabled
+        /// </summary>
+        /// <param name="session">Server session</param>
+        /// <param name="responseMessage">Response message</param>
+        protected void  CheckSessionRecovery(ITDSServerSession session, TDSMessage responseMessage)
+        {
             // Check if session recovery is enabled
             if (session.IsSessionRecoveryEnabled)
             {
@@ -641,10 +693,19 @@ namespace Microsoft.SqlServer.TDS.Servers
                 // Log response
                 TDSUtilities.Log(Arguments.Log, "Response", featureExtActToken);
 
-                // Serialize feature extnesion token into the response
+                // Serialize feature extension token into the response
                 responseMessage.Add(featureExtActToken);
             }
+        }
 
+
+        /// <summary>
+        /// Check if Json is supported
+        /// </summary>
+        /// <param name="session">Server session</param>
+        /// <param name="responseMessage">Response message</param>
+        protected void CheckJsonSupported(ITDSServerSession session, TDSMessage responseMessage)
+        {
             // Check if Json is supported
             if (session.IsJsonSupportEnabled)
             {
@@ -670,7 +731,15 @@ namespace Microsoft.SqlServer.TDS.Servers
                     featureExtAckToken.Options.Add(jsonSupportOption);
                 }
             }
+        }
 
+        /// <summary>
+        /// Check if Vector is supported
+        /// </summary>
+        /// <param name="session">Server session</param>
+        /// <param name="responseMessage">Response message</param>
+        protected void CheckVectorSupport(ITDSServerSession session, TDSMessage responseMessage)
+        {
             // Check if Vector is supported
             if (session.IsVectorSupportEnabled)
             {
@@ -696,55 +765,41 @@ namespace Microsoft.SqlServer.TDS.Servers
                     featureExtAckToken.Options.Add(vectorSupportOption);
                 }
             }
+        }
 
-            if (!string.IsNullOrEmpty(Arguments.FailoverPartner))
-            {
-                envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.RealTimeLogShipping, Arguments.FailoverPartner);
-
-                // Log response
-                TDSUtilities.Log(Arguments.Log, "Response", envChange);
-
-                responseMessage.Add(envChange);
-            }
-
+        /// <summary>
+        /// Check if UserAgent support is enabled
+        /// </summary>
+        /// <param name="session">Server session</param>
+        /// <param name="responseMessage">Response message</param>
+        protected void CheckUserAgentSupport(ITDSServerSession session, TDSMessage responseMessage)
+        {
             // If tests request it, force an ACK for UserAgentSupport with no negotiation
-            if (EmitUserAgentFeatureExtAck)
+            if (session.IsUserAgentSupportEnabled)
             {
-                byte ackVersion = ServerSupportedUserAgentFeatureExtVersion;
+                // Create ack data (1 byte: Version number)
+                byte[] data = new byte[1];
+                data[0] = ServerSupportedUserAgentFeatureExtVersion;
 
-                var data = new byte[] { ackVersion };
-                var uaAck = new TDSFeatureExtAckGenericOption(
-                    TDSFeatureID.UserAgentSupport,
-                    (uint)data.Length,
-                    data);
+                // Create user agent support as a generic feature extension option
+                TDSFeatureExtAckGenericOption userAgentSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.UserAgentSupport, (uint)data.Length, data);
 
-                // Reuse an existing FeatureExtAck token if present, otherwise add a new one
-                var featureExtAckToken = responseMessage.OfType<TDSFeatureExtAckToken>().FirstOrDefault();
+                // Look for feature extension token
+                TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
+
                 if (featureExtAckToken == null)
                 {
-                    featureExtAckToken = new TDSFeatureExtAckToken(uaAck);
+                    // Create feature extension ack token
+                    featureExtAckToken = new TDSFeatureExtAckToken(userAgentSupportOption);
                     responseMessage.Add(featureExtAckToken);
                 }
                 else
                 {
-                    featureExtAckToken.Options.Add(uaAck);
+                    // Update the existing token
+                    featureExtAckToken.Options.Add(userAgentSupportOption);
                 }
             }
 
-            // Create DONE token
-            TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final);
-
-            // Log response
-            TDSUtilities.Log(Arguments.Log, "Response", doneToken);
-
-            // Serialize DONE token into the response packet
-            responseMessage.Add(doneToken);
-
-            // Invoke delegate for response validation
-            OnAuthenticationResponseCompleted?.Invoke(responseMessage);
-
-            // Wrap a single message in a collection
-            return new TDSMessageCollection(responseMessage);
         }
 
         /// <summary>

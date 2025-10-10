@@ -843,7 +843,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.ServerSupportedUserAgentFeatureExtVersion = 0x01;
 
             // Opt in to forced ACK for UserAgentSupport (no negotiation)
-            server.EmitUserAgentFeatureExtAck = forceAck;
+            server.EnableUserAgentFeatureExt = forceAck;
 
             bool loginFound = false;
 
