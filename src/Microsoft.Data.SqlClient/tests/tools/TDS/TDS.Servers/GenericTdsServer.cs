@@ -76,11 +76,6 @@ namespace Microsoft.SqlServer.TDS.Servers
         private byte _clientSupportedVectorFeatureExtVersion = 0;
 
         /// <summary>
-        /// Server will ACK UserAgentSupport in the login response when this property is set to true.
-        /// </summary>
-        public bool EmitUserAgentFeatureExtAck { get; set; } = false;
-
-        /// <summary>
         /// Default feature extension version supported on the server for user agent.
         /// </summary>
         public const byte DefaultSupportedUserAgentFeatureExtVersion = 0x01;
