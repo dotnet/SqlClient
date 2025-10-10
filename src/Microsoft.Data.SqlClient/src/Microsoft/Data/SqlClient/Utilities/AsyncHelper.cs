@@ -65,6 +65,73 @@ namespace Microsoft.Data.SqlClient.Utilities
             );
         }
 
+        internal static void ContinueTaskWithState<TState>(
+            Task taskToContinue,
+            TaskCompletionSource<object> taskCompletionSource,
+            TState state,
+            Action<TState> onSuccess,
+            Action<TState, Exception> onFailure = null,
+            Action<TState> onCancellation = null)
+        {
+            TaskCompletionSourceContinuationState<TState> continuationState = new(
+                OnCancellation: onCancellation,
+                OnFailure: onFailure,
+                OnSuccess: onSuccess,
+                State: state,
+                TaskCompletionSource: taskCompletionSource);
+
+            taskToContinue.ContinueWith(
+                static (task, state2) =>
+                {
+                    TaskCompletionSourceContinuationState<TState> typedState2 =
+                        (TaskCompletionSourceContinuationState<TState>)state2;
+
+                    if (task.Exception is not null)
+                    {
+                        // @TODO: Exception converter?
+                        try
+                        {
+                            typedState2.OnFailure?.Invoke(typedState2.State, task.Exception);
+                        }
+                        finally
+                        {
+                            typedState2.TaskCompletionSource.TrySetException(task.Exception);
+                        }
+                    }
+                    else if (task.IsCanceled)
+                    {
+                        try
+                        {
+                            typedState2.OnCancellation?.Invoke(typedState2.State);
+                        }
+                        finally
+                        {
+                            typedState2.TaskCompletionSource.TrySetCanceled();
+                        }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            typedState2.OnSuccess(typedState2.State);
+                        }
+                        catch (Exception e)
+                        {
+                            typedState2.TaskCompletionSource.SetException(e);
+                        }
+                    }
+                },
+                state: continuationState,
+                scheduler: TaskScheduler.Default);
+        }
+
+        private record TaskCompletionSourceContinuationState<TState>(
+            Action<TState> OnCancellation,
+            Action<TState, Exception> OnFailure,
+            Action<TState> OnSuccess,
+            TState State,
+            TaskCompletionSource<object> TaskCompletionSource);
+
         // the same logic as ContinueTask but with an added state parameter to allow the caller to avoid the use of a closure
         // the parameter allocation cannot be avoided here and using closure names is clearer than Tuple numbered properties
         internal static void ContinueTaskWithState(Task task,
