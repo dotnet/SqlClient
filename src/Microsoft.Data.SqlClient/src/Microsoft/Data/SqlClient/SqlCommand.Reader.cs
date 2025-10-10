@@ -10,10 +10,10 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
-using Microsoft.Data.SqlClient.Utilities;
 #endif
 
 namespace Microsoft.Data.SqlClient

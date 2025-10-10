@@ -16,17 +16,10 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ManagedSni;
-
-#if NETFRAMEWORK
-using System.Runtime.ConstrainedExecution;
-#endif
+using Microsoft.Data.SqlClient.Utilities;
 
 namespace Microsoft.Data.SqlClient
 {
-#if NETFRAMEWORK
-    using RuntimeHelpers = System.Runtime.CompilerServices.RuntimeHelpers;
-#endif
-    
     sealed internal class LastIOTimer
     {
         internal long _value;

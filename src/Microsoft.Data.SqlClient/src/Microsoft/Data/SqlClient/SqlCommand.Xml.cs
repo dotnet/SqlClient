@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
