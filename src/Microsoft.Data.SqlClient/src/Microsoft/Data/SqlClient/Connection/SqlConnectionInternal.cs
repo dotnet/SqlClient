@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security;
 using System.Text;
@@ -14,12 +13,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
-using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
-using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Utilities;
+using IsolationLevel = System.Data.IsolationLevel;
+
+#if NETFRAMEWORK
+using Microsoft.Data.Common.ConnectionString;
+#endif
 
 namespace Microsoft.Data.SqlClient.Connection
 {
@@ -400,7 +402,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
             try
             {
-                // If we want to consider pool operations against the overall connect timeout, 
+                // If we want to consider pool operations against the overall connect timeout,
                 // use the provided timeout. Otherwise, start a fresh timeout to receive the full
                 // connect timeout.
                 _timeout = ResolveLoginTimeout(timeout, connectionOptions.ConnectTimeout);

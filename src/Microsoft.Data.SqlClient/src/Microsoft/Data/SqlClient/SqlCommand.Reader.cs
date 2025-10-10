@@ -13,10 +13,10 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
-using Microsoft.Data.SqlClient.Utilities;
 #endif
 
 namespace Microsoft.Data.SqlClient

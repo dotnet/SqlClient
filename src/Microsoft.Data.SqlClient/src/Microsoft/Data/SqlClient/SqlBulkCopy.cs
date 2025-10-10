@@ -17,6 +17,7 @@ using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Utilities;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -776,7 +777,7 @@ DROP TABLE #Column_Aliases
 
                     // Remove it from our unmatched set.
                     unmatchedColumns.Remove(localColumn.MappedDestinationColumn);
-                    
+
                     // Check for column types that we refuse to bulk load, even
                     // though we found a match.
                     //
