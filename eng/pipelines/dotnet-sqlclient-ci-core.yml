@@ -365,7 +365,7 @@ stages:
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
         windows_azure_arm64_sql:
-          pool: ADO-CI-PUBLIC-ARM64-1ES-EUS-POOL
+          pool: ADO-CI-PUBLIC-ARM64-1ES-POOL
           images: 
             Win22_Azure_ARM64_Sql: ADO-WIN11-ARM64
           TargetFrameworks: ${{parameters.targetFrameworks }}
