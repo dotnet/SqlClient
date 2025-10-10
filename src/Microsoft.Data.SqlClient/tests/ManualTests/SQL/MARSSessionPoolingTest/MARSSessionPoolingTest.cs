@@ -225,6 +225,40 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // @TODO: THIS POISONS THE POOL. IS THIS A BUG???
         }
 
+        private static void AssertSessionsAndRequests(SqlConnection connection, int expectedSessions, int expectedRequests)
+        {
+            using SqlCommand verificationCommand = new SqlCommand();
+            verificationCommand.CommandText =
+                @"SELECT COUNT(*) AS MarsSessionCount " +
+                @"FROM sys.dm_exec_connections " +
+                @"WHERE session_id=@@spid AND net_transport='Session'; " +
+                @"SELECT COUNT(*) as ActiveRequestCount " +
+                @"FROM sys.dm_exec_requests " +
+                @"WHERE session_id=@@spid AND (status='running' OR status='suspended')";
+            verificationCommand.CommandType = CommandType.Text;
+            verificationCommand.Connection = connection;
+
+            using SqlDataReader reader = verificationCommand.ExecuteReader();
+
+            // Result 1) Count of active MARS sessions from sys.dm_exec_connections
+            if (!reader.Read())
+            {
+                throw new Exception("Expected dm_exec_connections results from verification command");
+            }
+
+            // Add 1 for the verification command executing
+            Assert.Equal(expectedSessions + 1, reader.GetInt32(0));
+
+            // Result 2) Count of active requests from sys.dm_exec_requests
+            if (!reader.NextResult() || !reader.Read())
+            {
+                throw new Exception("Expected dm_exec_requests results from verification command");
+            }
+
+            // Add 1 for the verification command executing
+            Assert.Equal(expectedRequests + 1, reader.GetInt32(0));
+        }
+
         private static DisposableArray<SqlCommand> GetCommands(SqlConnection connection, CommandType commandType)
         {
             SqlCommand[] result = new SqlCommand[ConcurrentCommands];
@@ -261,36 +295,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             return new DisposableArray<SqlCommand>(result);
-        }
-
-        private void AssertSessionsAndRequests(SqlConnection connection, int expectedSessions, int expectedRequests)
-        {
-            using SqlCommand verificationCommand = new SqlCommand();
-            verificationCommand.CommandText =
-                "select count(*) as MarsSessionCount from sys.dm_exec_connections where session_id=@@spid and net_transport='Session'; " +
-                "select count(*) as ActiveRequestCount from sys.dm_exec_requests where session_id=@@spid and (status='running' or status='suspended')";
-            verificationCommand.CommandType = CommandType.Text;
-            verificationCommand.Connection = connection;
-
-            using SqlDataReader reader = verificationCommand.ExecuteReader();
-
-            // Result 1) Count of active MARS sessions from sys.dm_exec_connections
-            if (!reader.Read())
-            {
-                throw new Exception("Expected dm_exec_connections results from verification command");
-            }
-
-            // Add 1 for the verification command executing
-            Assert.Equal(expectedSessions + 1, reader.GetInt32(0));
-
-            // Result 2) Count of active requests from sys.dm_exec_requests
-            if (!reader.NextResult() || !reader.Read())
-            {
-                throw new Exception("Expected dm_exec_requests results from verification command");
-            }
-
-            // Add 1 for the verification command executing
-            Assert.Equal(expectedRequests + 1, reader.GetInt32(0));
         }
 
         private static WeakReference OpenReaderThenNullify(SqlCommand command)
