@@ -780,135 +780,55 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Read the output of sp_describe_parameter_encryption
-        /// </summary>
-        /// <param name="ds">Resultset from calling to sp_describe_parameter_encryption</param>
-        /// <param name="describeParameterEncryptionRpcOriginalRpcMap"> Readonly dictionary with the map of parameter encryption rpc requests with the corresponding original rpc requests.</param>
-        /// <param name="isRetry">Indicates if this is a retry from a failed call.</param>
-        private void ReadDescribeEncryptionParameterResults(
-            SqlDataReader ds, // @TODO: Rename something more obvious
-            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
-            bool isRetry)
+        private void ReadDescribeEncryptionParameterAttestation(SqlDataReader ds, bool isRetry)
         {
-            // @TODO: This should be SqlTceCipherInfoTable
-            Dictionary<int, SqlTceCipherInfoEntry> columnEncryptionKeyTable = new Dictionary<int, SqlTceCipherInfoEntry>();
-
-            Debug.Assert((describeParameterEncryptionRpcOriginalRpcMap != null) == _batchRPCMode,
-                "describeParameterEncryptionRpcOriginalRpcMap should be non-null if and only if it is _batchRPCMode.");
-
-            // Indicates the current result set we are reading, used in BatchRPCMode, where we can have more than 1 result set.
-            int resultSetSequenceNumber = 0;
-
-            // A flag that used in BatchRPCMode, to assert the result of lookup in to the dictionary maintaining the map of describe parameter encryption requests
-            // and the corresponding original rpc requests.
-            bool lookupDictionaryResult;
-
-            // @TODO: If this is supposed to read the results of sp_describe_parameter_encryption there should only ever be 2/3 result sets. So no need to loop this.
-            do
+            bool attestationInfoRead = false;
+            while (ds.Read())
             {
-                if (_batchRPCMode)
+                if (attestationInfoRead)
                 {
-                    // If we got more RPC results from the server than what was requested.
-                    if (resultSetSequenceNumber >= _sqlRPCParameterEncryptionReqArray.Length)
-                    {
-                        Debug.Assert(false, "Server sent back more results than what was expected for describe parameter encryption requests in _batchRPCMode.");
-                        // Ignore the rest of the results from the server, if for whatever reason it sends back more than what we expect.
-                        break;
-                    }
+                    throw SQL.MultipleRowsReturnedForAttestationInfo();
                 }
 
-                // 1) Read the first result set that contains the column encryption key list
-                bool enclaveMetadataExists = ReadDescribeEncryptionParameterResults1(ds, columnEncryptionKeyTable);
-                if (!enclaveMetadataExists && !ds.NextResult())
-                {
-                    throw SQL.UnexpectedDescribeParamFormatParameterMetadata();
-                }
+                int attestationInfoLength = (int)ds.GetBytes(
+                    (int)DescribeParameterEncryptionResultSet3.AttestationInfo,
+                    dataIndex: 0,
+                    buffer: null,
+                    bufferIndex: 0,
+                    length: 0);
+                byte[] attestationInfo = new byte[attestationInfoLength];
+                ds.GetBytes(
+                    (int)DescribeParameterEncryptionResultSet3.AttestationInfo,
+                    dataIndex: 0,
+                    buffer: attestationInfo,
+                    bufferIndex: 0,
+                    length: attestationInfoLength);
 
-                // 2) Find the RPC command that generated this TCE request
-                _SqlRPC rpc;
-                if (_batchRPCMode)
-                {
-                    Debug.Assert(_sqlRPCParameterEncryptionReqArray[resultSetSequenceNumber] != null, "_sqlRPCParameterEncryptionReqArray[resultSetSequenceNumber] should not be null.");
+                SqlConnectionAttestationProtocol attestationProtocol = _activeConnection.AttestationProtocol;
+                string enclaveType = _activeConnection.Parser.EnclaveType;
 
-                    // Lookup in the dictionary to get the original rpc request corresponding to the describe parameter encryption request
-                    // pointed to by _sqlRPCParameterEncryptionReqArray[resultSetSequenceNumber]
-                    rpc = null;
-                    lookupDictionaryResult = describeParameterEncryptionRpcOriginalRpcMap.TryGetValue(_sqlRPCParameterEncryptionReqArray[resultSetSequenceNumber++], out rpc);
-
-                    Debug.Assert(lookupDictionaryResult,
-                        "Describe Parameter Encryption RPC request key must be present in the dictionary describeParameterEncryptionRpcOriginalRpcMap");
-                    Debug.Assert(rpc != null,
-                        "Describe Parameter Encryption RPC request's corresponding original rpc request must not be null in the dictionary describeParameterEncryptionRpcOriginalRpcMap");
-                }
-                else
-                {
-                    rpc = _rpcArrayOf1[0];
-                }
-
-                Debug.Assert(rpc != null, "rpc should not be null here.");
-
-                // 3) Read the second result set containing the cipher metadata
-                int receivedMetadataCount = 0;
-                if (!enclaveMetadataExists || ds.NextResult())
-                {
-                    receivedMetadataCount = ReadDescribeEncryptionParameterResults2(ds, rpc, columnEncryptionKeyTable);
-                }
-
-                // When the RPC object gets reused, the parameter array has more parameters that the valid params for the command.
-                // Null is used to indicate the end of the valid part of the array. Refer to GetRPCObject().
-                int userParamCount = rpc.userParams?.Count ?? 0;
-                if (receivedMetadataCount != userParamCount)
-                {
-                    for (int index = 0; index < userParamCount; index++)
-                    {
-                        SqlParameter sqlParameter = rpc.userParams[index];
-                        if (!sqlParameter.HasReceivedMetadata && sqlParameter.Direction != ParameterDirection.ReturnValue)
-                        {
-                            // Encryption MD wasn't sent by the server - we expect the metadata to be sent for all the parameters
-                            // that were sent in the original sp_describe_parameter_encryption but not necessarily for return values,
-                            // since there might be multiple return values but server will only send for one of them.
-                            // For parameters that don't need encryption, the encryption type is set to plaintext.
-                            throw SQL.ParamEncryptionMetadataMissing(sqlParameter.ParameterName, rpc.GetCommandTextOrRpcName());
-                        }
-                    }
-                }
-
-                // 4) Read the third result set containing enclave attestation information
-                if (ShouldUseEnclaveBasedWorkflow && (enclaveAttestationParameters != null) && requiresEnclaveComputations)
-                {
-                    if (!ds.NextResult())
-                    {
-                        throw SQL.UnexpectedDescribeParamFormatAttestationInfo(this._activeConnection.Parser.EnclaveType);
-                    }
-
-                    ReadDescribeEncryptionParameterResults3(ds, isRetry);
-                }
-
-                // The server has responded with encryption related information for this rpc request. So clear the needsFetchParameterEncryptionMetadata flag.
-                rpc.needsFetchParameterEncryptionMetadata = false;
-            } while (ds.NextResult());
-
-            // Verify that we received response for each rpc call needs tce
-            if (_batchRPCMode)
-            {
-                for (int i = 0; i < _RPCList.Count; i++)
-                {
-                    if (_RPCList[i].needsFetchParameterEncryptionMetadata)
-                    {
-                        throw SQL.ProcEncryptionMetadataMissing(_RPCList[i].rpcName);
-                    }
-                }
+                EnclaveDelegate.Instance.CreateEnclaveSession(
+                    attestationProtocol,
+                    enclaveType,
+                    GetEnclaveSessionParameters(),
+                    attestationInfo,
+                    enclaveAttestationParameters,
+                    customData,
+                    customDataLength,
+                    isRetry);
+                enclaveAttestationParameters = null;
+                attestationInfoRead = true;
             }
 
-            // If we are not in Batch RPC mode, update the query cache with the encryption MD.
-            if (!_batchRPCMode && ShouldCacheEncryptionMetadata && (_parameters is not null && _parameters.Count > 0))
+            if (!attestationInfoRead)
             {
-                SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: true);
+                throw SQL.AttestationInfoNotReturnedFromSqlServer(
+                    _activeConnection.Parser.EnclaveType,
+                    _activeConnection.EnclaveAttestationUrl);
             }
         }
 
-        private bool ReadDescribeEncryptionParameterResults1(
+        private bool ReadDescribeEncryptionParameterKeys(
             SqlDataReader ds,
             Dictionary<int, SqlTceCipherInfoEntry> columnEncryptionKeyTable)
         {
@@ -1048,7 +968,7 @@ namespace Microsoft.Data.SqlClient
             return enclaveMetadataExists;
         }
 
-        private int ReadDescribeEncryptionParameterResults2(
+        private int ReadDescribeEncryptionParameterMetadata(
             SqlDataReader ds,
             _SqlRPC rpc,
             Dictionary<int, SqlTceCipherInfoEntry> columnEncryptionKeyTable)
@@ -1126,51 +1046,134 @@ namespace Microsoft.Data.SqlClient
             return receivedMetadataCount;
         }
 
-        private void ReadDescribeEncryptionParameterResults3(SqlDataReader ds, bool isRetry)
+        /// <summary>
+        /// Read the output of sp_describe_parameter_encryption
+        /// </summary>
+        /// <param name="ds">Resultset from calling to sp_describe_parameter_encryption</param>
+        /// <param name="describeParameterEncryptionRpcOriginalRpcMap"> Readonly dictionary with the map of parameter encryption rpc requests with the corresponding original rpc requests.</param>
+        /// <param name="isRetry">Indicates if this is a retry from a failed call.</param>
+        private void ReadDescribeEncryptionParameterResults(
+            SqlDataReader ds, // @TODO: Rename something more obvious
+            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
+            bool isRetry)
         {
-            bool attestationInfoRead = false;
-            while (ds.Read())
+            // @TODO: This should be SqlTceCipherInfoTable
+            Dictionary<int, SqlTceCipherInfoEntry> columnEncryptionKeyTable = new Dictionary<int, SqlTceCipherInfoEntry>();
+
+            Debug.Assert(describeParameterEncryptionRpcOriginalRpcMap != null == _batchRPCMode,
+                "describeParameterEncryptionRpcOriginalRpcMap should be non-null if and only if it is _batchRPCMode.");
+
+            // Indicates the current result set we are reading, used in BatchRPCMode, where we can
+            // have more than 1 result set.
+            int resultSetSequenceNumber = 0;
+
+            // A flag that used in BatchRPCMode, to assert the result of lookup in to the
+            // dictionary maintaining the map of describe parameter encryption requests and the
+            // corresponding original rpc requests.
+            bool lookupDictionaryResult;
+
+            // @TODO: If this is supposed to read the results of sp_describe_parameter_encryption there should only ever be 2/3 result sets. So no need to loop this.
+            do
             {
-                if (attestationInfoRead)
+                if (_batchRPCMode)
                 {
-                    throw SQL.MultipleRowsReturnedForAttestationInfo();
+                    // If we got more RPC results from the server than what was requested.
+                    if (resultSetSequenceNumber >= _sqlRPCParameterEncryptionReqArray.Length)
+                    {
+                        Debug.Fail("Server sent back more results than what was expected for describe parameter encryption requests in _batchRPCMode.");
+                        // Ignore the rest of the results from the server, if for whatever reason it sends back more than what we expect.
+                        break;
+                    }
                 }
 
-                int attestationInfoLength = (int)ds.GetBytes(
-                    (int)DescribeParameterEncryptionResultSet3.AttestationInfo,
-                    dataIndex: 0,
-                    buffer: null,
-                    bufferIndex: 0,
-                    length: 0);
-                byte[] attestationInfo = new byte[attestationInfoLength];
-                ds.GetBytes(
-                    (int)DescribeParameterEncryptionResultSet3.AttestationInfo,
-                    dataIndex: 0,
-                    buffer: attestationInfo,
-                    bufferIndex: 0,
-                    length: attestationInfoLength);
+                // 1) Read the first result set that contains the column encryption key list
+                bool enclaveMetadataExists = ReadDescribeEncryptionParameterKeys(ds, columnEncryptionKeyTable);
+                if (!enclaveMetadataExists && !ds.NextResult())
+                {
+                    throw SQL.UnexpectedDescribeParamFormatParameterMetadata();
+                }
 
-                SqlConnectionAttestationProtocol attestationProtocol = _activeConnection.AttestationProtocol;
-                string enclaveType = _activeConnection.Parser.EnclaveType;
+                // 2) Find the RPC command that generated this TCE request
+                _SqlRPC rpc;
+                if (_batchRPCMode)
+                {
+                    Debug.Assert(_sqlRPCParameterEncryptionReqArray[resultSetSequenceNumber] != null, "_sqlRPCParameterEncryptionReqArray[resultSetSequenceNumber] should not be null.");
 
-                EnclaveDelegate.Instance.CreateEnclaveSession(
-                    attestationProtocol,
-                    enclaveType,
-                    GetEnclaveSessionParameters(),
-                    attestationInfo,
-                    enclaveAttestationParameters,
-                    customData,
-                    customDataLength,
-                    isRetry);
-                enclaveAttestationParameters = null;
-                attestationInfoRead = true;
+                    // Lookup in the dictionary to get the original rpc request corresponding to the describe parameter encryption request
+                    // pointed to by _sqlRPCParameterEncryptionReqArray[resultSetSequenceNumber]
+                    lookupDictionaryResult = describeParameterEncryptionRpcOriginalRpcMap.TryGetValue(
+                        _sqlRPCParameterEncryptionReqArray[resultSetSequenceNumber++],
+                        out rpc);
+
+                    Debug.Assert(lookupDictionaryResult,
+                        "Describe Parameter Encryption RPC request key must be present in the dictionary describeParameterEncryptionRpcOriginalRpcMap");
+                    Debug.Assert(rpc != null,
+                        "Describe Parameter Encryption RPC request's corresponding original rpc request must not be null in the dictionary describeParameterEncryptionRpcOriginalRpcMap");
+                }
+                else
+                {
+                    rpc = _rpcArrayOf1[0];
+                }
+
+                Debug.Assert(rpc is not null, "rpc should not be null here.");
+
+                // 3) Read the second result set containing the per-parameter cipher metadata
+                int receivedMetadataCount = 0;
+                if (!enclaveMetadataExists || ds.NextResult())
+                {
+                    receivedMetadataCount = ReadDescribeEncryptionParameterMetadata(ds, rpc, columnEncryptionKeyTable);
+                }
+
+                // When the RPC object gets reused, the parameter array has more parameters that the valid params for the command.
+                // Null is used to indicate the end of the valid part of the array. Refer to GetRPCObject().
+                int userParamCount = rpc.userParams?.Count ?? 0;
+                if (receivedMetadataCount != userParamCount)
+                {
+                    for (int index = 0; index < userParamCount; index++)
+                    {
+                        SqlParameter sqlParameter = rpc.userParams[index];
+                        if (!sqlParameter.HasReceivedMetadata && sqlParameter.Direction != ParameterDirection.ReturnValue)
+                        {
+                            // Encryption MD wasn't sent by the server - we expect the metadata to be sent for all the parameters
+                            // that were sent in the original sp_describe_parameter_encryption but not necessarily for return values,
+                            // since there might be multiple return values but server will only send for one of them.
+                            // For parameters that don't need encryption, the encryption type is set to plaintext.
+                            throw SQL.ParamEncryptionMetadataMissing(sqlParameter.ParameterName, rpc.GetCommandTextOrRpcName());
+                        }
+                    }
+                }
+
+                // 4) Read the third result set containing enclave attestation information
+                if (ShouldUseEnclaveBasedWorkflow && enclaveAttestationParameters != null && requiresEnclaveComputations)
+                {
+                    if (!ds.NextResult())
+                    {
+                        throw SQL.UnexpectedDescribeParamFormatAttestationInfo(_activeConnection.Parser.EnclaveType);
+                    }
+
+                    ReadDescribeEncryptionParameterAttestation(ds, isRetry);
+                }
+
+                // The server has responded with encryption related information for this rpc request. So clear the needsFetchParameterEncryptionMetadata flag.
+                rpc.needsFetchParameterEncryptionMetadata = false;
+            } while (ds.NextResult());
+
+            // Verify that we received response for each rpc call needs tce
+            if (_batchRPCMode)
+            {
+                for (int i = 0; i < _RPCList.Count; i++)
+                {
+                    if (_RPCList[i].needsFetchParameterEncryptionMetadata)
+                    {
+                        throw SQL.ProcEncryptionMetadataMissing(_RPCList[i].rpcName);
+                    }
+                }
             }
 
-            if (!attestationInfoRead)
+            // If we are not in Batch RPC mode, update the query cache with the encryption MD.
+            if (!_batchRPCMode && ShouldCacheEncryptionMetadata && _parameters?.Count > 0)
             {
-                throw SQL.AttestationInfoNotReturnedFromSqlServer(
-                    _activeConnection.Parser.EnclaveType,
-                    _activeConnection.EnclaveAttestationUrl);
+                SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: true);
             }
         }
 
