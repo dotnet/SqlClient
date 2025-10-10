@@ -2150,7 +2150,9 @@ namespace Microsoft.Data.SqlClient
 
             if (connectionOptions != null &&
                 (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
+                #pragma warning disable 0618 // Use of obsolete member 'SqlAuthenticationMethod.ActiveDirectoryPassword'
                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
+                #pragma warning restore 0618 // Use of obsolete member 'SqlAuthenticationMethod.ActiveDirectoryPassword'
                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal) &&
                 (!connectionOptions._hasUserIdKeyword || !connectionOptions._hasPasswordKeyword) &&
                 _credential == null)

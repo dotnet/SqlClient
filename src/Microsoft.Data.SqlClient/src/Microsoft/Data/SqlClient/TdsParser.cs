@@ -8733,7 +8733,9 @@ namespace Microsoft.Data.SqlClient
                         byte workflow = 0x00;
                         switch (fedAuthFeatureData.authentication)
                         {
+                            #pragma warning disable 0618 // Type or member is obsolete
                             case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                            #pragma warning restore 0618 // Type or member is obsolete
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD;
                                 break;
                             case SqlAuthenticationMethod.ActiveDirectoryIntegrated:

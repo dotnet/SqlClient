@@ -37,6 +37,7 @@ namespace Microsoft.Data.SqlClient
             _cache = new MemoryCache(new MemoryCacheOptions());
         }
 
+        // @TODO: Replace with Instance property.
         internal static SqlQueryMetadataCache GetInstance()
         {
             return s_singletonInstance;

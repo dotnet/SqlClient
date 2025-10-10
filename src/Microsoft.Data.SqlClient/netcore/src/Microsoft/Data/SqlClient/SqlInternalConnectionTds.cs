@@ -1360,7 +1360,9 @@ namespace Microsoft.Data.SqlClient
             // If the workflow being used is Active Directory Authentication and server's prelogin response
             // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
             // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
+            #pragma warning disable 0618 // Type or member is obsolete
             if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
+            #pragma warning restore 0618 // Type or member is obsolete
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
@@ -2573,7 +2575,9 @@ namespace Microsoft.Data.SqlClient
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
                             break;
+                        #pragma warning disable 0618 // Type or member is obsolete
                         case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                        #pragma warning restore 0618 // Type or member is obsolete
                         case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
