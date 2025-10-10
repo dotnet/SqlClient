@@ -9271,6 +9271,11 @@ namespace Microsoft.Data.SqlClient
             {
                 checked
                 {
+                    // NOTE: As part of TDS spec UserAgent feature extension should be the first feature extension in the list.
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) != 0)
+                    {
+                        length += WriteUserAgentFeatureRequest(userAgentJsonPayload, write);
+                    }
                     if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)
                     {
                         length += WriteSessionRecoveryFeatureRequest(recoverySessionData, write);
@@ -9315,11 +9320,6 @@ namespace Microsoft.Data.SqlClient
                     if ((requestedFeatures & TdsEnums.FeatureExtension.VectorSupport) != 0)
                     {
                         length += WriteVectorSupportFeatureRequest(write);
-                    }
-
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) != 0)
-                    {
-                        length += WriteUserAgentFeatureRequest(userAgentJsonPayload, write);
                     }
 
                     length++; // for terminator

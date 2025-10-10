@@ -631,6 +631,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Serialize the login token into the response packet
             responseMessage.Add(loginResponseToken);
 
+            // TODO: Split the conditional blocks below into separate virtual methods
             // Check if session recovery is enabled
             if (session.IsSessionRecoveryEnabled)
             {
@@ -729,6 +730,32 @@ namespace Microsoft.SqlServer.TDS.Servers
                     featureExtAckToken.Options.Add(uaAck);
                 }
             }
+
+            //// If tests request it, force an ACK for UserAgentSupport with no negotiation
+            //if (session.EmitUserAgentFeatureExtAck)
+            //{
+            //    // Create ack data (1 byte: Version number)
+            //    byte[] data = new byte[1];
+            //    data[0] = ServerSupportedVectorFeatureExtVersion > _clientSupportedVectorFeatureExtVersion ? _clientSupportedVectorFeatureExtVersion : ServerSupportedVectorFeatureExtVersion;
+
+            //    // Create vector support as a generic feature extension option
+            //    TDSFeatureExtAckGenericOption vectorSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.VectorSupport, (uint)data.Length, data);
+
+            //    // Look for feature extension token
+            //    TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
+
+            //    if (featureExtAckToken == null)
+            //    {
+            //        // Create feature extension ack token
+            //        featureExtAckToken = new TDSFeatureExtAckToken(vectorSupportOption);
+            //        responseMessage.Add(featureExtAckToken);
+            //    }
+            //    else
+            //    {
+            //        // Update the existing token
+            //        featureExtAckToken.Options.Add(vectorSupportOption);
+            //    }
+            //}
 
             // Create DONE token
             TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final);

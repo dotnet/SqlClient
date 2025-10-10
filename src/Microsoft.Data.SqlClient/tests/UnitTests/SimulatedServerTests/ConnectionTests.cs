@@ -854,20 +854,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Inspect what the client sends in the LOGIN7 packet
             server.OnLogin7Validated = loginToken =>
             {
-                var token = loginToken.FeatureExt
-                                      .OfType<TDSLogin7GenericOptionToken>()
-                                      .FirstOrDefault(t => t.FeatureID == TDSFeatureID.UserAgentSupport);
-                if (token == null)
-                {
-                    return;
-                }
+                var tdsFeatureExt = loginToken.FeatureExt
+                                      .OfType<TDSLogin7GenericOptionToken>().ToArray();
+                var token = tdsFeatureExt?.FirstOrDefault(t => t.FeatureID == TDSFeatureID.UserAgentSupport);
 
+                Assert.Equal(TDSFeatureID.UserAgentSupport, tdsFeatureExt?[0].FeatureID);
+                Assert.NotNull(token);
                 var data = token.Data;
-                if (data == null || data.Length < 2)
-                {
-                    return;
-                }
-
+                Assert.True(data.Length >= 2);
+                
                 observedVersion = data[0];
                 observedJsonBytes = data.AsSpan(1).ToArray();
                 loginFound = true;
