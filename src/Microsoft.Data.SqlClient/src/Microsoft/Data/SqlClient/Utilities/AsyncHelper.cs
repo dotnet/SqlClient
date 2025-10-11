@@ -114,6 +114,7 @@ namespace Microsoft.Data.SqlClient.Utilities
                         try
                         {
                             typedState2.OnSuccess(typedState2.State);
+                            // @TODO: The one unpleasant thing with this code is that the TCS is not set completed and left to the caller to do or not do (which is more unpleasant)
                         }
                         catch (Exception e)
                         {
@@ -189,6 +190,83 @@ namespace Microsoft.Data.SqlClient.Utilities
                 state: state,
                 scheduler: TaskScheduler.Default
             );
+        }
+
+        internal static Task CreateContinuationTaskWithState<TState>(
+            Task taskToContinue,
+            TState state,
+            Action<TState> onSuccess,
+            Action<TState, Exception> onFailure = null,
+            Action<TState> onCancellation = null)
+        {
+            // Note: this code is almost identical to ContinueTaskWithState, but creates its own
+            // task completion source and completes it on success.
+            // Yes, we could just chain into the ContinueTaskWithState, but that requires wrapping
+            // more state in a tuple and confusing the heck out of people. So, duplicating code
+            // just makes things more clean. Besides, @TODO: We should get rid of these helpers and
+            // just use async/await natives.
+
+            if (taskToContinue is null)
+            {
+                onSuccess(state);
+                return null;
+            }
+
+            // @TODO: Can totally use a non-generic TaskCompletionSource
+            TaskCompletionSource<object> taskCompletionSource = new();
+            TaskCompletionSourceContinuationState<TState> continuationState = new(
+                OnCancellation: onCancellation,
+                OnFailure: onFailure,
+                OnSuccess: onSuccess,
+                State: state,
+                TaskCompletionSource: taskCompletionSource);
+
+            taskToContinue.ContinueWith(
+                static (task, state2) =>
+                {
+                    TaskCompletionSourceContinuationState<TState> typedState2 =
+                        (TaskCompletionSourceContinuationState<TState>)state2;
+
+                    if (task.Exception is not null)
+                    {
+                        try
+                        {
+                            typedState2.OnFailure?.Invoke(typedState2.State, task.Exception);
+                        }
+                        finally
+                        {
+                            typedState2.TaskCompletionSource.TrySetException(task.Exception);
+                        }
+                    }
+                    else if (task.IsCanceled)
+                    {
+                        try
+                        {
+                            typedState2.OnCancellation?.Invoke(typedState2.State);
+                        }
+                        finally
+                        {
+                            typedState2.TaskCompletionSource.TrySetCanceled();
+                        }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            typedState2.OnSuccess(typedState2.State);
+                            typedState2.TaskCompletionSource.SetResult(null);
+                        }
+                        catch (Exception e)
+                        {
+                            typedState2.TaskCompletionSource.SetException(e);
+                        }
+                    }
+
+                },
+                state: continuationState,
+                scheduler: TaskScheduler.Default);
+
+            return taskCompletionSource.Task;
         }
 
         internal static Task CreateContinuationTask(
