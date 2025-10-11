@@ -220,14 +220,11 @@ namespace Microsoft.Data.SqlClient
                     if (execNonQuery is not null)
                     {
                         AsyncHelper.ContinueTaskWithState(
-                            task: execNonQuery,
-                            completion: localCompletion,
+                            taskToContinue: execNonQuery,
+                            taskCompletionSource: localCompletion,
                             state: Tuple.Create(this, localCompletion),
                             onSuccess: static state =>
-                            {
-                                var parameters = (Tuple<SqlCommand, TaskCompletionSource<object>>)state;
-                                parameters.Item1.BeginExecuteNonQueryInternalReadStage(parameters.Item2);
-                            });
+                                state.Item1.BeginExecuteNonQueryInternalReadStage(state.Item2));
                     }
                     else
                     {
@@ -897,10 +894,10 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         AsyncHelper.ContinueTaskWithState(
-                            subTask,
-                            completion,
+                            taskToContinue: subTask,
+                            taskCompletionSource: completion,
                             state: completion,
-                            onSuccess: static state => ((TaskCompletionSource<object>)state).SetResult(null));
+                            onSuccess: static state => state.SetResult(null));
                     }
                 });
         }
