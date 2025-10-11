@@ -192,6 +192,20 @@ namespace Microsoft.Data.SqlClient.Utilities
             );
         }
 
+        internal static Task CreateContinuationTask(
+            Task taskToContinue,
+            Action onSuccess,
+            Action<Exception> onFailure = null,
+            Action onCancellation = null)
+        {
+            return CreateContinuationTaskWithState(
+                taskToContinue,
+                state: Tuple.Create(onSuccess, onFailure, onCancellation),
+                onSuccess: static state => state.Item1(),
+                onFailure: static (state, exception) => state.Item2?.Invoke(exception),
+                onCancellation: static state => state.Item3?.Invoke());
+        }
+
         internal static Task CreateContinuationTaskWithState<TState>(
             Task taskToContinue,
             TState state,
