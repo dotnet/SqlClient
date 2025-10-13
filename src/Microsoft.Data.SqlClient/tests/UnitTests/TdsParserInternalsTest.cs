@@ -41,10 +41,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             int count = (int)usedField.GetValue(stateObj)!;
 
             return (buffer, count);
-        }
-
-        [Fact]
-        public void WriteUserAgentFeatureRequest_WriteFalse_LengthOnlyReturn()
+               public void WriteUserAgentFeatureRequest_WriteFalse_LengthOnlyReturn()
         {
             byte[] payload = Encoding.UTF8.GetBytes("{\"kel\":\"sier\"}");
             var (_, countBefore) = ExtractOutputBuffer(_parser);
