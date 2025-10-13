@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string connectionString = DataTestUtility.TCPConnectionString;
 
-            string tempTable = DataTestUtility.GetUniqueNameForSqlServer("table");
+            string tempTable = DataTestUtility.GetLongName("table");
 
             DbProviderFactory provider = SqlClientFactory.Instance;
             try
@@ -275,7 +275,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void SqlDataReader_SqlBuffer_GetFieldValue()
         {
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("SqlBuffer_GetFieldValue");
+            string tableName = DataTestUtility.GetLongName("SqlBuffer_GetFieldValue");
             DateTimeOffset dtoffset = DateTimeOffset.Now;
             DateTime dt = DateTime.Now;
             //Exclude the millisecond because of rounding at some points by SQL Server.
@@ -374,7 +374,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async Task SqlDataReader_SqlBuffer_GetFieldValue_Async()
         {
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("SqlBuffer_GetFieldValue_Async");
+            string tableName = DataTestUtility.GetLongName("SqlBuffer_GetFieldValue_Async");
             DateTimeOffset dtoffset = DateTimeOffset.Now;
             DateTime dt = DateTime.Now;
             //Exclude the millisecond because of rounding at some points by SQL Server.

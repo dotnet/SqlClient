@@ -19,6 +19,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
                 command.CommandText = sql;
                 command.ExecuteNonQuery();
             }
+
+            // TODO: Remove.
+            System.Console.WriteLine($"Dropped table {Name} from {sqlConnection.ConnectionString}");
         }
 
         public static void DeleteData(string tableName, SqlConnection sqlConnection)
