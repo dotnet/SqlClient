@@ -36,8 +36,12 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Core" />
-    <PackageReference Include="System.Text.Encodings.Web" />
+    <!--<PackageReference Include="System.Text.Encodings.Web" />-->
     <PackageReference Include="Azure.Security.KeyVault.Keys" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
   </ItemGroup>
-</Project>
+  <ItemGroup Condition="$([MSBuild]::VersionLessThan('$(NETCoreSdkVersion)', '10.0.100'))">
+    <PackageReference Include="System.Text.Encodings.Web" />
+  </ItemGroup>
+
+  </Project>
