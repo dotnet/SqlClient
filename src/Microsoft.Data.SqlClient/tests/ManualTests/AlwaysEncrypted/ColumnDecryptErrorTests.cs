@@ -10,7 +10,8 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public sealed class ColumnDecryptErrorTests : IClassFixture<SQLSetupStrategyAzureKeyVault>, IDisposable
+    [Collection("AlwaysEncryptedAKV")]
+    public sealed class ColumnDecryptErrorTests : IDisposable
     {
         private SQLSetupStrategyAzureKeyVault fixture;
 

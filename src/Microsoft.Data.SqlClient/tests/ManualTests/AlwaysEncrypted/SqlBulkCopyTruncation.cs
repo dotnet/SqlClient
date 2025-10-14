@@ -11,7 +11,8 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class SqlBulkCopyTruncation : IClassFixture<SQLSetupStrategyCertStoreProvider>
+    [Collection("AlwaysEncryptedCertStore")]
+    public class SqlBulkCopyTruncation
     {
         private SQLSetupStrategy _fixture;
 

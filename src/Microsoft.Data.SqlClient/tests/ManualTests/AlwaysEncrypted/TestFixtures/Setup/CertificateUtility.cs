@@ -198,7 +198,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 builder.EnclaveAttestationUrl = sb.EnclaveAttestationUrl;
                 builder.AttestationProtocol = sb.AttestationProtocol;
             }
-            builder.ConnectTimeout = 10000;
             return builder.ToString();
         }
 

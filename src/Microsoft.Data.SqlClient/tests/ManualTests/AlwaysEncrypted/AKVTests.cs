@@ -12,7 +12,8 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class AKVTest : IClassFixture<SQLSetupStrategyAzureKeyVault>
+    [Collection("AlwaysEncryptedAKV")]
+    public sealed class AKVTest : IDisposable
     {
         private readonly SQLSetupStrategyAzureKeyVault _fixture;
         private readonly string _akvTableName;
@@ -189,6 +190,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             sqlCommand.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customProvider);
             Exception ex = Assert.Throws<SqlException>(() => sqlCommand.ExecuteReader());
             Assert.StartsWith("The current credential is not configured to acquire tokens for tenant", ex.InnerException.Message);
+        }
+
+        public void Dispose()
+        {
+            foreach (string connection in DataTestUtility.AEConnStringsSetup)
+            {
+                using (SqlConnection sqlConnection = new SqlConnection(connection))
+                {
+                    sqlConnection.Open();
+
+                    Table.DeleteData(_fixture.AKVTestTable.Name, sqlConnection);
+                }
+            }
         }
 
         private class EmptyKeyStoreProvider : SqlColumnEncryptionKeyStoreProvider

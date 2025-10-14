@@ -11,7 +11,8 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public sealed class End2EndSmokeTests : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
+    [Collection("AlwaysEncryptedCertStore")]
+    public sealed class End2EndSmokeTests : IDisposable
     {
         private SQLSetupStrategy fixture;
 
