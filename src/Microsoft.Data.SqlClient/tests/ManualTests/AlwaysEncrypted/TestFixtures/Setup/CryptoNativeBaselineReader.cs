@@ -174,7 +174,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
         /// <summary>
         /// Parameter Data End identifier, to search inside resource text file.
         /// </summary>
-        private static readonly Regex regexEndParameterIdentifier = new Regex(@"\r");
+        private static readonly Regex regexEndParameterIdentifier = new Regex(@"\n");
 
         private readonly IList<CryptoVector> m_CryptoVectors;
 
