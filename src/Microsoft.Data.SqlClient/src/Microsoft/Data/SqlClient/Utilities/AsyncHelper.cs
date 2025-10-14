@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClient.Utilities
             Action<TState, Exception> onFailure = null,
             Action<TState> onCancellation = null)
         {
-            TaskCompletionSourceContinuationState<TState> continuationState = new(
+            ContinuationState<TState> continuationState = new(
                 OnCancellation: onCancellation,
                 OnFailure: onFailure,
                 OnSuccess: onSuccess,
@@ -83,8 +83,8 @@ namespace Microsoft.Data.SqlClient.Utilities
             taskToContinue.ContinueWith(
                 static (task, state2) =>
                 {
-                    TaskCompletionSourceContinuationState<TState> typedState2 =
-                        (TaskCompletionSourceContinuationState<TState>)state2;
+                    ContinuationState<TState> typedState2 =
+                        (ContinuationState<TState>)state2;
 
                     if (task.Exception is not null)
                     {
@@ -126,11 +126,80 @@ namespace Microsoft.Data.SqlClient.Utilities
                 scheduler: TaskScheduler.Default);
         }
 
-        private record TaskCompletionSourceContinuationState<TState>(
+        internal static void ContinueTaskWithState<TState1, TState2>(
+            Task taskToContinue,
+            TaskCompletionSource<object> taskCompletionSource,
+            TState1 state1,
+            TState2 state2,
+            Action<TState1, TState2> onSuccess,
+            Action<TState1, TState2, Exception> onFailure = null,
+            Action<TState1, TState2> onCancellation = null)
+        {
+            ContinuationState<TState1, TState2> continuationState = new(
+                OnCancellation: onCancellation,
+                OnFailure: onFailure,
+                OnSuccess: onSuccess,
+                State1: state1,
+                State2: state2,
+                TaskCompletionSource: taskCompletionSource);
+
+            taskToContinue.ContinueWith(
+                static (task, state2) =>
+                {
+                    ContinuationState<TState1, TState2> typedState2 = (ContinuationState<TState1, TState2>)state2;
+
+                    if (task.Exception is not null)
+                    {
+                        // @TODO: Exception converter?
+                        try
+                        {
+                            typedState2.OnFailure?.Invoke(typedState2.State1, typedState2.State2, task.Exception);
+                        }
+                        finally
+                        {
+                            typedState2.TaskCompletionSource.TrySetException(task.Exception);
+                        }
+                    }
+                    else if (task.IsCanceled)
+                    {
+                        try
+                        {
+                            typedState2.OnCancellation?.Invoke(typedState2.State1, typedState2.State2);
+                        }
+                        finally
+                        {
+                            typedState2.TaskCompletionSource.TrySetCanceled();
+                        }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            typedState2.OnSuccess(typedState2.State1, typedState2.State2);
+                        }
+                        catch (Exception e)
+                        {
+                            typedState2.TaskCompletionSource.SetException(e);
+                        }
+                    }
+                },
+                state: continuationState,
+                scheduler: TaskScheduler.Default);
+        }
+
+        private record ContinuationState<TState>(
             Action<TState> OnCancellation,
             Action<TState, Exception> OnFailure,
             Action<TState> OnSuccess,
             TState State,
+            TaskCompletionSource<object> TaskCompletionSource);
+
+        private record ContinuationState<TState1, TState2>(
+            Action<TState1, TState2> OnCancellation,
+            Action<TState1, TState2, Exception> OnFailure,
+            Action<TState1, TState2> OnSuccess,
+            TState1 State1,
+            TState2 State2,
             TaskCompletionSource<object> TaskCompletionSource);
 
         // the same logic as ContinueTask but with an added state parameter to allow the caller to avoid the use of a closure
@@ -228,7 +297,7 @@ namespace Microsoft.Data.SqlClient.Utilities
 
             // @TODO: Can totally use a non-generic TaskCompletionSource
             TaskCompletionSource<object> taskCompletionSource = new();
-            TaskCompletionSourceContinuationState<TState> continuationState = new(
+            ContinuationState<TState> continuationState = new(
                 OnCancellation: onCancellation,
                 OnFailure: onFailure,
                 OnSuccess: onSuccess,
@@ -238,8 +307,8 @@ namespace Microsoft.Data.SqlClient.Utilities
             taskToContinue.ContinueWith(
                 static (task, state2) =>
                 {
-                    TaskCompletionSourceContinuationState<TState> typedState2 =
-                        (TaskCompletionSourceContinuationState<TState>)state2;
+                    ContinuationState<TState> typedState2 =
+                        (ContinuationState<TState>)state2;
 
                     if (task.Exception is not null)
                     {

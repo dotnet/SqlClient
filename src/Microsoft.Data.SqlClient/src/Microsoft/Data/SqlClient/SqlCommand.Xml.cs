@@ -269,12 +269,13 @@ namespace Microsoft.Data.SqlClient
 
                 if (writeTask is not null)
                 {
-                    AsyncHelper.ContinueTaskWithState<Tuple<SqlCommand, TaskCompletionSource<object>>>(
+                    AsyncHelper.ContinueTaskWithState(
                         taskToContinue: writeTask,
                         taskCompletionSource: localCompletion,
-                        state: Tuple.Create(this, localCompletion),
-                        onSuccess: static state =>
-                            state.Item1.BeginExecuteXmlReaderInternalReadStage(state.Item2));
+                        state1: this,
+                        state2: localCompletion,
+                        onSuccess: static (this2, localCompletion2) =>
+                            this2.BeginExecuteXmlReaderInternalReadStage(localCompletion2));
                 }
                 else
                 {

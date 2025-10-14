@@ -222,9 +222,10 @@ namespace Microsoft.Data.SqlClient
                         AsyncHelper.ContinueTaskWithState(
                             taskToContinue: execNonQuery,
                             taskCompletionSource: localCompletion,
-                            state: Tuple.Create(this, localCompletion),
-                            onSuccess: static state =>
-                                state.Item1.BeginExecuteNonQueryInternalReadStage(state.Item2));
+                            state1: this,
+                            state2: localCompletion,
+                            onSuccess: static (this2, localCompletion2) =>
+                                this2.BeginExecuteNonQueryInternalReadStage(localCompletion2));
                     }
                     else
                     {
