@@ -3044,7 +3044,10 @@ namespace Microsoft.Data.SqlClient
             if (willCancel)
             {
                 // If we have been canceled, then ensure that we write the ATTN packet as well
-                task = AsyncHelper.CreateContinuationTask(task, CancelWritePacket);
+                task = AsyncHelper.CreateContinuationTaskWithState(
+                    taskToContinue: task,
+                    state: this,
+                    onSuccess: static this2 => this2.CancelWritePacket());
             }
 
             return task;
