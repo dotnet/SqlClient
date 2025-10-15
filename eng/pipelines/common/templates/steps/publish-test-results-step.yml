@@ -15,9 +15,11 @@ parameters:
     type: string
     default: $(Platform)
 
-  - name: configuration
+  - name: buildConfiguration
     type: string
-    default: '$(Configuration)'
+    values:
+      - Debug
+      - Release
   
   - name: operatingSystem
     type: string
@@ -29,7 +31,7 @@ steps:
     testResultsFormat: VSTest
     mergeTestResults: true
     buildPlatform: '${{parameters.platform }}'
-    buildConfiguration: '${{parameters.configuration }}'
+    buildConfiguration: '${{parameters.buildConfiguration }}'
     ${{ if eq(parameters.operatingSystem, 'Windows') }}:
       testResultsFiles: 'TestResults/*.trx'
       testRunTitle: 'Windows Tests'

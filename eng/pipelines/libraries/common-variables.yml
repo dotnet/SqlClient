@@ -13,8 +13,6 @@ variables:
     # AuthAKVName
     # AuthSignCertName
 
-  - name: Configuration
-    value: Release
   - name: CommitHead
     value: '' # the value will be extracted from the repo's head  
   - name: REPOROOT

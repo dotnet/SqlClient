@@ -4,10 +4,18 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This pipeline is used to trigger PR validation runs for dev/topic/feature
-# branches in GitHub using the Package reference type.
+# This pipeline builds and tests the following packages using package
+# references:
 #
-# It maps to the "PR-SqlClient-Package" pipeline in Azure DevOps.
+#   - Microsoft.SqlServer.Server
+#   - Microsoft.Data.SqlClient
+#   - Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+#
+# It is triggered by pushes to PRs for dev/topic/feature branches in GitHub.
+#
+# It maps to the "PR-SqlClient-Package" pipeline in the Public project:
+#
+# https://dev.azure.com/SqlClientDrivers/public/_build?definitionId=2198
 
 # Set the pipeline run name to the day-of-year and the daily run counter.
 name: $(DayOfYear)$(Rev:rr)
@@ -22,7 +30,7 @@ pr:
     include:
     # GitHub repo branch targets that will trigger PR validation builds.
     # TODO: Temporarily restricting to my ci-debug branches only.
-    - dev/paul/ci-debug-*
+    - dev/paul/ci-debug*
     # - dev/*
     # - feat/*
     # - main
@@ -41,62 +49,62 @@ pr:
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
 
-# The build configuration to use; defaults to Debug.
-- name: buildConfiguration
-  displayName: Build Configuration
-  type: string
-  default: Debug
-  values:
-    - Debug
-    - Release
+  # The build configuration to use; defaults to Debug.
+  - name: buildConfiguration
+    displayName: Build Configuration
+    type: string
+    default: Debug
+    values:
+      - Debug
+      - Release
 
-- name: buildPlatforms
-  displayName: Build Platforms on Windows
-  type: object
-  default: [AnyCPU]
+  - name: buildPlatforms
+    displayName: Build Platforms on Windows
+    type: object
+    default: [AnyCPU]
 
-- name: codeCovTargetFrameworks
-  displayName: Code Coverage Target Frameworks
-  type: object
-  default: [net462, net8.0]
+  - name: codeCovTargetFrameworks
+    displayName: Code Coverage Target Frameworks
+    type: object
+    default: [net462, net8.0]
 
-- name: debug
-  displayName: Enable debug output
-  type: boolean
-  default: false
+  - name: debug
+    displayName: Enable debug output
+    type: boolean
+    default: false
 
-- name: enableStressTests
-  displayName: Enable Stress Tests
-  type: boolean
-  default: false
+  - name: enableStressTests
+    displayName: Enable Stress Tests
+    type: boolean
+    default: false
 
-- name: targetFrameworks
-  displayName: Target Frameworks on Windows
-  type: object
-  default: [net462, net8.0, net9.0]
+  - name: targetFrameworks
+    displayName: Target Frameworks on Windows
+    type: object
+    default: [net462, net8.0, net9.0]
 
-- name: targetFrameworksLinux
-  displayName: Target Frameworks on Non-Windows
-  type: object
-  default: [net8.0, net9.0]
+  - name: targetFrameworksLinux
+    displayName: Target Frameworks on Non-Windows
+    type: object
+    default: [net8.0, net9.0]
 
-- name: testSets
-  displayName: Test Sets
-  type: object
-  default: [1, 2, 3]
+  - name: testSets
+    displayName: Test Sets
+    type: object
+    default: [1, 2, 3]
 
-# The timeout, in minutes, for each test job.
-- name: testJobTimeout
-  displayName: Test job timeout (in minutes)
-  type: string
-  default: Default
+  # The timeout, in minutes, for each test job.
+  - name: testJobTimeout
+    displayName: Test job timeout (in minutes)
+    type: string
+    default: Default
 
-- name: useManagedSNI
-  displayName: |
-    Use Managed/Native SNI on Windows,
-    values [false, true], [false] or [true] are allowed
-  type: object
-  default: [false, true]
+  - name: useManagedSNI
+    displayName: |
+      Use Managed/Native SNI on Windows,
+      values [false, true], [false] or [true] are allowed
+    type: object
+    default: [false, true]
 
 extends:
   template: dotnet-sqlclient-ci-core.yml@self
