@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
 {
@@ -174,7 +173,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
         /// <summary>
         /// Parameter Data End identifier, to search inside resource text file.
         /// </summary>
-        private static readonly Regex regexEndParameterIdentifier = new Regex(@"\r");
+        private static readonly Regex regexEndParameterIdentifier = new Regex(Environment.NewLine);
 
         private readonly IList<CryptoVector> m_CryptoVectors;
 
