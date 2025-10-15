@@ -1,0 +1,8 @@
+schemaVersion: 0.0.1
+isProduction: true
+accountableOwners:
+  service: 24ff40ff-f299-428e-9508-d67fdeb2f473
+routing:
+  defaultAreaPath:
+    org: sqlclientdrivers
+    path: ADO.Net
