@@ -358,7 +358,7 @@ namespace Microsoft.Data.SqlClient.Utilities
 
         // the same logic as ContinueTask but with an added state parameter to allow the caller to avoid the use of a closure
         // the parameter allocation cannot be avoided here and using closure names is clearer than Tuple numbered properties
-        internal static void ContinueTaskWithState(Task task,
+        private static void ContinueTaskWithState(Task task,
             TaskCompletionSource<object> completion,
             object state,
             Action<object> onSuccess,

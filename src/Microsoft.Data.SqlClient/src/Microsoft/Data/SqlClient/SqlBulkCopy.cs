@@ -3023,25 +3023,38 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         );
 
                         AsyncHelper.ContinueTaskWithState(
-                            task: cancellableReconnectTS.Task,
-                            completion: source,
+                            taskToContinue:cancellableReconnectTS.Task,
+                            taskCompletionSource: source,
                             state: regReconnectCancel,
-                            onSuccess: (object state) =>
+                            onSuccess: regReconnectCancel2 =>
                             {
-                                ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose();
-                                if (_parserLock != null)
+                                regReconnectCancel2.Value.Dispose();
+
+                                if (_parserLock is not null)
                                 {
                                     _parserLock.Release();
-                                    _parserLock = null;
+                                    _parserLock = null; // @TODO: Can be omitted b/c we reassign it directly below
                                 }
                                 _parserLock = _connection.GetOpenTdsConnection()._parserLock;
                                 _parserLock.Wait(canReleaseFromAnyThread: true);
                                 WriteToServerInternalRestAsync(cts, source);
                             },
-                            onFailure: static (_, state) => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
-                            onCancellation: static state => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
-                            exceptionConverter: ex => SQL.BulkLoadInvalidDestinationTable(_destinationTableName, ex)
-                        );
+                            onFailure: (regReconnectCancel2, exception) =>
+                            {
+                                regReconnectCancel2.Value.Dispose();
+
+                                // Convert exception and set it on the source
+                                // Note: This is safe because the helper will only try to set the
+                                //    exception and b/c it is already set will pass without setting
+                                //    to the original exception.
+                                Exception convertedException = SQL.BulkLoadInvalidDestinationTable(
+                                    _destinationTableName,
+                                    exception);
+                                source.TrySetException(convertedException);
+                            },
+                            onCancellation: static regReconnectCancel2 =>
+                                regReconnectCancel2.Value.Dispose());
+
                         return;
                     }
                     else
