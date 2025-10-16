@@ -457,6 +457,34 @@ namespace Microsoft.Data.SqlClient.Utilities
                     cancellationToken: CancellationToken.None);
         }
 
+        internal static void WaitForCompletion(
+            Task task,
+            int timeoutInSeconds,
+            Action onTimeout = null,
+            bool rethrowExceptions = true)
+        {
+            try
+            {
+                task.Wait(timeoutInSeconds > 0 ? 1000 * timeoutInSeconds : Timeout.Infinite);
+            }
+            catch (AggregateException ae)
+            {
+                if (rethrowExceptions)
+                {
+                    Debug.Assert(ae.InnerException is not null, "Inner exception is null");
+                    Debug.Assert(ae.InnerExceptions.Count == 1, "There is more than one exception in AggregateException");
+                    ExceptionDispatchInfo.Capture(ae.InnerException).Throw();
+                }
+            }
+
+            if (!task.IsCompleted)
+            {
+                //Ensure the task does not leave an unobserved exception
+                task.ContinueWith(static t => { var ignored = t.Exception; });
+                onTimeout?.Invoke();
+            }
+        }
+
         private record ContinuationState(
             Action OnCancellation,
             Action<Exception> OnFailure,
@@ -477,26 +505,5 @@ namespace Microsoft.Data.SqlClient.Utilities
             TState1 State1,
             TState2 State2,
             TaskCompletionSource<object> TaskCompletionSource);
-
-        internal static void WaitForCompletion(Task task, int timeout, Action onTimeout = null, bool rethrowExceptions = true)
-        {
-            try
-            {
-                task.Wait(timeout > 0 ? (1000 * timeout) : Timeout.Infinite);
-            }
-            catch (AggregateException ae)
-            {
-                if (rethrowExceptions)
-                {
-                    Debug.Assert(ae.InnerExceptions.Count == 1, "There is more than one exception in AggregateException");
-                    ExceptionDispatchInfo.Capture(ae.InnerException).Throw();
-                }
-            }
-            if (!task.IsCompleted)
-            {
-                task.ContinueWith(static t => { var ignored = t.Exception; }); //Ensure the task does not leave an unobserved exception
-                onTimeout?.Invoke();
-            }
-        }
     }
 }
