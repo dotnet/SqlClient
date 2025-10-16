@@ -51,11 +51,10 @@ namespace Microsoft.Data.SqlClient
 
     internal static class AsyncHelper
     {
-        internal static Task CreateContinuationTask(Task task, Action onSuccess,
-#if NETFRAMEWORK
-            SqlInternalConnectionTds connectionToDoom = null,
-#endif
-             Action<Exception> onFailure = null)
+        internal static Task CreateContinuationTask(
+            Task task,
+            Action onSuccess,
+            Action<Exception> onFailure = null)
         {
             if (task == null)
             {
@@ -65,8 +64,9 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
-#if NET
-                ContinueTaskWithState(task, completion,
+                ContinueTaskWithState(
+                    task,
+                    completion,
                     state: Tuple.Create(onSuccess, onFailure, completion),
                     onSuccess: static (object state) =>
                     {
@@ -82,16 +82,6 @@ namespace Microsoft.Data.SqlClient
                         Action<Exception> failure = parameters.Item2;
                         failure?.Invoke(exception);
                     }
-#else
-                ContinueTask(task, completion,
-                    onSuccess: () =>
-                    {
-                        onSuccess();
-                        completion.SetResult(null);
-                    },
-                    onFailure: onFailure,
-                    connectionToDoom: connectionToDoom
-#endif
                 );
                 return completion.Task;
             }
@@ -119,13 +109,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static Task CreateContinuationTask<T1, T2>(Task task, Action<T1, T2> onSuccess, T1 arg1, T2 arg2, SqlInternalConnectionTds connectionToDoom = null, Action<Exception> onFailure = null)
+        internal static Task CreateContinuationTask<T1, T2>(
+            Task task,
+            Action<T1, T2> onSuccess,
+            T1 arg1,
+            T2 arg2,
+            Action<Exception> onFailure = null)
         {
-            return CreateContinuationTask(task, () => onSuccess(arg1, arg2),
-#if NETFRAMEWORK
-                connectionToDoom,
-#endif
-                onFailure);
+            return CreateContinuationTask(task, () => onSuccess(arg1, arg2), onFailure);
         }
 
         internal static void ContinueTask(Task task,
@@ -133,18 +124,8 @@ namespace Microsoft.Data.SqlClient
             Action onSuccess,
             Action<Exception> onFailure = null,
             Action onCancellation = null,
-            Func<Exception, Exception> exceptionConverter = null,
-#if NET
-            SqlInternalConnectionTds connectionToDoom = null
-#else
-            SqlInternalConnectionTds connectionToDoom = null,
-            SqlConnection connectionToAbort = null
-#endif
-        )
+            Func<Exception, Exception> exceptionConverter = null)
         {
-#if NETFRAMEWORK
-            Debug.Assert((connectionToAbort == null) || (connectionToDoom == null), "Should not specify both connectionToDoom and connectionToAbort");
-#endif
             task.ContinueWith(
                 tsk =>
                 {
@@ -177,42 +158,16 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-#if NETFRAMEWORK
-                        if (connectionToDoom != null || connectionToAbort != null)
-                        {
-                            try
-                            {
-                                onSuccess();
-                            }
-                            // @TODO: CER Exception Handling was removed here (see GH#3581)
-                            catch (Exception e)
-                            {
-                                completion.SetException(e);
-                            }
-                        }
-                        else
-                        { // no connection to doom - reliability section not required
-                            try
-                            {
-                                onSuccess();
-                            }
-                            catch (Exception e)
-                            {
-                                completion.SetException(e);
-                            }
-                        }
-                    }
-#else
                         try
                         {
                             onSuccess();
                         }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
                         catch (Exception e)
                         {
                             completion.SetException(e);
                         }
                     }
-#endif
                 }, TaskScheduler.Default
             );
         }
@@ -225,18 +180,8 @@ namespace Microsoft.Data.SqlClient
             Action<object> onSuccess,
             Action<Exception, object> onFailure = null,
             Action<object> onCancellation = null,
-#if NET
-            Func<Exception, Exception> exceptionConverter = null,
-#else
-            Func<Exception, object, Exception> exceptionConverter = null,
-#endif
-            SqlInternalConnectionTds connectionToDoom = null,
-            SqlConnection connectionToAbort = null
-        )
+            Func<Exception, Exception> exceptionConverter = null)
         {
-#if NETFRAMEWORK
-            Debug.Assert((connectionToAbort == null) || (connectionToDoom == null), "Should not specify both connectionToDoom and connectionToAbort");
-#endif
             task.ContinueWith(
                 (Task tsk, object state2) =>
                 {
@@ -245,12 +190,9 @@ namespace Microsoft.Data.SqlClient
                         Exception exc = tsk.Exception.InnerException;
                         if (exceptionConverter != null)
                         {
-                            exc = exceptionConverter(exc
-#if NETFRAMEWORK
-                                , state2
-#endif
-                                );
+                            exc = exceptionConverter(exc);
                         }
+
                         try
                         {
                             onFailure?.Invoke(exc, state2);
@@ -271,24 +213,13 @@ namespace Microsoft.Data.SqlClient
                             completion.TrySetCanceled();
                         }
                     }
-                    else if (connectionToDoom != null || connectionToAbort != null)
-                    {
-                        try
-                        {
-                            onSuccess(state2);
-                        }
-                        // @TODO: CER Exception Handling was removed here (see GH#3581)
-                        catch (Exception e)
-                        {
-                            completion.SetException(e);
-                        }
-                    }
                     else
                     {
                         try
                         {
                             onSuccess(state2);
                         }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
                         catch (Exception e)
                         {
                             completion.SetException(e);
