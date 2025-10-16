@@ -23,14 +23,36 @@ parameters:
     - name: referenceType
       type: string
       values:
-          - Package
-          - Project
+        - Package
+        - Project
+    
+    # Semi-colon separated properties to pass to nuget via the -properties
+    # argument.
+    - name: properties
+      type: string
+      default: ''
 
 steps:
-    - task: NuGetToolInstaller@1
-      displayName: 'Install Latest Nuget'
-      inputs:
-          checkLatest: true
+    # This tool is failing on OneBranch pipelines, possibly due to new
+    # network isolation rules:
+    #
+    #   ERR:Client network socket disconnected before secure TLS connection was established
+    #
+    # Our AKV Official build uses this 1ES image:
+    #
+    #   Image: 1ES-OB-2022-D8-Netlock-V2_westus2_1_image
+    #
+    # An ICM for this issue exists:
+    #
+    #   https://portal.microsofticm.com/imp/v5/incidents/details/690355343/summary
+    #
+    # Recommendation is to remove this step since NuGet is already present on
+    # the 1ES images.
+    #
+    # - task: NuGetToolInstaller@1
+    #   displayName: 'Install Latest Nuget'
+    #   inputs:
+    #       checkLatest: true
 
     - ${{ if parameters.generateSymbolsPackage }}:
           - task: NuGetCommand@2
@@ -44,7 +66,7 @@ steps:
                     -SymbolPackageFormat snupkg
                     -Version ${{ parameters.packageVersion }}
                     -OutputDirectory ${{ parameters.outputDirectory }}
-                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};ReferenceType=${{ parameters.referenceType }}"
+                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};ReferenceType=${{ parameters.referenceType }};${{ parameters.properties }}"
     - ${{ else }}:
           - task: NuGetCommand@2
             displayName: 'Generate NuGet Package'
@@ -55,4 +77,4 @@ steps:
                     ${{ parameters.nuspecPath }}
                     -Version ${{ parameters.packageVersion }}
                     -OutputDirectory ${{ parameters.outputDirectory }}
-                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};ReferenceType=${{ parameters.referenceType }}"
+                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};ReferenceType=${{ parameters.referenceType }};${{ parameters.properties }}"

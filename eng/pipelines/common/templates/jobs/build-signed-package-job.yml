@@ -27,8 +27,10 @@ jobs:
   variables:
   - template: ../../../libraries/variables.yml@self
   - ${{ if parameters.isPreview }}:
-    - name: NugetPackageVersion
-      value: $(PreviewNugetPackageVersion)
+    - name: abstractionsPackageVersion
+      value: $(abstractionsPackagePreviewVersion)
+    - name: mdsPackageVersion
+      value: $(previewMdsPackageVersion)
 
   steps:
   - script: SET
@@ -37,20 +39,56 @@ jobs:
   - powershell: |
       Write-Host "##vso[task.setvariable variable=CDP_BUILD_TYPE_COPY;isOutput=true]$($env:CDP_BUILD_TYPE)"
     name: GetBuildType
-  
-  - template: ../steps/build-all-configurations-signed-dlls-step.yml@self
-  
+
+  # Build our tooling, which is required by the analysis step below, but
+  # shouldn't be analyzed itself.
+  - task: MSBuild@1
+    displayName: 'Build Tooling'
+    inputs:
+      solution: '**/build.proj'
+      configuration: $(Configuration)
+      msbuildArguments: -t:BuildTools
+
+  # Perform analysis before building, since this step will clobber build output
   - template: ../steps/code-analyze-step.yml@self
-    parameters:
-      analyzeType: all
   
+  # Update the root NuGet.config to use the packages/ directory as a source.
+  # When we build MDS in Package mode, it depends on the Abstractions package,
+  # which we will build and package into packages/.
+  - template: ../steps/update-nuget-config-local-feed-step.yml
+    parameters:
+      packagePath: $(REPOROOT)/packages
+  
+  # Build the Abstractions package.
+  - task: MSBuild@1
+    displayName: Build Abstractions
+    inputs:
+      solution: '**/build.proj'
+      configuration: $(Configuration)
+      msbuildArguments: -t:BuildAbstractions
+
+  # Build MDS in Package mode, producing signed DLLs.
+  - template: ../steps/build-all-configurations-signed-dlls-step.yml@self
+    parameters:
+      # These variables are sourced from common-variables.yml.
+      abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
+      abstractionsPackageVersion: $(abstractionsPackageVersion)
+      configuration: $(Configuration)
+      mdsAssemblyFileVersion: $(mdsAssemblyFileVersion)
+      mdsPackageVersion: $(mdsPackageVersion)
+      referenceType: Package
+
   - template: ../steps/esrp-code-signing-step.yml@self
     parameters:
       artifactType: dll
   
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:
-      OutputDirectory: $(artifactDirectory)
+      nuspecPath: $(nuspecPath)
+      packageVersion: $(mdsPackageVersion)
+      outputDirectory: $(artifactDirectory)
+      displayName: 'Create MDS NuGet Package'
+      referenceType: Package
       properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion)'
   
   - template: ../steps/esrp-code-signing-step.yml@self
@@ -65,4 +103,4 @@ jobs:
   - template: ../steps/publish-symbols-step.yml@self
     parameters:
       publishSymbols: ${{ parameters['PublishSymbols'] }}
-      symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(NuGetPackageVersion)_$(System.TimelineId)
+      symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(mdsPackageVersion)_$(System.TimelineId)
