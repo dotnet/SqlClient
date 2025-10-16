@@ -1,0 +1,188 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This job packs the Azure package into NuGet and symbols packages and publishes
+# them as a named pipeline artifact.
+#
+# This template defines a job named 'pack_azure_package_job' that can be
+# depended on by downstream jobs.
+
+parameters:
+
+  # The name of the Abstractions pipeline artifact to download.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: abstractionsArtifactName
+    type: string
+    default: Abstractions.Artifact
+
+  # The Abstractions package verion to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: abstractionsPackageVersion
+    type: string
+
+  # The name of the pipeline artifact to publish.
+  - name: azureArtifactName
+    type: string
+    default: Azure.Artifact
+
+  # The version to apply to the NuGet package and DLLs.
+  - name: azurePackageVersion
+    type: string
+
+  # The type of build to test (Release or Debug)
+  - name: buildConfiguration
+    type: string
+    values:
+    - Release
+    - Debug
+  
+  # The list of upstream jobs to depend on.
+  - name: dependsOn
+    type: object
+    default: []
+
+  # The reference type to use:
+  #
+  # Project - dependent projects are referenced directly.
+  # Package - dependent projects are referenced via NuGet packages.
+  #
+  - name: referenceType
+    type: string
+    values:
+    - Package
+    - Project
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: verbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+jobs:
+
+  - job: pack_azure_package_job
+    displayName: 'Pack Azure Package'
+
+    dependsOn: ${{ parameters.dependsOn }}
+
+    pool:
+      name: Azure Pipelines
+      vmImage: ubuntu-latest
+
+    variables:
+
+      # The Azure project file to use for all dotnet CLI commands.
+      - name: project
+        value: src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj
+
+      # The directory where the NuGet packages will be staged before being
+      # published as pipeline artifacts.
+      - name: dotnetPackagesDir
+        value: $(Build.StagingDirectory)/dotnetPackages
+
+      # dotnet CLI arguments common to all commands.
+      - name: commonArguments
+        value: >-
+          --verbosity ${{ parameters.verbosity }}
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+
+      # dotnet CLI arguments for build/test/pack commands
+      - name: buildArguments
+        value: >-
+          $(commonArguments)
+          --configuration ${{ parameters.buildConfiguration }}
+          -p:AzurePackageVersion=${{ parameters.azurePackageVersion }}
+
+      # Explicitly unset the $PLATFORM environment variable that is set by the
+      # 'ADO Build properties' Library in the ADO SqlClientDrivers public
+      # project.  This is defined with a non-standard Platform of 'AnyCPU', and
+      # will fail the builds if left defined.  The stress tests solution does
+      # not require any specific Platform, and so its solution file doesn't
+      # support any non-standard platforms.
+      #
+      # Note that Azure Pipelines will inject this variable as PLATFORM into the
+      # environment of all tasks in this job.
+      #
+      # See:
+      #   https://learn.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&tabs=yaml%2Cbatch
+      #
+      - name: Platform
+        value: ''
+
+      # Do the same for $CONFIGURATION since we explicitly set it using our
+      # 'buildConfiguration' parameter, and we don't want the environment to
+      # override us.
+      - name: Configuration
+        value: ''
+
+    steps:
+
+      # We have a few extra steps for Package reference builds.
+      - ${{ if eq(parameters.referenceType, 'Package') }}:
+
+        # Download the Abstractions package artifacts into packages/.
+        - task: DownloadPipelineArtifact@2
+          displayName: Download Abstractions Package Artifact
+          inputs:
+            artifactName: ${{ parameters.abstractionsArtifactName }}
+            targetPath: $(Build.SourcesDirectory)/packages
+
+        # Use the local NuGet.config that references the packages/ directory.
+        - pwsh: cp $(Build.SourcesDirectory)/NuGet.config.local $(Build.SourcesDirectory)/NuGet.config
+          displayName: Use local NuGet.config
+      
+      # Install the .NET 9.0 SDK.
+      - task: UseDotNet@2
+        displayName: Install .NET 9.0 SDK
+        inputs:
+          packageType: sdk
+          version: 9.x
+
+      # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't
+      # support all of our argument combinations for the different build steps.
+
+      # Restore the solution.
+      - task: DotNetCoreCLI@2
+        displayName: Restore Solution
+        inputs:
+          command: custom
+          custom: restore
+          projects: $(project)
+          arguments: $(commonArguments)
+
+      # Build the solution.
+      - task: DotNetCoreCLI@2
+        displayName: Build Solution
+        inputs:
+          command: custom
+          custom: build
+          projects: $(project)
+          arguments: $(buildArguments) --no-restore
+
+      # Create the NuGet packages.
+      - task: DotNetCoreCLI@2
+        displayName: Create NuGet Package
+        inputs:
+          command: custom
+          custom: pack
+          projects: $(project)
+          arguments: $(buildArguments) --no-build -o $(dotnetPackagesDir)
+
+      # Publish the NuGet packages as a named pipeline artifact.
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Pipeline Artifact
+        inputs:
+          targetPath: $(dotnetPackagesDir)
+          artifactName: ${{ parameters.azureArtifactName }}
+          publishLocation: pipeline

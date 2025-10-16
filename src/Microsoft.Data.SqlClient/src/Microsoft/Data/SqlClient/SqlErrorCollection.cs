@@ -45,6 +45,11 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/GetEnumerator/*' />
         public IEnumerator GetEnumerator() => _errors.GetEnumerator();
 
-        internal void Add(SqlError error) => _errors.Add(error);
+        // Append the error to our list, and return ourselves for chaining.
+        internal SqlErrorCollection Add(SqlError error)
+        {
+            _errors.Add(error);
+            return this;
+        }
     }
 }

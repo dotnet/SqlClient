@@ -4297,7 +4297,8 @@ namespace Microsoft.Data.SqlClient
         private TdsOperationStatus TryProcessFedAuthInfo(TdsParserStateObject stateObj, int tokenLen, out SqlFedAuthInfo sqlFedAuthInfo)
         {
             sqlFedAuthInfo = null;
-            SqlFedAuthInfo tempFedAuthInfo = new SqlFedAuthInfo();
+            string spn = null;
+            string stsUrl = null;
 
             // Skip reading token length, since it has already been read in caller
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> FEDAUTHINFO token stream length = {0}", tokenLen);
@@ -4390,15 +4391,15 @@ namespace Microsoft.Data.SqlClient
                     }
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ADV> FedAuthInfoData: {0}", data);
 
-                    // store data in tempFedAuthInfo
+                    // Store data in temporaries.
                     switch ((TdsEnums.FedAuthInfoId)id)
                     {
                         case TdsEnums.FedAuthInfoId.Spn:
-                            tempFedAuthInfo.spn = data;
+                            spn = data;
                             break;
 
                         case TdsEnums.FedAuthInfoId.Stsurl:
-                            tempFedAuthInfo.stsurl = data;
+                            stsUrl = data;
                             break;
 
                         default:
@@ -4413,15 +4414,16 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.ParsingErrorLength(ParsingErrorState.FedAuthInfoLengthTooShortForData, tokenLen);
             }
 
-            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> Processed FEDAUTHINFO token stream: {0}", tempFedAuthInfo);
-            if (string.IsNullOrWhiteSpace(tempFedAuthInfo.stsurl) || string.IsNullOrWhiteSpace(tempFedAuthInfo.spn))
+            if (string.IsNullOrWhiteSpace(spn) || string.IsNullOrWhiteSpace(stsUrl))
             {
                 // We should be receiving both stsurl and spn
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ERR> FEDAUTHINFO token stream does not contain both STSURL and SPN.");
                 throw SQL.ParsingError(ParsingErrorState.FedAuthInfoDoesNotContainStsurlAndSpn);
             }
 
-            sqlFedAuthInfo = tempFedAuthInfo;
+            sqlFedAuthInfo = new(spn, stsUrl);
+            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> Processed FEDAUTHINFO token stream: {0}", sqlFedAuthInfo);
+
             return TdsOperationStatus.Done;
         }
 
@@ -9539,11 +9541,11 @@ namespace Microsoft.Data.SqlClient
         internal void SendFedAuthToken(SqlFedAuthToken fedAuthToken)
         {
             Debug.Assert(fedAuthToken != null, "fedAuthToken cannot be null");
-            Debug.Assert(fedAuthToken.accessToken != null, "fedAuthToken.accessToken cannot be null");
+            Debug.Assert(fedAuthToken.AccessToken != null, "fedAuthToken.AccessToken cannot be null");
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendFedAuthToken|SEC> Sending federated authentication token");
             _physicalStateObj._outputMessageType = TdsEnums.MT_FEDAUTH;
 
-            byte[] accessToken = fedAuthToken.accessToken;
+            byte[] accessToken = fedAuthToken.AccessToken;
 
             // Send total length (length of token plus 4 bytes for the token length field)
             // If we were sending a nonce, this would include that length as well

@@ -28,10 +28,13 @@
     <TargetNetCoreVersion Condition="$(TargetGroup) == 'netcoreapp' AND $(TargetNetCoreVersion) == ''">$(TF)</TargetNetCoreVersion>
     <TargetNetFxVersion Condition="$(TargetGroup) == 'netfx' AND $(TargetNetFxVersion) == ''">$(TF)</TargetNetFxVersion>
     <GenerateNuget Condition="'$(GenerateNuget)' == '' AND '$(IsEnabledWindows)' == 'true'">true</GenerateNuget>
-    <SqlServerLibProperties>Configuration=$(Configuration);AssemblyVersion=$(SqlServerAssemblyVersion);AssemblyFileVersion=$(SqlServerAssemblyFileVersion);Version=$(SqlServerPackageVersion);</SqlServerLibProperties>
-    <ProjectProperties>Configuration=$(Configuration);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
+    
+    <CommonProperties>Configuration=$(Configuration);ReferenceType=$(ReferenceType)</CommonProperties>
+    <SqlServerLibProperties>$(CommonProperties);AssemblyVersion=$(SqlServerAssemblyVersion);AssemblyFileVersion=$(SqlServerAssemblyFileVersion);Version=$(SqlServerPackageVersion);</SqlServerLibProperties>
+    <ProjectProperties>$(CommonProperties);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
     <TestProjectProperties>$(ProjectProperties);BuildForRelease=false;TargetNetCoreVersion=$(TargetNetCoreVersion);TargetNetFxVersion=$(TargetNetFxVersion)</TestProjectProperties>
     <ResultsDirectory Condition="$(ResultsDirectory) == ''">TestResults</ResultsDirectory>
+
     <!-- 
       Path to a `dotnet` version like a x86 or any especific versions in addition to a default installed version.
       This property is empty by default to use the default path of the system's path variable. 
@@ -52,8 +55,11 @@
 
   <!-- Populate all managed projects -->
   <ItemGroup>
+    <Tools Include="tools/GenAPI/Microsoft.DotNet.GenAPI/Microsoft.DotNet.GenAPI.csproj" />
     <Abstractions Include="src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
     <AbstractionsTest Include="src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/Abstractions.Test.csproj" />
+    <Azure Include="src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj" />
+    <AzureTest Include="src/Microsoft.Data.SqlClient.Extensions/Azure/test/Azure.Test.csproj" />
     <SqlServerLib Include="**/Microsoft.SqlServer.Server.csproj" />
     <NetFxDriver Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledWindows)' == 'true'" />
     <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
@@ -101,6 +107,8 @@
 
   <!-- Abstractions Targets -->
   <PropertyGroup>
+    <AbstractionsProperties>$(CommonProperties)</AbstractionsProperties>
+
     <!--
       If the AbstractionsPackageVersion property was supplied on the
       command-line, then pass it along to the Abstractions build.  Otherwise,
@@ -116,7 +124,7 @@
     -->
     <AbstractionsProperties
       Condition="'$(AbstractionsPackageVersion)' != ''">
-      AbstractionsPackageVersion=$(AbstractionsPackageVersion)
+      $(AbstractionsProperties);AbstractionsPackageVersion=$(AbstractionsPackageVersion)
     </AbstractionsProperties>
 
     <!-- Do the same for the AbstractionsAssemblyFileVersion property. -->
@@ -133,7 +141,7 @@
       Properties="$(AbstractionsProperties)" />
   </Target>
 
-  <Target Name="BuildAbstractions">
+  <Target Name="BuildAbstractions" DependsOnTargets="RestoreAbstractions">
     <MSBuild
       Projects="@(Abstractions)"
       Targets="Build;Pack"
@@ -147,22 +155,78 @@
       Properties="$(AbstractionsProperties)" />
   </Target>
 
-  <Target Name="BuildAbstractionsTest">
+  <Target Name="BuildAbstractionsTest" DependsOnTargets="RestoreAbstractionsTest">
     <MSBuild
       Projects="@(AbstractionsTest)"
       Targets="Build"
       Properties="$(AbstractionsProperties)" />
   </Target>
 
+  <!-- Azure Targets -->
+  <PropertyGroup>
+    <AzureProperties>$(CommonProperties)</AzureProperties>
+
+    <!--
+      If the AzurePackageVersion property was supplied on the command-line, then
+      pass it along to the Azure build.  Otherwise, omit it entirely to avoid it
+      expanding as empty here and thus overriding the default behaviour in the
+      Azure project.  Command-line properties take precedence over project
+      defaults, even if their value is empty.  For example:
+
+        dotnet build -p:AzurePackageVersion=
+
+      That results in $(AzurePackageVersion) being defined as empty, and cannot
+      be overridden by the project.
+    -->
+    <AzureProperties
+      Condition="'$(AzurePackageVersion)' != ''">
+      $(AzureProperties);AzurePackageVersion=$(AzurePackageVersion)
+    </AzureProperties>
+
+    <!-- Do the same for the AzureAssemblyFileVersion property. -->
+    <AzureProperties
+      Condition="'$(AzureAssemblyFileVersion)' != ''">
+      $(AzureProperties);AzureAssemblyFileVersion=$(AzureAssemblyFileVersion)
+    </AzureProperties>
+  </PropertyGroup>
+  
+  <Target Name="RestoreAzure">
+    <MSBuild
+      Projects="@(Azure)"
+      Targets="Restore"
+      Properties="$(AzureProperties)" />
+  </Target>
+
+  <Target Name="BuildAzure" DependsOnTargets="RestoreAzure">
+    <MSBuild
+      Projects="@(Azure)"
+      Targets="Build;Pack"
+      Properties="$(AzureProperties)" />
+  </Target>
+
+  <Target Name="RestoreAzureTest">
+    <MSBuild
+      Projects="@(AzureTest)"
+      Targets="Restore"
+      Properties="$(AzureProperties)" />
+  </Target>
+
+  <Target Name="BuildAzureTest" DependsOnTargets="RestoreAzureTest">
+    <MSBuild
+      Projects="@(AzureTest)"
+      Targets="Build"
+      Properties="$(AzureProperties)" />
+  </Target>
+
   <!-- Other Targets -->
   <Target Name="RestoreSqlServerLib">
-    <MSBuild Projects="@(SqlServerLib)" Targets="restore" />
+    <MSBuild Projects="@(SqlServerLib)" Targets="restore" Properties="$(SqlServerLibProperties)" />
   </Target>
 
   <Target
     Name="RestoreNetCore"
     DependsOnTargets="RestoreSqlServerLib;RestoreAbstractions">
-    <MSBuild Projects="@(NetCoreDriver)" Targets="restore" />
+    <MSBuild Projects="@(NetCoreDriver)" Targets="restore" Properties="$(ProjectProperties)" />
   </Target>
 
   <Target Name="RestoreTestsNetCore" DependsOnTargets="RestoreNetCore">
@@ -175,7 +239,7 @@
     Name="RestoreNetFx"
     DependsOnTargets="RestoreSqlServerLib;RestoreAbstractions"
     Condition="'$(IsEnabledWindows)' == 'true'">
-    <MSBuild Projects="@(NetFxDriver)" Targets="restore" />
+    <MSBuild Projects="@(NetFxDriver)" Targets="restore" Properties="$(ProjectProperties)" />
   </Target>
 
   <Target
@@ -187,11 +251,12 @@
     <MSBuild Projects="@(UnitTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
   </Target>
 
-  <Target Name="BuildTools" Condition="'$(BuildTools)' == 'true'">
-    <PropertyGroup>
-      <DotnetBuildCmd>dotnet build -c Release -p:ReferenceType=$(ReferenceType)</DotnetBuildCmd>
-    </PropertyGroup>
-    <Exec Command="$(DotnetBuildCmd)" WorkingDirectory="$(GenAPISrcDir)Microsoft.DotNet.GenAPI\" />
+  <Target Name="RestoreTools" Condition="'$(BuildTools)' == 'true'">
+    <MSBuild Projects="@(Tools)" Targets="restore" Properties="$(CommonProperties)" />
+  </Target>
+
+  <Target Name="BuildTools" DependsOnTargets="RestoreTools" Condition="'$(BuildTools)' == 'true'">
+    <MSBuild Projects="@(Tools)" Properties="$(CommonProperties)" />
   </Target>
 
   <Target
@@ -206,11 +271,11 @@
   </Target>
 
   <Target Name="BuildSqlServerLib" DependsOnTargets="RestoreSqlServerLib">
-    <Message Text=">>> Building SqlServerLib [$(CI);$(SqlServerLibProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))" />
+    <Message Text=">>> Building SqlServerLib [$(CI);$(SqlServerLibProperties);Platform=AnyCPU] ..." Condition="!$(ReferenceType.Contains('Package'))" />
     <MSBuild Projects="@(SqlServerLib)" Properties="$(CI);$(SqlServerLibProperties);Platform=AnyCPU;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="!$(ReferenceType.Contains('Package'))" />
 
     <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building SqlServerLib [$(CI);$(SqlServerLibProperties);Platform=$(Platform);ReferenceType=$(ReferenceType);] ..." Condition="$(ReferenceType.Contains('Package'))" />
+    <Message Text=">>> Building SqlServerLib [$(CI);$(SqlServerLibProperties);Platform=$(Platform)] ..." Condition="$(ReferenceType.Contains('Package'))" />
     <MSBuild Projects="@(SqlServerLib)" Properties="$(CI);$(SqlServerLibProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))" />
   </Target>
 
@@ -238,29 +303,29 @@
     Name="BuildUnitTestsNetCore"
     DependsOnTargets="RestoreTestsNetCore;BuildNetCore"
     Condition="$(ReferenceType.Contains('Project'))">
-    <Message Text=">>> Building UnitTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
+    <Message Text=">>> Building UnitTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
     <MSBuild Projects="@(UnitTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
   </Target>
 
   <Target
     Name="BuildFunctionalTestsNetCore"
     DependsOnTargets="RestoreTestsNetCore;BuildNetCore;BuildAKVNetCore">
-    <Message Text=">>> Building FunctionalTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))" />
+    <Message Text=">>> Building FunctionalTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU] ..." Condition="!$(ReferenceType.Contains('Package'))" />
     <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
 
     <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building FunctionalTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);ReferenceType=$(ReferenceType);] ..." Condition="$(ReferenceType.Contains('Package'))" />
+    <Message Text=">>> Building FunctionalTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform)] ..." Condition="$(ReferenceType.Contains('Package'))" />
     <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))" />
   </Target>
 
   <Target
     Name="BuildManualTestsNetCore"
     DependsOnTargets="RestoreTestsNetCore;BuildNetCore;BuildAKVNetCore">
-    <Message Text=">>> Building ManualTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))" />
+    <Message Text=">>> Building ManualTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU] ..." Condition="!$(ReferenceType.Contains('Package'))" />
     <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
 
     <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building ManualTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);ReferenceType=$(ReferenceType);] ..." Condition="$(ReferenceType.Contains('Package'))" />
+    <Message Text=">>> Building ManualTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform)] ..." Condition="$(ReferenceType.Contains('Package'))" />
     <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))" />
   </Target>
 

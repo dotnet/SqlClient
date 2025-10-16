@@ -23,17 +23,19 @@
   <!-- Build Config -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions</AssemblyName>
-    <RootNamespace>Microsoft.Data.SqlClient.Extensions.Abstractions</RootNamespace>
+    <RootNamespace>$(AssemblyName)</RootNamespace>
 
     <!--
       We pin the AssemblyVersion of our package to the default major version
       number, with all remaining parts set to 0.
     -->
-    <AssemblyVersion>$(_DefaultMajorVersion).0.0.0</AssemblyVersion>
+    <AssemblyVersion>$(AbstractionsDefaultMajorVersion).0.0.0</AssemblyVersion>
 
     <AssemblyFileVersion>$(AbstractionsAssemblyFileVersion)</AssemblyFileVersion>
     <FileVersion>$(AbstractionsAssemblyFileVersion)</FileVersion>
     <Version>$(AbstractionsPackageVersion)</Version>
+
+    <DocumentationFile>$(Artifacts)/doc/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <!-- Our API is CLS Compliant. -->
@@ -42,7 +44,7 @@
     </AssemblyAttribute>
 
     <!-- Our unit tests have access to our internal types. -->
-    <InternalsVisibleTo Include="Microsoft.Data.SqlClient.Extensions.Abstractions.Test" />
+    <InternalsVisibleTo Include="$(AssemblyName).Test" />
   </ItemGroup>
 
   <!--

@@ -11,7 +11,6 @@
     <TargetsUnix Condition="'$(OSGroup)'=='Unix'">true</TargetsUnix>
     <Configurations>Debug;Release;</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
-    <ReferenceType Condition="'$(ReferenceType)'==''">Project</ReferenceType>
   </PropertyGroup>
 
   <!-- Audit Settings -->

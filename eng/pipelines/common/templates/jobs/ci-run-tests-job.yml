@@ -10,6 +10,12 @@ parameters:
   - name: abstractionsPackageVersion
     type: string
 
+  - name: azureArtifactName
+    type: string
+
+  - name: azurePackageVersion
+    type: string
+
   - name: configProperties
     type: object
     default: {} # - key: 'value'
@@ -119,6 +125,12 @@ jobs:
       displayName: Download MDS Package Artifact
       inputs:
         artifactName: ${{ parameters.mdsArtifactName }}
+        targetPath: $(Build.SourcesDirectory)/packages
+
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Azure Package Artifact
+      inputs:
+        artifactName: ${{ parameters.azureArtifactName }}
         targetPath: $(Build.SourcesDirectory)/packages
 
   - ${{ if ne(parameters.prebuildSteps, '') }}:
@@ -253,6 +265,7 @@ jobs:
         referenceType: ${{ parameters.referenceType }}
         testSet: ${{ parameters.testSet }}
         abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+        azurePackageVersion: ${{ parameters.azurePackageVersion }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
         ${{ if ne(parameters.operatingSystem, 'Windows') }}:
           OSGroup: Unix
