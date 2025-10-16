@@ -4,37 +4,78 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+# Use the day of year and a revision number for the build name.  This is what
+# appears in the Azure DevOps UI.
 name: $(DayOfYear)$(Rev:rr)
+
+# Trigger PR validation runs for all pushes to PRs that target the specified
+# branches.
+#
+# https://learn.microsoft.com/en-us/azure/devops/pipelines/repos/github?view=azure-devops&tabs=yaml#pr-triggers
+#
+pr:
+  branches:
+    include:
+    # GitHub repo branch targets that will trigger PR validation builds.
+    - dev/*
+    - feat/*
+    - main
+
+  paths:
+    include:
+    - .azuredevops
+    - .config
+    - src
+    - eng
+    - tools
+    - azurepipelines-coverage.yml
+    - build.proj
+    - NuGet.config
+
+# Trigger batched CI runs on pushes to the specified branches.
+#
+# https://learn.microsoft.com/en-us/azure/devops/pipelines/repos/github?view=azure-devops&tabs=yaml#ci-triggers
+#
 trigger:
   batch: true
   branches:
     include:
+    # GitHub repo branch targets that will trigger CI builds.
+    - feat/*
     - main
+
+    # ADO repo branch targets that will trigger CI builds.
     - internal/main
+
   paths:
     include:
-    - src\Microsoft.Data.SqlClient\netcore\ref
-    - src\Microsoft.Data.SqlClient\netfx\ref
-    - src\Microsoft.Data.SqlClient\ref
+    - .azuredevops
+    - .config
+    - src
     - eng
     - tools
-    - .config
-    - Nuget.config
+    - azurepipelines-coverage.yml
+    - build.proj
+    - NuGet.config
 
+# Schedule periodic CI runs for the main branches.
 schedules:
-- cron: '0 4 * * Fri'
-  displayName: Weekly Thursday 9:00 PM (UTC - 7) Build
-  branches:
-    include:
-    - internal/main
-  always: true
 
-- cron: '0 0 * * Mon-Fri'
-  displayName: Daily build 5:00 PM (UTC - 7) Build
-  branches:
-    include:
-    - main
-  always: true
+  # ADO internal/main
+  - cron: '0 4 * * Fri'
+    displayName: Weekly Thursday 9:00 PM (UTC - 7) Build
+    branches:
+      include:
+      - internal/main
+    always: true
+
+  # GitHub main
+  - cron: '0 0 * * Mon-Fri'
+    displayName: Daily build 5:00 PM (UTC - 7) Build
+    branches:
+      include:
+      - main
+    always: true
 
 parameters: # parameters are shown up in ADO UI in a build queue time
 - name: 'debug'
@@ -74,13 +115,6 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: object
   default: [net462, net8.0]
 
-- name: buildType
-  displayName: 'Build Type'
-  default: Package
-  values:
-    - Project
-    - Package
-
 - name: buildConfiguration
   displayName: 'Build Configuration'
   default: Release
@@ -109,7 +143,7 @@ extends:
     testSets: ${{ parameters.testSets }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
-    buildType: ${{ parameters.buildType }}
+    referenceType: Package
     buildConfiguration: ${{ parameters.buildConfiguration }}
     enableStressTests: ${{ parameters.enableStressTests }}
     testsTimeout: ${{ parameters.testsTimeout }}
