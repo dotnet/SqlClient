@@ -31,10 +31,14 @@
       specific to MDS, and then used in the MDS project.  As-is, these names are
       used by the build tooling and may be unintentionally included in other
       (non-MDS) projects.
+
+      For example, the AKV package uses the AssemblyVersion, FileVersion, and
+      Version as its own.  It currently isn't possible to build/package both
+      MDS and AKV at the same time.
     -->
 
     <!--
-      GOTCHA: These two Assembly properties must appear in the second
+      GOTCHA: These two Assembly properties must appear in the third
       <PropertyGroup> in this file due to hardcoded XML processing in:
 
       eng/pipelines/common/templates/jobs/validate-signed-package-job.yml

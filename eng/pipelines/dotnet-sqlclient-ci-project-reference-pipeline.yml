@@ -173,7 +173,7 @@ extends:
   parameters:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
-    buildType: Project
+    referenceType: Project
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
     debug: ${{ parameters.debug }}
     enableStressTests: ${{ parameters.enableStressTests }}

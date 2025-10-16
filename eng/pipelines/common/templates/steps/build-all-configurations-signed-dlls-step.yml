@@ -4,9 +4,12 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: AssemblyFileVersion
+
+  - name: abstractionsAssemblyFileVersion
     type: string
-    default: $(AssemblyFileVersion)
+
+  - name: abstractionsPackageVersion
+    type: string
   
   - name: buildConfiguration
     type: string
@@ -14,15 +17,17 @@ parameters:
       - Debug
       - Release
 
-  - name: packageRefMdsVersion
+  - name: mdsAssemblyFileVersion
     type: string
-    default: ''
 
-  - name: product
-    default: MDS
+  - name: mdsPackageVersion
+    type: string
+
+  - name: referenceType
+    type: string
     values:
-    - MDS
-    - MSS
+      - Package
+      - Project
 
 steps:
 - task: DownloadSecureFile@1
@@ -49,10 +54,9 @@ steps:
     packageType: runtime
     version: '8.x'
 
-- ${{ if eq(parameters.product, 'MDS') }}:
-  - task: MSBuild@1
-    displayName: 'BuildAllConfigurations using build.proj'
-    inputs:
-      solution: '**/build.proj'
-      configuration: '${{parameters.buildConfiguration }}'
-      msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAllConfigurations -p:GenerateNuget=false -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'
+- task: MSBuild@1
+  displayName: 'BuildAllConfigurations using build.proj'
+  inputs:
+    solution: '**/build.proj'
+    configuration: '${{ parameters.buildConfiguration }}'
+    msbuildArguments: '-t:BuildAllConfigurations -p:ReferenceType=${{ parameters.referenceType }} -p:GenerateNuget=false -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }} -p:AssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }} -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }} -p:AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }}'

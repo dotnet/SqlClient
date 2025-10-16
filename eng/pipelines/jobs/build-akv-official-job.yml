@@ -5,13 +5,16 @@
 #################################################################################
 
 parameters:
+    - name: akvAssemblyFileVersion
+      type: string
+
+    - name: akvPackageVersion
+      type: string
+
     - name: apiScanDllPath
       type: string
       
     - name: apiScanPdbPath
-      type: string
-    
-    - name: assemblyFileVersion
       type: string
 
     - name: buildConfiguration
@@ -19,9 +22,6 @@ parameters:
       values:
         - Debug
         - Release
-
-    - name: nugetPackageVersion
-      type: string
 
     - name: mdsPackageVersion
       type: string
@@ -89,9 +89,18 @@ jobs:
                 $jsonParams | ConvertFrom-Json | Format-List
             displayName: 'Output Job Parameters'
 
+          # Perform analysis before building, since this step will clobber build
+          # output
+          - template: ../steps/roslyn-analyzers-akv-step.yml@self
+            parameters:
+                akvPackageVersion: '${{ parameters.akvPackageVersion }}'
+                buildConfiguration: '${{ parameters.buildConfiguration }}'
+                mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
+
           - template: ../steps/compound-build-akv-step.yml@self
             parameters:
-                assemblyFileVersion: '${{ parameters.assemblyFileVersion }}'
+                akvAssemblyFileVersion: '${{ parameters.akvAssemblyFileVersion }}'
+                akvPackageVersion: '${{ parameters.akvPackageVersion }}'
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
                 
@@ -103,11 +112,6 @@ jobs:
                     pdbPath: '${{ parameters.apiScanPdbPath }}'
                     referenceType: Package
                     targetFramework: '${{ targetFramework }}'
-
-          - template: ../steps/roslyn-analyzers-akv-step.yml@self
-            parameters:
-                buildConfiguration: '${{ parameters.buildConfiguration }}'
-                mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
 
           - template: ../steps/compound-esrp-code-signing-step.yml@self
             parameters:
@@ -123,10 +127,11 @@ jobs:
             parameters:
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 generateSymbolsPackage: true    # Always generate symbols, even if they are not published
-                packageVersion: '${{ parameters.nugetPackageVersion }}'
+                packageVersion: '${{ parameters.akvPackageVersion }}'
                 nuspecPath: '$(REPO_ROOT)/tools/specs/add-ons/$(PACKAGE_NAME).nuspec'
                 outputDirectory: '$(ARTIFACT_PATH)'
-                referenceType: 'Package'
+                referenceType: Package
+                properties: MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
           - template: ../steps/compound-esrp-code-signing-step.yml@self
             parameters:
@@ -141,7 +146,7 @@ jobs:
           - ${{ if parameters.publishSymbols }}:
             - template: ../steps/compound-publish-symbols-step.yml@self
               parameters:
-                  artifactName: 'akv_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.nugetPackageVersion }}_$(System.TimelineId)'
+                  artifactName: 'akv_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.akvPackageVersion }}_$(System.TimelineId)'
                   azureSubscription: '${{ parameters.symbolsAzureSubscription }}'
                   publishProjectName: '${{ parameters.symbolsPublishProjectName }}'
                   packageName: '$(PACKAGE_NAME)'
@@ -154,4 +159,4 @@ jobs:
                       Windows_NT/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/$(PACKAGE_NAME).pdb
                       AnyOS/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/$(PACKAGE_NAME).pdb
                   uploadAccount: '${{ parameters.symbolsUploadAccount }}'
-                  version: '${{ parameters.nugetPackageVersion }}'
+                  version: '${{ parameters.akvPackageVersion }}'

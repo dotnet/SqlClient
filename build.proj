@@ -456,7 +456,6 @@
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "bin", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", ".nuget", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "obj", SearchOption.AllDirectories))' />
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "packages", SearchOption.AllDirectories))' />
 </Target>
 
   <!-- AKV Targets ========================================================= -->

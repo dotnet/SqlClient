@@ -4,12 +4,31 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  - name: abstractionsArtifactName
+    type: string
+
+  - name: abstractionsPackageVersion
+    type: string
+
+  - name: configProperties
+    type: object
+    default: {} # - key: 'value'
+  
+  - name: configSqlFor
+    type: string # local, azure, or enclave
+    default: local
+
   - name: debug
     type: boolean
     default: false
 
-  - name: poolName
-    type: string
+  - name: enableX64Test
+    type: boolean
+    default: true
+
+  - name: enableX86Test
+    type: boolean
+    default: false
 
   - name: hostedPool
     type: boolean
@@ -21,46 +40,14 @@ parameters:
   - name: jobDisplayName
     type: string
 
-  - name: usemanagedSNI
-    type: boolean
-    default: false
-
-  - name: configProperties
-    type: object
-    default: {} # - key: 'value'
-
-  - name: prebuildSteps
-    type: stepList
-    default: []
-
-  - name: artifactName
+  - name: mdsArtifactName
     type: string
-    default: Artifacts
 
-  - name: targetFramework
+  - name: mdsPackageVersion
     type: string
 
   - name: netcoreVersionTestUtils
     type: string
-
-  - name: enableX86Test
-    type: boolean
-    default: false
-
-  - name: enableX64Test
-    type: boolean
-    default: true
-
-  - name: testSet
-    type: string
-  
-  - name: publishTestResults
-    type: boolean
-    default: false
-  
-  - name: configSqlFor
-    type: string # local, azure, or enclave
-    default: local
   
   - name: operatingSystem
     type: string
@@ -71,16 +58,37 @@ parameters:
     values:
       - Debug
       - Release
+
+  - name: poolName
+    type: string
+
+  - name: prebuildSteps
+    type: stepList
+    default: []
   
-  - name: buildType
-    default: Project
+  - name: publishTestResults
+    type: boolean
+    default: false
+
+  - name: referenceType
+    type: string
     values:
       - Project
       - Package
 
+  - name: targetFramework
+    type: string
+
+  - name: testSet
+    type: string
+  
   # The timeout, in minutes, for this job.
   - name: timeout
     type: number
+
+  - name: usemanagedSNI
+    type: boolean
+    default: false
 
 jobs:
 - job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.image, 'unknown_image')) }}
@@ -102,6 +110,22 @@ jobs:
       value: '$(dotnetx86Path)'
 
   steps:
+
+  # If we're testing in Package mode, download the Abstractions and MDS package
+  # artifacts and put them in the packages/ directory in the repo root.
+  - ${{ if eq(parameters.referenceType, 'Package') }}:
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Abstractions Package Artifact
+      inputs:
+        artifactName: ${{ parameters.abstractionsArtifactName }}
+        targetPath: $(Build.SourcesDirectory)/packages
+
+    - task: DownloadPipelineArtifact@2
+      displayName: Download MDS Package Artifact
+      inputs:
+        artifactName: ${{ parameters.mdsArtifactName }}
+        targetPath: $(Build.SourcesDirectory)/packages
+
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
@@ -232,8 +256,10 @@ jobs:
       parameters:
         targetFramework: ${{ parameters.targetFramework }}
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        referenceType: ${{ parameters.buildType }}
+        referenceType: ${{ parameters.referenceType }}
         testSet: ${{ parameters.testSet }}
+        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
         ${{ if ne(parameters.operatingSystem, 'Windows') }}:
           OSGroup: Unix
 
@@ -243,7 +269,7 @@ jobs:
         debug: ${{ parameters.debug }}
         targetFramework: ${{ parameters.targetFramework }}
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        referenceType: ${{ parameters.buildType }}
+        referenceType: ${{ parameters.referenceType }}
         testSet: ${{ parameters.testSet }}
         operatingSystem: ${{ parameters.operatingSystem }}
 
@@ -286,13 +312,13 @@ jobs:
         debug: ${{ parameters.debug }}
         targetFramework: ${{ parameters.targetFramework }}
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        referenceType: ${{ parameters.buildType }}
+        referenceType: ${{ parameters.referenceType }}
         testSet: ${{ parameters.testSet }}
         msbuildArchitecture: x86
         dotnetx86RootPath: $(dotnetx86RootPath)
         operatingSystem: ${{ parameters.operatingSystem }}
 
-  - ${{ if and(eq(parameters.publishTestResults, true), eq(parameters.buildType, 'Project')) }}: # publish test results if build type is project
+  - ${{ if and(eq(parameters.publishTestResults, true), eq(parameters.referenceType, 'Project')) }}: # publish test results if build type is project
     - template: ../steps/publish-test-results-step.yml@self
       parameters:
         debug: ${{ parameters.debug }}
