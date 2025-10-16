@@ -485,28 +485,6 @@ namespace Microsoft.Data.SqlClient.Utilities
             );
         }
 
-        internal static Task CreateContinuationTaskWithState(Task task, object state, Action<object> onSuccess, Action<Exception, object> onFailure = null)
-        {
-            if (task == null)
-            {
-                onSuccess(state);
-                return null;
-            }
-            else
-            {
-                var completion = new TaskCompletionSource<object>();
-                ContinueTaskWithState(task, completion, state,
-                    onSuccess: (object continueState) =>
-                    {
-                        onSuccess(continueState);
-                        completion.SetResult(null);
-                    },
-                    onFailure: onFailure
-                );
-                return completion.Task;
-            }
-        }
-
         internal static void SetTimeoutException(TaskCompletionSource<object> completion, int timeout, Func<Exception> onFailure, CancellationToken ctoken)
         {
             if (timeout > 0)

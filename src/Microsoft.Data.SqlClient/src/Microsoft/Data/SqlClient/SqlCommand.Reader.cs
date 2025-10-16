@@ -1580,21 +1580,19 @@ namespace Microsoft.Data.SqlClient
             string optionSettings,
             Task writeTask)
         {
-            // @TODO: Why use the state version if we can't make this a static helper?
             return AsyncHelper.CreateContinuationTaskWithState(
-                task: writeTask,
-                state: _activeConnection,
-                onSuccess: state =>
+                taskToContinue: writeTask,
+                state1: this,
+                state2: Tuple.Create(ds, runBehavior, optionSettings),
+                onSuccess: static (this2, parameters) =>
                 {
                     // This will throw if the connection is closed.
                     // @TODO: So... can we have something that specifically does that?
-                    ((SqlConnection)state).GetOpenTdsConnection();
-                    CachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
+                    this2._activeConnection.GetOpenTdsConnection();
+                    this2.CachedAsyncState.SetAsyncReaderState(parameters.Item1, parameters.Item2, parameters.Item3);
                 },
-                onFailure: static (exception, state) =>
-                {
-                    ((SqlConnection)state).GetOpenTdsConnection().DecrementAsyncCount();
-                });
+                onFailure: static (this2, _, exception) =>
+                    this2._activeConnection.GetOpenTdsConnection().DecrementAsyncCount());
         }
 
         // @TODO: This is way too many parameters being shoveled back and forth. We can do better.
