@@ -8,17 +8,20 @@ name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 trigger:
   branches:
     include:
+
+    # This pipeline is intended to only run against the ADO dotnet-sqlclient
+    # repo.
     - internal/main
   paths:
     include:
+    - .azuredevops
+    - .config
     - src
     - eng
     - tools
-    - .config
+    - azurepipelines-coverage.yml
     - build.proj
-    - Nuget.config
-    - '*.cmd'
-    - '*.sh'
+    - NuGet.config
 
 schedules:
 - cron: '30 4 * * Mon'
@@ -107,14 +110,14 @@ extends:
         softwareFolder: $(softwareFolder)
         symbolsFolder: $(symbolsFolder)
         softwarename: Microsoft.Data.SqlClient
-        versionNumber: $(AssemblyFileVersion)
+        versionNumber: $(mdsAssemblyFileVersion)
       codeql:
         compiled:
         enabled: ${{ not(parameters['isPreview']) }}
       sbom:
         enabled: ${{ not(parameters['isPreview']) }}
         packageName: Microsoft.Data.SqlClient
-        packageVersion: $(NugetPackageVersion)
+        packageVersion: $(mdsPackageVersion)
       policheck:
         enabled: ${{ not(parameters['isPreview']) }}
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'

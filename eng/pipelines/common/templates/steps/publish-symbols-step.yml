@@ -15,7 +15,7 @@ parameters:
 
   - name: symbolsVersion
     type: string
-    default: '$(NuGetPackageVersion)'
+    default: '$(mdsPackageVersion)'
 
   - name: symbolServer
     type: string
