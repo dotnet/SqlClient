@@ -485,42 +485,6 @@ namespace Microsoft.Data.SqlClient.Utilities
             );
         }
 
-        internal static Task CreateContinuationTask(
-            Task task,
-            Action onSuccess,
-            Action<Exception> onFailure = null)
-        {
-            if (task == null)
-            {
-                onSuccess();
-                return null;
-            }
-            else
-            {
-                TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
-                ContinueTaskWithState(
-                    task,
-                    completion,
-                    state: Tuple.Create(onSuccess, onFailure, completion),
-                    onSuccess: static (object state) =>
-                    {
-                        var parameters = (Tuple<Action, Action<Exception>, TaskCompletionSource<object>>)state;
-                        Action success = parameters.Item1;
-                        TaskCompletionSource<object> taskCompletionSource = parameters.Item3;
-                        success();
-                        taskCompletionSource.SetResult(null);
-                    },
-                    onFailure: static (Exception exception, object state) =>
-                    {
-                        var parameters = (Tuple<Action, Action<Exception>, TaskCompletionSource<object>>)state;
-                        Action<Exception> failure = parameters.Item2;
-                        failure?.Invoke(exception);
-                    }
-                );
-                return completion.Task;
-            }
-        }
-
         internal static Task CreateContinuationTaskWithState(Task task, object state, Action<object> onSuccess, Action<Exception, object> onFailure = null)
         {
             if (task == null)
