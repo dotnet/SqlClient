@@ -187,6 +187,70 @@ namespace Microsoft.Data.SqlClient.Utilities
                 scheduler: TaskScheduler.Default);
         }
 
+        internal static Task CreateContinuationTask(
+            Task taskToContinue,
+            Action onSuccess,
+            Action<Exception> onFailure = null,
+            Action onCancellation = null)
+        {
+            if (taskToContinue is null)
+            {
+                onSuccess();
+                return null;
+            }
+
+            // @TODO: Can totally use a non-generic TaskCompletionSource
+            TaskCompletionSource<object> taskCompletionSource = new();
+            ContinuationState continuationState = new(
+                OnCancellation: onCancellation,
+                OnFailure: onFailure,
+                OnSuccess: onSuccess,
+                TaskCompletionSource: taskCompletionSource);
+
+            taskToContinue.ContinueWith(static (task, continuationState2) =>
+                {
+                    ContinuationState typedState = (ContinuationState)continuationState2;
+                    if (task.Exception is not null)
+                    {
+                        try
+                        {
+                            typedState.OnFailure?.Invoke(task.Exception);
+                        }
+                        finally
+                        {
+                            typedState.TaskCompletionSource.TrySetException(task.Exception);
+                        }
+                    }
+                    else if (task.IsCanceled)
+                    {
+                        try
+                        {
+                            typedState.OnCancellation?.Invoke();
+                        }
+                        finally
+                        {
+                            typedState.TaskCompletionSource.TrySetCanceled();
+                        }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            typedState.OnSuccess();
+                            typedState.TaskCompletionSource.SetResult(null);
+                        }
+                        catch (Exception e)
+                        {
+                            typedState.TaskCompletionSource.SetException(e);
+                        }
+                    }
+                },
+                state: continuationState,
+                scheduler: TaskScheduler.Default);
+
+            return taskCompletionSource.Task;
+        }
+
         internal static Task CreateContinuationTaskWithState<TState>(
             Task taskToContinue,
             TState state,
@@ -341,6 +405,12 @@ namespace Microsoft.Data.SqlClient.Utilities
             return taskCompletionSource.Task;
         }
 
+        private record ContinuationState(
+            Action OnCancellation,
+            Action<Exception> OnFailure,
+            Action OnSuccess,
+            TaskCompletionSource<object> TaskCompletionSource);
+
         private record ContinuationState<TState>(
             Action<TState> OnCancellation,
             Action<TState, Exception> OnFailure,
@@ -413,20 +483,6 @@ namespace Microsoft.Data.SqlClient.Utilities
                 state: state,
                 scheduler: TaskScheduler.Default
             );
-        }
-
-        internal static Task CreateContinuationTask(
-            Task taskToContinue,
-            Action onSuccess,
-            Action<Exception> onFailure = null,
-            Action onCancellation = null)
-        {
-            return CreateContinuationTaskWithState(
-                taskToContinue,
-                state: Tuple.Create(onSuccess, onFailure, onCancellation),
-                onSuccess: static state => state.Item1(),
-                onFailure: static (state, exception) => state.Item2?.Invoke(exception),
-                onCancellation: static state => state.Item3?.Invoke());
         }
 
         internal static Task CreateContinuationTask(
