@@ -117,7 +117,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
 
-        public FeatureExtensionEnablementTriState EnableEnhancedRouting { get; set; } = FeatureExtensionEnablementTriState.Disabled;
+        public FeatureExtensionBehavior EnhancedRoutingBehavior { get; set; } = FeatureExtensionBehavior.Disabled;
 
         public OnAuthenticationCompletedDelegate OnAuthenticationResponseCompleted { private get; set; }
 
@@ -319,7 +319,7 @@ namespace Microsoft.SqlServer.TDS.Servers
 
                         case TDSFeatureID.EnhancedRoutingSupport:
                             {
-                                session.IsEnhancedRoutingSupportEnabled = true;
+                                session.IsEnhancedRoutingSupportRequested = true;
                                 break;
                             }
 
@@ -689,20 +689,13 @@ namespace Microsoft.SqlServer.TDS.Servers
                 }
             }
 
-            if (session.IsEnhancedRoutingSupportEnabled &&
-                EnableEnhancedRouting != FeatureExtensionEnablementTriState.DoNotAcknowledge)
+            if (session.IsEnhancedRoutingSupportRequested &&
+                EnhancedRoutingBehavior != FeatureExtensionBehavior.DoNotAcknowledge)
             {
                 // Create ack data (1 byte: IsEnabled)
-                byte[] data = new byte[1];
-
-                if (EnableEnhancedRouting == FeatureExtensionEnablementTriState.Enabled)
-                {
-                    data[0] = 1;
-                }
-                else
-                {
-                    data[0] = 0;
-                }
+                byte[] data = EnhancedRoutingBehavior == FeatureExtensionBehavior.Enabled
+                    ? [1]
+                    : [0];
 
                 // Create enhanced routing support as a generic feature extension option
                 TDSFeatureExtAckGenericOption enhancedRoutingSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.EnhancedRoutingSupport, (uint)data.Length, data);

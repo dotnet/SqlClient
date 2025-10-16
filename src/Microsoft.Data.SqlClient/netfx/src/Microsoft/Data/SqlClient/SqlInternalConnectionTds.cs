@@ -3056,15 +3056,22 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT:
                     {
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for ENHANCEDROUTINGSUPPORT", ObjectID);
                         if (data.Length != 1)
                         {
-                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for ENHANCEDROUTINGSUPPORT", ObjectID);
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR>" +
+                                " {0}, Unknown token for ENHANCEDROUTINGSUPPORT",
+                                ObjectID);
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
 
                         // A value of 1 indicates that the server supports the feature.
                         IsEnhancedRoutingSupportEnabled = data[0] == 1;
+
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                            "<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension " +
+                            "acknowledgement for ENHANCEDROUTINGSUPPORT, Feature enabled: {1}",
+                            ObjectID,
+                            IsEnhancedRoutingSupportEnabled);
                         break;
                     }
 
@@ -3189,14 +3196,7 @@ namespace Microsoft.Data.SqlClient
                 UserServerName = string.Format(CultureInfo.InvariantCulture, "{0},{1}", routing.ServerName, routing.Port);
             }
 
-            if (routing == null || routing.DatabaseName == null)
-            {
-                ResolvedDatabaseName = userOptions.InitialCatalog;
-            }
-            else
-            {
-                ResolvedDatabaseName = routing.DatabaseName;
-            }
+            ResolvedDatabaseName = routing?.DatabaseName ?? userOptions.InitialCatalog;
 
             PreRoutingServerName = preRoutingServerName;
             UserProtocol = TdsEnums.TCP;

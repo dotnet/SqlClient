@@ -29,6 +29,8 @@ using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
+using System.Security.Cryptography;
+
 #if NETFRAMEWORK
 using Microsoft.Data.SqlTypes;
 #endif
@@ -3144,13 +3146,28 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Reads an enhanced routing token from the stream and populates the provided <see cref="SqlEnvChange"/> object.
         /// </summary>
+        /// <remark>
+        /// Example token:
+        /// Length | Field              | Example Value      | Description
+        /// ------------------------------------------------------------------------------
+        /// 1      | Token ID           | 0xE3               | ENVCHANGE token
+        /// 1      | Envchange Type     | 0x0F               | Enhanced Routing
+        /// 2      | New Length         | 0x002A (42)        | New value payload size
+        /// 1      | Protocol           | 0x00               | TCP protocol
+        /// 2      | Port               | 0x599 (1433)       | TCP port
+        /// 2      | Server Name Length | 0x000F (15)        | 15 characters
+        /// 30     | Server Name        | sql.example.com    | Variable length string, UTF-16 encoded
+        /// 2      | DB Name Length     | 0x000A (10)        | 10 characters  
+        /// 20     | Database Name      | MyDatabase         | Variable length string, UTF-16 encoded
+        /// 2      | Old Length         | 0x0000 (0)         | No old value
+        /// ------------------------------------------------------------------------------
+        /// </remark>
         /// <param name="stateObj">The state object containing the stream.</param>
         /// <param name="env">The object to populate.</param>
         /// <returns>Returns a <see cref="TdsOperationStatus"/> to indicate the status of the operation.</returns>
         private TdsOperationStatus TryProcessEnhancedRoutingToken(TdsParserStateObject stateObj, SqlEnvChange env)
         {
-            ushort newLength;
-            TdsOperationStatus result = stateObj.TryReadUInt16(out newLength);
+            TdsOperationStatus result = stateObj.TryReadUInt16(out ushort newLength);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
@@ -3158,43 +3175,37 @@ namespace Microsoft.Data.SqlClient
 
             env._newLength = newLength;
 
-            byte protocol;
-            result = stateObj.TryReadByte(out protocol);
+            result = stateObj.TryReadByte(out byte protocol);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
             }
 
-            ushort port;
-            result = stateObj.TryReadUInt16(out port);
+            result = stateObj.TryReadUInt16(out ushort port);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
             }
 
-            ushort serverLen;
-            result = stateObj.TryReadUInt16(out serverLen);
+            result = stateObj.TryReadUInt16(out ushort serverLen);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
             }
 
-            string serverName;
-            result = stateObj.TryReadString(serverLen, out serverName);
+            result = stateObj.TryReadString(serverLen, out string serverName);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
             }
 
-            ushort databaseLen;
-            result = stateObj.TryReadUInt16(out databaseLen);
+            result = stateObj.TryReadUInt16(out ushort databaseLen);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
             }
 
-            string databaseName;
-            result = stateObj.TryReadString(databaseLen, out databaseName);
+            result = stateObj.TryReadString(databaseLen, out string databaseName);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
@@ -3204,8 +3215,7 @@ namespace Microsoft.Data.SqlClient
 
             // The enhanced routing token does not include an old value payload
             // read/skip as necessary to clear the required length field and any data.
-            ushort oldLength;
-            result = stateObj.TryReadUInt16(out oldLength);
+            result = stateObj.TryReadUInt16(out ushort oldLength);
             if (result != TdsOperationStatus.Done)
             {
                 return result;

@@ -97,6 +97,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// <summary>
         /// Indicates whether the client supports Enhanced Routing
         /// </summary>
-        bool IsEnhancedRoutingSupportEnabled { get; set; }
+        bool IsEnhancedRoutingSupportRequested { get; set; }
     }
 }
