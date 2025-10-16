@@ -49,7 +49,7 @@ jobs:
       configuration: $(Configuration)
       msbuildArguments: -t:BuildTools
 
-  # Perform analysis before building, since this step will clobber build output
+  # Perform analysis before building, since this step will clobber build output.
   - template: ../steps/code-analyze-step.yml@self
   
   # Update the root NuGet.config to use the packages/ directory as a source.
