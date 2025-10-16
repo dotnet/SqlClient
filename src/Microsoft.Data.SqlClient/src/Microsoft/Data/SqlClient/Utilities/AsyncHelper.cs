@@ -405,7 +405,6 @@ namespace Microsoft.Data.SqlClient.Utilities
             return taskCompletionSource.Task;
         }
 
-        // @TODO: This is a pretty wonky way of doing timeouts, imo.
         internal static void SetTimeoutException(
             TaskCompletionSource<object> taskCompletionSource,
             int timeoutInSeconds,
@@ -428,7 +427,34 @@ namespace Microsoft.Data.SqlClient.Utilities
                             taskCompletionSource.TrySetException(onTimeout());
                         }
                     },
-                    cancellationToken);
+                    cancellationToken: CancellationToken.None);
+        }
+
+        internal static void SetTimeoutExceptionWithState<TState>(
+            TaskCompletionSource<object> taskCompletionSource,
+            int timeoutInSeconds,
+            TState state,
+            Func<TState, Exception> onTimeout,
+            CancellationToken cancellationToken)
+        {
+            if (timeoutInSeconds <= 0)
+            {
+                return;
+            }
+
+            Task.Delay(TimeSpan.FromSeconds(timeoutInSeconds), cancellationToken)
+                .ContinueWith(
+                    (task, state2) =>
+                    {
+                        // If the timeout ran to completion AND the task to complete did not complete
+                        // then the timeout expired first, run the timeout handler
+                        if (!task.IsCanceled && !taskCompletionSource.Task.IsCompleted)
+                        {
+                            taskCompletionSource.TrySetException(onTimeout((TState)state2));
+                        }
+                    },
+                    state: state,
+                    cancellationToken: CancellationToken.None);
         }
 
         private record ContinuationState(
@@ -451,30 +477,6 @@ namespace Microsoft.Data.SqlClient.Utilities
             TState1 State1,
             TState2 State2,
             TaskCompletionSource<object> TaskCompletionSource);
-
-        internal static void SetTimeoutExceptionWithState(
-            TaskCompletionSource<object> completion,
-            int timeout,
-            object state,
-            Func<object, Exception> onFailure,
-            CancellationToken cancellationToken)
-        {
-            if (timeout <= 0)
-            {
-                return;
-            }
-
-            Task.Delay(timeout * 1000, cancellationToken).ContinueWith(
-                (task, innerState) =>
-                {
-                    if (!task.IsCanceled && !completion.Task.IsCompleted)
-                    {
-                        completion.TrySetException(onFailure(innerState));
-                    }
-                },
-                state: state,
-                cancellationToken: CancellationToken.None);
-        }
 
         internal static void WaitForCompletion(Task task, int timeout, Action onTimeout = null, bool rethrowExceptions = true)
         {
