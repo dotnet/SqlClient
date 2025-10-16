@@ -6,7 +6,6 @@
 
 variables:
   - group: 'ADO Build properties'
-  - group: 'ADO CI Packaging'
   - group: 'ADO Test Configuration Properties'
   
   - name: buildNumber
@@ -15,21 +14,15 @@ variables:
     value: 'net8.0'
   - name: SQLTarget
     value: 'localhost'
-  - name: NugetPackageVersion
-    value: $(Major).$(Minor)$(Patch)-pull.1$(buildnumber)
+  - name: abstractionsPackageVersion
+    value: 1.0.0.$(buildNumber)-ci
+  - name: akvPackageVersion
+    value: 7.0.0.$(buildNumber)-ci
+  - name: mdsPackageVersion
+    value: 7.0.0.$(buildNumber)-ci
   - name: skipComponentGovernanceDetection
     value: true
   - name: runCodesignValidationInjection
     value: false
   - name: packagePath
     value: '$(Build.SourcesDirectory)/packages'
-
-  # TODO(ADO-38703): Remove these when the other pipeline changes arrive.
-  - name: baseBuildNumber
-    value: $[ split(variables['Build.BuildNumber'], '.')[0] ]
-  - name: abstractionsPackageVersion
-    value: 1.0.0.$(baseBuildNumber)
-  - name: mdsPackageVersion
-    value: $(NugetPackageVersion)
-  - name: akvPackageVersion
-    value: $(NugetPackageVersion)

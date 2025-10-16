@@ -50,9 +50,7 @@ jobs:
 
   - template: ../steps/update-nuget-config-local-feed-step.yml
     parameters:
-      downloadedNugetPath: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
-      ${{ if parameters.isPreview }}:
-        nugetPackageVersion: $(PreviewNugetPackageVersion)
+      packagePath: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
 
   - template: ../steps/update-config-file-step.yml
     parameters: 
@@ -68,7 +66,7 @@ jobs:
       referenceType: Package
       buildConfiguration: Release
       ${{ if parameters.isPreview }}:
-        nugetPackageVersion: $(PreviewNugetPackageVersion)
+        mdsPackageVersion: $(previewMdsPackageVersion)
 
   - template: ../steps/build-and-run-tests-netcore-step.yml
     parameters:
@@ -76,4 +74,4 @@ jobs:
       buildConfiguration: Release
       cleanFirst: true
       ${{ if parameters.isPreview }}:
-        nugetPackageVersion: $(PreviewNugetPackageVersion)
+        mdsPackageVersion: $(previewMdsPackageVersion)

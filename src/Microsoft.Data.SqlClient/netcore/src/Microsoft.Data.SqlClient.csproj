@@ -1115,12 +1115,9 @@
     <ProjectReference
       Include="../../../Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"
       Condition="'$(ReferenceType)' == 'Project'" />
-    <!-- TODO(ADO-38703): Package ref requires pipeline changes TBD. -->
-    <!--
     <PackageReference
       Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
       Condition="'$(ReferenceType)' == 'Package'" />
-    -->
   </ItemGroup>
 
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />

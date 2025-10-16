@@ -58,9 +58,12 @@ parameters:
   type: object
   default: [net462, net8.0]
 
-- name: buildType
-  displayName: 'Build Type'
-  default: Project
+# The way we will reference sibling projects in the .csproj files:
+#   Project - use <ProjectReference> references.
+#   Package - use <PackageReference> references to NuGet packages in the
+#             packages/ directory.
+- name: referenceType
+  displayName: 'Reference Type'
   values:
     - Project
     - Package
@@ -93,20 +96,48 @@ parameters:
 variables:
   - template: libraries/ci-build-variables.yml@self
   
-  - name: artifactName
-    value: Artifacts
+  - name: abstractionsArtifactName
+    value: Abstractions.Artifact
+
+  - name: mdsArtifactName
+    value: MDS.Artifact
 
   - name: defaultHostedPoolName
     value: 'Azure Pipelines'
 
 stages:
-  - stage: build_nugets
-    displayName: 'Build NuGet Packages'
+
+  # Build the Abstractions package, and publish it to the pipeline artifacts
+  # under the given artifact name.
+  - template: stages/build-abstractions-package-ci-stage.yml@self
+    parameters:
+      buildConfiguration: Release
+      abstractionsPackageVersion: $(abstractionsPackageVersion)
+      artifactName: $(abstractionsArtifactName)
+      ${{if eq(parameters.debug, 'true')}}:
+        verbosity: diagnostic
+
+  # Build MDS and its NuGet packages.
+  - stage: build_mds_akv_packages_stage
+    displayName: 'Build MDS & AKV Packages'
+
+    # When building MDS via packages, we must depend on the Abstractions 
+    # package.
+    ${{ if eq(parameters.referenceType, 'Package') }}:
+      dependsOn:
+        - build_abstractions_package_stage
+    ${{ else }}:
+      dependsOn: []
+
     jobs:
     - template: common/templates/jobs/ci-build-nugets-job.yml@self
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        artifactName: $(artifactName)
+        referenceType: ${{ parameters.referenceType }}
+        abstractionsPackageVersion: $(abstractionsPackageVersion)
+        abstractionsArtifactName: $(abstractionsArtifactName)
+        mdsPackageVersion: $(mdsPackageVersion)
+        mdsArtifactName: $(mdsArtifactName)
         ${{if ne(parameters.SNIVersion, '')}}:
           prebuildSteps:
             - template: common/templates/steps/override-sni-version.yml@self
@@ -114,47 +145,51 @@ stages:
                 SNIVersion: ${{parameters.SNIVersion}}
                 SNIValidationFeed: ${{parameters.SNIValidationFeed}}
 
+  # Run the stress tests, if desired.
   - ${{ if eq(parameters.enableStressTests, true) }}:
     - template: stages/stress-tests-ci-stage.yml@self
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        dependsOn: [build_nugets]
+        dependsOn: [build_mds_akv_packages_stage]
         pipelineArtifactName: $(artifactName)
-        mdsPackageVersion: $(NugetPackageVersion)
+        mdsPackageVersion: $(mdsPackageVersion)
         ${{ if eq(parameters.debug, 'true') }}:
           verbosity: 'detailed'
-    
+  
+  # Run the MDS and AKV tests.
   - template: common/templates/stages/ci-run-tests-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
       buildConfiguration: ${{ parameters.buildConfiguration }}
-      buildType: ${{ parameters.buildType }}
+      referenceType: ${{ parameters.referenceType }}
+      abstractionsArtifactName: $(abstractionsArtifactName)
+      abstractionsPackageVersion: $(abstractionsPackageVersion)
+      mdsArtifactName: $(mdsArtifactName)
+      mdsPackageVersion: $(mdsPackageVersion)
       testJobTimeout: ${{ parameters.testJobTimeout }}
       ${{ if eq(parameters.buildType, 'Package') }}:
         dependsOn: build_nugets
 
-      ${{if ne(parameters.SNIVersion, '')}}:
-        prebuildSteps: # steps to run prior to building and running tests on each job
+      # When testing MDS via packages, we must depend on the Abstractions and
+      # MDS packages.
+      ${{ if eq(parameters.referenceType, 'Package') }}:
+        dependsOn:
+          - build_abstractions_package_stage
+          - build_mds_akv_packages_stage
+
+      prebuildSteps: # steps to run prior to building and running tests on each job
+        - ${{if ne(parameters.SNIVersion, '')}}:
           - template: common/templates/steps/override-sni-version.yml@self
             parameters:
               SNIVersion: ${{parameters.SNIVersion}}
               SNIValidationFeed: ${{parameters.SNIValidationFeed}}
-          - template: common/templates/steps/ci-prebuild-step.yml@self
-            parameters:
-              debug: ${{ parameters.debug }}
-              artifactName: $(artifactName)
-              buildType: ${{ parameters.buildType }}
-              buildConfiguration: ${{ parameters.buildConfiguration }}
-      ${{else}}:
-        prebuildSteps: # steps to run prior to building and running tests on each job
-          - template: common/templates/steps/ci-prebuild-step.yml@self
-            parameters:
-              debug: ${{ parameters.debug }}
-              artifactName: $(artifactName)
-              buildType: ${{ parameters.buildType }}
-              buildConfiguration: ${{ parameters.buildConfiguration }}
 
-      ${{ if eq(parameters.buildType, 'Project') }}: # only run the code coverage job if the build type is project
+        - template: common/templates/steps/ci-prebuild-step.yml@self
+          parameters:
+            debug: ${{ parameters.debug }}
+            referenceType: ${{ parameters.referenceType }}
+
+      ${{ if eq(parameters.referenceType, 'Project') }}: # only run the code coverage job if the build type is project
         postTestJobs: # jobs to run after the tests are done
         - template: common/templates/jobs/ci-code-coverage-job.yml@self
           parameters:
@@ -361,9 +396,8 @@ stages:
             # ways to detect if they were present) won't run consistently across forks and non-forks.
             ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
               AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
-            AADServicePrincipalId: $(AADServicePrincipalId)
-            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+            AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
@@ -390,48 +424,14 @@ stages:
             AADAuthorityURL: $(AADAuthorityURL)
             ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
               AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR_eastus)
-            AADServicePrincipalId: $(AADServicePrincipalId)
-            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+            AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
             UserManagedIdentityClientId: $(UserManagedIdentityClientId_eastus)
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
-
-        # Only run the AE tests if enable and if we have access to the necessary
-        # secrets.
-        ${{ if and(eq(parameters.runAlwaysEncryptedTests, true), eq(variables['system.pullRequest.isFork'], 'False')) }}:
-          windows_enclave_sql:
-            pool: ADO-CI-AE-1ES-Pool
-            images: 
-              Win22_Enclave_Sql19: ADO-MMS22-SQL19
-            TargetFrameworks: ${{parameters.targetFrameworks }}
-            netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
-            buildPlatforms: ${{parameters.buildPlatforms }}
-            testSets: [AE]
-            useManagedSNI: ${{parameters.useManagedSNI }}
-            codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
-            configSqlFor: enclave
-            operatingSystem: Windows
-            configProperties:
-              # config.json properties
-              TCPConnectionStringHGSVBS: $(SQL_TCP_CONN_STRING_HGSVBS)
-              TCPConnectionStringNoneVBS: $(SQL_TCP_CONN_STRING_NoneVBS)
-              TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)
-              EnclaveEnabled: true
-              AADAuthorityURL: $(AADAuthorityURL)
-              AADServicePrincipalId: $(AADServicePrincipalId)
-              ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
-                AADServicePrincipalSecret: $(AADServicePrincipalSecret)
-              AzureKeyVaultUrl: $(AzureKeyVaultUrl)
-              AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
-              SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
-              UserManagedIdentityClientId: $(UserManagedIdentityClientId)
-              AliasName: $(SQLAliasName)            
-              LocalDbAppName: $(LocalDbAppName)
-              LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
     # self hosted SQL Server on Linux
         linux_ub20_22_sql_22:
@@ -479,9 +479,8 @@ stages:
             AADAuthorityURL: $(AADAuthorityURL)
             ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
               AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
-            AADServicePrincipalId: $(AADServicePrincipalId)
-            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+            AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
@@ -489,9 +488,64 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
+        # Self hosted SQL Server on Mac
+        mac_sql_22:
+          pool: $(defaultHostedPoolName)
+          hostedPool: true
+          images:
+            MacOSLatest_Sql22: macos-latest
+          TargetFrameworks: ${{parameters.targetFrameworksLinux }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+          buildPlatforms: [AnyCPU]
+          testSets: ${{parameters.testSets }}
+          useManagedSNI: [true]
+          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
+          configSqlFor: local
+          operatingSystem: Mac
+          configProperties:
+            # config.json properties
+            TCPConnectionString: $(SQL_TCP_CONN_STRING)
+            NPConnectionString: $(SQL_NP_CONN_STRING)
+            SupportsIntegratedSecurity: false
+            ManagedIdentitySupported: false
+            LocalDbAppName: $(LocalDbAppName)
+            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+
+        # Enclave tests
+        #
         # Only run the AE tests if enable and if we have access to the necessary
         # secrets.
         ${{ if and(eq(parameters.runAlwaysEncryptedTests, true), eq(variables['system.pullRequest.isFork'], 'False')) }}:
+          windows_enclave_sql:
+            pool: ADO-CI-AE-1ES-Pool
+            images:
+              Win22_Enclave_Sql19: ADO-MMS22-SQL19
+            TargetFrameworks: ${{parameters.targetFrameworks }}
+            netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+            buildPlatforms: ${{parameters.buildPlatforms }}
+            testSets: [AE]
+            useManagedSNI: ${{parameters.useManagedSNI }}
+            codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
+            configSqlFor: enclave
+            operatingSystem: Windows
+            configProperties:
+              # config.json properties
+              TCPConnectionStringHGSVBS: $(SQL_TCP_CONN_STRING_HGSVBS)
+              TCPConnectionStringNoneVBS: $(SQL_TCP_CONN_STRING_NoneVBS)
+              TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)
+              EnclaveEnabled: true
+              AADAuthorityURL: $(AADAuthorityURL)
+              AADServicePrincipalId: $(AADServicePrincipalId)
+              ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+                AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+              AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+              AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+              SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+              UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+              AliasName: $(SQLAliasName)
+              LocalDbAppName: $(LocalDbAppName)
+              LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+
           linux_enclave_sql:
             pool: ADO-CI-AE-1ES-Pool
             images:
@@ -519,26 +573,3 @@ stages:
               UserManagedIdentityClientId: $(UserManagedIdentityClientId)
               LocalDbAppName: $(LocalDbAppName)
               LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
-
-        # Self hosted SQL Server on Mac
-        mac_sql_22:
-          pool: $(defaultHostedPoolName)
-          hostedPool: true
-          images:
-            MacOSLatest_Sql22: macos-latest
-          TargetFrameworks: ${{parameters.targetFrameworksLinux }}
-          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
-          buildPlatforms: [AnyCPU]
-          testSets: ${{parameters.testSets }}
-          useManagedSNI: [true]
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
-          configSqlFor: local
-          operatingSystem: Mac
-          configProperties:
-            # config.json properties
-            TCPConnectionString: $(SQL_TCP_CONN_STRING)
-            NPConnectionString: $(SQL_NP_CONN_STRING)
-            SupportsIntegratedSecurity: false
-            ManagedIdentitySupported: false
-            LocalDbAppName: $(LocalDbAppName)
-            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
