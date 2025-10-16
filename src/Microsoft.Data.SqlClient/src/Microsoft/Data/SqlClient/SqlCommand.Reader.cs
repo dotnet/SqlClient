@@ -1613,7 +1613,7 @@ namespace Microsoft.Data.SqlClient
             AsyncHelper.SetTimeoutException(
                 completion,
                 timeout,
-                onFailure: static () => SQL.CR_ReconnectTimeout(),
+                onTimeout: static () => SQL.CR_ReconnectTimeout(),
                 timeoutCts.Token);
 
             // @TODO: With an object to pass around we can use the state-based version

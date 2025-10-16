@@ -405,6 +405,32 @@ namespace Microsoft.Data.SqlClient.Utilities
             return taskCompletionSource.Task;
         }
 
+        // @TODO: This is a pretty wonky way of doing timeouts, imo.
+        internal static void SetTimeoutException(
+            TaskCompletionSource<object> taskCompletionSource,
+            int timeoutInSeconds,
+            Func<Exception> onTimeout,
+            CancellationToken cancellationToken)
+        {
+            if (timeoutInSeconds <= 0)
+            {
+                return;
+            }
+
+            Task.Delay(TimeSpan.FromSeconds(timeoutInSeconds), cancellationToken)
+                .ContinueWith(
+                    task =>
+                    {
+                        // If the timeout ran to completion AND the task to complete did not complete
+                        // then the timeout expired first, run the timeout handler
+                        if (!task.IsCanceled && !taskCompletionSource.Task.IsCompleted)
+                        {
+                            taskCompletionSource.TrySetException(onTimeout());
+                        }
+                    },
+                    cancellationToken);
+        }
+
         private record ContinuationState(
             Action OnCancellation,
             Action<Exception> OnFailure,
@@ -425,81 +451,6 @@ namespace Microsoft.Data.SqlClient.Utilities
             TState1 State1,
             TState2 State2,
             TaskCompletionSource<object> TaskCompletionSource);
-
-        // the same logic as ContinueTask but with an added state parameter to allow the caller to avoid the use of a closure
-        // the parameter allocation cannot be avoided here and using closure names is clearer than Tuple numbered properties
-        private static void ContinueTaskWithState(Task task,
-            TaskCompletionSource<object> completion,
-            object state,
-            Action<object> onSuccess,
-            Action<Exception, object> onFailure = null,
-            Action<object> onCancellation = null,
-            Func<Exception, Exception> exceptionConverter = null)
-        {
-            task.ContinueWith(
-                (Task tsk, object state2) =>
-                {
-                    if (tsk.Exception != null)
-                    {
-                        Exception exc = tsk.Exception.InnerException;
-                        if (exceptionConverter != null)
-                        {
-                            exc = exceptionConverter(exc);
-                        }
-
-                        try
-                        {
-                            onFailure?.Invoke(exc, state2);
-                        }
-                        finally
-                        {
-                            completion.TrySetException(exc);
-                        }
-                    }
-                    else if (tsk.IsCanceled)
-                    {
-                        try
-                        {
-                            onCancellation?.Invoke(state2);
-                        }
-                        finally
-                        {
-                            completion.TrySetCanceled();
-                        }
-                    }
-                    else
-                    {
-                        try
-                        {
-                            onSuccess(state2);
-                        }
-                        // @TODO: CER Exception Handling was removed here (see GH#3581)
-                        catch (Exception e)
-                        {
-                            completion.SetException(e);
-                        }
-                    }
-                },
-                state: state,
-                scheduler: TaskScheduler.Default
-            );
-        }
-
-        internal static void SetTimeoutException(TaskCompletionSource<object> completion, int timeout, Func<Exception> onFailure, CancellationToken ctoken)
-        {
-            if (timeout > 0)
-            {
-                Task.Delay(timeout * 1000, ctoken).ContinueWith(
-                    (Task task) =>
-                    {
-                        if (!task.IsCanceled && !completion.Task.IsCompleted)
-                        {
-                            completion.TrySetException(onFailure());
-                        }
-                    }
-                );
-            }
-        }
 
         internal static void SetTimeoutExceptionWithState(
             TaskCompletionSource<object> completion,
