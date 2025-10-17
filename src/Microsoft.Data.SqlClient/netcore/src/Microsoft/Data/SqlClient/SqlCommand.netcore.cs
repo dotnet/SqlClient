@@ -58,10 +58,6 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private static bool _forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage = false;
 #endif
-
-        private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener();
-        private bool _parentOperationStarted = false;
-
         internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
 
         private _SqlRPC[] _rpcArrayOf1 = null;                // Used for RPC executes
