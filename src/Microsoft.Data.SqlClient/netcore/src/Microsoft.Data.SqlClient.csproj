@@ -177,9 +177,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AAsyncCallContext.cs">
       <Link>Microsoft\Data\SqlClient\AAsyncCallContext.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs">
-      <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs</Link>
     </Compile>
@@ -489,17 +486,11 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAppContextSwitchManager.netcore.cs">
       <Link>Microsoft\Data\SqlClient\SqlAppContextSwitchManager.netcore.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs">
-      <Link>Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationProvider.cs">
-      <Link>Microsoft\Data\SqlClient\SqlAuthenticationProvider.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationParametersBuilder.cs">
+      <Link>Microsoft\Data\SqlClient\SqlAuthenticationParametersBuilder.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs">
       <Link>Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationToken.cs">
-      <Link>Microsoft\Data\SqlClient\SqlAuthenticationToken.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlBatch.cs">
       <Link>Microsoft\Data\SqlClient\SqlBatch.cs</Link>
@@ -1068,8 +1059,6 @@
 
   <!-- Package References Etc -->
   <ItemGroup>
-    <PackageReference Include="Azure.Core" />
-    <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />

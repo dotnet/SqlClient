@@ -57,19 +57,12 @@
     <Version>$(MdsPackageVersion)</Version>
   </PropertyGroup>
 
+  <!-- Azure Package Properties -->
+  <Import Project="..\..\src\Microsoft.Data.SqlClient.Extensions\Azure\src\AzureVersions.props" />
+
   <!-- AKV Package Properties -->
   <PropertyGroup>
     <AkvVersionDefault>7.0.0</AkvVersionDefault>
     <AkvPackageVersion Condition="'$(AkvPackageVersion)' == ''">$(AkvVersionDefault).$(BuildNumber)-dev</AkvPackageVersion>
-
-    <!--
-      GOTCHA: This property must appear in the last <PropertyGroup> in this file
-      due to hardcoded XML processing in:
-
-      eng/pipelines/common/templates/jobs/validate-signed-package-job.yml
-
-      See the 'Modify TestMicrosoftDataSqlClientVersion' step.
-    -->
-    <TestMicrosoftDataSqlClientVersion>$(MdsPackageVersion)</TestMicrosoftDataSqlClientVersion>
   </PropertyGroup>
 </Project>

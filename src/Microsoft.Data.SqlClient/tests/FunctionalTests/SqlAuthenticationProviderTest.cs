@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)]
         public void DefaultAuthenticationProviders(SqlAuthenticationMethod method)
         {
-            Assert.IsType<ActiveDirectoryAuthenticationProvider>(SqlAuthenticationProvider.GetProvider(method));
+            Assert.IsType<ActiveDirectoryAuthenticationProvider>(SqlAuthenticationProviderManager.GetProvider(method));
         }
 
         #if NETFRAMEWORK
@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryInteractive)]
         public void DefaultAuthenticationProviders_Interactive(SqlAuthenticationMethod method)
         {
-            Assert.IsType<DummySqlAuthenticationProvider>(SqlAuthenticationProvider.GetProvider(method));
+            Assert.IsType<DummySqlAuthenticationProvider>(SqlAuthenticationProviderManager.GetProvider(method));
         }
         
         #endif

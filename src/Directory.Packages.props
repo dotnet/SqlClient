@@ -5,22 +5,33 @@
   </PropertyGroup>
   
   <!-- ===================================================================== -->
-  <!-- Shared Dependencies -->
-
-  <!-- Sibling Packages -->
+  <!-- Driver Packages -->
+ 
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
     <PackageVersion
       Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
       Version="$(AbstractionsPackageVersion)" />
+    <PackageVersion
+      Include="Microsoft.Data.SqlClient.Extensions.Azure"
+      Version="$(AzurePackageVersion)" />
+    <PackageVersion
+      Include="Microsoft.Data.SqlClient"
+      Version="$(MdsPackageVersion)" />
+    <PackageVersion
+      Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
+      Version="$(AkvPackageVersion)" />
   </ItemGroup>
+  
+  <!-- ===================================================================== -->
+  <!-- Shared Dependencies -->
 
-  <!-- Published -->
+  <!-- Public -->
   <ItemGroup>
     <!-- MDS and AKV -->
     <PackageVersion Include="Azure.Core" Version="1.49.0" />
   </ItemGroup>
 
-  <!-- Published - Target Framework Specific Dependencies -->
+  <!-- Public - Target Framework Specific Dependencies -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
     <!-- MDS and AKV -->
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.9" />
@@ -30,7 +41,7 @@
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
   </ItemGroup>
 
-  <!-- Internal -->
+  <!-- Private -->
   <ItemGroup>
     <!-- MDS and AKV Tests -->
     <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
@@ -52,7 +63,7 @@
     <PackageVersion Include="xunit.runner.console" Version="2.9.3" />
   </ItemGroup>
 
-  <!-- Internal - Target Framework Specific Dependencies -->
+  <!-- Private - Target Framework Specific Dependencies -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
     <!-- MDS and AKV Tests -->
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
@@ -68,11 +79,15 @@
   </ItemGroup>
 
   <!-- ===================================================================== -->
+  <!-- Abstractions Dependencies -->
+
+  <!-- None -->
+
+  <!-- ===================================================================== -->
   <!-- MDS Dependencies -->
 
   <!-- Common Dependencies (.NET and .NET Framework) -->
   <ItemGroup>
-    <PackageVersion Include="Azure.Identity" Version="1.16.0" />
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.14.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.14.0" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
@@ -109,16 +124,22 @@
     <PackageVersion Include="System.ValueTuple" Version="4.6.1" />
   </ItemGroup>
 
-  <!-- =================================================================== -->
+  <!-- ===================================================================== -->
   <!-- AKV Dependencies -->
 
   <ItemGroup>
     <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.8.0" />
   </ItemGroup>
 
-  <!-- =================================================================== -->
+  <!-- ===================================================================== -->
   <!-- MSS Dependencies -->
 
   <!-- None -->
 
+  <!-- ===================================================================== -->
+  <!-- Azure Dependencies -->
+
+  <ItemGroup>
+    <PackageVersion Include="Azure.Identity" Version="1.14.2" />
+  </ItemGroup>
 </Project>
