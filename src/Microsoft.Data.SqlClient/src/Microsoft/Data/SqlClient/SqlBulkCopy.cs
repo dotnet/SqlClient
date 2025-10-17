@@ -420,9 +420,6 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.BulkLoadInvalidDestinationTable(DestinationTableName, null);
             }
-            string TDSCommand;
-
-            TDSCommand = "select @@trancount; SET FMTONLY ON select * from " + ADP.BuildMultiPartName(parts) + " SET FMTONLY OFF ";
 
             string TableCollationsStoredProc;
             if (_connection.Is2008OrNewer)
@@ -456,27 +453,41 @@ namespace Microsoft.Data.SqlClient
             string CatalogName = parts[MultipartIdentifier.CatalogIndex];
             if (isTempTable && string.IsNullOrEmpty(CatalogName))
             {
-                TDSCommand += string.Format("exec tempdb..{0} N'{1}.{2}'",
-                    TableCollationsStoredProc,
-                    SchemaName,
-                    TableName
-                );
+                CatalogName = "tempdb";
             }
-            else
+            else if (!string.IsNullOrEmpty(CatalogName))
             {
-                // Escape the catalog name
-                if (!string.IsNullOrEmpty(CatalogName))
-                {
-                    CatalogName = SqlServerEscapeHelper.EscapeIdentifier(CatalogName);
-                }
-                TDSCommand += string.Format("exec {0}..{1} N'{2}.{3}'",
-                    CatalogName,
-                    TableCollationsStoredProc,
-                    SchemaName,
-                    TableName
-                );
+                CatalogName = SqlServerEscapeHelper.EscapeIdentifier(CatalogName);
             }
-            return TDSCommand;
+
+            string objectName = ADP.BuildMultiPartName(parts);
+            string escapedObjectName = SqlServerEscapeHelper.EscapeStringAsLiteral(objectName);
+            // Specify the column names explicitly. This is to ensure that we can map to hidden columns (e.g. columns in temporal tables.)
+            // If the target table doesn't exist, OBJECT_ID will return NULL and @Column_Names will remain non-null. The subsequent SELECT *
+            // query will then continue to fail with "Invalid object name" rather than with an unusual error because the query being executed
+            // is NULL.
+            // Some hidden columns (e.g. SQL Graph columns) cannot be selected, so we need to exclude them explicitly.
+            return $"""
+SELECT @@TRANCOUNT;
+
+DECLARE @Column_Names NVARCHAR(MAX) = NULL;
+IF EXISTS (SELECT TOP 1 * FROM sys.all_columns WHERE [object_id] = OBJECT_ID('sys.all_columns') AND [name] = 'graph_type')
+BEGIN
+    SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME([name]) FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{escapedObjectName}') AND COALESCE([graph_type], 0) NOT IN (1, 3, 4, 6, 7) ORDER BY [column_id] ASC;
+END
+ELSE
+BEGIN
+    SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME([name]) FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{escapedObjectName}') ORDER BY [column_id] ASC;
+END
+
+SELECT @Column_Names = COALESCE(@Column_Names, '*');
+
+SET FMTONLY ON;
+EXEC(N'SELECT ' + @Column_Names + N' FROM {escapedObjectName}');
+SET FMTONLY OFF;
+
+EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
+""";
         }
 
         // Creates and then executes initial query to get information about the targettable
@@ -1441,7 +1452,10 @@ namespace Microsoft.Data.SqlClient
         private string UnquotedName(string name)
         {
             if (string.IsNullOrEmpty(name))
+            {
                 return null;
+            }
+
             if (name[0] == '[')
             {
                 int l = name.Length;
@@ -2311,7 +2325,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     task = ReadWriteColumnValueAsync(i); //First reads and then writes one cell value. Task 'task' is completed when reading task and writing task both are complete.
                     if (task != null)
+                    {
                         break; //task != null means we have a pending read/write Task.
+                    }
                 }
                 if (task != null)
                 {
@@ -2345,7 +2361,10 @@ namespace Microsoft.Data.SqlClient
         // This is in its own method to avoid always allocating the lambda in CopyColumnsAsync
         private void CopyColumnsAsyncSetupContinuation(TaskCompletionSource<object> source, Task task, int i)
         {
-            AsyncHelper.ContinueTaskWithState(task, source, this,
+            AsyncHelper.ContinueTaskWithState(
+                task,
+                source,
+                state: this,
                 onSuccess: (object state) =>
                 {
                     SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
@@ -2357,9 +2376,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         source.SetResult(null);
                     }
-                },
-                connectionToDoom: _connection.GetOpenTdsConnection()
-            );
+                });
         }
 
         // The notification logic.
@@ -2494,10 +2511,11 @@ namespace Microsoft.Data.SqlClient
                             }
                             resultTask = source.Task;
 
-                            AsyncHelper.ContinueTaskWithState(readTask, source, this,
-                                onSuccess: (object state) => ((SqlBulkCopy)state).CopyRowsAsync(i + 1, totalRows, cts, source),
-                                connectionToDoom: _connection.GetOpenTdsConnection()
-                            );
+                            AsyncHelper.ContinueTaskWithState(
+                                readTask,
+                                source,
+                                state: this,
+                                onSuccess: (object state) => ((SqlBulkCopy)state).CopyRowsAsync(i + 1, totalRows, cts, source));
                             return resultTask; // Associated task will be completed when all rows are copied to server/exception/cancelled.
                         }
                     }
@@ -2519,14 +2537,13 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 else
                                 {
-                                    AsyncHelper.ContinueTaskWithState(readTask, source, sqlBulkCopy,
-                                        onSuccess: (object state2) => ((SqlBulkCopy)state2).CopyRowsAsync(i + 1, totalRows, cts, source),
-                                        connectionToDoom: _connection.GetOpenTdsConnection()
-                                    );
+                                    AsyncHelper.ContinueTaskWithState(
+                                        readTask,
+                                        source,
+                                        state: sqlBulkCopy,
+                                        onSuccess: (object state2) => ((SqlBulkCopy)state2).CopyRowsAsync(i + 1, totalRows, cts, source));
                                 }
-                            },
-                            connectionToDoom: _connection.GetOpenTdsConnection()
-                        );
+                            });
                         return resultTask;
                     }
                 }
@@ -2595,7 +2612,10 @@ namespace Microsoft.Data.SqlClient
                             source = new TaskCompletionSource<object>();
                         }
 
-                        AsyncHelper.ContinueTaskWithState(commandTask, source, this,
+                        AsyncHelper.ContinueTaskWithState(
+                            commandTask,
+                            source,
+                            state: this,
                             onSuccess: (object state) =>
                             {
                                 SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
@@ -2605,9 +2625,7 @@ namespace Microsoft.Data.SqlClient
                                     // Continuation finished sync, recall into CopyBatchesAsync to continue
                                     sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                                 }
-                            },
-                            connectionToDoom: _connection.GetOpenTdsConnection()
-                        );
+                            });
                         return source.Task;
                     }
                 }
@@ -2661,7 +2679,10 @@ namespace Microsoft.Data.SqlClient
                     {   // First time only
                         source = new TaskCompletionSource<object>();
                     }
-                    AsyncHelper.ContinueTaskWithState(task, source, this,
+                    AsyncHelper.ContinueTaskWithState(
+                        task,
+                        source,
+                        state: this,
                         onSuccess: (object state) =>
                         {
                             SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
@@ -2673,9 +2694,7 @@ namespace Microsoft.Data.SqlClient
                             }
                         },
                         onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false),
-                        onCancellation: static (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true),
-                        connectionToDoom: _connection.GetOpenTdsConnection()
-                    );
+                        onCancellation: static (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true));
 
                     return source.Task;
                 }
@@ -2722,7 +2741,10 @@ namespace Microsoft.Data.SqlClient
                         source = new TaskCompletionSource<object>();
                     }
 
-                    AsyncHelper.ContinueTaskWithState(writeTask, source, this,
+                    AsyncHelper.ContinueTaskWithState(
+                        writeTask,
+                        source,
+                        state: this,
                         onSuccess: (object state) =>
                         {
                             SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
@@ -2740,9 +2762,7 @@ namespace Microsoft.Data.SqlClient
                             // Always call back into CopyBatchesAsync
                             sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                         },
-                        onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false),
-                        connectionToDoom: _connection.GetOpenTdsConnection()
-                    );
+                        onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false));
                     return source.Task;
                 }
             }
@@ -2843,7 +2863,10 @@ namespace Microsoft.Data.SqlClient
                     {
                         source = new TaskCompletionSource<object>();
                     }
-                    AsyncHelper.ContinueTaskWithState(task, source, this,
+                    AsyncHelper.ContinueTaskWithState(
+                        task,
+                        source,
+                        state: this,
                         onSuccess: (object state) =>
                         {
                             SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
@@ -2886,9 +2909,7 @@ namespace Microsoft.Data.SqlClient
                                     }
                                 }
                             }
-                        },
-                        connectionToDoom: _connection.GetOpenTdsConnection()
-                    );
+                        });
                     return;
                 }
                 else
@@ -3013,14 +3034,9 @@ namespace Microsoft.Data.SqlClient
                                 _parserLock.Wait(canReleaseFromAnyThread: true);
                                 WriteToServerInternalRestAsync(cts, source);
                             },
-                            connectionToAbort: _connection,
                             onFailure: static (_, state) => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
                             onCancellation: static state => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
-                            #if NET
                             exceptionConverter: ex => SQL.BulkLoadInvalidDestinationTable(_destinationTableName, ex)
-                            #else
-                            exceptionConverter: (ex, _) => SQL.BulkLoadInvalidDestinationTable(_destinationTableName, ex)
-                            #endif
                         );
                         return;
                     }
@@ -3069,10 +3085,11 @@ namespace Microsoft.Data.SqlClient
 
                 if (internalResultsTask != null)
                 {
-                    AsyncHelper.ContinueTaskWithState(internalResultsTask, source, this,
-                        onSuccess: (object state) => ((SqlBulkCopy)state).WriteToServerInternalRestContinuedAsync(internalResultsTask.Result, cts, source),
-                        connectionToDoom: _connection.GetOpenTdsConnection()
-                    );
+                    AsyncHelper.ContinueTaskWithState(
+                        internalResultsTask,
+                        source,
+                        state: this,
+                        onSuccess: (object state) => ((SqlBulkCopy)state).WriteToServerInternalRestContinuedAsync(internalResultsTask.Result, cts, source));
                 }
                 else
                 {
@@ -3153,9 +3170,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 sqlBulkCopy.WriteToServerInternalRestAsync(ctoken, source); // Passing the same completion which will be completed by the Callee.
                             }
-                        },
-                        connectionToDoom: _connection.GetOpenTdsConnection()
-                    );
+                        });
                     return resultTask;
                 }
             }

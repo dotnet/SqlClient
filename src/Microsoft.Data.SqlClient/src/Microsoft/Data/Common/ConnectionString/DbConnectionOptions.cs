@@ -165,16 +165,24 @@ namespace Microsoft.Data.Common.ConnectionString
         internal static bool ConvertValueToBooleanInternal(string keyName, string stringValue)
         {
             if (CompareInsensitiveInvariant(stringValue, "true") || CompareInsensitiveInvariant(stringValue, "yes"))
+            {
                 return true;
+            }
             else if (CompareInsensitiveInvariant(stringValue, "false") || CompareInsensitiveInvariant(stringValue, "no"))
+            {
                 return false;
+            }
             else
             {
                 string tmp = stringValue.Trim();  // Remove leading & trailing whitespace.
                 if (CompareInsensitiveInvariant(tmp, "true") || CompareInsensitiveInvariant(tmp, "yes"))
+                {
                     return true;
+                }
                 else if (CompareInsensitiveInvariant(tmp, "false") || CompareInsensitiveInvariant(tmp, "no"))
+                {
                     return false;
+                }
                 else
                 {
                     throw ADP.InvalidConnectionOptionValue(keyName);

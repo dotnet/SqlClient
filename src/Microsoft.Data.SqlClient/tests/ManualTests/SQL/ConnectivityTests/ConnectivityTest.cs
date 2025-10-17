@@ -269,7 +269,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: KILL not supported on Azure Synapse - Parse error at line: 1, column: 6: Incorrect syntax near '105'.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         public static void ConnectionResiliencySPIDTest()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
@@ -308,10 +308,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using SqlCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "SELECT @@SPID";
                 using (SqlDataReader reader = cmd.ExecuteReader())
+                {
                     while (reader.Read())
                     {
                         serverSPID = reader.GetInt16(0);
                     }
+                }
 
                 Assert.Equal(serverSPID, clientSPID);
                 // Also check SPID after query execution
@@ -321,10 +323,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 // Connection resiliency should reconnect transparently
                 using (SqlDataReader reader = cmd.ExecuteReader())
+                {
                     while (reader.Read())
                     {
                         serverSPID = reader.GetInt16(0);
                     }
+                }
 
                 // SPID should match server's SPID
                 Assert.Equal(serverSPID, conn.ServerProcessId);

@@ -10,10 +10,9 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class CoreCryptoTests : IClassFixture<SQLSetupStrategyCertStoreProvider>
+    public class CoreCryptoTests
     {
-        // Synapse: Always Encrypted not supported in Azure Synapse.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [Fact]
         public void TestAeadCryptoWithNativeBaseline()
         {
             // Initialize the reader for resource text file which has the native code generated baseline.
@@ -46,8 +45,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        // Synapse: Always Encrypted not supported in Azure Synapse.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [Fact]
         public void TestRsaCryptoWithNativeBaseline()
         {
             SqlColumnEncryptionCertificateStoreProvider rsaProvider = new();

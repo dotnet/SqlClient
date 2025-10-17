@@ -349,39 +349,73 @@ namespace Microsoft.Data.SqlClient
                         return s_metaVariant;
                     } // check sql types now
                     else if (dataType == typeof(SqlBinary))
+                    {
                         return MetaVarBinary;
+                    }
                     else if (dataType == typeof(SqlBoolean))
+                    {
                         return s_metaBit;
+                    }
                     else if (dataType == typeof(SqlByte))
+                    {
                         return s_metaTinyInt;
+                    }
                     else if (dataType == typeof(SqlBytes))
+                    {
                         return MetaVarBinary;
+                    }
                     else if (dataType == typeof(SqlChars))
+                    {
                         return MetaNVarChar; // MDAC 87587
+                    }
                     else if (dataType == typeof(SqlDateTime))
+                    {
                         return s_metaDateTime;
+                    }
                     else if (dataType == typeof(SqlDouble))
+                    {
                         return s_metaFloat;
+                    }
                     else if (dataType == typeof(SqlGuid))
+                    {
                         return s_metaUniqueId;
+                    }
                     else if (dataType == typeof(SqlInt16))
+                    {
                         return s_metaSmallInt;
+                    }
                     else if (dataType == typeof(SqlInt32))
+                    {
                         return s_metaInt;
+                    }
                     else if (dataType == typeof(SqlInt64))
+                    {
                         return s_metaBigInt;
+                    }
                     else if (dataType == typeof(SqlMoney))
+                    {
                         return s_metaMoney;
+                    }
                     else if (dataType == typeof(SqlDecimal))
+                    {
                         return MetaDecimal;
+                    }
                     else if (dataType == typeof(SqlSingle))
+                    {
                         return s_metaReal;
+                    }
                     else if (dataType == typeof(SqlXml))
+                    {
                         return MetaXml;
+                    }
                     else if (dataType == typeof(SqlJson))
+                    {
                         return s_MetaJson;
+                    }
                     else if (dataType == typeof(SqlVector<float>))
+                    {
                         return s_MetaVector;
+                    }
                     else if (dataType == typeof(SqlString))
                     {
                         return ((inferLen && !((SqlString)value).IsNull)
@@ -479,45 +513,85 @@ namespace Microsoft.Data.SqlClient
         internal static object GetNullSqlValue(Type sqlType)
         {
             if (sqlType == typeof(SqlSingle))
+            {
                 return SqlSingle.Null;
+            }
             else if (sqlType == typeof(SqlString))
+            {
                 return SqlString.Null;
+            }
             else if (sqlType == typeof(SqlDouble))
+            {
                 return SqlDouble.Null;
+            }
             else if (sqlType == typeof(SqlBinary))
+            {
                 return SqlBinary.Null;
+            }
             else if (sqlType == typeof(SqlGuid))
+            {
                 return SqlGuid.Null;
+            }
             else if (sqlType == typeof(SqlBoolean))
+            {
                 return SqlBoolean.Null;
+            }
             else if (sqlType == typeof(SqlByte))
+            {
                 return SqlByte.Null;
+            }
             else if (sqlType == typeof(SqlInt16))
+            {
                 return SqlInt16.Null;
+            }
             else if (sqlType == typeof(SqlInt32))
+            {
                 return SqlInt32.Null;
+            }
             else if (sqlType == typeof(SqlInt64))
+            {
                 return SqlInt64.Null;
+            }
             else if (sqlType == typeof(SqlDecimal))
+            {
                 return SqlDecimal.Null;
+            }
             else if (sqlType == typeof(SqlDateTime))
+            {
                 return SqlDateTime.Null;
+            }
             else if (sqlType == typeof(SqlMoney))
+            {
                 return SqlMoney.Null;
+            }
             else if (sqlType == typeof(SqlXml))
+            {
                 return SqlXml.Null;
+            }
             else if (sqlType == typeof(object))
+            {
                 return DBNull.Value;
+            }
             else if (sqlType == typeof(IEnumerable<DbDataRecord>))
+            {
                 return DBNull.Value;
+            }
             else if (sqlType == typeof(DataTable))
+            {
                 return DBNull.Value;
+            }
             else if (sqlType == typeof(DateTime))
+            {
                 return DBNull.Value;
+            }
             else if (sqlType == typeof(TimeSpan))
+            {
                 return DBNull.Value;
+            }
             else if (sqlType == typeof(DateTimeOffset))
+            {
                 return DBNull.Value;
+            }
             else
             {
                 Debug.Fail("Unknown SqlType!");
@@ -541,7 +615,9 @@ namespace Microsoft.Data.SqlClient
             object comVal = null;
 
             if (ADP.IsNull(sqlVal))
+            {
                 return comVal;
+            }
 
             switch (sqlVal)
             {
@@ -1037,10 +1113,14 @@ namespace Microsoft.Data.SqlClient
         internal static int GetTimeSizeFromScale(byte scale)
         {
             if (scale <= 2)
+            {
                 return 3;
+            }
 
             if (scale <= 4)
+            {
                 return 4;
+            }
 
             return 5;
         }

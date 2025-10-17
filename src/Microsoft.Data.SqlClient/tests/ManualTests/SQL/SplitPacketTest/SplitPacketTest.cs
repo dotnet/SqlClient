@@ -30,8 +30,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 Thread.Sleep(500);
             }
+
             if (_port == -1)
+            {
                 throw new InvalidOperationException("Proxy local port not defined!");
+            }
 
             builder.DataSource = "tcp:127.0.0.1," + _port;
             _baseConnString = builder.ConnectionString;

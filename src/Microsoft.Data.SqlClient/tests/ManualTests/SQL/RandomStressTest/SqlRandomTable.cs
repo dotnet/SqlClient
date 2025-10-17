@@ -51,9 +51,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             get
             {
                 if (HasSparseColumns)
+                {
                     return MaxBytesPerRowWithSparse;
+                }
                 else
+                {
                     return MaxBytesPerRow;
+                }
             }
         }
 
@@ -73,19 +77,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public SqlRandomTable(SqlRandomTableColumn[] columns, int? primaryKeyColumnIndex = null, int estimatedRowCount = 0)
         {
             if (columns == null || columns.Length == 0)
+            {
                 throw new ArgumentException("non-empty type array is required");
+            }
+
             if (estimatedRowCount < 0)
+            {
                 throw new ArgumentOutOfRangeException("non-negative row count is required, use 0 for default");
+            }
+
             if (primaryKeyColumnIndex.HasValue && (primaryKeyColumnIndex.Value < 0 || primaryKeyColumnIndex.Value >= columns.Length))
+            {
                 throw new ArgumentOutOfRangeException("primaryColumnIndex");
+            }
 
             PrimaryKeyColumnIndex = primaryKeyColumnIndex;
             _columns = (SqlRandomTableColumn[])columns.Clone();
             _columnNames = new string[columns.Length];
             if (estimatedRowCount == 0)
+            {
                 _rows = new List<object[]>();
+            }
             else
+            {
                 _rows = new List<object[]>(estimatedRowCount);
+            }
 
             Columns = new List<SqlRandomTableColumn>(_columns).AsReadOnly();
             ColumnNames = new List<string>(_columnNames).AsReadOnly();
@@ -212,7 +228,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void AddRows(SqlRandomizer rand, int rowCount)
         {
             for (int i = 0; i < rowCount; i++)
+            {
                 AddRow(rand);
+            }
         }
 
         public string GenerateCreateTableTSql(string tableName)
@@ -224,7 +242,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             for (int c = 0; c < _columns.Length; c++)
             {
                 if (c != 0)
+                {
                     tsql.Append(", ");
+                }
 
                 tsql.AppendFormat("[{0}] {1}", GetColumnName(c), GetColumnTSqlType(c));
                 if (IsPrimaryKey(c))
@@ -256,11 +276,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 output.Write(_columnNames[i]);
                 if (_columns[i].StorageSize.HasValue)
+                {
                     output.Write(",  [StorageSize={0}]", _columns[i].StorageSize.Value);
+                }
+
                 if (_columns[i].Precision.HasValue)
+                {
                     output.Write(",  [Precision={0}]", _columns[i].Precision.Value);
+                }
+
                 if (_columns[i].Scale.HasValue)
+                {
                     output.Write(",  [Scale={0}]", _columns[i].Scale.Value);
+                }
+
                 output.WriteLine();
             }
         }
@@ -268,7 +297,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void DumpRow(TextWriter output, object[] row)
         {
             if (row == null || row.Length != _columns.Length)
+            {
                 throw new ArgumentException("Row length does not match the columns");
+            }
 
             for (int i = 0; i < _columnNames.Length - 1; i++)
             {
@@ -465,7 +496,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public int GenerateSelectFromTableTSql(string tableName, StringBuilder selectBuilder, int[] columnIndices = null, int indicesOffset = -1, int indicesCount = -1)
         {
             if (tableName == null || selectBuilder == null)
+            {
                 throw new ArgumentNullException("tableName == null || selectBuilder == null");
+            }
 
             int maxIndicesLength = (columnIndices == null) ? _columns.Length : columnIndices.Length;
             if (indicesOffset == -1)
@@ -515,7 +548,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             selectBuilder.AppendFormat(" FROM {0}", tableName);
 
             if (PrimaryKeyColumnIndex.HasValue)
+            {
                 selectBuilder.AppendFormat(" ORDER BY [{0}]", _columnNames[PrimaryKeyColumnIndex.Value]);
+            }
 
             return countAdded;
         }
@@ -754,9 +789,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string baseName;
             if (IsPrimaryKey(c))
+            {
                 baseName = "PKEY";
+            }
             else
+            {
                 baseName = string.Format("C{0}_{1}", _columns[c].Type, c);
+            }
 
             string name = baseName;
             int extraSuffix = 1;
@@ -765,6 +804,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 name = string.Format("{0}_{1}", baseName, extraSuffix);
                 ++extraSuffix;
             }
+
             return name;
         }
 
