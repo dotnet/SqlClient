@@ -30,6 +30,11 @@ namespace Microsoft.SqlServer.TDS
         VectorSupport = 0x0E,
 
         /// <summary>
+        /// User Agent Support
+        /// </summary>
+        UserAgentSupport = 0x10,
+
+        /// <summary>
         /// End of the list
         /// </summary>
         Terminator = 0xFF
