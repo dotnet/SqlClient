@@ -794,7 +794,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SspiContextProvider SspiContextProvider
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SspiContextProvider/*' />
+        public SspiContextProvider SspiContextProvider
         {
             get { return _sspiContextProvider; }
             set
