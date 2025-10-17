@@ -131,7 +131,11 @@ function Invoke-SqlServerCertificateCommand {
         Write-Output "Converting certificate to pfx..."
         Write-Output "Cert:\LocalMachine\my\$($certificate.Thumbprint)"
 
+        # PSScriptAnalyzer rule suppression
+        # Suppress the 'PSAvoidUsingConvertToSecureStringWithPlainText' rule for the next line as this is a test certificate with no password
+        [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingConvertToSecureStringWithPlainText", "")]
         $pwd = ConvertTo-SecureString -String 'nopassword' -Force -AsPlainText
+        
         # Export the certificate to a pfx format
         Export-PfxCertificate -Password $pwd -FilePath "$OutDir\localhostcert.pfx" -Cert "Cert:\LocalMachine\my\$($certificate.Thumbprint)"
 
