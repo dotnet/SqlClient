@@ -133,7 +133,7 @@ function Invoke-SqlServerCertificateCommand {
 
         # PSScriptAnalyzer rule suppression
         # Suppress the 'PSAvoidUsingConvertToSecureStringWithPlainText' rule for the next line as this is a test certificate with no password
-        [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingConvertToSecureStringWithPlainText", "")]
+        [void][Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingConvertToSecureStringWithPlainText", "", Justification="Test certificate with no real secret")]
         $pwd = ConvertTo-SecureString -String 'nopassword' -Force -AsPlainText
         
         # Export the certificate to a pfx format
