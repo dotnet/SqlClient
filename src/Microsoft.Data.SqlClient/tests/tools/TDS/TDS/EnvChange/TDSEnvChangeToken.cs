@@ -163,6 +163,33 @@ namespace Microsoft.SqlServer.TDS.EnvChange
 
                         break;
                     }
+                case TDSEnvChangeTokenType.EnhancedRouting:
+                    {
+                        // Read the new value length
+                        ushort valueLength = TDSUtilities.ReadUShort(source);
+
+                        // Update token length
+                        tokenLength -= 2;  // sizeof(ushort)
+
+                        // Instantiate new value
+                        NewValue = new TdsEnhancedRoutingEnvChangeTokenValue();
+
+                        // Inflate new value
+                        if (!(NewValue as TdsEnhancedRoutingEnvChangeTokenValue).Inflate(source))
+                        {
+                            // We should never reach this point
+                            throw new Exception("Routing information inflation failed");
+                        }
+
+                        // Read always-zero old value unsigned short
+                        if (TDSUtilities.ReadUShort(source) != 0)
+                        {
+                            // We should never reach this point
+                            throw new Exception("Non-zero old value for routing information");
+                        }
+
+                        break;
+                    }
                 case TDSEnvChangeTokenType.SQLCollation:
                     {
                         // Read new value length
@@ -284,6 +311,29 @@ namespace Microsoft.SqlServer.TDS.EnvChange
                         {
                             // Deflate token value
                             (NewValue as TDSRoutingEnvChangeTokenValue).Deflate(subCache);
+                        }
+
+                        // Write new value length
+                        TDSUtilities.WriteUShort(cache, (ushort)subCache.Length);
+
+                        // Write new value
+                        subCache.WriteTo(cache);
+
+                        // Write zero for the old value length
+                        TDSUtilities.WriteUShort(cache, 0);
+
+                        break;
+                    }
+                case TDSEnvChangeTokenType.EnhancedRouting:
+                    {
+                        // Create a sub-cache to determine the value length
+                        MemoryStream subCache = new MemoryStream();
+
+                        // Check if new value exists
+                        if (NewValue != null)
+                        {
+                            // Deflate token value
+                            (NewValue as TdsEnhancedRoutingEnvChangeTokenValue).Deflate(subCache);
                         }
 
                         // Write new value length
