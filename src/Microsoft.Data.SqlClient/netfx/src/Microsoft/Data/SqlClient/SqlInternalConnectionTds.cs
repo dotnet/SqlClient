@@ -2169,7 +2169,6 @@ namespace Microsoft.Data.SqlClient
                         CurrentDatabase = _originalDatabase = ConnectionOptions.InitialCatalog;
                         ServerProvidedFailoverPartner = null;
                         _instanceName = string.Empty;
-                        _instanceName = string.Empty;
 
                         AttemptOneLogin(
                                 currentServerInfo,

@@ -94,16 +94,11 @@ namespace Microsoft.Data.SqlClient
             {
                 if (s_ignoreServerProvidedFailoverPartner is null)
                 {
-                    if (AppContext.TryGetSwitch(IgnoreServerProvidedFailoverPartnerString, out bool returnedValue) && returnedValue)
-                    {
-                        s_ignoreServerProvidedFailoverPartner = true;
-                    }
-                    else
-                    {
-                        s_ignoreServerProvidedFailoverPartner = false;
-                    }
+                    bool result;
+                    result = AppContext.TryGetSwitch(IgnoreServerProvidedFailoverPartnerString, out result) ? result : false;
+                    s_ignoreServerProvidedFailoverPartner = result;
                 }
-                return s_ignoreServerProvidedFailoverPartner == true;
+                return s_ignoreServerProvidedFailoverPartner.Value;
             }
         }
     }
