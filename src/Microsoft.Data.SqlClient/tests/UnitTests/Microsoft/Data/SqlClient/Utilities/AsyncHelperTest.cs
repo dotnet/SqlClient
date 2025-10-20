@@ -1,3 +1,7 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -620,6 +624,29 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         #region CreateContinuationTask
 
         [Fact]
+        public void CreateContinuationTask_NullTask()
+        {
+            // Arrange
+            Mock<Action> onSuccess = new();
+            Mock<Action<Exception>> onFailure = new();
+            Mock<Action> onCancellation = new();
+
+            // Act
+            Task continuationTask = AsyncHelper.CreateContinuationTask(
+                taskToContinue: null,
+                onSuccess.Object,
+                onFailure.Object,
+                onCancellation.Object);
+
+            // Assert
+            Assert.Null(continuationTask);
+
+            onSuccess.Verify(action => action(), Times.Once);
+            onFailure.VerifyNeverCalled();
+            onCancellation.VerifyNeverCalled();
+        }
+
+        [Fact]
         public async Task CreateContinuationTask_TaskCompletes()
         {
             // Arrange
@@ -638,6 +665,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
 
             // Assert
             Assert.Equal(TaskStatus.RanToCompletion, continuationTask.Status);
+
             onSuccess.Verify(action => action(), Times.Once);
             onFailure.VerifyNeverCalled();
             onCancellation.VerifyNeverCalled();
@@ -778,6 +806,31 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         #endregion
 
         #region CreateContinuationTaskWithState<T1>
+
+        [Fact]
+        public void CreateContinuationTaskWithState_1Generic_NullTask()
+        {
+            // Arrange
+            const int state1 = 123;
+            Mock<Action<int>> onSuccess = new();
+            Mock<Action<int, Exception>> onFailure = new();
+            Mock<Action<int>> onCancellation = new();
+
+            // Act
+            Task continuationTask = AsyncHelper.CreateContinuationTaskWithState(
+                taskToContinue: null,
+                state1,
+                onSuccess.Object,
+                onFailure.Object,
+                onCancellation.Object);
+
+            // Assert
+            Assert.Null(continuationTask);
+
+            onSuccess.Verify(action => action(state1), Times.Once);
+            onFailure.VerifyNeverCalled();
+            onCancellation.VerifyNeverCalled();
+        }
 
         [Fact]
         public async Task CreateContinuationTaskWithState_1Generic_TaskCompletes()
@@ -956,6 +1009,34 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         #endregion
 
         #region CreateContinuationTaskWithState<T1, T2>
+
+        [Fact]
+        public void CreateContinuationTaskWithState_2Generics_NullTask()
+        {
+            // Arrange
+            const int state1 = 123;
+            const int state2 = 234;
+
+            Mock<Action<int, int>> onSuccess = new();
+            Mock<Action<int, int, Exception>> onFailure = new();
+            Mock<Action<int, int>> onCancellation = new();
+
+            // Act
+            Task continuationTask = AsyncHelper.CreateContinuationTaskWithState(
+                taskToContinue: null,
+                state1,
+                state2,
+                onSuccess.Object,
+                onFailure.Object,
+                onCancellation.Object);
+
+            // Assert
+            Assert.Null(continuationTask);
+
+            onSuccess.Verify(action => action(state1, state2), Times.Once);
+            onFailure.VerifyNeverCalled();
+            onCancellation.VerifyNeverCalled();
+        }
 
         [Fact]
         public async Task CreateContinuationTaskWithState_2Generics_TaskCompletes()
