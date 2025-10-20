@@ -12,14 +12,15 @@ namespace Microsoft.Data.SqlClient.Utilities
 {
     internal static class AsyncHelper
     {
-        internal static void ContinueTask(Task task,
-            TaskCompletionSource<object> completion,
+        internal static void ContinueTask(
+            Task taskToContinue,
+            TaskCompletionSource<object> taskCompletionSource,
             Action onSuccess,
             Action<Exception> onFailure = null,
             Action onCancellation = null,
             Func<Exception, Exception> exceptionConverter = null)
         {
-            task.ContinueWith(
+            taskToContinue.ContinueWith(
                 tsk =>
                 {
                     if (tsk.Exception != null)
@@ -35,7 +36,7 @@ namespace Microsoft.Data.SqlClient.Utilities
                         }
                         finally
                         {
-                            completion.TrySetException(exc);
+                            taskCompletionSource.TrySetException(exc);
                         }
                     }
                     else if (tsk.IsCanceled)
@@ -46,7 +47,7 @@ namespace Microsoft.Data.SqlClient.Utilities
                         }
                         finally
                         {
-                            completion.TrySetCanceled();
+                            taskCompletionSource.TrySetCanceled();
                         }
                     }
                     else
@@ -58,7 +59,7 @@ namespace Microsoft.Data.SqlClient.Utilities
                         // @TODO: CER Exception Handling was removed here (see GH#3581)
                         catch (Exception e)
                         {
-                            completion.SetException(e);
+                            taskCompletionSource.SetException(e);
                         }
                     }
                 }, TaskScheduler.Default
@@ -88,7 +89,6 @@ namespace Microsoft.Data.SqlClient.Utilities
 
                     if (task.Exception is not null)
                     {
-                        // @TODO: Exception converter?
                         try
                         {
                             typedState2.OnFailure?.Invoke(typedState2.State, task.Exception);
@@ -150,7 +150,6 @@ namespace Microsoft.Data.SqlClient.Utilities
 
                     if (task.Exception is not null)
                     {
-                        // @TODO: Exception converter?
                         try
                         {
                             typedState2.OnFailure?.Invoke(typedState2.State1, typedState2.State2, task.Exception);
@@ -258,13 +257,6 @@ namespace Microsoft.Data.SqlClient.Utilities
             Action<TState, Exception> onFailure = null,
             Action<TState> onCancellation = null)
         {
-            // Note: this code is almost identical to ContinueTaskWithState, but creates its own
-            // task completion source and completes it on success.
-            // Yes, we could just chain into the ContinueTaskWithState, but that requires wrapping
-            // more state in a tuple and confusing the heck out of people. So, duplicating code
-            // just makes things more clean. Besides, @TODO: We should get rid of these helpers and
-            // just use async/await natives.
-
             if (taskToContinue is null)
             {
                 onSuccess(state);
