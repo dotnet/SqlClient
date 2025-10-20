@@ -444,9 +444,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParser.cs">
       <Link>Microsoft\Data\SqlClient\TdsParser.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParser.SSPI.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParser.SSPI.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.cs</Link>
     </Compile>
@@ -1017,7 +1014,6 @@
     
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netfx.cs" />
   </ItemGroup>
   <!-- Resources  -->
   <ItemGroup>

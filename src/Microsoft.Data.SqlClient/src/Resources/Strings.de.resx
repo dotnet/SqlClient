@@ -2350,7 +2350,7 @@
     <value>Interner Microsoft.Data.OleDb.OleDbDataAdapter-Fehler: ungültiger Parameteraccessor: {0} {1}.</value>
   </data>
   <data name="OleDb_UninitializedParameters" xml:space="preserve">
-    <value>Parameter {0}: die Eigenschaft OleDbType ist nicht initialisiert: OleDbType.{1}.</value>
+    <value>Parameter[{0}]: die Eigenschaft OleDbType ist nicht initialisiert: OleDbType.{1}.</value>
   </data>
   <data name="OleDb_NoProviderSupportForParameters" xml:space="preserve">
     <value>Die ICommandWithParameters-Schnittstelle wird vom '{0}'-Provider nicht unterstützt. Befehlsparameter werden vom aktuellen Provider nicht unterstützt.</value>
@@ -2854,7 +2854,7 @@
     <value>Die Länge von '{0}' muss mit der Länge von '{1}' übereinstimmen.</value>
   </data>
   <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
-    <value>Der 'SqlDbType' '{0}' ist für {1} unzulässig. Unterstützt wird nur {2}.</value>
+    <value>Der SqlDbType '{0}' ist für {1} unzulässig. Unterstützt wird nur {2}.</value>
   </data>
   <data name="SQL_TooManyValues" xml:space="preserve">
     <value>Zu viele Werte.</value>
@@ -3466,7 +3466,7 @@
     <value>Der angegebene TypeName für Parameter '{0}'. TypeName darf nur für Structured-Parameter festgelegt werden.</value>
   </data>
   <data name="MetaType_SingleValuedStructNotSupported" xml:space="preserve">
-    <value>Der SqlDbType.Structured-Typ wird nur für Typen mit mehreren Werten unterstützt.</value>
+    <value>Der Typ SqlDbType.Structured wird nur für Typen mit mehreren Werten unterstützt.</value>
   </data>
   <data name="NullSchemaTableDataTypeNotSupported" xml:space="preserve">
     <value>Die 'DateType'-Spalte für das Feld '{0}' in der Schematabelle ist NULL. 'DataType' darf nicht 'null' sein.</value>
@@ -3634,7 +3634,7 @@
     <value>GetMetaData ist für diesen SqlDbType nicht gültig.</value>
   </data>
   <data name="SqlMetaData_InvalidSqlDbTypeForConstructorFormat" xml:space="preserve">
-    <value>Der 'dbType' {0} ist für diesen Konstruktor ungültig.</value>
+    <value>Der dbType {0} ist für diesen Konstruktor ungültig.</value>
   </data>
   <data name="SqlMetaData_NameTooLong" xml:space="preserve">
     <value>Der Name ist zu lang.</value>
@@ -4684,7 +4684,7 @@
     <value>Nicht unterstützter Vektortyp „{0}“.</value>
   </data>
   <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
-    <value>Der Nullwert wird für den Ausgabeparameter „{0}“ des SqlDbtype-Vektors nicht unterstützt.</value>
+    <value>Der Nullwert wird für den Ausgabeparameter '{0}' des SqlDbtype-Vektors nicht unterstützt.</value>
   </data>
   <data name="ADP_InvalidVectorHeader" xml:space="preserve">
     <value>Ungültiger Vektorheader empfangen.</value>

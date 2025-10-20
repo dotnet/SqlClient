@@ -109,10 +109,8 @@ namespace Microsoft.Data.SqlClient
             _pendingCancel = false;
 
             // @TODO: Do we want to use a command scope here like nonquery and xml? or is operation id ok?
-            #if NET
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
             Exception e = null;
-            #endif
 
             using var eventScope = TryEventScope.Create($"SqlCommand.ExecuteReader | API | Object Id {ObjectID}");
             // @TODO: Do we want to have a correlation trace event here like nonquery and xml?
@@ -136,9 +134,7 @@ namespace Microsoft.Data.SqlClient
             // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception ex)
             {
-                #if NET
                 e = ex;
-                #endif
 
                 if (ex is SqlException sqlException)
                 {
@@ -152,7 +148,6 @@ namespace Microsoft.Data.SqlClient
                 SqlStatistics.StopTimer(statistics);
                 WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
 
-                #if NET
                 if (e is not null)
                 {
                     s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
@@ -161,7 +156,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                 }
-                #endif
             }
         }
 
@@ -573,23 +567,19 @@ namespace Microsoft.Data.SqlClient
             {
                 Exception e = task.Exception.InnerException;
 
-                #if NET
                 if (!_parentOperationStarted)
                 {
                     s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 }
-                #endif
 
                 source.SetException(e);
             }
             else
             {
-                #if NET
                 if (!_parentOperationStarted)
                 {
                     s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                 }
-                #endif
 
                 if (task.IsCanceled)
                 {
@@ -940,13 +930,7 @@ namespace Microsoft.Data.SqlClient
                 $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
                 $"Command Text '{CommandText}'");
 
-            Guid operationId = Guid.Empty;
-            #if NET
-            if (!_parentOperationStarted)
-            {
-                operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
-            }
-            #endif
+            Guid operationId = !_parentOperationStarted ? s_diagnosticListener.WriteCommandBefore(this, _transaction) : Guid.Empty;
 
             // Connection can be used as state in RegisterForConnectionCloseNotification
             // continuation to avoid an allocation so use it as the state value if possible, but it
@@ -1015,12 +999,10 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                #if NET
                 if (!_parentOperationStarted)
                 {
                     s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 }
-                #endif
 
                 source.SetException(e);
                 context?.Dispose();
@@ -1749,11 +1731,7 @@ namespace Microsoft.Data.SqlClient
                     onCancellation: static state =>
                     {
                         ((SqlCommand)state).CachedAsyncState?.ResetAsyncState();
-                    }
-                    #if NETFRAMEWORK
-                    , connectionToAbort: _activeConnection
-                    #endif
-                );
+                    });
 
                 task = completion.Task;
                 return ds;

@@ -16,7 +16,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
-using Microsoft.Data.SqlClient.Diagnostics;
 
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
@@ -26,9 +25,6 @@ namespace Microsoft.Data.SqlClient
     public sealed partial class SqlCommand : DbCommand, ICloneable
     {
         private const int MaxRPCNameLength = 1046;
-
-        private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener();
-        private bool _parentOperationStarted = false;
 
         internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
 

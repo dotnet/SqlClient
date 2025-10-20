@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted;
 /// This takes ownership of the RSA instance supplied to it, disposing of it when Dispose is called.
 /// </para>
 /// </remarks>
-internal readonly ref struct ColumnMasterKeyMetadata // : IDisposable
+internal readonly ref struct ColumnMasterKeyMetadata : IDisposable
 {
     private static readonly HashAlgorithmName s_hashAlgorithm = HashAlgorithmName.SHA256;
 
@@ -49,7 +49,6 @@ internal readonly ref struct ColumnMasterKeyMetadata // : IDisposable
 #endif
     private readonly RSA _rsa;
 
-    // @TODO: SqlColumnEncryptionCertificateStoreProvider.SignMasterKeyMetadata and .VerifyMasterKeyMetadata should use this type.
     /// <summary>
     /// Represents metadata associated with a column master key, including its cryptographic hash, path, provider name,
     /// and enclave computation settings.
