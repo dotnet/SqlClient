@@ -46,6 +46,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly Tristate _legacyVarTimeZeroScaleBehaviourOriginal;
     private readonly FieldInfo _useConnectionPoolV2Field;
     private readonly Tristate _useConnectionPoolV2Original;
+    private readonly FieldInfo _ignoreServerProvidedFailoverPartnerField;
     private readonly Tristate _ignoreServerProvidedFailoverPartnerOriginal;
 #if NETFRAMEWORK
     private readonly FieldInfo _disableTnirByDefaultField;
