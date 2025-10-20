@@ -26,5 +26,6 @@
     <Reference Include="System.Transactions" />
     <PackageReference Include="System.Data.Common" />
     <PackageReference Include="System.ValueTuple" />
-	</ItemGroup>
+    <PackageReference Include="System.Threading.Channels" />
+  </ItemGroup>
 </Project>

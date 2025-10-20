@@ -6,7 +6,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 {
     internal enum DbConnectionPoolState
     {
-        Initializing,
         Running,
         ShuttingDown,
     }
