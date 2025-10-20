@@ -2052,14 +2052,10 @@ namespace Microsoft.Data.SqlClient
             ServerInfo failoverServerInfo = new ServerInfo(connectionOptions, failoverHost, connectionOptions.FailoverPartnerSPN);
 
             ResolveExtendedServerName(primaryServerInfo, !redirectedUserInstance, connectionOptions);
-<<<<<<< HEAD
-            if (ServerProvidedFailOverPartner == null)
-            {// No point in resolving the failover partner when we're going to override it below
-             // Don't resolve aliases if failover == primary // UNDONE: WHY?  Previous code in TdsParser.Connect did this, but the reason is not clear
-=======
             if (ServerProvidedFailoverPartner == null)
             {
->>>>>>> fa7132eb7 (Fix #3400, ignore server-provided failover partner (#3625))
+                // No point in resolving the failover partner when we're going to override it below
+                // Don't resolve aliases if failover == primary // UNDONE: WHY?  Previous code in TdsParser.Connect did this, but the reason is not clear
                 ResolveExtendedServerName(failoverServerInfo, !redirectedUserInstance && failoverHost != primaryServerInfo.UserServerName, connectionOptions);
             }
 
@@ -2177,13 +2173,8 @@ namespace Microsoft.Data.SqlClient
                         // restore properties that could be changed by the environment tokens
                         _currentPacketSize = ConnectionOptions.PacketSize;
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
-<<<<<<< HEAD
                         CurrentDatabase = _originalDatabase = ConnectionOptions.InitialCatalog;
-                        _currentFailoverPartner = null;
-=======
-                        CurrentDatabase = _originalDatabase = connectionOptions.InitialCatalog;
                         ServerProvidedFailoverPartner = null;
->>>>>>> fa7132eb7 (Fix #3400, ignore server-provided failover partner (#3625))
                         _instanceName = string.Empty;
 
                         AttemptOneLogin(

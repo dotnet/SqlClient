@@ -1789,22 +1789,9 @@ namespace Microsoft.Data.SqlClient
                 ServerInfo currentServerInfo;
                 if (useFailoverHost)
                 {
-<<<<<<< HEAD
-                    // Primary server may give us a different failover partner than the connection string indicates.  Update it
-                    if (ServerProvidedFailOverPartner != null && failoverServerInfo.ResolvedServerName != ServerProvidedFailOverPartner)
-=======
-                    if (!failoverDemandDone)
-                    {
-#if NETFRAMEWORK
-                        FailoverPermissionDemand();
-#endif
-                        failoverDemandDone = true;
-                    }
-
                     // Primary server may give us a different failover partner than the connection string indicates.
                     // Update it only if we are respecting server-provided failover partner values.
                     if (ServerProvidedFailoverPartner != null && failoverServerInfo.ResolvedServerName != ServerProvidedFailoverPartner)
->>>>>>> fa7132eb7 (Fix #3400, ignore server-provided failover partner (#3625))
                     {
                         if (LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner)
                         {
