@@ -33,9 +33,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public static MethodInfo sqlAeadAes256CbcHmac256FactoryCreate = sqlAeadAes256CbcHmac256Factory.GetMethod("Create", BindingFlags.Instance | BindingFlags.NonPublic);
         public static Type sqlClientEncryptionAlgorithm = systemData.GetType("Microsoft.Data.SqlClient.SqlClientEncryptionAlgorithm");
         public static MethodInfo sqlClientEncryptionAlgorithmEncryptData = sqlClientEncryptionAlgorithm.GetMethod("EncryptData", BindingFlags.Instance | BindingFlags.NonPublic);
-        public static Type SqlColumnEncryptionCertificateStoreProvider = systemData.GetType("Microsoft.Data.SqlClient.SqlColumnEncryptionCertificateStoreProvider");
-        public static MethodInfo SqlColumnEncryptionCertificateStoreProviderRSADecrypt = SqlColumnEncryptionCertificateStoreProvider.GetMethod("RSADecrypt", BindingFlags.Instance | BindingFlags.NonPublic);
-        public static MethodInfo SqlColumnEncryptionCertificateStoreProviderRSAVerifySignature = SqlColumnEncryptionCertificateStoreProvider.GetMethod("RSAVerifySignature", BindingFlags.Instance | BindingFlags.NonPublic);
         public static MethodInfo sqlClientEncryptionAlgorithmDecryptData = sqlClientEncryptionAlgorithm.GetMethod("DecryptData", BindingFlags.Instance | BindingFlags.NonPublic);
         public static Type SqlSymmetricKeyCache = systemData.GetType("Microsoft.Data.SqlClient.SqlSymmetricKeyCache");
         public static MethodInfo SqlSymmetricKeyCacheGetInstance = SqlSymmetricKeyCache.GetMethod("GetInstance", BindingFlags.Static | BindingFlags.NonPublic);
@@ -100,41 +97,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             object sqlSymmetricKeyCache = SqlSymmetricKeyCacheGetInstance.Invoke(null, null);
             MemoryCache cache = SqlSymmetricKeyCacheFieldCache.GetValue(sqlSymmetricKeyCache) as MemoryCache;
             ClearCache(cache);
-        }
-
-        internal static byte[] DecryptRsaDirectly(byte[] rsaPfx, byte[] ciphertextCek, string masterKeyPath)
-        {
-            Debug.Assert(rsaPfx != null && rsaPfx.Length > 0);
-            // The rest of the parameters may be invalid for exception handling test cases
-
-#if NET9_0_OR_GREATER
-            X509Certificate2 x509 = X509CertificateLoader.LoadPkcs12(rsaPfx, @"P@zzw0rD!SqlvN3x+");
-#else
-            X509Certificate2 x509 = new(rsaPfx, @"P@zzw0rD!SqlvN3x+");
-#endif
-            Debug.Assert(x509.HasPrivateKey);
-
-            SqlColumnEncryptionCertificateStoreProvider rsaProvider = new SqlColumnEncryptionCertificateStoreProvider();
-            Object RsaDecryptionResult = SqlColumnEncryptionCertificateStoreProviderRSADecrypt.Invoke(rsaProvider, new object[] { ciphertextCek, x509 });
-
-            return (byte[])RsaDecryptionResult;
-        }
-
-        internal static bool VerifyRsaSignatureDirectly(byte[] hashedCek, byte[] signedCek, byte[] rsaPfx)
-        {
-            Debug.Assert(rsaPfx != null && rsaPfx.Length > 0);
-
-#if NET9_0_OR_GREATER
-            X509Certificate2 x509 = X509CertificateLoader.LoadPkcs12(rsaPfx, @"P@zzw0rD!SqlvN3x+");
-#else
-            X509Certificate2 x509 = new(rsaPfx, @"P@zzw0rD!SqlvN3x+");
-#endif
-            Debug.Assert(x509.HasPrivateKey);
-
-            SqlColumnEncryptionCertificateStoreProvider rsaProvider = new SqlColumnEncryptionCertificateStoreProvider();
-            Object RsaVerifySignatureResult = SqlColumnEncryptionCertificateStoreProviderRSAVerifySignature.Invoke(rsaProvider, new object[] { hashedCek, signedCek, x509 });
-
-            return (bool)RsaVerifySignatureResult;
         }
 
         /// <summary>
