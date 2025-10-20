@@ -870,8 +870,8 @@ namespace Microsoft.Data.SqlClient
                 timeoutCts.Token);
             
             AsyncHelper.ContinueTask(
-                reconnectTask,
-                completion,
+                taskToContinue: reconnectTask,
+                taskCompletionSource: completion,
                 onSuccess: () =>
                 {
                     if (completion.Task.IsCompleted)

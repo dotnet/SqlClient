@@ -4353,9 +4353,16 @@ namespace Microsoft.Data.SqlClient
         // This is in its own method to avoid always allocating the lambda in WriteBytes
         private void WriteBytesSetupContinuation(byte[] array, int len, TaskCompletionSource<object> completion, int offset, Task packetTask)
         {
-            AsyncHelper.ContinueTask(packetTask, completion,
-               onSuccess: () => WriteBytes(ReadOnlySpan<byte>.Empty, len: len, offsetBuffer: offset, canAccumulate: false, completion: completion, array)
-           );
+            AsyncHelper.ContinueTask(
+                taskToContinue: packetTask,
+                taskCompletionSource: completion,
+                onSuccess: () => WriteBytes(
+                    ReadOnlySpan<byte>.Empty,
+                    len: len,
+                    offsetBuffer: offset,
+                    canAccumulate: false,
+                    completion: completion,
+                    array));
         }
 
         /// <summary>

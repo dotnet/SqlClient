@@ -17,8 +17,7 @@ namespace Microsoft.Data.SqlClient.Utilities
             TaskCompletionSource<object> taskCompletionSource,
             Action onSuccess,
             Action<Exception> onFailure = null,
-            Action onCancellation = null,
-            Func<Exception, Exception> exceptionConverter = null)
+            Action onCancellation = null)
         {
             taskToContinue.ContinueWith(
                 tsk =>
@@ -26,10 +25,6 @@ namespace Microsoft.Data.SqlClient.Utilities
                     if (tsk.Exception != null)
                     {
                         Exception exc = tsk.Exception.InnerException;
-                        if (exceptionConverter != null)
-                        {
-                            exc = exceptionConverter(exc);
-                        }
                         try
                         {
                             onFailure?.Invoke(exc);
@@ -62,8 +57,8 @@ namespace Microsoft.Data.SqlClient.Utilities
                             taskCompletionSource.SetException(e);
                         }
                     }
-                }, TaskScheduler.Default
-            );
+                },
+                TaskScheduler.Default);
         }
 
         internal static void ContinueTaskWithState<TState>(

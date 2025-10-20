@@ -1616,10 +1616,9 @@ namespace Microsoft.Data.SqlClient
                 onTimeout: static () => SQL.CR_ReconnectTimeout(),
                 timeoutCts.Token);
 
-            // @TODO: With an object to pass around we can use the state-based version
             AsyncHelper.ContinueTask(
-                reconnectTask,
-                completion,
+                taskToContinue: reconnectTask,
+                taskCompletionSource: completion,
                 onSuccess: () =>
                 {
                     if (completion.Task.IsCompleted)
@@ -1651,7 +1650,7 @@ namespace Microsoft.Data.SqlClient
                             taskToContinue: subTask,
                             taskCompletionSource: completion,
                             state: completion,
-                            onSuccess: static state => state.SetResult(null));
+                            onSuccess: static completion2 => completion2.SetResult(null));
                     }
                 });
         }
