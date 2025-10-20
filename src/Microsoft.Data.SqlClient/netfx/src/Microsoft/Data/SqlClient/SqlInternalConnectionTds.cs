@@ -2118,7 +2118,7 @@ namespace Microsoft.Data.SqlClient
                             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}, new failover partner={1}", ObjectID, ServerProvidedFailoverPartner);
                             failoverServerInfo.SetDerivedNames(protocol, ServerProvidedFailoverPartner);
                         }
-                        failoverServerInfo.SetDerivedNames(protocol, ServerProvidedFailOverPartner);
+                        failoverServerInfo.SetDerivedNames(protocol, ServerProvidedFailoverPartner);
                     }
 
                     currentServerInfo = failoverServerInfo;
@@ -2234,7 +2234,6 @@ namespace Microsoft.Data.SqlClient
             _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.HasLoggedIn;
 
             if (useFailoverHost && ServerProvidedFailoverPartner == null)
-            if (useFailoverHost && ServerProvidedFailOverPartner == null)
             {
                 throw SQL.InvalidPartnerConfiguration(failoverHost, CurrentDatabase);
             }
