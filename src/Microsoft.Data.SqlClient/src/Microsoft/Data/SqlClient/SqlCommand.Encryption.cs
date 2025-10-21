@@ -156,6 +156,42 @@ namespace Microsoft.Data.SqlClient
             return describeParameterEncryptionDataReader;
         }
 
+        private void ReadDescribeEncryptionParameterResultsAttestation(SqlDataReader ds, bool isRetry)
+        {
+            bool attestationInfoRead = false;
+            while (ds.Read())
+            {
+                if (attestationInfoRead)
+                {
+                    throw SQL.MultipleRowsReturnedForAttestationInfo();
+                }
+
+                int attestationInfoLength = (int)ds.GetBytes((int)DescribeParameterEncryptionResultSet3.AttestationInfo, 0, null, 0, 0);
+                byte[] attestationInfo = new byte[attestationInfoLength];
+                ds.GetBytes((int)DescribeParameterEncryptionResultSet3.AttestationInfo, 0, attestationInfo, 0, attestationInfoLength);
+
+                SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
+                string enclaveType = this._activeConnection.Parser.EnclaveType;
+
+                EnclaveDelegate.Instance.CreateEnclaveSession(
+                    attestationProtocol,
+                    enclaveType,
+                    GetEnclaveSessionParameters(),
+                    attestationInfo,
+                    enclaveAttestationParameters,
+                    customData,
+                    customDataLength,
+                    isRetry);
+                enclaveAttestationParameters = null;
+                attestationInfoRead = true;
+            }
+
+            if (!attestationInfoRead)
+            {
+                throw SQL.AttestationInfoNotReturnedFromSqlServer(this._activeConnection.Parser.EnclaveType, this._activeConnection.EnclaveAttestationUrl);
+            }
+        }
+
         private bool ReadDescribeEncryptionParameterResultsKeyList(
             SqlDataReader ds,
             Dictionary<int, SqlTceCipherInfoEntry> columnEncryptionKeyTable)

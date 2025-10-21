@@ -1597,11 +1597,6 @@ namespace Microsoft.Data.SqlClient
             // Indicates the current result set we are reading, used in BatchRPCMode, where we can have more than 1 result set.
             int resultSetSequenceNumber = 0;
 
-#if DEBUG
-            // Keep track of the number of rows in the result sets.
-            int rowsAffected = 0;
-#endif
-
             // A flag that used in BatchRPCMode, to assert the result of lookup in to the dictionary maintaining the map of describe parameter encryption requests
             // and the corresponding original rpc requests.
             bool lookupDictionaryResult;
@@ -1672,12 +1667,6 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-#if DEBUG
-                Debug.Assert((rowsAffected == 0) || (rowsAffected == RowsAffectedByDescribeParameterEncryption),
-                            "number of rows received (if received) for describe parameter encryption should be equal to rows affected by describe parameter encryption.");
-#endif
-
-
                 if (ShouldUseEnclaveBasedWorkflow && (enclaveAttestationParameters != null) && requiresEnclaveComputations)
                 {
                     if (!ds.NextResult())
@@ -1685,39 +1674,7 @@ namespace Microsoft.Data.SqlClient
                         throw SQL.UnexpectedDescribeParamFormatAttestationInfo(this._activeConnection.Parser.EnclaveType);
                     }
 
-                    bool attestationInfoRead = false;
-
-                    while (ds.Read())
-                    {
-                        if (attestationInfoRead)
-                        {
-                            throw SQL.MultipleRowsReturnedForAttestationInfo();
-                        }
-
-                        int attestationInfoLength = (int)ds.GetBytes((int)DescribeParameterEncryptionResultSet3.AttestationInfo, 0, null, 0, 0);
-                        byte[] attestationInfo = new byte[attestationInfoLength];
-                        ds.GetBytes((int)DescribeParameterEncryptionResultSet3.AttestationInfo, 0, attestationInfo, 0, attestationInfoLength);
-
-                        SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
-                        string enclaveType = this._activeConnection.Parser.EnclaveType;
-
-                        EnclaveDelegate.Instance.CreateEnclaveSession(
-                            attestationProtocol,
-                            enclaveType,
-                            GetEnclaveSessionParameters(),
-                            attestationInfo,
-                            enclaveAttestationParameters,
-                            customData,
-                            customDataLength,
-                            isRetry);
-                        enclaveAttestationParameters = null;
-                        attestationInfoRead = true;
-                    }
-
-                    if (!attestationInfoRead)
-                    {
-                        throw SQL.AttestationInfoNotReturnedFromSqlServer(this._activeConnection.Parser.EnclaveType, this._activeConnection.EnclaveAttestationUrl);
-                    }
+                    ReadDescribeEncryptionParameterResultsAttestation(ds, isRetry);
                 }
 
                 // The server has responded with encryption related information for this rpc request. So clear the needsFetchParameterEncryptionMetadata flag.
