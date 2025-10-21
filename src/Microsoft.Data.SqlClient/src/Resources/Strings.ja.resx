@@ -4077,20 +4077,11 @@
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
     <value>指定された列暗号化キーの暗号文の長さ ({0}) が、'{3}' において列マスター キー ({2}) を使用した場合の暗号文の長さ ({1}) と一致しません。暗号化された列暗号化キーが壊れているか、指定された {4} パスが正しくない可能性があります。</value>
   </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
-    <value>指定された列暗号化キーの暗号文の長さ ({0}) が、'{2}' にある列マスター キー (証明書) を使用して生成された暗号文の長さ ({1}) と一致しません。暗号化された列暗号化キーが壊れているか、指定した証明書のパスが正しくない可能性があります。</value>
-  </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
     <value>指定された列暗号化キーの署名の長さ ({0}) が、'{3}' において列マスター キー ({2}) を使用した場合の署名の長さ ({1}) と一致しません。暗号化された列暗号化キーが壊れているか、指定された {4} パスが正しくない可能性があります。</value>
   </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
-    <value>指定された列暗号化キーの署名の長さ ({0}) が、'{2}' にある列マスター キー (証明書) を使用して計算された署名の長さ ({1}) と一致しません。暗号化された列暗号化キーが壊れているか、指定した証明書のパスが正しくない可能性があります。</value>
-  </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
     <value>指定された列暗号化キーの署名が、'{1}' にある列マスター キー ({0}) を使用して計算された署名と一致しません。暗号化された列暗号化キーが破損したか、指定されたパスが正しくない可能性があります。</value>
-  </data>
-  <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
-    <value>指定した暗号化された列暗号化キーの署名が、'{0}' にある列マスター キー (証明書) を使って計算された署名と一致しません 。暗号化された列暗号化キーが壊れているか、指定されたパスが正しくない可能性があります。</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>キーのパス '{0}' で指定された証明書には、列暗号化キーを暗号化する秘密キーがありません。証明書が正常にインポートされていることを確認してください。</value>

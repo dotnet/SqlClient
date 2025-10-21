@@ -620,6 +620,15 @@ namespace Microsoft.Data.SqlClient
 
         #region Pooler Trace
         [NonEvent]
+        internal void TryPoolerTraceEvent(string message)
+        {
+            if (Log.IsPoolerTraceEnabled())
+            {
+                PoolerTrace(message);
+            }
+        }
+
+        [NonEvent]
         internal void TryPoolerTraceEvent<T0>(string message, T0 args0)
         {
             if (Log.IsPoolerTraceEnabled())

@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted;
 /// This takes ownership of the RSA instance supplied to it, disposing of it when Dispose is called.
 /// </para>
 /// </remarks>
-internal readonly ref struct EncryptedColumnEncryptionKeyParameters // : IDisposable
+internal readonly ref struct EncryptedColumnEncryptionKeyParameters : IDisposable
 {
     private const byte AlgorithmVersion = 0x01;
 
@@ -64,7 +64,6 @@ internal readonly ref struct EncryptedColumnEncryptionKeyParameters // : IDispos
     private readonly string _keyType;
     private readonly string _keyPathReference;
 
-    // @TODO: SqlColumnEncryptionCertificateStoreProvider, SqlColumnEncryptionCngProvider and SqlColumnEncryptionCspProvider should use this type.
     /// <summary>
     /// Initializes a new instance of the <see cref="EncryptedColumnEncryptionKeyParameters"/> struct with the specified
     /// RSA key, key path, key type, and key path reference.

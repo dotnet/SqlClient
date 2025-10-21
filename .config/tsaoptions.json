@@ -1,9 +1,9 @@
 {
     "instanceUrl": "https://sqlclientdrivers.visualstudio.com/",
     "projectName": "ADO.Net",
-    "areaPath": "ADO.Net",
-    "iterationPath": "ADO.Net\\TSA\\SqlClient",
-    "notificationAliases": [ "SqlClient@microsoft.com" ],
+    "areaPath": "ADO.Net\\SqlDevX",
+    "iterationPath": "ADO.Net",
+    "notificationAliases": [ "sqlclientdevs@microsoft.com" ],
     "repositoryName": "SqlClient",
     "codebaseName": "SqlClient",
     "allTools": true,

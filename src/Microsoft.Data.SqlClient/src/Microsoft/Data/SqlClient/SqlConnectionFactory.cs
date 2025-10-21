@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient
         
         #region Constructors
         
-        private SqlConnectionFactory()
+        protected SqlConnectionFactory()
         {
             _connectionPoolGroups = new Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup>();
             _poolsToRelease = new List<IDbConnectionPool>();
@@ -111,7 +111,7 @@ namespace Microsoft.Data.SqlClient
                 ? new SqlConnectionPoolProviderInfo()
                 : null;
         
-        internal SqlInternalConnectionTds CreateNonPooledConnection(
+        internal DbConnectionInternal CreateNonPooledConnection(
             DbConnection owningConnection,
             DbConnectionPoolGroup poolGroup,
             DbConnectionOptions userOptions)
@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(owningConnection is not null, "null owningConnection?");
             Debug.Assert(poolGroup is not null, "null poolGroup?");
 
-            SqlInternalConnectionTds newConnection = CreateConnection(
+            DbConnectionInternal newConnection = CreateConnection(
                 poolGroup.ConnectionOptions,
                 poolGroup.PoolKey,
                 poolGroup.ProviderInfo,
@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient
             return newConnection;
         }
 
-        internal SqlInternalConnectionTds CreatePooledConnection(
+        internal DbConnectionInternal CreatePooledConnection(
             DbConnection owningConnection,
             IDbConnectionPool pool,
             DbConnectionPoolKey poolKey,
@@ -145,20 +145,31 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(pool != null, "null pool?");
 
-            SqlInternalConnectionTds newConnection = CreateConnection(
+            DbConnectionInternal newConnection = CreateConnection(
                 options,
                 poolKey, // @TODO: is pool.PoolGroup.Key the same thing?
                 pool.PoolGroup.ProviderInfo,
                 pool,
                 owningConnection,
                 userOptions);
-            if (newConnection is not null)
+
+            if (newConnection is null)
             {
-                SqlClientEventSource.Metrics.HardConnectRequest();
-                newConnection.MakePooledConnection(pool);
+                throw ADP.InternalError(ADP.InternalErrorCode.CreateObjectReturnedNull);    // CreateObject succeeded, but null object
             }
-            
+
+            if (!newConnection.CanBePooled)
+            {
+                throw ADP.InternalError(ADP.InternalErrorCode.NewObjectCannotBePooled);        // CreateObject succeeded, but non-poolable object
+            }
+
+            SqlClientEventSource.Metrics.HardConnectRequest();
+            newConnection.MakePooledConnection(pool);
+
             SqlClientEventSource.Log.TryTraceEvent("<prov.SqlConnectionFactory.CreatePooledConnection|RES|CPOOL> {0}, Pooled database connection created.", ObjectId);
+
+            newConnection.PrePush(null);
+
             return newConnection;
         }
 
@@ -576,7 +587,7 @@ namespace Microsoft.Data.SqlClient
         #region Private Methods
         
         // @TODO: I think this could be broken down into methods more specific to use cases above
-        private static SqlInternalConnectionTds CreateConnection(
+        protected virtual DbConnectionInternal CreateConnection(
             DbConnectionOptions options,
             DbConnectionPoolKey poolKey,
             DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,

@@ -2671,7 +2671,7 @@
     <value>SqlDbType.SmallDateTime 오버플로가 발생했습니다. '{0}' 값이 범위를 벗어났습니다. 이 값은 1900년 1월 1일 오전 12:00:00에서 2079년 6월 6일 오후 11:59:59 사이에 있어야 합니다.</value>
   </data>
   <data name="SQL_TimeOverflow" xml:space="preserve">
-    <value>SqlDbType.Time 오버플로가 발생했습니다.  '{0}' 값이 범위를 벗어났습니다. 이 값은 00:00:00.0000000에서 23:59:59.9999999 사이여야 합니다.</value>
+    <value>SqlDbType.Time 오버플로가 발생했습니다. '{0}' 값이 범위를 벗어났습니다. 이 값은 00:00:00.0000000에서 23:59:59.9999999 사이여야 합니다.</value>
   </data>
   <data name="SQL_MoneyOverflow" xml:space="preserve">
     <value>SqlDbType.SmallMoney 오버플로가 발생했습니다. '{0}' 값이 범위를 벗어났습니다. 이 값은 -214,748.3648에서 214,748.3647 사이여야 합니다.</value>
@@ -4077,20 +4077,11 @@
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
     <value>'{3}'에서 열 마스터 키({2})를 사용할 때 지정된 암호화된 열 암호화 키의 암호 텍스트 길이 {0}이(가) 암호 텍스트 길이 {1}과(와) 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정된 {4} 경로가 잘못되었을 수 있습니다.</value>
   </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
-    <value>'{2}'에서 열 마스터 키(인증서)를 사용할 때 지정된 암호화된 열 암호화 키의 암호 텍스트 길이 {0}이(가) 암호 텍스트 길이 {1}과(와) 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정된 인증서 경로가 잘못되었을 수 있습니다.</value>
-  </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
     <value>'{3}'에서 열 마스터 키({2})를 사용할 때 암호화된 열 암호화 키의 서명 길이 {0}이(가) 서명 길이 {1}과(와) 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정된 {4} 경로가 잘못되었을 수 있습니다.</value>
   </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
-    <value>'{2}'에서 열 마스터 키(인증서)를 사용할 때 지정된 암호화된 열 암호화 키의 서명 길이 {0}이(가) 서명 길이 {1}과(와) 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정된 인증서 경로가 잘못되었을 수 있습니다.</value>
-  </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
     <value>'{1}'에서 지정한 암호화된 열 암호화 키 서명이 열 마스터 키({0})로 계산된 서명과 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정된 경로가 잘못되었을 수 있습니다.</value>
-  </data>
-  <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
-    <value>지정한 암호화된 열 암호화 키 서명이 '{0}'의 열 마스터 키(인증서)를 사용하여 계산된 서명과 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정한 경로가 올바르지 않을 수 있습니다.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>키 경로 '{0}'의 지정된 인증서에 열 암호화 키를 암호화할 프라이빗 키가 없습니다. 인증서를 올바로 가져왔는지 확인하세요.</value>
