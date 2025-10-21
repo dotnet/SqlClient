@@ -48,18 +48,6 @@ namespace Microsoft.Data.SqlClient
         internal static int DebugForceAsyncWriteDelay { get; set; }
 #endif
 
-        internal bool ShouldUseEnclaveBasedWorkflow =>
-            (!string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) || Connection.AttestationProtocol == SqlConnectionAttestationProtocol.None) &&
-                  IsColumnEncryptionEnabled;
-
-        /// <summary>
-        /// Per-command custom providers. It can be provided by the user and can be set more than once. 
-        /// </summary> 
-        private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
-
-        internal bool HasColumnEncryptionKeyStoreProvidersRegistered =>
-            _customColumnEncryptionKeyStoreProviders is not null && _customColumnEncryptionKeyStoreProviders.Count > 0;
-
         // Cached info for async executions
         private sealed class AsyncState
         {
