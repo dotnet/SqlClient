@@ -793,5 +793,23 @@ namespace Microsoft.Data.SqlClient
             customData = null;
             customDataLength = 0;
         }
+
+        /// <summary>
+        /// Set the column encryption setting to the new one.
+        /// Do not allow conflicting column encryption settings.
+        /// </summary>
+        // @TODO: This basically just allows it to be set once and it cannot be changed after.
+        private void SetColumnEncryptionSetting(SqlCommandColumnEncryptionSetting newColumnEncryptionSetting)
+        {
+            if (!_wasBatchModeColumnEncryptionSettingSetOnce)
+            {
+                _columnEncryptionSetting = newColumnEncryptionSetting;
+                _wasBatchModeColumnEncryptionSettingSetOnce = true;
+            }
+            else if (_columnEncryptionSetting != newColumnEncryptionSetting)
+            {
+                throw SQL.BatchedUpdateColumnEncryptionSettingMismatch();
+            }
+        }
     }
 }
