@@ -30,9 +30,8 @@ namespace Microsoft.Data.SqlClient
 
 
         internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
-
         private _SqlRPC[] _rpcArrayOf1 = null;                // Used for RPC executes
-        private _SqlRPC _rpcForEncryption = null;                // Used for sp_describe_parameter_encryption RPC executes
+
 
         // cut down on object creation and cache all these
         // cached metadata
@@ -1328,123 +1327,6 @@ namespace Microsoft.Data.SqlClient
         private static int GetParameterCount(SqlParameterCollection parameters)
         {
             return parameters != null ? parameters.Count : 0;
-        }
-
-        /// <summary>
-        /// This function constructs a string parameter containing the exec statement in the following format
-        /// N'EXEC sp_name @param1=@param1, @param1=@param2, ..., @paramN=@paramN'
-        /// TODO: Need to handle return values.
-        /// </summary>
-        /// <param name="storedProcedureName">Stored procedure name</param>
-        /// <param name="parameters">SqlParameter list</param>
-        /// <returns>A string SqlParameter containing the constructed sql statement value</returns>
-        private SqlParameter BuildStoredProcedureStatementForColumnEncryption(string storedProcedureName, SqlParameterCollection parameters)
-        {
-            Debug.Assert(CommandType == CommandType.StoredProcedure, "BuildStoredProcedureStatementForColumnEncryption() should only be called for stored procedures");
-            Debug.Assert(!string.IsNullOrWhiteSpace(storedProcedureName), "storedProcedureName cannot be null or empty in BuildStoredProcedureStatementForColumnEncryption");
-
-            StringBuilder execStatement = new StringBuilder();
-            execStatement.Append(@"EXEC ");
-
-            if (parameters is null)
-            {
-                execStatement.Append(ParseAndQuoteIdentifier(storedProcedureName, false));
-                return new SqlParameter(
-                    null,
-                    ((execStatement.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText,
-                    execStatement.Length)
-                {
-                    Value = execStatement.ToString()
-                };
-            }
-
-            // Find the return value parameter (if any).
-            SqlParameter returnValueParameter = null;
-            foreach (SqlParameter param in parameters)
-            {
-                if (param.Direction == ParameterDirection.ReturnValue)
-                {
-                    returnValueParameter = param;
-                    break;
-                }
-            }
-
-            // If there is a return value parameter we need to assign the result to it.
-            // EXEC @returnValue = moduleName [parameters]
-            if (returnValueParameter != null)
-            {
-                SqlParameter.AppendPrefixedParameterName(execStatement, returnValueParameter.ParameterName);
-                execStatement.Append('=');
-            }
-
-            execStatement.Append(ParseAndQuoteIdentifier(storedProcedureName, false));
-
-            // Build parameter list in the format
-            // @param1=@param1, @param1=@param2, ..., @paramn=@paramn
-
-            // Append the first parameter
-            int index = 0;
-            int count = parameters.Count;
-            SqlParameter parameter;
-            if (count > 0)
-            {
-                // Skip the return value parameters.
-                while (index < parameters.Count && parameters[index].Direction == ParameterDirection.ReturnValue)
-                {
-                    index++;
-                }
-
-                if (index < count)
-                {
-                    parameter = parameters[index];
-                    // Possibility of a SQL Injection issue through parameter names and how to construct valid identifier for parameters.
-                    // Since the parameters comes from application itself, there should not be a security vulnerability.
-                    // Also since the query is not executed, but only analyzed there is no possibility for elevation of privilege, but only for
-                    // incorrect results which would only affect the user that attempts the injection.
-                    execStatement.Append(' ');
-                    SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
-                    execStatement.Append('=');
-                    SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
-
-                    // InputOutput and Output parameters need to be marked as such.
-                    if (parameter.Direction == ParameterDirection.Output ||
-                        parameter.Direction == ParameterDirection.InputOutput)
-                    {
-                        execStatement.AppendFormat(@" OUTPUT");
-                    }
-                }
-            }
-
-            // Move to the next parameter.
-            index++;
-
-            // Append the rest of parameters
-            for (; index < count; index++)
-            {
-                parameter = parameters[index];
-                if (parameter.Direction != ParameterDirection.ReturnValue)
-                {
-                    execStatement.Append(", ");
-                    SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
-                    execStatement.Append('=');
-                    SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
-
-                    // InputOutput and Output parameters need to be marked as such.
-                    if (
-                        parameter.Direction == ParameterDirection.Output ||
-                        parameter.Direction == ParameterDirection.InputOutput
-                    )
-                    {
-                        execStatement.AppendFormat(@" OUTPUT");
-                    }
-                }
-            }
-
-            // Construct @tsql SqlParameter to be returned
-            SqlParameter tsqlParameter = new SqlParameter(null, ((execStatement.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText, execStatement.Length);
-            tsqlParameter.Value = execStatement.ToString();
-
-            return tsqlParameter;
         }
 
         // paramList parameter for sp_executesql, sp_prepare, and sp_prepexec
