@@ -899,6 +899,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false
             }.ConnectionString;
 
             // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
@@ -961,6 +962,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false
             }.ConnectionString;
 
             using var connection = new SqlConnection(connStr);
