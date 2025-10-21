@@ -1718,17 +1718,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Clear the state in sqlcommand related to describe parameter encryption RPC requests.
-        /// </summary>
-        private void ClearDescribeParameterEncryptionRequests()
-        {
-            _sqlRPCParameterEncryptionReqArray = null;
-            _currentlyExecutingDescribeParameterEncryptionRPC = 0;
-            IsDescribeParameterEncryptionRPCCurrentlyInProgress = false;
-            _rowsAffectedBySpDescribeParameterEncryption = -1;
-        }
-
         internal void ClearBatchCommand()
         {
             _RPCList?.Clear();
