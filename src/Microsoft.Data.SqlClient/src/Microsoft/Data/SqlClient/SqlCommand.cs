@@ -238,6 +238,14 @@ namespace Microsoft.Data.SqlClient
         private SqlRetryLogicBaseProvider _retryLogicProvider;
 
         /// <summary>
+        /// number of rows affected by sp_describe_parameter_encryption.
+        /// </summary>
+        // @TODO: Use int? and replace -1 usage with null
+        // @TODO: This is only used for debug asserts?
+        // @TODO: Rename to drop Sp
+        private int _rowsAffectedBySpDescribeParameterEncryption = -1;
+
+        /// <summary>
         /// Sql reader will pull this value out for each NextResult call. It is not cumulative.
         /// _rowsAffected is cumulative for ExecuteNonQuery across all rpc batches
         /// </summary>
@@ -615,6 +623,26 @@ namespace Microsoft.Data.SqlClient
                 return _retryLogicProvider;
             }
             set => _retryLogicProvider = value;
+        }
+
+        /// <summary>
+        /// Get or add to the number of records affected by SpDescribeParameterEncryption.
+        /// The below line is used only for debug asserts and not exposed publicly or impacts functionality otherwise.
+        /// </summary>
+        internal int RowsAffectedByDescribeParameterEncryption
+        {
+            get => _rowsAffectedBySpDescribeParameterEncryption;
+            set
+            {
+                if (_rowsAffectedBySpDescribeParameterEncryption == -1)
+                {
+                    _rowsAffectedBySpDescribeParameterEncryption = value;
+                }
+                else if (value > 0)
+                {
+                    _rowsAffectedBySpDescribeParameterEncryption += value;
+                }
+            }
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Transaction/*'/>
