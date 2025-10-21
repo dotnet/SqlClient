@@ -433,30 +433,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// This function walks through the registered custom column encryption key store providers and returns an object if found.
-        /// </summary>
-        /// <param name="providerName">Provider Name to be searched in custom provider dictionary.</param>
-        /// <param name="columnKeyStoreProvider">If the provider is found, initializes the corresponding SqlColumnEncryptionKeyStoreProvider instance.</param>
-        /// <returns>true if the provider is found, else returns false</returns>
-        internal bool TryGetColumnEncryptionKeyStoreProvider(string providerName, out SqlColumnEncryptionKeyStoreProvider columnKeyStoreProvider)
-        {
-            Debug.Assert(!string.IsNullOrWhiteSpace(providerName), "Provider name is invalid");
-            return _customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
-        }
 
-        /// <summary>
-        /// This function returns a list of the names of the custom providers currently registered.
-        /// </summary>
-        /// <returns>Combined list of provider names</returns>
-        internal List<string> GetColumnEncryptionCustomKeyStoreProvidersNames()
-        {
-            if (_customColumnEncryptionKeyStoreProviders.Count > 0)
-            {
-                return new List<string>(_customColumnEncryptionKeyStoreProviders.Keys);
-            }
-            return new List<string>(0);
-        }
 
         // If the user part is quoted, remove first and last brackets and then unquote any right square
         // brackets in the procedure.  This is a very simple parser that performs no validation.  As
