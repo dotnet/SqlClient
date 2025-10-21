@@ -841,7 +841,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             using LocalAppContextSwitchesHelper switchesHelper = new();
             switchesHelper.EnableUserAgentField = LocalAppContextSwitchesHelper.Tristate.True;
 
-            using var server = new TdsServer();
+            using var server = new TdsServer(new()
+            {
+                Log = Console.Out
+            });
             server.Start();
 
             // Configure the server to support UserAgent version 0x01
@@ -865,6 +868,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 var tdsFeatureExt = loginToken.FeatureExt
                                       .OfType<TDSLogin7GenericOptionToken>().ToArray();
+                //Console.WriteLine(tdsFeatureExt);
                 var token = tdsFeatureExt?.FirstOrDefault(t => t.FeatureID == TDSFeatureID.UserAgentSupport);
 
                 // Capture conditions instead of asserting here
@@ -908,22 +912,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True(dataLengthAtLeast2);
             Assert.Equal(0x1, observedVersion);
 
-            // Note: Accessing UserAgentInfo via Reflection.
-            // We cannot use InternalsVisibleTo here because making internals visible to FunctionalTests
-            // causes the *.TestHarness.cs stubs to clash with the real internal types in SqlClient.
-            var asm = typeof(SqlConnection).Assembly;
-            var userAgentInfoType =
-                asm.GetTypes().FirstOrDefault(t => string.Equals(t.Name, "UserAgentInfo", StringComparison.Ordinal)) ??
-                asm.GetTypes().FirstOrDefault(t => t.FullName?.EndsWith(".UserAgentInfo", StringComparison.Ordinal) == true);
-
-            Assert.NotNull(userAgentInfoType);
-
-            // Try to get the property
-            var prop = userAgentInfoType.GetProperty("UserAgentCachedJsonPayload",
-                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-            Assert.NotNull(prop);
-
-            ReadOnlyMemory<byte> cachedPayload = (ReadOnlyMemory<byte>)prop.GetValue(null)!;
+            ReadOnlyMemory<byte> cachedPayload = UserAgent.UserAgentInfo.UserAgentCachedJsonPayload;
             Assert.Equal(cachedPayload.ToArray(), observedJsonBytes.ToArray());
         }
 
