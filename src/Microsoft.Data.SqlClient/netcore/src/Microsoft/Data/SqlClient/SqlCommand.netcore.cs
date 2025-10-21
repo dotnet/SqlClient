@@ -41,11 +41,6 @@ namespace Microsoft.Data.SqlClient
         // cached metadata
         private _SqlMetaDataSet _cachedMetaData;
 
-        internal EnclavePackage enclavePackage = null;
-        private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
-        private byte[] customData = null;
-        private int customDataLength = 0;
-
         // Last TaskCompletionSource for reconnect task - use for cancellation only
         private TaskCompletionSource<object> _reconnectionCompletionSource = null;
 
