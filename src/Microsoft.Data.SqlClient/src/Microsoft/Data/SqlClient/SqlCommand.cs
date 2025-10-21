@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -71,6 +72,12 @@ namespace Microsoft.Data.SqlClient
 
         // @TODO: Make property - non-private fields are bad
         internal SqlDependency _sqlDep;
+
+        // @TODO: Make property - non-private fields are bad (this should be read-only externally)
+        internal ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
+
+        // @TODO: Make property - non-private fields are bad (this can be read-only externally)
+        internal bool requiresEnclaveComputations = false;
 
         // @TODO: Rename _batchRpcMode to follow pattern
         private bool _batchRPCMode;
@@ -795,6 +802,14 @@ namespace Microsoft.Data.SqlClient
 
         private bool IsSimpleTextQuery => CommandType is CommandType.Text &&
                                           (_parameters is null || _parameters.Count == 0);
+
+        private bool ShouldCacheEncryptionMetadata
+        {
+            get
+            {
+                return !requiresEnclaveComputations || _activeConnection.Parser.AreEnclaveRetriesSupported;
+            }
+        }
 
         #endregion
 
