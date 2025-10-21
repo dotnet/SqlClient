@@ -199,6 +199,47 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
+        /// Steps to be executed in the Prepare Transparent Encryption finally block.
+        /// </summary>
+        private void PrepareTransparentEncryptionFinallyBlock(bool closeDataReader,
+            bool clearDataStructures,
+            bool decrementAsyncCount,
+            bool wasDescribeParameterEncryptionNeeded,
+            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
+            SqlDataReader describeParameterEncryptionDataReader)
+        {
+            if (clearDataStructures)
+            {
+                // Clear some state variables in SqlCommand that reflect in-progress describe parameter encryption requests.
+                ClearDescribeParameterEncryptionRequests();
+
+                if (describeParameterEncryptionRpcOriginalRpcMap != null)
+                {
+                    describeParameterEncryptionRpcOriginalRpcMap = null;
+                }
+            }
+
+            // Decrement the async count.
+            if (decrementAsyncCount)
+            {
+                SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
+                if (internalConnectionTds != null)
+                {
+                    internalConnectionTds.DecrementAsyncCount();
+                }
+            }
+
+            if (closeDataReader)
+            {
+                // Close the data reader to reset the _stateObj
+                if (describeParameterEncryptionDataReader != null)
+                {
+                    describeParameterEncryptionDataReader.Close();
+                }
+            }
+        }
+
+        /// <summary>
         /// Read the output of sp_describe_parameter_encryption
         /// </summary>
         /// <param name="ds">Resultset from calling to sp_describe_parameter_encryption</param>
