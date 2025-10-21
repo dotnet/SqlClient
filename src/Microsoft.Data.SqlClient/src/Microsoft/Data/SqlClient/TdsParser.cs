@@ -9494,6 +9494,14 @@ namespace Microsoft.Data.SqlClient
             {
                 checked
                 {
+                    if (!LocalAppContextSwitches.EnableUserAgent)
+                    {
+                        Console.WriteLine("UserAgent feature extension is disabled.");
+                    }
+                    if (((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) == 0))
+                    {
+                        Console.WriteLine("UserAgent feature extension is not requested.");
+                    }
                     // NOTE: As part of TDS spec UserAgent feature extension should be the first feature extension in the list.
                     if (LocalAppContextSwitches.EnableUserAgent && ((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) != 0))
                     {
