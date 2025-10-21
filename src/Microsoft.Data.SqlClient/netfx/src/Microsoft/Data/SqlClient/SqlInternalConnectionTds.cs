@@ -1420,9 +1420,7 @@ namespace Microsoft.Data.SqlClient
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
             requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
 
-        #if DEBUG    
             requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
-        #endif
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
