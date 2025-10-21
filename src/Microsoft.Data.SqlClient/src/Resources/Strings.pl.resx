@@ -4077,20 +4077,11 @@
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
     <value>Określona długość szyfrowanego klucza szyfrowania kolumny tekstu szyfrowanego: {0} nie jest zgodna z długością tekstu szyfrowanego: {1} w przypadku używania klucza głównego kolumny ({2}) w „{3}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka {4} może być nieprawidłowa.</value>
   </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
-    <value>Określona długość szyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością tekstu szyfrowanego: {1} w przypadku używania klucza głównego kolumny (certyfikatu) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka certyfikatu może być nieprawidłowa.</value>
-  </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
     <value>Określona długość podpisu zaszyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością podpisu: {1} w przypadku używania klucza głównego kolumny ({2}) w „{3}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka {4} może być nieprawidłowa.</value>
   </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
-    <value>Określona długość podpisu zaszyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością podpisu: {1} w przypadku używania klucza głównego kolumny (certyfikatu) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka certyfikatu może być nieprawidłowa.</value>
-  </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
     <value>Określony podpis zaszyfrowanego klucza szyfrowania kolumny jest niezgodny z podpisem obliczonym przy użyciu klucza głównego kolumny ({0}) w „{1}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka może być nieprawidłowa.</value>
-  </data>
-  <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
-    <value>Określony podpis zaszyfrowanego klucza szyfrowania kolumny jest niezgodny z podpisem obliczonym przy użyciu klucza głównego kolumny (certyfikatu) w elemencie „{0}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka może być nieprawidłowa.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>Certyfikat określony w ścieżce klucza „{0}” nie ma klucza prywatnego do szyfrowania klucza szyfrowania kolumny. Sprawdź, czy certyfikat został zaimportowany poprawnie.</value>
