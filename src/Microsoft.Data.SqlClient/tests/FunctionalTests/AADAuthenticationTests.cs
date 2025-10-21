@@ -84,19 +84,22 @@ namespace Microsoft.Data.SqlClient.Tests
 
             Assert.True(
                 SqlAuthenticationProviderManager.SetProvider(
-                    SqlAuthenticationMethod.ActiveDirectoryInteractive,
+                    // GOTCHA: On .NET Framework, the dummy provider is already
+                    // registered as the default provider for Interactive, so we
+                    // use DeviceCodeFlow instead.
+                    SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow,
                     provider1));
 
             Assert.Same(
                 provider1,
                 SqlAuthenticationProviderManager.GetProvider(
-                    SqlAuthenticationMethod.ActiveDirectoryInteractive));
+                    SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
 
             Assert.Same(
                 provider1,
                 #pragma warning disable CS0618 // Type or member is obsolete
                 SqlAuthenticationProvider.GetProvider(
-                    SqlAuthenticationMethod.ActiveDirectoryInteractive));
+                    SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
                 #pragma warning restore CS0618 // Type or member is obsolete
 
             // Set via Abstractions, get via both.
@@ -105,20 +108,20 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.True(
                 #pragma warning disable CS0618 // Type or member is obsolete
                 SqlAuthenticationProvider.SetProvider(
-                    SqlAuthenticationMethod.ActiveDirectoryInteractive,
+                    SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow,
                     provider2));
                 #pragma warning restore CS0618 // Type or member is obsolete
 
             Assert.Same(
                 provider2,
                 SqlAuthenticationProviderManager.GetProvider(
-                    SqlAuthenticationMethod.ActiveDirectoryInteractive));
+                    SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
             
             Assert.Same(
                 provider2,
                 #pragma warning disable CS0618 // Type or member is obsolete
                 SqlAuthenticationProvider.GetProvider(
-                    SqlAuthenticationMethod.ActiveDirectoryInteractive));
+                    SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
                 #pragma warning restore CS0618 // Type or member is obsolete
         }
 
