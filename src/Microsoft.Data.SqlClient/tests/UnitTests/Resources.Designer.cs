@@ -63,6 +63,966 @@ namespace Microsoft.Data.SqlClient.UnitTests {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell01 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell01", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell02 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell02", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell03 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell03", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell04 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell04", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell05 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell05", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell06 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell06", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell07 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell07", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell08 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell08", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell09 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell09", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell10 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell10", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell11 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell11", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell12 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell12", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell13 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell13", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell14 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell14", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell15 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell15", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell16 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell16", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell17 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell17", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell18 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell18", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell19 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell19", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell20 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell20", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell21 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell21", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell22 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell22", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell23 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell23", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell24 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell24", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell25 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell25", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell26 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell26", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell27 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell27", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell28 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell28", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell29 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell29", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell30 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell30", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell31 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell31", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_FinalCell32 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_FinalCell32", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText01 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText01", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText02 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText02", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText03 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText03", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText04 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText04", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText05 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText05", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText06 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText06", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText07 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText07", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText08 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText08", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText09 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText09", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText10 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText10", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText11 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText11", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText12 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText12", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText13 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText13", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText14 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText14", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText15 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText15", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText16 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText16", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText17 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText17", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText18 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText18", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText19 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText19", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText20 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText20", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText21 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText21", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText22 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText22", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText23 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText23", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText24 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText24", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText25 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText25", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText26 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText26", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText27 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText27", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText28 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText28", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText29 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText29", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText30 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText30", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText31 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText31", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_PlainText32 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_PlainText32", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey01 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey01", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey02 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey02", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey03 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey03", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey04 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey04", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey05 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey05", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey06 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey06", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey07 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey07", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey08 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey08", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey09 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey09", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey10 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey10", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey11 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey11", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey12 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey12", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey13 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey13", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey14 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey14", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey15 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey15", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey16 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey16", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey17 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey17", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey18 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey18", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey19 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey19", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey20 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey20", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey21 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey21", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey22 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey22", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey23 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey23", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey24 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey24", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey25 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey25", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey26 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey26", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey27 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey27", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey28 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey28", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey29 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey29", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey30 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey30", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey31 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey31", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AlwaysEncrypted_NativeAeadBaseline_RootKey32 {
+            get {
+                object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeAeadBaseline_RootKey32", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] AlwaysEncrypted_NativeColumnEncryptionKeyBaseline_Certificate {
             get {
                 object obj = ResourceManager.GetObject("AlwaysEncrypted_NativeColumnEncryptionKeyBaseline_Certificate", resourceCulture);

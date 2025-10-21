@@ -12,40 +12,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     public class CoreCryptoTests
     {
-        [Fact]
-        public void TestAeadCryptoWithNativeBaseline()
-        {
-            // Initialize the reader for resource text file which has the native code generated baseline.
-            CryptoNativeBaselineReader cryptoNativeBaselineReader = new CryptoNativeBaselineReader();
-
-            // Read and initialized the crypto vectors from the resource text file.
-            cryptoNativeBaselineReader.InitializeCryptoVectors();
-
-            IList<CryptoVector> cryptoParametersListForTest = cryptoNativeBaselineReader.CryptoVectors;
-
-            Assert.True(cryptoParametersListForTest.Count >= 1, @"Invalid number of AEAD test vectors. Expected at least 1.");
-
-            // For each crypto vector, run the test to compare the output generated through sqlclient's code and the native code.
-            foreach (CryptoVector cryptoParameter in cryptoParametersListForTest)
-            {
-                // For Deterministic encryption, compare the result of encrypting the cell data (or plain text).
-                if (cryptoParameter.CryptoVectorEncryptionTypeVal == CryptoVectorEncryptionType.Deterministic)
-                {
-                    TestEncryptionResultUsingAead(cryptoParameter.PlainText,
-                                                  cryptoParameter.RootKey,
-                                                  cryptoParameter.CryptoVectorEncryptionTypeVal == CryptoVectorEncryptionType.Deterministic ? CertificateUtility.CColumnEncryptionType.Deterministic : CertificateUtility.CColumnEncryptionType.Randomized,
-                                                  cryptoParameter.FinalCell);
-                }
-
-                // For Randomized and Deterministic encryption, try the decryption of final cell value and compare against the native code baseline's plain text.
-                TestDecryptionResultUsingAead(cryptoParameter.FinalCell,
-                                              cryptoParameter.RootKey,
-                                              cryptoParameter.CryptoVectorEncryptionTypeVal == CryptoVectorEncryptionType.Deterministic ? CertificateUtility.CColumnEncryptionType.Deterministic : CertificateUtility.CColumnEncryptionType.Randomized,
-                                              cryptoParameter.PlainText);
-            }
-        }
-
-
         /// <summary>
         /// Helper function to test the result of encryption using Aead.
         /// </summary>

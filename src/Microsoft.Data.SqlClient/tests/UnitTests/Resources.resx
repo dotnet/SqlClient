@@ -148,4 +148,293 @@
   <data name="AlwaysEncrypted_NativeColumnEncryptionKeyBaseline_Certificate" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\AlwaysEncrypted\NativeColumnEncryptionKeyBaseline\Certificate.pfx;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell01" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell01.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell02" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell02.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell03" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell03.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell04" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell04.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell05" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell05.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell06" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell06.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell07" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell07.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell08" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell08.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell09" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell09.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell10" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell10.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell11" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell11.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell12" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell12.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell13" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell13.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell14" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell14.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell15" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell15.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell16" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell16.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell17" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell17.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell18" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell18.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell19" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell19.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell20" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell20.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell21" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell21.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell22" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell22.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell23" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell23.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell24" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell24.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell25" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell25.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell26" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell26.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell27" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell27.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell28" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell28.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell29" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell29.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell30" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell30.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell31" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell31.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_FinalCell32" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\FinalCell32.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText01" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText01.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText02" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText02.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText03" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText03.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText04" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText04.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText05" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText05.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText06" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText06.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText07" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText07.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText08" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText08.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText09" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText09.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText10" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText10.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText11" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText11.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText12" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText12.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText13" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText13.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText14" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText14.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText15" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText15.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText16" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText16.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText17" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText17.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText18" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText18.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText19" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText19.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText20" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText20.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText21" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText21.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText22" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText22.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText23" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText23.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText24" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText24.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText25" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText25.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText26" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText26.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText27" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText27.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText28" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText28.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText29" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText29.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText30" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText30.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText31" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText31.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_PlainText32" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\PlainText32.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey01" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey01.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey02" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey02.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey03" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey03.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey04" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey04.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey05" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey05.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey06" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey06.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey07" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey07.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey08" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey08.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey09" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey09.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey10" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey10.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey11" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey11.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey12" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey12.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey13" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey13.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey14" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey14.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey15" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey15.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey16" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey16.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey17" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey17.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey18" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey18.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey19" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey19.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey20" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey20.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey21" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey21.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey22" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey22.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey23" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey23.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey24" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey24.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey25" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey25.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey26" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey26.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey27" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey27.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey28" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey28.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey29" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey29.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey30" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey30.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey31" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey31.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AlwaysEncrypted_NativeAeadBaseline_RootKey32" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\AlwaysEncrypted\NativeAeadBaseline\RootKey32.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>
