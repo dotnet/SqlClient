@@ -1304,62 +1304,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private SqlDataReader GetParameterEncryptionDataReaderAsync(out Task returnTask,
-            SqlDataReader describeParameterEncryptionDataReader,
-            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap, bool describeParameterEncryptionNeeded, bool isRetry)
-        {
-            returnTask = Task.Run(() =>
-            {
-                bool processFinallyBlockAsync = true;
-                bool decrementAsyncCountInFinallyBlockAsync = true;
-
-                try
-                {
-                    // Check for any exceptions on network write, before reading.
-                    CheckThrowSNIException();
-
-                    // If it is async, then TryFetchInputParameterEncryptionInfo-> RunExecuteReaderTds would have incremented the async count.
-                    // Decrement it when we are about to complete async execute reader.
-                    SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
-                    if (internalConnectionTds != null)
-                    {
-                        internalConnectionTds.DecrementAsyncCount();
-                        decrementAsyncCountInFinallyBlockAsync = false;
-                    }
-
-                    // Complete executereader.
-                    describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(isInternal: false, forDescribeParameterEncryption: true);
-                    Debug.Assert(_stateObj == null, "non-null state object in PrepareForTransparentEncryption.");
-
-                    // Read the results of describe parameter encryption.
-                    ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader,
-                        describeParameterEncryptionRpcOriginalRpcMap, isRetry);
-#if DEBUG
-                    // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
-                    if (_sleepAfterReadDescribeEncryptionParameterResults)
-                    {
-                        Thread.Sleep(10000);
-                    }
-#endif
-                }
-                catch (Exception e)
-                {
-                    processFinallyBlockAsync = ADP.IsCatchableExceptionType(e);
-                    throw;
-                }
-                finally
-                {
-                    PrepareTransparentEncryptionFinallyBlock(closeDataReader: processFinallyBlockAsync,
-                        decrementAsyncCount: decrementAsyncCountInFinallyBlockAsync,
-                        clearDataStructures: processFinallyBlockAsync,
-                        wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
-                        describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
-                        describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
-                }
-            });
-            return describeParameterEncryptionDataReader;
-        }
-
         /// <summary>
         /// Executes an RPC to fetch param encryption info from SQL Engine. If this method is not done writing
         ///  the request to wire, it'll set the "task" parameter which can be used to create continuations.
