@@ -5,7 +5,7 @@
 namespace Microsoft.Data.SqlClient;
 
 /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/SqlAuthenticationProvider/*'/>
-public abstract class SqlAuthenticationProvider
+public abstract partial class SqlAuthenticationProvider
 {
     /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/BeforeLoad/*'/>
     public virtual void BeforeLoad(SqlAuthenticationMethod authenticationMethod) { }
@@ -18,4 +18,28 @@ public abstract class SqlAuthenticationProvider
 
     /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/AcquireTokenAsync/*'/>
     public abstract Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters);
+
+
+    /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/GetProvider/*'/>
+    [Obsolete(
+        "This method is deprecated and will be removed in future versions.  " +
+        "Use SqlAuthenticationProviderManager.GetProvider() from the " +
+        "Microsoft.Data.SqlClient package instead.")]
+    public static SqlAuthenticationProvider? GetProvider(
+        SqlAuthenticationMethod authenticationMethod)
+    {
+        return Internal.GetProvider(authenticationMethod);
+    }
+    
+    /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/SetProvider/*'/>
+    [Obsolete(
+        "This method is deprecated and will be removed in future versions.  " +
+        "Use SqlAuthenticationProviderManager.SetProvider() from the " +
+        "Microsoft.Data.SqlClient package instead.")]
+    public static bool SetProvider(
+        SqlAuthenticationMethod authenticationMethod,
+        SqlAuthenticationProvider provider)
+    {
+        return Internal.SetProvider(authenticationMethod, provider);
+    }
 }

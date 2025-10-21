@@ -49,8 +49,8 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Throws<InvalidOperationException>(() => connection.AccessToken = "SampleAccessToken");
             }
         }
-        
-        #if NETFRAMEWORK
+
+#if NETFRAMEWORK
         // This test is only valid for .NET Framework
 
         /// <summary>
@@ -69,7 +69,58 @@ namespace Microsoft.Data.SqlClient.Tests
             var token = await provider.AcquireTokenAsync(null);
             Assert.Equal(token.AccessToken, DummySqlAuthenticationProvider.DUMMY_TOKEN_STR);
         }
-        #endif
+#endif
+
+        // Verify that we can get and set providers via both the Abstractions
+        // package and Manager class interchangeably.
+        //
+        // This tests the dynamic assembly loading code in the Abstractions
+        // package.
+        [Fact]
+        public void Abstractions_And_Manager_GetSetProvider_Equivalent()
+        {
+            // Set via Manager, get via both.
+            DummySqlAuthenticationProvider provider1 = new();
+
+            Assert.True(
+                SqlAuthenticationProviderManager.SetProvider(
+                    SqlAuthenticationMethod.ActiveDirectoryInteractive,
+                    provider1));
+
+            Assert.Same(
+                provider1,
+                SqlAuthenticationProviderManager.GetProvider(
+                    SqlAuthenticationMethod.ActiveDirectoryInteractive));
+
+            Assert.Same(
+                provider1,
+                #pragma warning disable CS0618 // Type or member is obsolete
+                SqlAuthenticationProvider.GetProvider(
+                    SqlAuthenticationMethod.ActiveDirectoryInteractive));
+                #pragma warning restore CS0618 // Type or member is obsolete
+
+            // Set via Abstractions, get via both.
+            DummySqlAuthenticationProvider provider2 = new();
+
+            Assert.True(
+                #pragma warning disable CS0618 // Type or member is obsolete
+                SqlAuthenticationProvider.SetProvider(
+                    SqlAuthenticationMethod.ActiveDirectoryInteractive,
+                    provider2));
+                #pragma warning restore CS0618 // Type or member is obsolete
+
+            Assert.Same(
+                provider2,
+                SqlAuthenticationProviderManager.GetProvider(
+                    SqlAuthenticationMethod.ActiveDirectoryInteractive));
+            
+            Assert.Same(
+                provider2,
+                #pragma warning disable CS0618 // Type or member is obsolete
+                SqlAuthenticationProvider.GetProvider(
+                    SqlAuthenticationMethod.ActiveDirectoryInteractive));
+                #pragma warning restore CS0618 // Type or member is obsolete
+        }
 
         [Fact]
         public void CustomActiveDirectoryProviderTest()

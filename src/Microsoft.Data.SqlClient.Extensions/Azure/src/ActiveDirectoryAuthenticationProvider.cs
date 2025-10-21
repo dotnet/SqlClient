@@ -125,18 +125,18 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         {
             using CancellationTokenSource cts = new();
 
-            // Use Connection timeout value to cancel token acquire request
-            // after certain period of time.
-            if (parameters.ConnectionTimeout > 0)
+            // Use the authentication timeout value to cancel token acquire
+            // request after certain period of time.
+            if (parameters.AuthenticationTimeout > 0)
             {
                 // Safely convert to milliseconds.
-                if (int.MaxValue / 1000 > parameters.ConnectionTimeout)
+                if (int.MaxValue / 1000 > parameters.AuthenticationTimeout)
                 {
                     cts.CancelAfter(int.MaxValue);
                 }
                 else
                 {
-                    cts.CancelAfter(parameters.ConnectionTimeout * 1000);
+                    cts.CancelAfter(parameters.AuthenticationTimeout * 1000);
                 }
             }
 
@@ -291,7 +291,9 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
 
                 if (result == null)
                 {
+                    #pragma warning disable CS0618 // Type or member is obsolete
                     result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
+                    #pragma warning disable CS0618 // Type or member is obsolete
                         .WithCorrelationId(parameters.ConnectionId)
                         .ExecuteAsync(cancellationToken: cts.Token)
                         .ConfigureAwait(false);

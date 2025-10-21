@@ -140,6 +140,6 @@
   <!-- Azure Dependencies -->
 
   <ItemGroup>
-    <PackageVersion Include="Azure.Identity" Version="1.14.2" />
+    <PackageVersion Include="Azure.Identity" Version="1.17.0" />
   </ItemGroup>
 </Project>

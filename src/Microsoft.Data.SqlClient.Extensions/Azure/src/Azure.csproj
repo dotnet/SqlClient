@@ -42,8 +42,15 @@
     <AssemblyAttribute Include="System.CLSCompliantAttribute">
       <_Parameter1>true</_Parameter1>
     </AssemblyAttribute>
+  </ItemGroup>
+  <!--
+    Our unit tests have access to our internal types, but only for non-official
+    builds.  This prevents downstream consumers from creating an assembly with
+    our test assembly name and gaining non-reflective access to our internals.
 
-    <!-- Our unit tests have access to our internal types. -->
+    CDP_BUILD_TYPE is a OneBranch governed pipeline variable.
+  -->
+  <ItemGroup Condition="'$(CDP_BUILD_TYPE)' != 'Official'">
     <InternalsVisibleTo Include="$(AssemblyName).Test" />
   </ItemGroup>
 

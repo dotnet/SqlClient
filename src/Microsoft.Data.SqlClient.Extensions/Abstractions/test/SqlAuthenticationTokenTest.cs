@@ -1,3 +1,7 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 public class SqlAuthenticationTokenTest
@@ -22,7 +26,7 @@ public class SqlAuthenticationTokenTest
         string? token = null;
         var expiry = DateTimeOffset.UtcNow.AddHours(1);
 
-        var ex = Assert.Throws<SqlAuthenticationToken.TokenException>(() =>
+        var ex = Assert.ThrowsAny<SqlAuthenticationProviderException>(() =>
         {
             new SqlAuthenticationToken(token!, expiry);
         });
@@ -37,7 +41,7 @@ public class SqlAuthenticationTokenTest
         string token = string.Empty;
         var expiry = DateTimeOffset.UtcNow.AddHours(1);
 
-        var ex = Assert.Throws<SqlAuthenticationToken.TokenException>(() =>
+        var ex = Assert.ThrowsAny<SqlAuthenticationProviderException>(() =>
         {
             new SqlAuthenticationToken(token, expiry);
         });

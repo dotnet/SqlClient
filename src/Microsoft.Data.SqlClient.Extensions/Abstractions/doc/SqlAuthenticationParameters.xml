@@ -1,4 +1,9 @@
-﻿<docs>
+﻿<!--
+Licensed to the .NET Foundation under one or more agreements.
+The .NET Foundation licenses this file to you under the MIT license.
+See the LICENSE file in the project root for more information.
+-->
+<docs>
   <members name="SqlAuthenticationParameters">
     <SqlAuthenticationParameters>
       <summary>
@@ -17,7 +22,7 @@
       <param name="userId">The user login name/ID, or null if not applicable.</param>
       <param name="password">The user password, or null if not applicable.</param>
       <param name="connectionId">The connection ID.</param>
-      <param name="connectionTimeout">The connection timeout, in seconds.</param>
+      <param name="authenticationTimeout">The authentication timeout, in seconds.</param>
     </ctor>
     <AuthenticationMethod>
       <summary>Gets the authentication method.</summary>
@@ -51,8 +56,16 @@
       <summary>Gets the connection ID.</summary>
       <value>The connection ID.</value>
     </ConnectionId>
+    <AuthenticationTimeout>
+      <summary>Gets the authentication timeout value.</summary>
+      <value>The authentication timeout, in seconds.</value>
+    </AuthenticationTimeout>
     <ConnectionTimeout>
       <summary>Gets the connection timeout value.</summary>
+      <remarks>
+        This property is deprecated and will be removed in future versions.  Use
+        AuthenticationTimeout instead.
+      </remarks>
       <value>The connection timeout, in seconds.</value>
     </ConnectionTimeout>
   </members>

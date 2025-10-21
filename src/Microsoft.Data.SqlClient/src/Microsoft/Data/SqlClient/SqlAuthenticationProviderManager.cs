@@ -58,7 +58,16 @@ namespace Microsoft.Data.SqlClient
                 // Try to load our Azure extension.
                 var assembly = Assembly.Load(assemblyName);
 
-                // TODO: Verify the assembly is signed by us?
+                if (assembly is null)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        nameof(SqlAuthenticationProviderManager) +
+                        $": Azure extension assembly={assemblyName} not found; " +
+                        "no default Active Directory provider installed");
+                    return;
+                }
+
+                // TODO(ADO-39845): Verify the assembly is signed by us?
 
                 SqlClientEventSource.Log.TryTraceEvent(
                     nameof(SqlAuthenticationProviderManager) +

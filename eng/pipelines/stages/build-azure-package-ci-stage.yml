@@ -118,7 +118,7 @@ stages:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           displayNamePrefix: Win
           jobNameSuffix: windows
-          netFrameworkRuntimes: [net462, net47, net471, net472, net48, net481]
+          netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0]
           poolName: Azure Pipelines
           referenceType: ${{ parameters.referenceType }}

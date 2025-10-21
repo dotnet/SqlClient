@@ -2574,7 +2574,7 @@ namespace Microsoft.Data.SqlClient
                         serverName: ConnectionOptions.DataSource,
                         databaseName: ConnectionOptions.InitialCatalog)
                         .WithConnectionId(_clientConnectionId)
-                        .WithConnectionTimeout(ConnectionOptions.ConnectTimeout);
+                        .WithAuthenticationTimeout(ConnectionOptions.ConnectTimeout);
                     switch (ConnectionOptions.Authentication)
                     {
                         case SqlAuthenticationMethod.ActiveDirectoryIntegrated:

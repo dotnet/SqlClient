@@ -1,3 +1,7 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 public class SqlAuthenticationParametersTest
@@ -36,7 +40,10 @@ public class SqlAuthenticationParametersTest
         Assert.Null(parameters.UserId);
         Assert.Null(parameters.Password);
         Assert.Equal(id, parameters.ConnectionId);
+        Assert.Equal(timeout, parameters.AuthenticationTimeout);
+        #pragma warning disable CS0618 // Type or member is obsolete
         Assert.Equal(timeout, parameters.ConnectionTimeout);
+        #pragma warning restore CS0618 // Type or member is obsolete
     }
 
     // Verify that the properties are set correctly when nullable arguments
@@ -73,6 +80,9 @@ public class SqlAuthenticationParametersTest
         Assert.Equal(user, parameters.UserId);
         Assert.Equal(pass, parameters.Password);
         Assert.Equal(id, parameters.ConnectionId);
+        Assert.Equal(timeout, parameters.AuthenticationTimeout);
+        #pragma warning disable CS0618 // Type or member is obsolete
         Assert.Equal(timeout, parameters.ConnectionTimeout);
+        #pragma warning restore CS0618 // Type or member is obsolete
     }
 }

@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient
         private string _userId;
         private string _password;
         private Guid _connectionId = Guid.NewGuid();
-        private int _connectionTimeout = ADP.DefaultConnectionTimeout;
+        private int _authenticationTimeout = ADP.DefaultConnectionTimeout;
 
         /// <summary>
         /// Implicitly converts to <see cref="SqlAuthenticationParameters"/>.
@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient
                 userId: builder._userId,
                 password: builder._password,
                 connectionId: builder._connectionId,
-                connectionTimeout: builder._connectionTimeout);
+                authenticationTimeout: builder._authenticationTimeout);
         }
 
         /// <summary>
@@ -84,11 +84,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Set connection timeout.
+        /// Set authentication timeout.
         /// </summary>
-        public SqlAuthenticationParametersBuilder WithConnectionTimeout(int timeout)
+        public SqlAuthenticationParametersBuilder WithAuthenticationTimeout(int timeout)
         {
-            _connectionTimeout = timeout;
+            _authenticationTimeout = timeout;
             return this;
         }
 

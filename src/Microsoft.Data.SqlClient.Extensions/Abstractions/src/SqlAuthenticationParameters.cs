@@ -31,8 +31,14 @@ public sealed class SqlAuthenticationParameters
     /// <include file='../doc/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/DatabaseName/*'/>
     public string DatabaseName { get; }
 
+    /// <include file='../doc/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/AuthenticationTimeout/*'/>
+    public int AuthenticationTimeout { get; }
+
     /// <include file='../doc/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ConnectionTimeout/*'/>
-    public int ConnectionTimeout { get; }
+    [Obsolete(
+        "This property is deprecated and will be removed in future versions.  " +
+        "Use AuthenticationTimeout instead.")]
+    public int ConnectionTimeout { get { return AuthenticationTimeout; } }
 
     /// <include file='../doc/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ctor/*'/>
     public SqlAuthenticationParameters(
@@ -44,7 +50,7 @@ public sealed class SqlAuthenticationParameters
         string? userId,
         string? password,
         Guid connectionId,
-        int connectionTimeout)
+        int authenticationTimeout)
     {
         AuthenticationMethod = authenticationMethod;
         ServerName = serverName;
@@ -54,6 +60,6 @@ public sealed class SqlAuthenticationParameters
         UserId = userId;
         Password = password;
         ConnectionId = connectionId;
-        ConnectionTimeout = connectionTimeout;
+        AuthenticationTimeout = authenticationTimeout;
     }
 }

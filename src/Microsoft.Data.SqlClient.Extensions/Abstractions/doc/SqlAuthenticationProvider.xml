@@ -1,4 +1,9 @@
-﻿<docs>
+﻿<!--
+Licensed to the .NET Foundation under one or more agreements.
+The .NET Foundation licenses this file to you under the MIT license.
+See the LICENSE file in the project root for more information.
+-->
+<docs>
   <members name="SqlAuthenticationProvider">
     <SqlAuthenticationProvider>
       <summary>Defines the core behavior of authentication providers and provides a base class for derived classes.</summary>
@@ -116,10 +121,33 @@
       <param name="authenticationMethod">The authentication method.</param>
     </IsSupported>
     <AcquireTokenAsync>
-      <summary>Acquires a security token from the authority.</summary>
-      <param name="parameters">The Active Directory authentication parameters passed by the driver to authentication providers.</param>
+      <summary>Acquires an access token from the authority.</summary>
+      <param name="parameters">The parameters passed to the provider by the driver.</param>
       <throws cref="SqlAuthenticationProviderException">If any errors occur.</throws>
       <returns>Represents an asynchronous operation that returns the AD authentication token.</returns>
     </AcquireTokenAsync>
+    <GetProvider>
+      <summary>Gets an authentication provider by method.</summary>
+      <remarks>
+        This method is obsolete and will be removed in future versions.  Use
+        the SqlAuthenticationProviderManager.GetProvider() method in the
+        Microsoft.Data.SqlClient package instead.
+      </remarks>
+      <param name="authenticationMethod">The authentication method.</param>
+      <returns>The authentication provider or <see langword="null" /> if not found.</returns>
+    </GetProvider>
+    <SetProvider>
+      <summary>Sets an authentication provider by method.</summary>
+      <remarks>
+        This method is obsolete and will be removed in future versions.  Use
+        the SqlAuthenticationProviderManager.SetProvider() method in the
+        Microsoft.Data.SqlClient package instead.
+      </remarks>
+      <param name="authenticationMethod">The authentication method.</param>
+      <param name="provider">The authentication provider.</param>
+      <returns>
+        <see langword="true" /> if the operation succeeded; otherwise, <see langword="false" /> (for example, the existing provider disallows overriding).
+      </returns>
+    </SetProvider>
   </members>
 </docs>
