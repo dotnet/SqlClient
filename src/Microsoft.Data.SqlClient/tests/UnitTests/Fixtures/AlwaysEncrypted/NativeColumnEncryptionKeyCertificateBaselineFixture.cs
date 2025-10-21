@@ -24,6 +24,7 @@ public sealed class NativeColumnEncryptionKeyCertificateBaselineFixture : Certif
     /// Parameter 2: The encrypted column encryption key as produced by SQL Server's native code.
     /// Parameter 3: The expected plaintext column encryption key.
     /// </remarks>
+    /// <seealso cref="UnitTests.AlwaysEncrypted.NativeColumnEncryptionKeyBaseline.Baseline_FinalCell_Decrypts_To_Known_Plaintext" />
     public static TheoryData<string, byte[], byte[]> NativeCEKBaselineData =>
         new()
         {

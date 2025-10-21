@@ -24,6 +24,7 @@ public class NativeAeadBaseline
     /// Parameter 2: the column encryption key (CEK) used for encryption.
     /// Parameter 3: the expected final cell value as produced by SQL Server's native code.
     /// </remarks>
+    /// <seealso cref="Known_Plaintext_Encrypts_To_Known_FinalCell"/>
     public static TheoryData<byte[], byte[], byte[]> DeterministicEncryptedValues =>
         new()
         {
@@ -53,6 +54,7 @@ public class NativeAeadBaseline
     /// Parameter 2: the column encryption key (CEK) used for encryption.
     /// Parameter 3: the expected final cell value as produced by SQL Server's native code.
     /// </remarks>
+    /// <seealso cref="Known_FinalCell_Decrypts_To_Known_Plaintext"/>
     public static TheoryData<byte[], byte[], byte[]> NativeEncryptionBaseline =>
         new()
         {
