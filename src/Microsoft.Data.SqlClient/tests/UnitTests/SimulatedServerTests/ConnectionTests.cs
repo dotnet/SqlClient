@@ -841,6 +841,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             using LocalAppContextSwitchesHelper switchesHelper = new();
             switchesHelper.EnableUserAgentField = LocalAppContextSwitchesHelper.Tristate.True;
 
+            Console.WriteLine($"user agent enabled: {LocalAppContextSwitches.EnableUserAgent}");
+            Console.WriteLine($"user agent helper enabled: {switchesHelper.EnableUserAgent}");
+
             using var server = new TdsServer(new()
             {
                 Log = Console.Out
@@ -925,6 +928,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Disable the client-side UserAgent field entirely
             using LocalAppContextSwitchesHelper switchesHelper = new();
             switchesHelper.EnableUserAgentField = LocalAppContextSwitchesHelper.Tristate.False;
+
+            Console.WriteLine($"user agent enabled: {LocalAppContextSwitches.EnableUserAgent}");
+            Console.WriteLine($"user agent helper enabled: {switchesHelper.EnableUserAgent}");
 
             using var server = new TdsServer();
             server.Start();
