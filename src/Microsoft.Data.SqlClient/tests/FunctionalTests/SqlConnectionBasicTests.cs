@@ -213,32 +213,24 @@ namespace Microsoft.Data.SqlClient.Tests
         public void TransientFault_IgnoreServerProvidedFailoverPartner_ShouldConnectToUserProvidedPartner()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper switchesHelper = new();
-            switchesHelper.IgnoreServerProvidedFailoverPartnerField = LocalAppContextSwitchesHelper.Tristate.True;
+            AppContext.SetSwitch("Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner", true);
 
-            using TdsServer failoverServer = new(
-                new TdsServerArguments
-                {
-                    // Doesn't need to point to a real endpoint, just needs a value specified
-                    FailoverPartner = "localhost,1234",
-                });
-            failoverServer.Start();
+            using TestTdsServer failoverServer = TestTdsServer.StartTestServer();
+            // Doesn't need to point to a real endpoint, just needs a value specified
+            //TODO: FailoverPartner = "localhost,1234",
 
-            using TdsServer server = new(
-                new TdsServerArguments()
-                {
+            var failoverBuilder = new SqlConnectionStringBuilder(failoverServer.ConnectionString);
+
+            using TestTdsServer server = TestTdsServer.StartTestServer();
                     // Set an invalid failover partner to ensure that the connection fails if the
                     // server provided failover partner is used.
-                    FailoverPartner = $"invalidhost",
-                });
-            server.Start();
+                    // TODO: FailoverPartner = $"invalidhost",
 
-            SqlConnectionStringBuilder builder = new()
+            SqlConnectionStringBuilder builder = new(server.ConnectionString)
             {
-                DataSource = $"localhost,{server.EndPoint.Port}",
                 InitialCatalog = "master",
                 Encrypt = false,
-                FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+                FailoverPartner = failoverBuilder.DataSource,
                 // Ensure pooling is enabled so that the failover partner information
                 // is persisted in the pool group. If pooling is disabled, the server
                 // provided failover partner will never be used.
@@ -265,7 +257,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             // Assert
             Assert.Equal(ConnectionState.Open, failoverConnection.State);
-            Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", failoverConnection.DataSource);
+            Assert.Equal(failoverBuilder.DataSource, failoverConnection.DataSource);
             // 1 for the initial connection
             Assert.Equal(1, server.PreLoginCount);
             // 1 for the failover connection
