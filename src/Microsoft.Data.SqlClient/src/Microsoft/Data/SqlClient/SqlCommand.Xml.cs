@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
@@ -269,14 +270,12 @@ namespace Microsoft.Data.SqlClient
                 if (writeTask is not null)
                 {
                     AsyncHelper.ContinueTaskWithState(
-                        task: writeTask,
-                        completion: localCompletion,
-                        state: Tuple.Create(this, localCompletion),
-                        onSuccess: static state =>
-                        {
-                            var parameters = (Tuple<SqlCommand, TaskCompletionSource<object>>)state;
-                            parameters.Item1.BeginExecuteXmlReaderInternalReadStage(parameters.Item2);
-                        });
+                        taskToContinue: writeTask,
+                        taskCompletionSource: localCompletion,
+                        state1: this,
+                        state2: localCompletion,
+                        onSuccess: static (this2, localCompletion2) =>
+                            this2.BeginExecuteXmlReaderInternalReadStage(localCompletion2));
                 }
                 else
                 {

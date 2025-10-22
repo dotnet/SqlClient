@@ -3,21 +3,20 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.CompilerServices;
-using System.Runtime.ConstrainedExecution;
 using System.Security.Permissions;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
-using System.Collections.Concurrent;
+using Microsoft.Data.SqlClient.Utilities;
 
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
@@ -1249,69 +1248,70 @@ namespace Microsoft.Data.SqlClient
                         // Mark that we should not process the finally block since we have async execution pending.
                         // Note that this should be done outside the task's continuation delegate.
                         processFinallyBlock = false;
-                        returnTask = AsyncHelper.CreateContinuationTask(fetchInputParameterEncryptionInfoTask, () =>
-                        {
-                            bool processFinallyBlockAsync = true;
-                            bool decrementAsyncCountInFinallyBlockAsync = true;
-
-                            try
+                        returnTask = AsyncHelper.CreateContinuationTask(
+                            taskToContinue: fetchInputParameterEncryptionInfoTask,
+                            onSuccess: () =>
                             {
-                                // Check for any exceptions on network write, before reading.
-                                CheckThrowSNIException();
+                                bool processFinallyBlockAsync = true;
+                                bool decrementAsyncCountInFinallyBlockAsync = true;
 
-                                // If it is async, then TryFetchInputParameterEncryptionInfo-> RunExecuteReaderTds would have incremented the async count.
-                                // Decrement it when we are about to complete async execute reader.
-                                SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
-                                if (internalConnectionTds != null)
+                                try
                                 {
-                                    internalConnectionTds.DecrementAsyncCount();
-                                    decrementAsyncCountInFinallyBlockAsync = false;
+                                    // Check for any exceptions on network write, before reading.
+                                    CheckThrowSNIException();
+
+                                    // If it is async, then TryFetchInputParameterEncryptionInfo-> RunExecuteReaderTds would have incremented the async count.
+                                    // Decrement it when we are about to complete async execute reader.
+                                    SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
+                                    if (internalConnectionTds != null)
+                                    {
+                                        internalConnectionTds.DecrementAsyncCount();
+                                        decrementAsyncCountInFinallyBlockAsync = false;
+                                    }
+
+                                    // Complete executereader.
+                                    describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(isInternal: false, forDescribeParameterEncryption: true);
+                                    Debug.Assert(_stateObj == null, "non-null state object in PrepareForTransparentEncryption.");
+
+                                    // Read the results of describe parameter encryption.
+                                    ReadDescribeEncryptionParameterResults(
+                                        describeParameterEncryptionDataReader,
+                                        describeParameterEncryptionRpcOriginalRpcMap,
+                                        isRetry);
+
+                                    #if DEBUG
+                                    // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
+                                    if (_sleepAfterReadDescribeEncryptionParameterResults)
+                                    {
+                                        Thread.Sleep(10000);
+                                    }
+                                    #endif //DEBUG
                                 }
-
-                                // Complete executereader.
-                                describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(isInternal: false, forDescribeParameterEncryption: true);
-                                Debug.Assert(_stateObj == null, "non-null state object in PrepareForTransparentEncryption.");
-
-                                // Read the results of describe parameter encryption.
-                                ReadDescribeEncryptionParameterResults(
-                                    describeParameterEncryptionDataReader,
-                                    describeParameterEncryptionRpcOriginalRpcMap,
-                                    isRetry);
-
-#if DEBUG
-                                // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
-                                if (_sleepAfterReadDescribeEncryptionParameterResults)
+                                catch (Exception e)
                                 {
-                                    Thread.Sleep(10000);
+                                    processFinallyBlockAsync = ADP.IsCatchableExceptionType(e);
+                                    throw;
                                 }
-#endif //DEBUG
-                            }
-                            catch (Exception e)
+                                finally
+                                {
+                                    PrepareTransparentEncryptionFinallyBlock(
+                                        closeDataReader: processFinallyBlockAsync,
+                                        decrementAsyncCount: decrementAsyncCountInFinallyBlockAsync,
+                                        clearDataStructures: processFinallyBlockAsync,
+                                        wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
+                                        describeParameterEncryptionRpcOriginalRpcMap:
+                                        describeParameterEncryptionRpcOriginalRpcMap,
+                                        describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
+                                }
+                            },
+                            onFailure: exception =>
                             {
-                                processFinallyBlockAsync = ADP.IsCatchableExceptionType(e);
-                                throw;
-                            }
-                            finally
-                            {
-                                PrepareTransparentEncryptionFinallyBlock(closeDataReader: processFinallyBlockAsync,
-                                                                            decrementAsyncCount: decrementAsyncCountInFinallyBlockAsync,
-                                                                            clearDataStructures: processFinallyBlockAsync,
-                                                                            wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
-                                                                            describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
-                                                                            describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
-                            }
-                        },
-                        onFailure: ((exception) =>
-                        {
-                            if (CachedAsyncState != null)
-                            {
-                                CachedAsyncState.ResetAsyncState();
-                            }
-                            if (exception != null)
-                            {
-                                throw exception;
-                            }
-                        }));
+                                CachedAsyncState?.ResetAsyncState();
+                                if (exception != null)
+                                {
+                                    throw exception;
+                                }
+                            });
 
                         decrementAsyncCountInFinallyBlock = false;
                     }
