@@ -1283,6 +1283,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             {
                 Assert.Fail("Timeout elapsed.");
             }
+
+            // Force observation of any exception
+            _ = taskToRun.Exception;
         }
     }
 }

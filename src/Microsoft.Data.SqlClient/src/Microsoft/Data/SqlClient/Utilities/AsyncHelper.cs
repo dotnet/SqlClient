@@ -19,19 +19,19 @@ namespace Microsoft.Data.SqlClient.Utilities
             Action<Exception> onFailure = null,
             Action onCancellation = null)
         {
-            taskToContinue.ContinueWith(
+            Task continuationTask = taskToContinue.ContinueWith(
                 tsk =>
                 {
                     if (tsk.Exception != null)
                     {
-                        Exception exc = tsk.Exception.InnerException;
+                        Exception innerException = tsk.Exception.InnerException;
                         try
                         {
-                            onFailure?.Invoke(exc);
+                            onFailure?.Invoke(innerException);
                         }
                         finally
                         {
-                            taskCompletionSource.TrySetException(exc);
+                            taskCompletionSource.TrySetException(innerException);
                         }
                     }
                     else if (tsk.IsCanceled)
@@ -59,6 +59,9 @@ namespace Microsoft.Data.SqlClient.Utilities
                     }
                 },
                 TaskScheduler.Default);
+
+            // Explicitly follow up by observing any exception thrown during continuation
+            ObserveContinuationException(continuationTask);
         }
 
         internal static void ContinueTaskWithState<TState>(
@@ -76,7 +79,7 @@ namespace Microsoft.Data.SqlClient.Utilities
                 State: state,
                 TaskCompletionSource: taskCompletionSource);
 
-            taskToContinue.ContinueWith(
+            Task continuationTask = taskToContinue.ContinueWith(
                 static (task, state2) =>
                 {
                     ContinuationState<TState> typedState2 =
@@ -84,13 +87,14 @@ namespace Microsoft.Data.SqlClient.Utilities
 
                     if (task.Exception is not null)
                     {
+                        Exception innerException = task.Exception.InnerException;
                         try
                         {
-                            typedState2.OnFailure?.Invoke(typedState2.State, task.Exception);
+                            typedState2.OnFailure?.Invoke(typedState2.State, innerException);
                         }
                         finally
                         {
-                            typedState2.TaskCompletionSource.TrySetException(task.Exception);
+                            typedState2.TaskCompletionSource.TrySetException(innerException);
                         }
                     }
                     else if (task.IsCanceled)
@@ -119,6 +123,9 @@ namespace Microsoft.Data.SqlClient.Utilities
                 },
                 state: continuationState,
                 scheduler: TaskScheduler.Default);
+
+            // Explicitly follow up by observing any exception thrown during continuation
+            ObserveContinuationException(continuationTask);
         }
 
         internal static void ContinueTaskWithState<TState1, TState2>(
@@ -138,20 +145,21 @@ namespace Microsoft.Data.SqlClient.Utilities
                 State2: state2,
                 TaskCompletionSource: taskCompletionSource);
 
-            taskToContinue.ContinueWith(
+            Task continuationTask = taskToContinue.ContinueWith(
                 static (task, state2) =>
                 {
                     ContinuationState<TState1, TState2> typedState2 = (ContinuationState<TState1, TState2>)state2;
 
                     if (task.Exception is not null)
                     {
+                        Exception innerException = task.Exception.InnerException;
                         try
                         {
-                            typedState2.OnFailure?.Invoke(typedState2.State1, typedState2.State2, task.Exception);
+                            typedState2.OnFailure?.Invoke(typedState2.State1, typedState2.State2, innerException);
                         }
                         finally
                         {
-                            typedState2.TaskCompletionSource.TrySetException(task.Exception);
+                            typedState2.TaskCompletionSource.TrySetException(innerException);
                         }
                     }
                     else if (task.IsCanceled)
@@ -179,6 +187,9 @@ namespace Microsoft.Data.SqlClient.Utilities
                 },
                 state: continuationState,
                 scheduler: TaskScheduler.Default);
+
+            // Explicitly follow up by observing any exception thrown during continuation
+            ObserveContinuationException(continuationTask);
         }
 
         internal static Task CreateContinuationTask(
@@ -201,18 +212,19 @@ namespace Microsoft.Data.SqlClient.Utilities
                 OnSuccess: onSuccess,
                 TaskCompletionSource: taskCompletionSource);
 
-            taskToContinue.ContinueWith(static (task, continuationState2) =>
+            Task continuationTask = taskToContinue.ContinueWith(static (task, continuationState2) =>
                 {
                     ContinuationState typedState = (ContinuationState)continuationState2;
                     if (task.Exception is not null)
                     {
+                        Exception innerException = task.Exception.InnerException;
                         try
                         {
-                            typedState.OnFailure?.Invoke(task.Exception);
+                            typedState.OnFailure?.Invoke(innerException);
                         }
                         finally
                         {
-                            typedState.TaskCompletionSource.TrySetException(task.Exception);
+                            typedState.TaskCompletionSource.TrySetException(innerException);
                         }
                     }
                     else if (task.IsCanceled)
@@ -242,6 +254,9 @@ namespace Microsoft.Data.SqlClient.Utilities
                 state: continuationState,
                 scheduler: TaskScheduler.Default);
 
+            // Explicitly follow up by observing any exception thrown during continuation
+            ObserveContinuationException(continuationTask);
+
             return taskCompletionSource.Task;
         }
 
@@ -267,20 +282,21 @@ namespace Microsoft.Data.SqlClient.Utilities
                 State: state,
                 TaskCompletionSource: taskCompletionSource);
 
-            taskToContinue.ContinueWith(
+            Task continuationTask = taskToContinue.ContinueWith(
                 static (task, state2) =>
                 {
                     ContinuationState<TState> typedState2 = (ContinuationState<TState>)state2;
 
                     if (task.Exception is not null)
                     {
+                        Exception innerException = task.Exception.InnerException;
                         try
                         {
-                            typedState2.OnFailure?.Invoke(typedState2.State, task.Exception);
+                            typedState2.OnFailure?.Invoke(typedState2.State, innerException);
                         }
                         finally
                         {
-                            typedState2.TaskCompletionSource.TrySetException(task.Exception);
+                            typedState2.TaskCompletionSource.TrySetException(innerException);
                         }
                     }
                     else if (task.IsCanceled)
@@ -311,6 +327,9 @@ namespace Microsoft.Data.SqlClient.Utilities
                 state: continuationState,
                 scheduler: TaskScheduler.Default);
 
+            // Explicitly follow up by observing any exception thrown during continuation
+            ObserveContinuationException(continuationTask);
+
             return taskCompletionSource.Task;
         }
 
@@ -322,13 +341,6 @@ namespace Microsoft.Data.SqlClient.Utilities
             Action<TState1, TState2, Exception> onFailure = null,
             Action<TState1, TState2> onCancellation = null)
         {
-            // Note: this code is almost identical to ContinueTaskWithState, but creates its own
-            // task completion source and completes it on success.
-            // Yes, we could just chain into the ContinueTaskWithState, but that requires wrapping
-            // more state in a tuple and confusing the heck out of people. So, duplicating code
-            // just makes things more clean. Besides, @TODO: We should get rid of these helpers and
-            // just use async/await natives.
-
             if (taskToContinue is null)
             {
                 onSuccess(state1, state2);
@@ -345,20 +357,21 @@ namespace Microsoft.Data.SqlClient.Utilities
                 State2: state2,
                 TaskCompletionSource: taskCompletionSource);
 
-            taskToContinue.ContinueWith(
+            Task continuationTask = taskToContinue.ContinueWith(
                 static (task, state2) =>
                 {
                     ContinuationState<TState1, TState2> typedState2 = (ContinuationState<TState1, TState2>)state2;
 
                     if (task.Exception is not null)
                     {
+                        Exception innerException = task.Exception.InnerException;
                         try
                         {
-                            typedState2.OnFailure?.Invoke(typedState2.State1, typedState2.State2, task.Exception);
+                            typedState2.OnFailure?.Invoke(typedState2.State1, typedState2.State2, innerException);
                         }
                         finally
                         {
-                            typedState2.TaskCompletionSource.TrySetException(task.Exception);
+                            typedState2.TaskCompletionSource.TrySetException(innerException);
                         }
                     }
                     else if (task.IsCanceled)
@@ -388,6 +401,9 @@ namespace Microsoft.Data.SqlClient.Utilities
                 },
                 state: continuationState,
                 scheduler: TaskScheduler.Default);
+
+            // Explicitly follow up by observing any exception thrown during continuation
+            ObserveContinuationException(continuationTask);
 
             return taskCompletionSource.Task;
         }
@@ -470,6 +486,13 @@ namespace Microsoft.Data.SqlClient.Utilities
                 task.ContinueWith(static t => { _ = t.Exception; });
                 onTimeout?.Invoke();
             }
+        }
+
+        private static void ObserveContinuationException(Task continuationTask)
+        {
+            continuationTask.ContinueWith(
+                static task => _ = task.Exception,
+                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
         }
 
         private record ContinuationState(
