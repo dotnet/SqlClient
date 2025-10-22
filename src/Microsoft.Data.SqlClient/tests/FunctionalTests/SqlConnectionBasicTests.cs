@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Configuration;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
@@ -20,6 +21,13 @@ namespace Microsoft.Data.SqlClient.Tests
 {
     public class SqlConnectionBasicTests
     {
+        // Reflection
+        public static Assembly systemData = Assembly.GetAssembly(typeof(SqlConnection));
+        public static Type sqlConnection = systemData.GetType("Microsoft.Data.SqlClient.SqlConnection");
+        public static PropertyInfo innerConnectionProperty = sqlConnection.GetProperty("InnerConnection", BindingFlags.NonPublic | BindingFlags.Instance);
+        public static Type sqlInternalConnectionTds = systemData.GetType("Microsoft.Data.SqlClient.SqlInternalConnectionTds");
+        public static PropertyInfo serverProvidedFailoverPartnerProperty = sqlInternalConnectionTds.GetProperty("ServerProvidedFailoverPartner", BindingFlags.NonPublic | BindingFlags.Instance);
+
         [Fact]
         public void ConnectionTest()
         {
@@ -299,18 +307,18 @@ namespace Microsoft.Data.SqlClient.Tests
         public void TransientFault_IgnoreServerProvidedFailoverPartner_ShouldConnectToUserProvidedPartner()
         {
             // Arrange
-            AppContext.SetSwitch("Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner", true);
+            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner", true);
 
             using TestTdsServer failoverServer = TestTdsServer.StartTestServer();
             // Doesn't need to point to a real endpoint, just needs a value specified
-            //TODO: FailoverPartner = "localhost,1234",
+            failoverServer.Arguments.FailoverPartner = "localhost,1234";
 
             var failoverBuilder = new SqlConnectionStringBuilder(failoverServer.ConnectionString);
 
             using TestTdsServer server = TestTdsServer.StartTestServer();
-                    // Set an invalid failover partner to ensure that the connection fails if the
-                    // server provided failover partner is used.
-                    // TODO: FailoverPartner = $"invalidhost",
+            // Set an invalid failover partner to ensure that the connection fails if the
+            // server provided failover partner is used.
+            server.Arguments.FailoverPartner = $"invalidhost";
 
             SqlConnectionStringBuilder builder = new(server.ConnectionString)
             {
@@ -320,17 +328,19 @@ namespace Microsoft.Data.SqlClient.Tests
                 // Ensure pooling is enabled so that the failover partner information
                 // is persisted in the pool group. If pooling is disabled, the server
                 // provided failover partner will never be used.
-                Pooling = true
+                Pooling = true,
             };
             SqlConnection connection = new(builder.ConnectionString);
 
             // Connect once to the primary to trigger it to send the failover partner
             connection.Open();
-            Assert.Equal("invalidhost", (connection.InnerConnection as SqlInternalConnectionTds)!.ServerProvidedFailoverPartner);
+
+            var innerConnection = innerConnectionProperty.GetValue(connection);
+            var serverProvidedFailoverPartner = serverProvidedFailoverPartnerProperty.GetValue(innerConnection);
+            Assert.Equal("invalidhost", serverProvidedFailoverPartner);
 
             // Close the connection to return it to the pool
             connection.Close();
-
 
             // Act
             // Dispose of the server to trigger a failover
