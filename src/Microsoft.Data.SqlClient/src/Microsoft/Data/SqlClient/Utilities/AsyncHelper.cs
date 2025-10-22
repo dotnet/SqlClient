@@ -466,8 +466,8 @@ namespace Microsoft.Data.SqlClient.Utilities
 
             if (!task.IsCompleted)
             {
-                //Ensure the task does not leave an unobserved exception
-                task.ContinueWith(static t => { var ignored = t.Exception; });
+                // Ensure the task does not leave an unobserved exception
+                task.ContinueWith(static t => { _ = t.Exception; });
                 onTimeout?.Invoke();
             }
         }

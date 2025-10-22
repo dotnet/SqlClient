@@ -1226,6 +1226,48 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
 
         #endregion
 
+        #region WaitForCompletion
+
+        [Fact]
+        public void WaitForCompletion_DoesNotCreateUnobservedException()
+        {
+            // Arrange
+            Exception? unhandledException = null;
+            EventHandler<UnobservedTaskExceptionEventArgs> handleUnobservedException =
+                (_, args) => unhandledException = args.Exception;
+
+            // @TODO: Can we do this with a custom scheduler to avoid changing global state?
+            TaskScheduler.UnobservedTaskException += handleUnobservedException;
+
+            try
+            {
+                // Act
+                // - Run task that will always time out
+                TaskCompletionSource<object> tcs = new();
+                AsyncHelper.WaitForCompletion(
+                    tcs.Task,
+                    timeoutInSeconds: 1,
+                    onTimeout: null,
+                    rethrowExceptions: true);
+
+                // - Force collection of unobserved task
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+
+                // Assert
+                // - Make sure no unobserved tasks happened
+                Assert.Null(unhandledException);
+            }
+            finally
+            {
+                // Cleanup
+                // - Remove the unobserved task handler
+                TaskScheduler.UnobservedTaskException -= handleUnobservedException;
+            }
+        }
+
+        #endregion
+
         private static Task GetCancelledTask()
         {
             using CancellationTokenSource cts = new();
