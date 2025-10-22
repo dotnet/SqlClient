@@ -25,6 +25,7 @@ namespace Microsoft.Data.SqlClient
         private const string UseConnectionPoolV2String = @"Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
         private const string TruncateScaledDecimalString = @"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal";
         private const string IgnoreServerProvidedFailoverPartnerString = @"Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner";
+        private const string EnableUserAgentString = @"Switch.Microsoft.Data.SqlClient.EnableUserAgent";
 #if NET
         private const string GlobalizationInvariantModeString = @"System.Globalization.Invariant";
         private const string GlobalizationInvariantModeEnvironmentVariable = "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT";
@@ -45,6 +46,7 @@ namespace Microsoft.Data.SqlClient
         private static Tristate s_useConnectionPoolV2;
         private static Tristate s_truncateScaledDecimal;
         private static Tristate s_ignoreServerProvidedFailoverPartner;
+        private static Tristate s_enableUserAgent;
 #if NET
         private static Tristate s_globalizationInvariantMode;
         private static Tristate s_useManagedNetworking;
@@ -328,7 +330,27 @@ namespace Microsoft.Data.SqlClient
                 return s_ignoreServerProvidedFailoverPartner == Tristate.True;
             }
         }
-
+        /// <summary>
+        /// When set to true, the user agent feature is enabled and the driver will send the user agent string to the server.
+        /// </summary>
+        public static bool EnableUserAgent
+        {
+            get
+            {
+                if (s_enableUserAgent == Tristate.NotInitialized)
+                {
+                    if (AppContext.TryGetSwitch(EnableUserAgentString, out bool returnedValue) && returnedValue)
+                    {
+                        s_enableUserAgent = Tristate.True;
+                    }
+                    else
+                    {
+                        s_enableUserAgent = Tristate.False;
+                    }
+                }
+                return s_enableUserAgent == Tristate.True;
+            }
+        }
 #if NET
         /// <summary>
         /// .NET Core 2.0 and up supports Globalization Invariant mode, which reduces the size of the required libraries for
