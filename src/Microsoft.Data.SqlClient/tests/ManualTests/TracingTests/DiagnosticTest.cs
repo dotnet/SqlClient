@@ -2,6 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+// TODO(ADO-39873): Re-enable these tests after addressing their flakiness.
+//
+// Note that xUnit v2 has no built-in way to skip an entire test class, so we
+// use the preprocessor instead.
+#if false
+
 using System.Collections;
 using System.Diagnostics;
 using System.Reflection;
@@ -999,3 +1005,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
     }
 }
+
+#endif
