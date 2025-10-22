@@ -140,7 +140,7 @@ namespace Microsoft.Data.SqlClient
             if (returnValueParameter is not null)
             {
                 SqlParameter.AppendPrefixedParameterName(execStatement, returnValueParameter.ParameterName);
-                execStatement.Append("=");
+                execStatement.Append('=');
             }
 
             execStatement.Append(ParseAndQuoteIdentifier(storedProcedureName, isUdtTypeName: false));
@@ -198,7 +198,7 @@ namespace Microsoft.Data.SqlClient
                 // @TODO: Invert
                 if (parameter.Direction is not ParameterDirection.ReturnValue)
                 {
-                    execStatement.Append(' ');
+                    execStatement.Append(", ");
                     SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
                     execStatement.Append('=');
                     SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
