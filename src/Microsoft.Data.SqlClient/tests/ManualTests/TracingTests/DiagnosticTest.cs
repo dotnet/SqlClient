@@ -14,13 +14,10 @@ using Microsoft.SqlServer.TDS.Error;
 using Microsoft.SqlServer.TDS.Servers;
 using Microsoft.SqlServer.TDS.SQLBatch;
 using Xunit;
-using Xunit.Abstractions;
 using System.Runtime.CompilerServices;
 using System;
 using System.Data;
 using Microsoft.DotNet.RemoteExecutor;
-
-#nullable enable
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -37,13 +34,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string WriteConnectionCloseBefore = "Microsoft.Data.SqlClient.WriteConnectionCloseBefore";
         private const string WriteConnectionCloseAfter = "Microsoft.Data.SqlClient.WriteConnectionCloseAfter";
         private const string WriteConnectionCloseError = "Microsoft.Data.SqlClient.WriteConnectionCloseError";
-
-        private readonly ITestOutputHelper _output;
-
-        public DiagnosticTest(ITestOutputHelper output)
-        {
-            _output = output;
-        }
 
         [Fact]
         public void ExecuteScalarTest()
@@ -552,7 +542,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }).Dispose();
         }
 
-        private void CollectStatisticsDiagnostics(Action<string> sqlOperation, string[] expectedDiagnostics, [CallerMemberName] string methodName = "")
+        private static void CollectStatisticsDiagnostics(Action<string> sqlOperation, string[] expectedDiagnostics, [CallerMemberName] string methodName = "")
         {
             bool statsLogged = false;
             bool operationHasError = false;
@@ -740,12 +730,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (DiagnosticListener.AllListeners.Subscribe(diagnosticListenerObserver))
             {
 
-                _output.WriteLine(string.Format("Test: {0} Enabled Listeners", methodName));
+                Console.WriteLine(string.Format("Test: {0} Enabled Listeners", methodName));
 
                 using (var server = new TdsServer(new DiagnosticsQueryEngine(), new TdsServerArguments()))
                 {
                     server.Start(methodName);
-                    _output.WriteLine(string.Format("Test: {0} Started Server", methodName));
+                    Console.WriteLine(string.Format("Test: {0} Started Server", methodName));
 
                     var connectionString = new SqlConnectionStringBuilder
                     {
@@ -755,7 +745,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     sqlOperation(connectionString);
 
-                    _output.WriteLine(string.Format("Test: {0} SqlOperation Successful", methodName));
+                    Console.WriteLine(string.Format("Test: {0} SqlOperation Successful", methodName));
 
                     Assert.True(statsLogged);
 
@@ -765,14 +755,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         Assert.True(diagnosticListenerObserver.HasReceivedDiagnostic(expected), $"Missing diagnostic '{expected}'");
                     }
 
-                    _output.WriteLine(string.Format("Test: {0} Listeners Disabled", methodName));
+                    Console.WriteLine(string.Format("Test: {0} Listeners Disabled", methodName));
                 }
-                _output.WriteLine(string.Format("Test: {0} Server Disposed", methodName));
+                Console.WriteLine(string.Format("Test: {0} Server Disposed", methodName));
             }
-            _output.WriteLine(string.Format("Test: {0} Listeners Disposed Successfully", methodName));
+            Console.WriteLine(string.Format("Test: {0} Listeners Disposed Successfully", methodName));
         }
 
-        private async Task CollectStatisticsDiagnosticsAsync(Func<string, Task> sqlOperation, string[] expectedDiagnostics, [CallerMemberName] string methodName = "")
+        private static async Task CollectStatisticsDiagnosticsAsync(Func<string, Task> sqlOperation, string[] expectedDiagnostics, [CallerMemberName] string methodName = "")
         {
             bool statsLogged = false;
             bool operationHasError = false;
@@ -944,11 +934,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             diagnosticListenerObserver.Enable();
             using (DiagnosticListener.AllListeners.Subscribe(diagnosticListenerObserver))
             {
-                _output.WriteLine(string.Format("Test: {0} Enabled Listeners", methodName));
+                Console.WriteLine(string.Format("Test: {0} Enabled Listeners", methodName));
                 using (var server = new TdsServer(new DiagnosticsQueryEngine(), new TdsServerArguments()))
                 {
                     server.Start(methodName);
-                    _output.WriteLine(string.Format("Test: {0} Started Server", methodName));
+                    Console.WriteLine(string.Format("Test: {0} Started Server", methodName));
 
                     var connectionString = new SqlConnectionStringBuilder
                     {
@@ -957,7 +947,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }.ConnectionString;
                     await sqlOperation(connectionString);
 
-                    _output.WriteLine(string.Format("Test: {0} SqlOperation Successful", methodName));
+                    Console.WriteLine(string.Format("Test: {0} SqlOperation Successful", methodName));
 
                     Assert.True(statsLogged);
 
@@ -967,20 +957,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         Assert.True(diagnosticListenerObserver.HasReceivedDiagnostic(expected), $"Missing diagnostic '{expected}'");
                     }
 
-                    _output.WriteLine(string.Format("Test: {0} Listeners Disabled", methodName));
+                    Console.WriteLine(string.Format("Test: {0} Listeners Disabled", methodName));
                 }
-                _output.WriteLine(string.Format("Test: {0} Server Disposed", methodName));
+                Console.WriteLine(string.Format("Test: {0} Server Disposed", methodName));
             }
-            _output.WriteLine(string.Format("Test: {0} Listeners Disposed Successfully", methodName));
+            Console.WriteLine(string.Format("Test: {0} Listeners Disposed Successfully", methodName));
         }
 
         private static T GetPropertyValueFromType<T>(object obj, string propName)
         {
             Type type = obj.GetType();
-            PropertyInfo? pi = type.GetRuntimeProperty(propName);
+            PropertyInfo pi = type.GetRuntimeProperty(propName);
 
-            var propertyValue = pi?.GetValue(obj);
-            return (T)propertyValue!;
+            var propertyValue = pi.GetValue(obj);
+            return (T)propertyValue;
         }
     }
 
