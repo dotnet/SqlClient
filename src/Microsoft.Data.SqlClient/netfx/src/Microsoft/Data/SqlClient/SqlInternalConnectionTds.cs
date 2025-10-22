@@ -776,7 +776,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal string ServerProvidedFailoverPartner { get; set; }
+        internal string ServerProvidedFailoverPartner { get; private set; }
 
         internal SqlConnectionPoolGroupProviderInfo PoolGroupProviderInfo
         {
@@ -2118,7 +2118,6 @@ namespace Microsoft.Data.SqlClient
                             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}, new failover partner={1}", ObjectID, ServerProvidedFailoverPartner);
                             failoverServerInfo.SetDerivedNames(protocol, ServerProvidedFailoverPartner);
                         }
-                        failoverServerInfo.SetDerivedNames(protocol, ServerProvidedFailoverPartner);
                     }
 
                     currentServerInfo = failoverServerInfo;
@@ -2166,6 +2165,7 @@ namespace Microsoft.Data.SqlClient
 
                         // restore properties that could be changed by the environment tokens
                         _currentPacketSize = ConnectionOptions.PacketSize;
+                        _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
                         CurrentDatabase = _originalDatabase = ConnectionOptions.InitialCatalog;
                         ServerProvidedFailoverPartner = null;
                         _instanceName = string.Empty;
