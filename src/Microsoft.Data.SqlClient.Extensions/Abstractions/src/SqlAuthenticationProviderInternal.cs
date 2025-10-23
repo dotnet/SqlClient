@@ -9,11 +9,17 @@ namespace Microsoft.Data.SqlClient;
 /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/SqlAuthenticationProvider/*'/>
 public abstract partial class SqlAuthenticationProvider
 {
+    // This class implements the obsolete static GetProvider and SetProvider
+    // methods by using reflection to call into the Microsoft.Data.SqlClient
+    // package's SqlAuthenticationProviderManager class, if that assembly is
+    // present.
     private static class Internal
     {
+        // Handles to the reflected get/set methods.
         private static MethodInfo? _getProvider = null;
         private static MethodInfo? _setProvider = null;
 
+        // Static construction performs the reflection lookups.
         static Internal()
         {
             // If the MDS package is present, load its
@@ -66,7 +72,7 @@ public abstract partial class SqlAuthenticationProvider
                 _setProvider = manager.GetMethod(
                     "SetProvider",
                     BindingFlags.Public | BindingFlags.Static);
-                
+
                 // TODO: Logging
                 // SqlClientEventSource.Log.TryTraceEvent(
                 //     nameof(SqlAuthenticationProviderManager) +
@@ -90,6 +96,11 @@ public abstract partial class SqlAuthenticationProvider
             // Any other exceptions are fatal.
         }
 
+        // Call the reflected GetProvider method.
+        //
+        // Returns null if reflection failed or any exceptions occur.
+        // Otherwise, returns as the reflected method does.
+        //
         public static SqlAuthenticationProvider? GetProvider(
             SqlAuthenticationMethod authenticationMethod)
         {
@@ -114,6 +125,12 @@ public abstract partial class SqlAuthenticationProvider
             }
         }
 
+
+        // Call the reflected SetProvider method.
+        //
+        // Returns false if reflection failed, invocation fails, or any
+        // exceptions occur.  Otherwise, returns as the reflected method does.
+        //
         public static bool SetProvider(
             SqlAuthenticationMethod authenticationMethod,
             SqlAuthenticationProvider provider)

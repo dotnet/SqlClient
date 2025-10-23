@@ -25,6 +25,7 @@ public abstract partial class SqlAuthenticationProvider
         "This method is deprecated and will be removed in future versions.  " +
         "Use SqlAuthenticationProviderManager.GetProvider() from the " +
         "Microsoft.Data.SqlClient package instead.")]
+    // Obsoleted with MDS 7.0.0; to be removed at least 2 major versions later.
     public static SqlAuthenticationProvider? GetProvider(
         SqlAuthenticationMethod authenticationMethod)
     {
@@ -36,6 +37,7 @@ public abstract partial class SqlAuthenticationProvider
         "This method is deprecated and will be removed in future versions.  " +
         "Use SqlAuthenticationProviderManager.SetProvider() from the " +
         "Microsoft.Data.SqlClient package instead.")]
+    // Obsoleted with MDS 7.0.0; to be removed at least 2 major versions later.
     public static bool SetProvider(
         SqlAuthenticationMethod authenticationMethod,
         SqlAuthenticationProvider provider)

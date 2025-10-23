@@ -22,7 +22,18 @@ See the LICENSE file in the project root for more information.
       <param name="userId">The user login name/ID, or null if not applicable.</param>
       <param name="password">The user password, or null if not applicable.</param>
       <param name="connectionId">The connection ID.</param>
-      <param name="authenticationTimeout">The authentication timeout, in seconds.</param>
+      <param name="connectionTimeout">
+        The authentication timeout, in seconds.  The overall connection timeout
+        is managed by the driver; this timeout only applies to authentication.
+
+        The value supplied here is used to set the AuthenticationTimeout
+        property.
+        
+        Note that C# doesn't have a mechanism to deprecate constructor parameter
+        names in a backwards-compatible fashion, so we must keep the old name
+        (connectionTimeout) even though this parameter should really be named
+        authenticationTimeout
+      </param>
     </ctor>
     <AuthenticationMethod>
       <summary>Gets the authentication method.</summary>
@@ -61,12 +72,11 @@ See the LICENSE file in the project root for more information.
       <value>The authentication timeout, in seconds.</value>
     </AuthenticationTimeout>
     <ConnectionTimeout>
-      <summary>Gets the connection timeout value.</summary>
+      <summary>Gets the AuthenticationTimeout property value.</summary>
       <remarks>
         This property is deprecated and will be removed in future versions.  Use
         AuthenticationTimeout instead.
       </remarks>
-      <value>The connection timeout, in seconds.</value>
     </ConnectionTimeout>
   </members>
 </docs>

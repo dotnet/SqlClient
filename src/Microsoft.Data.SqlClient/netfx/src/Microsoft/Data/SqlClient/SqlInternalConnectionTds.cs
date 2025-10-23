@@ -2545,7 +2545,7 @@ namespace Microsoft.Data.SqlClient
             const int defaultRetryPeriod = 100;
 
             // Number of retry attempts we are willing to perform.
-            const int maxRetryAttempts = 1;
+            const int maxAttempts = 1;
 
             // Username to use in error messages.
             string? username = null;
@@ -2558,7 +2558,7 @@ namespace Microsoft.Data.SqlClient
 
             // We will perform retries if the provider indicates an error that
             // is retryable.
-            for (int retryAttempt = 0; retryAttempt < maxRetryAttempts; ++retryAttempt)
+            for (int attempt = 0; attempt < maxAttempts; ++attempt)
             {
                 try
                 {
@@ -2686,7 +2686,7 @@ namespace Microsoft.Data.SqlClient
                     if (_timeout.IsExpired || _timeout.MillisecondsRemaining <= 0)
                     {
                         // No, so we throw.
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken error:> Retry Attempt: {0}, Timeout: {1}", retryAttempt, ex.FailureCode);
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken error:> Attempt: {0}, Timeout: {1}", attempt, ex.FailureCode);
                         throw SQL.ActiveDirectoryTokenRetrievingTimeout(Enum.GetName(typeof(SqlAuthenticationMethod), ConnectionOptions.Authentication), ex.FailureCode, ex);
                     }
 
@@ -2695,10 +2695,10 @@ namespace Microsoft.Data.SqlClient
                     int retryPeriod =
                       ex.RetryPeriod > 0
                       ? ex.RetryPeriod
-                      : defaultRetryPeriod * (2 ^ retryAttempt);
+                      : defaultRetryPeriod * (2 ^ attempt);
 
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}, Retry Attempt: {1}, sleeping {2}[Milliseconds]", ObjectID, retryAttempt, retryPeriod);
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}, Retry Attempt: {1}, remaining {2}[Milliseconds]", ObjectID, retryAttempt, _timeout.MillisecondsRemaining);
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}, Attempt: {1}, sleeping {2}[Milliseconds]", ObjectID, attempt, retryPeriod);
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}, Attempt: {1}, remaining {2}[Milliseconds]", ObjectID, attempt, _timeout.MillisecondsRemaining);
 
                     // Sleep for the desired period.
                     Thread.Sleep(retryPeriod);

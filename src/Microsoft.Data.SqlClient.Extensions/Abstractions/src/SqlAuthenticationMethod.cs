@@ -15,6 +15,7 @@ public enum SqlAuthenticationMethod : int
 
     /// <include file='../doc/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryPassword/*'/>
     [Obsolete("ActiveDirectoryPassword is deprecated, use a more secure authentication method. See https://aka.ms/SqlClientEntraIDAuthentication for more details.")]
+    // Obsoleted with MDS 7.0.0; to be removed at least 2 major versions later.
     ActiveDirectoryPassword,
 
     /// <include file='../doc/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryIntegrated/*'/>

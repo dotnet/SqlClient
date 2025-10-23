@@ -38,6 +38,7 @@ public sealed class SqlAuthenticationParameters
     [Obsolete(
         "This property is deprecated and will be removed in future versions.  " +
         "Use AuthenticationTimeout instead.")]
+    // Obsoleted with MDS 7.0.0; to be removed at least 2 major versions later.
     public int ConnectionTimeout { get { return AuthenticationTimeout; } }
 
     /// <include file='../doc/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ctor/*'/>
@@ -50,7 +51,10 @@ public sealed class SqlAuthenticationParameters
         string? userId,
         string? password,
         Guid connectionId,
-        int authenticationTimeout)
+        // This parameter should really be named authenticationTimeout, but we
+        // must keep the old name for backwards compatibility.  The value
+        // supplied here is used to set the AuthenticationTimeout property.
+        int connectionTimeout)
     {
         AuthenticationMethod = authenticationMethod;
         ServerName = serverName;
@@ -60,6 +64,6 @@ public sealed class SqlAuthenticationParameters
         UserId = userId;
         Password = password;
         ConnectionId = connectionId;
-        AuthenticationTimeout = authenticationTimeout;
+        AuthenticationTimeout = connectionTimeout;
     }
 }
