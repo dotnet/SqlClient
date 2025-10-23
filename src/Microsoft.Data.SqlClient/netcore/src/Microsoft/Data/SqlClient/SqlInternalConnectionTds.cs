@@ -1634,7 +1634,7 @@ namespace Microsoft.Data.SqlClient
 
                 // When ignoring server provided failover partner, we must pass in the original failover partner from the connection string.
                 // Otherwise the pool group's failover partner designation will be updated to point to the server provided value.
-                string actualFailoverPartner = LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner ? "" : ServerProvidedFailoverPartner;
+                string actualFailoverPartner = LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner ? string.Empty : ServerProvidedFailoverPartner;
 
                 PoolGroupProviderInfo.FailoverCheck(false, connectionOptions, actualFailoverPartner);
             }
