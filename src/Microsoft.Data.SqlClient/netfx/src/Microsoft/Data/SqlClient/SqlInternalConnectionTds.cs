@@ -770,7 +770,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal string ServerProvidedFailoverPartner { get; set; }
+        internal string ServerProvidedFailoverPartner { get; private set; }
 
         internal SqlConnectionPoolGroupProviderInfo PoolGroupProviderInfo
         {

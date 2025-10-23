@@ -311,7 +311,7 @@ namespace Microsoft.Data.SqlClient.Tests
         public void TransientFault_IgnoreServerProvidedFailoverPartner_ShouldConnectToUserProvidedPartner()
         {
             // Arrange
-            ignoreServerProvidedFailoverPartnerField.SetValue(null, true);
+            ignoreServerProvidedFailoverPartnerField.SetValue(null, );
             
 
             try
