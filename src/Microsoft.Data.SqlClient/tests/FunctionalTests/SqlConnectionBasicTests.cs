@@ -30,6 +30,9 @@ namespace Microsoft.Data.SqlClient.Tests
         public static PropertyInfo serverProvidedFailoverPartnerProperty = sqlInternalConnectionTds.GetProperty("ServerProvidedFailoverPartner", BindingFlags.NonPublic | BindingFlags.Instance);
         public static Type localAppContextSwitches = systemData.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
         public static FieldInfo ignoreServerProvidedFailoverPartnerField = localAppContextSwitches.GetField("s_ignoreServerProvidedFailoverPartner", BindingFlags.NonPublic | BindingFlags.Static);
+        public static Type tristateEnum = localAppContextSwitches.GetNestedType("Tristate", BindingFlags.NonPublic);
+        public static object tristateTrue = Enum.Parse(tristateEnum, "True");
+        public static object tristateFalse = Enum.Parse(tristateEnum, "False");
 
 
         [Fact]
@@ -311,7 +314,7 @@ namespace Microsoft.Data.SqlClient.Tests
         public void TransientFault_IgnoreServerProvidedFailoverPartner_ShouldConnectToUserProvidedPartner()
         {
             // Arrange
-            ignoreServerProvidedFailoverPartnerField.SetValue(null, );
+            ignoreServerProvidedFailoverPartnerField.SetValue(null, tristateTrue);
             
 
             try
@@ -373,7 +376,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
             finally
             {
-                ignoreServerProvidedFailoverPartnerField.SetValue(null, false);
+                ignoreServerProvidedFailoverPartnerField.SetValue(null, tristateFalse);
             }
         }
 
