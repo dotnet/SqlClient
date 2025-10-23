@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient
                 userId: builder._userId,
                 password: builder._password,
                 connectionId: builder._connectionId,
-                authenticationTimeout: builder._authenticationTimeout);
+                connectionTimeout: builder._authenticationTimeout);
         }
 
         /// <summary>
