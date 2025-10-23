@@ -42,6 +42,7 @@
         <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
         <dependency id="System.Text.Encodings.Web" version="8.0.0" />
         <dependency id="System.Text.Json" version="8.0.6" />
+        <dependency id="System.Threading.Channels" version="8.0.0" />
       </group>
       <group targetFramework="net8.0">
         <dependency id="Microsoft.Bcl.Cryptography" version="8.0.0" />
@@ -81,6 +82,7 @@
         <dependency id="System.Runtime.InteropServices.RuntimeInformation" version="4.3.0" />
         <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
         <dependency id="System.Text.Json" version="8.0.6" />
+        <dependency id="System.Threading.Channels" version="8.0.0" />
       </group>
     </dependencies>
     <frameworkAssemblies>

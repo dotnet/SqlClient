@@ -208,9 +208,6 @@ namespace Microsoft.Data.SqlClient
         // Json Support Flag
         internal bool IsJsonSupportEnabled = false;
 
-        // User Agent Flag
-        internal bool IsUserAgentEnabled = true;
-
         // Vector Support Flag
         internal bool IsVectorSupportEnabled = false;
 
@@ -1401,10 +1398,7 @@ namespace Microsoft.Data.SqlClient
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
             requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
-
-        #if DEBUG
             requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
-        #endif
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
@@ -2980,6 +2974,12 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError();
                         }
                         IsVectorSupportEnabled = true;
+                        break;
+                    }
+                case TdsEnums.FEATUREEXT_USERAGENT:
+                    {
+                        // Unexpected ack from server but we ignore it entirely
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for USERAGENTSUPPORT (ignored)", ObjectID);
                         break;
                     }
 

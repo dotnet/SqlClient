@@ -211,9 +211,6 @@ namespace Microsoft.Data.SqlClient
         // Vector Support Flag
         internal bool IsVectorSupportEnabled = false;
 
-        // User Agent Flag
-        internal bool IsUserAgentEnabled = true;
-
         // TCE flags
         internal byte _tceVersionSupported;
 
@@ -1409,9 +1406,7 @@ namespace Microsoft.Data.SqlClient
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
             requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
 
-        #if DEBUG    
             requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
-        #endif
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
@@ -3028,7 +3023,18 @@ namespace Microsoft.Data.SqlClient
                         IsVectorSupportEnabled = true;
                         break;
                     }
+                case TdsEnums.FEATUREEXT_USERAGENT:
+                    {
+                        // TODO: Verify that the server sends an acknowledgment (Ack)
+                        // using this log message in the future.
 
+                        // This Ack from the server is unexpected and is ignored completely.
+                        // According to the TDS specification, an Ack is not defined/expected
+                        // for this scenario. We handle it only for completeness
+                        // and to support testing.
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for USERAGENTSUPPORT (ignored)", ObjectID);
+                        break;
+                    }
                 default:
                     {
                         // Unknown feature ack

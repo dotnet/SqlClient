@@ -4077,20 +4077,11 @@
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
     <value>Die angegebene Chiffretextlänge {0} des Verschlüsselungsschlüssels der verschlüsselten Spalte entspricht nicht der Chiffretextlänge {1}, wenn der Spaltenhauptschlüssel ({2}) in „{3}“ verwendet wird. Der verschlüsselte Spaltenverschlüsselungsschlüssel ist vielleicht beschädigt, oder es wurde möglicherweise ein falscher {4}-Pfad angegeben.</value>
   </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
-    <value>Die angegebene Chiffretextlänge {0} des Verschlüsselungsschlüssels der verschlüsselten Spalte entspricht nicht der Chiffretextlänge {1}, wenn der Spaltenhauptschlüssel (Zertifikat) in „{2}“ verwendet wird. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist möglicherweise beschädigt, oder der angegebene Zertifikatpfad ist falsch.</value>
-  </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
     <value>Die angegebene Signaturlänge {0} des Verschlüsselungsschlüssels der verschlüsselten Spalte entspricht nicht der Signaturlänge {1}, wenn der Spaltenhauptschlüssel ({2}) in „{3}“ verwendet wird. Der verschlüsselte Spaltenverschlüsselungsschlüssel ist vielleicht beschädigt, oder es wurde möglicherweise ein falscher {4}-Pfad angegeben.</value>
   </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
-    <value>Die angegebene Signaturlänge {0} des Verschlüsselungsschlüssels der verschlüsselten Spalte entspricht nicht der Signaturlänge {1}, wenn der Spaltenhauptschlüssel (Zertifikat) in „{2}“ verwendet wird. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist möglicherweise beschädigt, oder der angegebene Zertifikatpfad ist falsch.</value>
-  </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
     <value>Die angegebene Verschlüsselungsschlüsselsignatur der verschlüsselten Spalte entspricht nicht der Signatur, die mit dem Spaltenhauptschlüssel ({0}) in „{1}“ berechnet wurde. Der verschlüsselte Spaltenverschlüsselungsschlüssel ist vielleicht beschädigt, oder es wurde möglicherweise ein falscher Pfad angegeben.</value>
-  </data>
-  <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
-    <value>Die angegebene Verschlüsselungsschlüsselsignatur der verschlüsselten Spalte entspricht nicht der Signatur, die mit dem Spaltenhauptschlüssel (Zertifikat) in '{0}' berechnet wurde. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist möglicherweise beschädigt, oder der angegebene Pfad ist falsch.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>Unter dem Schlüsselpfad '{0}' festgelegtes Zertifikat verfügt nicht über einen privaten Schlüssel zur Verschlüsselung eines Spaltenverschlüsselungsschlüssels. Stellen Sie sicher, dass das Zertifikat korrekt importiert wurde.</value>

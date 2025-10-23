@@ -300,6 +300,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\ChannelDbConnectionPool.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\ChannelDbConnectionPool.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\ConnectionPoolSlots.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\ConnectionPoolSlots.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolAuthenticationContext.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolAuthenticationContext.cs</Link>
     </Compile>
@@ -1047,6 +1050,7 @@
     <PackageReference Include="System.Text.Encodings.Web" />
     <PackageReference Include="System.Text.Json" />
     <PackageReference Include="System.ValueTuple" />
+    <PackageReference Include="System.Threading.Channels" />
   </ItemGroup>
 
   <!--

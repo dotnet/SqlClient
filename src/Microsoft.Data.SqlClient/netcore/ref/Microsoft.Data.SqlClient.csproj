@@ -45,6 +45,11 @@
     <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
+  <!-- netstandard dependencies -->
+  <ItemGroup Condition="'$(TargetGroup)' != 'netcoreapp'">
+    <PackageReference Include="System.Threading.Channels" />
+  </ItemGroup>
+   
   <!--
     Refer to the Abstractions package via project or package reference
     depending on our build parameters.

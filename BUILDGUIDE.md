@@ -202,7 +202,7 @@ Alternatively, the `ReferenceType` build property property may be specified with
 a value of `Package`.  This will change inter-component dependencies to use
 `<PackageReference>` dependencies, and require that dependent components be
 built and packaged before building the depending component.  In this scenario,
-the root `NuGet.Config` file must be updated to include the following entry
+the root `NuGet.config` file must be updated to include the following entry
 under the `<packageSources>` element:
 
 ```xml
@@ -213,6 +213,10 @@ under the `<packageSources>` element:
   </packageSources>
 </configuration>
 ```
+
+As a convenience, a `NuGet.config.local` file is supplied with the above
+package source already present.  You may simply copy it over `NuGet.config`
+when using `Package` references.
 
 Then, you can specify `Package` references be used, for example:
 
