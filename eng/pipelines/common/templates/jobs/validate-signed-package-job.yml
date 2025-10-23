@@ -306,17 +306,6 @@ jobs:
     displayName: 'Verify "File Version" matches expected values for DLLs'
 
   - powershell: |
-      # Change TestMicrosoftDataSqlClientVersion
-
-      [Xml] $versionprops = Get-Content -Path "tools/props/Versions.props" 
-      $versionpropspath = "tools\props\Versions.props"
-      $versionprops.Project.PropertyGroup[$versionprops.Project.PropertyGroup.Count-1].TestMicrosoftDataSqlClientVersion ="$(mdsPackageVersion)"
-      Write-Host "Saving Test nuget version at $rootfolder\props ...." -ForegroundColor Green
-      $versionprops.Save($versionpropspath)
-
-    displayName: 'Modify TestMicrosoftDataSqlClientVersion'
-
-  - powershell: |
       # Check assembly versions.
       #
       # GOTCHA: This expects the Versions.props file having XML elements in a

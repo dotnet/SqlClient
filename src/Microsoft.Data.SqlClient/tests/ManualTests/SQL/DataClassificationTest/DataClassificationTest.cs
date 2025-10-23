@@ -25,7 +25,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 try
                 {
                     sqlConnection.Open();
-                    Assert.True(DataTestUtility.IsSupportedDataClassification());
                     CreateTable(sqlCommand);
                     AddSensitivity(sqlCommand, rankEnabled: true);
                     InsertData(sqlCommand);
@@ -48,7 +47,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 try
                 {
                     sqlConnection.Open();
-                    Assert.True(DataTestUtility.IsSupportedDataClassification());
                     CreateTable(sqlCommand);
                     AddSensitivity(sqlCommand);
                     InsertData(sqlCommand);

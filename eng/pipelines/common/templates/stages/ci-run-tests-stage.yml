@@ -10,6 +10,12 @@ parameters:
   - name: abstractionsPackageVersion
     type: string
 
+  - name: azureArtifactName
+    type: string
+
+  - name: azurePackageVersion
+    type: string
+
   - name: debug
     type: boolean
     default: false
@@ -68,7 +74,9 @@ stages:
                   jobDisplayName: ${{ format('{0}_{1}_{2}', replace(targetFramework, '.', '_'), platform, testSet) }}
                   configProperties: ${{ config.value.configProperties }}
                   abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
-                  abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
+                  abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+                  azureArtifactName: ${{ parameters.azureArtifactName }}
+                  azurePackageVersion: ${{ parameters.azurePackageVersion }}
                   mdsArtifactName: ${{ parameters.mdsArtifactName }}
                   mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
                   prebuildSteps: ${{ parameters.prebuildSteps }}
@@ -102,7 +110,9 @@ stages:
                     configProperties: ${{ config.value.configProperties }}
                     useManagedSNI: ${{ useManagedSNI }}
                     abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
-                    abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
+                    abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+                    azureArtifactName: ${{ parameters.azureArtifactName }}
+                    azurePackageVersion: ${{ parameters.azurePackageVersion }}
                     mdsArtifactName: ${{ parameters.mdsArtifactName }}
                     mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
                     prebuildSteps: ${{ parameters.prebuildSteps }}                  

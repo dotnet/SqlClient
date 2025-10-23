@@ -49,8 +49,8 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Throws<InvalidOperationException>(() => connection.AccessToken = "SampleAccessToken");
             }
         }
-        
-        #if NETFRAMEWORK
+
+#if NETFRAMEWORK
         // This test is only valid for .NET Framework
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public async Task IsDummySqlAuthenticationProviderSetByDefault()
         {
-            var provider = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive);
+            var provider = SqlAuthenticationProviderManager.GetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive);
 
             Assert.NotNull(provider);
             Assert.Equal(typeof(DummySqlAuthenticationProvider), provider.GetType());
@@ -69,30 +69,84 @@ namespace Microsoft.Data.SqlClient.Tests
             var token = await provider.AcquireTokenAsync(null);
             Assert.Equal(token.AccessToken, DummySqlAuthenticationProvider.DUMMY_TOKEN_STR);
         }
-        #endif
+#endif
+
+        // Verify that we can get and set providers via both the Abstractions
+        // package and Manager class interchangeably.
+        //
+        // This tests the dynamic assembly loading code in the Abstractions
+        // package.
+        [Fact]
+        public void Abstractions_And_Manager_GetSetProvider_Equivalent()
+        {
+            // Set via Manager, get via both.
+            DummySqlAuthenticationProvider provider1 = new();
+
+            Assert.True(
+                SqlAuthenticationProviderManager.SetProvider(
+                    // GOTCHA: On .NET Framework, the dummy provider is already
+                    // registered as the default provider for Interactive, so we
+                    // use DeviceCodeFlow instead.
+                    SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow,
+                    provider1));
+
+            Assert.Same(
+                provider1,
+                SqlAuthenticationProviderManager.GetProvider(
+                    SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
+
+            Assert.Same(
+                provider1,
+                #pragma warning disable CS0618 // Type or member is obsolete
+                SqlAuthenticationProvider.GetProvider(
+                    SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
+                #pragma warning restore CS0618 // Type or member is obsolete
+
+            // Set via Abstractions, get via both.
+            DummySqlAuthenticationProvider provider2 = new();
+
+            Assert.True(
+                #pragma warning disable CS0618 // Type or member is obsolete
+                SqlAuthenticationProvider.SetProvider(
+                    SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow,
+                    provider2));
+                #pragma warning restore CS0618 // Type or member is obsolete
+
+            Assert.Same(
+                provider2,
+                SqlAuthenticationProviderManager.GetProvider(
+                    SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
+            
+            Assert.Same(
+                provider2,
+                #pragma warning disable CS0618 // Type or member is obsolete
+                SqlAuthenticationProvider.GetProvider(
+                    SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
+                #pragma warning restore CS0618 // Type or member is obsolete
+        }
 
         [Fact]
         public void CustomActiveDirectoryProviderTest()
         {
             SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(static (result) => Task.CompletedTask);
-            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
-            Assert.Equal(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
+            SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
+            Assert.Same(authProvider, SqlAuthenticationProviderManager.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
         }
 
         [Fact]
         public void CustomActiveDirectoryProviderTest_AppClientId()
         {
             SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(Guid.NewGuid().ToString());
-            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
-            Assert.Equal(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
+            SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
+            Assert.Same(authProvider, SqlAuthenticationProviderManager.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
         }
 
         [Fact]
         public void CustomActiveDirectoryProviderTest_AppClientId_DeviceFlowCallback()
         {
             SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(static (result) => Task.CompletedTask, Guid.NewGuid().ToString());
-            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
-            Assert.Equal(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
+            SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
+            Assert.Same(authProvider, SqlAuthenticationProviderManager.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
         }
     }
 }

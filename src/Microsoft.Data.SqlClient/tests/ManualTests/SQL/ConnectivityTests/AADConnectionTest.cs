@@ -8,7 +8,6 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
-using Azure.Identity;
 using Microsoft.Identity.Client;
 using Xunit;
 
@@ -35,7 +34,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 _ = parameters.ConnectionId;
 
                 var cts = new CancellationTokenSource();
-                cts.CancelAfter(parameters.ConnectionTimeout * 1000);
+                cts.CancelAfter(parameters.AuthenticationTimeout * 1000);
 
                 string[] scopes = new string[] { scope };
                 SecureString password = new SecureString();
@@ -263,7 +262,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void TestCustomProviderAuthentication()
         {
             #pragma warning disable 0618 // Type or member is obsolete
-            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new CustomSqlAuthenticationProvider(DataTestUtility.ApplicationClientId));
+            SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new CustomSqlAuthenticationProvider(DataTestUtility.ApplicationClientId));
             #pragma warning restore 0618 // Type or member is obsolete
             // Connect to Azure DB with password and retrieve user name using custom authentication provider
             using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
@@ -283,7 +282,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             // Reset to driver internal provider.
             #pragma warning disable 0618 // Type or member is obsolete
-            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new ActiveDirectoryAuthenticationProvider(DataTestUtility.ApplicationClientId));
+            SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new ActiveDirectoryAuthenticationProvider(DataTestUtility.ApplicationClientId));
             #pragma warning restore 0618 // Type or member is obsolete
         }
 
