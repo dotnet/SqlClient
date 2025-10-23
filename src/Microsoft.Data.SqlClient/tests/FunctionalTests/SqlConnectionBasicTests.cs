@@ -312,6 +312,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             // Arrange
             ignoreServerProvidedFailoverPartnerField.SetValue(null, true);
+            
 
             try
             {
@@ -335,7 +336,7 @@ namespace Microsoft.Data.SqlClient.Tests
                     // is persisted in the pool group. If pooling is disabled, the server
                     // provided failover partner will never be used.
                     Pooling = true,
-                    ConnectTimeout = 10000
+                    MinPoolSize = 1,
                 };
                 SqlConnection connection = new(builder.ConnectionString);
 
@@ -356,6 +357,10 @@ namespace Microsoft.Data.SqlClient.Tests
                 // Opening a new connection will use the failover partner stored in the pool group.
                 // This will fail if the server provided failover partner was stored to the pool group.
                 using SqlConnection failoverConnection = new(builder.ConnectionString);
+
+                // Clear the pool to ensure a new physical connection is created
+                // Pool group info such as failover partner will still be retained
+                SqlConnection.ClearPool(connection);
                 failoverConnection.Open();
 
                 // Assert
