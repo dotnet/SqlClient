@@ -76,6 +76,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         public SslProtocols EncryptionProtocols { get; set; }
 
         /// <summary>
+        /// Specifies the failover partner server name and port
+        /// </summary>
+        public string FailoverPartner { get; set; } = string.Empty;
+
+        /// <summary>
         /// Initialization constructor
         /// </summary>
         public TDSServerArguments()
