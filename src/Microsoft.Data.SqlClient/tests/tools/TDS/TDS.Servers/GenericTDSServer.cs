@@ -33,14 +33,24 @@ namespace Microsoft.SqlServer.TDS.Servers
         private int _sessionCount = 0;
 
         /// <summary>
+        /// Counts pre-login requests to the server.
+        /// </summary>
+        private int _preLoginCount = 0;
+
+        /// <summary>
         /// Server configuration
         /// </summary>
-        protected TDSServerArguments Arguments { get; set; }
+        public TDSServerArguments Arguments { get; set; }
 
         /// <summary>
         /// Query engine instance
         /// </summary>
         protected QueryEngine Engine { get; set; }
+
+        /// <summary>
+        /// Counts pre-login requests to the server.
+        /// </summary>
+        public int PreLoginCount => _preLoginCount;
 
         /// <summary>
         /// Default constructor
@@ -104,6 +114,8 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public virtual TDSMessageCollection OnPreLoginRequest(ITDSServerSession session, TDSMessage request)
         {
+            Interlocked.Increment(ref _preLoginCount);
+
             // Inflate pre-login request from the message
             TDSPreLoginToken preLoginRequest = request[0] as TDSPreLoginToken;
 
@@ -542,6 +554,16 @@ namespace Microsoft.SqlServer.TDS.Servers
 
                 // Serialize feature extnesion token into the response
                 responseMessage.Add(featureExtActToken);
+            }
+
+            if (!string.IsNullOrEmpty(Arguments.FailoverPartner))
+            {
+                envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.RealTimeLogShipping, Arguments.FailoverPartner);
+
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", envChange);
+
+                responseMessage.Add(envChange);
             }
 
             // Create DONE token
