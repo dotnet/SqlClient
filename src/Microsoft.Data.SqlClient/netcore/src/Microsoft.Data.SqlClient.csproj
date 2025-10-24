@@ -2,15 +2,31 @@
   <PropertyGroup>
 
     <!--
-      Our true assembly name is 'Microsoft.Data.SqlClient'.  However, because we
-      have 2 projects (one for netcore, one for netfx), we need to use a unique
-      assembly name for each when building via project references.  Otherwise,
-      MSBuild gets very confused when restoring a different set of dependencies
-      for the same AssemblyName due to the different target frameworks for each
-      project.
+      Our true assembly name is 'Microsoft.Data.SqlClient'.  However, we
+      currently have 2 projects that use the same assembly name:  one for
+      netcore, and one for netfx.  When attempting to build downstream projects
+      (like Azure, AKV, and tests) that reference both the netcore and netfx
+      projects depending on target framework, MSBuild gets confused and fails to
+      restore due to the duplicate assembly names.
+
+      To work around this, we append '.NetCore' to the assembly name, but only
+      when building by project references _and_ when not a pipeline build.  This
+      ensures that developer builds (dotnet CLI or via IDE) of the downstream
+      projects succeed without having to specify specific target frameworks, but
+      that pipeline runs can still build via project reference and perform NuGet
+      packaging with the correct artifacts and DLL metadata.
+
+      For developer builds, we don't care that the MDS assembly name isn't
+      truthful.  MSBuild finds the correct artifacts based on target framework
+      and all downstream projects build without needing a target framework
+      specified.
+
+      For package reference or pipeline builds, the assembly name remains
+      truthful and downstream projects don't encounter MSBuild restore problems
+      since the MDS artifacts are pulled from the NuGet package directly.
     -->
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
-    <AssemblyName Condition="'$(ReferenceType)' == 'Project'">Microsoft.Data.SqlClient.NetCore</AssemblyName>
+    <AssemblyName Condition="'$(ReferenceType)' == 'Project' AND '$(TF_BUILD)' != 'true'">$(AssemblyName).NetCore</AssemblyName>
 
     <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
 
