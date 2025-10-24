@@ -153,6 +153,8 @@ stages:
       azureArtifactName: $(azureArtifactName)
       azurePackageVersion: $(azurePackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
+      mdsArtifactName: $(mdsArtifactName)
+      mdsPackageVersion: $(mdsPackageVersion)
       # When building via package references, we must depend on the Abstractions
       # package.
       ${{ if eq(parameters.referenceType, 'Package') }}:

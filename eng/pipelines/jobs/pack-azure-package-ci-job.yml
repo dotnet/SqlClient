@@ -95,6 +95,7 @@ jobs:
         value: >-
           --verbosity ${{ parameters.verbosity }}
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:ForceMdsAssemblyNameSuffix=true
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
 
       # dotnet CLI arguments for build/test/pack commands

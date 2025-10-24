@@ -23,9 +23,14 @@
       For package reference or pipeline builds, the assembly name remains
       truthful and downstream projects don't encounter MSBuild restore problems
       since the MDS artifacts are pulled from the NuGet package directly.
+
+      There are some downstream projects that still expect different assembly
+      names, even during pipeline builds.  For those, we define the
+      ForceMdsAssemblyNameSuffix property, which overrides the default pipeline
+      behaviour for project-based builds.
     -->
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
-    <AssemblyName Condition="'$(ReferenceType)' == 'Project' AND '$(TF_BUILD)' != 'true'">$(AssemblyName).NetCore</AssemblyName>
+    <AssemblyName Condition="'$(ReferenceType)' == 'Project' AND ('$(ForceMdsAssemblyNameSuffix)' == 'true' OR '$(TF_BUILD)' != 'true')">$(AssemblyName).NetCore</AssemblyName>
 
     <TargetFrameworks>net8.0;net9.0;netstandard2.0</TargetFrameworks>
 
