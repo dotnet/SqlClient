@@ -340,14 +340,12 @@
     <ProjectReference
       Condition="'$(TargetGroup)'=='netfx'"
       Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Include="../../../Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj" />
     <ProjectReference Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
   </ItemGroup>
 
   <!-- Conditional Package References -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
     <PackageReference Include="Microsoft.Data.SqlClient" />
-    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure" />
     <PackageReference Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider" />
   </ItemGroup>
 

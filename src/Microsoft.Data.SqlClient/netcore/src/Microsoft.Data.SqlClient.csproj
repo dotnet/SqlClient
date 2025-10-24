@@ -1,7 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+
+    <!--
+      Our true assembly name is 'Microsoft.Data.SqlClient'.  However, because we
+      have 2 projects (one for netcore, one for netfx), we need to use a unique
+      assembly name for each when building via project references.  Otherwise,
+      MSBuild gets very confused when restoring a different set of dependencies
+      for the same AssemblyName due to the different target frameworks for each
+      project.
+    -->
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
+    <AssemblyName Condition="'$(ReferenceType)' == 'Project'">Microsoft.Data.SqlClient.NetCore</AssemblyName>
+
     <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+
     <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(OSGroup)' == 'AnyOS'">Microsoft.Data.SqlClient is not supported on this platform.</GeneratePlatformNotSupportedAssemblyMessage>
     <OSGroup Condition="'$(OSGroup)' == ''">$(OS)</OSGroup>
     <TargetsWindows Condition="'$(OSGroup)'=='Windows_NT'">true</TargetsWindows>

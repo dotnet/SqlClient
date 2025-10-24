@@ -13,7 +13,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public class AADConnectionsTest
+    public class AADConnectionTest
     {
         class CustomSqlAuthenticationProvider : SqlAuthenticationProvider
         {
@@ -228,12 +228,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void GetAccessTokenByPasswordTest()
         {
-            // Clear token cache for code coverage.
-            ActiveDirectoryAuthenticationProvider.ClearUserTokenCache();
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
+            #pragma warning disable 0618 // Type or member is obsolete
+            SqlAuthenticationProvider original = SqlAuthenticationProviderManager.GetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword);
+            #pragma warning restore 0618 // Type or member is obsolete
+
+            try
             {
-                connection.Open();
-                Assert.True(connection.State == System.Data.ConnectionState.Open);
+                #pragma warning disable 0618 // Type or member is obsolete
+                SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new CustomSqlAuthenticationProvider(DataTestUtility.ApplicationClientId));
+                #pragma warning restore 0618 // Type or member is obsolete
+
+                using (SqlConnection connection = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
+                {
+                    connection.Open();
+                    Assert.True(connection.State == System.Data.ConnectionState.Open);
+                }
+            }
+            finally
+            {
+                // Reset to driver internal provider.
+                #pragma warning disable 0618 // Type or member is obsolete
+                SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, original);
+                #pragma warning restore 0618 // Type or member is obsolete
             }
         }
 
@@ -262,28 +278,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void TestCustomProviderAuthentication()
         {
             #pragma warning disable 0618 // Type or member is obsolete
-            SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new CustomSqlAuthenticationProvider(DataTestUtility.ApplicationClientId));
+            SqlAuthenticationProvider original = SqlAuthenticationProviderManager.GetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword);
             #pragma warning restore 0618 // Type or member is obsolete
-            // Connect to Azure DB with password and retrieve user name using custom authentication provider
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
+
+            try
             {
-                conn.Open();
-                using (SqlCommand sqlCommand = new SqlCommand
-                (
-                    cmdText: $"SELECT SUSER_SNAME();",
-                    connection: conn,
-                    transaction: null
-                ))
+                #pragma warning disable 0618 // Type or member is obsolete
+                SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new CustomSqlAuthenticationProvider(DataTestUtility.ApplicationClientId));
+                #pragma warning restore 0618 // Type or member is obsolete
+                // Connect to Azure DB with password and retrieve user name using custom authentication provider
+                using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
                 {
-                    string customerId = (string)sqlCommand.ExecuteScalar();
-                    string expected = DataTestUtility.RetrieveValueFromConnStr(DataTestUtility.AADPasswordConnectionString, new string[] { "User ID", "UID" });
-                    Assert.Equal(expected, customerId);
+                    conn.Open();
+                    using (SqlCommand sqlCommand = new SqlCommand
+                    (
+                        cmdText: $"SELECT SUSER_SNAME();",
+                        connection: conn,
+                        transaction: null
+                    ))
+                    {
+                        string customerId = (string)sqlCommand.ExecuteScalar();
+                        string expected = DataTestUtility.RetrieveValueFromConnStr(DataTestUtility.AADPasswordConnectionString, new string[] { "User ID", "UID" });
+                        Assert.Equal(expected, customerId);
+                    }
                 }
             }
-            // Reset to driver internal provider.
-            #pragma warning disable 0618 // Type or member is obsolete
-            SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new ActiveDirectoryAuthenticationProvider(DataTestUtility.ApplicationClientId));
-            #pragma warning restore 0618 // Type or member is obsolete
+            finally
+            {
+                // Reset to driver internal provider.
+                #pragma warning disable 0618 // Type or member is obsolete
+                SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, original);
+                #pragma warning restore 0618 // Type or member is obsolete
+            }
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
@@ -680,36 +706,53 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void ConnectionSpeed()
         {
-            var connString = DataTestUtility.AADPasswordConnectionString;
+            #pragma warning disable 0618 // Type or member is obsolete
+            SqlAuthenticationProvider original = SqlAuthenticationProviderManager.GetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword);
+            #pragma warning restore 0618 // Type or member is obsolete
 
-            //Ensure server endpoints are warm
-            using (var connectionDrill = new SqlConnection(connString))
+            try
             {
-                connectionDrill.Open();
-            }
+                #pragma warning disable 0618 // Type or member is obsolete
+                SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new CustomSqlAuthenticationProvider(DataTestUtility.ApplicationClientId));
+                #pragma warning restore 0618 // Type or member is obsolete
 
-            SqlConnection.ClearAllPools();
-            ActiveDirectoryAuthenticationProvider.ClearUserTokenCache();
+                var connString = DataTestUtility.AADPasswordConnectionString;
 
-            Stopwatch firstConnectionTime = new Stopwatch();
-            Stopwatch secondConnectionTime = new Stopwatch();
-
-            using (var connectionDrill = new SqlConnection(connString))
-            {
-                firstConnectionTime.Start();
-                connectionDrill.Open();
-                firstConnectionTime.Stop();
-                using (var connectionDrill2 = new SqlConnection(connString))
+                //Ensure server endpoints are warm
+                using (var connectionDrill = new SqlConnection(connString))
                 {
-                    secondConnectionTime.Start();
-                    connectionDrill2.Open();
-                    secondConnectionTime.Stop();
+                    connectionDrill.Open();
                 }
-            }
 
-            // Subsequent AAD connections within a short timeframe should use an auth token cached from the connection pool
-            // Second connection speed in tests was typically 10-15% of the first connection time. Using 30% since speeds may vary.
-            Assert.True(((double)secondConnectionTime.ElapsedMilliseconds / firstConnectionTime.ElapsedMilliseconds) < 0.30, $"Second AAD connection too slow ({secondConnectionTime.ElapsedMilliseconds}ms)! (More than 30% of the first ({firstConnectionTime.ElapsedMilliseconds}ms).)");
+                SqlConnection.ClearAllPools();
+
+                Stopwatch firstConnectionTime = new Stopwatch();
+                Stopwatch secondConnectionTime = new Stopwatch();
+
+                using (var connectionDrill = new SqlConnection(connString))
+                {
+                    firstConnectionTime.Start();
+                    connectionDrill.Open();
+                    firstConnectionTime.Stop();
+                    using (var connectionDrill2 = new SqlConnection(connString))
+                    {
+                        secondConnectionTime.Start();
+                        connectionDrill2.Open();
+                        secondConnectionTime.Stop();
+                    }
+                }
+
+                // Subsequent AAD connections within a short timeframe should use an auth token cached from the connection pool
+                // Second connection speed in tests was typically 10-15% of the first connection time. Using 30% since speeds may vary.
+                Assert.True(((double)secondConnectionTime.ElapsedMilliseconds / firstConnectionTime.ElapsedMilliseconds) < 0.30, $"Second AAD connection too slow ({secondConnectionTime.ElapsedMilliseconds}ms)! (More than 30% of the first ({firstConnectionTime.ElapsedMilliseconds}ms).)");
+            }
+            finally
+            {
+                // Reset to driver internal provider.
+                #pragma warning disable 0618 // Type or member is obsolete
+                SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, original);
+                #pragma warning restore 0618 // Type or member is obsolete
+            }
         }
 
         #region Managed Identity Authentication tests
