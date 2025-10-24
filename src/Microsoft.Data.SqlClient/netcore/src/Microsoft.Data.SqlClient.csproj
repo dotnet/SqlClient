@@ -585,6 +585,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommand.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommand.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommand.Encryption.cs">
+      <Link>Microsoft\Data\SqlClient\SqlCommand.Encryption.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommand.NonQuery.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommand.NonQuery.cs</Link>
     </Compile>
