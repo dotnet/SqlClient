@@ -283,6 +283,7 @@
     <Compile Include="DataCommon\ConnectionTestParametersData.cs" />
     <Compile Include="DataCommon\DataSourceBuilder.cs" />
     <Compile Include="DataCommon\DataTestUtility.cs" />
+    <Compile Include="DataCommon\ManagedIdentityProvider.cs" />
     <Compile Include="DataCommon\ProxyServer.cs" />
     <Compile Include="DataCommon\SqlClientCustomTokenCredential.cs" />
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />

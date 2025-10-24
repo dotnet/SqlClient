@@ -156,10 +156,11 @@ stages:
       mdsArtifactName: $(mdsArtifactName)
       mdsPackageVersion: $(mdsPackageVersion)
       # When building via package references, we must depend on the Abstractions
-      # package.
+      # and MDS packages
       ${{ if eq(parameters.referenceType, 'Package') }}:
         dependsOn:
           - build_abstractions_package_stage
+          - build_mds_akv_packages_stage
       referenceType: ${{ parameters.referenceType }}
       ${{if eq(parameters.debug, 'true')}}:
         verbosity: diagnostic
@@ -169,7 +170,9 @@ stages:
     - template: stages/stress-tests-ci-stage.yml@self
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        dependsOn: [build_mds_akv_packages_stage]
+        dependsOn:
+          - build_mds_akv_packages_stage
+          - build_azure_package_stage
         pipelineArtifactName: $(artifactName)
         mdsPackageVersion: $(mdsPackageVersion)
         ${{ if eq(parameters.debug, 'true') }}:
