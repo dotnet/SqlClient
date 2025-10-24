@@ -67,11 +67,4 @@ internal class ManagedIdentityProvider : SqlAuthenticationProvider
     {
         return authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
     }
-
-    static ManagedIdentityProvider()
-    {
-        SqlAuthenticationProviderManager.SetProvider(
-            SqlAuthenticationMethod.ActiveDirectoryManagedIdentity,
-            new ManagedIdentityProvider());
-    }
 }
