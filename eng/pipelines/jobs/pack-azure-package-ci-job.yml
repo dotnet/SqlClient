@@ -40,11 +40,27 @@ parameters:
     values:
     - Release
     - Debug
+
+  # True to enable extra debug steps and logging.
+  - name: debug
+    type: boolean
+    default: false
   
   # The list of upstream jobs to depend on.
   - name: dependsOn
     type: object
     default: []
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
 
   # The reference type to use:
   #
@@ -56,17 +72,6 @@ parameters:
     values:
     - Package
     - Project
-
-  # The verbosity level for the dotnet CLI commands.
-  - name: verbosity
-    type: string
-    default: normal
-    values:
-    - quiet
-    - minimal
-    - normal
-    - detailed
-    - diagnostic
 
 jobs:
 
@@ -93,8 +98,9 @@ jobs:
       # dotnet CLI arguments common to all commands.
       - name: commonArguments
         value: >-
-          --verbosity ${{ parameters.verbosity }}
+          --verbosity ${{ parameters.dotnetVerbosity }}
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:ForceMdsAssemblyNameSuffix=true
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
 
       # dotnet CLI arguments for build/test/pack commands
@@ -127,6 +133,11 @@ jobs:
         value: ''
 
     steps:
+
+      # Emit environment variables if debug is enabled.
+      - ${{ if eq(parameters.debug, true) }}:
+        - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
+          displayName: '[Debug] Print Environment Variables'
 
       # We have a few extra steps for Package reference builds.
       - ${{ if eq(parameters.referenceType, 'Package') }}:

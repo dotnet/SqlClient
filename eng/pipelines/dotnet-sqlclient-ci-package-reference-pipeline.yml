@@ -133,6 +133,18 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: string
   default: 90
 
+# Dotnet CLI verbosity level.
+- name: dotnetVerbosity
+  displayName: dotnet CLI Verbosity
+  type: string
+  default: normal
+  values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
 extends:
   template: dotnet-sqlclient-ci-core.yml@self
   parameters:
@@ -147,3 +159,4 @@ extends:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     enableStressTests: ${{ parameters.enableStressTests }}
     testsTimeout: ${{ parameters.testsTimeout }}
+    dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

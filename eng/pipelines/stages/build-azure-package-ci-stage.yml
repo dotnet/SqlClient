@@ -55,10 +55,39 @@ parameters:
     - Release
     - Debug
 
+  # True to enable extra debug steps and logging.
+  - name: debug
+    type: boolean
+    default: false
+
   # The stages we depend on, if any.
   - name: dependsOn
     type: object
     default: []
+
+  # The dotnet CLI verbosity to use.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+  # The name of the MDS pipeline artifact to download.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: mdsArtifactName
+    type: string
+    default: MDS.Artifact
+
+  # The MDS package verion to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: mdsPackageVersion
+    type: string
   
   # The reference type to use:
   #
@@ -70,17 +99,6 @@ parameters:
     values:
     - Package
     - Project
-
-  # The dotnet CLI verbosity to use.
-  - name: verbosity
-    type: string
-    default: normal
-    values:
-    - quiet
-    - minimal
-    - normal
-    - detailed
-    - diagnostic
 
 stages:
 
@@ -99,13 +117,16 @@ stages:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
           displayNamePrefix: Linux
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: linux
+          mdsArtifactName: MDS.Artifact
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0]
           poolName: Azure Pipelines
           referenceType: ${{ parameters.referenceType }}
-          verbosity: ${{ parameters.verbosity }}
           vmImage: ubuntu-latest
 
       # ------------------------------------------------------------------------
@@ -116,13 +137,16 @@ stages:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
           displayNamePrefix: Win
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: windows
+          mdsArtifactName: MDS.Artifact
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0]
           poolName: Azure Pipelines
           referenceType: ${{ parameters.referenceType }}
-          verbosity: ${{ parameters.verbosity }}
           vmImage: windows-latest
 
       # ------------------------------------------------------------------------
@@ -133,13 +157,16 @@ stages:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
           displayNamePrefix: macOS
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: macos
+          mdsArtifactName: MDS.Artifact
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0]
           poolName: Azure Pipelines
           referenceType: ${{ parameters.referenceType }}
-          verbosity: ${{ parameters.verbosity }}
           vmImage: macos-latest
 
       # ------------------------------------------------------------------------
@@ -152,11 +179,12 @@ stages:
           azureArtifactName: ${{ parameters.azureArtifactName }}
           azurePackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
           dependsOn:
             # We depend on all of the test jobs to ensure the tests pass before
             # producing the NuGet package.
             - test_azure_package_job_linux
             - test_azure_package_job_windows
             - test_azure_package_job_macos
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           referenceType: ${{ parameters.referenceType }}
-          verbosity: ${{ parameters.verbosity }}

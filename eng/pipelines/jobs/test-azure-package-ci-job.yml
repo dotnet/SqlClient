@@ -32,6 +32,11 @@ parameters:
     - Release
     - Debug
 
+  # True to enable extra debug steps and logging.
+  - name: debug
+    type: boolean
+    default: false
+  
   # The prefix to prepend to the job's display name:
   #
   #   [<prefix>] Run Stress Tests
@@ -39,8 +44,32 @@ parameters:
   - name: displayNamePrefix
     type: string
 
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
   # The suffix to append to the job name.
   - name: jobNameSuffix
+    type: string
+
+  # The name of the MDS pipeline artifact to download.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: mdsArtifactName
+    type: string
+    default: MDS.Artifact
+
+  # The MDS package verion to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: mdsPackageVersion
     type: string
 
   # The list of .NET Framework runtimes to test against.
@@ -67,17 +96,6 @@ parameters:
     values:
     - Package
     - Project
-
-  # The verbosity level for the dotnet CLI commands.
-  - name: verbosity
-    type: string
-    default: normal
-    values:
-    - quiet
-    - minimal
-    - normal
-    - detailed
-    - diagnostic
 
   # The pool VM image to use.
   - name: vmImage
@@ -107,9 +125,11 @@ jobs:
       # dotnet CLI arguments common to all commands.
       - name: commonArguments
         value: >-
-          --verbosity ${{ parameters.verbosity }}
+          --verbosity ${{ parameters.dotnetVerbosity }}
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:ForceMdsAssemblyNameSuffix=true
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
       # dotnet CLI arguments for build/test/pack commands
       - name: buildArguments
@@ -141,6 +161,11 @@ jobs:
 
     steps:
 
+      # Emit environment variables if debug is enabled.
+      - ${{ if eq(parameters.debug, true) }}:
+        - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
+          displayName: '[Debug] Print Environment Variables'
+      
       # We have a few extra steps for Package reference builds.
       - ${{ if eq(parameters.referenceType, 'Package') }}:
 
@@ -149,6 +174,15 @@ jobs:
           displayName: Download Abstractions Package Artifact
           inputs:
             artifactName: ${{ parameters.abstractionsArtifactName }}
+            targetPath: $(Build.SourcesDirectory)/packages
+
+        # Download the MDS package artifacts into packages/.
+        #
+        # The Azure project doesn't depend on MDS, but the test project does.
+        - task: DownloadPipelineArtifact@2
+          displayName: Download MDS Package Artifact
+          inputs:
+            artifactName: ${{ parameters.mdsArtifactName }}
             targetPath: $(Build.SourcesDirectory)/packages
 
         # Use the local NuGet.config that references the packages/ directory.
@@ -197,7 +231,26 @@ jobs:
       - ${{ each runtime in parameters.netRuntimes }}:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
+          env:
+            TEST_DEBUG_EMIT: ${{ parameters.debug }}
+            # # Translate our ADO Library variables into environment variables
+            # # that the test Config class expects.
+            # TEST_AZURE_SQL_SERVER: $(Azure_SQL_Server_westus2)
+            # TEST_AZURE_SQL_DB: Northwind
+            # TEST_AZURE_SQL_USER: $(AZURE_USERNAME)
+            # # Avoid exposing the password variable in PRs from forks, which
+            # # is the only type of PR a non-maintainer can create.
+            # ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+            #   TEST_AZURE_SQL_PASSWORD: $(Azure_Password)
+            # TEST_AZURE_MANAGED_IDENTITY: $(UserManagedIdentityClientId)
+            # The connectedServiceName below needs the system access token.
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
           inputs:
+            # The tests need to access Azure resources, which is achieved via
+            # this service connection.  See:
+            #
+            # https://sqlclientdrivers.visualstudio.com/public/_settings/adminservices?resourceId=ec9623b2-829c-497f-ae1f-7461766f9a9c
+            connectedServiceName: dotnetMSI-managed-identity
             command: custom
             custom: test
             projects: $(project)
@@ -208,6 +261,7 @@ jobs:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
           inputs:
+            azureSubscription: dotnetMSI-managed-identity
             command: custom
             custom: test
             projects: $(project)

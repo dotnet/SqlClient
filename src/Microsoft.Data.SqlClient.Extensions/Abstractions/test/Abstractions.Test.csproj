@@ -24,4 +24,11 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ContentWithTargetPath Include="../../../Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>xunit.runner.json</TargetPath>
+    </ContentWithTargetPath>
+  </ItemGroup>
+
 </Project>
