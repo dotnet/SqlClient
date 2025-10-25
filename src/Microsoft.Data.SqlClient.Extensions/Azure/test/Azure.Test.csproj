@@ -18,10 +18,30 @@
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="xunit.runner.console" />
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!-- Conditional Project References -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
+    <!--
+      Include the .NET or .NET Framework MDS project depending on which
+      framework we are targeting.
+    -->
+    <ProjectReference
+      Condition="'$(TargetFramework)' != 'net462'"
+      Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference
+      Condition="'$(TargetFramework)' == 'net462'"
+      Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup>
+
+  <!-- Conditional Package References -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageReference Include="Microsoft.Data.SqlClient" />
   </ItemGroup>
 
 </Project>

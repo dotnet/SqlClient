@@ -59,6 +59,19 @@ parameters:
   - name: dependsOn
     type: object
     default: []
+
+  # The name of the MDS pipeline artifact to download.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: mdsArtifactName
+    type: string
+    default: MDS.Artifact
+
+  # The MDS package verion to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: mdsPackageVersion
+    type: string
   
   # The reference type to use:
   #
@@ -101,6 +114,8 @@ stages:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           displayNamePrefix: Linux
           jobNameSuffix: linux
+          mdsArtifactName: MDS.Artifact
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0]
           poolName: Azure Pipelines
@@ -118,6 +133,8 @@ stages:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           displayNamePrefix: Win
           jobNameSuffix: windows
+          mdsArtifactName: MDS.Artifact
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0]
           poolName: Azure Pipelines
@@ -135,6 +152,8 @@ stages:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           displayNamePrefix: macOS
           jobNameSuffix: macos
+          mdsArtifactName: MDS.Artifact
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0]
           poolName: Azure Pipelines

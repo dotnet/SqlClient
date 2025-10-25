@@ -9,22 +9,6 @@ namespace Microsoft.Data.SqlClient.Tests
 {
     public class SqlAuthenticationProviderTest
     {
-        [Theory]
-        [InlineData(SqlAuthenticationMethod.ActiveDirectoryIntegrated)]
-        #pragma warning disable 0618 // Type or member is obsolete
-        [InlineData(SqlAuthenticationMethod.ActiveDirectoryPassword)]
-        #pragma warning restore 0618 // Type or member is obsolete
-        [InlineData(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)]
-        [InlineData(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)]
-        [InlineData(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)]
-        [InlineData(SqlAuthenticationMethod.ActiveDirectoryMSI)]
-        [InlineData(SqlAuthenticationMethod.ActiveDirectoryDefault)]
-        [InlineData(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)]
-        public void DefaultAuthenticationProviders(SqlAuthenticationMethod method)
-        {
-            Assert.IsType<ActiveDirectoryAuthenticationProvider>(SqlAuthenticationProviderManager.GetProvider(method));
-        }
-
         #if NETFRAMEWORK
         // This test is only valid for .NET Framework
 
