@@ -4,6 +4,90 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 7.0.0-preview2.25289.6] - 2025-10-16
+
+This update brings the following changes since [7.0.0-preview1.25257.1]
+
+### Bug Fixes
+
+- Fixed a debug assertion in connection pool (no impact to production code)
+  ([#3587](https://github.com/dotnet/SqlClient/pull/3587))
+- Prevent uninitialized performance counters escaping `CreatePerformanceCounters`
+  ([#3623](https://github.com/dotnet/SqlClient/pull/3623))
+- Fix SetProvider to return immediately if user-defined authentication provider found
+  ([#3620](https://github.com/dotnet/SqlClient/pull/3620))
+- Allow SqlBulkCopy to operate on hidden columns
+  ([#3590](https://github.com/dotnet/SqlClient/pull/3590))
+- Fix connection pool concurrency issue
+  ([#3632](https://github.com/dotnet/SqlClient/pull/3632))
+
+### Added
+
+- App context switch for ignoring server-provided failover partner
+  ([#3625](https://github.com/dotnet/SqlClient/pull/3625))
+- App context switch for enabling asynchronous multi-packet improvements
+  ([#3605](https://github.com/dotnet/SqlClient/pull/3605))
+
+### Changed
+
+- Deprecation of `SqlAuthenticationMethod.ActiveDirectoryPassword`
+  ([#3671](https://github.com/dotnet/SqlClient/pull/3671))
+
+#### Other changes
+
+- Improve performance in `SqlStatistics` by using `Environment.TickCount` for calculating execution timing 
+  ([#3609](https://github.com/dotnet/SqlClient/pull/3609))
+
+- Improve performance in Always Encrypted scenarios by using lower-allocation primitives
+  ([#3612](https://github.com/dotnet/SqlClient/pull/3612))
+
+- Various test improvements:
+  ([#3423](https://github.com/dotnet/SqlClient/pull/3423),
+   [#3488](https://github.com/dotnet/SqlClient/pull/3488),
+   [#3624](https://github.com/dotnet/SqlClient/pull/3624),
+   [#3638](https://github.com/dotnet/SqlClient/pull/3638),
+   [#3642](https://github.com/dotnet/SqlClient/pull/3642),
+   [#3678](https://github.com/dotnet/SqlClient/pull/3678),
+   [#3690](https://github.com/dotnet/SqlClient/pull/3690))
+
+- Codebase merge project and related cleanup:
+  ([#3555](https://github.com/dotnet/SqlClient/pull/3555),
+   [#3603](https://github.com/dotnet/SqlClient/pull/3603),
+   [#3608](https://github.com/dotnet/SqlClient/pull/3608),
+   [#3611](https://github.com/dotnet/SqlClient/pull/3611),
+   [#3619](https://github.com/dotnet/SqlClient/pull/3619),
+   [#3622](https://github.com/dotnet/SqlClient/pull/3622),
+   [#3630](https://github.com/dotnet/SqlClient/pull/3630),
+   [#3631](https://github.com/dotnet/SqlClient/pull/3631),
+   [#3634](https://github.com/dotnet/SqlClient/pull/3634),
+   [#3637](https://github.com/dotnet/SqlClient/pull/3637),
+   [#3644](https://github.com/dotnet/SqlClient/pull/3644),
+   [#3647](https://github.com/dotnet/SqlClient/pull/3647),
+   [#3655](https://github.com/dotnet/SqlClient/pull/3655))
+
+- Code health improvements:
+  ([#3645](https://github.com/dotnet/SqlClient/pull/3645))
+
+- Internal infrastructure improvements:
+  ([#3659](https://github.com/dotnet/SqlClient/pull/3659),
+   [#3692](https://github.com/dotnet/SqlClient/pull/3692),
+   [#3695](https://github.com/dotnet/SqlClient/pull/3695))
+
+- Updated Dependencies
+  ([#3638](https://github.com/dotnet/SqlClient/pull/3638)):
+  - Updated `Azure.Core` to v1.49.0
+  - Updated `Azure.Identity` to v1.16.0
+  - Updated `Azure.Security.KeyVault.Keys` v4.8.0 (AKV provider)
+  - Updated `Microsoft.Bcl.Cryptography` to v9.0.9 (net9)
+  - Updated `Microsoft.Extensions.Caching.Memory` to v9.0.9 (net9)
+  - Updated `Microsoft.IdentityModel.JsonWebTokens` to v8.14.0
+  - Updated `Microsoft.IdentityModel.Protocols.OpenIdConnect` to v8.14.0
+  - Updated `System.Buffers` to v4.6.1 (net462)
+  - Updated `System.Memory` to v4.6.3 (net462)
+  - Updated `System.Configuration.ConfigurationManager` to v9.0.9 (net9)
+  - Updated `System.Security.Cryptography.Pkcs` to v9.0.9 (net9)
+  - Updated `System.Text.Json` to v8.0.6 (net8), v9.0.9 (net9)
+
 ## [Stable Release 6.1.2] - 2025-10-07
 
 This update brings the below changes over the previous stable release:

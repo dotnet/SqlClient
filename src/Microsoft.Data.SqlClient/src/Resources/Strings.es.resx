@@ -4077,20 +4077,11 @@
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
     <value>La longitud del texto cifrado de la clave de cifrado de columnas cifradas especificada, que es de {0}, no coincide con la longitud del texto cifrado, de {1}, al usar una clave maestra de columnas (certificado) en ({2}) en “{3}”. Es posible que la clave de cifrado de la columna cifrada esté dañada o que la ruta de acceso {4} especificada no sea correcta.</value>
   </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
-    <value>La longitud del texto cifrado de la clave de cifrado de columnas cifradas especificada, que es de {0}, no coincide con la longitud del texto cifrado, de {1}, al usar una clave maestra de columnas (certificado) en "{2}". Puede que la clave de cifrado de columnas cifradas esté dañada o que la ruta especificada del certificado no sea correcta.</value>
-  </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
     <value>La longitud de la signatura de la clave de cifrado de columnas cifradas especificada, que es de {0}, no coincide con la longitud de la signatura, de {1}, al usar una clave maestra de columnas (certificado) en ({2}) en “{3}”. Es posible que la clave de cifrado de la columna cifrada esté dañada o que la ruta de acceso {4} especificada no sea correcta.</value>
   </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
-    <value>La longitud de la signatura de la clave de cifrado de columnas cifradas especificada, que es de {0}, no coincide con la longitud de la signatura, de {1}, al usar una clave maestra de columnas (certificado) en ({2}). Puede que la clave de cifrado de columnas cifradas esté dañada o que la ruta especificada del certificado no sea correcta.</value>
-  </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
     <value>La signatura de la clave de cifrado de columnas cifradas especificada no coincide con la signatura calculada con la clave maestra de columnas ({0}) en “{1}”. Es posible que la clave de cifrado de la columna cifrada esté dañada o que la ruta de acceso especificada no sea correcta.</value>
-  </data>
-  <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
-    <value>La firma de clave de cifrado de columna cifrada especificada no coincide con la firma calculada con la clave maestra de columna (certificado) en "{0}". Puede que la clave de cifrado de la columna cifrada esté dañada o que la ruta del certificado especificada no sea correcta.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>El certificado especificado en la ruta de claves "{0}" no tiene una clave privada para cifrar una clave de cifrado de columnas. Compruebe que el certificado se ha importado correctamente.</value>

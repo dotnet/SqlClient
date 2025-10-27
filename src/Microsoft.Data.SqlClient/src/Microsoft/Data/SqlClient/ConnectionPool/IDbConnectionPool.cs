@@ -10,6 +10,8 @@ using System.Transactions;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 
+#nullable enable
+
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
     /// <summary>
@@ -81,7 +83,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>
         /// The current state of the connection pool.
         /// </summary>
-        DbConnectionPoolState State { get; set; }
+        DbConnectionPoolState State { get; }
 
         /// <summary>
         /// Indicates whether the connection pool is using load balancing.
@@ -104,7 +106,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="userOptions">The user options to use if a new connection must be opened.</param>
         /// <param name="connection">The retrieved connection will be passed out via this parameter.</param>
         /// <returns>True if a connection was set in the out parameter, otherwise returns false.</returns>
-        bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal connection);
+        bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal? connection);
 
         /// <summary>
         /// Replaces the internal connection currently associated with owningObject with a new internal connection from the pool.
@@ -120,7 +122,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         /// <param name="obj">The internal connection to return to the pool.</param>
         /// <param name="owningObject">The connection that currently owns this internal connection. Used to verify ownership.</param>
-        void ReturnInternalConnection(DbConnectionInternal obj, object owningObject);
+        void ReturnInternalConnection(DbConnectionInternal obj, DbConnection owningObject);
 
         /// <summary>
         /// Puts an internal connection from a transacted pool back into the general pool.

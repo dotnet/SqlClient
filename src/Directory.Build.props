@@ -62,8 +62,6 @@
     <NuGetRoot Condition="'$(NuGetRoot)' == ''">$(RepoRoot).nuget\</NuGetRoot>
     <NuGetCmd>$(NuGetRoot)nuget.exe</NuGetCmd>
     <!-- Respect environment variable for the .NET install directory if set; otherwise, use the current default location -->
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904;NU1905</WarningsNotAsErrors>
     <BuildSimulator Condition="'$(BuildSimulator)' != 'true'">false</BuildSimulator>
   </PropertyGroup>
   <PropertyGroup Condition="'$(BuildSimulator)' == 'true'">
@@ -71,18 +69,47 @@
   </PropertyGroup>
 
   <!-- NuGet Audit Settings -->
-  <PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
-    <!--
-      ADO does not support audit/vulnerability feeds, so the audit feed is specified (in
-      nuget.config) as nuget.org. OneBranch default network isolation does not allow connections
-      to nuget.org. To avoid this issue, we will disable auditing for official builds, but leave it
-      enabled for local builds.
-      @TODO: If/when auditing is enabled for central feeds services, this can be removed. 
-    -->
-    <NuGetAudit>false</NuGetAudit>
-  </PropertyGroup>
   <PropertyGroup>
+    <!--
+      See the NuGet Audit documentation here:
+
+      https://learn.microsoft.com/en-us/nuget/concepts/auditing-packages
+    -->
+
+    <!--
+      We always want NuGet auditing enabled.  There are no build scenarios
+      where auditing should be disabled.
+    -->
+    <NuGetAudit>true</NuGetAudit>
+
+    <!-- We want all dependencies audited. -->
     <NuGetAuditMode>all</NuGetAuditMode>
+
+    <!-- We want all possible audit severity messages. -->
+    <NuGetAuditLevel>low</NuGetAuditLevel>
+  </PropertyGroup>
+
+  <!-- Build Warning/Error Settings -->
+  <PropertyGroup>
+    <!-- We treat all warnings as errors. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!--
+      There may be a few specific warnings that should _not_ be considered an
+      error.  This list should be used sparingly to avoid important warnings
+      being ignored.
+    -->
+    <WarningsNotAsErrors></WarningsNotAsErrors>
+
+    <!--
+      If a build is failing due to vulnerable dependencies, you may temporarily
+      uncomment the following line to treat the audit warnings as non-errors.
+      This should only be done as a temporary measure while addressing the
+      vulnerable dependencies.  See:
+
+      https://learn.microsoft.com/en-us/nuget/reference/errors-and-warnings/nu1901-nu1904
+    -->
+    <!-- <WarningsNotAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors> -->
   </PropertyGroup>
 
   <!-- Packaging  for source link-->
