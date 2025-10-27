@@ -106,49 +106,6 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed partial class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
     {
-
-        internal SQLDNSInfo pendingSQLDNSObject = null;
-
-        // Json Support Flag
-        internal bool IsJsonSupportEnabled = false;
-
-        // Vector Support Flag
-        internal bool IsVectorSupportEnabled = false;
-
-        // TCE flags
-        internal byte _tceVersionSupported;
-
-        // The pool that this connection is associated with, if at all it is.
-        private IDbConnectionPool _dbConnectionPool;
-
-        // This is used to preserve the authentication context object if we decide to cache it for subsequent connections in the same pool.
-        // This will finally end up in _dbConnectionPool.AuthenticationContexts, but only after 1 successful login to SQL Server using this context.
-        // This variable is to persist the context after we have generated it, but before we have successfully completed the login with this new context.
-        // If this connection attempt ended up re-using the existing context and not create a new one, this will be null (since the context is not new).
-        private DbConnectionPoolAuthenticationContext _newDbConnectionPoolAuthenticationContext;
-
-        // The key of the authentication context, built from information found in the FedAuthInfoToken.
-        private DbConnectionPoolAuthenticationContextKey _dbConnectionPoolAuthenticationContextKey;
-
-#if DEBUG
-        // This is a test hook to enable testing of the retry paths for MSAL get access token.
-        // Sample code to enable:
-        //
-        //    Type type = typeof(SqlConnection).Assembly.GetType("Microsoft.Data.SqlClient.SQLInternalConnectionTds");
-        //    System.Reflection.FieldInfo field = type.GetField("_forceMsalRetry", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        //    if (field != null) {
-        //        field.SetValue(null, true);
-        //    }
-        //
-        internal static bool _forceMsalRetry = false;
-
-        // This is a test hook to simulate a token expiring within the next 45 minutes.
-        private static bool _forceExpiryLocked = false;
-
-        // This is a test hook to simulate a token expiring within the next 10 minutes.
-        private static bool _forceExpiryUnLocked = false;
-#endif //DEBUG
-
         // The timespan defining the amount of time the authentication context needs to be valid for at-least, to re-use the cached context,
         // without making an attempt to refresh it. IF the context is expiring within the next 45 mins, then try to take a lock and refresh
         // the context, if the lock is acquired.

@@ -31,6 +31,34 @@ namespace Microsoft.Data.SqlClient
 
         #region Fields
 
+        #region Debug/Test Behavior Overrides
+        #if DEBUG
+        /// <summary>
+        /// This is a test hook to enable testing of the retry paths for MSAL get access token.
+        /// </summary>
+        /// <example>
+        /// Type type = typeof(SqlConnection).Assembly.GetType("Microsoft.Data.SqlClient.SQLInternalConnectionTds");
+        /// FieldInfo field = type.GetField("_forceMsalRetry", BindingFlags.NonPublic | BindingFlags.Static);
+        /// if (field != null)
+        /// {
+        ///     field.SetValue(null, true);
+        /// }
+        /// </example>
+        /// @TODO: For unit tests, it should not be necessary to do this via reflection.
+        internal static bool _forceMsalRetry = false;
+
+        /// <summary>
+        /// This is a test hook to simulate a token expiring within the next 45 minutes.
+        /// </summary>
+        private static bool _forceExpiryLocked = false;
+
+        /// <summary>
+        /// This is a test hook to simulate a token expiring within the next 10 minutes.
+        /// </summary>
+        private static bool _forceExpiryUnLocked = false;
+        #endif
+        #endregion
+
         // @TODO: Should be private and accessed via internal property
         internal byte[] _accessTokenInBytes;
 
@@ -70,12 +98,43 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Should be private and accessed via internal property
         internal bool _federatedAuthenticationRequested;
 
+        /// <summary>
+        /// Flag indicating whether JSON objects are supported by the server.
+        /// </summary>
+        // @TODO: Should be private and accessed via internal property
+        internal bool IsJsonSupportEnabled = false;
+
+        /// <summary>
+        /// Flag indicating whether vector objects are supported by the server.
+        /// </summary>
+        // @TODO: Should be private and accessed via internal property
+        internal bool IsVectorSupportEnabled = false;
+
+        // @TODO: Should be private and accessed via internal property
+        internal SQLDNSInfo pendingSQLDNSObject = null;
+
         // @TODO: Should be private and accessed via internal property
         internal readonly SspiContextProvider _sspiContextProvider;
+
+        /// <summary>
+        /// TCE flags supported by the server.
+        /// </summary>
+        // @TODO: Should be private and accessed via internal property
+        internal byte _tceVersionSupported;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
 
         private SqlCredential _credential;
+
+        /// <summary>
+        /// Pool this connection is associated with, if any.
+        /// </summary>
+        private IDbConnectionPool _dbConnectionPool;
+
+        /// <summary>
+        /// Ley of the authentication context, built from information found in the FedAuthInfoToken.
+        /// </summary>
+        private DbConnectionPoolAuthenticationContextKey _dbConnectionPoolAuthenticationContextKey;
 
         // @TODO: Rename to match naming conventions
         private bool _dnsCachingBeforeRedirect = false;
@@ -85,6 +144,17 @@ namespace Microsoft.Data.SqlClient
         private SqlFedAuthToken _fedAuthToken = null;
 
         private SqlLoginAck _loginAck;
+
+        /// <summary>
+        /// This is used to preserve the authentication context object if we decide to cache it for
+        /// subsequent connections in the same pool. This will finally end up in
+        /// _dbConnectionPool.AuthenticationContexts, but only after 1 successful login to SQL
+        /// Server using this context. This variable is to persist the context after we have
+        /// generated it, but before we have successfully completed the login with this new
+        /// context. If this connection attempt ended up re-using the existing context and not
+        /// create a new one, this will be null (since the context is not new).
+        /// </summary>
+        private DbConnectionPoolAuthenticationContext _newDbConnectionPoolAuthenticationContext;
 
         private TdsParser _parser;
 
