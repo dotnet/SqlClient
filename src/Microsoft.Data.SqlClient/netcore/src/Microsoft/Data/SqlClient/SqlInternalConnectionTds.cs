@@ -106,44 +106,6 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed partial class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
     {
-        // https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/retry-after#simple-retry-for-errors-with-http-error-codes-500-600
-        internal const int MsalHttpRetryStatusCode = 429;
-        // Connection re-route limit
-        internal const int MaxNumberOfRedirectRoute = 10;
-
-        // CONNECTION AND STATE VARIABLES
-        private readonly SqlConnectionPoolGroupProviderInfo _poolGroupProviderInfo; // will only be null when called for ChangePassword, or creating SSE User Instance
-        private TdsParser _parser;
-
-        private SqlLoginAck _loginAck;
-        private SqlCredential _credential;
-        private FederatedAuthenticationFeatureExtensionData _fedAuthFeatureExtensionData;
-
-        // Connection Resiliency
-        private bool _sessionRecoveryRequested;
-        internal bool _sessionRecoveryAcknowledged;
-        internal SessionData _currentSessionData; // internal for use from TdsParser only, other should use CurrentSessionData property that will fix database and language
-        private SessionData _recoverySessionData;
-
-        // Federated Authentication
-        // Response obtained from the server for FEDAUTHREQUIRED prelogin option.
-        internal bool _fedAuthRequired;
-        internal bool _federatedAuthenticationRequested;
-        internal bool _federatedAuthenticationAcknowledged;
-        internal bool _federatedAuthenticationInfoRequested; // Keep this distinct from _federatedAuthenticationRequested, since some fedauth library types may not need more info
-        internal bool _federatedAuthenticationInfoReceived;
-
-        // The Federated Authentication returned by TryGetFedAuthTokenLocked or GetFedAuthToken.
-        SqlFedAuthToken _fedAuthToken = null;
-        internal byte[] _accessTokenInBytes;
-        internal readonly Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
-        internal readonly SspiContextProvider _sspiContextProvider;
-
-        private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
-
-        internal bool _cleanSQLDNSCaching = false;
-        private bool _serverSupportsDNSCaching = false;
-
         /// <summary>
         /// Returns buffer time allowed before access token expiry to continue using the access token.
         /// </summary>
