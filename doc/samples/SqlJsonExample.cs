@@ -11,7 +11,7 @@
 // Requirements:
 // - SQL Server 2025 and above.
 // - Microsoft.Data.SqlClient (6.1.2 and above)
-
+//<Snippet1>
 using System.Data;
 using Microsoft.Data;
 using Microsoft.Data.SqlClient;
@@ -272,3 +272,5 @@ class Program
         }
     }
 }
+//</Snippet1>
+

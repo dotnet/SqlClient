@@ -14,7 +14,7 @@
 // Requirements:
 // - SQL Server 2025 and above
 // - Microsoft.Data.SqlClient (6.1.2 and above)
-
+//<Snippet1>
 using Microsoft.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlTypes;
@@ -123,8 +123,10 @@ END
     {
         string dropProc = $@"IF OBJECT_ID(N'{ProcName}', N'P') IS NOT NULL DROP PROCEDURE {ProcName};";
         string dropTable = $@"IF OBJECT_ID(N'{TableName}', N'U') IS NOT NULL DROP TABLE {TableName};";
-        using (var cmd = new SqlCommand(dropProc, conn)) await cmd.ExecuteNonQueryAsync();
-        using (var cmd = new SqlCommand(dropTable, conn)) await cmd.ExecuteNonQueryAsync();
+        using (var cmd = new SqlCommand(dropProc, conn))
+            await cmd.ExecuteNonQueryAsync();
+        using (var cmd = new SqlCommand(dropTable, conn))
+            await cmd.ExecuteNonQueryAsync();
     }
 
     #region InsertWithSqlVectorParam
@@ -269,8 +271,10 @@ END
     {
         string dropSrc = $@"IF OBJECT_ID(N'{SrcTable}',  N'U') IS NOT NULL DROP TABLE {SrcTable};";
         string dropDest = $@"IF OBJECT_ID(N'{DestTable}', N'U') IS NOT NULL DROP TABLE {DestTable};";
-        using (var cmd = new SqlCommand(dropSrc, conn)) await cmd.ExecuteNonQueryAsync();
-        using (var cmd = new SqlCommand(dropDest, conn)) await cmd.ExecuteNonQueryAsync();
+        using (var cmd = new SqlCommand(dropSrc, conn))
+            await cmd.ExecuteNonQueryAsync();
+        using (var cmd = new SqlCommand(dropDest, conn))
+            await cmd.ExecuteNonQueryAsync();
     }
 
     private static async Task CreateBulkObjectsAsync(SqlConnection conn)
@@ -287,8 +291,10 @@ CREATE TABLE {DestTable}
     Id INT IDENTITY(1,1) PRIMARY KEY,
     VectorData vector(3) NULL
 );";
-        using (var cmd = new SqlCommand(createSrc, conn)) await cmd.ExecuteNonQueryAsync();
-        using (var cmd = new SqlCommand(createDest, conn)) await cmd.ExecuteNonQueryAsync();
+        using (var cmd = new SqlCommand(createSrc, conn))
+            await cmd.ExecuteNonQueryAsync();
+        using (var cmd = new SqlCommand(createDest, conn))
+            await cmd.ExecuteNonQueryAsync();
     }
 
     private static async Task SeedBulkSourceAsync(SqlConnection conn)
@@ -386,3 +392,4 @@ CREATE TABLE {DestTable}
         Console.WriteLine($"Destination row count: {count}");
     }
 }
+//</Snippet1>
