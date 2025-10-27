@@ -23,6 +23,7 @@ using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.UserAgent;
 using Microsoft.Data.SqlClient.Utilities;
 using Microsoft.SqlServer.Server;
 
@@ -1358,7 +1359,14 @@ namespace Microsoft.Data.SqlClient
 
                 int feOffset = length;
                 // calculate and reserve the required bytes for the featureEx
-                length = ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, useFeatureExt, length);
+                length = ApplyFeatureExData(
+                    requestedFeatures,
+                    recoverySessionData,
+                    fedAuthFeatureExtensionData,
+                    UserAgentInfo.UserAgentCachedJsonPayload.ToArray(),
+                    useFeatureExt,
+                    length
+                    );
 
                 WriteLoginData(rec,
                                requestedFeatures,
@@ -9445,7 +9453,15 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, useFeatureExt, length, true);
+                ApplyFeatureExData(
+                    requestedFeatures,
+                    recoverySessionData,
+                    fedAuthFeatureExtensionData,
+                    UserAgentInfo.UserAgentCachedJsonPayload.ToArray(),
+                    useFeatureExt,
+                    length,
+                    true
+                    );
             }
             catch (Exception e)
             {
@@ -9464,6 +9480,7 @@ namespace Microsoft.Data.SqlClient
         private int ApplyFeatureExData(TdsEnums.FeatureExtension requestedFeatures,
                                        SessionData recoverySessionData,
                                        FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
+                                       byte[] userAgentJsonPayload,
                                        bool useFeatureExt,
                                        int length,
                                        bool write = false)
@@ -9472,6 +9489,11 @@ namespace Microsoft.Data.SqlClient
             {
                 checked
                 {
+                    // NOTE: As part of TDS spec UserAgent feature extension should be the first feature extension in the list.
+                    if (LocalAppContextSwitches.EnableUserAgent && ((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) != 0))
+                    {
+                        length += WriteUserAgentFeatureRequest(userAgentJsonPayload, write);
+                    }
                     if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)
                     {
                         length += WriteSessionRecoveryFeatureRequest(recoverySessionData, write);

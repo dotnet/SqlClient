@@ -241,8 +241,7 @@ namespace Microsoft.Data.SqlClient
         public const byte FEATUREEXT_SQLDNSCACHING = 0x0B;
         public const byte FEATUREEXT_JSONSUPPORT = 0x0D;
         public const byte FEATUREEXT_VECTORSUPPORT = 0x0E;
-        // TODO: re-verify if this byte competes with another feature
-        public const byte FEATUREEXT_USERAGENT = 0x0F;
+        public const byte FEATUREEXT_USERAGENT = 0x10;
 
         [Flags]
         public enum FeatureExtension : uint

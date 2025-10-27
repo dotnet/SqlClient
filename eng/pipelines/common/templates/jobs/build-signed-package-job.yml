@@ -51,6 +51,7 @@ jobs:
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:
       OutputDirectory: $(artifactDirectory)
+      installNuget: false
   
   - template: ../steps/esrp-code-signing-step.yml@self
     parameters:

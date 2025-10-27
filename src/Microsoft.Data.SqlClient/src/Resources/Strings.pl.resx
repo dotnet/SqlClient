@@ -2161,7 +2161,7 @@
     <value>Nieprawidłowa wartość dla tych metadanych.</value>
   </data>
   <data name="ADP_NotRowType" xml:space="preserve">
-    <value>Metadane muszą być elementem SqlDbType.Row.</value>
+    <value>Metadane muszą być elementem SqlDbType.Row</value>
   </data>
   <data name="ADP_ParameterConversionFailed" xml:space="preserve">
     <value>Nie można przekonwertować wartości parametru z {0} na {1}.</value>
@@ -2668,7 +2668,7 @@
     <value>Alokacja pamięci dla połączenia wewnętrznego nie powiodła się.</value>
   </data>
   <data name="SQL_SmallDateTimeOverflow" xml:space="preserve">
-    <value>Przepełnienie elementu SqlDbType.SmallDateTime.  Wartość „{0}” jest spoza zakresu.  Musi należeć do zakresu od 1.01.1900 12:00:00 do 6.06.2079 23:59:59.</value>
+    <value>Przepełnienie elementu SqlDbType.SmallDateTime.  Wartość „{0}” jest spoza zakresu.  Musi należeć do zakresu od 1.01.1900 00:00:00 do 6.06.2079 23:59:59.</value>
   </data>
   <data name="SQL_TimeOverflow" xml:space="preserve">
     <value>Przepełnienie elementu SqlDbType.Time.  Wartość „{0}” jest spoza zakresu.  Musi należeć do zakresu od 00:00:00.0000000 do 23:59:59.9999999.</value>
