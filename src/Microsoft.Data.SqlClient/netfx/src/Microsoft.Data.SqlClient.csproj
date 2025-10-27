@@ -857,6 +857,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlInternalConnection.cs">
       <Link>Microsoft\Data\SqlClient\SqlInternalConnection.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs">
+      <Link>Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlInternalTransaction.cs">
       <Link>Microsoft\Data\SqlClient\SqlInternalTransaction.cs</Link>
     </Compile>

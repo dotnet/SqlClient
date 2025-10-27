@@ -12,7 +12,7 @@ using Microsoft.Data.SqlClient.ConnectionPool;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal class SqlInternalConnectionTds
+    internal partial class SqlInternalConnectionTds
     {
         internal SyncAsyncLock _parserLock = null;
 

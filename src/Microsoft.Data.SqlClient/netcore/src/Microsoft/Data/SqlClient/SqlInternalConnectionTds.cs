@@ -104,7 +104,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    internal sealed class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
+    internal sealed partial class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
     {
         // https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/retry-after#simple-retry-for-errors-with-http-error-codes-500-600
         internal const int MsalHttpRetryStatusCode = 429;
