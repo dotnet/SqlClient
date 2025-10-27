@@ -77,6 +77,9 @@ namespace Microsoft.Data.SqlClient
 
         private SqlCredential _credential;
 
+        // @TODO: Rename to match naming conventions
+        private bool _dnsCachingBeforeRedirect = false;
+
         private FederatedAuthenticationFeatureExtensionData _fedAuthFeatureExtensionData;
 
         private SqlFedAuthToken _fedAuthToken = null;
@@ -93,6 +96,9 @@ namespace Microsoft.Data.SqlClient
         private SessionData _recoverySessionData;
 
         // @TODO: Rename to match naming conventions
+        private bool _SQLDNSRetryEnabled = false;
+
+        // @TODO: Rename to match naming conventions
         private bool _serverSupportsDNSCaching = false;
 
         private bool _sessionRecoveryRequested;
@@ -100,6 +106,36 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Properties
+
+        /// <summary>
+        /// Get or set if SQLDNSCaching is supported by the server.
+        /// </summary>
+        // @TODO: Make auto-property
+        internal bool IsSQLDNSCachingSupported
+        {
+            get => _serverSupportsDNSCaching;
+            set => _serverSupportsDNSCaching = value;
+        }
+
+        /// <summary>
+        /// Get or set if the control ring send redirect token and feature ext ack with true for DNSCaching
+        /// </summary>
+        /// @TODO: Make auto-property
+        internal bool IsDNSCachingBeforeRedirectSupported
+        {
+            get => _dnsCachingBeforeRedirect;
+            set => _dnsCachingBeforeRedirect = value;
+        }
+
+        /// <summary>
+        /// Get or set if we need retrying with IP received from FeatureExtAck.
+        /// </summary>
+        // @TODO: Make auto-property
+        internal bool IsSQLDNSRetryEnabled
+        {
+            get => _SQLDNSRetryEnabled;
+            set => _SQLDNSRetryEnabled = value;
+        }
 
         /// <summary>
         /// Returns buffer time allowed before access token expiry to continue using the access token.

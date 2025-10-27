@@ -107,54 +107,7 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed partial class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
     {
-        /// <summary>
-        /// Get or set if SQLDNSCaching is supported by the server.
-        /// </summary>
-        internal bool IsSQLDNSCachingSupported
-        {
-            get
-            {
-                return _serverSupportsDNSCaching;
-            }
-            set
-            {
-                _serverSupportsDNSCaching = value;
-            }
-        }
 
-        private bool _SQLDNSRetryEnabled = false;
-
-        /// <summary>
-        /// Get or set if we need retrying with IP received from FeatureExtAck.
-        /// </summary>
-        internal bool IsSQLDNSRetryEnabled
-        {
-            get
-            {
-                return _SQLDNSRetryEnabled;
-            }
-            set
-            {
-                _SQLDNSRetryEnabled = value;
-            }
-        }
-
-        private bool _dnsCachingBeforeRedirect = false;
-
-        /// <summary>
-        /// Get or set if the control ring send redirect token and feature ext ack with true for DNSCaching
-        /// </summary>
-        internal bool IsDNSCachingBeforeRedirectSupported
-        {
-            get
-            {
-                return _dnsCachingBeforeRedirect;
-            }
-            set
-            {
-                _dnsCachingBeforeRedirect = value;
-            }
-        }
 
         internal SQLDNSInfo pendingSQLDNSObject = null;
 
