@@ -1591,7 +1591,7 @@ namespace Microsoft.Data.SqlClient
                     this2._activeConnection.GetOpenTdsConnection();
                     this2.CachedAsyncState.SetAsyncReaderState(parameters.Item1, parameters.Item2, parameters.Item3);
                 },
-                onFailure: static (this2, _, exception) =>
+                onFailure: static (this2, _, _) =>
                     this2._activeConnection.GetOpenTdsConnection().DecrementAsyncCount());
         }
 

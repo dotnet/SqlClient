@@ -2366,17 +2366,18 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             AsyncHelper.ContinueTaskWithState(
                 taskToContinue: task,
                 taskCompletionSource: source,
-                state: this,
-                onSuccess: this2 =>
+                state1: this,
+                state2: Tuple.Create(source, i),
+                onSuccess: static (this2, parameters) =>
                 {
-                    if (i + 1 < this2._sortedColumnMappings.Count)
+                    if (parameters.Item2 + 1 < this2._sortedColumnMappings.Count)
                     {
                         // continue from the next column
-                        this2.CopyColumnsAsync(i + 1, source);
+                        this2.CopyColumnsAsync(parameters.Item2 + 1, parameters.Item1);
                     }
                     else
                     {
-                        source.SetResult(null);
+                        parameters.Item1.SetResult(null);
                     }
                 });
         }
