@@ -107,18 +107,6 @@ namespace Microsoft.Data.SqlClient
     internal sealed partial class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
     {
         /// <summary>
-        /// Returns buffer time allowed before access token expiry to continue using the access token.
-        /// </summary>
-        private int accessTokenExpirationBufferTime
-        {
-            get
-            {
-                return (ConnectionOptions.ConnectTimeout == ADP.InfiniteConnectionTimeout || ConnectionOptions.ConnectTimeout >= ADP.MaxBufferAccessTokenExpiry)
-                    ? ADP.MaxBufferAccessTokenExpiry : ConnectionOptions.ConnectTimeout;
-            }
-        }
-
-        /// <summary>
         /// Get or set if SQLDNSCaching is supported by the server.
         /// </summary>
         internal bool IsSQLDNSCachingSupported

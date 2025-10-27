@@ -5,11 +5,12 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.ConnectionPool;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal partial class SqlInternalConnectionTds
+    internal partial class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
     {
         #region Constants
 
@@ -95,6 +96,22 @@ namespace Microsoft.Data.SqlClient
         private bool _serverSupportsDNSCaching = false;
 
         private bool _sessionRecoveryRequested;
+
+        #endregion
+
+        #region Properties
+
+        /// <summary>
+        /// Returns buffer time allowed before access token expiry to continue using the access token.
+        /// </summary>
+        // @TODO: Rename to match naming convention
+        private int accessTokenExpirationBufferTime
+        {
+            get => ConnectionOptions.ConnectTimeout == ADP.InfiniteConnectionTimeout ||
+                   ConnectionOptions.ConnectTimeout >= ADP.MaxBufferAccessTokenExpiry
+                ? ADP.MaxBufferAccessTokenExpiry
+                : ConnectionOptions.ConnectTimeout;
+        }
 
         #endregion
     }
