@@ -1064,7 +1064,7 @@ namespace Microsoft.Data.SqlClient
                     SqlSecurityUtility.VerifyColumnMasterKeySignature(
                         providerName,
                         keyPath,
-                        isEnclaveEnabled: true,
+                        isEnclaveEnabled: isRequestedByEnclave,
                         keySignature,
                         _activeConnection,
                         this);
@@ -1276,92 +1276,95 @@ namespace Microsoft.Data.SqlClient
                         enclaveAttestationParameters,
                         enclaveType);
                 }
+            }
 
-                // @TODO: I think these should just be separate methods
-                if (_batchRPCMode)
+            // @TODO: I think these should just be separate methods
+            if (_batchRPCMode)
+            {
+                // Count the RPC requests that need to be transparently encrypted. We simply
+                // look for any parameters in a request and add the request to be queried for
+                // parameter encryption.
+                Dictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcDictionary =
+                    new Dictionary<_SqlRPC, _SqlRPC>();
+
+                for (int i = 0; i < _RPCList.Count; i++)
                 {
-                    // Count the RPC requests that need to be transparently encrypted. We simply
-                    // look for any parameters in a request and add the request to be queried for
-                    // parameter encryption.
-                    Dictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcDictionary =
-                        new Dictionary<_SqlRPC, _SqlRPC>();
-
-                    for (int i = 0; i < _RPCList.Count; i++)
+                    // In _batchRPCMode, the actual T-SQL query is in the first parameter and
+                    // not present as the rpcName, as is the case with non-_batchRPCMode. So
+                    // input parameters start at parameters[1]. parameters[0] is the actual
+                    // T-SQL Statement. rpcName is sp_executesql.
+                    if (_RPCList[i].systemParams.Length > 1)
                     {
-                        // In _batchRPCMode, the actual T-SQL query is in the first parameter and
-                        // not present as the rpcName, as is the case with non-_batchRPCMode. So
-                        // input parameters start at parameters[1]. parameters[0] is the actual
-                        // T-SQL Statement. rpcName is sp_executesql.
-                        if (_RPCList[i].systemParams.Length > 1)
-                        {
-                            _RPCList[i].needsFetchParameterEncryptionMetadata = true;
+                        _RPCList[i].needsFetchParameterEncryptionMetadata = true;
 
-                            // Since we are going to need multiple RPC objects, allocate a new one
-                            // here for each command in the batch.
-                            _SqlRPC rpcDescribeParameterEncryptionRequest = new _SqlRPC();
+                        // Since we are going to need multiple RPC objects, allocate a new one
+                        // here for each command in the batch.
+                        _SqlRPC rpcDescribeParameterEncryptionRequest = new _SqlRPC();
 
-                            // Prepare the describe parameter encryption request.
-                            PrepareDescribeParameterEncryptionRequest(
-                                _RPCList[i],
-                                ref rpcDescribeParameterEncryptionRequest,
-                                i == 0 ? serializedAttestationParameters : null);
+                        // Prepare the describe parameter encryption request.
+                        PrepareDescribeParameterEncryptionRequest(
+                            _RPCList[i],
+                            ref rpcDescribeParameterEncryptionRequest,
+                            i == 0 ? serializedAttestationParameters : null);
 
-                            Debug.Assert(rpcDescribeParameterEncryptionRequest != null,
-                                "rpcDescribeParameterEncryptionRequest should not be null, after call to PrepareDescribeParameterEncryptionRequest.");
-                            Debug.Assert(!describeParameterEncryptionRpcOriginalRpcDictionary.ContainsKey(rpcDescribeParameterEncryptionRequest),
-                                "There should not already be a key referring to the current rpcDescribeParameterEncryptionRequest, in the dictionary describeParameterEncryptionRpcOriginalRpcDictionary.");
+                        Debug.Assert(rpcDescribeParameterEncryptionRequest != null,
+                            "rpcDescribeParameterEncryptionRequest should not be null, after call to PrepareDescribeParameterEncryptionRequest.");
+                        Debug.Assert(!describeParameterEncryptionRpcOriginalRpcDictionary.ContainsKey(rpcDescribeParameterEncryptionRequest),
+                            "There should not already be a key referring to the current rpcDescribeParameterEncryptionRequest, in the dictionary describeParameterEncryptionRpcOriginalRpcDictionary.");
 
-                            // Add the describe parameter encryption RPC request as the key and its
-                            // corresponding original rpc request to the dictionary.
-                            describeParameterEncryptionRpcOriginalRpcDictionary.Add(
-                                rpcDescribeParameterEncryptionRequest,
-                                _RPCList[i]);
-                        }
+                        // Add the describe parameter encryption RPC request as the key and its
+                        // corresponding original rpc request to the dictionary.
+                        describeParameterEncryptionRpcOriginalRpcDictionary.Add(
+                            rpcDescribeParameterEncryptionRequest,
+                            _RPCList[i]);
                     }
-
-                    describeParameterEncryptionRpcOriginalRpcMap = new ReadOnlyDictionary<_SqlRPC, _SqlRPC>(
-                        describeParameterEncryptionRpcOriginalRpcDictionary);
-
-                    if (describeParameterEncryptionRpcOriginalRpcMap.Count == 0)
-                    {
-                        // No parameters are present, nothing to do, simply return.
-                        return null;
-                    }
-
-                    inputParameterEncryptionNeeded = true;
-                    _sqlRPCParameterEncryptionReqArray = new _SqlRPC[describeParameterEncryptionRpcOriginalRpcMap.Count];
-                    describeParameterEncryptionRpcOriginalRpcMap.Keys.CopyTo(_sqlRPCParameterEncryptionReqArray, 0);
-
-                    Debug.Assert(_sqlRPCParameterEncryptionReqArray.Length > 0,
-                        "There should be at-least 1 describe parameter encryption rpc request.");
-                    Debug.Assert(_sqlRPCParameterEncryptionReqArray.Length <= _RPCList.Count,
-                        "The number of describe parameter encryption RPC requests is more than the number of original RPC requests.");
                 }
-                else if (ShouldUseEnclaveBasedWorkflow || GetParameterCount(_parameters) != 0)
+
+                describeParameterEncryptionRpcOriginalRpcMap = new ReadOnlyDictionary<_SqlRPC, _SqlRPC>(
+                    describeParameterEncryptionRpcOriginalRpcDictionary);
+
+                if (describeParameterEncryptionRpcOriginalRpcMap.Count == 0)
                 {
-                    // Always Encrypted generally operates only on parameterized queries. However,
-                    // enclave based Always encrypted also supports unparameterized queries.
-
-                    // Fetch params for a single batch.
-                    inputParameterEncryptionNeeded = true;
-                    _sqlRPCParameterEncryptionReqArray = new _SqlRPC[1];
-
-                    _SqlRPC rpc = null;
-                    GetRPCObject(systemParamCount: 0, GetParameterCount(_parameters), ref rpc);
-                    Debug.Assert(rpc is not null, "GetRPCObject should not return rpc as null.");
-
-                    rpc.rpcName = CommandText;
-                    rpc.userParams = _parameters;
-
-                    // Prepare the RPC request for describe parameter encryption procedure.
-                    PrepareDescribeParameterEncryptionRequest(
-                        rpc,
-                        ref _sqlRPCParameterEncryptionReqArray[0],
-                        serializedAttestationParameters);
-
-                    Debug.Assert(_sqlRPCParameterEncryptionReqArray[0] is not null,
-                        "_sqlRPCParameterEncryptionReqArray[0] should not be null, after call to PrepareDescribeParameterEncryptionRequest.");
+                    // No parameters are present, nothing to do, simply return.
+                    return null;
                 }
+                else
+                {
+                    inputParameterEncryptionNeeded = true;
+                }
+
+                _sqlRPCParameterEncryptionReqArray = new _SqlRPC[describeParameterEncryptionRpcOriginalRpcMap.Count];
+                describeParameterEncryptionRpcOriginalRpcMap.Keys.CopyTo(_sqlRPCParameterEncryptionReqArray, 0);
+
+                Debug.Assert(_sqlRPCParameterEncryptionReqArray.Length > 0,
+                    "There should be at-least 1 describe parameter encryption rpc request.");
+                Debug.Assert(_sqlRPCParameterEncryptionReqArray.Length <= _RPCList.Count,
+                    "The number of describe parameter encryption RPC requests is more than the number of original RPC requests.");
+            }
+            else if (ShouldUseEnclaveBasedWorkflow || GetParameterCount(_parameters) != 0)
+            {
+                // Always Encrypted generally operates only on parameterized queries. However,
+                // enclave based Always encrypted also supports unparameterized queries.
+
+                // Fetch params for a single batch.
+                inputParameterEncryptionNeeded = true;
+                _sqlRPCParameterEncryptionReqArray = new _SqlRPC[1];
+
+                _SqlRPC rpc = null;
+                GetRPCObject(systemParamCount: 0, GetParameterCount(_parameters), ref rpc);
+                Debug.Assert(rpc is not null, "GetRPCObject should not return rpc as null.");
+
+                rpc.rpcName = CommandText;
+                rpc.userParams = _parameters;
+
+                // Prepare the RPC request for describe parameter encryption procedure.
+                PrepareDescribeParameterEncryptionRequest(
+                    rpc,
+                    ref _sqlRPCParameterEncryptionReqArray[0],
+                    serializedAttestationParameters);
+
+                Debug.Assert(_sqlRPCParameterEncryptionReqArray[0] is not null,
+                    "_sqlRPCParameterEncryptionReqArray[0] should not be null, after call to PrepareDescribeParameterEncryptionRequest.");
             }
 
             // @TODO: Invert to reduce nesting of important code
