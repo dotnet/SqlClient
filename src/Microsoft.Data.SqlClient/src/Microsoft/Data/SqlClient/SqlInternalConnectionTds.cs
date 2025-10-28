@@ -296,6 +296,17 @@ namespace Microsoft.Data.SqlClient
 
         #region Properties
 
+        internal override SqlInternalTransaction AvailableInternalTransaction
+        {
+            get => _parser._fResetConnection ? null : CurrentTransaction;
+        }
+
+        // @TODO: Make auto-property
+        internal Guid ClientConnectionId
+        {
+            get => _clientConnectionId;
+        }
+
         internal SessionData CurrentSessionData
         {
             get
@@ -307,6 +318,17 @@ namespace Microsoft.Data.SqlClient
                 }
                 return _currentSessionData;
             }
+        }
+
+        internal override SqlInternalTransaction CurrentTransaction
+        {
+            get => _parser.CurrentTransaction;
+        }
+
+        // @TODO: Make auto-property
+        internal DbConnectionPoolIdentity Identity
+        {
+            get => _identity;
         }
 
         /// <summary>
@@ -340,6 +362,25 @@ namespace Microsoft.Data.SqlClient
         }
 
         // @TODO: Make auto-property
+        internal Guid OriginalClientConnectionId
+        {
+            get => _originalClientConnectionId;
+        }
+
+        internal override SqlInternalTransaction PendingTransaction
+        {
+            get => _parser.PendingTransaction;
+        }
+
+        // @TODO: Make auto-property
+        internal string RoutingDestination
+        {
+            get => _routingDestination;
+        }
+
+        internal RoutingInfo RoutingInfo { get; private set; } = null;
+
+        // @TODO: Make auto-property
         internal SqlConnectionTimeoutErrorInternal TimeoutErrorInternal
         {
             get => _timeoutErrorInternal;
@@ -355,6 +396,33 @@ namespace Microsoft.Data.SqlClient
                    ConnectionOptions.ConnectTimeout >= ADP.MaxBufferAccessTokenExpiry
                 ? ADP.MaxBufferAccessTokenExpiry
                 : ConnectionOptions.ConnectTimeout;
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        /// <summary>
+        /// Returns <c>true</c> if the SQL error is transient, as per <see cref="s_transientErrors"/>.
+        /// </summary>
+        private bool IsTransientError(SqlException exc)
+        {
+            if (exc == null)
+            {
+                return false;
+            }
+
+            foreach (SqlError error in exc.Errors)
+            {
+                if (s_transientErrors.Contains(error.Number))
+                {
+                    // When server timeouts, connection is doomed. Reset here to allow reconnect.
+                    UnDoomThisConnection();
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         #endregion
