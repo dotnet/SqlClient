@@ -349,7 +349,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         [Fact]
-        [ActiveIssue("Flaky, timing dependent")]
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3730")]
         public async Task GetConnectionAsyncMaxPoolSize_ShouldRespectOrderOfRequest()
         {
             // Arrange
