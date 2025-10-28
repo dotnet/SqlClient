@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Configuration;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
@@ -12,7 +13,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.SqlServer.TDS.PreLogin;
+using Microsoft.SqlServer.TDS.EndPoint;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
@@ -20,6 +21,20 @@ namespace Microsoft.Data.SqlClient.Tests
 {
     public class SqlConnectionBasicTests
     {
+        // Reflection
+        public static Assembly systemData = Assembly.GetAssembly(typeof(SqlConnection));
+        
+        public static Type sqlConnection = systemData.GetType("Microsoft.Data.SqlClient.SqlConnection");
+        public static PropertyInfo innerConnectionProperty = sqlConnection.GetProperty("InnerConnection", BindingFlags.NonPublic | BindingFlags.Instance);
+        public static Type sqlInternalConnectionTds = systemData.GetType("Microsoft.Data.SqlClient.SqlInternalConnectionTds");
+        public static PropertyInfo serverProvidedFailoverPartnerProperty = sqlInternalConnectionTds.GetProperty("ServerProvidedFailoverPartner", BindingFlags.NonPublic | BindingFlags.Instance);
+        public static Type localAppContextSwitches = systemData.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+        public static FieldInfo ignoreServerProvidedFailoverPartnerField = localAppContextSwitches.GetField("s_ignoreServerProvidedFailoverPartner", BindingFlags.NonPublic | BindingFlags.Static);
+        public static Type tristateEnum = localAppContextSwitches.GetNestedType("Tristate", BindingFlags.NonPublic);
+        public static object tristateTrue = Enum.Parse(tristateEnum, "True");
+        public static object tristateFalse = Enum.Parse(tristateEnum, "False");
+
+
         [Fact]
         public void ConnectionTest()
         {
@@ -293,6 +308,76 @@ namespace Microsoft.Data.SqlClient.Tests
             var conn = new SqlConnection(string.Empty, sqlCredential);
 
             Assert.Equal(sqlCredential, conn.Credential);
+        }
+
+        [Fact]
+        public void TransientFault_IgnoreServerProvidedFailoverPartner_ShouldConnectToUserProvidedPartner()
+        {
+            // Arrange
+            ignoreServerProvidedFailoverPartnerField.SetValue(null, tristateTrue);
+            
+
+            try
+            {
+                using TestTdsServer failoverServer = TestTdsServer.StartTestServer();
+                // Doesn't need to point to a real endpoint, just needs a value specified
+                failoverServer.Arguments.FailoverPartner = "localhost,1234";
+
+                var failoverBuilder = new SqlConnectionStringBuilder(failoverServer.ConnectionString);
+
+                using TestTdsServer server = TestTdsServer.StartTestServer();
+                // Set an invalid failover partner to ensure that the connection fails if the
+                // server provided failover partner is used.
+                server.Arguments.FailoverPartner = $"invalidhost";
+
+                SqlConnectionStringBuilder builder = new(server.ConnectionString)
+                {
+                    InitialCatalog = "master",
+                    Encrypt = false,
+                    FailoverPartner = failoverBuilder.DataSource,
+                    // Ensure pooling is enabled so that the failover partner information
+                    // is persisted in the pool group. If pooling is disabled, the server
+                    // provided failover partner will never be used.
+                    Pooling = true,
+                    MinPoolSize = 1,
+                };
+                SqlConnection connection = new(builder.ConnectionString);
+
+                // Connect once to the primary to trigger it to send the failover partner
+                connection.Open();
+
+                var innerConnection = innerConnectionProperty.GetValue(connection);
+                var serverProvidedFailoverPartner = serverProvidedFailoverPartnerProperty.GetValue(innerConnection);
+                Assert.Equal("invalidhost", serverProvidedFailoverPartner);
+
+                // Close the connection to return it to the pool
+                connection.Close();
+
+                // Act
+                // Dispose of the server to trigger a failover
+                server.Dispose();
+
+                // Opening a new connection will use the failover partner stored in the pool group.
+                // This will fail if the server provided failover partner was stored to the pool group.
+                using SqlConnection failoverConnection = new(builder.ConnectionString);
+
+                // Clear the pool to ensure a new physical connection is created
+                // Pool group info such as failover partner will still be retained
+                SqlConnection.ClearPool(connection);
+                failoverConnection.Open();
+
+                // Assert
+                Assert.Equal(ConnectionState.Open, failoverConnection.State);
+                Assert.Equal(failoverBuilder.DataSource, failoverConnection.DataSource);
+                // 1 for the initial connection
+                Assert.Equal(1, server.PreLoginCount);
+                // 1 for the failover connection
+                Assert.Equal(1, failoverServer.PreLoginCount);
+            }
+            finally
+            {
+                ignoreServerProvidedFailoverPartnerField.SetValue(null, tristateFalse);
+            }
         }
 
 
