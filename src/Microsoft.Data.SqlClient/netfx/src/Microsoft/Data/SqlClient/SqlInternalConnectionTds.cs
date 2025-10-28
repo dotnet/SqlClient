@@ -207,24 +207,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
         internal SyncAsyncLock _parserLock = new SyncAsyncLock();
-        private int _threadIdOwningParserLock = -1;
-
-        private SqlConnectionTimeoutErrorInternal _timeoutErrorInternal;
-
-        internal SqlConnectionTimeoutErrorInternal TimeoutErrorInternal
-        {
-            get { return _timeoutErrorInternal; }
-        }
-
-        // OTHER STATE VARIABLES AND REFERENCES
-        internal Guid _clientConnectionId = Guid.Empty;
-
-        // Routing information (ROR)
-        private Guid _originalClientConnectionId = Guid.Empty;
-        private string _routingDestination = null;
-        private readonly TimeoutTimer _timeout;
 
         // although the new password is generally not used it must be passed to the ctor
         // the new Login7 packet will always write out the new password (or a length of zero and no bytes if not present)

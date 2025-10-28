@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 
 namespace Microsoft.Data.SqlClient
@@ -149,6 +150,8 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Rename to match naming conventions
         internal bool _cleanSQLDNSCaching = false;
 
+        internal Guid _clientConnectionId = Guid.Empty;
+
         /// <remarks>
         /// Internal for use from TdsParser only, other should use CurrentSessionData property that will fix database and language
         /// @TODO: No... all external usages should be via property.
@@ -254,6 +257,8 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private DbConnectionPoolAuthenticationContext _newDbConnectionPoolAuthenticationContext;
 
+        private Guid _originalClientConnectionId = Guid.Empty;
+
         private string _originalDatabase;
 
         private string _originalLanguage;
@@ -270,6 +275,8 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Rename to match naming conventions (remove f prefix)
         private bool _fResetConnection;
 
+        private string _routingDestination = null;
+
         // @TODO: Rename to match naming conventions
         private bool _SQLDNSRetryEnabled = false;
 
@@ -277,6 +284,13 @@ namespace Microsoft.Data.SqlClient
         private bool _serverSupportsDNSCaching = false;
 
         private bool _sessionRecoveryRequested;
+
+        private int _threadIdOwningParserLock = -1;
+
+        // @TODO: Rename to indicate this has to do with routing
+        private readonly TimeoutTimer _timeout;
+
+        private SqlConnectionTimeoutErrorInternal _timeoutErrorInternal;
 
         #endregion
 
@@ -323,6 +337,12 @@ namespace Microsoft.Data.SqlClient
         {
             get => _SQLDNSRetryEnabled;
             set => _SQLDNSRetryEnabled = value;
+        }
+
+        // @TODO: Make auto-property
+        internal SqlConnectionTimeoutErrorInternal TimeoutErrorInternal
+        {
+            get => _timeoutErrorInternal;
         }
 
         /// <summary>
