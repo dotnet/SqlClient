@@ -19,6 +19,8 @@ using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
+#nullable enable
+
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
     public class ConnectionTests
