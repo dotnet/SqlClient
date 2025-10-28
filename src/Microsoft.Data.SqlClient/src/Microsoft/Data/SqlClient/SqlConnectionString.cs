@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient
             internal const string FailoverPartnerSPN = DbConnectionStringDefaults.FailoverPartnerSPN;
             internal const bool Context_Connection = DbConnectionStringDefaults.ContextConnection;
 #if NETFRAMEWORK
-            internal static readonly bool TransparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIpResolution;
+            internal static bool TransparentNetworkIPResolution => DbConnectionStringDefaults.TransparentNetworkIpResolution;
             internal const bool Connection_Reset = DbConnectionStringDefaults.ConnectionReset;
             internal const string Network_Library = DbConnectionStringDefaults.NetworkLibrary;
 #endif // NETFRAMEWORK
