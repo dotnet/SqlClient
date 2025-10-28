@@ -9,9 +9,18 @@ namespace Microsoft.Data.SqlClient.Tests
     public static class TestUtility
     {
         public static readonly bool IsNotArmProcess = RuntimeInformation.ProcessArchitecture != Architecture.Arm;
-        public static bool IsNet => RuntimeInformation.FrameworkDescription == ".NET";
-        public static bool IsNetCore => RuntimeInformation.FrameworkDescription == ".NET Core";
-        public static bool IsNetFramework => RuntimeInformation.FrameworkDescription == ".NET Framework";
-        public static bool IsNetNative => RuntimeInformation.FrameworkDescription == ".NET Native";
+        public static bool IsNet
+        {
+            get
+            {
+                return
+                    !IsNetCore && !IsNetFramework && !IsNetNative &&
+                    RuntimeInformation.FrameworkDescription.StartsWith(".NET");
+            }
+        }
+
+        public static bool IsNetCore => RuntimeInformation.FrameworkDescription.StartsWith(".NET Core");
+        public static bool IsNetFramework => RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework");
+        public static bool IsNetNative => RuntimeInformation.FrameworkDescription.StartsWith(".NET Native");
     }
 }

@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 _ = parameters.ConnectionId;
 
                 var cts = new CancellationTokenSource();
-                cts.CancelAfter(parameters.AuthenticationTimeout * 1000);
+                cts.CancelAfter(parameters.ConnectionTimeout * 1000);
 
                 string[] scopes = new string[] { scope };
                 SecureString password = new SecureString();
