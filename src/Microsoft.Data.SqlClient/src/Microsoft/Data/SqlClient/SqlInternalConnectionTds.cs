@@ -296,6 +296,12 @@ namespace Microsoft.Data.SqlClient
 
         #region Properties
 
+        // @TODO: Make internal
+        public override string ServerVersion
+        {
+            get => $"{_loginAck.majorVersion:00}.{(short)_loginAck.minorVersion:00}.{_loginAck.buildNum:0000}";
+        }
+
         internal override SqlInternalTransaction AvailableInternalTransaction
         {
             get => _parser._fResetConnection ? null : CurrentTransaction;
@@ -331,6 +337,17 @@ namespace Microsoft.Data.SqlClient
             get => _identity;
         }
 
+        // @TODO: Make auto-property
+        internal string InstanceName
+        {
+            get => _instanceName;
+        }
+
+        internal override bool Is2008OrNewer
+        {
+            get => _parser.Is2008OrNewer;
+        }
+
         /// <summary>
         /// Get or set if SQLDNSCaching is supported by the server.
         /// </summary>
@@ -351,6 +368,11 @@ namespace Microsoft.Data.SqlClient
             set => _dnsCachingBeforeRedirect = value;
         }
 
+        internal override bool IsLockedForBulkCopy
+        {
+            get => !_parser.MARSOn && _parser._physicalStateObj.BcpLock;
+        }
+
         /// <summary>
         /// Get or set if we need retrying with IP received from FeatureExtAck.
         /// </summary>
@@ -367,9 +389,27 @@ namespace Microsoft.Data.SqlClient
             get => _originalClientConnectionId;
         }
 
+        // @TODO: Make auto-property
+        internal int PacketSize
+        {
+            get => _currentPacketSize;
+        }
+
+        // @TODO: Make auto-property
+        internal TdsParser Parser
+        {
+            get => _parser;
+        }
+
         internal override SqlInternalTransaction PendingTransaction
         {
             get => _parser.PendingTransaction;
+        }
+
+        // @TODO: Make auto-property
+        internal SqlConnectionPoolGroupProviderInfo PoolGroupProviderInfo
+        {
+            get => _poolGroupProviderInfo;
         }
 
         // @TODO: Make auto-property
@@ -380,10 +420,24 @@ namespace Microsoft.Data.SqlClient
 
         internal RoutingInfo RoutingInfo { get; private set; } = null;
 
+        internal int ServerProcessId
+        {
+            get => _parser._physicalStateObj._spid;
+        }
+
+        internal string ServerProvidedFailoverPartner { get; set; }
+
         // @TODO: Make auto-property
         internal SqlConnectionTimeoutErrorInternal TimeoutErrorInternal
         {
             get => _timeoutErrorInternal;
+        }
+
+        // @TODO: Rename to be "IsReadyToPrepareTransaction"
+        protected override bool ReadyToPrepareTransaction
+        {
+            // TODO: probably need to use a different method but that's a different bug
+            get => FindLiveReader(null) is null; // Can't prepare with a live data reader...
         }
 
         /// <summary>
