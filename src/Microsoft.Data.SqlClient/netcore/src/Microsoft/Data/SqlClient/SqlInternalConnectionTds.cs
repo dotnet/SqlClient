@@ -106,36 +106,6 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed partial class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
     {
-        internal SessionData CurrentSessionData
-        {
-            get
-            {
-                if (_currentSessionData != null)
-                {
-                    _currentSessionData._database = CurrentDatabase;
-                    _currentSessionData._language = _currentLanguage;
-                }
-                return _currentSessionData;
-            }
-        }
-
-        // FOR POOLING
-        private bool _fConnectionOpen = false;
-
-        // FOR CONNECTION RESET MANAGEMENT
-        private bool _fResetConnection;
-        private string _originalDatabase;
-        private string _originalLanguage;
-        private string _currentLanguage;
-        private int _currentPacketSize;
-        private int _asyncCommandCount; // number of async Begins minus number of async Ends.
-
-        // FOR SSE
-        private string _instanceName = string.Empty;
-
-        // FOR NOTIFICATIONS
-        private DbConnectionPoolIdentity _identity; // Used to lookup info for notification matching Start().
-
         // FOR SYNCHRONIZATION IN TdsParser
         // How to use these locks:
         // 1. Whenever writing to the connection (with the exception of Cancellation) the _parserLock MUST be taken

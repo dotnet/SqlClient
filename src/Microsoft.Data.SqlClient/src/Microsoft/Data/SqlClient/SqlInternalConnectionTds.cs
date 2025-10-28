@@ -203,7 +203,19 @@ namespace Microsoft.Data.SqlClient
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
 
+        /// <summary>
+        /// Number of async Begins minus number of async Ends.
+        /// </summary>
+        private int _asyncCommandCount;
+
+        // @TODO: Rename for naming conventions (remove f prefix)
+        private bool _fConnectionOpen = false;
+
         private SqlCredential _credential;
+
+        private string _currentLanguage;
+
+        private int _currentPacketSize;
 
         /// <summary>
         /// Pool this connection is associated with, if any.
@@ -222,6 +234,13 @@ namespace Microsoft.Data.SqlClient
 
         private SqlFedAuthToken _fedAuthToken = null;
 
+        /// <summary>
+        /// Used to lookup info for notification matching Start().
+        /// </summary>
+        private DbConnectionPoolIdentity _identity;
+
+        private string _instanceName = string.Empty;
+
         private SqlLoginAck _loginAck;
 
         /// <summary>
@@ -235,6 +254,10 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private DbConnectionPoolAuthenticationContext _newDbConnectionPoolAuthenticationContext;
 
+        private string _originalDatabase;
+
+        private string _originalLanguage;
+
         private TdsParser _parser;
 
         /// <remarks>
@@ -243,6 +266,9 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlConnectionPoolGroupProviderInfo _poolGroupProviderInfo;
 
         private SessionData _recoverySessionData;
+
+        // @TODO: Rename to match naming conventions (remove f prefix)
+        private bool _fResetConnection;
 
         // @TODO: Rename to match naming conventions
         private bool _SQLDNSRetryEnabled = false;
@@ -255,6 +281,19 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Properties
+
+        internal SessionData CurrentSessionData
+        {
+            get
+            {
+                if (_currentSessionData != null)
+                {
+                    _currentSessionData._database = CurrentDatabase;
+                    _currentSessionData._language = _currentLanguage;
+                }
+                return _currentSessionData;
+            }
+        }
 
         /// <summary>
         /// Get or set if SQLDNSCaching is supported by the server.
