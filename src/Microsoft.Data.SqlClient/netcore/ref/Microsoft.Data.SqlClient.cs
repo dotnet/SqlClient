@@ -180,14 +180,6 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/Initialize/*'/>
         public abstract void Initialize();
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProviderManager.xml' path='docs/members[@name="SqlAuthenticationProviderManager"]/SqlAuthenticationProviderManager/*'/>
-    public sealed partial class SqlAuthenticationProviderManager
-    {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProviderManager.xml' path='docs/members[@name="SqlAuthenticationProviderManager"]/GetProvider/*'/>
-        public static Microsoft.Data.SqlClient.SqlAuthenticationProvider GetProvider(Microsoft.Data.SqlClient.SqlAuthenticationMethod authenticationMethod) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProviderManager.xml' path='docs/members[@name="SqlAuthenticationProviderManager"]/IsSupported/*'/>
-        public static bool SetProvider(Microsoft.Data.SqlClient.SqlAuthenticationMethod authenticationMethod, Microsoft.Data.SqlClient.SqlAuthenticationProvider provider) { throw null; }
-    }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlBulkCopy/*'/>
     public sealed partial class SqlBulkCopy : System.IDisposable
     {

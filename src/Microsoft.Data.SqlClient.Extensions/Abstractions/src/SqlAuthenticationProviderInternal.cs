@@ -9,10 +9,9 @@ namespace Microsoft.Data.SqlClient;
 /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/SqlAuthenticationProvider/*'/>
 public abstract partial class SqlAuthenticationProvider
 {
-    // This class implements the obsolete static GetProvider and SetProvider
-    // methods by using reflection to call into the Microsoft.Data.SqlClient
-    // package's SqlAuthenticationProviderManager class, if that assembly is
-    // present.
+    // This class implements the static GetProvider and SetProvider methods by
+    // using reflection to call into the Microsoft.Data.SqlClient package's
+    // SqlAuthenticationProviderManager class, if that assembly is present.
     private static class Internal
     {
         // Handles to the reflected get/set methods.
