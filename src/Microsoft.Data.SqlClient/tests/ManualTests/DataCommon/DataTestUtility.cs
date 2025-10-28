@@ -230,7 +230,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             //
             // TODO: Figure out which ones and install on-demand rather than
             // globally.
-            SqlAuthenticationProviderManager.SetProvider(
+            SqlAuthenticationProvider.SetProvider(
                 SqlAuthenticationMethod.ActiveDirectoryManagedIdentity,
                 new ManagedIdentityProvider());
         }

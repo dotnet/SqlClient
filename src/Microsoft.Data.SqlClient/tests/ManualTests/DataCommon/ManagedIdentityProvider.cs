@@ -68,7 +68,7 @@ internal class ManagedIdentityProvider : SqlAuthenticationProvider
             // Set up a cancellation token based on the authentication timeout,
             // ignoring overflow since this is just test code.
             using CancellationTokenSource cancellor = new();
-            cancellor.CancelAfter(parameters.AuthenticationTimeout * 1000);
+            cancellor.CancelAfter(parameters.ConnectionTimeout * 1000);
 
             // Acquire the token, which may be cached by the credential.
             AccessToken token =

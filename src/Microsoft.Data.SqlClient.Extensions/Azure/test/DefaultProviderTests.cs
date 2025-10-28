@@ -24,7 +24,7 @@ public class DefaultProviderTests
         )
         {
             SqlAuthenticationProvider? provider =
-                SqlAuthenticationProviderManager.GetProvider(method);
+                SqlAuthenticationProvider.GetProvider(method);
 
             switch (method)
             {

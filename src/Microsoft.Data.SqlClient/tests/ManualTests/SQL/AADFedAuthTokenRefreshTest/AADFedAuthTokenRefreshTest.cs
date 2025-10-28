@@ -23,13 +23,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void FedAuthTokenRefreshTest()
         {
             #pragma warning disable 0618 // Type or member is obsolete
-            SqlAuthenticationProvider original = SqlAuthenticationProviderManager.GetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword);
+            SqlAuthenticationProvider original = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword);
             #pragma warning restore 0618 // Type or member is obsolete
 
             try
             {
                 #pragma warning disable 0618 // Type or member is obsolete
-                SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new UsernamePasswordProvider(DataTestUtility.ApplicationClientId));
+                SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new UsernamePasswordProvider(DataTestUtility.ApplicationClientId));
                 #pragma warning restore 0618 // Type or member is obsolete
  
                 string connectionString = DataTestUtility.AADPasswordConnectionString;
@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     // Reset to driver internal provider.
                     #pragma warning disable 0618 // Type or member is obsolete
-                    SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, original);
+                    SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, original);
                     #pragma warning restore 0618 // Type or member is obsolete
                 }
             }

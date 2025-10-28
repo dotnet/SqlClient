@@ -28,7 +28,7 @@ internal class UsernamePasswordProvider : SqlAuthenticationProvider
             : parameters.Resource + s_defaultScopeSuffix;
 
         var cts = new CancellationTokenSource();
-        cts.CancelAfter(parameters.AuthenticationTimeout * 1000);
+        cts.CancelAfter(parameters.ConnectionTimeout * 1000);
 
         string[] scopes = new string[] { scope };
         SecureString password = new SecureString();

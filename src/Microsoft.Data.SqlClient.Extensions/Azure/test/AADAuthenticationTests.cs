@@ -11,23 +11,23 @@ public class AADAuthenticationTests
     public void CustomActiveDirectoryProviderTest()
     {
         SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(static (result) => Task.CompletedTask);
-        SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
-        Assert.Same(authProvider, SqlAuthenticationProviderManager.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
+        SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
+        Assert.Same(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
     }
 
     [Fact]
     public void CustomActiveDirectoryProviderTest_AppClientId()
     {
         SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(Guid.NewGuid().ToString());
-        SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
-        Assert.Same(authProvider, SqlAuthenticationProviderManager.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
+        SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
+        Assert.Same(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
     }
 
     [Fact]
     public void CustomActiveDirectoryProviderTest_AppClientId_DeviceFlowCallback()
     {
         SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(static (result) => Task.CompletedTask, Guid.NewGuid().ToString());
-        SqlAuthenticationProviderManager.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
-        Assert.Same(authProvider, SqlAuthenticationProviderManager.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
+        SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
+        Assert.Same(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
     }
 }
