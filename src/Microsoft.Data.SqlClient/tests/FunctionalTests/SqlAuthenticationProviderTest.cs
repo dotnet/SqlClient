@@ -22,20 +22,15 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)]
         public void DefaultAuthenticationProviders(SqlAuthenticationMethod method)
         {
-            Assert.IsType<ActiveDirectoryAuthenticationProvider>(SqlAuthenticationProviderManager.GetProvider(method));
+            Assert.IsType<ActiveDirectoryAuthenticationProvider>(SqlAuthenticationProvider.GetProvider(method));
         }
 
-        #if NETFRAMEWORK
-        // This test is only valid for .NET Framework
-
         // Overridden by app.config in this project
-        [Theory]
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNetFramework))]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryInteractive)]
         public void DefaultAuthenticationProviders_Interactive(SqlAuthenticationMethod method)
         {
-            Assert.IsType<DummySqlAuthenticationProvider>(SqlAuthenticationProviderManager.GetProvider(method));
+            Assert.IsType<DummySqlAuthenticationProvider>(SqlAuthenticationProvider.GetProvider(method));
         }
-        
-        #endif
     }
 }

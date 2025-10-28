@@ -35,11 +35,9 @@ public class SqlAuthenticationProviderTest
         Assert.Throws<FileNotFoundException>(
             () => Assembly.Load("Microsoft.Data.SqlClient"));
 
-#pragma warning disable CS0618 // Type or member is obsolete
         Assert.Null(
             SqlAuthenticationProvider.GetProvider(
                 SqlAuthenticationMethod.ActiveDirectoryInteractive));
-#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     // Test that SetProvider fails predictably when the MDS assembly can't be
@@ -51,11 +49,9 @@ public class SqlAuthenticationProviderTest
         Assert.Throws<FileNotFoundException>(
             () => Assembly.Load("Microsoft.Data.SqlClient"));
 
-#pragma warning disable CS0618 // Type or member is obsolete
         Assert.False(
             SqlAuthenticationProvider.SetProvider(
                 SqlAuthenticationMethod.ActiveDirectoryIntegrated,
                 new Provider()));
-#pragma warning restore CS0618 // Type or member is obsolete
     }
 }

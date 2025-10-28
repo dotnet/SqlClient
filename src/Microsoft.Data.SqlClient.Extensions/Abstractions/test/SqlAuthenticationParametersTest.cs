@@ -40,10 +40,7 @@ public class SqlAuthenticationParametersTest
         Assert.Null(parameters.UserId);
         Assert.Null(parameters.Password);
         Assert.Equal(id, parameters.ConnectionId);
-        Assert.Equal(timeout, parameters.AuthenticationTimeout);
-        #pragma warning disable CS0618 // Type or member is obsolete
         Assert.Equal(timeout, parameters.ConnectionTimeout);
-        #pragma warning restore CS0618 // Type or member is obsolete
     }
 
     // Verify that the properties are set correctly when nullable arguments
@@ -80,9 +77,6 @@ public class SqlAuthenticationParametersTest
         Assert.Equal(user, parameters.UserId);
         Assert.Equal(pass, parameters.Password);
         Assert.Equal(id, parameters.ConnectionId);
-        Assert.Equal(timeout, parameters.AuthenticationTimeout);
-        #pragma warning disable CS0618 // Type or member is obsolete
         Assert.Equal(timeout, parameters.ConnectionTimeout);
-        #pragma warning restore CS0618 // Type or member is obsolete
     }
 }

@@ -68,10 +68,10 @@ public abstract partial class SqlAuthenticationProvider
                 // Get handles to the get/set static methods.
                 _getProvider = manager.GetMethod(
                     "GetProvider",
-                    BindingFlags.Public | BindingFlags.Static);
+                    BindingFlags.NonPublic | BindingFlags.Static);
                 _setProvider = manager.GetMethod(
                     "SetProvider",
-                    BindingFlags.Public | BindingFlags.Static);
+                    BindingFlags.NonPublic | BindingFlags.Static);
 
                 // TODO: Logging
                 // SqlClientEventSource.Log.TryTraceEvent(

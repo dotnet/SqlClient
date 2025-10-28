@@ -20,29 +20,9 @@ namespace Microsoft.Data.SqlClient.FunctionalTests.DataCommon
         public override Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
         => Task.FromResult(new SqlAuthenticationToken(DUMMY_TOKEN_STR, new DateTimeOffset(DateTime.Now.AddHours(2))));
 
-        // We support two methods:
-        // 
-        //   ActiveDirectoryInteractive:
-        //     We are installed as a default provider for this method by the
-        //     app.config file for .NET Framework only.  Default providers
-        //     cannot be overridden by application code.
-        //
-        //   ActiveDirectoryDeviceCodeFlow:
-        //     We support this method, but are not installed as a default
-        //     provider for it.  This allows the tests to explicitly set us
-        //     as the provider.
-        //
         public override bool IsSupported(SqlAuthenticationMethod authenticationMethod)
         {
-            switch (authenticationMethod)
-            {
-                case SqlAuthenticationMethod.ActiveDirectoryInteractive:
-                case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
-                    return true;
-
-                default:
-                    return false;
-            }
+            return authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive;
         }
     }
 }

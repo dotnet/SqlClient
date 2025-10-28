@@ -13,8 +13,7 @@ using System.Reflection;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProviderManager.xml' path='docs/members[@name="SqlAuthenticationProviderManager"]/SqlAuthenticationProviderManager/*'/>
-    public sealed class SqlAuthenticationProviderManager
+    internal sealed class SqlAuthenticationProviderManager
     {
         [Obsolete("ActiveDirectoryPassword is deprecated, use a more secure authentication method. See https://aka.ms/SqlClientEntraIDAuthentication for more details.")]
         private const string ActiveDirectoryPassword = "active directory password";
@@ -250,15 +249,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProviderManager.xml' path='docs/members[@name="SqlAuthenticationProviderManager"]/GetProvider/*'/>
-        public static SqlAuthenticationProvider? GetProvider(SqlAuthenticationMethod authenticationMethod)
+        internal static SqlAuthenticationProvider? GetProvider(SqlAuthenticationMethod authenticationMethod)
         {
             SqlAuthenticationProvider? value;
             return Instance._providers.TryGetValue(authenticationMethod, out value) ? value : null;
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProviderManager.xml' path='docs/members[@name="SqlAuthenticationProviderManager"]/SetProvider/*'/>
-        public static bool SetProvider(SqlAuthenticationMethod authenticationMethod, SqlAuthenticationProvider provider)
+        internal static bool SetProvider(SqlAuthenticationMethod authenticationMethod, SqlAuthenticationProvider provider)
         {
             if (!provider.IsSupported(authenticationMethod))
             {

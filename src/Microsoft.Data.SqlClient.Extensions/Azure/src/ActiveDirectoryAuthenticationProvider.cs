@@ -127,16 +127,16 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
 
             // Use the authentication timeout value to cancel token acquire
             // request after certain period of time.
-            if (parameters.AuthenticationTimeout > 0)
+            if (parameters.ConnectionTimeout > 0)
             {
                 // Safely convert to milliseconds.
-                if (int.MaxValue / 1000 > parameters.AuthenticationTimeout)
+                if (int.MaxValue / 1000 > parameters.ConnectionTimeout)
                 {
                     cts.CancelAfter(int.MaxValue);
                 }
                 else
                 {
-                    cts.CancelAfter(parameters.AuthenticationTimeout * 1000);
+                    cts.CancelAfter(parameters.ConnectionTimeout * 1000);
                 }
             }
 

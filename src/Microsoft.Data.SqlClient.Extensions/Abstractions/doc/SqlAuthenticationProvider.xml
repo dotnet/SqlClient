@@ -128,21 +128,11 @@ See the LICENSE file in the project root for more information.
     </AcquireTokenAsync>
     <GetProvider>
       <summary>Gets an authentication provider by method.</summary>
-      <remarks>
-        This method is obsolete and will be removed in future versions.  Use
-        the SqlAuthenticationProviderManager.GetProvider() method in the
-        Microsoft.Data.SqlClient package instead.
-      </remarks>
       <param name="authenticationMethod">The authentication method.</param>
       <returns>The authentication provider or <see langword="null" /> if not found.</returns>
     </GetProvider>
     <SetProvider>
       <summary>Sets an authentication provider by method.</summary>
-      <remarks>
-        This method is obsolete and will be removed in future versions.  Use
-        the SqlAuthenticationProviderManager.SetProvider() method in the
-        Microsoft.Data.SqlClient package instead.
-      </remarks>
       <param name="authenticationMethod">The authentication method.</param>
       <param name="provider">The authentication provider.</param>
       <returns>
