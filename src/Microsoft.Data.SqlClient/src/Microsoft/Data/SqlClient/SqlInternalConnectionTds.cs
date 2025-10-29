@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -1049,6 +1050,155 @@ namespace Microsoft.Data.SqlClient
                     _parserLock.Release();
                 }
             }
+        }
+
+        private void Login(
+            ServerInfo server,
+            TimeoutTimer timeout,
+            string newPassword,
+            SecureString newSecurePassword,
+            SqlConnectionEncryptOption encrypt)
+        {
+            // create a new login record
+            SqlLogin login = new SqlLogin();
+
+            // Gather all the settings the user set in the connection string or properties and do
+            // the login
+            CurrentDatabase = server.ResolvedDatabaseName;
+            _currentPacketSize = ConnectionOptions.PacketSize;
+            _currentLanguage = ConnectionOptions.CurrentLanguage;
+
+            int timeoutInSeconds = 0;
+
+            // If a timeout tick value is specified, compute the timeout based upon the amount of
+            // time left in seconds.
+            if (!timeout.IsInfinite)
+            {
+                long t = timeout.MillisecondsRemaining / 1000;
+                if (t == 0 && LocalAppContextSwitches.UseMinimumLoginTimeout)
+                {
+                    // Take 1 as the minimum value, since 0 is treated as an infinite timeout to
+                    // allow 1 second more for login to complete, since it should take only a few
+                    // milliseconds.
+                    t = 1;
+                }
+
+                if (int.MaxValue > t)
+                {
+                    timeoutInSeconds = (int)t;
+                }
+            }
+
+            // @TODO: How about we define all the easy ones in one block, then have the conditional ones below that
+            login.authentication = ConnectionOptions.Authentication;
+            login.timeout = timeoutInSeconds;
+            login.userInstance = ConnectionOptions.UserInstance;
+            login.hostName = ConnectionOptions.ObtainWorkstationId();
+            login.userName = ConnectionOptions.UserID;
+            login.password = ConnectionOptions.Password;
+            login.applicationName = ConnectionOptions.ApplicationName;
+            login.language = _currentLanguage;
+
+            if (!login.userInstance)
+            {
+                // Do not send attachdbfilename or database to SSE primary instance
+                login.database = CurrentDatabase;
+                login.attachDBFilename = ConnectionOptions.AttachDBFilename;
+            }
+
+            // Ensure ServerName is sent during TdsLogin to enable SQL Azure connectivity.
+            // Using server.UserServerName (versus ConnectionOptions.DataSource) since TdsLogin
+            // requires serverName to always be non-null.
+            login.serverName = server.UserServerName;
+
+            login.useReplication = ConnectionOptions.Replication;
+
+            // Treat AD Integrated like Windows integrated when against a non-FedAuth endpoint
+            login.useSSPI = ConnectionOptions.IntegratedSecurity || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && !_fedAuthRequired);
+
+            login.packetSize = _currentPacketSize;
+            login.newPassword = newPassword;
+            login.readOnlyIntent = ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly;
+            login.credential = _credential;
+
+            if (newSecurePassword != null)
+            {
+                // @TODO: Isn't this already null?
+                login.newSecurePassword = newSecurePassword;
+            }
+
+            TdsEnums.FeatureExtension requestedFeatures = TdsEnums.FeatureExtension.None;
+            if (ConnectionOptions.ConnectRetryCount > 0)
+            {
+                requestedFeatures |= TdsEnums.FeatureExtension.SessionRecovery;
+                _sessionRecoveryRequested = true;
+            }
+
+            // If the workflow being used is Active Directory Authentication and server's prelogin
+            // response for FEDAUTHREQUIRED option indicates Federated Authentication is required,
+            // we have to insert FedAuth Feature Extension in Login7, indicating the intent to use
+            // Active Directory Authentication for SQL Server.
+            // @TODO: Rewrite using a static readonly hash set of federated auth types
+            #pragma warning disable 0618 // Type or member is obsolete
+            if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
+            #pragma warning restore 0618 // Type or member is obsolete
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
+                // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
+                || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired)
+                || _accessTokenCallback != null)
+            {
+                requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
+                _federatedAuthenticationInfoRequested = true;
+                _fedAuthFeatureExtensionData =
+                    new FederatedAuthenticationFeatureExtensionData
+                    {
+                        libraryType = TdsEnums.FedAuthLibrary.MSAL,
+                        authentication = ConnectionOptions.Authentication,
+                        fedAuthRequiredPreLoginResponse = _fedAuthRequired
+                    };
+            }
+
+            if (_accessTokenInBytes != null)
+            {
+                requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
+                _fedAuthFeatureExtensionData = new FederatedAuthenticationFeatureExtensionData
+                {
+                    libraryType = TdsEnums.FedAuthLibrary.SecurityToken,
+                    fedAuthRequiredPreLoginResponse = _fedAuthRequired,
+                    accessToken = _accessTokenInBytes
+                };
+
+                // No need any further info from the server for token based authentication. So set
+                // _federatedAuthenticationRequested to true
+                _federatedAuthenticationRequested = true;
+            }
+
+            // The GLOBALTRANSACTIONS, DATACLASSIFICATION, TCE, and UTF8 support features are implicitly requested
+            requestedFeatures |= TdsEnums.FeatureExtension.GlobalTransactions |
+                                 TdsEnums.FeatureExtension.DataClassification |
+                                 TdsEnums.FeatureExtension.Tce |
+                                 TdsEnums.FeatureExtension.UTF8Support;
+
+            // The AzureSQLSupport feature is implicitly set for ReadOnly login
+            if (ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly)
+            {
+                requestedFeatures |= TdsEnums.FeatureExtension.AzureSQLSupport;
+            }
+
+            // The following features are implicitly set
+            // @TODO: Request all the implicit features in one place (probably at the very top)
+            requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
+            requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
+            requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
+            requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
+
+            _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
 
         /// <summary>
