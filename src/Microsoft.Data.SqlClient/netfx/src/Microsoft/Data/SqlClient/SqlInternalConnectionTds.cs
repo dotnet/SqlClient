@@ -341,36 +341,6 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.ctor|ADV> {0}, constructed new TDS internal connection", ObjectID);
         }
 
-        ////////////////////////////////////////////////////////////////////////////////////////
-        // POOLING METHODS
-        ////////////////////////////////////////////////////////////////////////////////////////
-
-        internal void DecrementAsyncCount()
-        {
-            Debug.Assert(_asyncCommandCount > 0);
-            Interlocked.Decrement(ref _asyncCommandCount);
-        }
-
-        internal void IncrementAsyncCount()
-        {
-            Interlocked.Increment(ref _asyncCommandCount);
-        }
-
-
-        ////////////////////////////////////////////////////////////////////////////////////////
-        // LOCAL TRANSACTION METHODS
-        ////////////////////////////////////////////////////////////////////////////////////////
-
-        internal override void DisconnectTransaction(SqlInternalTransaction internalTransaction)
-        {
-            TdsParser parser = Parser;
-
-            if (parser != null)
-            {
-                parser.DisconnectTransaction(internalTransaction);
-            }
-        }
-
         internal void ExecuteTransaction(TransactionRequest transactionRequest, string name, System.Data.IsolationLevel iso)
         {
             ExecuteTransaction(transactionRequest, name, iso, null, false);

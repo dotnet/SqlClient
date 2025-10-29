@@ -573,6 +573,15 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal void DecrementAsyncCount()
+        {
+            Debug.Assert(_asyncCommandCount > 0);
+            Interlocked.Decrement(ref _asyncCommandCount);
+        }
+
+        internal override void DisconnectTransaction(SqlInternalTransaction internalTransaction) =>
+            _parser?.DisconnectTransaction(internalTransaction);
+
         // @TODO: Make internal by making the SqlInternalConnection implementation internal
         public override void Dispose()
         {
@@ -602,6 +611,11 @@ namespace Microsoft.Data.SqlClient
             }
 
             base.Dispose();
+        }
+
+        internal void IncrementAsyncCount()
+        {
+            Interlocked.Increment(ref _asyncCommandCount);
         }
 
         internal override bool IsConnectionAlive(bool throwOnException) =>
