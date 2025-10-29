@@ -1201,6 +1201,19 @@ namespace Microsoft.Data.SqlClient
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
 
+
+        private void LoginFailure()
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                $"SqlInternalConnectionTds.LoginFailure | RES | CPOOL | " +
+                $"Object ID {ObjectID}");
+
+            // If the parser was allocated, and we failed, then we must have failed on either the
+            // Connect or Login, either way we should call Disconnect. Disconnect can be called if
+            // the connection is already closed - becomes no-op, so no issues there.
+            _parser?.Disconnect();
+        }
+
         /// <summary>
         /// Returns <c>true</c> if the SQL error is transient, as per <see cref="s_transientErrors"/>.
         /// </summary>

@@ -344,19 +344,6 @@ namespace Microsoft.Data.SqlClient
         ////////////////////////////////////////////////////////////////////////////////////////
         // LOGIN-RELATED METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
-        private void LoginFailure()
-        {
-            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.LoginFailure|RES|CPOOL> {0}", ObjectID);
-
-            // If the parser was allocated and we failed, then we must have failed on
-            // either the Connect or Login, either way we should call Disconnect.
-            // Disconnect can be called if the connection is already closed - becomes
-            // no-op, so no issues there.
-            if (_parser != null)
-            {
-                _parser.Disconnect();
-            }
-        }
 
         private void OpenLoginEnlist(TimeoutTimer timeout,
                                     SqlConnectionString connectionOptions,
