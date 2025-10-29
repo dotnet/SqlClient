@@ -604,6 +604,9 @@ namespace Microsoft.Data.SqlClient
             base.Dispose();
         }
 
+        internal override bool IsConnectionAlive(bool throwOnException) =>
+            _parser._physicalStateObj.IsConnectionAlive(throwOnException);
+
         internal override void ValidateConnectionForExecute(SqlCommand command)
         {
             TdsParser parser = _parser;
@@ -655,6 +658,31 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Protected Methods
+
+        protected override void Activate(Transaction transaction)
+        {
+            #if NETFRAMEWORK
+            // Demand for unspecified failover pooled connections
+            FailoverPermissionDemand();
+            #endif
+
+            // When we're required to automatically enlist in transactions and there is one we
+            // enlist in it. On the other hand, if there isn't a transaction, and we are
+            // currently enlisted in one, then we un-enlist from it.
+            // Regardless of whether we're required to automatically enlist, when there is not a
+            // current transaction, we cannot leave the connection enlisted in a transaction.
+            if (transaction != null)
+            {
+                if (ConnectionOptions.Enlist)
+                {
+                    Enlist(transaction);
+                }
+            }
+            else
+            {
+                Enlist(null);
+            }
+        }
 
         // @TODO: Is this suppression still required
         [SuppressMessage("Microsoft.Globalization", "CA1303:DoNotPassLiteralsAsLocalizedParameters")] // copied from Triaged.cs

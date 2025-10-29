@@ -342,40 +342,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////
-        // GENERAL METHODS
-        ////////////////////////////////////////////////////////////////////////////////////////
-
-        internal override bool IsConnectionAlive(bool throwOnException) =>
-            _parser._physicalStateObj.IsConnectionAlive(throwOnException);
-
-        ////////////////////////////////////////////////////////////////////////////////////////
         // POOLING METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
-
-        protected override void Activate(Transaction transaction)
-        {
-            FailoverPermissionDemand(); // Demand for unspecified failover pooled connections
-
-            // When we're required to automatically enlist in transactions and
-            // there is one we enlist in it. On the other hand, if there isn't a
-            // transaction and we are currently enlisted in one, then we
-            // unenlist from it.
-            //
-            // Regardless of whether we're required to automatically enlist,
-            // when there is not a current transaction, we cannot leave the
-            // connection enlisted in a transaction.
-            if (transaction != null)
-            {
-                if (ConnectionOptions.Enlist)
-                {
-                    Enlist(transaction);
-                }
-            }
-            else
-            {
-                Enlist(null);
-            }
-        }
 
         protected override void InternalDeactivate()
         {
