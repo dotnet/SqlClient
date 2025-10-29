@@ -130,7 +130,7 @@ namespace Microsoft.Data.SqlClient
 
 #if NETFRAMEWORK
         private bool _connectionReset = DbConnectionStringDefaults.ConnectionReset;
-        private bool _transparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
+        private bool _transparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIpResolution;
         private string _networkLibrary = DbConnectionStringDefaults.NetworkLibrary;
 #endif
         #endregion //Fields
@@ -549,7 +549,7 @@ namespace Microsoft.Data.SqlClient
                     _connectionReset = DbConnectionStringDefaults.ConnectionReset;
                     break;
                 case Keywords.TransparentNetworkIPResolution:
-                    _transparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
+                    _transparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIpResolution;
                     break;
                 case Keywords.NetworkLibrary:
                     _networkLibrary = DbConnectionStringDefaults.NetworkLibrary;
