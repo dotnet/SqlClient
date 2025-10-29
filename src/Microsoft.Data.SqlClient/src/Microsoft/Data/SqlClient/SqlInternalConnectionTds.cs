@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
@@ -509,6 +510,33 @@ namespace Microsoft.Data.SqlClient
                    ConnectionOptions.ConnectTimeout >= ADP.MaxBufferAccessTokenExpiry
                 ? ADP.MaxBufferAccessTokenExpiry
                 : ConnectionOptions.ConnectTimeout;
+        }
+
+        #endregion
+
+        #region Protected Methods
+
+        // @TODO: Is this suppression still required
+        [SuppressMessage("Microsoft.Globalization", "CA1303:DoNotPassLiteralsAsLocalizedParameters")] // copied from Triaged.cs
+        protected override void ChangeDatabaseInternal(string database)
+        {
+            // MDAC 73598 - add brackets around database
+            database = SqlConnection.FixupDatabaseTransactionName(database); // @TODO: Should go to a utility method
+            Task executeTask = _parser.TdsExecuteSQLBatch(
+                $@"USE {database}",
+                ConnectionOptions.ConnectTimeout,
+                notificationRequest: null,
+                _parser._physicalStateObj,
+                sync: true);
+
+            Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
+
+            _parser.Run(
+                RunBehavior.UntilDone,
+                cmdHandler: null,
+                dataStream: null,
+                bulkCopyHandler: null,
+                _parser._physicalStateObj);
         }
 
         #endregion
