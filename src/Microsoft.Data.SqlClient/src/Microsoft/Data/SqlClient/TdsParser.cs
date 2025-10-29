@@ -7702,8 +7702,15 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLNUMERICN:
                     {
+#if NET
+                        Span<int> decimalBits = stackalloc int[4];
+                        decimal.GetBits((decimal)value, decimalBits);
+#else
+                        int[] decimalBits = decimal.GetBits((decimal)value);
+#endif
+
                         stateObj.WriteByte(mt.Precision); //propbytes: precision
-                        stateObj.WriteByte((byte)((decimal.GetBits((decimal)value)[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
+                        stateObj.WriteByte((byte)((decimalBits[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
                         WriteDecimal((decimal)value, stateObj);
                         break;
                     }
@@ -7864,9 +7871,15 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLNUMERICN:
                     {
+#if NET
+                        Span<int> decimalBits = stackalloc int[4];
+                        decimal.GetBits((decimal)value, decimalBits);
+#else
+                        int[] decimalBits = decimal.GetBits((decimal)value);
+#endif
                         WriteSqlVariantHeader(21, metatype.TDSType, metatype.PropBytes, stateObj);
                         stateObj.WriteByte(metatype.Precision); //propbytes: precision
-                        stateObj.WriteByte((byte)((decimal.GetBits((decimal)value)[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
+                        stateObj.WriteByte((byte)((decimalBits[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
                         WriteDecimal((decimal)value, stateObj);
                         break;
                     }
@@ -7923,7 +7936,12 @@ namespace Microsoft.Data.SqlClient
         private void WriteSqlMoney(SqlMoney value, int length, TdsParserStateObject stateObj)
         {
             // UNDONE: can I use SqlMoney.ToInt64()?
+#if NET
+            Span<int> bits = stackalloc int[4];
+            decimal.GetBits(value.Value, bits);
+#else
             int[] bits = decimal.GetBits(value.Value);
+#endif
 
             // this decimal should be scaled by 10000 (regardless of what the incoming decimal was scaled by)
             bool isNeg = (0 != (bits[3] & unchecked((int)0x80000000)));
@@ -7956,7 +7974,12 @@ namespace Microsoft.Data.SqlClient
         private byte[] SerializeCurrency(Decimal value, int length, TdsParserStateObject stateObj)
         {
             SqlMoney m = new SqlMoney(value);
-            int[] bits = Decimal.GetBits(m.Value);
+#if NET
+            Span<int> bits = stackalloc int[4];
+            decimal.GetBits(m.Value, bits);
+#else
+            int[] bits = decimal.GetBits(m.Value);
+#endif
 
             // this decimal should be scaled by 10000 (regardless of what the incoming decimal was scaled by)
             bool isNeg = (0 != (bits[3] & unchecked((int)0x80000000)));
@@ -8001,7 +8024,12 @@ namespace Microsoft.Data.SqlClient
         private void WriteCurrency(decimal value, int length, TdsParserStateObject stateObj)
         {
             SqlMoney m = new SqlMoney(value);
+#if NET
+            Span<int> bits = stackalloc int[4];
+            decimal.GetBits(m.Value, bits);
+#else
             int[] bits = decimal.GetBits(m.Value);
+#endif
 
             // this decimal should be scaled by 10000 (regardless of what the incoming decimal was scaled by)
             bool isNeg = (0 != (bits[3] & unchecked((int)0x80000000)));
@@ -8201,7 +8229,13 @@ namespace Microsoft.Data.SqlClient
 
         internal static decimal AdjustDecimalScale(decimal value, int newScale)
         {
-            int oldScale = (decimal.GetBits(value)[3] & 0x00ff0000) >> 0x10;
+#if NET
+            Span<int> decimalBits = stackalloc int[4];
+            decimal.GetBits(value, decimalBits);
+#else
+            int[] decimalBits = decimal.GetBits(value);
+#endif
+            int oldScale = (decimalBits[3] & 0x00ff0000) >> 0x10;
 
             if (newScale != oldScale)
             {
@@ -8283,7 +8317,12 @@ namespace Microsoft.Data.SqlClient
 
         private byte[] SerializeDecimal(decimal value, TdsParserStateObject stateObj)
         {
-            int[] decimalBits = Decimal.GetBits(value);
+#if NET
+            Span<int> decimalBits = stackalloc int[4];
+            decimal.GetBits(value, decimalBits);
+#else
+            int[] decimalBits = decimal.GetBits(value);
+#endif
             if (stateObj._bDecimalBytes == null)
             {
                 stateObj._bDecimalBytes = new byte[17];
@@ -8338,8 +8377,14 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteDecimal(decimal value, TdsParserStateObject stateObj)
         {
-            stateObj._decimalBits = decimal.GetBits(value);
+#if NET
+            Span<int> decimalBits = stackalloc int[4];
+            decimal.GetBits(value, decimalBits);
+#else
+            int[] decimalBits = decimal.GetBits(value);
+            stateObj._decimalBits = decimalBits;
             Debug.Assert(stateObj._decimalBits != null, "decimalBits should be filled in at TdsExecuteRPC time");
+#endif
 
             /*
              Returns a binary representation of a Decimal. The return value is an integer
@@ -8361,7 +8406,7 @@ namespace Microsoft.Data.SqlClient
             */
 
             // write the sign (note that COM and SQL are opposite)
-            if (0x80000000 == (stateObj._decimalBits[3] & 0x80000000))
+            if ((decimalBits[3] & 0x80000000) == 0x80000000)
             {
                 stateObj.WriteByte(0);
             }
@@ -8370,9 +8415,9 @@ namespace Microsoft.Data.SqlClient
                 stateObj.WriteByte(1);
             }
 
-            WriteInt(stateObj._decimalBits[0], stateObj);
-            WriteInt(stateObj._decimalBits[1], stateObj);
-            WriteInt(stateObj._decimalBits[2], stateObj);
+            WriteInt(decimalBits[0], stateObj);
+            WriteInt(decimalBits[1], stateObj);
+            WriteInt(decimalBits[2], stateObj);
             WriteInt(0, stateObj);
         }
 
@@ -8954,9 +8999,9 @@ namespace Microsoft.Data.SqlClient
                         byte workflow = 0x00;
                         switch (fedAuthFeatureData.authentication)
                         {
-                            #pragma warning disable 0618 // Type or member is obsolete
+#pragma warning disable 0618 // Type or member is obsolete
                             case SqlAuthenticationMethod.ActiveDirectoryPassword:
-                            #pragma warning restore 0618 // Type or member is obsolete
+#pragma warning restore 0618 // Type or member is obsolete
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD;
                                 break;
                             case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
