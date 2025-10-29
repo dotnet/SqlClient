@@ -805,6 +805,92 @@ namespace Microsoft.Data.SqlClient
 
         #region Private Methods
 
+        private void CompleteLogin(bool enlistOK) // @TODO: Rename as per guidelines
+        {
+            _parser.Run(
+                RunBehavior.UntilDone,
+                cmdHandler: null,
+                dataStream: null,
+                bulkCopyHandler: null,
+                _parser._physicalStateObj);
+
+            if (RoutingInfo == null)
+            {
+                // ROR should not affect state of connection recovery
+                if (_federatedAuthenticationRequested && !_federatedAuthenticationAcknowledged)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        $"SqlInternalConnectionTds.CompleteLogin | ERR | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Server did not acknowledge the federated authentication request");
+                    throw SQL.ParsingError(ParsingErrorState.FedAuthNotAcknowledged);
+                }
+
+                if (_federatedAuthenticationInfoRequested && !_federatedAuthenticationInfoReceived)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        $"SqlInternalConnectionTds.CompleteLogin | ERR | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Server never sent the requested federated authentication info");
+                    throw SQL.ParsingError(ParsingErrorState.FedAuthInfoNotReceived);
+                }
+
+                if (!_sessionRecoveryAcknowledged)
+                {
+                    _currentSessionData = null;
+                    if (_recoverySessionData != null)
+                    {
+                        throw SQL.CR_NoCRAckAtReconnection(this);
+                    }
+                }
+
+                if (_currentSessionData != null && _recoverySessionData == null)
+                {
+                    _currentSessionData._initialDatabase = CurrentDatabase;
+                    _currentSessionData._initialCollation = _currentSessionData._collation;
+                    _currentSessionData._initialLanguage = _currentLanguage;
+                }
+
+                bool isEncrypted = (_parser.EncryptionOptions & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.ON;
+                if (_recoverySessionData != null)
+                {
+                    if (_recoverySessionData._encrypted != isEncrypted)
+                    {
+                        throw SQL.CR_EncryptionChanged(this);
+                    }
+                }
+
+                if (_currentSessionData != null)
+                {
+                    _currentSessionData._encrypted = isEncrypted;
+                }
+
+                _recoverySessionData = null;
+            }
+
+            Debug.Assert(SniContext.Snix_Login == Parser._physicalStateObj.SniContext,
+                $"SniContext should be Snix_Login; actual Value: {Parser._physicalStateObj.SniContext}");
+
+            _parser._physicalStateObj.SniContext = SniContext.Snix_EnableMars;
+            _parser.EnableMars();
+
+            // Mark connection as open
+            _fConnectionOpen = true;
+            SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                "SqlInternalConnectionTds.CompleteLogin | ADV | Post-Login Phase: Server connection obtained.");
+
+            // For non-pooled connections, enlist in a distributed transaction if present - and
+            // user specified to enlist
+            if (enlistOK && ConnectionOptions.Enlist && RoutingInfo == null)
+            {
+                _parser._physicalStateObj.SniContext = SniContext.Snix_AutoEnlist;
+                Transaction tx = ADP.GetCurrentTransaction();
+                Enlist(tx);
+            }
+
+            _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
+        }
+
         // @TODO: Rename to ExecuteTransactionInternal ... we don't have multiple server version implementations of this
         private void ExecuteTransaction2005(
             TransactionRequest transactionRequest,
