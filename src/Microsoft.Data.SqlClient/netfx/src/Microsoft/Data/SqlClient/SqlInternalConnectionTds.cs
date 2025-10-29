@@ -345,65 +345,6 @@ namespace Microsoft.Data.SqlClient
         // GENERAL METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        /// <summary>
-        /// Validate the enlisted transaction state, taking into consideration the ambient transaction and transaction unbinding mode.
-        /// If there is no enlisted transaction, this method is a nop.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// This method must be called while holding a lock on the SqlInternalConnection instance,
-        /// to ensure we don't accidentally execute after the transaction has completed on a different thread,
-        /// causing us to unwittingly execute in auto-commit mode.
-        /// </para>
-        ///
-        /// <para>
-        /// When using Explicit transaction unbinding,
-        /// verify that the enlisted transaction is active and equal to the current ambient transaction.
-        /// </para>
-        ///
-        /// <para>
-        /// When using Implicit transaction unbinding,
-        /// verify that the enlisted transaction is active.
-        /// If it is not active, and the transaction object has been disposed, unbind from the transaction.
-        /// If it is not active and not disposed, throw an exception.
-        /// </para>
-        /// </remarks>
-        internal void CheckEnlistedTransactionBinding()
-        {
-            // If we are enlisted in a transaction, check that transaction is active.
-            // When using explicit transaction unbinding, also verify that the enlisted transaction is the current transaction.
-            Transaction enlistedTransaction = EnlistedTransaction;
-
-            if (enlistedTransaction != null)
-            {
-                bool requireExplicitTransactionUnbind = ConnectionOptions.TransactionBinding == SqlConnectionString.TransactionBindingEnum.ExplicitUnbind;
-
-                if (requireExplicitTransactionUnbind)
-                {
-                    Transaction currentTransaction = Transaction.Current;
-
-                    if (TransactionStatus.Active != enlistedTransaction.TransactionInformation.Status || !enlistedTransaction.Equals(currentTransaction))
-                    {
-                        throw ADP.TransactionConnectionMismatch();
-                    }
-                }
-                else // implicit transaction unbind
-                {
-                    if (TransactionStatus.Active != enlistedTransaction.TransactionInformation.Status)
-                    {
-                        if (EnlistedTransactionDisposed)
-                        {
-                            DetachTransaction(enlistedTransaction, true);
-                        }
-                        else
-                        {
-                            throw ADP.TransactionCompletedButNotDisposed();
-                        }
-                    }
-                }
-            }
-        }
-
         internal override bool IsConnectionAlive(bool throwOnException) =>
             _parser._physicalStateObj.IsConnectionAlive(throwOnException);
 

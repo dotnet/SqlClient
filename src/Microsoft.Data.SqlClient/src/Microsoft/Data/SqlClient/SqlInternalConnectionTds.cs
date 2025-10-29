@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
@@ -515,6 +516,62 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Public and Internal Methods
+
+        /// <summary>
+        /// Validate the enlisted transaction state, taking into consideration the ambient
+        /// transaction and transaction unbinding mode. If there is no enlisted transaction, this
+        /// method is a no-op.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This method must be called while holding a lock on the SqlInternalConnection instance,
+        /// to ensure we don't accidentally execute after the transaction has completed on a
+        /// different thread, causing us to unwittingly execute in auto-commit mode.
+        /// </para>
+        /// <para>
+        /// When using Explicit transaction unbinding, verify that the enlisted transaction is
+        /// active and equal to the current ambient transaction.
+        /// </para>
+        /// <para>
+        /// When using Implicit transaction unbinding, verify that the enlisted transaction is
+        /// active. If it is not active, and the transaction object has been disposed, unbind from
+        /// the transaction. If it is not active and not disposed, throw an exception.
+        /// </para>
+        /// </remarks>
+        internal void CheckEnlistedTransactionBinding()
+        {
+            // If we are enlisted in a transaction, check that transaction is active.
+            // When using explicit transaction unbinding, also verify that the enlisted transaction
+            // is the current transaction.
+            Transaction enlistedTransaction = EnlistedTransaction;
+
+            if (enlistedTransaction != null)
+            {
+                if (ConnectionOptions.TransactionBinding is SqlConnectionString.TransactionBindingEnum.ExplicitUnbind)
+                {
+                    Transaction currentTransaction = Transaction.Current;
+                    if (enlistedTransaction.TransactionInformation.Status != TransactionStatus.Active || !enlistedTransaction.Equals(currentTransaction))
+                    {
+                        throw ADP.TransactionConnectionMismatch();
+                    }
+                }
+                else
+                {
+                    // Implicit transaction unbind
+                    if (enlistedTransaction.TransactionInformation.Status != TransactionStatus.Active)
+                    {
+                        if (EnlistedTransactionDisposed)
+                        {
+                            DetachTransaction(enlistedTransaction, isExplicitlyReleasing: true);
+                        }
+                        else
+                        {
+                            throw ADP.TransactionCompletedButNotDisposed();
+                        }
+                    }
+                }
+            }
+        }
 
         // @TODO: Make internal by making the SqlInternalConnection implementation internal
         public override void Dispose()
