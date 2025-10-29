@@ -345,28 +345,6 @@ namespace Microsoft.Data.SqlClient
         ////////////////////////////////////////////////////////////////////////////////////////
         // GENERAL METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
-        public override void Dispose()
-        {
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.Dispose|ADV> {0} disposing", ObjectID);
-            try
-            {
-                TdsParser parser = Interlocked.Exchange(ref _parser, null);  // guard against multiple concurrent dispose calls -- Delegated Transactions might cause this.
-
-                Debug.Assert(parser != null && _fConnectionOpen || parser == null && !_fConnectionOpen, "Unexpected state on dispose");
-                if (parser != null)
-                {
-                    parser.Disconnect();
-                }
-            }
-            finally
-            {
-                // close will always close, even if exception is thrown
-                // remember to null out any object references
-                _loginAck = null;
-                _fConnectionOpen = false; // mark internal connection as closed
-            }
-            base.Dispose();
-        }
 
         internal override void ValidateConnectionForExecute(SqlCommand command)
         {

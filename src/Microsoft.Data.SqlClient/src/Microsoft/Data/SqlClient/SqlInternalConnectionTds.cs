@@ -514,6 +514,41 @@ namespace Microsoft.Data.SqlClient
 
         #endregion
 
+        #region Public and Internal Methods
+
+        // @TODO: Make internal by making the SqlInternalConnection implementation internal
+        public override void Dispose()
+        {
+            SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                $"SqlInternalConnectionTds.Dispose | ADV | " +
+                $"Object ID {ObjectID} disposing");
+
+            try
+            {
+                // Guard against multiple concurrent dispose calls -- Delegated Transactions might
+                // cause this.
+                TdsParser parser = Interlocked.Exchange(ref _parser, null);
+
+                Debug.Assert(parser is not null && _fConnectionOpen || parser is null && !_fConnectionOpen,
+                    "Unexpected state on dispose");
+
+                parser?.Disconnect();
+            }
+            finally
+            {
+                // Close will always close, even if exception is thrown.
+                // Remember to null out any object references.
+                _loginAck = null;
+
+                // Mark internal connection as closed
+                _fConnectionOpen = false;
+            }
+
+            base.Dispose();
+        }
+
+        #endregion
+
         #region Protected Methods
 
         // @TODO: Is this suppression still required
