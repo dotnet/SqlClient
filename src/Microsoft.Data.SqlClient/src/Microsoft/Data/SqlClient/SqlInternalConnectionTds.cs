@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
@@ -337,6 +338,15 @@ namespace Microsoft.Data.SqlClient
             get => _identity;
         }
 
+        /// <summary>
+        /// Returns <c>true</c> if we are only draining environment change tokens, used by
+        /// <see cref="TdsParser"/>. This is the case when the connection has been re-routed.
+        /// </summary>
+        internal bool IgnoreEnvChange
+        {
+            get => RoutingInfo != null;
+        }
+
         // @TODO: Make auto-property
         internal string InstanceName
         {
@@ -441,6 +451,32 @@ namespace Microsoft.Data.SqlClient
         internal SqlConnectionTimeoutErrorInternal TimeoutErrorInternal
         {
             get => _timeoutErrorInternal;
+        }
+
+        /// <summary>
+        /// Indicates if the current thread claims to hold the parser lock.
+        /// </summary>
+        internal bool ThreadHasParserLockForClose
+        {
+            // @TODO: Replace with Environment.CurrentManagedThreadId in netcore
+            get => _threadIdOwningParserLock == Thread.CurrentThread.ManagedThreadId;
+            set
+            {
+                Debug.Assert(_parserLock.ThreadMayHaveLock(), "Should not modify ThreadHasParserLockForClose without taking the lock first");
+                Debug.Assert(_threadIdOwningParserLock == -1 || _threadIdOwningParserLock == Thread.CurrentThread.ManagedThreadId, "Another thread already claims to own the parser lock");
+
+                if (value)
+                {
+                    // If setting to true, then the thread owning the lock is the current thread
+                    _threadIdOwningParserLock = Thread.CurrentThread.ManagedThreadId;
+                }
+                else if (_threadIdOwningParserLock == Thread.CurrentThread.ManagedThreadId)
+                {
+                    // If setting to false and currently owns the lock, then no-one owns the lock
+                    _threadIdOwningParserLock = -1;
+                }
+                // else This thread didn't own the parser lock and doesn't claim to own it, so do nothing
+            }
         }
 
         // @TODO: Rename to be "IsReadyToPrepareTransaction"

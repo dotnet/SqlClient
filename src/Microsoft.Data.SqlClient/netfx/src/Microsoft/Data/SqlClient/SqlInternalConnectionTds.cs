@@ -1803,14 +1803,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool IgnoreEnvChange
-        { // true if we are only draining environment change tokens, used by TdsParser
-            get
-            {
-                return RoutingInfo != null; // connection was routed, ignore rest of env change
-            }
-        }
-
         internal void OnEnvChange(SqlEnvChange rec)
         {
             Debug.Assert(!IgnoreEnvChange, "This function should not be called if IgnoreEnvChange is set!");
@@ -2657,32 +2649,6 @@ namespace Microsoft.Data.SqlClient
         ////////////////////////////////////////////////////////////////////////////////////////
         // Helper methods for Locks
         ////////////////////////////////////////////////////////////////////////////////////////
-
-        // Indicates if the current thread claims to hold the parser lock
-        internal bool ThreadHasParserLockForClose
-        {
-            get
-            {
-                return _threadIdOwningParserLock == Thread.CurrentThread.ManagedThreadId;
-            }
-            set
-            {
-                Debug.Assert(_parserLock.ThreadMayHaveLock(), "Should not modify ThreadHasParserLockForClose without taking the lock first");
-                Debug.Assert(_threadIdOwningParserLock == -1 || _threadIdOwningParserLock == Thread.CurrentThread.ManagedThreadId, "Another thread already claims to own the parser lock");
-
-                if (value)
-                {
-                    // If setting to true, then the thread owning the lock is the current thread
-                    _threadIdOwningParserLock = Thread.CurrentThread.ManagedThreadId;
-                }
-                else if (_threadIdOwningParserLock == Thread.CurrentThread.ManagedThreadId)
-                {
-                    // If setting to false and currently owns the lock, then no-one owns the lock
-                    _threadIdOwningParserLock = -1;
-                }
-                // else This thread didn't own the parser lock and doesn't claim to own it, so do nothing
-            }
-        }
 
         internal override bool TryReplaceConnection(
             DbConnection outerConnection,

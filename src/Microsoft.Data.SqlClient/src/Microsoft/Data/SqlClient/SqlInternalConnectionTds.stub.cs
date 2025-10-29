@@ -32,8 +32,6 @@ namespace Microsoft.Data.SqlClient
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null)
         {
         }
-        
-        internal bool ThreadHasParserLockForClose { get; set; }
 
         internal void Dispose() { }
         
