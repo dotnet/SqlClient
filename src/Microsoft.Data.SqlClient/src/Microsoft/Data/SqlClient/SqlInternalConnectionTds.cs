@@ -707,6 +707,35 @@ namespace Microsoft.Data.SqlClient
                 _parser._physicalStateObj);
         }
 
+        protected override void InternalDeactivate()
+        {
+            // When we're deactivated, the user must have called End on all the async commands, or
+            // we don't know that we're in a state that we can recover from. We doom the connection
+            // in this case, to prevent odd cases when we go to the wire.
+            if (_asyncCommandCount != 0)
+            {
+                DoomThisConnection();
+            }
+
+            // If we're deactivating with a delegated transaction, we should not be cleaning up the
+            // parser just yet, that will cause our transaction to be rolled back and the
+            // connection to be reset.  We'll get called again once the delegated transaction is
+            // completed, and we can do it all then.
+            if (!(IsTransactionRoot && Pool == null))
+            {
+                Debug.Assert(_parser != null || IsConnectionDoomed, "Deactivating a disposed connection?");
+                if (_parser != null)
+                {
+                    _parser.Deactivate(IsConnectionDoomed);
+
+                    if (!IsConnectionDoomed)
+                    {
+                        ResetConnection();
+                    }
+                }
+            }
+        }
+
         #endregion
 
         #region Private Methods
