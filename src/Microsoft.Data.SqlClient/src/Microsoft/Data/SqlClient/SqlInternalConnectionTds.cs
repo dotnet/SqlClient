@@ -755,6 +755,15 @@ namespace Microsoft.Data.SqlClient
                 _parser._physicalStateObj);
         }
 
+        // @TODO: Rename to match guidelines
+        protected override byte[] GetDTCAddress()
+        {
+            byte[] dtcAddress = _parser.GetDTCAddress(ConnectionOptions.ConnectTimeout, _parser.GetSession(this));
+
+            Debug.Assert(dtcAddress != null, "null dtcAddress?");
+            return dtcAddress;
+        }
+
         protected override void InternalDeactivate()
         {
             // When we're deactivated, the user must have called End on all the async commands, or
@@ -782,6 +791,14 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
+        }
+
+        protected override void PropagateTransactionCookie(byte[] cookie)
+        {
+            _parser.PropagateDistributedTransaction(
+                cookie,
+                ConnectionOptions.ConnectTimeout,
+                _parser._physicalStateObj);
         }
 
         #endregion

@@ -343,28 +343,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////
-        // DISTRIBUTED TRANSACTION METHODS
-        ////////////////////////////////////////////////////////////////////////////////////////
-
-        internal override void DelegatedTransactionEnded()
-        {
-            // TODO: I don't like the way that this works, but I don't want to rototill the entire pooler to avoid this call.
-            base.DelegatedTransactionEnded();
-        }
-
-        protected override byte[] GetDTCAddress()
-        {
-            byte[] dtcAddress = _parser.GetDTCAddress(ConnectionOptions.ConnectTimeout, _parser.GetSession(this));
-            Debug.Assert(dtcAddress != null, "null dtcAddress?");
-            return dtcAddress;
-        }
-
-        protected override void PropagateTransactionCookie(byte[] cookie)
-        {
-            _parser.PropagateDistributedTransaction(cookie, ConnectionOptions.ConnectTimeout, _parser._physicalStateObj);
-        }
-
-        ////////////////////////////////////////////////////////////////////////////////////////
         // LOGIN-RELATED METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
