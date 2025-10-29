@@ -341,29 +341,6 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.ctor|ADV> {0}, constructed new TDS internal connection", ObjectID);
         }
 
-        /// <summary>
-        /// Get boolean that specifies whether an enlisted transaction can be unbound from
-        /// the connection when that transaction completes.
-        /// </summary>
-        /// <value>
-        /// This override always returns false.
-        /// </value>
-        /// <remarks>
-        /// The SqlInternalConnectionTds.CheckEnlistedTransactionBinding method handles implicit unbinding for disposed transactions.
-        /// </remarks>
-        protected override bool UnbindOnTransactionCompletion
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Validates if federated authentication is used, Access Token used by this connection is active for the value of 'accessTokenExpirationBufferTime'.
-        /// </summary>
-        internal override bool IsAccessTokenExpired => _federatedAuthenticationInfoRequested && DateTime.FromFileTimeUtc(_fedAuthToken.expirationFileTime) < DateTime.UtcNow.AddSeconds(accessTokenExpirationBufferTime);
-
         ////////////////////////////////////////////////////////////////////////////////////////
         // GENERAL METHODS
         ////////////////////////////////////////////////////////////////////////////////////////

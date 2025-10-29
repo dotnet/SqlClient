@@ -349,13 +349,13 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Get or set if SQLDNSCaching is supported by the server.
+        /// Validates if federated authentication is used, Access Token used by this connection is
+        /// active for the value of 'accessTokenExpirationBufferTime'.
         /// </summary>
-        // @TODO: Make auto-property
-        internal bool IsSQLDNSCachingSupported
+        internal override bool IsAccessTokenExpired
         {
-            get => _serverSupportsDNSCaching;
-            set => _serverSupportsDNSCaching = value;
+            get => _federatedAuthenticationInfoRequested &&
+                   DateTime.FromFileTimeUtc(_fedAuthToken.expirationFileTime) < DateTime.UtcNow.AddSeconds(accessTokenExpirationBufferTime);
         }
 
         /// <summary>
@@ -371,6 +371,16 @@ namespace Microsoft.Data.SqlClient
         internal override bool IsLockedForBulkCopy
         {
             get => !_parser.MARSOn && _parser._physicalStateObj.BcpLock;
+        }
+
+        /// <summary>
+        /// Get or set if SQLDNSCaching is supported by the server.
+        /// </summary>
+        // @TODO: Make auto-property
+        internal bool IsSQLDNSCachingSupported
+        {
+            get => _serverSupportsDNSCaching;
+            set => _serverSupportsDNSCaching = value;
         }
 
         /// <summary>
@@ -438,6 +448,19 @@ namespace Microsoft.Data.SqlClient
         {
             // TODO: probably need to use a different method but that's a different bug
             get => FindLiveReader(null) is null; // Can't prepare with a live data reader...
+        }
+
+        /// <summary>
+        /// Get boolean that specifies whether an enlisted transaction can be unbound from the
+        /// connection when that transaction completes. This override always returns <c>false</c>.
+        /// </summary>
+        /// <remarks>
+        /// The SqlInternalConnectionTds.CheckEnlistedTransactionBinding method handles implicit
+        /// unbinding for disposed transactions.
+        /// </remarks>
+        protected override bool UnbindOnTransactionCompletion
+        {
+            get => false;
         }
 
         /// <summary>
