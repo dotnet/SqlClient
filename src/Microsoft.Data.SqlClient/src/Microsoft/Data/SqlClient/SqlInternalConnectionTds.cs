@@ -613,6 +613,40 @@ namespace Microsoft.Data.SqlClient
             base.Dispose();
         }
 
+        internal override void ExecuteTransaction(
+            TransactionRequest transactionRequest,
+            string name,
+            System.Data.IsolationLevel iso,
+            SqlInternalTransaction internalTransaction,
+            bool isDelegateControlRequest)
+        {
+            if (IsConnectionDoomed)
+            {
+                // Doomed means we can't do anything else...
+                if (transactionRequest is TransactionRequest.Rollback or
+                                          TransactionRequest.IfRollback)
+                {
+                    return;
+                }
+
+                throw SQL.ConnectionDoomed();
+            }
+
+            if (transactionRequest is TransactionRequest.Commit or
+                                      TransactionRequest.Rollback or
+                                      TransactionRequest.IfRollback)
+            {
+                if (!Parser.MARSOn && Parser._physicalStateObj.BcpLock)
+                {
+                    throw SQL.ConnectionLockedForBcpEvent();
+                }
+            }
+
+            string transactionName = name ?? string.Empty;
+
+            ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
+        }
+
         internal void IncrementAsyncCount()
         {
             Interlocked.Increment(ref _asyncCommandCount);

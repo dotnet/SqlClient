@@ -342,39 +342,6 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.ctor|ADV> {0}, constructed new TDS internal connection", ObjectID);
         }
 
-        internal void ExecuteTransaction(TransactionRequest transactionRequest, string name, System.Data.IsolationLevel iso)
-        {
-            ExecuteTransaction(transactionRequest, name, iso, null, false);
-        }
-
-        internal override void ExecuteTransaction(TransactionRequest transactionRequest, string name, System.Data.IsolationLevel iso, SqlInternalTransaction internalTransaction, bool isDelegateControlRequest)
-        {
-            if (IsConnectionDoomed)
-            {  // doomed means we can't do anything else...
-                if (transactionRequest == TransactionRequest.Rollback
-                 || transactionRequest == TransactionRequest.IfRollback)
-                {
-                    return;
-                }
-                throw SQL.ConnectionDoomed();
-            }
-
-            if (transactionRequest == TransactionRequest.Commit
-             || transactionRequest == TransactionRequest.Rollback
-             || transactionRequest == TransactionRequest.IfRollback)
-            {
-                if (!Parser.MARSOn && Parser._physicalStateObj.BcpLock)
-                {
-                    throw SQL.ConnectionLockedForBcpEvent();
-                }
-            }
-
-            string transactionName = name == null ? string.Empty : name;
-
-            ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
-        }
-
-
         internal void ExecuteTransaction2005(
                     TransactionRequest transactionRequest,
                     string transactionName,
