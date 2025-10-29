@@ -1201,7 +1201,6 @@ namespace Microsoft.Data.SqlClient
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
 
-
         private void LoginFailure()
         {
             SqlClientEventSource.Log.TryTraceEvent(
@@ -1235,6 +1234,108 @@ namespace Microsoft.Data.SqlClient
             }
 
             return false;
+        }
+
+        private void OpenLoginEnlist(
+            TimeoutTimer timeout,
+            SqlConnectionString connectionOptions,
+            SqlCredential credential,
+            string newPassword,
+            SecureString newSecurePassword,
+            bool redirectedUserInstance)
+        {
+            // Indicates whether we should use primary or secondary first
+            bool useFailoverPartner;
+            string failoverPartner;
+
+            ServerInfo dataSource = new ServerInfo(connectionOptions);
+
+            if (PoolGroupProviderInfo != null)
+            {
+                useFailoverPartner = PoolGroupProviderInfo.UseFailoverPartner;
+                failoverPartner = PoolGroupProviderInfo.FailoverPartner;
+            }
+            else
+            {
+                // Only ChangePassword or SSE User Instance comes through this code path.
+                useFailoverPartner = false;
+                failoverPartner = ConnectionOptions.FailoverPartner;
+            }
+
+            SqlConnectionInternalSourceType sourceType = useFailoverPartner
+                ? SqlConnectionInternalSourceType.Failover
+                : SqlConnectionInternalSourceType.Principle;
+            _timeoutErrorInternal.SetInternalSourceType(sourceType);
+
+            bool hasFailoverPartner = !string.IsNullOrEmpty(failoverPartner);
+
+            try
+            {
+                // Open the connection and Login
+                _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PreLoginBegin);
+                if (hasFailoverPartner)
+                {
+                    // This is a failover scenario
+                    _timeoutErrorInternal.SetFailoverScenario(true);
+                    LoginWithFailover(
+                        useFailoverPartner,
+                        dataSource,
+                        failoverPartner,
+                        newPassword,
+                        newSecurePassword,
+                        redirectedUserInstance,
+                        connectionOptions,
+                        credential,
+                        timeout);
+                }
+                else
+                {
+                    // This is *not* a failover scenario
+                    _timeoutErrorInternal.SetFailoverScenario(false);
+                    LoginNoFailover(
+                        dataSource,
+                        newPassword,
+                        newSecurePassword,
+                        redirectedUserInstance,
+                        connectionOptions,
+                        credential,
+                        timeout);
+                }
+
+                if (!IsAzureSqlConnection)
+                {
+                    // If not a connection to Azure SQL, Readonly with FailoverPartner is not supported
+                    if (ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly)
+                    {
+                        if (!string.IsNullOrEmpty(ConnectionOptions.FailoverPartner))
+                        {
+                            throw SQL.ROR_FailoverNotSupportedConnString();
+                        }
+
+                        if (ServerProvidedFailoverPartner != null)
+                        {
+                            throw SQL.ROR_FailoverNotSupportedServer(this);
+                        }
+                    }
+                }
+
+                _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
+            }
+            catch (Exception e)
+            {
+                if (ADP.IsCatchableExceptionType(e))
+                {
+                    LoginFailure();
+                }
+
+                throw;
+            }
+
+            _timeoutErrorInternal.SetAllCompleteMarker();
+
+            #if DEBUG
+            _parser._physicalStateObj.InvalidateDebugOnlyCopyOfSniContext();
+            #endif
         }
 
         // @TODO: Is this suppression still required
