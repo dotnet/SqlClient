@@ -1,0 +1,4 @@
+<Project>
+  <!-- Import parent Directory.Packages.props -->
+  <Import Project="..\Directory.Packages.props" />
+</Project>

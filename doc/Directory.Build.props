@@ -3,5 +3,5 @@
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <!-- Import parent Directory.build.props -->
-  <Import Project="..\Directory.Build.props" />
+  <Import Project="..\src\Microsoft.Data.SqlClient\tests\Directory.Build.props" />
 </Project>

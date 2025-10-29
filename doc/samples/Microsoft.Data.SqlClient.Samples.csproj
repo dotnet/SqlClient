@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>Latest</LangVersion>
+  </PropertyGroup>
+
+  <!-- Set Target Group property value -->
+  <PropertyGroup>
+    <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
+    <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>  
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Microsoft.Identity.Client" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
+  </ItemGroup>
+
+  <!-- .NET Framework references -->
+  <ItemGroup Condition="$(TargetGroup) == 'netfx'">
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
+    <ProjectReference Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  
+  <!-- .NET references -->
+  <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp'">
+    <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ContentWithTargetPath Condition="'$(TargetGroup)'=='netfx'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\$(TargetFramework)\*SNI*.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>%(Filename)%(Extension)</TargetPath>
+    </ContentWithTargetPath>
+  </ItemGroup>
+  
+</Project>
