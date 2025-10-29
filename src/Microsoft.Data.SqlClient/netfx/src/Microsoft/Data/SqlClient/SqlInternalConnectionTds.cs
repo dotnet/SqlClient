@@ -345,31 +345,6 @@ namespace Microsoft.Data.SqlClient
         // POOLING METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        [SuppressMessage("Microsoft.Globalization", "CA1303:DoNotPassLiteralsAsLocalizedParameters")] // copied from Triaged.cs
-        private void ResetConnection()
-        {
-            // For implicit pooled connections, if connection reset behavior is specified,
-            // reset the database and language properties back to default.  It is important
-            // to do this on activate so that the dictionary is correct before SqlConnection
-            // obtains a clone.
-
-            Debug.Assert(!HasLocalTransactionFromAPI, "Upon ResetConnection SqlInternalConnectionTds has a currently ongoing local transaction.");
-            Debug.Assert(!_parser._physicalStateObj.HasPendingData, "Upon ResetConnection SqlInternalConnectionTds has pending data.");
-
-            if (_fResetConnection)
-            {
-                // Pooled connections that are enlisted in a transaction must have their transaction
-                // preserved when reseting the connection state. Otherwise, future uses of the connection
-                // from the pool will execute outside of the transaction, in auto-commit mode.
-                // https://github.com/dotnet/SqlClient/issues/2970
-                _parser.PrepareResetConnection(EnlistedTransaction is not null && Pool is not null);
-
-                // Reset dictionary values, since calling reset will not send us env_changes.
-                CurrentDatabase = _originalDatabase;
-                _currentLanguage = _originalLanguage;
-            }
-        }
-
         internal void DecrementAsyncCount()
         {
             Debug.Assert(_asyncCommandCount > 0);
