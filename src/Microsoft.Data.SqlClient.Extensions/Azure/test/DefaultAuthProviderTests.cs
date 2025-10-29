@@ -4,17 +4,21 @@
 
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
-public class DefaultProviderTests
+public class DefaultAuthProviderTests
 {
-    // Verify that our provider has been installed for all AAD/Entra
+    // Verify that our auth provider has been installed for all AAD/Entra
     // authentication methods, and not for any other methods.
     //
     // Note that this isn't testing anything in the Azure package.  It actually
-    // tests the static constructor of SqlAuthenticationProviderManager in the
-    // MDS package.
+    // tests the static constructor of SqlAuthenticationProviderManager class in
+    // the MDS package and the static GetProvider() and SetProvider() methods of
+    // the SqlAuthenticationProvider class in the Abstractions package.
     [Fact]
-    public void OurProviderInstalled()
+    public void AuthProviderInstalled()
     {
+        // Iterate over all authentication methods rather than specifying them
+        // via Theory data so that we detect any new methods that don't meet
+        // our expectations.
         foreach (var method in
             #if NET
             Enum.GetValues<SqlAuthenticationMethod>()

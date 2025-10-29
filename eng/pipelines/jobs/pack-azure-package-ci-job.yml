@@ -163,18 +163,18 @@ jobs:
       # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't
       # support all of our argument combinations for the different build steps.
 
-      # Restore the solution.
+      # Restore the project.
       - task: DotNetCoreCLI@2
-        displayName: Restore Solution
+        displayName: Restore Project
         inputs:
           command: custom
           custom: restore
           projects: $(project)
           arguments: $(commonArguments)
 
-      # Build the solution.
+      # Build the project.
       - task: DotNetCoreCLI@2
-        displayName: Build Solution
+        displayName: Build Project
         inputs:
           command: custom
           custom: build

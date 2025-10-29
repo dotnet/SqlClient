@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.Tests
             var provider = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive);
 
             Assert.NotNull(provider);
-            Assert.Equal(typeof(DummySqlAuthenticationProvider), provider.GetType());
+            Assert.IsType<DummySqlAuthenticationProvider>(provider);
 
             var token = await provider.AcquireTokenAsync(null);
             Assert.Equal(token.AccessToken, DummySqlAuthenticationProvider.DUMMY_TOKEN_STR);

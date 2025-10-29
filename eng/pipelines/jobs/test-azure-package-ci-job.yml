@@ -206,21 +206,44 @@ jobs:
       # The Windows agent images include a suitable .NET Framework runtime, so
       # we don't have to install one explicitly.
 
+      # Setup the test config file.
+      #
+      # This must be done before building the project.  This template updates
+      # the sample config file, which is then copied into place by the build.
+      #
+      - template: ../common/templates/steps/update-config-file-step.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          AADServicePrincipalId: $(AADServicePrincipalId)
+          # macOS doesn't support managed identities.
+          ManagedIdentitySupported: ${{ not(eq(parameters.vmImage, 'macos-latest')) }}
+          SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+          TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
+          UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+          # Note: Using the isFork variable to determine if secrets are
+          # available is not ideal since it's an indirect association. But
+          # everything else (referencing secret variables various ways to detect
+          # if they were present) won't run consistently across forks and
+          # non-forks.
+          ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+            AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
+            AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+
       # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't
       # support all of our argument combinations for the different build steps.
 
-      # Restore the solution.
+      # Restore the project.
       - task: DotNetCoreCLI@2
-        displayName: Restore Solution
+        displayName: Restore Project
         inputs:
           command: custom
           custom: restore
           projects: $(project)
           arguments: $(commonArguments)
 
-      # Build the solution.
+      # Build the project.
       - task: DotNetCoreCLI@2
-        displayName: Build Solution
+        displayName: Build Project
         inputs:
           command: custom
           custom: build
@@ -232,19 +255,9 @@ jobs:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
           env:
-            TEST_DEBUG_EMIT: ${{ parameters.debug }}
-            # # Translate our ADO Library variables into environment variables
-            # # that the test Config class expects.
-            # TEST_AZURE_SQL_SERVER: $(Azure_SQL_Server_westus2)
-            # TEST_AZURE_SQL_DB: Northwind
-            # TEST_AZURE_SQL_USER: $(AZURE_USERNAME)
-            # # Avoid exposing the password variable in PRs from forks, which
-            # # is the only type of PR a non-maintainer can create.
-            # ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
-            #   TEST_AZURE_SQL_PASSWORD: $(Azure_Password)
-            # TEST_AZURE_MANAGED_IDENTITY: $(UserManagedIdentityClientId)
             # The connectedServiceName below needs the system access token.
             SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            TEST_DEBUG_EMIT: ${{ parameters.debug }}
           inputs:
             # The tests need to access Azure resources, which is achieved via
             # this service connection.  See:
@@ -260,8 +273,12 @@ jobs:
       - ${{ each runtime in parameters.netFrameworkRuntimes }}:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
+          env:
+            # The connectedServiceName below needs the system access token.
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            TEST_DEBUG_EMIT: ${{ parameters.debug }}
           inputs:
-            azureSubscription: dotnetMSI-managed-identity
+            connectedServiceName: dotnetMSI-managed-identity
             command: custom
             custom: test
             projects: $(project)

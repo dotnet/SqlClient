@@ -82,10 +82,5 @@
   <ItemGroup>
     <None Include="../../../../tools/icons/dotnet.png" Pack="true" PackagePath="/" />
   </ItemGroup>
-
-  <Target Name="Paul">
-    <Message Importance="high" Text="ApplyMdsAssemblyNameSuffix=$(ApplyMdsAssemblyNameSuffix)" />
-    <Message Importance="high" Text="DefineConstants=$(DefineConstants)" />
-  </Target>
   
 </Project>

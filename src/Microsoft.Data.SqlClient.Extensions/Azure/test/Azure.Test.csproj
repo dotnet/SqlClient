@@ -32,6 +32,10 @@
     </ContentWithTargetPath>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../../../Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
+  </ItemGroup>
+  
   <!-- Conditional Project References -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
     <!--

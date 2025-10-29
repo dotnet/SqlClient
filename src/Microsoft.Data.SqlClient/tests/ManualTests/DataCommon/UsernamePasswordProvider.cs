@@ -8,6 +8,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 
+#nullable enable
+
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests;
 
 internal class UsernamePasswordProvider : SqlAuthenticationProvider
@@ -22,28 +24,37 @@ internal class UsernamePasswordProvider : SqlAuthenticationProvider
 
     public override async Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
     {
-        string scope =
-            parameters.Resource.EndsWith(s_defaultScopeSuffix, StringComparison.Ordinal)
-            ? parameters.Resource
-            : parameters.Resource + s_defaultScopeSuffix;
+        try
+        {
+            string scope =
+                parameters.Resource.EndsWith(s_defaultScopeSuffix, StringComparison.Ordinal)
+                ? parameters.Resource
+                : parameters.Resource + s_defaultScopeSuffix;
 
-        var cts = new CancellationTokenSource();
-        cts.CancelAfter(parameters.ConnectionTimeout * 1000);
+            var cts = new CancellationTokenSource();
+            cts.CancelAfter(parameters.ConnectionTimeout * 1000);
 
-        string[] scopes = new string[] { scope };
-        SecureString password = new SecureString();
+            string[] scopes = new string[] { scope };
+            SecureString password = new SecureString();
 
-        AuthenticationResult result =
-            #pragma warning disable CS0618 // Type or member is obsolete
-            await PublicClientApplicationBuilder.Create(_appClientId)
-            .WithAuthority(parameters.Authority)
-            .Build()
-            .AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
-            #pragma warning restore CS0618 // Type or member is obsolete
-            .WithCorrelationId(parameters.ConnectionId)
-            .ExecuteAsync(cancellationToken: cts.Token);
+            AuthenticationResult result =
+                #pragma warning disable CS0618 // Type or member is obsolete
+                await PublicClientApplicationBuilder.Create(_appClientId)
+                .WithAuthority(parameters.Authority)
+                .Build()
+                .AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
+                #pragma warning restore CS0618 // Type or member is obsolete
+                .WithCorrelationId(parameters.ConnectionId)
+                .ExecuteAsync(cancellationToken: cts.Token);
 
-        return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
+            return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
+        }
+        catch (Exception ex)
+        {
+            throw new TokenException(
+                $"Failed to acquire token for ManagedIdentity " +
+                $"userId ={parameters.UserId} error={ex.Message}", ex);
+        }
     }
 
     public override bool IsSupported(SqlAuthenticationMethod authenticationMethod)
@@ -51,5 +62,14 @@ internal class UsernamePasswordProvider : SqlAuthenticationProvider
         #pragma warning disable 0618 // Type or member is obsolete
         return authenticationMethod.Equals(SqlAuthenticationMethod.ActiveDirectoryPassword);
         #pragma warning restore 0618 // Type or member is obsolete
+    }
+
+    // The exception we throw on any errors acquiring tokens.
+    private sealed class TokenException : SqlAuthenticationProviderException
+    {
+        internal TokenException(string message, Exception? causedBy = null)
+            : base(message, causedBy)
+        {
+        }
     }
 }

@@ -20,10 +20,6 @@ internal class ManagedIdentityProvider : SqlAuthenticationProvider
     private readonly ConcurrentDictionary<string, ManagedIdentityCredential>
     _credentialCache = new();
 
-    // The token to return when token acquisition fails.
-    private static readonly SqlAuthenticationToken s_failedToken =
-        new(string.Empty, DateTimeOffset.MinValue);
-
     // The default suffix to apply to resource scopes.
     private const string s_defaultScopeSuffix = "/.default";
 
@@ -39,21 +35,20 @@ internal class ManagedIdentityProvider : SqlAuthenticationProvider
     {
         if (parameters.UserId is null)
         {
-            Console.WriteLine(
-                "Refusing to acquire token for ManagedIdentity with null userId");
-            return s_failedToken;
+            throw new TokenException(
+                "Refusing to acquire token for ManagedIdentity with null UserId");
         }
-
-        // Build an appropriate scope.
-        string scope = parameters.Resource.EndsWith(
-            s_defaultScopeSuffix, StringComparison.Ordinal)
-            ? parameters.Resource
-            : parameters.Resource + s_defaultScopeSuffix;
-
-        TokenRequestContext context = new([scope]);
 
         try
         {
+            // Build an appropriate scope.
+            string scope = parameters.Resource.EndsWith(
+                s_defaultScopeSuffix, StringComparison.Ordinal)
+                ? parameters.Resource
+                : parameters.Resource + s_defaultScopeSuffix;
+
+            TokenRequestContext context = new([scope]);
+
             TokenCredentialOptions options = new()
             {
                 AuthorityHost = new Uri(parameters.Authority)
@@ -79,18 +74,24 @@ internal class ManagedIdentityProvider : SqlAuthenticationProvider
         }
         catch (Exception ex)
         {
-            Console.WriteLine(
-                "Failed to acquire token for ManagedIdentity " +
-                $"userId ={parameters.UserId} error={ex.Message}");
-            Console.WriteLine(ex);
+            throw new TokenException(
+                $"Failed to acquire token for ManagedIdentity " +
+                $"userId ={parameters.UserId} error={ex.Message}", ex);
         }
-
-        return s_failedToken;
     }
 
     /// We support only the Managed Identity authentication method.
     public override bool IsSupported(SqlAuthenticationMethod authenticationMethod)
     {
         return authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
+    }
+
+    // The exception we throw on any errors acquiring tokens.
+    private sealed class TokenException : SqlAuthenticationProviderException
+    {
+        internal TokenException(string message, Exception? causedBy = null)
+            : base(message, causedBy)
+        {
+        }
     }
 }

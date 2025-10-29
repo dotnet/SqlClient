@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <PropertyGroup>
-    <AssemblyNameSuffixNetFx Condition="'$(ReferenceType)' == 'Project' AND '$(TF_BUILD)' != 'true'">.NetFx</AssemblyNameSuffixNetFx>
-    <AssemblyNameSuffixNetCore Condition="'$(ReferenceType)' == 'Project' AND '$(TF_BUILD)' != 'true'">.NetCore</AssemblyNameSuffixNetCore>
+  <PropertyGroup Condition="'$(ApplyMdsAssemblyNameSuffix)' == 'true'">
+    <AssemblyNameSuffixNetFx>.NetFx</AssemblyNameSuffixNetFx>
+    <AssemblyNameSuffixNetCore>.NetCore</AssemblyNameSuffixNetCore>
   </PropertyGroup>
 
   <Target Name="GenerateMdsPackage" Condition="'$(GenerateNuget)' == 'true'">

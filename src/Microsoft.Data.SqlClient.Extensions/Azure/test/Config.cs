@@ -2,77 +2,197 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Runtime.InteropServices;
+using System.Text.Json;
+
+using Microsoft.Data.SqlClient.TestUtilities;
+
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
-// This class reads configuration information from environment variables for use
-// by our tests.
+// This class reads configuration information from environment variables and the
+// config.json file for use by our tests.
+//
+// Environment variables take precedence over config.json settings.
 //
 // The following variables are supported:
 //
-//   TEST_AZURE_SQL_SERVER - The server to connect to.
-//   TEST_AZURE_SQL_DB - The database to connect to.
-//   TEST_AZURE_SQL_USER - The username to connect with.
-//   TEST_AZURE_SQL_PASSWORD - The password to connect with.
-//   TEST_AZURE_MANAGED_IDENTITY - The managed identity to use for authentication.
+//   SYSTEM_ACCESSTOKEN:
+//     The Azure Pipelines $(System.AccessToken) to use for workload identity
+//     federation.
+//
+//   TEST_DEBUG_EMIT:
+//     When defined, enables debug output of configuration values.
+//
+//   TEST_MDS_CONFIG:
+//     The path to the config file to use instead of the default.  If not
+//     supplied, the config file is assumed to be located next to the test
+//     assembly and is named config.json.
 //
 internal static class Config
 {
     # region Config Properties
 
-    internal static bool DebugEmit { get; }
-    internal static string Server { get; }
-    internal static string Database { get; }
-    internal static string Username { get; }
-    internal static string Password { get; }
-    internal static string ManagedIdentity { get; }
-    internal static string SystemAccessToken { get; }
+    internal static bool DebugEmit { get; } = false;
+    internal static bool IntegratedSecuritySupported { get; } = false;
+    internal static bool ManagedIdentitySupported { get; } = false;
+    internal static string PasswordConnectionString { get; } = string.Empty;
+    internal static string ServicePrincipalId { get; } = string.Empty;
+    internal static string ServicePrincipalSecret { get; } = string.Empty;
+    internal static string SystemAccessToken { get; } = string.Empty;
+    internal static bool SystemAssignedManagedIdentitySupported { get; } = false;
+    internal static string TcpConnectionString { get; } = string.Empty;
+    internal static string UserManagedIdentityClientId { get; } = string.Empty;
 
     #endregion
 
     #region Conditional Fact/Theory Helpers
 
-    internal static bool HasServer() => Server.NotEmpty();
-    internal static bool HasDatabase() => Database.NotEmpty();
-    internal static bool HasUsernamePassword() => Username.NotEmpty() && Password.NotEmpty();
-    internal static bool HasManagedIdentity() => ManagedIdentity.NotEmpty();
-    internal static bool HasSystemAccessToken() => SystemAccessToken.NotEmpty();
-    
+    internal static bool HasIntegratedSecurityConnectionString() =>
+        !TcpConnectionString.Empty() && IntegratedSecuritySupported;
+    internal static bool HasPasswordConnectionString() => !PasswordConnectionString.Empty();
+    internal static bool HasServicePrincipal() => !ServicePrincipalId.Empty() && !ServicePrincipalSecret.Empty();
+    internal static bool HasSystemAccessToken() => !SystemAccessToken.Empty();
+    internal static bool HasTcpConnectionString() => !TcpConnectionString.Empty();
+    internal static bool HasUserManagedIdentityClientId() => !UserManagedIdentityClientId.Empty();
+
+    internal static bool SupportsIntegratedSecurity() => IntegratedSecuritySupported;
+    internal static bool SupportsManagedIdentity() => ManagedIdentitySupported;
+    internal static bool SupportsSystemAssignedManagedIdentity() => SystemAssignedManagedIdentitySupported;
+
+    internal static bool IsAzureSqlServer() =>
+        Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TcpConnectionString).DataSource);
+
+    internal static bool OnLinux() => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+    internal static bool OnMacOS() => RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+    internal static bool OnWindows() => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+    internal static bool OnUnix() => OnLinux() || OnMacOS();
+
     #endregion
 
     #region Static Construction
 
     static Config()
     {
+        // Read from the config.json file.
+        string configPath = GetEnvVar("TEST_MDS_CONFIG");
+        if (configPath.Empty())
+        {
+            configPath = "config.json";
+        }
+
+        try
+        {
+            using JsonDocument doc =
+                JsonDocument.Parse(
+                    File.ReadAllText(configPath),
+                    new JsonDocumentOptions
+                    {
+                        CommentHandling = JsonCommentHandling.Skip,
+                        AllowTrailingCommas = true
+                    });
+
+            JsonElement root = doc.RootElement;
+            // See the sample config file for information about these settings:
+            //
+            // src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json
+            //
+            // The sample file is copied to the build output directory as
+            // config.json by the TestUtilities project file.
+            //
+            IntegratedSecuritySupported = GetBool(root, "SupportsIntegratedSecurity");
+            ManagedIdentitySupported = GetBool(root, "ManagedIdentitySupported");
+            PasswordConnectionString = GetString(root, "AADPasswordConnectionString");
+            ServicePrincipalId = GetString(root, "AADServicePrincipalId");
+            ServicePrincipalSecret = GetString(root, "AADServicePrincipalSecret");
+            SystemAssignedManagedIdentitySupported = GetBool(root, "SupportsSystemAssignedManagedIdentity");
+            TcpConnectionString = GetString(root, "TCPConnectionString");
+            UserManagedIdentityClientId = GetString(root, "UserManagedIdentityClientId");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(
+                $"Config: Failed to read config file={configPath}: {ex}");
+        }
+
+        // Apply environment variable overrides.
+        //
         // Note that environment variables are case-sensitive on non-Windows
         // platforms.
-        DebugEmit = Environment.GetEnvironmentVariable("TEST_DEBUG_EMIT") is not null;
-        Server = GetEnvVar("TEST_AZURE_SQL_SERVER");
-        Database = GetEnvVar("TEST_AZURE_SQL_DB");
-        Username = GetEnvVar("TEST_AZURE_SQL_USER");
-        Password = GetEnvVar("TEST_AZURE_SQL_PASSWORD");
-        ManagedIdentity = GetEnvVar("TEST_AZURE_MANAGED_IDENTITY");
+        DebugEmit = GetEnvFlag("TEST_DEBUG_EMIT");
         SystemAccessToken = GetEnvVar("SYSTEM_ACCESSTOKEN");
 
+        // Emit debug information if requested.
         if (DebugEmit)
         {
-            var emit = (string name, string value) =>
-            {
-                Console.WriteLine($"  {name} ({value.Length}): {value}");
-            };
-
             Console.WriteLine("Config:");
-            emit("Server", Server);
-            emit("Database", Database);
-            emit("Username", Username);
-            emit("Password", Password);
-            emit("ManagedIdentity", ManagedIdentity);
-            emit("SystemAccessToken", SystemAccessToken);
+            Console.WriteLine(
+                $"  DebugEmit:                              {DebugEmit}");
+            Console.WriteLine(
+                $"  IntegratedSecuritySupported:            {IntegratedSecuritySupported}");
+            Console.WriteLine(
+                $"  ManagedIdentitySupported:               {ManagedIdentitySupported}");
+            Console.WriteLine(
+                $"  PasswordConnectionString:               {PasswordConnectionString}");
+            Console.WriteLine(
+                $"  ServicePrincipalId:                     {ServicePrincipalId}");
+            Console.WriteLine(
+                $"  ServicePrincipalSecret:                 {ServicePrincipalSecret.Length}");
+            Console.WriteLine(
+                $"  SystemAccessToken:                      {SystemAccessToken}");
+            Console.WriteLine(
+                $"  SystemAssignedManagedIdentitySupported: {SystemAssignedManagedIdentitySupported}");
+            Console.WriteLine(
+                $"  TcpConnectionString:                    {TcpConnectionString}");
+            Console.WriteLine(
+                $"  UserManagedIdentityClientId:            {UserManagedIdentityClientId}");
         }
     }
 
     #endregion
 
     #region Private Methods
+
+    private static string GetString(JsonElement element, string name)
+    {
+        if (element.TryGetProperty(name, out var property))
+        {
+            try
+            {
+                var value = property.GetString();
+                if (value is not null)
+                {
+                    return value;
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                // Ignore invalid values.
+            }
+        }
+
+        return string.Empty;
+    }
+    private static bool GetBool(JsonElement element, string name)
+    {
+        if (element.TryGetProperty(name, out var property))
+        {
+            try
+            {
+                return property.GetBoolean();
+            }
+            catch (InvalidOperationException)
+            {
+                // Ignore invalid values.
+            }
+        }
+
+        return false;
+    }
+
+    private static bool GetEnvFlag(string name)
+    {
+        return Environment.GetEnvironmentVariable(name) is not null;
+    }
 
     private static string GetEnvVar(string name)
     {

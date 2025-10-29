@@ -196,4 +196,4 @@ steps:
           }
       }
     workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
-    displayName: 'Read config.json [debug]'
+    displayName: '[Debug] Read config.json'
