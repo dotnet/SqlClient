@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Microsoft.Data.SqlClient;
 
@@ -21,10 +22,23 @@ public abstract partial class SqlAuthenticationProvider
         // Static construction performs the reflection lookups.
         static Internal()
         {
+            // Choose the MDS assembly name based on the build configuration and
+            // runtime environment.  See the top-level Directory.Build.props for
+            // more information.
+            string assemblyName = "Microsoft.Data.SqlClient";
+            #if (APPLY_MDS_ASSEMBLY_NAME_SUFFIX)
+            if (RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework"))
+            {
+                assemblyName += ".NetFx";
+            }
+            else
+            {
+                assemblyName += ".NetCore";
+            }
+            #endif
+
             // If the MDS package is present, load its
             // SqlAuthenticationProviderManager class and get/set methods.
-            const string assemblyName = "Microsoft.Data.SqlClient";
-
             try
             {
                 // Try to load the MDS assembly.
@@ -32,22 +46,12 @@ public abstract partial class SqlAuthenticationProvider
 
                 if (assembly is null)
                 {
-                    // TODO: Logging
-                    // SqlClientEventSource.Log.TryTraceEvent(
-                    //     nameof(SqlAuthenticationProviderManager) +
-                    //     $": Azure extension assembly={assemblyName} not found; " +
-                    //     "no default provider installed");
+                    Log($"MDS assembly={assemblyName} not found; " +
+                        "Get/SetProvider() will not function");
                     return;
                 }
 
                 // TODO(ADO-39845): Verify the assembly is signed by us?
-
-                // TODO: Logging
-                // SqlClientEventSource.Log.TryTraceEvent(
-                //     nameof(SqlAuthenticationProviderManager) +
-                //     $": Azure extension assembly={assemblyName} found; " +
-                //     "attempting to set as default provider for all Active " +
-                //     "Directory authentication methods");
 
                 // Look for the manager class.
                 const string className = "Microsoft.Data.SqlClient.SqlAuthenticationProviderManager";
@@ -55,12 +59,8 @@ public abstract partial class SqlAuthenticationProvider
 
                 if (manager is null)
                 {
-                    // TODO: Logging
-                    // SqlClientEventSource.Log.TryTraceEvent(
-                    //     nameof(SqlAuthenticationProviderManager) +
-                    //     $": Azure extension does not contain class={className}; " +
-                    //     "no default Active Directory provider installed");
-
+                    Log($"MDS auth manager manager class={className} not found; " +
+                        "Get/SetProvider() will not function");
                     return;
                 }
 
@@ -68,15 +68,22 @@ public abstract partial class SqlAuthenticationProvider
                 _getProvider = manager.GetMethod(
                     "GetProvider",
                     BindingFlags.NonPublic | BindingFlags.Static);
+                
+                if (_getProvider is null)
+                {
+                    Log($"MDS GetProvider() method not found; " +
+                        "GetProvider() will not function");
+                }
+
                 _setProvider = manager.GetMethod(
                     "SetProvider",
                     BindingFlags.NonPublic | BindingFlags.Static);
-
-                // TODO: Logging
-                // SqlClientEventSource.Log.TryTraceEvent(
-                //     nameof(SqlAuthenticationProviderManager) +
-                //     $": Azure extension class={className} installed as " +
-                //     "provider for all Active Directory authentication methods");
+                
+                if (_setProvider is null)
+                {
+                    Log($"MDS SetProvider() method not found; " +
+                        "SetProvider() will not function");
+                }
             }
             // All of these exceptions mean we couldn't find the get/set
             // methods.
@@ -86,11 +93,8 @@ public abstract partial class SqlAuthenticationProvider
                   ex is FileLoadException ||
                   ex is FileNotFoundException)
             {
-                // SqlClientEventSource.Log.TryTraceEvent(
-                //     nameof(SqlAuthenticationProviderManager) +
-                //     $": Azure extension assembly={assemblyName} not found or " +
-                //     "not usable; no default provider installed; " +
-                //     $"{ex.GetType().Name}: {ex.Message}");
+                Log($"MDS assembly={assemblyName} not found or not usable; " +
+                    $"Get/SetProvider() will not function: {ex} ");
             }
             // Any other exceptions are fatal.
         }
@@ -120,10 +124,11 @@ public abstract partial class SqlAuthenticationProvider
                   ex is NotSupportedException ||
                   ex is TargetInvocationException)
             {
+                Log($"GetProvider() invocation failed: " +
+                    $"{ex.GetType().Name}: {ex.Message}");
                 return null;
             }
         }
-
 
         // Call the reflected SetProvider method.
         //
@@ -147,6 +152,8 @@ public abstract partial class SqlAuthenticationProvider
 
                 if (!result.HasValue)
                 {
+                    Log($"SetProvider() invocation returned null; " +
+                        "translating to false"); 
                     return false;
                 }
 
@@ -159,8 +166,16 @@ public abstract partial class SqlAuthenticationProvider
                   ex is NotSupportedException ||
                   ex is TargetInvocationException)
             {
+                Log($"SetProvider() invocation failed: " +
+                    $"{ex.GetType().Name}: {ex.Message}");
                 return false;
             }
+        }
+
+        private static void Log(string message)
+        {
+            // TODO(ADO-39080): Convert to proper logging.
+            Console.WriteLine($"SqlAuthenticationProvider.Internal(): {message}");
         }
     }
 }
