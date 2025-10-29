@@ -345,48 +345,6 @@ namespace Microsoft.Data.SqlClient
         // GENERAL METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        internal override void ValidateConnectionForExecute(SqlCommand command)
-        {
-            TdsParser parser = _parser;
-            if ((parser == null) || (parser.State == TdsParserState.Broken) || (parser.State == TdsParserState.Closed))
-            {
-                throw ADP.ClosedConnectionError();
-            }
-            else
-            {
-                SqlDataReader reader = null;
-                if (parser.MARSOn)
-                {
-                    if (command != null)
-                    { // command can't have datareader already associated with it
-                        reader = FindLiveReader(command);
-                    }
-                }
-                else
-                { // single execution/datareader per connection
-                    if (_asyncCommandCount > 0)
-                    {
-                        throw SQL.MARSUnsupportedOnConnection();
-                    }
-
-                    reader = FindLiveReader(null);
-                }
-                if (reader != null)
-                {
-                    // if MARS is on, then a datareader associated with the command exists
-                    // or if MARS is off, then a datareader exists
-                    throw ADP.OpenReaderExists(parser.MARSOn); // MDAC 66411
-                }
-                else if (!parser.MARSOn && parser._physicalStateObj.HasPendingData)
-                {
-                    parser.DrainData(parser._physicalStateObj);
-                }
-                Debug.Assert(!parser._physicalStateObj.HasPendingData, "Should not have a busy physicalStateObject at this point!");
-
-                parser.RollbackOrphanedAPITransactions();
-            }
-        }
-
         /// <summary>
         /// Validate the enlisted transaction state, taking into consideration the ambient transaction and transaction unbinding mode.
         /// If there is no enlisted transaction, this method is a nop.

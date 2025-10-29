@@ -547,6 +547,54 @@ namespace Microsoft.Data.SqlClient
             base.Dispose();
         }
 
+        internal override void ValidateConnectionForExecute(SqlCommand command)
+        {
+            TdsParser parser = _parser;
+            if (parser == null || parser.State is TdsParserState.Broken or TdsParserState.Closed)
+            {
+                throw ADP.ClosedConnectionError();
+            }
+            else
+            {
+                SqlDataReader reader = null;
+                if (parser.MARSOn)
+                {
+                    if (command != null)
+                    {
+                        // Command can't have datareader already associated with it
+                        reader = FindLiveReader(command);
+                    }
+                }
+                else
+                {
+                    // Single execution/datareader per connection
+                    if (_asyncCommandCount > 0)
+                    {
+                        throw SQL.MARSUnsupportedOnConnection();
+                    }
+
+                    reader = FindLiveReader(null);
+                }
+
+                if (reader != null)
+                {
+                    // If MARS is on, then a datareader associated with the command exists or if
+                    // MARS is off, then a datareader exists
+                    throw ADP.OpenReaderExists(parser.MARSOn); // MDAC 66411
+                }
+
+                if (!parser.MARSOn && parser._physicalStateObj.HasPendingData)
+                {
+                    parser.DrainData(parser._physicalStateObj);
+                }
+
+                Debug.Assert(!parser._physicalStateObj.HasPendingData,
+                    "Should not have a busy physicalStateObject at this point!");
+
+                parser.RollbackOrphanedAPITransactions();
+            }
+        }
+
         #endregion
 
         #region Protected Methods
