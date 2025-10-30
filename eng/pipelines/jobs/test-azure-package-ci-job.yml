@@ -217,7 +217,7 @@ jobs:
           AADServicePrincipalId: $(AADServicePrincipalId)
           # macOS doesn't support managed identities.
           ManagedIdentitySupported: ${{ not(eq(parameters.vmImage, 'macos-latest')) }}
-          SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+          SupportsIntegratedSecurity: $[ eq(variables['SupportsIntegratedSecurity'], 'true') ]
           TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
           UserManagedIdentityClientId: $(UserManagedIdentityClientId)
           # Note: Using the isFork variable to determine if secrets are
