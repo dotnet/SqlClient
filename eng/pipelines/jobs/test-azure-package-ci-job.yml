@@ -264,7 +264,8 @@ jobs:
             # needs the system access token to be injected as this environment
             # variable.
             SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-            TEST_DEBUG_EMIT: ${{ parameters.debug }}
+            ${{ if eq(parameters.debug, true) }}:
+              TEST_DEBUG_EMIT: 1
           inputs:
             # The tests need to access Azure resources, which is achieved via
             # this service connection.  See:
@@ -290,7 +291,8 @@ jobs:
             # needs the system access token to be injected as this environment
             # variable.
             SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-            TEST_DEBUG_EMIT: ${{ parameters.debug }}
+            ${{ if eq(parameters.debug, true) }}:
+              TEST_DEBUG_EMIT: 1
           inputs:
             connectedServiceName: dotnetMSI-managed-identity
             command: custom

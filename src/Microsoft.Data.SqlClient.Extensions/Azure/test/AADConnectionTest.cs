@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Text.RegularExpressions;
+
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
 // These tests were migrated from MDS ManualTests AADConnectionTest.cs.
@@ -81,7 +83,7 @@ public class AADConnectionTest
         string[] removeKeys = { "User ID", "Password", "UID", "PWD" };
         string connStr = RemoveKeysInConnStr(Config.PasswordConnectionString, removeKeys) + "User ID=; Password=;";
         SqlException e = Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStr));
-        
+
         string expectedMessage = "Failed to authenticate the user  in Active Directory (Authentication=ActiveDirectoryPassword).";
         Assert.Contains(expectedMessage, e.Message);
     }
@@ -96,7 +98,7 @@ public class AADConnectionTest
         string[] removeKeys = { "User ID", "Password", "UID", "PWD" };
         string connStr = RemoveKeysInConnStr(Config.PasswordConnectionString, removeKeys) + "User ID=; Password=;";
         SqlException e = Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStr));
-        
+
         string expectedMessage = "MSAL cannot determine the username (UPN) of the currently logged in user.For Integrated Windows Authentication and Username/Password flows, please use .WithUsername() before calling ExecuteAsync().";
         Assert.Contains(expectedMessage, e.Message);
     }
@@ -111,7 +113,7 @@ public class AADConnectionTest
         string user = "testdotnet@domain.com";
         string connStr = RemoveKeysInConnStr(Config.PasswordConnectionString, removeKeys) + $"User ID={user}";
         SqlException e = Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStr));
-        
+
         string expectedMessage = string.Format("Failed to authenticate the user {0} in Active Directory (Authentication=ActiveDirectoryPassword).", user);
         Assert.Contains(expectedMessage, e.Message);
     }
@@ -123,12 +125,12 @@ public class AADConnectionTest
     {
         // test Passes with correct connection string.
         ConnectAndDisconnect(Config.PasswordConnectionString);
-        
+
         // connection fails with expected error message.
         string[] credKeys = { "User ID", "Password", "UID", "PWD" };
         string connStrWithNoCred = RemoveKeysInConnStr(Config.PasswordConnectionString, credKeys);
         InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred));
-        
+
         string expectedMessage = "Either Credential or both 'User ID' and 'Password' (or 'UID' and 'PWD') connection string keywords must be specified, if 'Authentication=Active Directory Password'.";
         Assert.Contains(expectedMessage, e.Message);
     }
@@ -144,13 +146,13 @@ public class AADConnectionTest
         string connStr = RemoveKeysInConnStr(Config.PasswordConnectionString, removeKeys) +
         $"Authentication=Active Directory Service Principal; User ID={Config.ServicePrincipalId}; PWD={Config.ServicePrincipalSecret};";
         ConnectAndDisconnect(connStr);
-        
+
         // connection fails with expected error message.
         string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
         string connStrWithNoCred = RemoveKeysInConnStr(Config.PasswordConnectionString, credKeys) +
         "Authentication=Active Directory Service Principal;";
         InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred));
-        
+
         string expectedMessage = "Either Credential or both 'User ID' and 'Password' (or 'UID' and 'PWD') connection string keywords must be specified, if 'Authentication=Active Directory Service Principal'.";
         Assert.Contains(expectedMessage, e.Message);
     }
@@ -167,15 +169,14 @@ public class AADConnectionTest
         string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
         string connStrWithNoCred = RemoveKeysInConnStr(Config.PasswordConnectionString, credKeys) +
         $"Authentication=Active Directory Managed Identity; User Id={userId}";
-        
+
         SqlException e = Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStrWithNoCred));
 
-        string expectedMessage = "[Managed Identity] Authentication unavailable";
-        
-        Console.WriteLine($"#### Expected: {expectedMessage}");
-        Console.WriteLine($"#### Actual: {e.GetBaseException().Message}");
-        
-        Assert.Contains(expectedMessage, e.GetBaseException().Message, StringComparison.OrdinalIgnoreCase);
+        Regex expected = new(
+            @"(\[Managed Identity\]|ManagedIdentityCredential) Authentication unavailable",
+            RegexOptions.IgnoreCase);
+
+        Assert.Matches(expected, e.GetBaseException().Message);
     }
 
     [ConditionalFact(
@@ -188,7 +189,7 @@ public class AADConnectionTest
         string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
         string connStr = RemoveKeysInConnStr(Config.PasswordConnectionString, credKeys) +
         $"Authentication=ActiveDirectoryDefault;User ID={Config.UserManagedIdentityClientId};";
-        
+
         // Connection should be established using Managed Identity by default.
         ConnectAndDisconnect(connStr);
     }
@@ -205,7 +206,7 @@ public class AADConnectionTest
         $"Authentication=Active Directory Integrated;";
         ConnectAndDisconnect(connStr);
     }
-    
+
     [ConditionalFact(
         typeof(Config),
         nameof(Config.HasPasswordConnectionString),
@@ -243,11 +244,11 @@ public class AADConnectionTest
         string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
         string connectionString = RemoveKeysInConnStr(Config.TcpConnectionString, removeKeys)
         + $"Authentication=Active Directory Managed Identity;";
-        
+
         using (SqlConnection conn = new SqlConnection(connectionString))
         {
             conn.Open();
-            
+
             Assert.True(conn.State == System.Data.ConnectionState.Open);
         }
     }
@@ -289,7 +290,7 @@ public class AADConnectionTest
 
         Assert.True(conn.State == System.Data.ConnectionState.Open);
     }
-    
+
     #endregion
 
     #region Helpers from ManualTests DataTestUtility.cs
@@ -371,6 +372,6 @@ public class AADConnectionTest
         }
         return res;
     }
-    
+
     #endregion
 }
