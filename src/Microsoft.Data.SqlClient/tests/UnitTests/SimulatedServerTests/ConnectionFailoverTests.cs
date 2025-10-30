@@ -12,11 +12,11 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
     [Collection("SimulatedServerTests")]
+    [Trait("Category", "flaky")]
     public class ConnectionFailoverTests
     {
         //TODO parameterize for transient errors
         [Theory]
-        [Trait("Category", "flaky")]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -76,7 +76,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Fact]
-        [Trait("Category", "flaky")]
         public void NetworkError_TriggersFailover_ClearsPool()
         {
             // When connecting to a server with a configured failover partner,
@@ -146,7 +145,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Fact]
-        [Trait("Category", "flaky")]
         public void NetworkTimeout_ShouldFail()
         {
             using TdsServer failoverServer = new(
@@ -193,7 +191,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Fact]
-        [Trait("Category", "flaky")]
         public void NetworkDelay_ShouldConnectToPrimary()
         {
             using TdsServer failoverServer = new(
@@ -246,7 +243,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Fact]
-        [Trait("Category", "flaky")]
         public void NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner()
         {
             using TdsServer failoverServer = new(
@@ -298,7 +294,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Fact]
-        [Trait("Category", "flaky")]
         public void NetworkError_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner()
         {
             using TdsServer failoverServer = new(
@@ -342,7 +337,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Theory]
-        [Trait("Category", "flaky")]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -388,7 +382,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Theory]
-        [Trait("Category", "flaky")]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -437,7 +430,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Theory]
-        [Trait("Category", "flaky")]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -484,7 +476,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Theory]
-        [Trait("Category", "flaky")]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
