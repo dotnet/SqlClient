@@ -5,6 +5,9 @@ using static Microsoft.Data.SqlClient.Tests.Common.LocalAppContextSwitchesHelper
 
 namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
 {
+    // TODO: We need to keep this in the same collection as SimulatedServerTests because of the AppContext switch manipulation.
+    // Make AppContext switches testable in isolation and remove this constraint so that these tests can run in parallel with others.
+    [Collection("SimulatedServerTests")]
     public class SqlConnectionStringTest : IDisposable
     {
         private LocalAppContextSwitchesHelper _appContextSwitchHelper;
