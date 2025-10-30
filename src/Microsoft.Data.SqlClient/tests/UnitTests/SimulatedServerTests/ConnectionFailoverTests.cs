@@ -566,7 +566,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 // Ensure pooling is enabled so that the failover partner information
                 // is persisted in the pool group. If pooling is disabled, the server
                 // provided failover partner will never be used.
-                Pooling = true
+                Pooling = true,
+                MinPoolSize = 1
             };
             SqlConnection connection = new(builder.ConnectionString);
 
@@ -577,7 +578,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Close the connection to return it to the pool
             connection.Close();
 
-
             // Act
             // Dispose of the server to trigger a failover
             server.Dispose();
@@ -585,6 +585,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Opening a new connection will use the failover partner stored in the pool group.
             // This will fail if the server provided failover partner was stored to the pool group.
             using SqlConnection failoverConnection = new(builder.ConnectionString);
+
+            // Clear the pool to ensure a new physical connection is created
+            // Pool group info such as failover partner will still be retained
+            SqlConnection.ClearPool(connection);
             failoverConnection.Open();
 
             // Assert
