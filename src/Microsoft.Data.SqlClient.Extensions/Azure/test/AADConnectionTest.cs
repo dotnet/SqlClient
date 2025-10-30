@@ -9,7 +9,7 @@ public class AADConnectionTest
 {
     [ConditionalFact(
         typeof(Config),
-        nameof(Config.OnWindows),
+        nameof(Config.OnAdoPool),
         nameof(Config.HasUserManagedIdentityClientId))]
     public static void KustoDatabaseTest()
     {
@@ -169,13 +169,18 @@ public class AADConnectionTest
         $"Authentication=Active Directory Managed Identity; User Id={userId}";
         
         SqlException e = Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStrWithNoCred));
-        
+
         string expectedMessage = "[Managed Identity] Authentication unavailable";
+        
+        Console.WriteLine($"#### Expected: {expectedMessage}");
+        Console.WriteLine($"#### Actual: {e.GetBaseException().Message}");
+        
         Assert.Contains(expectedMessage, e.GetBaseException().Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [ConditionalFact(
         typeof(Config),
+        nameof(Config.OnAdoPool),
         nameof(Config.HasPasswordConnectionString),
         nameof(Config.HasUserManagedIdentityClientId))]
     public static void ActiveDirectoryDefaultMustPass()
@@ -216,6 +221,7 @@ public class AADConnectionTest
 
     [ConditionalFact(
         typeof(Config),
+        nameof(Config.OnAdoPool),
         nameof(Config.HasPasswordConnectionString),
         nameof(Config.HasUserManagedIdentityClientId))]
     public static void UserAssigned_ManagedIdentityTest()

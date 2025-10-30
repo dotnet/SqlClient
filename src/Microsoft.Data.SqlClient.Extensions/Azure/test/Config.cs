@@ -16,6 +16,9 @@ namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 //
 // The following variables are supported:
 //
+//   ADO_POOL:
+//     When defined, indicates that tests are running in an ADO-CI pool.
+//
 //   SYSTEM_ACCESSTOKEN:
 //     The Azure Pipelines $(System.AccessToken) to use for workload identity
 //     federation.
@@ -32,6 +35,7 @@ internal static class Config
 {
     # region Config Properties
 
+    internal static bool AdoPool { get; } = false;
     internal static bool DebugEmit { get; } = false;
     internal static bool IntegratedSecuritySupported { get; } = false;
     internal static bool ManagedIdentitySupported { get; } = false;
@@ -62,6 +66,7 @@ internal static class Config
     internal static bool IsAzureSqlServer() =>
         Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TcpConnectionString).DataSource);
 
+    internal static bool OnAdoPool() => AdoPool;
     internal static bool OnLinux() => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
     internal static bool OnMacOS() => RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
     internal static bool OnWindows() => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
@@ -118,6 +123,7 @@ internal static class Config
         //
         // Note that environment variables are case-sensitive on non-Windows
         // platforms.
+        AdoPool = GetEnvFlag("ADO_POOL");
         DebugEmit = GetEnvFlag("TEST_DEBUG_EMIT");
         SystemAccessToken = GetEnvVar("SYSTEM_ACCESSTOKEN");
 

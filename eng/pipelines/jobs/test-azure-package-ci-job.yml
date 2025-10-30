@@ -255,7 +255,14 @@ jobs:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
           env:
-            # The connectedServiceName below needs the system access token.
+            # Many of our tests require access to Azure resources that are
+            # currently only granted by agents running our custom ADO-CI 1ES
+            # images in our ADO pool.
+            ${{ if startsWith(parameters.poolName, 'ADO-CI') }}:
+              ADO_POOL: 1
+            # When using connectedServiceName below, the DotNetCoreCLI task
+            # needs the system access token to be injected as this environment
+            # variable.
             SYSTEM_ACCESSTOKEN: $(System.AccessToken)
             TEST_DEBUG_EMIT: ${{ parameters.debug }}
           inputs:
@@ -274,7 +281,14 @@ jobs:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
           env:
-            # The connectedServiceName below needs the system access token.
+            # Many of our tests require access to Azure resources that are
+            # currently only granted by agents running our custom ADO-CI 1ES
+            # images in our ADO pool.
+            ${{ if startsWith(parameters.poolName, 'ADO-CI') }}:
+              ADO_POOL: 1
+            # When using connectedServiceName below, the DotNetCoreCLI task
+            # needs the system access token to be injected as this environment
+            # variable.
             SYSTEM_ACCESSTOKEN: $(System.AccessToken)
             TEST_DEBUG_EMIT: ${{ parameters.debug }}
           inputs:
