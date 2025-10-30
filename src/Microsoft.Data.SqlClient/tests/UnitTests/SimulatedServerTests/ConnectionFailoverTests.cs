@@ -570,6 +570,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 MinPoolSize = 1
             };
             SqlConnection connection = new(builder.ConnectionString);
+            // Clear the pool to ensure a new physical connection is created
+            SqlConnection.ClearPool(connection);
 
             // Connect once to the primary to trigger it to send the failover partner
             connection.Open();
