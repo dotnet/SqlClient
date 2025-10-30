@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.UnitTests.Utilities;
@@ -20,61 +21,64 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public async Task ContinueTask_TaskCompletes()
         {
             // Arrange
+            // - Task to continue that completed successfully
             Task taskToContinue = Task.CompletedTask;
-            TaskCompletionSource<object> taskCompletionSource = new();
-            Mock<Action<Exception>> onFailure = new();
-            Mock<Action> onCancellation = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
+            Mock<Action<Exception>> mockOnFailure = new();
+            Mock<Action> mockOnCancellation = new();
 
-            // Note: We have to set up onSuccess to set a result on the task completion source,
+            // Note: We have to set up mockOnSuccess to set a result on the task completion source,
             //       since the AsyncHelper will not do it, and without that, we cannot reliably
             //       know when the continuation completed. We will use SetResult b/c it will throw
             //       if it has already been set.
-            Mock<Action> onSuccess = new();
-            onSuccess.Setup(action => action())
+            Mock<Action> mockOnSuccess = new();
+            mockOnSuccess.Setup(action => action())
                 .Callback(() => taskCompletionSource.SetResult(0));
 
             // Act
             AsyncHelper.ContinueTask(
                 taskToContinue: taskToContinue,
                 taskCompletionSource: taskCompletionSource,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
-            onSuccess.Verify(action => action(), Times.Once);
-            onFailure.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.Verify(action => action(), Times.Once);
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Fact]
         public async Task ContinueTask_TaskCompletesHandlerThrows()
         {
             // Arrange
+            // - Task to continue that completed successfully
             Task taskToContinue = Task.CompletedTask;
-            TaskCompletionSource<object> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
 
-            Mock<Action> onSuccess = new();
-            onSuccess.SetupThrows<Exception>();
+            // - mockOnSuccess handler throws
+            Mock<Action> mockOnSuccess = new();
+            mockOnSuccess.SetupThrows<Exception>();
 
-            Mock<Action<Exception>> onFailure = new();
-            Mock<Action> onCancellation = new();
+            Mock<Action<Exception>> mockOnFailure = new();
+            Mock<Action> mockOnCancellation = new();
 
             // Act
             AsyncHelper.ContinueTask(
                 taskToContinue,
                 taskCompletionSource,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
-            onSuccess.Verify(action => action(), Times.Once);
-            onFailure.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.Verify(action => action(), Times.Once);
+            mockOnFailure.VerifyNeverCalled();
+            mockOnFailure.VerifyNeverCalled();
         }
 
         [Theory]
@@ -83,59 +87,61 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public async Task ContinueTask_TaskCancels(bool handlerShouldThrow)
         {
             // Arrange
+            // - Task to continue that is cancelled
             Task taskToContinue = GetCancelledTask();
-            TaskCompletionSource<object> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
 
-            Mock<Action> onCancellation = new();
+            Mock<Action> mockOnCancellation = new();
             if (handlerShouldThrow)
             {
-                onCancellation.SetupThrows<Exception>();
+                mockOnCancellation.SetupThrows<Exception>();
             }
 
-            Mock<Action> onSuccess = new();
-            Mock<Action<Exception>> onFailure = new();
+            Mock<Action> mockOnSuccess = new();
+            Mock<Action<Exception>> mockOnFailure = new();
 
             // Act
             AsyncHelper.ContinueTask(
                 taskToContinue,
                 taskCompletionSource,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
-            // - taskCompletionSource should have been cancelled, regardless of onCancellation throwing
+            // - taskCompletionSource should have been cancelled, regardless of mockOnCancellation throwing
             Assert.Equal(TaskStatus.Canceled, taskCompletionSource.Task.Status);
 
-            onSuccess.VerifyNeverCalled();
-            onFailure.VerifyNeverCalled();
-            onCancellation.Verify(action => action(), Times.Once);
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.Verify(action => action(), Times.Once);
         }
 
         [Fact]
         public async Task ContinueTask_TaskCancelsNoHandler()
         {
             // Arrange
+            // - Task to continue that is cancelled
             Task taskToContinue = GetCancelledTask();
-            TaskCompletionSource<object> taskCompletionSource = new();
-            Mock<Action> onSuccess = new();
-            Mock<Action<Exception>> onFailure = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
+            Mock<Action> mockOnSuccess = new();
+            Mock<Action<Exception>> mockOnFailure = new();
 
             // Act
             AsyncHelper.ContinueTask(
                 taskToContinue,
                 taskCompletionSource,
-                onSuccess.Object,
-                onFailure.Object,
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
                 onCancellation: null);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
             // - taskCompletionSource should have been cancelled
             Assert.Equal(TaskStatus.Canceled, taskCompletionSource.Task.Status);
-            onSuccess.VerifyNeverCalled();
-            onFailure.VerifyNeverCalled();
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnFailure.VerifyNeverCalled();
         }
 
         [Theory]
@@ -144,60 +150,62 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public async Task ContinueTask_TaskFaults(bool handlerShouldThrow)
         {
             // Arrange
+            // - Task to continue that is faulted
             Task taskToContinue = Task.FromException(new Exception());
-            TaskCompletionSource<object> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
 
-            Mock<Action<Exception>> onFailure = new();
+            Mock<Action<Exception>> mockOnFailure = new();
             if (handlerShouldThrow)
             {
-                onFailure.SetupThrows<Exception, Exception>();
+                mockOnFailure.SetupThrows<Exception, Exception>();
             }
 
-            Mock<Action> onSuccess = new();
-            Mock<Action> onCancellation = new();
+            Mock<Action> mockOnSuccess = new();
+            Mock<Action> mockOnCancellation = new();
 
             // Act
             AsyncHelper.ContinueTask(
                 taskToContinue,
                 taskCompletionSource,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
-            // - taskCompletionSource should have been cancelled, regardless of onSuccess throwing
+            // - taskCompletionSource should have been cancelled, regardless of mockOnSuccess throwing
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
 
-            onSuccess.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
-            onFailure.Verify(action => action(It.IsAny<Exception>()), Times.Once);
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
+            mockOnFailure.Verify(action => action(It.IsAny<Exception>()), Times.Once);
         }
 
         [Fact]
         public async Task ContinueTask_TaskFaultsNoHandler()
         {
             // Arrange
+            // - Task to continue that is cancelled
             Task taskToContinue = Task.FromException(new Exception());
-            TaskCompletionSource<object> taskCompletionSource = new();
-            Mock<Action> onSuccess = new();
-            Mock<Action> onCancellation = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
+            Mock<Action> mockOnSuccess = new();
+            Mock<Action> mockOnCancellation = new();
 
             // Act
             AsyncHelper.ContinueTask(
                 taskToContinue,
                 taskCompletionSource,
-                onSuccess.Object,
+                mockOnSuccess.Object,
                 onFailure: null,
-                onCancellation.Object);
+                mockOnCancellation.Object);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
             // - taskCompletionSource should have been cancelled
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
 
-            onSuccess.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         #endregion
@@ -208,19 +216,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public async Task ContinueTaskWithState_1Generic_TaskCompletes()
         {
             // Arrange
+            // - Task to continue that completed successfully
             Task taskToContinue = Task.CompletedTask;
-            TaskCompletionSource<object> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
             const int state1 = 123;
 
-            Mock<Action<int, Exception>> onFailure = new();
-            Mock<Action<int>> onCancellation = new();
+            Mock<Action<int, Exception>> mockOnFailure = new();
+            Mock<Action<int>> mockOnCancellation = new();
 
-            // Note: We have to set up onSuccess to set a result on the task completion source,
+            // Note: We have to set up mockOnSuccess to set a result on the task completion source,
             //       since the AsyncHelper will not do it, and without that, we cannot reliably
             //       know when the continuation completed. We will use SetResult b/c it will throw
             //       if it has already been set.
-            Mock<Action<int>> onSuccess = new();
-            onSuccess.Setup(action => action(state1))
+            Mock<Action<int>> mockOnSuccess = new();
+            mockOnSuccess.Setup(action => action(state1))
                 .Callback<int>(_ => taskCompletionSource.SetResult(0));
 
             // Act
@@ -228,48 +237,50 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 taskToContinue: taskToContinue,
                 taskCompletionSource: taskCompletionSource,
                 state1,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
-            onSuccess.Verify(action => action(state1), Times.Once);
-            onFailure.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.Verify(action => action(state1), Times.Once);
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Fact]
         public async Task ContinueTaskWithState_1Generic_TaskCompletesHandlerThrows()
         {
             // Arrange
+            // - Task to continue that completed successfully
             Task taskToContinue = Task.CompletedTask;
-            TaskCompletionSource<object> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
             const int state1 = 123;
 
-            Mock<Action<int>> onSuccess = new();
-            onSuccess.Setup(action => action(It.IsAny<int>())).Throws<Exception>();
+            // - mockOnSuccess handler throws
+            Mock<Action<int>> mockOnSuccess = new();
+            mockOnSuccess.Setup(action => action(It.IsAny<int>())).Throws<Exception>();
 
-            Mock<Action<int, Exception>> onFailure = new();
-            Mock<Action<int>> onCancellation = new();
+            Mock<Action<int, Exception>> mockOnFailure = new();
+            Mock<Action<int>> mockOnCancellation = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
                 taskToContinue,
                 taskCompletionSource,
                 state1,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
             // - taskCompletionSource should have faulted
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
 
-            onSuccess.Verify(action => action(state1), Times.Once);
-            onFailure.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.Verify(action => action(state1), Times.Once);
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Theory]
@@ -278,64 +289,66 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public async Task ContinueTaskWithState_1Generic_TaskCancels(bool handlerShouldThrow)
         {
             // Arrange
+            // - Task to continue that was cancelled
             Task taskToContinue = GetCancelledTask();
-            TaskCompletionSource<object> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
             const int state1 = 123;
 
-            Mock<Action<int>> onCancellation = new();
+            Mock<Action<int>> mockOnCancellation = new();
             if (handlerShouldThrow)
             {
-                onCancellation.SetupThrows<int, Exception>();
+                mockOnCancellation.SetupThrows<int, Exception>();
             }
 
-            Mock<Action<int>> onSuccess = new();
-            Mock<Action<int, Exception>> onFailure = new();
+            Mock<Action<int>> mockOnSuccess = new();
+            Mock<Action<int, Exception>> mockOnFailure = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
                 taskToContinue,
                 taskCompletionSource,
                 state1,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
-            // - taskCompletionSource should have been cancelled, regardless of onCancellation throwing
+            // - taskCompletionSource should have been cancelled, regardless of mockOnCancellation throwing
             Assert.Equal(TaskStatus.Canceled, taskCompletionSource.Task.Status);
 
-            onSuccess.VerifyNeverCalled();
-            onFailure.VerifyNeverCalled();
-            onCancellation.Verify(action => action(state1), Times.Once);
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.Verify(action => action(state1), Times.Once);
         }
 
         [Fact]
         public async Task ContinueTaskWithState_1Generic_TaskCancelsNoHandler()
         {
             // Arrange
+            // - Task to continue that was cancelled
             Task taskToContinue = GetCancelledTask();
-            TaskCompletionSource<object> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
             const int state1 = 123;
 
-            Mock<Action<int>> onSuccess = new();
-            Mock<Action<int, Exception>> onFailure = new();
+            Mock<Action<int>> mockOnSuccess = new();
+            Mock<Action<int, Exception>> mockOnFailure = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
                 taskToContinue,
                 taskCompletionSource,
                 state1,
-                onSuccess.Object,
-                onFailure.Object,
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
                 onCancellation: null);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
             // - taskCompletionSource should have been cancelled
             Assert.Equal(TaskStatus.Canceled, taskCompletionSource.Task.Status);
-            onSuccess.VerifyNeverCalled();
-            onFailure.VerifyNeverCalled();
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnFailure.VerifyNeverCalled();
         }
 
         [Theory]
@@ -344,64 +357,66 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public async Task ContinueTaskWithState_1Generic_TaskFaults(bool handlerShouldThrow)
         {
             // Arrange
+            // - Task to continue that faulted
             Task taskToContinue = Task.FromException(new Exception());
-            TaskCompletionSource<object> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
             const int state1 = 123;
 
-            Mock<Action<int, Exception>> onFailure = new();
+            Mock<Action<int, Exception>> mockOnFailure = new();
             if (handlerShouldThrow)
             {
-                onFailure.SetupThrows<int, Exception, Exception>();
+                mockOnFailure.SetupThrows<int, Exception, Exception>();
             }
 
-            Mock<Action<int>> onSuccess = new();
-            Mock<Action<int>> onCancellation = new();
+            Mock<Action<int>> mockOnSuccess = new();
+            Mock<Action<int>> mockOnCancellation = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
                 taskToContinue,
                 taskCompletionSource,
                 state1,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
-            // - taskCompletionSource should have been cancelled, regardless of onSuccess throwing
+            // - taskCompletionSource should have been cancelled, regardless of mockOnSuccess throwing
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
 
-            onSuccess.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
-            onFailure.Verify(action => action(state1, It.IsAny<Exception>()), Times.Once);
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
+            mockOnFailure.Verify(action => action(state1, It.IsAny<Exception>()), Times.Once);
         }
 
         [Fact]
         public async Task ContinueTaskWithState_1Generic_TaskFaultsNoHandler()
         {
             // Arrange
+            // - Task to continue that faulted
             Task taskToContinue = Task.FromException(new Exception());
-            TaskCompletionSource<object> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
             const int state1 = 123;
 
-            Mock<Action<int>> onSuccess = new();
-            Mock<Action<int>> onCancellation = new();
+            Mock<Action<int>> mockOnSuccess = new();
+            Mock<Action<int>> mockOnCancellation = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
                 taskToContinue,
                 taskCompletionSource,
                 state1,
-                onSuccess.Object,
+                mockOnSuccess.Object,
                 onFailure: null,
-                onCancellation.Object);
+                mockOnCancellation.Object);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
             // - taskCompletionSource should have been cancelled
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
-            onSuccess.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         #endregion
@@ -412,20 +427,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public async Task ContinueTaskWithState_2Generics_TaskCompletes()
         {
             // Arrange
+            // - Task to continue that completed successfully
             Task taskToContinue = Task.CompletedTask;
-            TaskCompletionSource<object> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
             const int state1 = 123;
             const int state2 = 234;
 
-            Mock<Action<int, int, Exception>> onFailure = new();
-            Mock<Action<int, int>> onCancellation = new();
+            Mock<Action<int, int, Exception>> mockOnFailure = new();
+            Mock<Action<int, int>> mockOnCancellation = new();
 
-            // Note: We have to set up onSuccess to set a result on the task completion source,
+            // Note: We have to set up mockOnSuccess to set a result on the task completion source,
             //       since the AsyncHelper will not do it, and without that, we cannot reliably
             //       know when the continuation completed. We will use SetResult b/c it will throw
             //       if it has already been set.
-            Mock<Action<int, int>> onSuccess = new();
-            onSuccess.Setup(action => action(state1, state2))
+            Mock<Action<int, int>> mockOnSuccess = new();
+            mockOnSuccess.Setup(action => action(state1, state2))
                 .Callback<int, int>((_, _) => taskCompletionSource.SetResult(0));
 
             // Act
@@ -434,49 +450,51 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 taskCompletionSource: taskCompletionSource,
                 state1,
                 state2,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
-            onSuccess.Verify(action => action(state1, state2), Times.Once);
-            onFailure.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.Verify(action => action(state1, state2), Times.Once);
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Fact]
         public async Task ContinueTaskWithState_2Generics_TaskCompletesHandlerThrows()
         {
             // Arrange
+            // - Task to continue that completed successfully
             Task taskToContinue = Task.CompletedTask;
-            TaskCompletionSource<object> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
             const int state1 = 123;
 
-            Mock<Action<int>> onSuccess = new();
-            onSuccess.Setup(o => o(It.IsAny<int>())).Throws<Exception>();
+            // - mockOnSuccess handler throws
+            Mock<Action<int>> mockOnSuccess = new();
+            mockOnSuccess.Setup(o => o(It.IsAny<int>())).Throws<Exception>();
 
-            Mock<Action<int, Exception>> onFailure = new();
-            Mock<Action<int>> onCancellation = new();
+            Mock<Action<int, Exception>> mockOnFailure = new();
+            Mock<Action<int>> mockOnCancellation = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
                 taskToContinue,
                 taskCompletionSource,
                 state1,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
             // - taskCompletionSource should have faulted
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
 
-            // - onSuccess was called with state obj
-            onSuccess.Verify(action => action(state1), Times.Once);
-            onFailure.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            // - mockOnSuccess was called with state obj
+            mockOnSuccess.Verify(action => action(state1), Times.Once);
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Theory]
@@ -485,19 +503,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public async Task ContinueTaskWithState_2Generics_TaskCancels(bool handlerShouldThrow)
         {
             // Arrange
+            // - Task to continue that was cancelled
             Task taskToContinue = GetCancelledTask();
-            TaskCompletionSource<object> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
             const int state1 = 123;
             const int state2 = 234;
 
-            Mock<Action<int, int>> onCancellation = new();
+            Mock<Action<int, int>> mockOnCancellation = new();
             if (handlerShouldThrow)
             {
-                onCancellation.SetupThrows<int, int, Exception>();
+                mockOnCancellation.SetupThrows<int, int, Exception>();
             }
 
-            Mock<Action<int, int>> onSuccess = new();
-            Mock<Action<int, int, Exception>> onFailure = new();
+            Mock<Action<int, int>> mockOnSuccess = new();
+            Mock<Action<int, int, Exception>> mockOnFailure = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
@@ -505,31 +524,32 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 taskCompletionSource,
                 state1,
                 state2,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
-            // - taskCompletionSource should have been cancelled, regardless of onCancellation throwing
+            // - taskCompletionSource should have been cancelled, regardless of mockOnCancellation throwing
             Assert.Equal(TaskStatus.Canceled, taskCompletionSource.Task.Status);
 
-            onSuccess.VerifyNeverCalled();
-            onFailure.VerifyNeverCalled();
-            onCancellation.Verify(action => action(state1, state2), Times.Once);
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.Verify(action => action(state1, state2), Times.Once);
         }
 
         [Fact]
         public async Task ContinueTaskWithState_2Generics_TaskCancelsNoHandler()
         {
             // Arrange
+            // - Task to continue that was cancelled
             Task taskToContinue = GetCancelledTask();
-            TaskCompletionSource<object> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
             const int state1 = 123;
             const int state2 = 234;
 
-            Mock<Action<int, int>> onSuccess = new();
-            Mock<Action<int, int, Exception>> onFailure = new();
+            Mock<Action<int, int>> mockOnSuccess = new();
+            Mock<Action<int, int, Exception>> mockOnFailure = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
@@ -537,16 +557,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 taskCompletionSource,
                 state1,
                 state2,
-                onSuccess.Object,
-                onFailure.Object,
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
                 onCancellation: null);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
             // - taskCompletionSource should have been cancelled
             Assert.Equal(TaskStatus.Canceled, taskCompletionSource.Task.Status);
-            onSuccess.VerifyNeverCalled();
-            onFailure.VerifyNeverCalled();
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnFailure.VerifyNeverCalled();
         }
 
         [Theory]
@@ -555,19 +575,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public async Task ContinueTaskWithState_2Generics_TaskFaults(bool handlerShouldThrow)
         {
             // Arrange
+            // - Task to continue that faulted
             Task taskToContinue = Task.FromException(new Exception());
-            TaskCompletionSource<object> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
             const int state1 = 123;
             const int state2 = 234;
 
-            Mock<Action<int, int, Exception>> onFailure = new();
+            Mock<Action<int, int, Exception>> mockOnFailure = new();
             if (handlerShouldThrow)
             {
-                onFailure.SetupThrows<int, int, Exception, Exception>();
+                mockOnFailure.SetupThrows<int, int, Exception, Exception>();
             }
 
-            Mock<Action<int, int>> onSuccess = new();
-            Mock<Action<int, int>> onCancellation = new();
+            Mock<Action<int, int>> mockOnSuccess = new();
+            Mock<Action<int, int>> mockOnCancellation = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
@@ -575,31 +596,32 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 taskCompletionSource,
                 state1,
                 state2,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
-            // - taskCompletionSource should have been cancelled, regardless of onSuccess throwing
+            // - taskCompletionSource should have been cancelled, regardless of mockOnSuccess throwing
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
 
-            onSuccess.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
-            onFailure.Verify(action => action(state1, state2, It.IsAny<Exception>()), Times.Once);
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
+            mockOnFailure.Verify(action => action(state1, state2, It.IsAny<Exception>()), Times.Once);
         }
 
         [Fact]
         public async Task ContinueTaskWithState_2Generics_TaskFaultsNoHandler()
         {
             // Arrange
+            // - Task to continue that faulted
             Task taskToContinue = Task.FromException(new Exception());
-            TaskCompletionSource<object> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = new();
             const int state1 = 123;
             const int state2 = 234;
 
-            Mock<Action<int, int>> onSuccess = new();
-            Mock<Action<int, int>> onCancellation = new();
+            Mock<Action<int, int>> mockOnSuccess = new();
+            Mock<Action<int, int>> mockOnCancellation = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
@@ -607,16 +629,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 taskCompletionSource,
                 state1,
                 state2,
-                onSuccess.Object,
+                mockOnSuccess.Object,
                 onFailure: null,
-                onCancellation.Object);
+                mockOnCancellation.Object);
             await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
 
             // Assert
             // - taskCompletionSource should have been cancelled
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
-            onSuccess.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         #endregion
@@ -627,74 +649,77 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public void CreateContinuationTask_NullTask()
         {
             // Arrange
-            Mock<Action> onSuccess = new();
-            Mock<Action<Exception>> onFailure = new();
-            Mock<Action> onCancellation = new();
+            Mock<Action> mockOnSuccess = new();
+            Mock<Action<Exception>> mockOnFailure = new();
+            Mock<Action> mockOnCancellation = new();
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTask(
+            Task? continuationTask = AsyncHelper.CreateContinuationTask(
                 taskToContinue: null,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
 
             // Assert
             Assert.Null(continuationTask);
 
-            onSuccess.Verify(action => action(), Times.Once);
-            onFailure.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.Verify(action => action(), Times.Once);
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Fact]
         public async Task CreateContinuationTask_TaskCompletes()
         {
             // Arrange
+            // - Task to continue completed successfully
             Task taskToContinue = Task.CompletedTask;
-            Mock<Action> onSuccess = new();
-            Mock<Action<Exception>> onFailure = new();
-            Mock<Action> onCancellation = new();
+            Mock<Action> mockOnSuccess = new();
+            Mock<Action<Exception>> mockOnFailure = new();
+            Mock<Action> mockOnCancellation = new();
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTask(
+            Task? continuationTask = AsyncHelper.CreateContinuationTask(
                 taskToContinue,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.RanToCompletion, continuationTask.Status);
 
-            onSuccess.Verify(action => action(), Times.Once);
-            onFailure.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.Verify(action => action(), Times.Once);
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Fact]
         public async Task CreateContinuationTask_TaskCompletesHandlerThrows()
         {
             // Arrange
+            // - Task to continue completed successfully
             Task taskToContinue = Task.CompletedTask;
-            Mock<Action<Exception>> onFailure = new();
-            Mock<Action> onCancellation = new();
+            Mock<Action<Exception>> mockOnFailure = new();
+            Mock<Action> mockOnCancellation = new();
 
-            Mock<Action> onSuccess = new();
-            onSuccess.SetupThrows<Exception>();
+            // - mockOnSuccess handler throws
+            Mock<Action> mockOnSuccess = new();
+            mockOnSuccess.SetupThrows<Exception>();
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTask(
+            Task? continuationTask = AsyncHelper.CreateContinuationTask(
                 taskToContinue,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
-            onSuccess.Verify(action => action(), Times.Once);
-            onFailure.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.Verify(action => action(), Times.Once);
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Theory]
@@ -703,51 +728,53 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public async Task CreateContinuationTask_TaskCancels(bool handlerShouldThrow)
         {
             // Arrange
+            // - Task to continue was cancelled
             Task taskToContinue = GetCancelledTask();
-            Mock<Action<Exception>> onFailure = new();
-            Mock<Action> onSuccess = new();
+            Mock<Action<Exception>> mockOnFailure = new();
+            Mock<Action> mockOnSuccess = new();
 
-            Mock<Action> onCancellation = new();
+            Mock<Action> mockOnCancellation = new();
             if (handlerShouldThrow)
             {
-                onCancellation.SetupThrows<Exception>();
+                mockOnCancellation.SetupThrows<Exception>();
             }
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTask(
+            Task? continuationTask = AsyncHelper.CreateContinuationTask(
                 taskToContinue,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.Canceled, continuationTask.Status);
-            onSuccess.VerifyNeverCalled();
-            onFailure.VerifyNeverCalled();
-            onCancellation.Verify(action => action(), Times.Once);
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.Verify(action => action(), Times.Once);
         }
 
         [Fact]
         public async Task CreateContinuationTask_TaskCancelsNoHandler()
         {
             // Arrange
+            // - Task to continue completed successfully
             Task taskToContinue = GetCancelledTask();
-            Mock<Action<Exception>> onFailure = new();
-            Mock<Action> onSuccess = new();
+            Mock<Action<Exception>> mockOnFailure = new();
+            Mock<Action> mockOnSuccess = new();
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTask(
+            Task? continuationTask = AsyncHelper.CreateContinuationTask(
                 taskToContinue,
-                onSuccess.Object,
-                onFailure.Object,
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
                 onCancellation: null);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.Canceled, continuationTask.Status);
-            onSuccess.VerifyNeverCalled();
-            onFailure.VerifyNeverCalled();
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnFailure.VerifyNeverCalled();
         }
 
         [Theory]
@@ -756,51 +783,53 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public async Task CreateContinuationTask_TaskFaults(bool handlerShouldThrow)
         {
             // Arrange
+            // - Task to continue faulted
             Task taskToContinue = Task.FromException(new Exception());
-            Mock<Action> onSuccess = new();
-            Mock<Action> onCancellation = new();
+            Mock<Action> mockOnSuccess = new();
+            Mock<Action> mockOnCancellation = new();
 
-            Mock<Action<Exception>> onFailure = new();
+            Mock<Action<Exception>> mockOnFailure = new();
             if (handlerShouldThrow)
             {
-                onFailure.SetupThrows<Exception, Exception>();
+                mockOnFailure.SetupThrows<Exception, Exception>();
             }
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTask(
+            Task? continuationTask = AsyncHelper.CreateContinuationTask(
                 taskToContinue,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
-            onSuccess.VerifyNeverCalled();
-            onFailure.Verify(action => action(It.IsAny<Exception>()), Times.Once);
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnFailure.Verify(action => action(It.IsAny<Exception>()), Times.Once);
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Fact]
         public async Task CreateContinuationTask_TaskFaultsNoHandler()
         {
             // Arrange
+            // - Task to continue completed successfully
             Task taskToContinue = Task.FromException(new Exception());
-            Mock<Action> onSuccess = new();
-            Mock<Action> onCancellation = new();
+            Mock<Action> mockOnSuccess = new();
+            Mock<Action> mockOnCancellation = new();
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTask(
+            Task? continuationTask = AsyncHelper.CreateContinuationTask(
                 taskToContinue,
-                onSuccess.Object,
+                mockOnSuccess.Object,
                 onFailure: null,
                 onCancellation: null);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
-            onSuccess.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         #endregion
@@ -812,80 +841,83 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         {
             // Arrange
             const int state1 = 123;
-            Mock<Action<int>> onSuccess = new();
-            Mock<Action<int, Exception>> onFailure = new();
-            Mock<Action<int>> onCancellation = new();
+            Mock<Action<int>> mockOnSuccess = new();
+            Mock<Action<int, Exception>> mockOnFailure = new();
+            Mock<Action<int>> mockOnCancellation = new();
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTaskWithState(
+            Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
                 taskToContinue: null,
                 state1,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
 
             // Assert
             Assert.Null(continuationTask);
 
-            onSuccess.Verify(action => action(state1), Times.Once);
-            onFailure.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.Verify(action => action(state1), Times.Once);
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Fact]
         public async Task CreateContinuationTaskWithState_1Generic_TaskCompletes()
         {
             // Arrange
+            // - Task to continue completed successfully
             Task taskToContinue = Task.CompletedTask;
             const int state1 = 123;
 
-            Mock<Action<int>> onSuccess = new();
-            Mock<Action<int, Exception>> onFailure = new();
-            Mock<Action<int>> onCancellation = new();
+            Mock<Action<int>> mockOnSuccess = new();
+            Mock<Action<int, Exception>> mockOnFailure = new();
+            Mock<Action<int>> mockOnCancellation = new();
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTaskWithState(
+            Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
                 taskToContinue,
                 state1,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.RanToCompletion, continuationTask.Status);
-            onSuccess.Verify(action => action(state1), Times.Once);
-            onFailure.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.Verify(action => action(state1), Times.Once);
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Fact]
         public async Task CreateContinuationTaskWithState_1Generic_TaskCompletesHandlerThrows()
         {
             // Arrange
+            // - Task to continue completed successfully
             Task taskToContinue = Task.CompletedTask;
             const int state1 = 123;
 
-            Mock<Action<int, Exception>> onFailure = new();
-            Mock<Action<int>> onCancellation = new();
+            Mock<Action<int, Exception>> mockOnFailure = new();
+            Mock<Action<int>> mockOnCancellation = new();
 
-            Mock<Action<int>> onSuccess = new();
-            onSuccess.SetupThrows<int, Exception>();
+            // - mockOnSuccess handler throws
+            Mock<Action<int>> mockOnSuccess = new();
+            mockOnSuccess.SetupThrows<int, Exception>();
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTaskWithState(
+            Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
                 taskToContinue,
                 state1,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
-            onSuccess.Verify(action => action(state1), Times.Once);
-            onFailure.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.Verify(action => action(state1), Times.Once);
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Theory]
@@ -894,57 +926,59 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public async Task CreateContinuationTaskWithState_1Generic_TaskCancels(bool handlerShouldThrow)
         {
             // Arrange
+            // - Task to continue was cancelled
             Task taskToContinue = GetCancelledTask();
             const int state1 = 123;
 
-            Mock<Action<int, Exception>> onFailure = new();
-            Mock<Action<int>> onSuccess = new();
+            Mock<Action<int, Exception>> mockOnFailure = new();
+            Mock<Action<int>> mockOnSuccess = new();
 
-            Mock<Action<int>> onCancellation = new();
+            Mock<Action<int>> mockOnCancellation = new();
             if (handlerShouldThrow)
             {
-                onCancellation.SetupThrows<int, Exception>();
+                mockOnCancellation.SetupThrows<int, Exception>();
             }
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTaskWithState(
+            Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
                 taskToContinue,
                 state1,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.Canceled, continuationTask.Status);
-            onSuccess.VerifyNeverCalled();
-            onFailure.VerifyNeverCalled();
-            onCancellation.Verify(action => action(state1), Times.Once);
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.Verify(action => action(state1), Times.Once);
         }
 
         [Fact]
         public async Task CreateContinuationTaskWithState_1Generic_TaskCancelsNoHandler()
         {
             // Arrange
+            // - Task to continue was cancelled
             Task taskToContinue = GetCancelledTask();
             const int state1 = 123;
 
-            Mock<Action<int, Exception>> onFailure = new();
-            Mock<Action<int>> onSuccess = new();
+            Mock<Action<int, Exception>> mockOnFailure = new();
+            Mock<Action<int>> mockOnSuccess = new();
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTaskWithState(
+            Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
                 taskToContinue,
                 state1,
-                onSuccess.Object,
-                onFailure.Object,
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
                 onCancellation: null);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.Canceled, continuationTask.Status);
-            onSuccess.VerifyNeverCalled();
-            onFailure.VerifyNeverCalled();
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnFailure.VerifyNeverCalled();
         }
 
         [Theory]
@@ -953,57 +987,59 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public async Task CreateContinuationTaskWithState_1Generic_TaskFaults(bool handlerShouldThrow)
         {
             // Arrange
+            // - Task to continue faulted
             Task taskToContinue = Task.FromException(new Exception());
             const int state1 = 123;
 
-            Mock<Action<int>> onSuccess = new();
-            Mock<Action<int>> onCancellation = new();
+            Mock<Action<int>> mockOnSuccess = new();
+            Mock<Action<int>> mockOnCancellation = new();
 
-            Mock<Action<int, Exception>> onFailure = new();
+            Mock<Action<int, Exception>> mockOnFailure = new();
             if (handlerShouldThrow)
             {
-                onFailure.SetupThrows<int, Exception, Exception>();
+                mockOnFailure.SetupThrows<int, Exception, Exception>();
             }
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTaskWithState(
+            Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
                 taskToContinue,
                 state1,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
-            onSuccess.VerifyNeverCalled();
-            onFailure.Verify(action => action(state1, It.IsAny<Exception>()), Times.Once);
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnFailure.Verify(action => action(state1, It.IsAny<Exception>()), Times.Once);
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Fact]
         public async Task CreateContinuationTaskWithState_1Generic_TaskFaultsNoHandler()
         {
             // Arrange
+            // - Task to continue faulted
             Task taskToContinue = Task.FromException(new Exception());
             const int state1 = 123;
 
-            Mock<Action<int>> onSuccess = new();
-            Mock<Action<int>> onCancellation = new();
+            Mock<Action<int>> mockOnSuccess = new();
+            Mock<Action<int>> mockOnCancellation = new();
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTaskWithState(
+            Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
                 taskToContinue,
                 state1,
-                onSuccess.Object,
+                mockOnSuccess.Object,
                 onFailure: null,
                 onCancellation: null);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
-            onSuccess.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         #endregion
@@ -1017,85 +1053,88 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             const int state1 = 123;
             const int state2 = 234;
 
-            Mock<Action<int, int>> onSuccess = new();
-            Mock<Action<int, int, Exception>> onFailure = new();
-            Mock<Action<int, int>> onCancellation = new();
+            Mock<Action<int, int>> mockOnSuccess = new();
+            Mock<Action<int, int, Exception>> mockOnFailure = new();
+            Mock<Action<int, int>> mockOnCancellation = new();
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTaskWithState(
+            Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
                 taskToContinue: null,
                 state1,
                 state2,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
 
             // Assert
             Assert.Null(continuationTask);
 
-            onSuccess.Verify(action => action(state1, state2), Times.Once);
-            onFailure.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.Verify(action => action(state1, state2), Times.Once);
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Fact]
         public async Task CreateContinuationTaskWithState_2Generics_TaskCompletes()
         {
             // Arrange
+            // - Task to continue completed successfully
             Task taskToContinue = Task.CompletedTask;
             const int state1 = 123;
             const int state2 = 234;
 
-            Mock<Action<int, int>> onSuccess = new();
-            Mock<Action<int, int, Exception>> onFailure = new();
-            Mock<Action<int, int>> onCancellation = new();
+            Mock<Action<int, int>> mockOnSuccess = new();
+            Mock<Action<int, int, Exception>> mockOnFailure = new();
+            Mock<Action<int, int>> mockOnCancellation = new();
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTaskWithState(
+            Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
                 taskToContinue,
                 state1,
                 state2,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.RanToCompletion, continuationTask.Status);
-            onSuccess.Verify(action => action(state1, state2), Times.Once);
-            onFailure.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.Verify(action => action(state1, state2), Times.Once);
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Fact]
         public async Task CreateContinuationTaskWithState_2Generics_TaskCompletesHandlerThrows()
         {
             // Arrange
+            // - Task to continue completed successfully
             Task taskToContinue = Task.CompletedTask;
             const int state1 = 123;
             const int state2 = 234;
 
-            Mock<Action<int, int, Exception>> onFailure = new();
-            Mock<Action<int, int>> onCancellation = new();
+            Mock<Action<int, int, Exception>> mockOnFailure = new();
+            Mock<Action<int, int>> mockOnCancellation = new();
 
-            Mock<Action<int, int>> onSuccess = new();
-            onSuccess.SetupThrows<int, int, Exception>();
+            // - mockOnSuccess handler throws
+            Mock<Action<int, int>> mockOnSuccess = new();
+            mockOnSuccess.SetupThrows<int, int, Exception>();
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTaskWithState(
+            Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
                 taskToContinue,
                 state1,
                 state2,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
-            onSuccess.Verify(action => action(state1, state2), Times.Once);
-            onFailure.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.Verify(action => action(state1, state2), Times.Once);
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Theory]
@@ -1104,61 +1143,63 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public async Task CreateContinuationTaskWithState_2Generics_TaskCancels(bool handlerShouldThrow)
         {
             // Arrange
+            // - Task to continue was cancelled
             Task taskToContinue = GetCancelledTask();
             const int state1 = 123;
             const int state2 = 234;
 
-            Mock<Action<int, int, Exception>> onFailure = new();
-            Mock<Action<int, int>> onSuccess = new();
+            Mock<Action<int, int, Exception>> mockOnFailure = new();
+            Mock<Action<int, int>> mockOnSuccess = new();
 
-            Mock<Action<int, int>> onCancellation = new();
+            Mock<Action<int, int>> mockOnCancellation = new();
             if (handlerShouldThrow)
             {
-                onCancellation.SetupThrows<int, int, Exception>();
+                mockOnCancellation.SetupThrows<int, int, Exception>();
             }
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTaskWithState(
+            Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
                 taskToContinue,
                 state1,
                 state2,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.Canceled, continuationTask.Status);
-            onSuccess.VerifyNeverCalled();
-            onFailure.VerifyNeverCalled();
-            onCancellation.Verify(action => action(state1, state2), Times.Once);
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.Verify(action => action(state1, state2), Times.Once);
         }
 
         [Fact]
         public async Task CreateContinuationTaskWithState_2Generics_TaskCancelsNoHandler()
         {
             // Arrange
+            // - Task to continue was cancelled
             Task taskToContinue = GetCancelledTask();
             const int state1 = 123;
             const int state2 = 234;
 
-            Mock<Action<int, int, Exception>> onFailure = new();
-            Mock<Action<int, int>> onSuccess = new();
+            Mock<Action<int, int, Exception>> mockOnFailure = new();
+            Mock<Action<int, int>> mockOnSuccess = new();
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTaskWithState(
+            Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
                 taskToContinue,
                 state1,
                 state2,
-                onSuccess.Object,
-                onFailure.Object,
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
                 onCancellation: null);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.Canceled, continuationTask.Status);
-            onSuccess.VerifyNeverCalled();
-            onFailure.VerifyNeverCalled();
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnFailure.VerifyNeverCalled();
         }
 
         [Theory]
@@ -1167,61 +1208,63 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public async Task CreateContinuationTaskWithState_2Generics_TaskFaults(bool handlerShouldThrow)
         {
             // Arrange
+            // - Task to continue faulted
             Task taskToContinue = Task.FromException(new Exception());
             const int state1 = 123;
             const int state2 = 234;
 
-            Mock<Action<int, int>> onSuccess = new();
-            Mock<Action<int, int>> onCancellation = new();
+            Mock<Action<int, int>> mockOnSuccess = new();
+            Mock<Action<int, int>> mockOnCancellation = new();
 
-            Mock<Action<int, int, Exception>> onFailure = new();
+            Mock<Action<int, int, Exception>> mockOnFailure = new();
             if (handlerShouldThrow)
             {
-                onFailure.SetupThrows<int, int, Exception, Exception>();
+                mockOnFailure.SetupThrows<int, int, Exception, Exception>();
             }
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTaskWithState(
+            Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
                 taskToContinue,
                 state1,
                 state2,
-                onSuccess.Object,
-                onFailure.Object,
-                onCancellation.Object);
+                mockOnSuccess.Object,
+                mockOnFailure.Object,
+                mockOnCancellation.Object);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
-            onSuccess.VerifyNeverCalled();
-            onFailure.Verify(action => action(state1, state2, It.IsAny<Exception>()), Times.Once);
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnFailure.Verify(action => action(state1, state2, It.IsAny<Exception>()), Times.Once);
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Fact]
         public async Task CreateContinuationTaskWithState_2Generics_TaskFaultsNoHandler()
         {
             // Arrange
+            // - Task to continue faulted
             Task taskToContinue = Task.FromException(new Exception());
             const int state1 = 123;
             const int state2 = 234;
 
-            Mock<Action<int, int>> onSuccess = new();
-            Mock<Action<int, int>> onCancellation = new();
+            Mock<Action<int, int>> mockOnSuccess = new();
+            Mock<Action<int, int>> mockOnCancellation = new();
 
             // Act
-            Task continuationTask = AsyncHelper.CreateContinuationTaskWithState(
+            Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
                 taskToContinue,
                 state1,
                 state2,
-                onSuccess.Object,
+                mockOnSuccess.Object,
                 onFailure: null,
                 onCancellation: null);
             await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
-            onSuccess.VerifyNeverCalled();
-            onCancellation.VerifyNeverCalled();
+            mockOnSuccess.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         #endregion
@@ -1232,6 +1275,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public void WaitForCompletion_DoesNotCreateUnobservedException()
         {
             // Arrange
+            // - Create a handler to capture any unhandled exception
             Exception? unhandledException = null;
             EventHandler<UnobservedTaskExceptionEventArgs> handleUnobservedException =
                 (_, args) => unhandledException = args.Exception;
@@ -1243,7 +1287,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             {
                 // Act
                 // - Run task that will always time out
-                TaskCompletionSource<object> tcs = new();
+                TaskCompletionSource<object?> tcs = new();
                 AsyncHelper.WaitForCompletion(
                     tcs.Task,
                     timeoutInSeconds: 1,
@@ -1276,8 +1320,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             return Task.FromCanceled(cts.Token);
         }
 
-        private static async Task RunWithTimeout(Task taskToRun, TimeSpan timeout)
+        private static async Task RunWithTimeout([NotNull] Task? taskToRun, TimeSpan timeout)
         {
+            if (taskToRun is null)
+            {
+                Assert.Fail("Expected non-null task for timeout");
+            }
+
             Task winner = await Task.WhenAny(taskToRun, Task.Delay(timeout));
             if (winner != taskToRun)
             {
