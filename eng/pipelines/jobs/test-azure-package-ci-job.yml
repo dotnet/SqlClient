@@ -214,14 +214,16 @@ jobs:
       - template: ../common/templates/steps/update-config-file-step.yml@self
         parameters:
           debug: ${{ parameters.debug }}
+          
+          # The config.json file has many options, but only some of them are
+          # used by the Azure package tests.  We only specify the ones that are
+          # necessary here.
+
           AADServicePrincipalId: $(AADServicePrincipalId)
           # macOS doesn't support managed identities.
           ManagedIdentitySupported: ${{ not(eq(parameters.vmImage, 'macos-latest')) }}
           SupportsIntegratedSecurity: ${{ eq(variables['SupportsIntegratedSecurity'], 'true') }}
           TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
-          # We don't have the SNI native DLL available, so tell MDS not to use
-          # it.
-          UseManagedSNIOnWindows: true
           UserManagedIdentityClientId: $(UserManagedIdentityClientId)
           # Note: Using the isFork variable to determine if secrets are
           # available is not ideal since it's an indirect association. But
