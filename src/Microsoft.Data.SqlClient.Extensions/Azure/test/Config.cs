@@ -45,6 +45,7 @@ internal static class Config
     internal static string SystemAccessToken { get; } = string.Empty;
     internal static bool SystemAssignedManagedIdentitySupported { get; } = false;
     internal static string TcpConnectionString { get; } = string.Empty;
+    internal static bool UseManagedSniOnWindows { get; } = false;
     internal static string UserManagedIdentityClientId { get; } = string.Empty;
 
     #endregion
@@ -111,6 +112,7 @@ internal static class Config
             ServicePrincipalSecret = GetString(root, "AADServicePrincipalSecret");
             SystemAssignedManagedIdentitySupported = GetBool(root, "SupportsSystemAssignedManagedIdentity");
             TcpConnectionString = GetString(root, "TCPConnectionString");
+            UseManagedSniOnWindows = GetBool(root, "UseManagedSNIOnWindows");
             UserManagedIdentityClientId = GetString(root, "UserManagedIdentityClientId");
         }
         catch (Exception ex)
@@ -150,7 +152,18 @@ internal static class Config
             Console.WriteLine(
                 $"  TcpConnectionString:                    {TcpConnectionString}");
             Console.WriteLine(
+                $"  UseManagedSniOnWindows:                 {UseManagedSniOnWindows}");
+            Console.WriteLine(
                 $"  UserManagedIdentityClientId:            {UserManagedIdentityClientId}");
+        }
+
+        // Apply the SNI flag, if necessary.  This must occur before any MDS
+        // APIs are used.
+        if (UseManagedSniOnWindows)
+        {
+            AppContext.SetSwitch(
+                "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows",
+                true);
         }
     }
 

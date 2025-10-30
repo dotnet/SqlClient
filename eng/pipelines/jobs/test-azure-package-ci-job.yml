@@ -219,6 +219,9 @@ jobs:
           ManagedIdentitySupported: ${{ not(eq(parameters.vmImage, 'macos-latest')) }}
           SupportsIntegratedSecurity: ${{ eq(variables['SupportsIntegratedSecurity'], 'true') }}
           TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
+          # We don't have the SNI native DLL available, so tell MDS not to use
+          # it.
+          UseManagedSNIOnWindows: true
           UserManagedIdentityClientId: $(UserManagedIdentityClientId)
           # Note: Using the isFork variable to determine if secrets are
           # available is not ideal since it's an indirect association. But
