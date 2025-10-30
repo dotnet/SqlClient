@@ -1351,7 +1351,11 @@ namespace Microsoft.Data.SqlClient
                 _sqlRPCParameterEncryptionReqArray = new _SqlRPC[1];
 
                 _SqlRPC rpc = null;
-                GetRPCObject(systemParamCount: 0, GetParameterCount(_parameters), ref rpc);
+                GetRPCObject(
+                    systemParamCount: 0,
+                    GetParameterCount(_parameters),
+                    ref rpc,
+                    forSpDescribeParameterEncryption: false);
                 Debug.Assert(rpc is not null, "GetRPCObject should not return rpc as null.");
 
                 rpc.rpcName = CommandText;
