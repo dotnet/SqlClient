@@ -363,8 +363,8 @@ namespace Microsoft.Data.SqlClient
         #region Events
         
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/StatementCompleted/*'/>
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_StatementCompleted)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_StatementCompleted)]
+        [ResCategory(nameof(Strings.DataCategory_StatementCompleted))]
+        [ResDescription(nameof(Strings.DbCommand_StatementCompleted))]
         public event StatementCompletedEventHandler StatementCompleted
         {
             add
@@ -407,13 +407,13 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ColumnEncryptionSetting/*'/>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.TCE_SqlCommand_ColumnEncryptionSetting)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.TCE_SqlCommand_ColumnEncryptionSetting))]
         public SqlCommandColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
         
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandTimeout/*'/>
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandTimeout)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.DbCommand_CommandTimeout))]
         public override int CommandTimeout
         {
             get => _commandTimeout ?? DefaultCommandTimeout;
@@ -441,8 +441,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandText/*'/>
         [DefaultValue("")]
         [RefreshProperties(RefreshProperties.All)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandText)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.DbCommand_CommandText))]
         public override string CommandText
         {
             get => _commandText ?? string.Empty;
@@ -465,8 +465,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandType/*'/>
         [DefaultValue(CommandType.Text)]
         [RefreshProperties(RefreshProperties.All)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandType)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.DbCommand_CommandType))]
         public override CommandType CommandType
         {
             get => _commandType != 0 ? _commandType : CommandType.Text;
@@ -499,8 +499,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Connection/*'/>
         [DefaultValue(null)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_Connection)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.DbCommand_Connection))]
         public new SqlConnection Connection
         {
             get => _activeConnection;
@@ -582,8 +582,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Notification/*'/>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Notification)]
-        [ResDescription(StringsHelper.ResourceNames.SqlCommand_Notification)]
+        [ResCategory(nameof(Strings.DataCategory_Notification))]
+        [ResDescription(nameof(Strings.SqlCommand_Notification))]
         public SqlNotificationRequest Notification
         {
             get => _notification;
@@ -600,8 +600,8 @@ namespace Microsoft.Data.SqlClient
         #if NETFRAMEWORK
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/NotificationAutoEnlist/*'/>
         [DefaultValue(true)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Notification)]
-        [ResDescription(StringsHelper.ResourceNames.SqlCommand_NotificationAutoEnlist)]
+        [ResCategory(nameof(Strings.DataCategory_Notification))]
+        [ResDescription(nameof(Strings.SqlCommand_NotificationAutoEnlist))]
         public bool NotificationAutoEnlist
         {
             get => _notificationAutoEnlist;
@@ -611,8 +611,8 @@ namespace Microsoft.Data.SqlClient
         
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_Parameters)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.DbCommand_Parameters))]
         public new SqlParameterCollection Parameters
         {
             get
@@ -640,7 +640,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Transaction/*'/>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_Transaction)]
+        [ResDescription(nameof(Strings.DbCommand_Transaction))]
         public new SqlTransaction Transaction
         {
             get
@@ -678,8 +678,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/UpdatedRowSource/*'/>
         [DefaultValue(UpdateRowSource.Both)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Update)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_UpdatedRowSource)]
+        [ResCategory(nameof(Strings.DataCategory_Update))]
+        [ResDescription(nameof(Strings.DbCommand_UpdatedRowSource))]
         public override UpdateRowSource UpdatedRowSource
         {
             get => _updatedRowSource;
