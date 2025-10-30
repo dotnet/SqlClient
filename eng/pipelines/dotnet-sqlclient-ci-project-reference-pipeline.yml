@@ -21,11 +21,11 @@ trigger:
     - Nuget.config
 
 schedules:
-- cron: '0 5 * * Thu'
-  displayName: Weekly Wednesday 10:00 PM (UTC - 7) Build
+- cron: '0 5 * * *'
+  displayName: Daily 10:00 PM (UTC - 7) Build
   branches:
     include:
-    - internal/main
+    - main
   always: true
 
 parameters: # parameters are shown up in ADO UI in a build queue time

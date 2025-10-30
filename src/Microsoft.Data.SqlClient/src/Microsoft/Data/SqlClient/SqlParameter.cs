@@ -1050,6 +1050,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="rawParameterName"></param>
+        // @TODO: This is only used in SqlCommand, and literally just adds a '@' at the beginning. This belongs in SqlCommand, without the append logic.
         internal static void AppendPrefixedParameterName(StringBuilder builder, string rawParameterName)
         {
             if (!string.IsNullOrEmpty(rawParameterName))

@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -40,7 +41,45 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Fields
-        
+        #region Test-Only Behavior Overrides
+        #if DEBUG
+        /// <summary>
+        /// Force the client to sleep during sp_describe_parameter_encryption in the function TryFetchInputParameterEncryptionInfo.
+        /// </summary>
+        private static bool _sleepDuringTryFetchInputParameterEncryptionInfo = false;
+
+        /// <summary>
+        /// Force the client to sleep during sp_describe_parameter_encryption in the function RunExecuteReaderTds.
+        /// </summary>
+        private static bool _sleepDuringRunExecuteReaderTdsForSpDescribeParameterEncryption = false;
+
+        /// <summary>
+        /// Force the client to sleep during sp_describe_parameter_encryption after ReadDescribeEncryptionParameterResults.
+        /// </summary>
+        private static bool _sleepAfterReadDescribeEncryptionParameterResults = false;
+
+        /// <summary>
+        /// Internal flag for testing purposes that forces all queries to internally end async calls.
+        /// </summary>
+        private static bool _forceInternalEndQuery = false;
+
+        /// <summary>
+        /// Internal flag for testing purposes that forces one RetryableEnclaveQueryExecutionException during GenerateEnclavePackage
+        /// </summary>
+        private static bool _forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage = false;
+        #endif
+        #endregion
+
+        // @TODO: Make property - non-private fields are bad
+        // @TODO: Rename to match naming convention _enclavePackage
+        internal EnclavePackage enclavePackage = null;
+
+        // @TODO: Make property - non-private fields are bad (this should be read-only externally)
+        internal ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
+
+        // @TODO: Make property - non-private fields are bad (this can be read-only externally)
+        internal bool requiresEnclaveComputations = false;
+
         // @TODO: Make property - non-private fields are bad
         internal SqlDependency _sqlDep;
 
@@ -75,7 +114,7 @@ namespace Microsoft.Data.SqlClient
         /// false. This may also be used to set other behavior which overrides connection level
         /// setting.
         /// </summary>
-        // @TODO: Make auto-property
+        // @TODO: Make auto-property, also make nullable.
         private SqlCommandColumnEncryptionSetting _columnEncryptionSetting =
             SqlCommandColumnEncryptionSetting.UseConnectionSetting;
         
@@ -95,6 +134,25 @@ namespace Microsoft.Data.SqlClient
         private CommandType _commandType;
 
         /// <summary>
+        /// This variable is used to keep track of which RPC batch's results are being read when reading the results of
+        /// describe parameter encryption RPC requests in BatchRPCMode.
+        /// </summary>
+        // @TODO: Rename to match naming conventions
+        private int _currentlyExecutingDescribeParameterEncryptionRPC;
+
+        /// <summary>
+        /// Per-command custom providers. It can be provided by the user and can be set more than
+        /// once.
+        /// </summary>
+        private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
+
+        // @TODO: Rename to indicate that this is for enclave stuff, I think...
+        private byte[] customData = null;
+
+        // @TODO: Rename to indicate that this is for enclave stuff. Or just get rid of it and use the length of customData if possible.
+        private int customDataLength = 0;
+
+        /// <summary>
         /// By default, the cmd object is visible on the design surface (i.e. VS7 Server Tray) to
         /// limit the number of components that clutter the design surface, when the DataAdapter
         /// design wizard generates the insert/update/delete commands it will set the
@@ -102,12 +160,6 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         // @TODO: Make auto-property
         private bool _designTimeInvisible;
-        
-        /// <summary>
-        /// Current state of preparation of the command.
-        /// By default, assume the user is not sharing a connection so the command has not been prepared.
-        /// </summary>
-        private EXECTYPE _execType = EXECTYPE.UNPREPARED;
 
         /// <summary>
         /// True if the user changes the command text or number of parameters after the command has
@@ -115,7 +167,16 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         // @TODO: Consider renaming "_IsUserDirty"
         private bool _dirty = false;
-        
+
+        /// <summary>
+        /// Current state of preparation of the command.
+        /// By default, assume the user is not sharing a connection so the command has not been prepared.
+        /// </summary>
+        private EXECTYPE _execType = EXECTYPE.UNPREPARED;
+
+        // @TODO: Rename to match naming conventions _enclaveAttestationParameters
+        private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
+
         /// <summary>
         /// On 8.0 and above the Prepared state cannot be left. Once a command is prepared it will
         /// always be prepared. A change in parameters, command text, etc (IsDirty) automatically
@@ -184,6 +245,22 @@ namespace Microsoft.Data.SqlClient
         private int _rowsAffected = -1;
 
         /// <summary>
+        /// number of rows affected by sp_describe_parameter_encryption.
+        /// </summary>
+        // @TODO: Use int? and replace -1 usage with null
+        // @TODO: This is only used for debug asserts?
+        // @TODO: Rename to drop Sp
+        private int _rowsAffectedBySpDescribeParameterEncryption = -1;
+
+        /// <summary>
+        /// RPC for tracking execution of sp_describe_parameter_encryption.
+        /// </summary>
+        private _SqlRPC _rpcForEncryption = null;
+
+        // @TODO: Rename to match naming convention
+        private _SqlRPC[] _sqlRPCParameterEncryptionReqArray;
+
+        /// <summary>
         /// TDS session the current instance is using.
         /// </summary>
         private TdsParserStateObject _stateObj;
@@ -204,7 +281,14 @@ namespace Microsoft.Data.SqlClient
         /// DbDataAdapter.
         /// </summary>
         private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
-        
+
+        /// <summary>
+        /// Indicates if the column encryption setting was set at-least once in the batch rpc mode,
+        /// when using AddBatchCommand.
+        /// </summary>
+        // @TODO: can be replaced by using nullable for _columnEncryptionSetting.
+        private bool _wasBatchModeColumnEncryptionSettingSetOnce;
+
         #endregion
 
         #region Constructors
@@ -624,9 +708,15 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Internal/Protected/Private Properties
-        
+
+        internal bool HasColumnEncryptionKeyStoreProvidersRegistered
+        {
+            get => _customColumnEncryptionKeyStoreProviders?.Count > 0;
+        }
+
         internal bool InPrepare => _inPrepare;
 
+        // @TODO: Rename RowsAffectedInternal or
         internal int InternalRecordsAffected
         {
             get => _rowsAffected;
@@ -643,8 +733,35 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// A flag to indicate if we have in-progress describe parameter encryption RPC requests.
+        /// Reset to false when completed.
+        /// </summary>
+        // @TODO: Rename to match naming conventions
+        internal bool IsDescribeParameterEncryptionRPCCurrentlyInProgress { get; private set; }
+
         // @TODO: Rename to match conventions.
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
+
+        /// <summary>
+        /// Get or add to the number of records affected by SpDescribeParameterEncryption.
+        /// The below line is used only for debug asserts and not exposed publicly or impacts functionality otherwise.
+        /// </summary>
+        internal int RowsAffectedByDescribeParameterEncryption
+        {
+            get => _rowsAffectedBySpDescribeParameterEncryption;
+            set
+            {
+                if (_rowsAffectedBySpDescribeParameterEncryption == -1)
+                {
+                    _rowsAffectedBySpDescribeParameterEncryption = value;
+                }
+                else if (value > 0)
+                {
+                    _rowsAffectedBySpDescribeParameterEncryption += value;
+                }
+            }
+        }
 
         internal SqlStatistics Statistics
         {
@@ -767,6 +884,20 @@ namespace Microsoft.Data.SqlClient
 
         private bool IsSimpleTextQuery => CommandType is CommandType.Text &&
                                           (_parameters is null || _parameters.Count == 0);
+
+        private bool ShouldCacheEncryptionMetadata
+        {
+            // @TODO: Should we check for null on _activeConnection?
+            get => !requiresEnclaveComputations || _activeConnection.Parser.AreEnclaveRetriesSupported;
+        }
+
+        private bool ShouldUseEnclaveBasedWorkflow
+        {
+            // @TODO: I'm pretty sure the or'd condition is used in several places. We could factor that out.
+            get => (!string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) ||
+                    _activeConnection.AttestationProtocol is SqlConnectionAttestationProtocol.None) &&
+                   IsColumnEncryptionEnabled;
+        }
 
         #endregion
 
