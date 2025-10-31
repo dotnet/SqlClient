@@ -2148,7 +2148,7 @@ namespace Microsoft.Data.SqlClient
         {
             // @TODO: Rather than manually add separators, is this something that could be done with a string.Join?
             StringBuilder paramList = new StringBuilder();
-            bool fAddSeparation = false; // @TODO: Drop f prefix
+            bool fAddSeparator = false; // @TODO: Drop f prefix
 
             int count = parameters.Count;
             for (int i = 0; i < count; i++)
@@ -2164,7 +2164,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Add separator for the ith parameter
-                if (fAddSeparation)
+                if (fAddSeparator)
                 {
                     paramList.Append(',');
                 }
@@ -2182,7 +2182,7 @@ namespace Microsoft.Data.SqlClient
                 // if we don't provide a fully qualified name
                 // @TODO: So ... what's correct? ---^^^
                 paramList.Append(" ");
-                if (mt.SqlDbType is SqlDbType.Udt) // @TODO: Switch :)
+                if (mt.SqlDbType is SqlDbType.Udt) // @TODO: Switch statement :)
                 {
                     string fullTypeName = sqlParam.UdtTypeName;
                     if (string.IsNullOrEmpty(fullTypeName))
@@ -2218,17 +2218,18 @@ namespace Microsoft.Data.SqlClient
                     paramList.Append(mt.TypeName);
                 }
 
-                fAddSeparation = true;
+                fAddSeparator = true;
 
                 // @TODO: These seem to be a total hodge-podge of conditions. Can we make a list of categories we're checking and expected behaviors
                 if (mt.SqlDbType is SqlDbType.Decimal)
                 {
-                    byte scale = sqlParam.GetActualScale();
                     byte precision = sqlParam.GetActualPrecision();
                     if (precision == 0)
                     {
                         precision = TdsEnums.DEFAULT_NUMERIC_PRECISION;
                     }
+
+                    byte scale = sqlParam.GetActualScale();
 
                     paramList.AppendFormat("({0},{1})", precision, scale);
                 }
@@ -2254,17 +2255,17 @@ namespace Microsoft.Data.SqlClient
                     // parser, with it's associated code page.
                     if (mt.IsAnsiType)
                     {
-                        object value = sqlParam.GetCoercedValue();
+                        object val = sqlParam.GetCoercedValue();
                         string s = null;
 
                         // Deal with the sql types
-                        if (value is not null && value != DBNull.Value)
+                        if (val is not null && val != DBNull.Value)
                         {
                             // @TODO: I swear this can be one line in the if statement...
-                            s = value as string;
+                            s = val as string;
                             if (s is null)
                             {
-                                SqlString sval = value is SqlString ? (SqlString)value : SqlString.Null;
+                                SqlString sval = val is SqlString ? (SqlString)val : SqlString.Null;
                                 if (!sval.IsNull)
                                 {
                                     s = sval.Value;
@@ -2276,7 +2277,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             int actualBytes = parser.GetEncodingCharLength(
                                 value: s,
-                                numChars: sqlParam.GetActualScale(),
+                                numChars: sqlParam.GetActualSize(),
                                 charOffset: sqlParam.Offset,
                                 encoding: null);
                             if (actualBytes > size)
