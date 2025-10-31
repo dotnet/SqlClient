@@ -1,3 +1,5 @@
+#if NETFRAMEWORK
+
 // <Snippet1>
 using System;
 using System.Collections.Generic;
@@ -8,14 +10,20 @@ using System.Text;
 using System.Windows.Forms;
 using Microsoft.Data.SqlClient;
 
-namespace Microsoft.AdoDotNet.CodeSamples
+namespace Microsoft.Data.SqlClient.Samples
 {
     public partial class Form1 : Form
     {
         public Form1()
         {
             InitializeComponent();
+            this.label1 = new Label();
+            this.dataGridView1 = new DataGridView();
+            this.button1 = new Button();
         }
+
+        private void InitializeComponent() { }
+
         // Hook up the form's Load event handler (you can double-click on 
         // the form's design surface in Visual Studio), and then add 
         // this code to the form's class:
@@ -31,6 +39,12 @@ namespace Microsoft.AdoDotNet.CodeSamples
         // to restart the command or close the form while the 
         // asynchronous command is executing.
         private bool isExecuting;
+
+        private Label label1 { get; set; }
+
+        private DataGridView dataGridView1 { get; set; }
+
+        private Button button1 { get; set; }
 
         private void DisplayStatus(string Text)
         {
@@ -133,8 +147,8 @@ namespace Microsoft.AdoDotNet.CodeSamples
             }
             else
             {
-                SqlCommand command = null;
-                SqlConnection connection = null;
+                SqlCommand? command = null;
+                SqlConnection? connection = null;
                 try
                 {
                     DisplayStatus("Connecting...");
@@ -185,3 +199,4 @@ namespace Microsoft.AdoDotNet.CodeSamples
     }
 }
 // </Snippet1>
+#endif
