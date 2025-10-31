@@ -262,6 +262,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal static void DecryptSymmetricKey(SqlTceCipherInfoEntry sqlTceCipherInfoEntry, out SqlClientSymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo encryptionkeyInfoChosen, SqlConnection connection, SqlCommand command)
         {
+            Debug.Assert(connection is not null, "Connection should not be null.");
             Debug.Assert(sqlTceCipherInfoEntry is not null, "sqlTceCipherInfoEntry should not be null in DecryptSymmetricKey.");
             Debug.Assert(sqlTceCipherInfoEntry.ColumnEncryptionKeyValues is not null,
                     "sqlTceCipherInfoEntry.ColumnEncryptionKeyValues should not be null in DecryptSymmetricKey.");

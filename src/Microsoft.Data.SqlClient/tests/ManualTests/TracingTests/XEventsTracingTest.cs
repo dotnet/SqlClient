@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class XEventsTracingTest
     {
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         [InlineData("SELECT @@VERSION", System.Data.CommandType.Text, "sql_statement_starting")]
         [InlineData("sp_help", System.Data.CommandType.StoredProcedure, "rpc_starting")]
         public void XEventActivityIDConsistentWithTracing(string query, System.Data.CommandType commandType, string xEvent)

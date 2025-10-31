@@ -32,6 +32,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly PropertyInfo _useConnectionPoolV2Property;
     private readonly PropertyInfo _truncateScaledDecimalProperty;
     private readonly PropertyInfo _ignoreServerProvidedFailoverPartner;
+    private readonly PropertyInfo _enableUserAgent;
 #if NET
     private readonly PropertyInfo _globalizationInvariantModeProperty;
     private readonly PropertyInfo _useManagedNetworkingProperty;
@@ -60,6 +61,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly Tristate _truncateScaledDecimalOriginal;
     private readonly FieldInfo _ignoreServerProvidedFailoverPartnerField;
     private readonly Tristate _ignoreServerProvidedFailoverPartnerOriginal;
+    private readonly FieldInfo _enableUserAgentField;
+    private readonly Tristate _enableUserAgentOriginal;
 #if NET
     private readonly FieldInfo _globalizationInvariantModeField;
     private readonly Tristate _globalizationInvariantModeOriginal;
@@ -162,7 +165,11 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             "IgnoreServerProvidedFailoverPartner",
             out _ignoreServerProvidedFailoverPartner);
 
-        #if NET
+        InitProperty(
+            "EnableUserAgent",
+            out _enableUserAgent);
+
+#if NET
         InitProperty(
             "GlobalizationInvariantMode",
             out _globalizationInvariantModeProperty);
@@ -240,6 +247,11 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             "s_ignoreServerProvidedFailoverPartner",
             out _ignoreServerProvidedFailoverPartnerField,
             out _ignoreServerProvidedFailoverPartnerOriginal);
+        
+        InitField(
+            "s_enableUserAgent",
+            out _enableUserAgentField,
+            out _enableUserAgentOriginal);
 
 #if NET
         InitField(
@@ -322,6 +334,10 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         RestoreField(
             _ignoreServerProvidedFailoverPartnerField,
             _ignoreServerProvidedFailoverPartnerOriginal);
+
+        RestoreField(
+            _enableUserAgentField,
+            _enableUserAgentOriginal);
 
 #if NET
         RestoreField(
@@ -427,6 +443,11 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     public bool IgnoreServerProvidedFailoverPartner
     {
         get => (bool)_ignoreServerProvidedFailoverPartner.GetValue(null);
+    }
+
+    public bool EnableUserAgent
+    {
+        get => (bool)_enableUserAgent.GetValue(null);
     }
 
 #if NET
@@ -551,6 +572,12 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => GetValue(_ignoreServerProvidedFailoverPartnerField);
         set => SetValue(_ignoreServerProvidedFailoverPartnerField, value);
+    }
+
+    public Tristate EnableUserAgentField
+    {
+        get => GetValue(_enableUserAgentField);
+        set => SetValue(_enableUserAgentField, value);
     }
 
 #if NET
