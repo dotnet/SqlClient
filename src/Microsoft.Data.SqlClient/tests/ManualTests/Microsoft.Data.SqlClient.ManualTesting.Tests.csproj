@@ -383,11 +383,11 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <ContentWithTargetPath Condition="$(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\$(TargetFramework)\*SNI*.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>%(Filename)%(Extension)</TargetPath>
-    </ContentWithTargetPath>
   </ItemGroup>
+
+  <!-- Ensure SNI DLLs are made available for .NET Framework project reference builds. -->
+  <Import Project="$(ToolsDir)/targets/CopySniDllsForNetFxProjectReferenceBuilds.targets" />
+
   <ItemGroup>
     <None Update="makepfxcert.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -401,9 +401,9 @@
     <None Update="SQL\ConnectionTestWithSSLCert\GenerateSelfSignedCertificate.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <ContentWithTargetPath Include="..\tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">
+    <Content Include="..\tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>xunit.runner.json</TargetPath>
-    </ContentWithTargetPath>
+    </Content>
   </ItemGroup>
 </Project>

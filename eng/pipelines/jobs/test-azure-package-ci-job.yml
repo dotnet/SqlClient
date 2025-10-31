@@ -255,6 +255,14 @@ jobs:
           projects: $(project)
           arguments: $(buildArguments) --no-restore
 
+      # List the DLLs in the output directory for debugging purposes.
+      - ${{ if eq(parameters.debug, true) }}:
+        - pwsh: |
+            Get-ChildItem `
+              -Path "src/Microsoft.Data.SqlClient.Extensions/Azure/test/bin/${{ parameters.buildConfiguration }}" `
+              -Recurse
+          displayName: '[Debug] List Output DLLs'
+
       # Run the tests for each .NET runtime.
       - ${{ each runtime in parameters.netRuntimes }}:
         - task: DotNetCoreCLI@2

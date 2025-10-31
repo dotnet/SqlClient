@@ -33,10 +33,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ContentWithTargetPath Include="../../../Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
+    <Content Include="../../../Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>xunit.runner.json</TargetPath>
-    </ContentWithTargetPath>
+    </Content>
   </ItemGroup>
 
 </Project>

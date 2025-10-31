@@ -9,11 +9,6 @@
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Azure.Test</AssemblyName>
   </PropertyGroup>
 
-  <!-- Hack to support the SNI native DLL copying below. -->
-  <PropertyGroup Condition="'$(ApplyMdsAssemblyNameSuffix)' == 'true'">
-    <MdsNetFxSuffix>.NetFx</MdsNetFxSuffix>
-  </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="../src/Azure.csproj" />
   </ItemGroup>
@@ -32,11 +27,14 @@
 
   <!-- Copy the xUnit config file to our artifacts. -->
   <ItemGroup>
-    <ContentWithTargetPath Include="../../../Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
+    <Content Include="../../../Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>xunit.runner.json</TargetPath>
-    </ContentWithTargetPath>
+    </Content>
   </ItemGroup>
+
+  <!-- Ensure SNI DLLs are made available for .NET Framework project reference builds. -->
+  <Import Project="$(ToolsDir)/targets/CopySniDllsForNetFxProjectReferenceBuilds.targets" />
 
   <!--
     Depend on the TestUtilities project because it copies the JSON config for
@@ -58,23 +56,12 @@
     <ProjectReference
       Condition="'$(TargetFramework)' == 'net462'"
       Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-
-    <!--
-      This is a hack to ensure that the SNI native DLLs are included with our
-      artifacts for .NET Framework.  Interestingly, they seem to be included
-      automatically for .NET - shrug!
-    -->
-    <ContentWithTargetPath
-      Condition="'$(TargetFramework)' == 'net462'"
-      Include="$(BinFolder)$(Configuration).AnyCPU/Microsoft.Data.SqlClient$(MdsNetFxSuffix)/netfx/net462/*SNI*.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>%(Filename)%(Extension)</TargetPath>
-    </ContentWithTargetPath>
   </ItemGroup>
 
   <!-- Conditional Package References -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
     <PackageReference Include="Microsoft.Data.SqlClient" />
   </ItemGroup>
+
 
 </Project>
