@@ -12,17 +12,11 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Security.Authentication;
-#if NETFRAMEWORK
-using System.Runtime.CompilerServices;
-#endif
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Interop.Common.Sni;
-#if NETFRAMEWORK
-using Interop.Windows.Sni;
-#endif
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
@@ -31,12 +25,13 @@ using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlClient.UserAgent;
 using Microsoft.Data.SqlClient.Utilities;
-
+using Microsoft.SqlServer.Server;
 
 #if NETFRAMEWORK
+using System.Runtime.CompilerServices;
+using Interop.Windows.Sni;
 using Microsoft.Data.SqlTypes;
 #endif
-using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -1365,11 +1360,11 @@ namespace Microsoft.Data.SqlClient
                 int feOffset = length;
                 // calculate and reserve the required bytes for the featureEx
                 length = ApplyFeatureExData(
-                    requestedFeatures, 
-                    recoverySessionData, 
+                    requestedFeatures,
+                    recoverySessionData,
                     fedAuthFeatureExtensionData,
                     UserAgentInfo.UserAgentCachedJsonPayload.ToArray(),
-                    useFeatureExt, 
+                    useFeatureExt,
                     length
                     );
 
@@ -10788,11 +10783,23 @@ namespace Microsoft.Data.SqlClient
         }
 
         // This is in its own method to avoid always allocating the lambda in TDSExecuteRPCParameter
-        private void TDSExecuteRPCParameterSetupWriteCompletion(SqlCommand cmd, IList<_SqlRPC> rpcArray, int timeout, bool inSchema, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool isCommandProc, bool sync, TaskCompletionSource<object> completion, int startRpc, int startParam, Task writeParamTask)
+        private void TDSExecuteRPCParameterSetupWriteCompletion(
+            SqlCommand cmd,
+            IList<_SqlRPC> rpcArray,
+            int timeout,
+            bool inSchema,
+            SqlNotificationRequest notificationRequest,
+            TdsParserStateObject stateObj,
+            bool isCommandProc,
+            bool sync,
+            TaskCompletionSource<object> completion,
+            int startRpc,
+            int startParam,
+            Task writeParamTask)
         {
             AsyncHelper.ContinueTask(
-                writeParamTask,
-                completion,
+                taskToContinue: writeParamTask,
+                taskCompletionSource: completion,
                 onSuccess: () => TdsExecuteRPC(
                     cmd,
                     rpcArray,
@@ -10804,8 +10811,7 @@ namespace Microsoft.Data.SqlClient
                     sync,
                     completion,
                     startRpc,
-                    startParam
-                ),
+                    startParam),
                 onFailure: exc => TdsExecuteRPC_OnFailure(exc, stateObj));
         }
 
@@ -12242,11 +12248,11 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    return AsyncHelper.CreateContinuationTask<int, TdsParserStateObject>(
-                        unterminatedWriteTask,
-                        onSuccess: WriteInt,
-                        arg1: 0,
-                        arg2: stateObj);
+                    return AsyncHelper.CreateContinuationTaskWithState(
+                        taskToContinue: unterminatedWriteTask,
+                        state1: this,
+                        state2: stateObj,
+                        onSuccess: static (this2, stateObj2) => this2.WriteInt(0, stateObj2));
                 }
             }
             else
@@ -13209,11 +13215,11 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // Otherwise, create a continuation task to write the encryption metadata after the previous write completes.
-                return AsyncHelper.CreateContinuationTask<SqlColumnEncryptionInputParameterInfo, TdsParserStateObject>(
-                    terminatedWriteTask,
-                    onSuccess: WriteEncryptionMetadata,
-                    arg1: columnEncryptionParameterInfo,
-                    arg2: stateObj);
+                return AsyncHelper.CreateContinuationTaskWithState(
+                    taskToContinue: terminatedWriteTask,
+                    state1: columnEncryptionParameterInfo,
+                    state2: stateObj,
+                    onSuccess: WriteEncryptionMetadata);
             }
         }
 
