@@ -25,14 +25,31 @@
         <!-- <MdsVersion>5.2.3</MdsVersion> -->
         <!-- <MdsVersion>6.0.1</MdsVersion> -->
         <!-- <MdsVersion>6.0.2</MdsVersion> -->
-        <!-- <MdsVersion>6.1.0-preview1.25120.4</MdsVersion> -->
-        <MdsVersion>6.1.0-preview2.25178.5</MdsVersion>
+        <!-- <MdsVersion>6.0.3</MdsVersion> -->
+        <!-- <MdsVersion>6.1.0</MdsVersion> -->
+        <!-- <MdsVersion>6.1.1</MdsVersion> -->
+        <MdsVersion>6.1.2</MdsVersion>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+
+  <!-- Same for $(AzurePackageVersion). -->
+  <Choose>
+    <When Condition="'$(AzurePackageVersion)' != ''">
+      <PropertyGroup>
+        <AzureVersion>$(AzurePackageVersion)</AzureVersion>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <AzureVersion>1.0.0</AzureVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>
 
   <ItemGroup>
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(MdsVersion)" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.Extensions.Azure" Version="$(AzureVersion)" />
   </ItemGroup>
 
 </Project>
