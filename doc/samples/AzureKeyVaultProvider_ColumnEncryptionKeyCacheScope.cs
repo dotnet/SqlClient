@@ -1,20 +1,26 @@
-// <Snippet1>
-class Program
+using System.Collections.Generic;
+using Microsoft.Data.SqlClient;
+
+namespace AzureKeyVaultProviderExample
 {
-    static void Main()
+    // <Snippet1>
+    class Program
     {
-        using (SqlConnection connection = new SqlConnection(connectionString))
+        static void Main()
         {
-            using (SqlCommand command = connection.CreateCommand())
+            using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customKeyStoreProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>();
-                SqlColumnEncryptionAzureKeyVaultProvider azureKeyVaultProvider = new SqlColumnEncryptionAzureKeyVaultProvider();
-                customKeyStoreProviders.Add(SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, azureKeyVaultProvider);
-                command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customKeyStoreProviders);
-                // Perform database operation using Azure Key Vault Provider
-                // Any decrypted column encryption keys will be cached
-            } // Column encryption key cache of "azureKeyVaultProvider" is cleared when "azureKeyVaultProvider" goes out of scope
+                using (SqlCommand command = connection.CreateCommand())
+                {
+                    Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customKeyStoreProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>();
+                    SqlColumnEncryptionAzureKeyVaultProvider azureKeyVaultProvider = new SqlColumnEncryptionAzureKeyVaultProvider();
+                    customKeyStoreProviders.Add(SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, azureKeyVaultProvider);
+                    command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customKeyStoreProviders);
+                    // Perform database operation using Azure Key Vault Provider
+                    // Any decrypted column encryption keys will be cached
+                } // Column encryption key cache of "azureKeyVaultProvider" is cleared when "azureKeyVaultProvider" goes out of scope
+            }
         }
     }
+    // </Snippet1>
 }
-// </Snippet1>
