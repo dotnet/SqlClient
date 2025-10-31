@@ -28,6 +28,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly PropertyInfo _useMinimumLoginTimeoutProperty;
     private readonly PropertyInfo _legacyVarTimeZeroScaleBehaviourProperty;
     private readonly PropertyInfo _useConnectionPoolV2Property;
+    private readonly PropertyInfo _ignoreServerProvidedFailoverPartner;
     #if NETFRAMEWORK
     private readonly PropertyInfo _disableTnirByDefaultProperty;
     #endif
@@ -45,10 +46,12 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly Tristate _legacyVarTimeZeroScaleBehaviourOriginal;
     private readonly FieldInfo _useConnectionPoolV2Field;
     private readonly Tristate _useConnectionPoolV2Original;
-    #if NETFRAMEWORK
+    private readonly FieldInfo _ignoreServerProvidedFailoverPartnerField;
+    private readonly Tristate _ignoreServerProvidedFailoverPartnerOriginal;
+#if NETFRAMEWORK
     private readonly FieldInfo _disableTnirByDefaultField;
     private readonly Tristate _disableTnirByDefaultOriginal;
-    #endif
+#endif
 
     #endregion
 
@@ -126,6 +129,10 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             "UseConnectionPoolV2",
             out _useConnectionPoolV2Property);
 
+        InitProperty(
+            "IgnoreServerProvidedFailoverPartner",
+            out _ignoreServerProvidedFailoverPartner);
+
         #if NETFRAMEWORK
         InitProperty(
             "DisableTnirByDefault",
@@ -177,6 +184,11 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             out _useConnectionPoolV2Field,
             out _useConnectionPoolV2Original);
 
+        InitField(
+            "s_ignoreServerProvidedFailoverPartner",
+            out _ignoreServerProvidedFailoverPartnerField,
+            out _ignoreServerProvidedFailoverPartnerOriginal);
+        
         #if NETFRAMEWORK
         InitField(
             "s_disableTnirByDefault",
@@ -233,6 +245,10 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             _useConnectionPoolV2Field,
             _useConnectionPoolV2Original);
 
+        RestoreField(
+            _ignoreServerProvidedFailoverPartnerField,
+            _ignoreServerProvidedFailoverPartnerOriginal);
+
         #if NETFRAMEWORK
         RestoreField(
             _disableTnirByDefaultField,
@@ -247,7 +263,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         }
     }
 
-    #endregion
+#endregion
 
     #region Public Properties
 
@@ -374,6 +390,12 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         set => SetValue(_useConnectionPoolV2Field, value);
     }
 
+    public Tristate IgnoreServerProvidedFailoverPartnerField
+    {
+        get => GetValue(_ignoreServerProvidedFailoverPartnerField);
+        set => SetValue(_ignoreServerProvidedFailoverPartnerField, value);
+    }
+
     #if NETFRAMEWORK
     /// <summary>
     /// Get or set the LocalAppContextSwitches.DisableTnirByDefault switch
@@ -386,7 +408,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     }
     #endif
 
-    #endregion
+#endregion
 
     #region Private Helpers
 
