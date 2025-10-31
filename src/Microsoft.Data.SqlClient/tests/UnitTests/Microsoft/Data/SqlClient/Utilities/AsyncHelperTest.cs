@@ -15,6 +15,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
 {
     public class AsyncHelperTest
     {
+        private static readonly TimeSpan RunTimeout = TimeSpan.FromSeconds(2);
+        
         #region ContinueTask
 
         [Fact]
@@ -23,7 +25,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that completed successfully
             Task taskToContinue = Task.CompletedTask;
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             Mock<Action<Exception>> mockOnFailure = new();
             Mock<Action> mockOnCancellation = new();
 
@@ -42,7 +44,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             mockOnSuccess.Verify(action => action(), Times.Once);
@@ -56,7 +58,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that completed successfully
             Task taskToContinue = Task.CompletedTask;
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
 
             // - mockOnSuccess handler throws
             Mock<Action> mockOnSuccess = new();
@@ -72,7 +74,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
@@ -89,7 +91,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that is cancelled
             Task taskToContinue = GetCancelledTask();
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
 
             Mock<Action> mockOnCancellation = new();
             if (handlerShouldThrow)
@@ -107,7 +109,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             // - taskCompletionSource should have been cancelled, regardless of mockOnCancellation throwing
@@ -124,7 +126,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that is cancelled
             Task taskToContinue = GetCancelledTask();
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             Mock<Action> mockOnSuccess = new();
             Mock<Action<Exception>> mockOnFailure = new();
 
@@ -135,7 +137,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 onCancellation: null);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             // - taskCompletionSource should have been cancelled
@@ -152,7 +154,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that is faulted
             Task taskToContinue = Task.FromException(new Exception());
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
 
             Mock<Action<Exception>> mockOnFailure = new();
             if (handlerShouldThrow)
@@ -170,7 +172,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             // - taskCompletionSource should have been cancelled, regardless of mockOnSuccess throwing
@@ -187,7 +189,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that is cancelled
             Task taskToContinue = Task.FromException(new Exception());
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             Mock<Action> mockOnSuccess = new();
             Mock<Action> mockOnCancellation = new();
 
@@ -198,7 +200,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 onFailure: null,
                 mockOnCancellation.Object);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             // - taskCompletionSource should have been cancelled
@@ -218,7 +220,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that completed successfully
             Task taskToContinue = Task.CompletedTask;
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             const int state1 = 123;
 
             Mock<Action<int, Exception>> mockOnFailure = new();
@@ -240,7 +242,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             mockOnSuccess.Verify(action => action(state1), Times.Once);
@@ -254,7 +256,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that completed successfully
             Task taskToContinue = Task.CompletedTask;
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             const int state1 = 123;
 
             // - mockOnSuccess handler throws
@@ -272,7 +274,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             // - taskCompletionSource should have faulted
@@ -291,7 +293,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that was cancelled
             Task taskToContinue = GetCancelledTask();
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             const int state1 = 123;
 
             Mock<Action<int>> mockOnCancellation = new();
@@ -311,7 +313,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             // - taskCompletionSource should have been cancelled, regardless of mockOnCancellation throwing
@@ -328,7 +330,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that was cancelled
             Task taskToContinue = GetCancelledTask();
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             const int state1 = 123;
 
             Mock<Action<int>> mockOnSuccess = new();
@@ -342,7 +344,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 onCancellation: null);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             // - taskCompletionSource should have been cancelled
@@ -359,7 +361,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that faulted
             Task taskToContinue = Task.FromException(new Exception());
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             const int state1 = 123;
 
             Mock<Action<int, Exception>> mockOnFailure = new();
@@ -379,7 +381,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             // - taskCompletionSource should have been cancelled, regardless of mockOnSuccess throwing
@@ -396,7 +398,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that faulted
             Task taskToContinue = Task.FromException(new Exception());
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             const int state1 = 123;
 
             Mock<Action<int>> mockOnSuccess = new();
@@ -410,7 +412,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 onFailure: null,
                 mockOnCancellation.Object);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             // - taskCompletionSource should have been cancelled
@@ -429,7 +431,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that completed successfully
             Task taskToContinue = Task.CompletedTask;
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             const int state1 = 123;
             const int state2 = 234;
 
@@ -453,7 +455,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             mockOnSuccess.Verify(action => action(state1, state2), Times.Once);
@@ -467,7 +469,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that completed successfully
             Task taskToContinue = Task.CompletedTask;
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             const int state1 = 123;
 
             // - mockOnSuccess handler throws
@@ -485,7 +487,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             // - taskCompletionSource should have faulted
@@ -505,7 +507,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that was cancelled
             Task taskToContinue = GetCancelledTask();
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             const int state1 = 123;
             const int state2 = 234;
 
@@ -527,7 +529,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             // - taskCompletionSource should have been cancelled, regardless of mockOnCancellation throwing
@@ -544,7 +546,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that was cancelled
             Task taskToContinue = GetCancelledTask();
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             const int state1 = 123;
             const int state2 = 234;
 
@@ -560,7 +562,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 onCancellation: null);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             // - taskCompletionSource should have been cancelled
@@ -577,7 +579,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that faulted
             Task taskToContinue = Task.FromException(new Exception());
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             const int state1 = 123;
             const int state2 = 234;
 
@@ -599,7 +601,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             // - taskCompletionSource should have been cancelled, regardless of mockOnSuccess throwing
@@ -616,7 +618,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue that faulted
             Task taskToContinue = Task.FromException(new Exception());
-            TaskCompletionSource<object?> taskCompletionSource = new();
+            TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             const int state1 = 123;
             const int state2 = 234;
 
@@ -632,7 +634,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 onFailure: null,
                 mockOnCancellation.Object);
-            await RunWithTimeout(taskCompletionSource.Task, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
             // - taskCompletionSource should have been cancelled
@@ -684,7 +686,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.RanToCompletion, continuationTask.Status);
@@ -713,7 +715,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
@@ -745,7 +747,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.Canceled, continuationTask.Status);
@@ -769,7 +771,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 onCancellation: null);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.Canceled, continuationTask.Status);
@@ -800,7 +802,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
@@ -824,7 +826,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 onFailure: null,
                 onCancellation: null);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
@@ -880,7 +882,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.RanToCompletion, continuationTask.Status);
@@ -911,7 +913,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
@@ -946,7 +948,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.Canceled, continuationTask.Status);
@@ -973,7 +975,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 onCancellation: null);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.Canceled, continuationTask.Status);
@@ -1007,7 +1009,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
@@ -1034,7 +1036,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 onFailure: null,
                 onCancellation: null);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
@@ -1095,7 +1097,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.RanToCompletion, continuationTask.Status);
@@ -1128,7 +1130,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
@@ -1165,7 +1167,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.Canceled, continuationTask.Status);
@@ -1194,7 +1196,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 onCancellation: null);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.Canceled, continuationTask.Status);
@@ -1230,7 +1232,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
@@ -1259,7 +1261,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                 mockOnSuccess.Object,
                 onFailure: null,
                 onCancellation: null);
-            await RunWithTimeout(continuationTask, TimeSpan.FromSeconds(1));
+            await RunWithTimeout(continuationTask, RunTimeout);
 
             // Assert
             Assert.Equal(TaskStatus.Faulted, continuationTask.Status);
@@ -1319,6 +1321,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
 
             return Task.FromCanceled(cts.Token);
         }
+
+        private static TaskCompletionSource<object?> GetTaskCompletionSource()
+            => new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         private static async Task RunWithTimeout([NotNull] Task? taskToRun, TimeSpan timeout)
         {
