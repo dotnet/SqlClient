@@ -112,6 +112,7 @@ stages:
       # ------------------------------------------------------------------------
       # Build and test on Linux.
 
+      # Use the Azure Pipelines pool for basic testing.
       - template: ../jobs/test-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
@@ -120,7 +121,7 @@ stages:
           debug: ${{ parameters.debug }}
           displayNamePrefix: Linux
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: linux
+          jobNameSuffix: linux-basic
           mdsArtifactName: MDS.Artifact
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: []
@@ -129,9 +130,28 @@ stages:
           referenceType: ${{ parameters.referenceType }}
           vmImage: ubuntu-latest
 
+      # Use our 1ES ADO-CI pool for comprehensive testing.
+      - template: ../jobs/test-azure-package-ci-job.yml@self
+        parameters:
+          abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
+          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          displayNamePrefix: Linux
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          jobNameSuffix: linux-comprehensive
+          mdsArtifactName: MDS.Artifact
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          netFrameworkRuntimes: []
+          netRuntimes: [net8.0, net9.0]
+          poolName: ADO-CI-1ES-Pool
+          referenceType: ${{ parameters.referenceType }}
+          vmImage: ADO-UB22-SQL22
+
       # ------------------------------------------------------------------------
       # Build and test on Windows
 
+      # Use the Azure Pipelines pool for basic testing.
       - template: ../jobs/test-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
@@ -140,7 +160,7 @@ stages:
           debug: ${{ parameters.debug }}
           displayNamePrefix: Win
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: windows
+          jobNameSuffix: windows-basic
           mdsArtifactName: MDS.Artifact
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: [net462]
@@ -149,9 +169,28 @@ stages:
           referenceType: ${{ parameters.referenceType }}
           vmImage: windows-latest
 
+      # Use our 1ES ADO-CI pool for comprehensive testing.
+      - template: ../jobs/test-azure-package-ci-job.yml@self
+        parameters:
+          abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
+          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          displayNamePrefix: Win
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          jobNameSuffix: windows-comprehensive
+          mdsArtifactName: MDS.Artifact
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          netFrameworkRuntimes: [net462]
+          netRuntimes: [net8.0, net9.0]
+          poolName: ADO-CI-1ES-Pool
+          referenceType: ${{ parameters.referenceType }}
+          vmImage: ADO-CI-Win11
+
       # ------------------------------------------------------------------------
       # Build and test on macOS.
 
+      # Use the Azure Pipelines pool for basic testing.
       - template: ../jobs/test-azure-package-ci-job.yml
         parameters:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
@@ -169,6 +208,8 @@ stages:
           referenceType: ${{ parameters.referenceType }}
           vmImage: macos-latest
 
+      # We do not currently have any images in our 1ES ADO-CI pool for macOS.
+
       # ------------------------------------------------------------------------
       # Create and publish the NuGet package.
 
@@ -183,8 +224,10 @@ stages:
           dependsOn:
             # We depend on all of the test jobs to ensure the tests pass before
             # producing the NuGet package.
-            - test_azure_package_job_linux
-            - test_azure_package_job_windows
+            - test_azure_package_job_linux-basic
+            - test_azure_package_job_linux-comprehensive
+            - test_azure_package_job_windows-basic
+            - test_azure_package_job_windows-comprehensive
             - test_azure_package_job_macos
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           referenceType: ${{ parameters.referenceType }}
