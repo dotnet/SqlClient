@@ -50,6 +50,11 @@
   <ItemGroup Condition="$([MSBuild]::VersionLessThan('$(NETCoreSdkVersion)', '10.0.100'))">
     <PackageReference Include="System.Text.Json" />
   </ItemGroup>
+
+  <!-- netstandard dependencies -->
+  <ItemGroup Condition="'$(TargetGroup)' != 'netcoreapp'">
+    <PackageReference Include="System.Threading.Channels" />
+  </ItemGroup>
    
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS' AND '$(TargetGroup)' != 'netcoreapp'" />
   <Import Project="$(ToolsDir)targets\NotSupported.targets" Condition="'$(OSGroup)' == 'AnyOS' AND '$(TargetGroup)' != 'netcoreapp'" />

@@ -300,6 +300,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\ChannelDbConnectionPool.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\ChannelDbConnectionPool.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\ConnectionPoolSlots.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\ConnectionPoolSlots.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolAuthenticationContext.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolAuthenticationContext.cs</Link>
     </Compile>
@@ -443,9 +446,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParser.cs">
       <Link>Microsoft\Data\SqlClient\TdsParser.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParser.SSPI.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParser.SSPI.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.cs</Link>
@@ -756,6 +756,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommand.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommand.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommand.Encryption.cs">
+      <Link>Microsoft\Data\SqlClient\SqlCommand.Encryption.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommand.NonQuery.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommand.NonQuery.cs</Link>
     </Compile>
@@ -1014,7 +1017,6 @@
     
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netfx.cs" />
   </ItemGroup>
   <!-- Resources  -->
   <ItemGroup>
@@ -1062,6 +1064,7 @@
     <PackageReference Include="System.Text.Encodings.Web" />
     <PackageReference Include="System.Text.Json" />
     <PackageReference Include="System.ValueTuple" />
+    <PackageReference Include="System.Threading.Channels" />
   </ItemGroup>
   <Import Project="$(CommonSourceRoot)tools\targets\GenerateResourceStringsSource.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateThisAssemblyCs.targets" />

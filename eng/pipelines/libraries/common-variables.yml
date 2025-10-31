@@ -38,7 +38,7 @@ variables:
   - name: Preview
     value: '-preview'
   - name: Revision
-    value: '1'
+    value: '2'
 
   - name: NugetPackageVersion
     value: $(Major).$(Minor).$(Patch)
