@@ -297,7 +297,7 @@ namespace Microsoft.Data.SqlClient.Utilities
                         }
                         catch (Exception e)
                         {
-                            typedState2.TaskCompletionSource.SetException(e);
+                            typedState2.TaskCompletionSource.TrySetException(e);
                         }
                     }
                 },
@@ -342,6 +342,9 @@ namespace Microsoft.Data.SqlClient.Utilities
         {
             if (taskToContinue is null)
             {
+                // This is a remnant of ye olde async/sync code that return null tasks when
+                // executing synchronously. It's still desirable that the onSuccess executes
+                // regardless of whether the preceding action was synchronous or asynchronous.
                 onSuccess();
                 return null;
             }
@@ -386,11 +389,11 @@ namespace Microsoft.Data.SqlClient.Utilities
                         try
                         {
                             typedState.OnSuccess();
-                            typedState.TaskCompletionSource.SetResult(null);
+                            typedState.TaskCompletionSource.TrySetResult(null);
                         }
                         catch (Exception e)
                         {
-                            typedState.TaskCompletionSource.SetException(e);
+                            typedState.TaskCompletionSource.TrySetException(e);
                         }
                     }
                 },
@@ -441,6 +444,9 @@ namespace Microsoft.Data.SqlClient.Utilities
         {
             if (taskToContinue is null)
             {
+                // This is a remnant of ye olde async/sync code that return null tasks when
+                // executing synchronously. It's still desirable that the onSuccess executes
+                // regardless of whether the preceding action was synchronous or asynchronous.
                 onSuccess(state);
                 return null;
             }
@@ -487,11 +493,11 @@ namespace Microsoft.Data.SqlClient.Utilities
                         try
                         {
                             typedState2.OnSuccess(typedState2.State);
-                            typedState2.TaskCompletionSource.SetResult(null);
+                            typedState2.TaskCompletionSource.TrySetResult(null);
                         }
                         catch (Exception e)
                         {
-                            typedState2.TaskCompletionSource.SetException(e);
+                            typedState2.TaskCompletionSource.TrySetException(e);
                         }
                     }
 
@@ -546,6 +552,9 @@ namespace Microsoft.Data.SqlClient.Utilities
         {
             if (taskToContinue is null)
             {
+                // This is a remnant of ye olde async/sync code that return null tasks when
+                // executing synchronously. It's still desirable that the onSuccess executes
+                // regardless of whether the preceding action was synchronous or asynchronous.
                 onSuccess(state1, state2);
                 return null;
             }
@@ -594,7 +603,7 @@ namespace Microsoft.Data.SqlClient.Utilities
                         try
                         {
                             typedState2.OnSuccess(typedState2.State1, typedState2.State2);
-                            typedState2.TaskCompletionSource.SetResult(null);
+                            typedState2.TaskCompletionSource.TrySetResult(null);
                         }
                         catch (Exception e)
                         {
