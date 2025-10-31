@@ -8,7 +8,7 @@ steps:
   parameters:
     packageType: 'sdk'
     version: '10.0'
-    includePreviewVersions: true
+    usePreview: true
 
 - template: ./ensure-dotnet-version.yml@self
   parameters:
