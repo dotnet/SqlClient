@@ -527,8 +527,8 @@ namespace Microsoft.Data.SqlClient
             sqlParam.SqlDbType = (paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
                 ? SqlDbType.NVarChar
                 : SqlDbType.NText;
-            sqlParam.Size = paramList.Length;
             sqlParam.Value = paramList;
+            sqlParam.Size = paramList.Length;
             sqlParam.Direction = ParameterDirection.Input;
 
             // @batch_text
@@ -537,8 +537,8 @@ namespace Microsoft.Data.SqlClient
             sqlParam.SqlDbType = (text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
                 ? SqlDbType.NVarChar
                 : SqlDbType.NText;
-            sqlParam.Size = text.Length;
             sqlParam.Value = text;
+            sqlParam.Size = text.Length;
             sqlParam.Direction = ParameterDirection.Input;
 
             SetUpRPCParameters(rpc, inSchema: false, _parameters);

@@ -2124,6 +2124,7 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Verify that this method needs to exist, and needs to exist in this class.
         private static string UnquoteProcedurePart(string part)
         {
+            // @TODO: Combine if statements if this method should exist
             if (part is not null && 2 <= part.Length)
             {
                 if (part[0] == '[' && part[part.Length - 1] == ']')
@@ -2502,7 +2503,7 @@ namespace Microsoft.Data.SqlClient
                             return;
                         }
 
-                        // Remove the entry from the caceh since it was inconsistent
+                        // Remove the entry from the cache since it was inconsistent
                         SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
                         InvalidateEnclaveSession();
 
@@ -2798,7 +2799,7 @@ namespace Microsoft.Data.SqlClient
                             options |= TdsEnums.RPC_PARAM_DEFAULT;
                         }
 
-                        // Detect incorrectly derived type names unchanged yb the caller and fix
+                        // Detect incorrectly derived type names unchanged by the caller and fix
                         if (parameter.IsDerivedParameterTypeName)
                         {
                             string[] parts = MultipartIdentifier.ParseMultipartIdentifier(
@@ -2807,6 +2808,7 @@ namespace Microsoft.Data.SqlClient
                                 rightQuote: "]\"",
                                 property: Strings.SQL_TDSParserTableName,
                                 ThrowOnEmptyMultipartName: false);
+                            // @TODO: Combine this and inner if statement
                             if (parts?.Length == 4)
                             {
                                 if (parts[3] is not null && // Name must not be null
@@ -3218,21 +3220,30 @@ namespace Microsoft.Data.SqlClient
 
             internal void SetActiveConnectionAndResult(TaskCompletionSource<object> completion, string endMethod, SqlConnection activeConnection)
             {
-                Debug.Assert(activeConnection != null, "Unexpected null connection argument on SetActiveConnectionAndResult!");
+                Debug.Assert(activeConnection != null,
+                    "Unexpected null connection argument on SetActiveConnectionAndResult!");
+
                 TdsParser parser = activeConnection?.Parser;
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.SetActiveConnectionAndResult | API | ObjectId {0}, Client Connection Id {1}, MARS={2}", activeConnection?.ObjectID, activeConnection?.ClientConnectionId, parser?.MARSOn);
-                if ((parser == null) || (parser.State == TdsParserState.Closed) || (parser.State == TdsParserState.Broken))
+
+                SqlClientEventSource.Log.TryTraceEvent(
+                    $"SqlCommand.SetActiveConnectionAndResult | API | " +
+                    $"Object ID {activeConnection.ObjectID}, " +
+                    $"Client Connection ID {activeConnection.ClientConnectionId}, " +
+                    $"MARS={parser?.MARSOn}");
+
+                if (parser == null || parser.State == TdsParserState.Closed || parser.State == TdsParserState.Broken)
                 {
                     throw ADP.ClosedConnectionError();
                 }
 
                 _cachedAsyncCloseCount = activeConnection.CloseCount;
                 _cachedAsyncResult = completion;
-                if (!parser.MARSOn)
+
+                if (!parser.MARSOn && activeConnection.AsyncCommandInProgress)
                 {
-                    if (activeConnection.AsyncCommandInProgress)
-                        throw SQL.MARSUnsupportedOnConnection();
+                    throw SQL.MARSUnsupportedOnConnection();
                 }
+
                 _cachedAsyncConnection = activeConnection;
 
                 // Should only be needed for non-MARS, but set anyway.
