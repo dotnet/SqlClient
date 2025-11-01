@@ -262,6 +262,12 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\NameValuePair.cs">
       <Link>Microsoft\Data\Common\NameValuePair.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\PacketBuffer.cs">
+      <Link>Microsoft\Data\Common\PacketBuffer.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ReadOnlySequenceUtilities.cs">
+      <Link>Microsoft\Data\Common\ReadOnlySequenceUtilities.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\DataException.cs">
       <Link>Microsoft\Data\DataException.cs</Link>
     </Compile>
