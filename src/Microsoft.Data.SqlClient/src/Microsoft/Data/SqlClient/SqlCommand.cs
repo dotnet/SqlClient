@@ -1866,7 +1866,7 @@ namespace Microsoft.Data.SqlClient
         private static void CancelIgnoreFailureCallback(object state) =>
             ((SqlCommand)state).CancelIgnoreFailure();
 
-        // @TODO: Assess if a parameterized version of this method is necessary or if a property can suffice.
+        // @TODO: Assess if a parameterized version of this method is necessary or if a property on SqlParameterCollection can suffice.
         private static int CountSendableParameters(SqlParameterCollection parameters)
         {
             if (parameters is null)
@@ -1896,18 +1896,21 @@ namespace Microsoft.Data.SqlClient
         private static string GetOptionsSetString(CommandBehavior behavior)
         {
             string s = null;
-            if (behavior is CommandBehavior.SchemaOnly or CommandBehavior.KeyInfo)
+
+            bool hasKeyInfo = (behavior & CommandBehavior.KeyInfo) == CommandBehavior.KeyInfo;
+            bool hasSchemaOnly = (behavior & CommandBehavior.SchemaOnly) == CommandBehavior.SchemaOnly;
+            if (hasKeyInfo || hasSchemaOnly)
             {
                 // SET FMTONLY ON will cause the server to ignore other SET OPTIONS, so turn if off
                 // before we ask for browse mode metadata
                 s = TdsEnums.FMTONLY_OFF;
 
-                if (behavior is CommandBehavior.KeyInfo)
+                if (hasKeyInfo)
                 {
                     s += TdsEnums.BROWSE_ON;
                 }
 
-                if (behavior is CommandBehavior.SchemaOnly)
+                if (hasSchemaOnly)
                 {
                     s += TdsEnums.FMTONLY_ON;
                 }
@@ -1920,12 +1923,12 @@ namespace Microsoft.Data.SqlClient
         {
             string s = null;
 
-            if (behavior is CommandBehavior.SchemaOnly)
+            if ((behavior & CommandBehavior.SchemaOnly) == CommandBehavior.SchemaOnly)
             {
                 s += TdsEnums.FMTONLY_OFF;
             }
 
-            if (behavior is CommandBehavior.KeyInfo)
+            if ((behavior & CommandBehavior.KeyInfo) == CommandBehavior.KeyInfo)
             {
                 s += TdsEnums.BROWSE_OFF;
             }
@@ -2125,7 +2128,7 @@ namespace Microsoft.Data.SqlClient
         private static string UnquoteProcedurePart(string part)
         {
             // @TODO: Combine if statements if this method should exist
-            if (part is not null && 2 <= part.Length)
+            if (part is not null && part.Length >= 2)
             {
                 if (part[0] == '[' && part[part.Length - 1] == ']')
                 {
@@ -2488,7 +2491,8 @@ namespace Microsoft.Data.SqlClient
 
                         if (!shouldRetry)
                         {
-                            // If we cannot retry, reset the async state to make sure we leave is clean.
+                            // If we cannot retry, reset the async state to make sure we leave a
+                            // clean state
                             CachedAsyncState?.ResetAsyncState();
 
                             try
@@ -2840,13 +2844,12 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
-            if (_reconnectionCompletionSource?.Task?.IsCanceled ?? false)
+            if (_reconnectionCompletionSource?.Task.IsCanceled ?? false)
             {
                 throw SQL.CR_ReconnectionCancelled();
             }
         }
 
-        // @TODO: This method *needs* to be decomposed.
         private bool TriggerInternalEndAndRetryIfNecessary(
             CommandBehavior behavior,
             object stateObject,
@@ -2947,9 +2950,9 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ConnectionRequired(method);
             }
 
-            // Ensure that the connection is open and that the PArser is in the correct state
+            // Ensure that the connection is open and that the parser is in the correct state
             // @TODO: Remove cast when possible.
-            SqlInternalConnectionTds tdsConnection = (SqlInternalConnectionTds)_activeConnection.InnerConnection;
+            SqlInternalConnectionTds tdsConnection = _activeConnection.InnerConnection as SqlInternalConnectionTds;
 
             // Ensure that if column encryption override was used then server supports it
             // @TODO: This is kinda clunky
