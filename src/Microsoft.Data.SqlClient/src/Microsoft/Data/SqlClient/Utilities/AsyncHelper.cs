@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient.Utilities
         /// * Successfully
         ///   * <paramref name="onSuccess"/> is called
         ///   * IF an exception is thrown during execution of <paramref name="onSuccess"/>, the
-        ///     exception is set on the <paramref name="taskCompletionSource"/>.
+        ///     helper will try to set an exception on the <paramref name="taskCompletionSource"/>.
         ///   * <paramref name="taskCompletionSource"/> is *not* with result on success. This
         ///     is to allow the task completion source to be continued even more after this current
         ///     continuation.
@@ -131,7 +131,7 @@ namespace Microsoft.Data.SqlClient.Utilities
         /// * Successfully
         ///   * <paramref name="onSuccess"/> is called
         ///   * IF an exception is thrown during execution of <paramref name="onSuccess"/>, the
-        ///     exception is set on the <paramref name="taskCompletionSource"/>.
+        ///     helper will try to set an exception on the <paramref name="taskCompletionSource"/>.
         ///   * <paramref name="taskCompletionSource"/> is *not* with result on success. This
         ///     is to allow the task completion source to be continued even more after this current
         ///     continuation.
@@ -227,10 +227,10 @@ namespace Microsoft.Data.SqlClient.Utilities
         /// * Successfully
         ///   * <paramref name="onSuccess"/> is called
         ///   * IF an exception is thrown during execution of <paramref name="onSuccess"/>, the
-        ///     exception is set on the <paramref name="taskCompletionSource"/>.
+        ///     helper will try to set an exception on the <paramref name="taskCompletionSource"/>.
         ///   * <paramref name="taskCompletionSource"/> is *not* with result on success. This
-        ///     is to allow the task completion source to be continued even more subsequent to
-        ///     this current continuation.
+        ///     is to allow the task completion source to be continued even more after this
+        ///     current continuation.
         /// </remarks>
         /// <param name="taskToContinue">Task to continue with provided callbacks</param>
         /// <param name="taskCompletionSource">
@@ -745,10 +745,30 @@ namespace Microsoft.Data.SqlClient.Utilities
             }
         }
 
+        /// <remarks>
+        /// This method is intended to be used within the above helpers to ensure that any
+        /// exceptions thrown during callbacks do not go unobserved. If these exceptions were
+        /// to go unobserved, they will trigger events to be raised by the default task scheduler.
+        /// Neither situation is ideal:
+        /// * If an application assigns a listener to this event, it will generate events that
+        ///   should be reported to us. But, because it happens outside the stack that caused the
+        ///   exception, most of the context of the exception is lost. Furthermore, the event is
+        ///   triggered when the GC runs, so the event happens asynchronous to the action that
+        ///   caused it.
+        /// * Adding this forced observation of the exception prevents applications from receiving
+        ///   the event, effectively swallowing it.
+        /// * However, if we log the exception when we observe it, we can still log that the
+        ///   unobserved exception happened without causing undue disruption to the application
+        ///   or leaking resources and causing overhead by raising the event.
+        /// </remarks>
         private static void ObserveContinuationException(Task continuationTask)
         {
             continuationTask.ContinueWith(
-                static task => _ = task.Exception,
+                static task =>
+                {
+                    SqlClientEventSource.Log.TraceEvent($"Unobserved task exception: {task.Exception}");
+                    return _ = task.Exception;
+                },
                 TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
         }
 

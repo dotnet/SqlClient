@@ -15,7 +15,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
 {
     public class AsyncHelperTest
     {
-        private static readonly TimeSpan RunTimeout = TimeSpan.FromSeconds(2);
+        // This timeout is set fairly high. The tests are expected to complete quickly, but are
+        // dependent on congestion of the thread pool. If the thread pool is congested, like on a
+        // full CI run, short timeouts may elapse even if the code under test would behave as
+        // expected. As such, we set a long timeout to ride out reasonable congestion on the
+        // thread pool, but still trigger a failure if the code under test hangs.
+        // @TODO: If suite-level timeouts are added, these timeouts can likely be removed.
+        private static readonly TimeSpan RunTimeout = TimeSpan.FromSeconds(30);
         
         #region ContinueTask
 

@@ -330,6 +330,18 @@ namespace Microsoft.Data.SqlClient
         #region Trace
 
         #region Traces without if statements
+
+        internal void TraceEvent(string message)
+        {
+            Trace(message);
+        }
+
+        [NonEvent]
+        internal void TraceEvent<T0>(string message, T0 args0)
+        {
+            Trace(string.Format(message, args0?.ToString() ?? NullStr);
+        }
+
         [NonEvent]
         internal void TraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
