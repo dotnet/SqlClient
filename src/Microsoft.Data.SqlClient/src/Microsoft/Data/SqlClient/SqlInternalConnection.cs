@@ -19,7 +19,6 @@ namespace Microsoft.Data.SqlClient
     internal abstract class SqlInternalConnection : DbConnectionInternal
     {
         private readonly SqlConnectionString _connectionOptions;
-        private bool _isEnlistedInTransaction; // is the server-side connection enlisted? true while we're enlisted, reset only after we send a null...
         private byte[] _promotedDTCToken;        // token returned by the server when we promote transaction
         private byte[] _whereAbouts;             // cache the whereabouts (DTC Address) for exporting
 
@@ -131,13 +130,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool IsEnlistedInTransaction
-        {
-            get
-            {
-                return _isEnlistedInTransaction;
-            }
-        }
+        /// <summary>
+        /// Indicates whether the connection is currently enlisted in a transaction.
+        /// </summary>
+        internal bool IsEnlistedInTransaction { get; private set; }
 
         abstract internal bool IsLockedForBulkCopy
         {
@@ -486,7 +482,7 @@ namespace Microsoft.Data.SqlClient
                 // send cookie to server to finish enlistment
                 PropagateTransactionCookie(cookie);
 
-                _isEnlistedInTransaction = true;
+                IsEnlistedInTransaction = true;
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.EnlistNonNull | ADV | Object Id {0}, Client Connection Id {1}, Enlisted in transaction with transactionId {2}", ObjectID, Connection?.ClientConnectionId, tx?.TransactionInformation?.LocalIdentifier);
             }
 
@@ -526,7 +522,7 @@ namespace Microsoft.Data.SqlClient
 
             PropagateTransactionCookie(null);
 
-            _isEnlistedInTransaction = false;
+            IsEnlistedInTransaction = false;
             EnlistedTransaction = null; // Tell the base class about our enlistment
 
             SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.EnlistNull | ADV | Object Id {0}, unenlisted.", ObjectID);
