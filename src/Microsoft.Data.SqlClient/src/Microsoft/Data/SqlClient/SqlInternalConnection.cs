@@ -22,7 +22,6 @@ namespace Microsoft.Data.SqlClient
         private byte[] _promotedDTCToken;        // token returned by the server when we promote transaction
         private byte[] _whereAbouts;             // cache the whereabouts (DTC Address) for exporting
 
-        private bool _isGlobalTransactionEnabledForServer; // Whether Global Transactions are enabled for this Azure SQL DB Server
         private static readonly Guid s_globalTransactionTMID = new("1c742caf-6680-40ea-9c26-6b6846079764"); // ID of the Non-MSDTC, Azure SQL DB Transaction Manager
 
         internal SqlCommand.ExecuteReaderAsyncCallContext CachedCommandExecuteReaderAsyncContext;
@@ -162,17 +161,11 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal bool IsGlobalTransaction { get; set; }
 
-        internal bool IsGlobalTransactionsEnabledForServer
-        {
-            get
-            {
-                return _isGlobalTransactionEnabledForServer;
-            }
-            set
-            {
-                _isGlobalTransactionEnabledForServer = value;
-            }
-        }
+        /// <summary>
+        /// Whether Global Transactions are enabled. Only supported by Azure SQL.
+        /// False if disabled or connected to on-prem SQL Server.
+        /// </summary>
+        internal bool IsGlobalTransactionsEnabledForServer { get; set; }
 
         private bool _isAzureSQLConnection = false; // If connected to Azure SQL
 
