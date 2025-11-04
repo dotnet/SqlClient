@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient
                         ValidateActiveOnConnection(connection);
 
                         connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Promote, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
-                        returnValue = connection.PromotedDTCToken;
+                        returnValue = connection.PromotedDtcToken;
 
                         // For Global Transactions, we need to set the Transaction Id since we use a Non-MSDTC Promoter type.
                         if (connection.IsGlobalTransaction)
@@ -446,10 +446,10 @@ namespace Microsoft.Data.SqlClient
         private Guid GetGlobalTxnIdentifierFromToken()
         {
 #if NET
-            return new Guid(new ReadOnlySpan<byte>(_connection.PromotedDTCToken, _globalTransactionsTokenVersionSizeInBytes, 16));
+            return new Guid(new ReadOnlySpan<byte>(_connection.PromotedDtcToken, _globalTransactionsTokenVersionSizeInBytes, 16));
 #else
             byte[] txnGuid = new byte[16];
-            Buffer.BlockCopy(_connection.PromotedDTCToken, _globalTransactionsTokenVersionSizeInBytes /* Skip the version */, txnGuid, 0, txnGuid.Length);
+            Buffer.BlockCopy(_connection.PromotedDtcToken, _globalTransactionsTokenVersionSizeInBytes /* Skip the version */, txnGuid, 0, txnGuid.Length);
             return new Guid(txnGuid);
 #endif
         }

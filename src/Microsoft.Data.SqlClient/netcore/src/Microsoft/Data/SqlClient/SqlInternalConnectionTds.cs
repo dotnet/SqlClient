@@ -2240,7 +2240,7 @@ namespace Microsoft.Data.SqlClient
                         dtcToken = rec._newBinValue;
                         rec._newBinValue = null;
                     }
-                    PromotedDTCToken = dtcToken;
+                    PromotedDtcToken = dtcToken;
                     break;
 
                 case TdsEnums.ENV_TRANSACTIONENDED:

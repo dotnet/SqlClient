@@ -18,8 +18,7 @@ namespace Microsoft.Data.SqlClient
 {
     internal abstract class SqlInternalConnection : DbConnectionInternal
     {
-        private readonly SqlConnectionString _connectionOptions;
-        private byte[] _promotedDTCToken;        // token returned by the server when we promote transaction
+        private readonly SqlConnectionString _connectionOptions;  
         private byte[] _whereAbouts;             // cache the whereabouts (DTC Address) for exporting
 
         private static readonly Guid s_globalTransactionTMID = new("1c742caf-6680-40ea-9c26-6b6846079764"); // ID of the Non-MSDTC, Azure SQL DB Transaction Manager
@@ -143,17 +142,10 @@ namespace Microsoft.Data.SqlClient
             get;
         }
 
-        internal byte[] PromotedDTCToken
-        {
-            get
-            {
-                return _promotedDTCToken;
-            }
-            set
-            {
-                _promotedDTCToken = value;
-            }
-        }
+        /// <summary>
+        /// A token returned by the server when we promote transaction.
+        /// </summary>
+        internal byte[] PromotedDtcToken { get; set; }
 
         /// <summary>
         /// Whether this is a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
