@@ -36,6 +36,37 @@ namespace Microsoft.Data.SqlClient
         internal SqlDataReader.ReadAsyncCallContext CachedDataReaderReadAsyncContext;
 
         /// <summary>
+        /// Constructs a new SqlInternalConnection object using the provided connection options.
+        /// </summary>
+        /// <param name="connectionOptions">The options to use for this connection.</param>
+        internal SqlInternalConnection(SqlConnectionString connectionOptions) : base()
+        {
+            Debug.Assert(connectionOptions != null, "null connectionOptions?");
+            ConnectionOptions = connectionOptions;
+        }
+
+        #region Properties
+
+        // SQLBU 415870
+        //  Get the internal transaction that should be hooked to a new outer transaction
+        //  during a BeginTransaction API call.  In some cases (i.e. connection is going to
+        //  be reset), CurrentTransaction should not be hooked up this way.
+        /// <summary>
+        /// TODO: need to understand this property better
+        /// </summary>
+        virtual internal SqlInternalTransaction AvailableInternalTransaction => CurrentTransaction;
+
+        /// <summary>
+        /// A reference to the SqlConnection that owns this internal connection.
+        /// </summary>
+        internal SqlConnection Connection => (SqlConnection)Owner;
+
+        /// <summary>
+        /// The connection options to be used for this connection.
+        /// </summary>
+        internal SqlConnectionString ConnectionOptions { get; init; }
+
+        /// <summary>
         /// The current database for this connection.
         /// Null if the connection is not open yet.
         /// </summary>
@@ -52,74 +83,14 @@ namespace Microsoft.Data.SqlClient
         internal string CurrentDataSource { get; set; }
 
         /// <summary>
-        /// The delegated (or promoted) transaction this connection is responsible for.
-        /// </summary>
-        internal SqlDelegatedTransaction DelegatedTransaction { get; set; }
-
-        /// <summary>
-        /// Constructs a new SqlInternalConnection object using the provided connection options.
-        /// </summary>
-        /// <param name="connectionOptions">The options to use for this connection.</param>
-        internal SqlInternalConnection(SqlConnectionString connectionOptions) : base()
-        {
-            Debug.Assert(connectionOptions != null, "null connectionOptions?");
-            ConnectionOptions = connectionOptions;
-        }
-
-        #region Properties
-
-        /// <summary>
-        /// A reference to the SqlConnection that owns this internal connection.
-        /// </summary>
-        internal SqlConnection Connection
-        {
-            get
-            {
-                return (SqlConnection)Owner;
-            }
-        }
-
-        /// <summary>
-        /// The connection options to be used for this connection.
-        /// </summary>
-        internal SqlConnectionString ConnectionOptions { get; init; }
-
-        /// <summary>
         /// The Transaction currently associated with this connection.
         /// </summary>
         abstract internal SqlInternalTransaction CurrentTransaction { get; }
 
-        // SQLBU 415870
-        //  Get the internal transaction that should be hooked to a new outer transaction
-        //  during a BeginTransaction API call.  In some cases (i.e. connection is going to
-        //  be reset), CurrentTransaction should not be hooked up this way.
         /// <summary>
-        /// TODO: need to understand this property better
+        /// The delegated (or promoted) transaction this connection is responsible for.
         /// </summary>
-        virtual internal SqlInternalTransaction AvailableInternalTransaction
-        {
-            get
-            {
-                return CurrentTransaction;
-            }
-        }
-
-        /// <summary>
-        /// TODO: need to understand this property better
-        /// </summary>
-        abstract internal SqlInternalTransaction PendingTransaction { get; }
-
-        /// <summary>
-        /// Whether this connection is the root of a delegated or promoted transaction.
-        /// </summary>
-        override internal bool IsTransactionRoot
-        {
-            get
-            {
-                SqlDelegatedTransaction delegatedTransaction = DelegatedTransaction;
-                return delegatedTransaction != null && (delegatedTransaction.IsActive);
-            }
-        }
+        internal SqlDelegatedTransaction DelegatedTransaction { get; set; }
 
         /// <summary>
         /// Whether this connection has a local (non-delegated) transaction.
@@ -149,24 +120,19 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
+        /// Whether the server version is SQL Server 2008 or newer.
+        /// </summary>
+        abstract internal bool Is2008OrNewer { get; }
+
+        /// <summary>
+        /// Whether this connection is to an Azure SQL Database.
+        /// </summary>
+        internal bool IsAzureSqlConnection { get; set; }
+
+        /// <summary>
         /// Indicates whether the connection is currently enlisted in a transaction.
         /// </summary>
         internal bool IsEnlistedInTransaction { get; private set; }
-
-        /// <summary>
-        /// Whether this connection is locked for bulk copy operations.
-        /// </summary>
-        abstract internal bool IsLockedForBulkCopy { get; }
-
-        /// <summary>
-        /// Whether the server version is SQL Server 2008 or newer.
-        /// </summary>
-        abstract internal bool Is2008OrNewer {  get; }
-
-        /// <summary>
-        /// A token returned by the server when we promote transaction.
-        /// </summary>
-        internal byte[] PromotedDtcToken { get; set; }
 
         /// <summary>
         /// Whether this is a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
@@ -181,9 +147,31 @@ namespace Microsoft.Data.SqlClient
         internal bool IsGlobalTransactionsEnabledForServer { get; set; }
 
         /// <summary>
-        /// Whether this connection is to an Azure SQL Database.
+        /// Whether this connection is locked for bulk copy operations.
         /// </summary>
-        internal bool IsAzureSqlConnection { get; set; }
+        abstract internal bool IsLockedForBulkCopy { get; }
+
+        /// <summary>
+        /// Whether this connection is the root of a delegated or promoted transaction.
+        /// </summary>
+        override internal bool IsTransactionRoot
+        {
+            get
+            {
+                SqlDelegatedTransaction delegatedTransaction = DelegatedTransaction;
+                return delegatedTransaction != null && (delegatedTransaction.IsActive);
+            }
+        }
+
+        /// <summary>
+        /// TODO: need to understand this property better
+        /// </summary>
+        abstract internal SqlInternalTransaction PendingTransaction { get; }
+
+        /// <summary>
+        /// A token returned by the server when we promote transaction.
+        /// </summary>
+        internal byte[] PromotedDtcToken { get; set; }
 
         #endregion
 
