@@ -12,4 +12,4 @@ internal enum TransactionRequest
     Rollback,
     IfRollback,
     Save
-};
+}
