@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient
 
             _internalTransaction = new SqlInternalTransaction(connection, TransactionType.Delegated, null);
 
-            connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Begin, null, _isolationLevel, _internalTransaction, true);
+            connection.ExecuteTransaction(TransactionRequest.Begin, null, _isolationLevel, _internalTransaction, true);
 
             // Handle case where ExecuteTran didn't produce a new transaction, but also didn't throw.
             if (connection.CurrentTransaction == null)
@@ -135,7 +135,7 @@ namespace Microsoft.Data.SqlClient
                         // Now that we've acquired the lock, make sure we still have valid state for this operation.
                         ValidateActiveOnConnection(connection);
 
-                        connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Promote, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
+                        connection.ExecuteTransaction(TransactionRequest.Promote, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
                         returnValue = connection.PromotedDtcToken;
 
                         // For Global Transactions, we need to set the Transaction Id since we use a Non-MSDTC Promoter type.
@@ -231,7 +231,7 @@ namespace Microsoft.Data.SqlClient
                         // If we haven't already rolled back (or aborted) then tell the SQL Server to roll back
                         if (!_internalTransaction.IsAborted)
                         {
-                            connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Rollback, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
+                            connection.ExecuteTransaction(TransactionRequest.Rollback, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
                         }
                     }
                     catch (SqlException e)
@@ -313,7 +313,7 @@ namespace Microsoft.Data.SqlClient
                             _active = false; // set to inactive first, doesn't matter how the rest completes, this transaction is done.
                             _connection = null; // Set prior to ExecuteTransaction call in case this initiates a TransactionEnd event
 
-                            connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
+                            connection.ExecuteTransaction(TransactionRequest.Commit, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
                             commitException = null;
                         }
                         catch (SqlException e)

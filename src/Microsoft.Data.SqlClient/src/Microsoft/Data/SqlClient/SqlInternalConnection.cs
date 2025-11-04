@@ -56,16 +56,6 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal SqlDelegatedTransaction DelegatedTransaction { get; set; }
 
-        internal enum TransactionRequest
-        {
-            Begin,
-            Promote,
-            Commit,
-            Rollback,
-            IfRollback,
-            Save
-        };
-
         /// <summary>
         /// Constructs a new SqlInternalConnection object using the provided connection options.
         /// </summary>
