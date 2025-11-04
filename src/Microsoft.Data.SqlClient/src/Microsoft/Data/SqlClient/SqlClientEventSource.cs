@@ -339,7 +339,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void TraceEvent<T0>(string message, T0 args0)
         {
-            Trace(string.Format(message, args0?.ToString() ?? NullStr);
+            Trace(string.Format(message, args0?.ToString() ?? NullStr));
         }
 
         [NonEvent]
