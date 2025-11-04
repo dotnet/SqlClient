@@ -18,7 +18,6 @@ namespace Microsoft.Data.SqlClient
 {
     internal abstract class SqlInternalConnection : DbConnectionInternal
     {
-        private readonly SqlConnectionString _connectionOptions;  
         private byte[] _whereAbouts;             // cache the whereabouts (DTC Address) for exporting
 
         private static readonly Guid s_globalTransactionTMID = new("1c742caf-6680-40ea-9c26-6b6846079764"); // ID of the Non-MSDTC, Azure SQL DB Transaction Manager
@@ -56,7 +55,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlInternalConnection(SqlConnectionString connectionOptions) : base()
         {
             Debug.Assert(connectionOptions != null, "null connectionOptions?");
-            _connectionOptions = connectionOptions;
+            ConnectionOptions = connectionOptions;
         }
 
         internal SqlConnection Connection
@@ -67,13 +66,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SqlConnectionString ConnectionOptions
-        {
-            get
-            {
-                return _connectionOptions;
-            }
-        }
+        internal SqlConnectionString ConnectionOptions { get; init; }
 
         abstract internal SqlInternalTransaction CurrentTransaction
         {
