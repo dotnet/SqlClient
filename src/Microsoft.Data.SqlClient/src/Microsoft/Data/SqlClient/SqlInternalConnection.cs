@@ -159,19 +159,10 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal bool IsGlobalTransactionsEnabledForServer { get; set; }
 
-        private bool _isAzureSQLConnection = false; // If connected to Azure SQL
-
-        internal bool IsAzureSQLConnection
-        {
-            get
-            {
-                return _isAzureSQLConnection;
-            }
-            set
-            {
-                _isAzureSQLConnection = value;
-            }
-        }
+        /// <summary>
+        /// Whether this connection is to an Azure SQL Database.
+        /// </summary>
+        internal bool IsAzureSqlConnection { get; set; }
 
         override public DbTransaction BeginTransaction(System.Data.IsolationLevel iso)
         {

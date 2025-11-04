@@ -1491,7 +1491,7 @@ namespace Microsoft.Data.SqlClient
                             timeout);
                 }
 
-                if (!IsAzureSQLConnection)
+                if (!IsAzureSqlConnection)
                 {
                     // If not a connection to Azure SQL, Readonly with FailoverPartner is not supported
                     if (ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly)
@@ -2940,7 +2940,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
 
-                        IsAzureSQLConnection = true;
+                        IsAzureSqlConnection = true;
 
                         //  Bit 0 for RO/FP support
                         if ((data[0] & 1) == 1 && SqlClientEventSource.Log.IsTraceEnabled())
