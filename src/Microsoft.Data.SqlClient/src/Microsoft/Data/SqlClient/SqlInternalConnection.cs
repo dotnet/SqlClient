@@ -101,14 +101,6 @@ namespace Microsoft.Data.SqlClient
             get;
         }
 
-        override protected internal bool IsNonPoolableTransactionRoot
-        {
-            get
-            {
-                return IsTransactionRoot;  // default behavior is that root transactions are NOT poolable.  Subclasses may override.
-            }
-        }
-
         override internal bool IsTransactionRoot
         {
             get
@@ -328,7 +320,9 @@ namespace Microsoft.Data.SqlClient
             //
             // Automatic enlistment isn't possible because
             // Sys.Tx keeps the connection alive until the transaction is completed.
-            Debug.Assert(!IsNonPoolableTransactionRoot, "cannot defect an active delegated transaction!");  // potential race condition, but it's an assert
+            // TODO: why do we assert pooling status? shouldn't we just be checking
+            // whether the connection is the root of the transaction?
+            Debug.Assert(!(IsTransactionRoot && Pool == null), "cannot defect an active delegated transaction!");  // potential race condition, but it's an assert
 
             if (tx == null)
             {
