@@ -18,9 +18,15 @@ namespace Microsoft.Data.SqlClient
 {
     internal abstract class SqlInternalConnection : DbConnectionInternal
     {
-        private byte[] _whereAbouts;             // cache the whereabouts (DTC Address) for exporting
+        /// <summary>
+        /// Cache the whereabouts (DTC Address) for exporting.
+        /// </summary>
+        private byte[] _whereAbouts;
 
-        private static readonly Guid s_globalTransactionTMID = new("1c742caf-6680-40ea-9c26-6b6846079764"); // ID of the Non-MSDTC, Azure SQL DB Transaction Manager
+        /// <summary>
+        /// ID of the Azure SQL DB Transaction Manager (Non-MSDTC)
+        /// </summary>
+        private static readonly Guid s_globalTransactionTMID = new("1c742caf-6680-40ea-9c26-6b6846079764");
 
         internal SqlCommand.ExecuteReaderAsyncCallContext CachedCommandExecuteReaderAsyncContext;
         internal SqlCommand.ExecuteNonQueryAsyncCallContext CachedCommandExecuteNonQueryAsyncContext;
@@ -29,17 +35,25 @@ namespace Microsoft.Data.SqlClient
         internal SqlDataReader.IsDBNullAsyncCallContext CachedDataReaderIsDBNullContext;
         internal SqlDataReader.ReadAsyncCallContext CachedDataReaderReadAsyncContext;
 
-        // if connection is not open: null
-        // if connection is open: currently active database
+        /// <summary>
+        /// The current database for this connection.
+        /// Null if the connection is not open yet.
+        /// </summary>
         internal string CurrentDatabase { get; set; }
 
-        // if connection is not open yet, CurrentDataSource is null
-        // if connection is open:
-        // * for regular connections, it is set to Data Source value from connection string
-        // * for connections with FailoverPartner, it is set to the FailoverPartner value from connection string if the connection was opened to it.
+        /// <summary>
+        /// The current data source for this connection.
+        /// 
+        /// if connection is not open yet, CurrentDataSource is null
+        /// if connection is open:
+        /// * for regular connections, it is set to the Data Source value from connection string
+        /// * for failover connections, it is set to the FailoverPartner value from the connection string
+        /// </summary>
         internal string CurrentDataSource { get; set; }
 
-        // the delegated (or promoted) transaction we're responsible for.
+        /// <summary>
+        /// The delegated (or promoted) transaction this connection is responsible for.
+        /// </summary>
         internal SqlDelegatedTransaction DelegatedTransaction { get; set; }
 
         internal enum TransactionRequest
@@ -52,12 +66,21 @@ namespace Microsoft.Data.SqlClient
             Save
         };
 
+        /// <summary>
+        /// Constructs a new SqlInternalConnection object using the provided connection options.
+        /// </summary>
+        /// <param name="connectionOptions">The options to use for this connection.</param>
         internal SqlInternalConnection(SqlConnectionString connectionOptions) : base()
         {
             Debug.Assert(connectionOptions != null, "null connectionOptions?");
             ConnectionOptions = connectionOptions;
         }
 
+        #region Properties
+
+        /// <summary>
+        /// A reference to the SqlConnection that owns this internal connection.
+        /// </summary>
         internal SqlConnection Connection
         {
             get
@@ -66,17 +89,23 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// The connection options to be used for this connection.
+        /// </summary>
         internal SqlConnectionString ConnectionOptions { get; init; }
 
-        abstract internal SqlInternalTransaction CurrentTransaction
-        {
-            get;
-        }
+        /// <summary>
+        /// The Transaction currently associated with this connection.
+        /// </summary>
+        abstract internal SqlInternalTransaction CurrentTransaction { get; }
 
         // SQLBU 415870
         //  Get the internal transaction that should be hooked to a new outer transaction
         //  during a BeginTransaction API call.  In some cases (i.e. connection is going to
         //  be reset), CurrentTransaction should not be hooked up this way.
+        /// <summary>
+        /// TODO: need to understand this property better
+        /// </summary>
         virtual internal SqlInternalTransaction AvailableInternalTransaction
         {
             get
@@ -85,11 +114,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        abstract internal SqlInternalTransaction PendingTransaction
-        {
-            get;
-        }
+        /// <summary>
+        /// TODO: need to understand this property better
+        /// </summary>
+        abstract internal SqlInternalTransaction PendingTransaction { get; }
 
+        /// <summary>
+        /// Whether this connection is the root of a delegated or promoted transaction.
+        /// </summary>
         override internal bool IsTransactionRoot
         {
             get
@@ -99,7 +131,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
+        /// <summary>
+        /// Whether this connection has a local (non-delegated) transaction.
+        /// </summary>
         internal bool HasLocalTransaction
         {
             get
@@ -110,6 +144,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Whether this connection has a local transaction started from the API (i.e., SqlConnection.BeginTransaction)
+        /// or had a TSQL transaction and later got wrapped by an API transaction.
+        /// </summary>
         internal bool HasLocalTransactionFromAPI
         {
             get
@@ -125,15 +163,15 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal bool IsEnlistedInTransaction { get; private set; }
 
-        abstract internal bool IsLockedForBulkCopy
-        {
-            get;
-        }
+        /// <summary>
+        /// Whether this connection is locked for bulk copy operations.
+        /// </summary>
+        abstract internal bool IsLockedForBulkCopy { get; }
 
-        abstract internal bool Is2008OrNewer
-        {
-            get;
-        }
+        /// <summary>
+        /// Whether the server version is SQL Server 2008 or newer.
+        /// </summary>
+        abstract internal bool Is2008OrNewer {  get; }
 
         /// <summary>
         /// A token returned by the server when we promote transaction.
@@ -156,6 +194,8 @@ namespace Microsoft.Data.SqlClient
         /// Whether this connection is to an Azure SQL Database.
         /// </summary>
         internal bool IsAzureSqlConnection { get; set; }
+
+        #endregion
 
         override public DbTransaction BeginTransaction(System.Data.IsolationLevel iso)
         {
