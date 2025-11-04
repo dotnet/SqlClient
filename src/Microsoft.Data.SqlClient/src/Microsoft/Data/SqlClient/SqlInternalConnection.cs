@@ -22,7 +22,6 @@ namespace Microsoft.Data.SqlClient
         private byte[] _promotedDTCToken;        // token returned by the server when we promote transaction
         private byte[] _whereAbouts;             // cache the whereabouts (DTC Address) for exporting
 
-        private bool _isGlobalTransaction; // Whether this is a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
         private bool _isGlobalTransactionEnabledForServer; // Whether Global Transactions are enabled for this Azure SQL DB Server
         private static readonly Guid s_globalTransactionTMID = new("1c742caf-6680-40ea-9c26-6b6846079764"); // ID of the Non-MSDTC, Azure SQL DB Transaction Manager
 
@@ -157,17 +156,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool IsGlobalTransaction
-        {
-            get
-            {
-                return _isGlobalTransaction;
-            }
-            set
-            {
-                _isGlobalTransaction = value;
-            }
-        }
+        /// <summary>
+        /// Whether this is a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
+        /// TODO: overlaps with IsGlobalTransactionsEnabledForServer, need to consolidate to avoid bugs
+        /// </summary>
+        internal bool IsGlobalTransaction { get; set; }
 
         internal bool IsGlobalTransactionsEnabledForServer
         {
@@ -396,7 +389,7 @@ namespace Microsoft.Data.SqlClient
                 // promoter types/TM in .NET 4.6.2. Following directions
                 // from .NETFX shiproom, to avoid a "hard-dependency"
                 // (compile time) on Sys.Tx, we use reflection to invoke
-                // the new APIs. Further, the _isGlobalTransaction flag
+                // the new APIs. Further, the IsGlobalTransaction flag
                 // indicates that this is an Azure SQL DB Transaction
                 // that could be promoted to a Global Transaction (it's
                 // always false for on-prem Sql Server). The Promote()
@@ -404,7 +397,7 @@ namespace Microsoft.Data.SqlClient
                 // right Sys.Tx.dll is loaded and that Global Transactions
                 // are actually allowed for this Azure SQL DB.
 
-                if (_isGlobalTransaction)
+                if (IsGlobalTransaction)
                 {
                     if (SysTxForGlobalTransactions.EnlistPromotableSinglePhase == null)
                     {
@@ -460,7 +453,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.EnlistNonNull | ADV | Object Id {0}, delegation not possible, enlisting.", ObjectID);
                 byte[] cookie = null;
 
-                if (_isGlobalTransaction)
+                if (IsGlobalTransaction)
                 {
                     if (SysTxForGlobalTransactions.GetPromotedToken == null)
                     {
