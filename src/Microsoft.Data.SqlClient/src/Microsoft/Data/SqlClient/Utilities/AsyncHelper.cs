@@ -766,7 +766,7 @@ namespace Microsoft.Data.SqlClient.Utilities
             continuationTask.ContinueWith(
                 static task =>
                 {
-                    SqlClientEventSource.Log.TraceEvent($"Unobserved task exception: {task.Exception}");
+                    SqlClientEventSource.Log.TryTraceEvent($"Unobserved task exception: {task.Exception}");
                     return _ = task.Exception;
                 },
                 TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
