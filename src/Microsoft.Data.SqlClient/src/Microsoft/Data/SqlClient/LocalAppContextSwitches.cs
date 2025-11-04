@@ -14,10 +14,12 @@ namespace Microsoft.Data.SqlClient
         internal const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
         internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
         internal const string SuppressInsecureTLSWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
+        private const string IgnoreServerProvidedFailoverPartnerString = @"Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner";
 
         private static bool s_makeReadAsyncBlocking;
         private static bool? s_LegacyRowVersionNullBehavior;
         private static bool? s_SuppressInsecureTLSWarning;
+        private static bool? s_ignoreServerProvidedFailoverPartner;
 
 #if !NETFRAMEWORK
         static LocalAppContextSwitches()
@@ -74,6 +76,29 @@ namespace Microsoft.Data.SqlClient
                     s_LegacyRowVersionNullBehavior = result;
                 }
                 return s_LegacyRowVersionNullBehavior.Value;
+            }
+        }
+
+        /// <summary>
+        /// When set to true, the failover partner provided by the server during connection
+        /// will be ignored. This is useful in scenarios where the application wants to
+        /// control the failover behavior explicitly (e.g. using a custom port). The application 
+        /// must be kept up to date with the failover configuration of the server. 
+        /// The application will not automatically discover a newly configured failover partner.
+        /// 
+        /// This app context switch defaults to 'false'.
+        /// </summary>
+        public static bool IgnoreServerProvidedFailoverPartner
+        {
+            get
+            {
+                if (s_ignoreServerProvidedFailoverPartner is null)
+                {
+                    bool result;
+                    result = AppContext.TryGetSwitch(IgnoreServerProvidedFailoverPartnerString, out result) ? result : false;
+                    s_ignoreServerProvidedFailoverPartner = result;
+                }
+                return s_ignoreServerProvidedFailoverPartner.Value;
             }
         }
     }
