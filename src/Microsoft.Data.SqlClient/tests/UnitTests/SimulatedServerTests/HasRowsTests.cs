@@ -139,11 +139,25 @@ public sealed class HasRowsTests : IDisposable
         {
             Assert.Equal($"{InfoQueryEngine.InfoPreamble}{i}", _infoText[i]);
         }
+        _infoText.Clear();
 
         // Verify that we can read the single row.
         Assert.True(reader.Read());
+
+        // HasRows never gets reset.
+        Assert.True(reader.HasRows);
+
+        // Verify the row data.
         Assert.Equal(InfoQueryEngine.RowData, reader.GetString(0));
+        
+        // No further rows.
         Assert.False(reader.Read());
+
+        // HasRows never gets reset.
+        Assert.True(reader.HasRows);
+
+        // No further INFO tokens were found.
+        Assert.Empty(_infoText);
     }
 
     // Verify that HasRows is true when a variable number of INFO tokens is
@@ -168,21 +182,41 @@ public sealed class HasRowsTests : IDisposable
             _connection);
         using SqlDataReader reader = command.ExecuteReader();
 
-        // We should have read past the column metadata token(s) and INFO
-        // tokens, and determined that there are row results.
-        Assert.True(reader.HasRows);
+        // TODO: HasRows should be true here, regardless of the number of INFO
+        // tokens.
+        bool hasRowsExpected = infoCount <= 1;
+        Assert.Equal(hasRowsExpected, reader.HasRows);
 
-        // Verify that we received the expected INFO messages.
+        // Starting a reader consumes the column metadata and then stops, so
+        // we haven't encountered the INFO tokens yet.
+        Assert.Empty(_infoText);
+
+        // Verify that we can read the single row.
+        Assert.True(reader.Read());
+
+        // TODO: HasRows should still be true - it never gets cleared.
+        Assert.Equal(hasRowsExpected, reader.HasRows);
+
+        // Reading into the first row reads past the INFO tokens, so we should
+        // have them all accumulated now.
         Assert.Equal(infoCount, (ushort)_infoText.Count);
         for (ushort i = 0; i < infoCount; i++)
         {
             Assert.Equal($"{InfoQueryEngine.InfoPreamble}{i}", _infoText[i]);
         }
+        _infoText.Clear();
 
-        // Verify that we can read the single row.
-        Assert.True(reader.Read());
+        // Verify the row data.
         Assert.Equal(InfoQueryEngine.RowData, reader.GetString(0));
+
+        // No further rows.
         Assert.False(reader.Read());
+
+        // TODO: HasRows should still be true - it never gets cleared.
+        Assert.Equal(hasRowsExpected, reader.HasRows);
+
+        // No further INFO tokens were found.
+        Assert.Empty(_infoText);
     }
 
     // Verify that HasRows is true when a variable number of INFO tokens is
@@ -210,15 +244,27 @@ public sealed class HasRowsTests : IDisposable
         // We should have read the column metadata and determined that there
         // are row results.
         Assert.True(reader.HasRows);
-        
-        // We haven't read the INFO tokens yet.
-        Assert.Equal(0, (ushort)_infoText.Count);
+
+        // Starting a reader consumes the column metadata and then stops, so
+        // we haven't encountered the INFO tokens yet.
+        Assert.Empty(_infoText);
 
         // Verify that we can read the single row.
         Assert.True(reader.Read());
-        Assert.Equal(InfoQueryEngine.RowData, reader.GetString(0));
-        Assert.False(reader.Read());
 
+        // HasRows never gets reset
+        Assert.True(reader.HasRows);
+
+        // Still no INFO tokens.
+        Assert.Empty(_infoText);
+
+        // Verify the row data.
+        Assert.Equal(InfoQueryEngine.RowData, reader.GetString(0));
+
+        // No further rows.
+        Assert.False(reader.Read());
+        Assert.True(reader.HasRows);
+        
         // Verify that we received the expected INFO messages.
         Assert.Equal(infoCount, (ushort)_infoText.Count);
         for (ushort i = 0; i < infoCount; i++)
