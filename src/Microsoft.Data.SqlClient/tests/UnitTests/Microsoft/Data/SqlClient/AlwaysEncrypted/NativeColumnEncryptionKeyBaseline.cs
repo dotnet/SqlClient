@@ -11,6 +11,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted;
 /// Provides unit tests which verify that a final cell produced by SQL Server's native Always Encrypted code
 /// can be decrypted to a known value.
 /// </summary>
+[SkipOnPlatform(TestPlatforms.OSX | TestPlatforms.MacCatalyst | TestPlatforms.iOS | TestPlatforms.tvOS,
+    "The supplied native column encryption key is a certificate which is incompatible with MacOS.")]
 public class NativeColumnEncryptionKeyBaseline : IClassFixture<NativeColumnEncryptionKeyCertificateBaselineFixture>
 {
     private readonly string _certificateThumbprint;
