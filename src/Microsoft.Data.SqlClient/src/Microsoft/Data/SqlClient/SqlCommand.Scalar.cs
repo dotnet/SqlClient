@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+                WriteEndExecuteEvent(success, sqlExceptionNumber, isSynchronous: true);
             }
         }
 
