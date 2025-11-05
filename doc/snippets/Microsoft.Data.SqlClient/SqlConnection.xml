@@ -2138,7 +2138,7 @@ The following sample tries to open a connection to an invalid database to simula
         Gets or sets the <see cref="SspiContextProvider"/> instance for customizing the SSPI context. If not set, the default for the platform will be used.
       </summary>
       <value>
-        An <see cref="T:Micorosft.Data.SqlClient.SspiContextProvider" /> instance.
+        An <see cref="T:Microsoft.Data.SqlClient.SspiContextProvider" /> instance.
       </value>
       <remarks>
         <para>
