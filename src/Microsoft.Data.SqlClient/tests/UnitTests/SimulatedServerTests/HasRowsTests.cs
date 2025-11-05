@@ -108,18 +108,20 @@ public sealed class HasRowsTests : IDisposable
     }
 
     // Verify that HasRows is true when a variable number of INFO tokens is
-    // included in the response to a SQL batch that returns rows.
+    // included at the start of the response stream to a SQL batch that returns
+    // rows.
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
     [InlineData(2)]
     [InlineData(3)]
     [InlineData(10)]
-    public void InfoAndRows(ushort infoCount)
+    public void InfoAndRows_Start(ushort infoCount)
     {
-        // Configure the engine to include the desired number of INFO tokens
-        // with its response.
+        // Configure the engine to specify the desired number and placement of
+        // INFO tokens with its response.
         _engine.InfoCount = infoCount;
+        _engine.InfoPlacement = InfoPlacement.Start;
 
         using SqlCommand command = new(
             // Use command text that is intercepted by our engine.
@@ -143,6 +145,87 @@ public sealed class HasRowsTests : IDisposable
         Assert.Equal(InfoQueryEngine.RowData, reader.GetString(0));
         Assert.False(reader.Read());
     }
+
+    // Verify that HasRows is true when a variable number of INFO tokens is
+    // included in the middle of the response stream to a SQL batch that returns
+    // rows.
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(10)]
+    public void InfoAndRows_Middle(ushort infoCount)
+    {
+        // Configure the engine to specify the desired number and placement of
+        // INFO tokens with its response.
+        _engine.InfoCount = infoCount;
+        _engine.InfoPlacement = InfoPlacement.Middle;
+
+        using SqlCommand command = new(
+            // Use command text that is intercepted by our engine.
+            InfoQueryEngine.CommandText,
+            _connection);
+        using SqlDataReader reader = command.ExecuteReader();
+
+        // We should have read past the column metadata token(s) and INFO
+        // tokens, and determined that there are row results.
+        Assert.True(reader.HasRows);
+
+        // Verify that we received the expected INFO messages.
+        Assert.Equal(infoCount, (ushort)_infoText.Count);
+        for (ushort i = 0; i < infoCount; i++)
+        {
+            Assert.Equal($"{InfoQueryEngine.InfoPreamble}{i}", _infoText[i]);
+        }
+
+        // Verify that we can read the single row.
+        Assert.True(reader.Read());
+        Assert.Equal(InfoQueryEngine.RowData, reader.GetString(0));
+        Assert.False(reader.Read());
+    }
+
+    // Verify that HasRows is true when a variable number of INFO tokens is
+    // included at the end of the response stream to a SQL batch that returns
+    // rows.
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(10)]
+    public void InfoAndRows_End(ushort infoCount)
+    {
+        // Configure the engine to specify the desired number and placement of
+        // INFO tokens with its response.
+        _engine.InfoCount = infoCount;
+        _engine.InfoPlacement = InfoPlacement.End;
+
+        using SqlCommand command = new(
+            // Use command text that is intercepted by our engine.
+            InfoQueryEngine.CommandText,
+            _connection);
+        using SqlDataReader reader = command.ExecuteReader();
+
+        // We should have read the column metadata and determined that there
+        // are row results.
+        Assert.True(reader.HasRows);
+        
+        // We haven't read the INFO tokens yet.
+        Assert.Equal(0, (ushort)_infoText.Count);
+
+        // Verify that we can read the single row.
+        Assert.True(reader.Read());
+        Assert.Equal(InfoQueryEngine.RowData, reader.GetString(0));
+        Assert.False(reader.Read());
+
+        // Verify that we received the expected INFO messages.
+        Assert.Equal(infoCount, (ushort)_infoText.Count);
+        for (ushort i = 0; i < infoCount; i++)
+        {
+            Assert.Equal($"{InfoQueryEngine.InfoPreamble}{i}", _infoText[i]);
+        }
+    }
 }
 
 // A writer compatible with TdsUtilities.Log() that pumps accumulated log
@@ -150,6 +233,10 @@ public sealed class HasRowsTests : IDisposable
 internal sealed class LogWriter : StringWriter
 {
     private readonly ITestOutputHelper _output;
+
+    // Disable emission if TEST_SUPPRESS_LOGGING is defined.
+    private readonly bool _suppressLogging =
+        Environment.GetEnvironmentVariable("TEST_SUPPRESS_LOGGING") is not null;
 
     public LogWriter(ITestOutputHelper output)
     {
@@ -169,13 +256,30 @@ internal sealed class LogWriter : StringWriter
         // Emit if there's anything worthwhile.
         if (text.Length > 0)
         {
-            _output.WriteLine(text);
+            // Suppress emission if requested, but still do everything else.
+            if (!_suppressLogging)
+            {
+                _output.WriteLine(text);
+            }
             base.Flush();
         }
         
         // Clear the buffer for the next accumulation.
         builder.Clear();
     }
+}
+
+// Indicates where in the response stream to place the INFO tokens.
+public enum InfoPlacement
+{
+    // Place the INFO tokens before the column metadata and row data.
+    Start,
+
+    // Place the INFO tokens between the column metadata and row data.
+    Middle,
+
+    // Place the INFO tokens after the row data.
+    End
 }
 
 // A query engine that can include INFO tokens in its response.
@@ -194,6 +298,9 @@ internal sealed class InfoQueryEngine : QueryEngine
 
     // The number of INFO tokens to include in the response.
     internal ushort InfoCount { get; set; } = 0;
+
+    // Determines where to place the INFO tokens in the response stream.
+    internal InfoPlacement InfoPlacement { get; set; } = InfoPlacement.Start;
 
     // Construct with server arguments.
     internal InfoQueryEngine(TdsServerArguments arguments)
@@ -219,13 +326,22 @@ internal sealed class InfoQueryEngine : QueryEngine
         // one row result.
         TDSMessage response = new(TDSMessageType.Response);
 
-        // Add the INFO tokens first.
-        for (ushort i = 0; i < InfoCount; i++)
+        // Helper to add INFO tokens at the desired placement.
+        var addInfoTokens = new Action(() =>
         {
-            // Choose an error code outside the reserved range.
-            TDSInfoToken token = new(30000u + i, 0, 0, $"{InfoPreamble}{i}");
-            response.Add(token);
-            TDSUtilities.Log(Log, "INFO Response", token);
+            for (ushort i = 0; i < InfoCount; i++)
+            {
+                // Choose an error code outside the reserved range.
+                TDSInfoToken token = new(30000u + i, 0, 0, $"{InfoPreamble}{i}");
+                response.Add(token);
+                TDSUtilities.Log(Log, "INFO Response", token);
+            }
+        });
+
+        // Add INFO tokens at the start if desired.
+        if (InfoPlacement == InfoPlacement.Start)
+        {
+            addInfoTokens();
         }
 
         // Add the column metadata.
@@ -244,11 +360,23 @@ internal sealed class InfoQueryEngine : QueryEngine
 
         TDSUtilities.Log(Log, "INFO Response", metadataToken);
 
+        // Add INFO tokens in the middle if desired.
+        if (InfoPlacement == InfoPlacement.Middle)
+        {
+            addInfoTokens();
+        }
+
         // Add the row result data.
         TDSRowToken rowToken = new(metadataToken);
         rowToken.Data.Add(RowData);
         response.Add(rowToken);
         TDSUtilities.Log(Log, "INFO Response", rowToken);
+
+        // Add INFO tokens at the end if desired.
+        if (InfoPlacement == InfoPlacement.End)
+        {
+            addInfoTokens();
+        }
 
         // Add the done token.
         TDSDoneToken doneToken = new(
