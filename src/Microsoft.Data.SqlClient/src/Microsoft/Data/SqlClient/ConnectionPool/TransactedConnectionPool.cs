@@ -28,8 +28,7 @@ internal class TransactedConnectionPool
 {
     /// <summary>
     /// A specialized list that holds database connections associated with a specific transaction.
-    /// This class extends List&lt;DbConnectionInternal&gt; and maintains a reference to the 
-    /// transaction for proper cleanup when the transaction completes.
+    /// Maintains a reference to the transaction for proper cleanup when the transaction completes.
     /// </summary>
     private sealed class TransactedConnectionList : List<DbConnectionInternal>
     {
@@ -59,10 +58,14 @@ internal class TransactedConnectionPool
         }
     }
 
+    #region Fields
+
     Dictionary<Transaction, TransactedConnectionList> _transactedCxns;
 
-    private static int _objectTypeCount; // EventSource Counter
+    private static int _objectTypeCount;
     internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
+
+    #endregion
 
     /// <summary>
     /// Initializes a new instance of the TransactedConnectionPool class for the specified connection pool.
@@ -80,6 +83,8 @@ internal class TransactedConnectionPool
         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactedConnectionPool|RES|CPOOL> {0}, Constructed for connection pool {1}", Id, Pool.Id);
     }
 
+    #region Properties
+
     /// <summary>
     /// Gets the unique identifier for this transacted connection pool instance.
     /// </summary>
@@ -91,6 +96,10 @@ internal class TransactedConnectionPool
     /// </summary>
     /// <value>The IDbConnectionPool instance that owns this transacted pool.</value>
     internal IDbConnectionPool Pool { get; private init; }
+
+    #endregion
+
+    #region Methods
 
     /// <summary>
     /// Retrieves a database connection that is already enlisted in the specified transaction.
@@ -336,4 +345,5 @@ internal class TransactedConnectionPool
         }
     }
 
+    #endregion
 }
