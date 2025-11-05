@@ -7,6 +7,8 @@ using System.Diagnostics;
 using System.Transactions;
 using Microsoft.Data.ProviderBase;
 
+#nullable enable
+
 namespace Microsoft.Data.SqlClient.ConnectionPool;
 
 internal class TransactedConnectionPool
@@ -60,13 +62,11 @@ internal class TransactedConnectionPool
         }
     }
 
-    internal DbConnectionInternal GetTransactedObject(Transaction transaction)
+    internal DbConnectionInternal? GetTransactedObject(Transaction transaction)
     {
-        Debug.Assert(transaction != null, "null transaction?");
+        DbConnectionInternal? transactedObject = null;
 
-        DbConnectionInternal transactedObject = null;
-
-        TransactedConnectionList connections;
+        TransactedConnectionList? connections;
         bool txnFound = false;
 
         lock (_transactedCxns)
@@ -81,9 +81,8 @@ internal class TransactedConnectionPool
         //   is similarly alright if a pending addition to the connections list in PutTransactedObject
         //   below is not completed prior to the lock on the connections object here...getting a new
         //   connection is probably better than unnecessarily locking
-        if (txnFound)
+        if (txnFound && connections is not null)
         {
-            Debug.Assert(connections != null);
 
             // synchronize multi-threaded access with PutTransactedObject (TransactionEnded should
             //   not be a concern, see comments above)
@@ -107,10 +106,7 @@ internal class TransactedConnectionPool
 
     internal void PutTransactedObject(Transaction transaction, DbConnectionInternal transactedObject)
     {
-        Debug.Assert(transaction != null, "null transaction?");
-        Debug.Assert(transactedObject != null, "null transactedObject?");
-
-        TransactedConnectionList connections;
+        TransactedConnectionList? connections;
         bool txnFound = false;
 
         // NOTE: because TransactionEnded is an asynchronous notification, there's no guarantee
@@ -119,10 +115,9 @@ internal class TransactedConnectionPool
         lock (_transactedCxns)
         {
             // Check if a transacted pool has been created for this transaction
-            if (txnFound = _transactedCxns.TryGetValue(transaction, out connections))
+            if ((txnFound = _transactedCxns.TryGetValue(transaction, out connections)) 
+                && connections is not null)
             {
-                Debug.Assert(connections != null);
-
                 // synchronize multi-threaded access with GetTransactedObject
                 lock (connections)
                 {
@@ -139,8 +134,8 @@ internal class TransactedConnectionPool
         {
             // create the transacted pool, making sure to clone the associated transaction
             //   for use as a key in our internal dictionary of transactions and connections
-            Transaction transactionClone = null;
-            TransactedConnectionList newConnections = null;
+            Transaction? transactionClone = null;
+            TransactedConnectionList? newConnections = null;
 
             try
             {
@@ -154,10 +149,9 @@ internal class TransactedConnectionPool
                     //   add a different connection to the transacted pool under the same 
                     //   transaction. As a result, threadB may have completed creating the
                     //   transacted pool while threadA was processing the above instructions.
-                    if (txnFound = _transactedCxns.TryGetValue(transaction, out connections))
+                    if ((txnFound = _transactedCxns.TryGetValue(transaction, out connections))
+                        && connections is not null)
                     {
-                        Debug.Assert(connections != null);
-
                         // synchronize multi-threaded access with GetTransactedObject
                         lock (connections)
                         {
@@ -205,7 +199,7 @@ internal class TransactedConnectionPool
     internal void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
     {
         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transaction Completed", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
-        TransactedConnectionList connections;
+        TransactedConnectionList? connections;
         int entry = -1;
 
         // NOTE: because TransactionEnded is an asynchronous notification, there's no guarantee
@@ -218,10 +212,9 @@ internal class TransactedConnectionPool
 
         lock (_transactedCxns)
         {
-            if (_transactedCxns.TryGetValue(transaction, out connections))
+            if (_transactedCxns.TryGetValue(transaction, out connections)
+                && connections is not null)
             {
-                Debug.Assert(connections != null);
-
                 bool shouldDisposeConnections = false;
 
                 // Lock connections to avoid conflict with GetTransactionObject
