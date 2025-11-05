@@ -37,6 +37,8 @@ namespace Microsoft.Data.SqlClient.Tests.Common
             {
                 element?.Dispose();
             }
+
+            GC.SuppressFinalize(this);
         }
 
         public IEnumerator<T> GetEnumerator() =>
