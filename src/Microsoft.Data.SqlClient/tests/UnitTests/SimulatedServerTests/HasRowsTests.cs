@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.ColMetadata;
@@ -20,28 +19,42 @@ using Xunit;
 using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.Tests.UnitTests.SimulatedServerTests;
+
 public sealed class HasRowsTests : IDisposable
 {
+    // The query engine used by the server.
     private readonly InfoQueryEngine _engine;
-    private readonly TdsServer _server;
-    private readonly SqlConnection _connection;
-    private readonly List<string> _infoMessagesReceived = new();
 
+    // The TDS server we will connect to.
+    private readonly TdsServer _server;
+
+    // The connection to the server; always open post-construction.
+    private readonly SqlConnection _connection;
+    
+    // The list of INFO message text received.
+    private readonly List<string> _infoText = new();
+
+    // Construct to setup the server and connection.
     public HasRowsTests(ITestOutputHelper output)
     {
-        _engine = new(new(){ Log = new LogWriter(output) });
+        // Use our log writer to capture TDS Server logs to the xUnit output.
+        _engine = new(new() { Log = new LogWriter(output) });
 
+        // Start the TDS server.
         _server = new(_engine);
         _server.Start();
 
+        // Use the server's endpoint to build a connection string.
         var connStr = new SqlConnectionStringBuilder()
         {
             DataSource = $"localhost,{_server.EndPoint.Port}",
             Encrypt = SqlConnectionEncryptOption.Optional,
         }.ConnectionString;
 
+        // Create the connection.
         _connection = new SqlConnection(connStr);
 
+        // Add a handler for INFO messages to capture them.
         _connection.InfoMessage += new(
             (object sender, SqlInfoMessageEventArgs imevent) =>
             {
@@ -49,13 +62,15 @@ public sealed class HasRowsTests : IDisposable
                 // reason.  Capture them in order.
                 for (int i = 0; i < imevent.Errors.Count; i++)
                 {
-                    _infoMessagesReceived.Add(imevent.Errors[i].Message);
+                    _infoText.Add(imevent.Errors[i].Message);
                 }
             });
-        
+
+        // Open the connection.
         _connection.Open();
     }
 
+    // Dispose of resources.
     public void Dispose()
     {
         _connection.Dispose();
@@ -70,6 +85,9 @@ public sealed class HasRowsTests : IDisposable
             // Use command text that isn't recognized by the query engine.  This
             // should elicit a response that includes 2 INFO tokens and no row
             // results.
+            //
+            // See QueryEngine.CreateQueryResponse()'s else block.
+            //
             "select 'Hello, World!'",
             _connection);
         using SqlDataReader reader = command.ExecuteReader();
@@ -77,27 +95,26 @@ public sealed class HasRowsTests : IDisposable
         // We should not have detected any rows.
         Assert.False(reader.HasRows);
 
-        // Verify that we received the expected 2 INFO messages with the
-        // expected text.
-        Assert.Equal(2, _infoMessagesReceived.Count);
-        Assert.Equal("select 'Hello, World!'", _infoMessagesReceived[0]);
+        // Verify that we received the expected 2 INFO messages.
+        Assert.Equal(2, _infoText.Count);
+        Assert.Equal("select 'Hello, World!'", _infoText[0]);
         Assert.Equal(
             "Received query is not recognized by the query engine. Please " +
             "ask a very specific question.",
-            _infoMessagesReceived[1]);
+            _infoText[1]);
 
         // Confirm that we really didn't get any rows.
         Assert.False(reader.Read());
     }
 
-    // Verify that HasRows is true when more than one INFO token is included
-    // in the response to a SQL batch that returns rows.
+    // Verify that HasRows is true when a variable number of INFO tokens is
+    // included in the response to a SQL batch that returns rows.
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
     [InlineData(2)]
     [InlineData(3)]
-    [InlineData(4)]
+    [InlineData(10)]
     public void InfoAndRows(ushort infoCount)
     {
         // Configure the engine to include the desired number of INFO tokens
@@ -105,26 +122,25 @@ public sealed class HasRowsTests : IDisposable
         _engine.InfoCount = infoCount;
 
         using SqlCommand command = new(
-            // Use command text that is intercepted by the InfoQueryEngine.
-            InfoQueryEngine.InfoCommandText,
+            // Use command text that is intercepted by our engine.
+            InfoQueryEngine.CommandText,
             _connection);
         using SqlDataReader reader = command.ExecuteReader();
 
         // We should have read past the INFO tokens and determined that there
         // are row results.
         Assert.True(reader.HasRows);
-        
-        // Verify that we received the expected number of INFO messages with
-        // the expected text.
-        Assert.Equal(infoCount, (ushort)_infoMessagesReceived.Count);
+
+        // Verify that we received the expected INFO messages.
+        Assert.Equal(infoCount, (ushort)_infoText.Count);
         for (ushort i = 0; i < infoCount; i++)
         {
-            Assert.Equal($"Info message {i}", _infoMessagesReceived[i]);
+            Assert.Equal($"{InfoQueryEngine.InfoPreamble}{i}", _infoText[i]);
         }
 
         // Verify that we can read the single row.
         Assert.True(reader.Read());
-        Assert.Equal("Foo Value", reader.GetString(0));
+        Assert.Equal(InfoQueryEngine.RowData, reader.GetString(0));
         Assert.False(reader.Read());
     }
 }
@@ -167,7 +183,14 @@ internal sealed class InfoQueryEngine : QueryEngine
 {
     // The query text that this engine recognizes and will trigger the
     // inclusion of InfoCount INFO tokens in the response.
-    internal const string InfoCommandText = "select Foo from Bar";
+    internal const string CommandText = "select Foo from Bar";
+
+    // The row data that this engine will return for the recognized query.
+    internal const string RowData = "Foo Value";
+
+    // The preamble for all INFO message text.  The 0-based index of the INFO
+    // token will be appended to this to form the complete message text.
+    internal const string InfoPreamble = "Info message ";
 
     // The number of INFO tokens to include in the response.
     internal ushort InfoCount { get; set; } = 0;
@@ -187,7 +210,7 @@ internal sealed class InfoQueryEngine : QueryEngine
         TDSSQLBatchToken batchRequest)
     {
         // Defer to the base implementation for unrecognized commands.
-        if (batchRequest.Text != InfoCommandText)
+        if (batchRequest.Text != CommandText)
         {
             return base.CreateQueryResponse(session, batchRequest);
         }
@@ -200,7 +223,7 @@ internal sealed class InfoQueryEngine : QueryEngine
         for (ushort i = 0; i < InfoCount; i++)
         {
             // Choose an error code outside the reserved range.
-            TDSInfoToken token = new(30000u + i, 0, 0, $"Info message {i}");
+            TDSInfoToken token = new(30000u + i, 0, 0, $"{InfoPreamble}{i}");
             response.Add(token);
             TDSUtilities.Log(Log, "INFO Response", token);
         }
@@ -223,7 +246,7 @@ internal sealed class InfoQueryEngine : QueryEngine
 
         // Add the row result data.
         TDSRowToken rowToken = new(metadataToken);
-        rowToken.Data.Add("Foo Value");
+        rowToken.Data.Add(RowData);
         response.Add(rowToken);
         TDSUtilities.Log(Log, "INFO Response", rowToken);
 
