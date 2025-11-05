@@ -807,6 +807,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsValueSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsValueSetter.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TransactionRequest.cs">
+        <Link>Microsoft\Data\SqlClient\TransactionRequest.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs</Link>
     </Compile>

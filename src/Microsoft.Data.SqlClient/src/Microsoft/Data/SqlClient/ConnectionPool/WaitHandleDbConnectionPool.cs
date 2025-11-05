@@ -912,7 +912,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     }
                     else
                     {
-                        if (obj.IsNonPoolableTransactionRoot)
+                        // TODO: how did we get here if the pool is null?
+                        if (obj.IsTransactionRoot && obj.Pool == null)
                         {
                             obj.SetInStasis();
                             rootTxn = true;

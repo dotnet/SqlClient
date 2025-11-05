@@ -304,19 +304,6 @@ namespace Microsoft.Data.ProviderBase
         /// </summary>
         protected internal bool IsConnectionDoomed { get; private set; }
 
-        /// <summary>
-        /// Is this a connection that must be put in stasis (or is already in stasis) pending the
-        /// end of its transaction?
-        /// </summary>
-        /// <remarks>
-        /// If you want to have delegated transactions that are non-poolable, you had better
-        /// override this...
-        /// </remarks>
-        protected internal virtual bool IsNonPoolableTransactionRoot
-        {
-            get => false;
-        }
-
         /// <remarks>
         /// We use a weak reference to the owning object so we can identify when it has been
         /// garbage collected without throwing exceptions.

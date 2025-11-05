@@ -18,14 +18,15 @@ namespace Microsoft.Data.SqlClient
 {
     internal abstract class SqlInternalConnection : DbConnectionInternal
     {
-        private readonly SqlConnectionString _connectionOptions;
-        private bool _isEnlistedInTransaction; // is the server-side connection enlisted? true while we're enlisted, reset only after we send a null...
-        private byte[] _promotedDTCToken;        // token returned by the server when we promote transaction
-        private byte[] _whereAbouts;             // cache the whereabouts (DTC Address) for exporting
+        /// <summary>
+        /// Cache the whereabouts (DTC Address) for exporting.
+        /// </summary>
+        private byte[] _whereAbouts;
 
-        private bool _isGlobalTransaction; // Whether this is a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
-        private bool _isGlobalTransactionEnabledForServer; // Whether Global Transactions are enabled for this Azure SQL DB Server
-        private static readonly Guid s_globalTransactionTMID = new("1c742caf-6680-40ea-9c26-6b6846079764"); // ID of the Non-MSDTC, Azure SQL DB Transaction Manager
+        /// <summary>
+        /// ID of the Azure SQL DB Transaction Manager (Non-MSDTC)
+        /// </summary>
+        private static readonly Guid s_globalTransactionTMID = new("1c742caf-6680-40ea-9c26-6b6846079764");
 
         internal SqlCommand.ExecuteReaderAsyncCallContext CachedCommandExecuteReaderAsyncContext;
         internal SqlCommand.ExecuteNonQueryAsyncCallContext CachedCommandExecuteNonQueryAsyncContext;
@@ -34,91 +35,66 @@ namespace Microsoft.Data.SqlClient
         internal SqlDataReader.IsDBNullAsyncCallContext CachedDataReaderIsDBNullContext;
         internal SqlDataReader.ReadAsyncCallContext CachedDataReaderReadAsyncContext;
 
-        // if connection is not open: null
-        // if connection is open: currently active database
-        internal string CurrentDatabase { get; set; }
-
-        // if connection is not open yet, CurrentDataSource is null
-        // if connection is open:
-        // * for regular connections, it is set to Data Source value from connection string
-        // * for connections with FailoverPartner, it is set to the FailoverPartner value from connection string if the connection was opened to it.
-        internal string CurrentDataSource { get; set; }
-
-        // the delegated (or promoted) transaction we're responsible for.
-        internal SqlDelegatedTransaction DelegatedTransaction { get; set; }
-
-        internal enum TransactionRequest
-        {
-            Begin,
-            Promote,
-            Commit,
-            Rollback,
-            IfRollback,
-            Save
-        };
-
+        /// <summary>
+        /// Constructs a new SqlInternalConnection object using the provided connection options.
+        /// </summary>
+        /// <param name="connectionOptions">The options to use for this connection.</param>
         internal SqlInternalConnection(SqlConnectionString connectionOptions) : base()
         {
             Debug.Assert(connectionOptions != null, "null connectionOptions?");
-            _connectionOptions = connectionOptions;
+            ConnectionOptions = connectionOptions;
         }
 
-        internal SqlConnection Connection
-        {
-            get
-            {
-                return (SqlConnection)Owner;
-            }
-        }
-
-        internal SqlConnectionString ConnectionOptions
-        {
-            get
-            {
-                return _connectionOptions;
-            }
-        }
-
-        abstract internal SqlInternalTransaction CurrentTransaction
-        {
-            get;
-        }
+        #region Properties
 
         // SQLBU 415870
         //  Get the internal transaction that should be hooked to a new outer transaction
         //  during a BeginTransaction API call.  In some cases (i.e. connection is going to
         //  be reset), CurrentTransaction should not be hooked up this way.
-        virtual internal SqlInternalTransaction AvailableInternalTransaction
-        {
-            get
-            {
-                return CurrentTransaction;
-            }
-        }
+        /// <summary>
+        /// TODO: need to understand this property better
+        /// </summary>
+        virtual internal SqlInternalTransaction AvailableInternalTransaction => CurrentTransaction;
 
-        abstract internal SqlInternalTransaction PendingTransaction
-        {
-            get;
-        }
+        /// <summary>
+        /// A reference to the SqlConnection that owns this internal connection.
+        /// </summary>
+        internal SqlConnection Connection => (SqlConnection)Owner;
 
-        override protected internal bool IsNonPoolableTransactionRoot
-        {
-            get
-            {
-                return IsTransactionRoot;  // default behavior is that root transactions are NOT poolable.  Subclasses may override.
-            }
-        }
+        /// <summary>
+        /// The connection options to be used for this connection.
+        /// </summary>
+        internal SqlConnectionString ConnectionOptions { get; init; }
 
-        override internal bool IsTransactionRoot
-        {
-            get
-            {
-                SqlDelegatedTransaction delegatedTransaction = DelegatedTransaction;
-                return delegatedTransaction != null && (delegatedTransaction.IsActive);
-            }
-        }
+        /// <summary>
+        /// The current database for this connection.
+        /// Null if the connection is not open yet.
+        /// </summary>
+        internal string CurrentDatabase { get; set; }
 
+        /// <summary>
+        /// The current data source for this connection.
+        /// 
+        /// if connection is not open yet, CurrentDataSource is null
+        /// if connection is open:
+        /// * for regular connections, it is set to the Data Source value from connection string
+        /// * for failover connections, it is set to the FailoverPartner value from the connection string
+        /// </summary>
+        internal string CurrentDataSource { get; set; }
 
+        /// <summary>
+        /// The Transaction currently associated with this connection.
+        /// </summary>
+        abstract internal SqlInternalTransaction CurrentTransaction { get; }
+
+        /// <summary>
+        /// The delegated (or promoted) transaction this connection is responsible for.
+        /// </summary>
+        internal SqlDelegatedTransaction DelegatedTransaction { get; set; }
+
+        /// <summary>
+        /// Whether this connection has a local (non-delegated) transaction.
+        /// </summary>
         internal bool HasLocalTransaction
         {
             get
@@ -129,6 +105,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Whether this connection has a local transaction started from the API (i.e., SqlConnection.BeginTransaction)
+        /// or had a TSQL transaction and later got wrapped by an API transaction.
+        /// </summary>
         internal bool HasLocalTransactionFromAPI
         {
             get
@@ -139,73 +119,61 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool IsEnlistedInTransaction
+        /// <summary>
+        /// Whether the server version is SQL Server 2008 or newer.
+        /// </summary>
+        abstract internal bool Is2008OrNewer { get; }
+
+        /// <summary>
+        /// Whether this connection is to an Azure SQL Database.
+        /// </summary>
+        internal bool IsAzureSqlConnection { get; set; }
+
+        /// <summary>
+        /// Indicates whether the connection is currently enlisted in a transaction.
+        /// </summary>
+        internal bool IsEnlistedInTransaction { get; private set; }
+
+        /// <summary>
+        /// Whether this is a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
+        /// TODO: overlaps with IsGlobalTransactionsEnabledForServer, need to consolidate to avoid bugs
+        /// </summary>
+        internal bool IsGlobalTransaction { get; set; }
+
+        /// <summary>
+        /// Whether Global Transactions are enabled. Only supported by Azure SQL.
+        /// False if disabled or connected to on-prem SQL Server.
+        /// </summary>
+        internal bool IsGlobalTransactionsEnabledForServer { get; set; }
+
+        /// <summary>
+        /// Whether this connection is locked for bulk copy operations.
+        /// </summary>
+        abstract internal bool IsLockedForBulkCopy { get; }
+
+        /// <summary>
+        /// Whether this connection is the root of a delegated or promoted transaction.
+        /// </summary>
+        override internal bool IsTransactionRoot
         {
             get
             {
-                return _isEnlistedInTransaction;
+                SqlDelegatedTransaction delegatedTransaction = DelegatedTransaction;
+                return delegatedTransaction != null && (delegatedTransaction.IsActive);
             }
         }
 
-        abstract internal bool IsLockedForBulkCopy
-        {
-            get;
-        }
+        /// <summary>
+        /// TODO: need to understand this property better
+        /// </summary>
+        abstract internal SqlInternalTransaction PendingTransaction { get; }
 
-        abstract internal bool Is2008OrNewer
-        {
-            get;
-        }
+        /// <summary>
+        /// A token returned by the server when we promote transaction.
+        /// </summary>
+        internal byte[] PromotedDtcToken { get; set; }
 
-        internal byte[] PromotedDTCToken
-        {
-            get
-            {
-                return _promotedDTCToken;
-            }
-            set
-            {
-                _promotedDTCToken = value;
-            }
-        }
-
-        internal bool IsGlobalTransaction
-        {
-            get
-            {
-                return _isGlobalTransaction;
-            }
-            set
-            {
-                _isGlobalTransaction = value;
-            }
-        }
-
-        internal bool IsGlobalTransactionsEnabledForServer
-        {
-            get
-            {
-                return _isGlobalTransactionEnabledForServer;
-            }
-            set
-            {
-                _isGlobalTransactionEnabledForServer = value;
-            }
-        }
-
-        private bool _isAzureSQLConnection = false; // If connected to Azure SQL
-
-        internal bool IsAzureSQLConnection
-        {
-            get
-            {
-                return _isAzureSQLConnection;
-            }
-            set
-            {
-                _isAzureSQLConnection = value;
-            }
-        }
+        #endregion
 
         override public DbTransaction BeginTransaction(System.Data.IsolationLevel iso)
         {
@@ -328,7 +296,9 @@ namespace Microsoft.Data.SqlClient
             //
             // Automatic enlistment isn't possible because
             // Sys.Tx keeps the connection alive until the transaction is completed.
-            Debug.Assert(!IsNonPoolableTransactionRoot, "cannot defect an active delegated transaction!");  // potential race condition, but it's an assert
+            // TODO: why do we assert pooling status? shouldn't we just be checking
+            // whether the connection is the root of the transaction?
+            Debug.Assert(!(IsTransactionRoot && Pool == null), "cannot defect an active delegated transaction!");  // potential race condition, but it's an assert
 
             if (tx == null)
             {
@@ -406,7 +376,7 @@ namespace Microsoft.Data.SqlClient
                 // promoter types/TM in .NET 4.6.2. Following directions
                 // from .NETFX shiproom, to avoid a "hard-dependency"
                 // (compile time) on Sys.Tx, we use reflection to invoke
-                // the new APIs. Further, the _isGlobalTransaction flag
+                // the new APIs. Further, the IsGlobalTransaction flag
                 // indicates that this is an Azure SQL DB Transaction
                 // that could be promoted to a Global Transaction (it's
                 // always false for on-prem Sql Server). The Promote()
@@ -414,7 +384,7 @@ namespace Microsoft.Data.SqlClient
                 // right Sys.Tx.dll is loaded and that Global Transactions
                 // are actually allowed for this Azure SQL DB.
 
-                if (_isGlobalTransaction)
+                if (IsGlobalTransaction)
                 {
                     if (SysTxForGlobalTransactions.EnlistPromotableSinglePhase == null)
                     {
@@ -470,7 +440,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.EnlistNonNull | ADV | Object Id {0}, delegation not possible, enlisting.", ObjectID);
                 byte[] cookie = null;
 
-                if (_isGlobalTransaction)
+                if (IsGlobalTransaction)
                 {
                     if (SysTxForGlobalTransactions.GetPromotedToken == null)
                     {
@@ -492,7 +462,7 @@ namespace Microsoft.Data.SqlClient
                 // send cookie to server to finish enlistment
                 PropagateTransactionCookie(cookie);
 
-                _isEnlistedInTransaction = true;
+                IsEnlistedInTransaction = true;
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.EnlistNonNull | ADV | Object Id {0}, Client Connection Id {1}, Enlisted in transaction with transactionId {2}", ObjectID, Connection?.ClientConnectionId, tx?.TransactionInformation?.LocalIdentifier);
             }
 
@@ -532,7 +502,7 @@ namespace Microsoft.Data.SqlClient
 
             PropagateTransactionCookie(null);
 
-            _isEnlistedInTransaction = false;
+            IsEnlistedInTransaction = false;
             EnlistedTransaction = null; // Tell the base class about our enlistment
 
             SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.EnlistNull | ADV | Object Id {0}, unenlisted.", ObjectID);

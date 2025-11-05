@@ -680,14 +680,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        protected internal override bool IsNonPoolableTransactionRoot
-        {
-            get
-            {
-                return IsTransactionRoot && (!Is2008OrNewer || Pool == null);
-            }
-        }
-
         internal override bool Is2008OrNewer
         {
             get
@@ -957,7 +949,9 @@ namespace Microsoft.Data.SqlClient
             // cause our transaction to be rolled back and the connection
             // to be reset.  We'll get called again once the delegated
             // transaction is completed and we can do it all then.
-            if (!IsNonPoolableTransactionRoot)
+            // TODO: I think this logic cares about pooling because the pool
+            // will handle deactivation of pool-associated transaction roots?
+            if (!(IsTransactionRoot && Pool == null))
             {
                 Debug.Assert(_parser != null || IsConnectionDoomed, "Deactivating a disposed connection?");
                 if (_parser != null)
@@ -1497,7 +1491,7 @@ namespace Microsoft.Data.SqlClient
                             timeout);
                 }
 
-                if (!IsAzureSQLConnection)
+                if (!IsAzureSqlConnection)
                 {
                     // If not a connection to Azure SQL, Readonly with FailoverPartner is not supported
                     if (ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly)
@@ -2303,7 +2297,7 @@ namespace Microsoft.Data.SqlClient
                         dtcToken = rec._newBinValue;
                         rec._newBinValue = null;
                     }
-                    PromotedDTCToken = dtcToken;
+                    PromotedDtcToken = dtcToken;
                     break;
 
                 case TdsEnums.ENV_TRANSACTIONENDED:
@@ -2946,7 +2940,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
 
-                        IsAzureSQLConnection = true;
+                        IsAzureSqlConnection = true;
 
                         //  Bit 0 for RO/FP support
                         if ((data[0] & 1) == 1 && SqlClientEventSource.Log.IsTraceEnabled())
