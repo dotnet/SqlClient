@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
             mockOnSuccess.Verify(action => action(), Times.Once);
             mockOnFailure.VerifyNeverCalled();
-            mockOnFailure.VerifyNeverCalled();
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Theory]
@@ -185,8 +185,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
 
             mockOnSuccess.VerifyNeverCalled();
-            mockOnCancellation.VerifyNeverCalled();
             mockOnFailure.Verify(action => action(It.IsAny<Exception>()), Times.Once);
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Fact]
@@ -394,8 +394,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
 
             mockOnSuccess.VerifyNeverCalled();
-            mockOnCancellation.VerifyNeverCalled();
             mockOnFailure.Verify(action => action(state1, It.IsAny<Exception>()), Times.Once);
+            mockOnCancellation.VerifyNeverCalled();
         }
 
         [Fact]
