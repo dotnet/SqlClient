@@ -223,7 +223,6 @@ namespace Microsoft.Data.SqlClient
         // TDS stream processing variables
         internal ulong _longlen;                                     // plp data length indicator
         internal ulong _longlenleft;                                 // Length of data left to read (64 bit lengths)
-        internal int[] _decimalBits;                // scratch buffer for decimal/numeric data
         internal byte[] _bTmp = new byte[TdsEnums.SQL2005_HEADER_LEN];  // Scratch buffer for misc use
         internal int _bTmpRead;                   // Counter for number of temporary bytes read
         internal Decoder _plpdecoder;             // Decoder object to process plp character data

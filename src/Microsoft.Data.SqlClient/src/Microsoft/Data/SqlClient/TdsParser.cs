@@ -6782,7 +6782,7 @@ namespace Microsoft.Data.SqlClient
 
                     // Now read the 4 next integers which contain the actual value.
                     length = checked((int)length - 1);
-                    int[] bits = new int[4];
+                    Span<int> bits = stackalloc int[4];
                     int decLength = length >> 2;
                     ReadOnlySpan<byte> span = unencryptedBytes.AsSpan();
                     for (int i = 0; i < decLength; i++)
@@ -8166,8 +8166,8 @@ namespace Microsoft.Data.SqlClient
 
             length = checked((int)length - 1);
 
-            int[] bits;
-            result = TryReadDecimalBits(length, stateObj, out bits);
+            Span<int> bits = stackalloc int[4];
+            result = TryReadDecimalBits(length, stateObj, bits);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
@@ -8179,31 +8179,16 @@ namespace Microsoft.Data.SqlClient
 
         // @devnote: length should be size of decimal without the sign
         // @devnote: sign should have already been read off the wire
-        private TdsOperationStatus TryReadDecimalBits(int length, TdsParserStateObject stateObj, out int[] bits)
+        private TdsOperationStatus TryReadDecimalBits(int length, TdsParserStateObject stateObj, Span<int> bits)
         {
-            bits = stateObj._decimalBits; // used alloc'd array if we have one already
-            int i;
-
-            if (bits == null)
-            {
-                bits = new int[4];
-                stateObj._decimalBits = bits;
-            }
-            else
-            {
-                for (i = 0; i < bits.Length; i++)
-                {
-                    bits[i] = 0;
-                }
-            }
-
+            Debug.Assert(bits.Length == 4);
             Debug.Assert((length > 0) &&
                          (length <= TdsEnums.MAX_NUMERIC_LEN - 1) &&
                          (length % 4 == 0), "decimal should have 4, 8, 12, or 16 bytes of data");
 
             int decLength = length >> 2;
 
-            for (i = 0; i < decLength; i++)
+            for (int i = 0; i < decLength; i++)
             {
                 // up to 16 bytes of data following the sign byte
                 TdsOperationStatus result = stateObj.TryReadInt32(out bits[i]);
@@ -8382,8 +8367,6 @@ namespace Microsoft.Data.SqlClient
             decimal.GetBits(value, decimalBits);
 #else
             int[] decimalBits = decimal.GetBits(value);
-            stateObj._decimalBits = decimalBits;
-            Debug.Assert(stateObj._decimalBits != null, "decimalBits should be filled in at TdsExecuteRPC time");
 #endif
 
             /*
