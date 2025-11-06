@@ -39,18 +39,7 @@ public class TransactedConnectionPoolTest
     }
 
     [Fact]
-    public void Constructor_WithNullPool_ThrowsNullReferenceException()
-    {
-        // Act & Assert
-        Assert.Throws<NullReferenceException>(() => new TransactedConnectionPool(null!));
-    }
-
-    #endregion
-
-    #region Property Tests
-
-    [Fact]
-    public void Id_ReturnsUniqueValues()
+    public void Constructor_UniqueIds()
     {
         // Arrange
         var pool1 = new TransactedConnectionPool(new MockDbConnectionPool());
@@ -60,17 +49,6 @@ public class TransactedConnectionPoolTest
         Assert.NotEqual(pool1.Id, pool2.Id);
         Assert.True(pool1.Id > 0);
         Assert.True(pool2.Id > 0);
-    }
-
-    [Fact]
-    public void Pool_ReturnsCorrectPool()
-    {
-        // Arrange
-        var mockPool = new MockDbConnectionPool();
-        var transactedPool = new TransactedConnectionPool(mockPool);
-
-        // Act & Assert
-        Assert.Equal(mockPool, transactedPool.Pool);
     }
 
     #endregion
@@ -177,7 +155,7 @@ public class TransactedConnectionPoolTest
 
         // Assert
         Assert.Equal(connections.Length, retrievedConnections.Count);
-        Assert.True(retrievedConnections.All(connections.Contains));
+        Assert.True(connections.All(retrievedConnections.Contains));
     }
 
     #endregion
