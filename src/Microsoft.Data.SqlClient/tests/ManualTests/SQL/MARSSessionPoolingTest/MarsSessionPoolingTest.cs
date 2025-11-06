@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 // Act
                 // - Run command
-                command.ExecuteScalar();
+                command.ExecuteNonQuery();
 
                 // - Dispose command
                 command.Dispose();
@@ -350,7 +350,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
                 (observedSessions, observedRequests) = QuerySessionCounters(connection);
-                if (observedSessions == expectedSessions && observedSessions == expectedRequests)
+                if (observedSessions == expectedSessions && observedRequests == expectedRequests)
                 {
                     // We observed the expected values.
                     return;
