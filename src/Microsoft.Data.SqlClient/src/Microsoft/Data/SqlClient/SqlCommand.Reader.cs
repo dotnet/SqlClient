@@ -146,7 +146,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+                WriteEndExecuteEvent(success, sqlExceptionNumber, isSynchronous: true);
 
                 if (e is not null)
                 {
@@ -407,7 +407,11 @@ namespace Microsoft.Data.SqlClient
             int userParameterCount = CountSendableParameters(_parameters);
 
             _SqlRPC rpc = null;
-            GetRPCObject(systemParameterCount, userParameterCount, ref rpc);
+            GetRPCObject(
+                systemParameterCount,
+                userParameterCount,
+                ref rpc,
+                forSpDescribeParameterEncryption: false);
             rpc.ProcID = TdsEnums.RPC_PROCID_EXECUTE;
             rpc.rpcName = TdsEnums.SP_EXECUTE;
 
@@ -443,7 +447,11 @@ namespace Microsoft.Data.SqlClient
             int userParamCount = CountSendableParameters(parameters);
             int systemParamCount = userParamCount > 0 ? 2 : 1;
 
-            GetRPCObject(systemParamCount, userParamCount, ref rpc);
+            GetRPCObject(
+                systemParamCount,
+                userParamCount,
+                ref rpc,
+                forSpDescribeParameterEncryption: false);
             rpc.ProcID = TdsEnums.RPC_PROCID_EXECUTESQL;
             rpc.rpcName = TdsEnums.SP_EXECUTESQL;
 
@@ -463,7 +471,10 @@ namespace Microsoft.Data.SqlClient
             if (userParamCount > 0)
             {
                 // @TODO: Why does batch RPC mode use different parameters?
-                string paramList = BuildParamList(_stateObj.Parser, _batchRPCMode ? parameters : _parameters);
+                string paramList = BuildParamList(
+                    _stateObj.Parser,
+                    _batchRPCMode ? parameters : _parameters,
+                    includeReturnValue: false);
                 sqlParam = rpc.systemParams[1];
                 sqlParam.SqlDbType = (paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
                     ? SqlDbType.NVarChar
@@ -486,7 +497,11 @@ namespace Microsoft.Data.SqlClient
             int userParameterCount = CountSendableParameters(_parameters);
 
             _SqlRPC rpc = null;
-            GetRPCObject(systemParameterCount, userParameterCount, ref rpc);
+            GetRPCObject(
+                systemParameterCount,
+                userParameterCount,
+                ref rpc,
+                forSpDescribeParameterEncryption: false);
             rpc.ProcID = TdsEnums.RPC_PROCID_PREPEXEC;
             rpc.rpcName = TdsEnums.SP_PREPEXEC;
 
@@ -501,7 +516,10 @@ namespace Microsoft.Data.SqlClient
             rpc.systemParamOptions[0] = TdsEnums.RPC_PARAM_BYREF;
 
             // @batch_params
-            string paramList = BuildParamList(_stateObj.Parser, _parameters);
+            string paramList = BuildParamList(
+                _stateObj.Parser,
+                _parameters,
+                includeReturnValue: false);
             sqlParam = rpc.systemParams[1];
             // @TODO: This pattern is used quite a bit - it could be factored out
             sqlParam.SqlDbType = (paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
@@ -517,8 +535,8 @@ namespace Microsoft.Data.SqlClient
             sqlParam.SqlDbType = (text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
                 ? SqlDbType.NVarChar
                 : SqlDbType.NText;
-            sqlParam.Size = text.Length;
             sqlParam.Value = text;
+            sqlParam.Size = text.Length;
             sqlParam.Direction = ParameterDirection.Input;
 
             SetUpRPCParameters(rpc, inSchema: false, _parameters);
@@ -536,7 +554,11 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(CommandType is CommandType.StoredProcedure, "Command must be a stored proc to execute an RPC");
 
             int userParameterCount = CountSendableParameters(parameters);
-            GetRPCObject(systemParamCount: 0, userParameterCount, ref rpc);
+            GetRPCObject(
+                systemParamCount: 0,
+                userParameterCount,
+                ref rpc,
+                forSpDescribeParameterEncryption: false);
             rpc.ProcID = 0;
 
             // TDS Protocol allows rpc name with maximum length of 1046 bytes for ProcName
@@ -708,7 +730,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: false);
+                WriteEndExecuteEvent(success, sqlExceptionNumber, isSynchronous: false);
             }
         }
 
@@ -1357,7 +1379,7 @@ namespace Microsoft.Data.SqlClient
                             $"Command Text '{CommandText}'");
                     }
 
-                    string text = GetCommandText(cmdBehavior) + GetResetOptionsString(cmdBehavior);
+                    string text = GetCommandText(cmdBehavior) + GetOptionsResetString(cmdBehavior);
 
                     // If the query requires enclave computations, pass the enclave package in the
                     // SqlBatch TDS stream
@@ -1465,7 +1487,7 @@ namespace Microsoft.Data.SqlClient
                     // If we need to augment the command because a user has changed the command
                     // behavior (e.g. FillSchema) then batch sql them over. This is inefficient (3
                     // round trips) but the only way we can get metadata only from a stored proc.
-                    optionSettings = GetSetOptionsString(cmdBehavior);
+                    optionSettings = GetOptionsSetString(cmdBehavior);
 
                     if (returnStream)
                     {
@@ -1504,7 +1526,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         // And turn OFF when the ds exhausts the stream on Close()
-                        optionSettings = GetResetOptionsString(cmdBehavior);
+                        optionSettings = GetOptionsResetString(cmdBehavior);
                     }
 
                     // Execute sproc

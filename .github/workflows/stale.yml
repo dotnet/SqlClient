@@ -1,0 +1,86 @@
+name: Close Stale Issues and PRs
+
+on:
+  schedule:
+    # Run daily at 2:00 AM UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch: # Allow manual triggering
+
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
+jobs:
+  close-stale:
+    runs-on: ubuntu-latest
+    name: Close stale Issues and PRs
+
+    steps:
+      - name: Close stale Issues and PRs
+        # Uses action https://github.com/actions/stale
+        uses: actions/stale@v10
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+          # Labels to identify stale issues
+          stale-issue-label: "stale"
+          stale-pr-label: "stale"
+
+          # Marks issues and PRs as stale after 30 days of inactivity
+          days-before-stale: 30
+
+          # Close issues after 7 days of inactivity once marked as stale
+          days-before-close: 7
+
+          # Issues
+
+          # Labels that indicate an issue needs more info or is waiting for customer
+          only-issue-labels: "Needs More Info :information_source:,Waiting for Customer :hourglass_flowing_sand:"
+
+          stale-issue-message: |
+            This issue has been marked as requiring more information or is waiting for a customer response. It has not been updated for more than 30 days.
+
+            If you have additional information or would like to provide an update, please respond to this issue. Otherwise, it will be closed automatically in 7 days.
+
+          # Message to post when closing the issue
+          close-issue-message: |
+            This issue has been automatically closed due to inactivity. It was labeled as stale, and has not been updated since then.
+
+            If you believe this issue is still relevant and needs attention, please feel free to reopen it with the additional information requested, or create a new issue with updated details.
+
+            Thank you for your contribution to the Microsoft.Data.SqlClient project!
+
+          # Don't close issues that have these labels (exemptions)
+          exempt-issue-labels: "P0,P1,P2"
+
+          # Pull Requests
+
+          # Message to post when marking the PR as stale
+          stale-pr-message: |
+            This pull request has been marked as stale due to inactivity for more than 30 days.
+
+            If you would like to keep this pull request open, please provide an update or respond to any comments. Otherwise, it will be closed automatically in 7 days.
+
+          # Message to post when closing the PR
+          close-pr-message: |
+            This pull request has been automatically closed due to inactivity. It was labeled as stale, and has not been updated since then.
+
+            If you believe this pull request is still relevant and needs attention, please feel free to reopen it or create a new pull request with updated changes.
+
+            Thank you for your contribution to the Microsoft.Data.SqlClient project!
+
+          # Don't mark draft PRs as stale
+          exempt-draft-pr: true
+
+          # Enable debug logging
+          debug-only: false
+
+          # Remove stale label when closing (cleanup)
+          remove-stale-when-updated: true
+
+          # Limit the number of operations per run to avoid API rate limits
+          operations-per-run: 50
+
+          # Enable ascending order (oldest first)
+          ascending: true

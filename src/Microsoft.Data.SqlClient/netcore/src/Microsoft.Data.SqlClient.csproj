@@ -585,6 +585,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommand.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommand.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommand.Batch.cs">
+      <Link>Microsoft\Data\SqlClient\SqlCommand.Batch.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommand.Encryption.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommand.Encryption.cs</Link>
     </Compile>
@@ -807,6 +810,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsValueSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsValueSetter.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TransactionRequest.cs">
+        <Link>Microsoft\Data\SqlClient\TransactionRequest.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs</Link>
     </Compile>
@@ -843,8 +849,7 @@
     <Compile Include="$(CommonSourceRoot)System\Diagnostics\CodeAnalysis.cs">
       <Link>System\Diagnostics\CodeAnalysis.cs</Link>
     </Compile>
-    
-    <Compile Include="Microsoft\Data\SqlClient\SqlCommand.netcore.cs" />
+
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
   </ItemGroup>
