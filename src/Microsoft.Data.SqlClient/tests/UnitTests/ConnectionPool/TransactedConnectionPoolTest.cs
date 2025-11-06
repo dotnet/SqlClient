@@ -34,7 +34,7 @@ public class TransactedConnectionPoolTest
         var transactedPool = new TransactedConnectionPool(mockPool);
 
         // Assert
-        Assert.Equal(mockPool, transactedPool.Pool);
+        Assert.Same(mockPool, transactedPool.Pool);
         Assert.True(transactedPool.Id > 0);
     }
 
@@ -86,7 +86,7 @@ public class TransactedConnectionPoolTest
         var result = transactedPool.GetTransactedObject(transaction);
 
         // Assert
-        Assert.Equal(connection, result);
+        Assert.Same(connection, result);
 
         // Verify the connection is removed (second call should return null)
         var secondResult = transactedPool.GetTransactedObject(transaction);
@@ -112,7 +112,7 @@ public class TransactedConnectionPoolTest
         var result = transactedPool.GetTransactedObject(transaction);
 
         // Assert
-        Assert.Equal(connection2, result); // Should return the last added (LIFO behavior)
+        Assert.Same(connection2, result); // Should return the last added (LIFO behavior)
     }
 
     [Fact]
@@ -144,10 +144,8 @@ public class TransactedConnectionPoolTest
             tasks[i] = Task.Run(() =>
             {
                 var conn = transactedPool.GetTransactedObject(transaction);
-                if (conn != null)
-                {
-                    retrievedConnections.Add(conn);
-                }
+                Assert.NotNull(conn);
+                retrievedConnections.Add(conn);
             });
         }
 
@@ -177,7 +175,7 @@ public class TransactedConnectionPoolTest
     }
 
     [Fact]
-    public void PutTransactedObject_WithNewTransaction_CreatesNewPool()
+    public void PutTransactedObject_WithNewTransaction_CreatesNewConnectionList()
     {
         // Arrange
         var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
@@ -191,11 +189,11 @@ public class TransactedConnectionPoolTest
 
         // Assert
         var retrievedConnection = transactedPool.GetTransactedObject(transaction);
-        Assert.Equal(connection, retrievedConnection);
+        Assert.Same(connection, retrievedConnection);
     }
 
     [Fact]
-    public void PutTransactedObject_WithExistingTransaction_AddsToExistingPool()
+    public void PutTransactedObject_WithExistingTransaction_AddsToExistingConnectionList()
     {
         // Arrange
         var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
@@ -213,8 +211,8 @@ public class TransactedConnectionPoolTest
         var retrieved1 = transactedPool.GetTransactedObject(transaction);
         var retrieved2 = transactedPool.GetTransactedObject(transaction);
         
-        Assert.Equal(connection2, retrieved1); // Last in, first out
-        Assert.Equal(connection1, retrieved2);
+        Assert.Same(connection2, retrieved1); // Last in, first out
+        Assert.Same(connection1, retrieved2);
     }
 
     [Fact]
@@ -274,8 +272,8 @@ public class TransactedConnectionPoolTest
         var retrieved1 = transactedPool.GetTransactedObject(transaction);
         var retrieved2 = transactedPool.GetTransactedObject(transaction);
 
-        Assert.Equal(connection, retrieved1);
-        Assert.Equal(connection, retrieved2);
+        Assert.Same(connection, retrieved1);
+        Assert.Same(connection, retrieved2);
     }
 
     #endregion
@@ -358,10 +356,12 @@ public class TransactedConnectionPoolTest
         // Assert
         Assert.Contains(connection1, mockPool.ReturnedConnections);
         Assert.DoesNotContain(connection2, mockPool.ReturnedConnections);
-        
+
         // Verify other connection is still in pool
+        // TODO: there shouldn't be partial state in the pool after the transaction ends
+        // May be a way to register a single callback to clear the whole list.
         var retrievedConnection = transactedPool.GetTransactedObject(transaction);
-        Assert.Equal(connection2, retrievedConnection);
+        Assert.Same(connection2, retrievedConnection);
     }
 
     [Fact]
@@ -465,7 +465,7 @@ public class TransactedConnectionPoolTest
 
         // Assert - connection should still be in the transacted pool
         var retrievedConnection = transactedPool.GetTransactedObject(transaction);
-        Assert.Equal(connection, retrievedConnection);
+        Assert.Same(connection, retrievedConnection);
     }
 
     #endregion
@@ -489,7 +489,7 @@ public class TransactedConnectionPoolTest
         
         // 2. Get connection from transacted pool
         var retrievedConnection = transactedPool.GetTransactedObject(transaction);
-        Assert.Equal(connection, retrievedConnection);
+        Assert.Same(connection, retrievedConnection);
         
         // 3. Put it back
         transactedPool.PutTransactedObject(transaction, connection);
@@ -532,8 +532,8 @@ public class TransactedConnectionPoolTest
         var retrieved1 = transactedPool.GetTransactedObject(transaction1!);
         var retrieved2 = transactedPool.GetTransactedObject(transaction2!);
 
-        Assert.Equal(connection1, retrieved1);
-        Assert.Equal(connection2, retrieved2);
+        Assert.Same(connection1, retrieved1);
+        Assert.Same(connection2, retrieved2);
     }
 
     [Fact]
@@ -617,7 +617,7 @@ public class TransactedConnectionPoolTest
 
         // Assert - connection should still be retrievable if transaction completed
         var retrieved = transactedPool.GetTransactedObject(capturedTransaction!);
-        Assert.Equal(connection, retrieved);
+        Assert.Same(connection, retrieved);
     }
 
     [Fact]

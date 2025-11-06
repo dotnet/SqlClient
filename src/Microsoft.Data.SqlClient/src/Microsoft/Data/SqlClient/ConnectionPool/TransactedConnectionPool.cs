@@ -341,6 +341,9 @@ internal class TransactedConnectionPool
         // connections, we'll put it back...
         if (0 <= entry)
         {
+            // TODO: can we give this responsibility to the main pool?
+            // The bi-directional dependency between the main pool and this pool
+            // is messy and hard to understand.
             SqlClientEventSource.Metrics.ExitFreeConnection();
             Pool.PutObjectFromTransactedPool(transactedObject);
         }
