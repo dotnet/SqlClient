@@ -44,7 +44,7 @@ jobs:
 
           # Message to post when closing the issue
           close-issue-message: |
-            This issue has been automatically closed due to inactivity. It was labeled as requiring more information or waiting for a customer response, and has not been updated for more than 30 days.
+            This issue has been automatically closed due to inactivity. It was labeled as stale, and has not been updated since then.
 
             If you believe this issue is still relevant and needs attention, please feel free to reopen it with the additional information requested, or create a new issue with updated details.
 
@@ -63,7 +63,7 @@ jobs:
 
           # Message to post when closing the PR
           close-pr-message: |
-            This pull request has been automatically closed due to inactivity. It has not been updated for more than 30 days.
+            This pull request has been automatically closed due to inactivity. It was labeled as stale, and has not been updated since then.
 
             If you believe this pull request is still relevant and needs attention, please feel free to reopen it or create a new pull request with updated changes.
 
