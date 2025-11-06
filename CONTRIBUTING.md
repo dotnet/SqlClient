@@ -35,7 +35,7 @@ For detailed build instructions, see [BUILDGUIDE.md](BUILDGUIDE.md).
 
 - PRs are automatically marked stale after 30 days of inactivity.
 - Stale PRs are closed after 7 additional days.
-- Add "WIP" or "DO NOT MERGE" labels to prevent auto-closure.
+- Convert PR to Draft to prevent auto-closure.
 - All PRs require maintainer approval and passing CI checks.
 
 ## DOs and DON'Ts
@@ -121,7 +121,7 @@ This repository uses automated workflows to maintain project hygiene:
 
 - PRs are marked stale after 30 days of inactivity.
 - Stale PRs are automatically closed after 7 additional days.
-- PRs labeled "WIP" or "DO NOT MERGE" are exempt from auto-closure.
+- PRs lin Draft are exempt from auto-closure.
 
 To prevent closure, simply add comments, push commits, or respond to feedback.
 

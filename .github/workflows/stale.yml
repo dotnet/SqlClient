@@ -18,6 +18,7 @@ jobs:
 
     steps:
       - name: Close stale Issues and PRs
+        # Uses action https://github.com/actions/stale
         uses: actions/stale@v10
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -69,8 +70,8 @@ jobs:
 
             Thank you for your contribution to the Microsoft.Data.SqlClient project!
 
-          # Don't mark PRs as stale that have these labels (exemptions)
-          exempt-pr-labels: "WIP,DO NOT MERGE"
+          # Don't mark draft PRs as stale
+          exempt-draft-pr: true
 
           # Enable debug logging
           debug-only: false

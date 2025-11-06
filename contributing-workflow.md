@@ -1,6 +1,6 @@
 # Contribution Workflow
 
-You can contribute to Microsoft.Data.SqlClient with issues and PRs. Simply filing issues for problems you encounter is a great way to contribute. Contributing implementations are greatly appreciated.
+You can contribute to Microsoft.Data.SqlClient with issues and PRs. Simply filing issues for problems you encounter is a great way to contribute. Contributing implementations is greatly appreciated.
 
 ## Suggested Workflow
 
@@ -36,7 +36,7 @@ We use and recommend the following workflow:
 
 ### Draft PRs
 
-- It is OK to create your PR as "Draft" or "[WIP]" on the upstream repo before the implementation is done.
+- It is OK to create your PR as Draft on the upstream repo before the implementation is done.
 - This can be useful if you'd like to start the feedback process concurrent with your implementation.
 - State that this is the case in the initial PR comment.
 
@@ -81,10 +81,7 @@ The SqlClient repository uses automated workflows to manage inactive pull reques
 
 ### Exemptions
 
-PRs with the following labels are **not** marked as stale:
-
-- `WIP`
-- `DO NOT MERGE`
+PRs in Draft are **not** marked as stale.
 
 ### Preventing Closure
 
@@ -101,7 +98,7 @@ Closed stale PRs can be:
 - Reopened by the author with updates.
 - Replaced with a new PR containing updated changes.
 
-Maintainers can add exempt labels to prevent auto-closure of important PRs that may appear inactive.
+Contributors can convert PRs to draft to prevent auto-closure of important PRs that may appear inactive.
 
 ## PR Feedback
 
