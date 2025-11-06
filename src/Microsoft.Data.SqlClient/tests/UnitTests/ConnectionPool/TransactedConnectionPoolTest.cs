@@ -60,10 +60,11 @@ public class TransactedConnectionPoolTest
     {
         // Arrange
         var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
-        using var transaction = new TransactionScope();
+        using var transactionScope = new TransactionScope();
+        var transaction = Transaction.Current!;
 
         // Act
-        var result = transactedPool.GetTransactedObject(Transaction.Current!);
+        var result = transactedPool.GetTransactedObject(transaction);
 
         // Assert
         Assert.Null(result);
@@ -669,7 +670,7 @@ public class TransactedConnectionPoolTest
         public DbConnectionPoolState State => throw new NotImplementedException();
         public bool UseLoadBalancing => throw new NotImplementedException();
 
-        public List<DbConnectionInternal> ReturnedConnections { get; } = new();
+        public ConcurrentBag<DbConnectionInternal> ReturnedConnections { get; } = new();
 
         public void Clear() => throw new NotImplementedException();
 
