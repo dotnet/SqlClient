@@ -5,8 +5,11 @@
 using System;
 using System.Data;
 using System.Linq;
+using System.Threading;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
+
+#nullable enable
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -72,7 +75,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 AssertSessionsAndRequests(connection, openMarsSessions: 0, openRequests: 0);
             }
         }
-
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         [InlineData(CommandType.Text)]
@@ -271,7 +273,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // Act
                 // - Run command
                 readers[i] = commands[i].ExecuteReader();
-
                 // - Close and reopen connection (return to pool)
                 connection.Close();
                 connection.Open();
@@ -330,39 +331,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int openMarsSessions,
             int openRequests)
         {
-            using SqlCommand verificationCommand = new SqlCommand();
-            verificationCommand.CommandText =
-                @"SELECT COUNT(*) AS SessionCount " +
-                @"FROM sys.dm_exec_connections " +
-                @"WHERE session_id=@@spid AND net_transport='Session'; " +
-                @"SELECT COUNT(*) AS RequestCount " +
-                @"FROM sys.dm_exec_requests " +
-                @"WHERE session_id=@@spid AND (status='running' OR status='suspended')";
-            verificationCommand.CommandType = CommandType.Text;
-            verificationCommand.Connection = connection;
-
-            using SqlDataReader reader = verificationCommand.ExecuteReader();
-
-            // Result 1) Count of active MARS sessions from sys.dm_exec_connections
-            if (!reader.Read())
-            {
-                throw new Exception("Expected dm_exec_connections results from verification command");
-            }
+            const int maxAttempts = 5;
 
             // For these tests, the expected session count will always be at least 2 in MARS mode:
             // 1 for the main connection
             // 1 for the verification command we just executed
-            Assert.Equal(openMarsSessions + 2, reader.GetInt32(0));
-
-            // Result 2) Count of active requests from sys.dm_exec_requests
-            if (!reader.NextResult() || !reader.Read())
-            {
-                throw new Exception("Expected dm_exec_requests results from verification command");
-            }
+            int? observedSessions = null;
+            int expectedSessions = openMarsSessions + 2;
 
             // For these tests, the expected session count will always be at least 1:
             // 1 for the verification command we just executed
-            Assert.Equal(openRequests + 1, reader.GetInt32(0));
+            int? observedRequests = null;
+            int expectedRequests = openRequests + 1;
+
+            // There is a race between opening new sessions and them appearing in the DMV tables.
+            // As such, we want to poll the DMV a few times before declaring the wrong behavior was
+            // observed.
+            for (int attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                (observedSessions, observedRequests) = QuerySessionCounters(connection);
+                if (observedSessions == expectedSessions && observedSessions == expectedRequests)
+                {
+                    // We observed the expected values.
+                    return;
+                }
+
+                // Back off and wait before trying again
+                Thread.SpinWait(20 << attempt);
+            }
+
+            // If we make it to here, we never saw the expected numbers, so fail the test with the
+            // last value we observed.
+            Assert.Equal(expectedSessions, observedSessions);
+            Assert.Equal(expectedRequests, observedRequests);
         }
 
         private static DisposableArray<SqlCommand> GetCommands(SqlConnection connection, CommandType commandType)
@@ -420,10 +421,43 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static WeakReference OpenReaderThenNullify(SqlCommand command)
         {
-            SqlDataReader reader = command.ExecuteReader();
+            SqlDataReader? reader = command.ExecuteReader();
             WeakReference weak = new WeakReference(reader);
             reader = null;
             return weak;
+        }
+
+        private static (int sessions, int requests) QuerySessionCounters(SqlConnection connection)
+        {
+            using SqlCommand verificationCommand = new SqlCommand();
+            verificationCommand.CommandText =
+                @"SELECT COUNT(*) AS SessionCount " +
+                @"FROM sys.dm_exec_connections " +
+                @"WHERE session_id=@@spid AND net_transport='Session'; " +
+                @"SELECT COUNT(*) AS RequestCount " +
+                @"FROM sys.dm_exec_requests " +
+                @"WHERE session_id=@@spid AND (status='running' OR status='suspended')";
+            verificationCommand.CommandType = CommandType.Text;
+            verificationCommand.Connection = connection;
+
+            // Result 1) Count of active sessions from sys.dm_exec_connections
+            using SqlDataReader reader = verificationCommand.ExecuteReader();
+            if (!reader.Read())
+            {
+                throw new Exception("Expected dm_exec_connections results from verification command");
+            }
+
+            int sessions = reader.GetInt32(0);
+
+            // Result 2) Count of active requests from sys.dm_exec_requests
+            if (!reader.NextResult() || !reader.Read())
+            {
+                throw new Exception("Expected dm_exec_requests results from verification command");
+            }
+
+            int requests = reader.GetInt32(0);
+
+            return (sessions, requests);
         }
     }
 }
