@@ -425,10 +425,11 @@ stages:
               LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
     # self hosted SQL Server on Linux
-        linux_sql_19_22:
+        linux_ub20_22_sql_22:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Ubuntu20_Sql22: ADO-UB20-SQL22
+            Ubuntu20_Sql22: ADO-UB20-SQL22 # drop testing against UB20 image post April 2025
+            Ubuntu22_Sql22: ADO-UB22-SQL22
           TargetFrameworks: ${{parameters.targetFrameworksLinux }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
@@ -453,7 +454,7 @@ stages:
         linux_azure_sql:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Ubuntu20_Azure_Sql: ADO-UB20-Sql22
+            Ubuntu22_Azure_Sql: ADO-UB22-SQL22
           TargetFrameworks: ${{parameters.targetFrameworksLinux }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
@@ -483,7 +484,7 @@ stages:
           linux_enclave_sql:
             pool: ADO-CI-AE-1ES-Pool
             images:
-              Ubuntu20_Enclave_Sql19: ADO-UB20-Sql22
+              Ubuntu20_Enclave_Sql19: ADO-UB22-Sql22
             TargetFrameworks: ${{parameters.targetFrameworksLinux }}
             netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
             buildPlatforms: [AnyCPU]
