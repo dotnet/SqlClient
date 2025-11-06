@@ -32,7 +32,7 @@ internal class TransactedConnectionPool
     /// </summary>
     private sealed class TransactedConnectionList : List<DbConnectionInternal>
     {
-        private Transaction _transaction;
+        private readonly Transaction _transaction;
         
         /// <summary>
         /// Initializes a new instance of the TransactedConnectionList class with the specified
@@ -60,7 +60,7 @@ internal class TransactedConnectionPool
 
     #region Fields
 
-    Dictionary<Transaction, TransactedConnectionList> _transactedCxns;
+    private readonly Dictionary<Transaction, TransactedConnectionList> _transactedCxns;
 
     private static int _objectTypeCount;
     internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
@@ -190,6 +190,8 @@ internal class TransactedConnectionPool
                 // synchronize multi-threaded access with GetTransactedObject
                 lock (connections)
                 {
+                    // TODO: validate that we're not adding the same connection twice?
+                    // Debug.Assert(0 > connections.IndexOf(transactedObject), "adding to pool a second time?");
                     SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Pushing.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
                     connections.Add(transactedObject);
                 }
@@ -217,7 +219,7 @@ internal class TransactedConnectionPool
                     //   add a different connection to the transacted pool under the same 
                     //   transaction. As a result, threadB may have completed creating the
                     //   transacted pool while threadA was processing the above instructions.
-                    if ((txnFound = _transactedCxns.TryGetValue(transaction, out connections))
+                    if (_transactedCxns.TryGetValue(transaction, out connections)
                         && connections is not null)
                     {
                         // synchronize multi-threaded access with GetTransactedObject

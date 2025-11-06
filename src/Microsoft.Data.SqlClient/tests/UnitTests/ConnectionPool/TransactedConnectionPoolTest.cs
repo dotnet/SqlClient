@@ -566,7 +566,7 @@ public class TransactedConnectionPoolTest
         var numberOfTransactions = 5;
         var connectionsPerTransaction = 3;
         var results = new ConcurrentDictionary<int, List<DbConnectionInternal>>();
-        var countdown = new CountdownEvent(numberOfTransactions);
+        using var countdown = new CountdownEvent(numberOfTransactions);
 
         // Act - create multiple transactions concurrently
         var tasks = Enumerable.Range(0, numberOfTransactions).Select(txIndex =>
@@ -578,13 +578,10 @@ public class TransactedConnectionPoolTest
                     using var scope = new TransactionScope();
                     var transaction = Transaction.Current!;
                     
-                    var connections = new List<DbConnectionInternal>();
-
                     // Add connections to this transaction
                     for (int i = 0; i < connectionsPerTransaction; i++)
                     {
                         var conn = new MockDbConnectionInternal();
-                        connections.Add(conn);
                         transactedPool.PutTransactedObject(transaction, conn);
                     }
 

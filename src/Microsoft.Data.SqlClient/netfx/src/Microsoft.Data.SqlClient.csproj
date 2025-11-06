@@ -346,7 +346,7 @@
       <Link>Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolProviderInfo.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\TransactedConnectionPool.cs">
-	    <Link>Microsoft\Data\SqlClient\ConnectionPool\TransactedConnectionPool.cs</Link>
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\TransactedConnectionPool.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\WaitHandleDbConnectionPool.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\WaitHandleDbConnectionPool.cs</Link>
