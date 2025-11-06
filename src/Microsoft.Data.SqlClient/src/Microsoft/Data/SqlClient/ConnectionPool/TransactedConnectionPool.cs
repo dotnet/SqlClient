@@ -190,7 +190,6 @@ internal class TransactedConnectionPool
                 // synchronize multi-threaded access with GetTransactedObject
                 lock (connections)
                 {
-                    Debug.Assert(0 > connections.IndexOf(transactedObject), "adding to pool a second time?");
                     SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Pushing.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
                     connections.Add(transactedObject);
                 }
