@@ -1,0 +1,75 @@
+name: Copilot PR Setup
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  copilot-pr-setup:
+    # View pre-installed software: https://github.com/actions/runner-images?tab=readme-ov-file#available-images
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+        # Event though .NET SDKs are pre-installed on the runner,
+        # we explicitly install the required versions to ensure they're available.
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            9.0.x
+            8.0.x
+
+      - name: Build solution
+        run: msbuild build.proj -t:BuildAllConfigurations -p:configuration Release
+
+      - name: Build Tests (net48)
+        run: msbuild build.proj -t:BuildTestsNetFx -p:configuration Release -p:TF=net48
+
+      - name: Build Tests (net8.0)
+        run: msbuild build.proj -t:BuildTestsNetCore -p:configuration Release -p:TF=net8.0
+
+      - name: Build Tests (net9.0)
+        run: msbuild build.proj -t:BuildTestsNetCore -p:configuration Release -p:TF=net9.0
+
+      - name: Run Unit Tests (net48)
+        run: msbuild build.proj -t:RunUnitTests -p:configuration Release -p:TF=net48
+
+      - name: Run Unit Tests (net8.0)
+        run: msbuild build.proj -t:RunUnitTests -p:configuration Release -p:TF=net8.0
+
+      - name: Run Unit Tests (net9.0)
+        run: msbuild build.proj -t:RunUnitTests -p:configuration Release -p:TF=net9.0
+        
+      - name: Run Functional Tests (net48)
+        run: msbuild build.proj -t:RunFunctionalTests -p:configuration Release -p:TF=net48
+
+      - name: Run Functional Tests (net8.0)
+        run: msbuild build.proj -t:RunFunctionalTests -p:configuration Release -p:TF=net8.0
+
+      - name: Run Functional Tests (net9.0)
+        run: msbuild build.proj -t:RunFunctionalTests -p:configuration Release -p:TF=net9.0
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            artifacts/**/TestResults/*.trx
+
+      - name: PR checklist summary
+        run: |
+          echo "### Copilot PR Checklist"
+          echo "- [ ] Tests added or updated"
+          echo "- [ ] Public API changes documented"
+          echo "- [ ] Verified against customer repro (if applicable)"
+          echo "- [ ] Ensure no breaking changes introduced"
+          echo ""
+          echo "Please ensure all items are checked before merging."
+
+      - name: Suggest changelog entry
+        run: |
+          echo "Please suggest a changelog entry for this PR in CHANGELOG.md."
