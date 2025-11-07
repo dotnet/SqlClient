@@ -652,6 +652,57 @@ namespace Microsoft.Data.SqlClient
             ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
         }
 
+        /// <summary>
+        /// Called by SqlConnection.RepairConnection which is a relatively expensive way of repair
+        /// inner connection prior to execution of request, used from EnlistTransaction,
+        /// EnlistDistributedTransaction and ChangeDatabase.
+        /// </summary>
+        internal bool GetSessionAndReconnectIfNeeded(SqlConnection parent, int timeout = 0) // @TODO: Return value is never used
+        {
+            Debug.Assert(!ThreadHasParserLockForClose, "Cannot call this method if caller has parser lock");
+
+            if (ThreadHasParserLockForClose)
+            {
+                // We cannot restore if we cannot release lock
+                return false;
+            }
+
+            _parserLock.Wait(canReleaseFromAnyThread: false);
+
+            // In case of error, let the connection know that we already own the parser lock
+            ThreadHasParserLockForClose = true;
+            bool releaseConnectionLock = true;
+
+            try
+            {
+                Task reconnectTask = parent.ValidateAndReconnect(
+                    () =>
+                    {
+                        ThreadHasParserLockForClose = false;
+                        _parserLock.Release();
+                        releaseConnectionLock = false;
+                    },
+                    timeout);
+
+                if (reconnectTask != null)
+                {
+                    AsyncHelper.WaitForCompletion(reconnectTask, timeout);
+                    return true;
+                }
+
+                return false;
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
+            }
+            finally
+            {
+                if (releaseConnectionLock)
+                {
+                    ThreadHasParserLockForClose = false;
+                    _parserLock.Release();
+                }
+            }
+        }
+
         internal void IncrementAsyncCount()
         {
             Interlocked.Increment(ref _asyncCommandCount);

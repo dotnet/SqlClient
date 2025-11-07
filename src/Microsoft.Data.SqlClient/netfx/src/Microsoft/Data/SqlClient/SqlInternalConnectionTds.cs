@@ -341,49 +341,6 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.ctor|ADV> {0}, constructed new TDS internal connection", ObjectID);
         }
 
-        ////////////////////////////////////////////////////////////////////////////////////////
-        // PREPARED COMMAND METHODS
-        ////////////////////////////////////////////////////////////////////////////////////////
-
-        // called by SqlConnection.RepairConnection which is a relatively expensive way of repair inner connection
-        // prior to execution of request, used from EnlistTransaction, EnlistDistributedTransaction and ChangeDatabase
-        internal bool GetSessionAndReconnectIfNeeded(SqlConnection parent, int timeout = 0)
-        {
-            Debug.Assert(!ThreadHasParserLockForClose, "Cannot call this method if caller has parser lock");
-            if (ThreadHasParserLockForClose)
-            {
-                return false; // we cannot restore if we cannot release lock
-            }
-
-            _parserLock.Wait(canReleaseFromAnyThread: false);
-            ThreadHasParserLockForClose = true;   // In case of error, let the connection know that we already own the parser lock
-            bool releaseConnectionLock = true;
-
-            try
-            {
-                Task reconnectTask = parent.ValidateAndReconnect(() =>
-                {
-                    ThreadHasParserLockForClose = false;
-                    _parserLock.Release();
-                    releaseConnectionLock = false;
-                }, timeout);
-                if (reconnectTask != null)
-                {
-                    AsyncHelper.WaitForCompletion(reconnectTask, timeout);
-                    return true;
-                }
-                return false;
-                // @TODO: CER Exception Handling was removed here (see GH#3581)
-            }
-            finally
-            {
-                if (releaseConnectionLock)
-                {
-                    ThreadHasParserLockForClose = false;
-                    _parserLock.Release();
-                }
-            }
-        }
 
         ////////////////////////////////////////////////////////////////////////////////////////
         // PARSER CALLBACKS
