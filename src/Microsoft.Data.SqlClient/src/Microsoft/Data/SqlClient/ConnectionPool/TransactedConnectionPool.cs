@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Transactions;
@@ -60,7 +61,7 @@ internal class TransactedConnectionPool
 
     #region Fields
 
-    private readonly Dictionary<Transaction, TransactedConnectionList> _transactedCxns;
+    private readonly ConcurrentDictionary<Transaction, TransactedConnectionList> _transactedCxns;
 
     private static int _objectTypeCount;
     internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
@@ -78,7 +79,7 @@ internal class TransactedConnectionPool
     /// </remarks>
     internal TransactedConnectionPool(IDbConnectionPool pool)
     {
-        _transactedCxns = new Dictionary<Transaction, TransactedConnectionList>();
+        _transactedCxns = new ConcurrentDictionary<Transaction, TransactedConnectionList>();
     }
 
     #region Properties
@@ -232,7 +233,7 @@ internal class TransactedConnectionPool
                         // add the connection/transacted object to the list
                         newConnections.Add(transactedObject);
 
-                        _transactedCxns.Add(transactionClone, newConnections);
+                        _transactedCxns.TryAdd(transactionClone, newConnections);
                         transactionClone = null; // we've used it -- don't throw it or the TransactedConnectionList that references it away.                                
                     }
                 }
@@ -312,7 +313,7 @@ internal class TransactedConnectionPool
                     if (connections.Count == 0)
                     {
                         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Removing List from transacted pool.", Id, transaction.GetHashCode());
-                        _transactedCxns.Remove(transaction);
+                        _transactedCxns.TryRemove(transaction, out _);
 
                         // we really need to dispose our connection list; it may have 
                         // native resources via the tx and GC may not happen soon enough.
