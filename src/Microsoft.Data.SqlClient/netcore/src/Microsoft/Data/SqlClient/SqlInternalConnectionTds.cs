@@ -348,27 +348,6 @@ namespace Microsoft.Data.SqlClient
         // PREPARED COMMAND METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        protected override bool ObtainAdditionalLocksForClose()
-        {
-            bool obtainParserLock = !ThreadHasParserLockForClose;
-            Debug.Assert(obtainParserLock || _parserLock.ThreadMayHaveLock(), "Thread claims to have lock, but lock is not taken");
-            if (obtainParserLock)
-            {
-                _parserLock.Wait(canReleaseFromAnyThread: false);
-                ThreadHasParserLockForClose = true;
-            }
-            return obtainParserLock;
-        }
-
-        protected override void ReleaseAdditionalLocksForClose(bool lockToken)
-        {
-            if (lockToken)
-            {
-                ThreadHasParserLockForClose = false;
-                _parserLock.Release();
-            }
-        }
-
         // called by SqlConnection.RepairConnection which is a relatively expensive way of repair inner connection
         // prior to execution of request, used from EnlistTransaction, EnlistDistributedTransaction and ChangeDatabase
         internal bool GetSessionAndReconnectIfNeeded(SqlConnection parent, int timeout = 0)

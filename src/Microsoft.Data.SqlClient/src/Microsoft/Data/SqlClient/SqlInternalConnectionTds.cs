@@ -798,6 +798,22 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        protected override bool ObtainAdditionalLocksForClose()
+        {
+            bool obtainParserLock = !ThreadHasParserLockForClose;
+
+            Debug.Assert(obtainParserLock || _parserLock.ThreadMayHaveLock(),
+                "Thread claims to have lock, but lock is not taken");
+
+            if (obtainParserLock)
+            {
+                _parserLock.Wait(canReleaseFromAnyThread: false);
+                ThreadHasParserLockForClose = true;
+            }
+
+            return obtainParserLock;
+        }
+
         protected override void PropagateTransactionCookie(byte[] cookie)
         {
             _parser.PropagateDistributedTransaction(
@@ -806,12 +822,19 @@ namespace Microsoft.Data.SqlClient
                 _parser._physicalStateObj);
         }
 
+        protected override void ReleaseAdditionalLocksForClose(bool lockToken)
+        {
+            if (lockToken)
+            {
+                ThreadHasParserLockForClose = false;
+                _parserLock.Release();
+            }
+        }
+
         #endregion
 
         #region Private Methods
 
-
-        //
         /// <summary>
         /// Common code path for making one attempt to establish a connection and log in to server.
         /// </summary>
