@@ -810,7 +810,63 @@ namespace Microsoft.Data.SqlClient
 
         #region Private Methods
 
+
         //
+        /// <summary>
+        /// Common code path for making one attempt to establish a connection and log in to server.
+        /// </summary>
+        // @TODO: This is gross - there is no good way to #if a multi-line method signature. Introduce a record/struct type the different values.
+        private void AttemptOneLogin(
+            ServerInfo serverInfo,
+            string newPassword,
+            SecureString newSecurePassword,
+            TimeoutTimer timeout,
+            bool withFailover = false
+
+            #if NETFRAMEWORK
+            ,
+            bool isFirstTransparentAttempt = true,
+            bool disableTnir = false
+            #endif
+        )
+        {
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timeout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
+            RoutingInfo = null; // forget routing information
+
+            _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
+
+            #if NETFRAMEWORK
+            _parser.Connect(
+                serverInfo,
+                this,
+                timeout,
+                ConnectionOptions,
+                withFailover,
+                isFirstTransparentAttempt,
+                disableTnir);
+            #else
+            _parser.Connect(
+                serverInfo,
+                this,
+                timeout,
+                ConnectionOptions,
+                withFailover);
+            #endif
+
+            _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
+            _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
+
+            _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
+            Login(serverInfo, timeout, newPassword, newSecurePassword, ConnectionOptions.Encrypt);
+
+            _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth);
+            _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
+
+            CompleteLogin(!ConnectionOptions.Pooling);
+
+            _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
+        }
+
         /// <summary>
         /// With possible MFA support in all AD auth providers, the duration for acquiring a token
         /// can be unpredictable. If a timeout error (client or server) happened, we silently retry
@@ -1085,6 +1141,11 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
+
+        #if NETFRAMEWORK
+        private void FailoverPermissionDemand() =>
+            PoolGroupProviderInfo?.FailoverPermissionDemand();
+        #endif
 
         private void Login(
             ServerInfo server,

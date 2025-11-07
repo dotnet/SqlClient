@@ -345,52 +345,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////
-        // LOGIN-RELATED METHODS
-        ////////////////////////////////////////////////////////////////////////////////////////
-
-        // Common code path for making one attempt to establish a connection and log in to server.
-        private void AttemptOneLogin(ServerInfo serverInfo,
-                                    string newPassword,
-                                    SecureString newSecurePassword,
-                                    TimeoutTimer timeout,
-                                    bool withFailover = false)
-        {
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timeout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
-            RoutingInfo = null; // forget routing information 
-
-            _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
-
-            _parser.Connect(serverInfo,
-                            this,
-                            timeout,
-                            ConnectionOptions,
-                            withFailover);
-
-            _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
-            _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
-
-            _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
-            this.Login(serverInfo, timeout, newPassword, newSecurePassword, ConnectionOptions.Encrypt);
-
-            _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth);
-            _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
-
-            CompleteLogin(!ConnectionOptions.Pooling);
-
-            _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
-        }
-
-#if NETFRAMEWORK
-        internal void FailoverPermissionDemand()
-        {
-            if (PoolGroupProviderInfo != null)
-            {
-                PoolGroupProviderInfo.FailoverPermissionDemand();
-            }
-        }
-#endif
-
-        ////////////////////////////////////////////////////////////////////////////////////////
         // PREPARED COMMAND METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
