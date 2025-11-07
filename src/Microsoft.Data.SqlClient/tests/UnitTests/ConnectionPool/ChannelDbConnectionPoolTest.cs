@@ -281,7 +281,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         [Fact]
-        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3730")]
         public async Task GetConnectionMaxPoolSize_ShouldRespectOrderOfRequest()
         {
             // Arrange
@@ -308,29 +307,31 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 Assert.NotNull(internalConnection);
             }
 
-            // Use ManualResetEventSlim to synchronize the tasks
-            // and force the request queueing order.
-            using ManualResetEventSlim mresQueueOrder = new();
-            using CountdownEvent allRequestsQueued = new(2);
+            // Use multiple ManualResetEventSlim to ensure proper ordering
+            using ManualResetEventSlim firstTaskReady = new(false);
+            using ManualResetEventSlim secondTaskReady = new(false);
+            using ManualResetEventSlim startRequests = new(false);
 
             // Act
             var recycledTask = Task.Run(() =>
             {
-                mresQueueOrder.Set();
-                allRequestsQueued.Signal();
+                firstTaskReady.Set();
+                startRequests.Wait();
                 pool.TryGetConnection(
-                    new SqlConnection(""),
+                    new SqlConnection("Timeout=5000"),
                     null,
                     new DbConnectionOptions("", null),
                     out DbConnectionInternal? recycledConnection
                 );
                 return recycledConnection;
             });
+            
             var failedTask = Task.Run(() =>
             {
-                // Force this request to be second in the queue.
-                mresQueueOrder.Wait();
-                allRequestsQueued.Signal();
+                secondTaskReady.Set();
+                startRequests.Wait();
+                // Add a small delay to ensure this request comes after the first
+                Thread.Sleep(50);
                 pool.TryGetConnection(
                     new SqlConnection("Timeout=1"),
                     null,
@@ -340,7 +341,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 return failedConnection;
             });
 
-            allRequestsQueued.Wait();
+            // Wait for both tasks to be ready before starting the requests
+            firstTaskReady.Wait();
+            secondTaskReady.Wait();
+            
+            // Use SpinWait to ensure both tasks are actually waiting
+            SpinWait.SpinUntil(() => false, 100);
+            
+            // Start both requests
+            startRequests.Set();
+            
+            // Give time for both requests to be queued
+            await Task.Delay(200);
+            
+            // Return the connection which should satisfy the first queued request
             pool.ReturnInternalConnection(firstConnection!, firstOwningConnection);
             var recycledConnection = await recycledTask;
 
@@ -350,7 +364,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         [Fact]
-        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3730")]
         public async Task GetConnectionAsyncMaxPoolSize_ShouldRespectOrderOfRequest()
         {
             // Arrange
@@ -382,14 +395,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Act
             var exceeded = pool.TryGetConnection(
-                new SqlConnection(""),
+                new SqlConnection("Timeout=5000"),
                 recycledTaskCompletionSource,
                 new DbConnectionOptions("", null),
                 out DbConnectionInternal? recycledConnection
             );
 
-            // Gives time for the recycled connection to be queued before the failed request is initiated.
-            await Task.Delay(1000);
+            // Ensure sufficient time for the recycled connection request to be fully queued
+            await Task.Delay(200);
 
             var exceeded2 = pool.TryGetConnection(
                 new SqlConnection("Timeout=1"),
@@ -397,6 +410,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 new DbConnectionOptions("", null),
                 out DbConnectionInternal? failedConnection
             );
+
+            // Ensure the second request is also queued
+            await Task.Delay(100);
 
             pool.ReturnInternalConnection(firstConnection!, firstOwningConnection);
             recycledConnection = await recycledTaskCompletionSource.Task;
