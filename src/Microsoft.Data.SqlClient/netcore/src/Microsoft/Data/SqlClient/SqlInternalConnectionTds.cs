@@ -346,25 +346,6 @@ namespace Microsoft.Data.SqlClient
         // LOGIN-RELATED METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        // With possible MFA support in all AD auth providers, the duration for acquiring a token can be unpredictable.
-        // If a timeout error (client or server) happened, we silently retry if a cached token exists from a previous auth attempt (see GetFedAuthToken)
-        private bool AttemptRetryADAuthWithTimeoutError(SqlException sqlex, SqlConnectionString connectionOptions, TimeoutTimer timeout)
-        {
-            if (!_activeDirectoryAuthTimeoutRetryHelper.CanRetryWithSqlException(sqlex))
-            {
-                return false;
-            }
-            // Reset client-side timeout.
-            timeout.Reset();
-            // When server timeout, the auth context key was already created. Clean it up here.
-            _dbConnectionPoolAuthenticationContextKey = null;
-            // When server timeouts, connection is doomed. Reset here to allow reconnect.
-            UnDoomThisConnection();
-            // Change retry state so it only retries once for timeout error.
-            _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.Retrying;
-            return true;
-        }
-
         // Attempt to login to a host that has a failover partner
         //
         // Connection & timeout sequence is
