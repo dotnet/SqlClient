@@ -28,9 +28,6 @@
   <PropertyGroup>
     <DebugType>full</DebugType>
   </PropertyGroup>
-  <PropertyGroup>
-    <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)\$(TargetFramework)','$(GeneratedSourceFileName)'))</TargetFrameworkMonikerAssemblyAttributesPath>
-  </PropertyGroup>
   <ItemGroup Condition="$(CDP_BUILD_TYPE)!=Official">
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>UnitTests</_Parameter1>
@@ -38,7 +35,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
-    <EmbeddedFiles Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" />
   </ItemGroup>
   <PropertyGroup>
     <!-- CSC Compiler Options -->
@@ -1071,7 +1067,6 @@
     <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="System.Threading.Channels" />
   </ItemGroup>
-  <Import Project="$(CommonSourceRoot)tools\targets\GenerateResourceStringsSource.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyRef.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyInfo.targets" />

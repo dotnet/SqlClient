@@ -161,20 +161,20 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.TCE_SqlConnection_ColumnEncryptionKeyCacheTtl)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.TCE_SqlConnection_ColumnEncryptionKeyCacheTtl))]
         public static TimeSpan ColumnEncryptionKeyCacheTtl { get; set; } = TimeSpan.FromHours(2);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionQueryMetadataCacheEnabled/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled))]
         public static bool ColumnEncryptionQueryMetadataCacheEnabled { get; set; } = true;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionTrustedMasterKeyPaths/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.TCE_SqlConnection_TrustedColumnMasterKeyPaths)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.TCE_SqlConnection_TrustedColumnMasterKeyPaths))]
         public static IDictionary<string, IList<string>> ColumnEncryptionTrustedMasterKeyPaths => _ColumnEncryptionTrustedMasterKeyPaths;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*' />
@@ -509,8 +509,8 @@ namespace Microsoft.Data.SqlClient
         //  connect the parser to the object.
         //  if there is no parser at this time we need to connect it after creation.
         [DefaultValue(false)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_StatisticsEnabled)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.SqlConnection_StatisticsEnabled))]
         public bool StatisticsEnabled
         {
             get
@@ -645,8 +645,8 @@ namespace Microsoft.Data.SqlClient
 #pragma warning restore 618
         [SettingsBindableAttribute(true)]
         [RefreshProperties(RefreshProperties.All)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_ConnectionString)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.SqlConnection_ConnectionString))]
         public override string ConnectionString
         {
             get
@@ -713,8 +713,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionTimeout/*' />
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_ConnectionTimeout)]
-        [ResCategory(StringsHelper.ResourceNames.SqlConnection_DataSource)]
+        [ResDescription(nameof(Strings.SqlConnection_ConnectionTimeout))]
+        [ResCategory(nameof(Strings.SqlConnection_DataSource))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public override int ConnectionTimeout
         {
@@ -727,7 +727,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CommandTimeout/*' />
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_ConnectionTimeout)]
+        [ResDescription(nameof(Strings.SqlConnection_ConnectionTimeout))]
         public int CommandTimeout
         {
             get
@@ -741,7 +741,7 @@ namespace Microsoft.Data.SqlClient
         // AccessToken: To be used for token based authentication
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_AccessToken)]
+        [ResDescription(nameof(Strings.SqlConnection_AccessToken))]
         public string AccessToken
         {
             get
@@ -805,8 +805,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Database/*' />
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_Database)]
-        [ResCategory(StringsHelper.ResourceNames.SqlConnection_DataSource)]
+        [ResDescription(nameof(Strings.SqlConnection_Database))]
+        [ResCategory(nameof(Strings.SqlConnection_DataSource))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public override string Database
         {
@@ -882,8 +882,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/DataSource/*' />
         [Browsable(true)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_DataSource)]
-        [ResCategory(StringsHelper.ResourceNames.SqlConnection_DataSource)]
+        [ResDescription(nameof(Strings.SqlConnection_DataSource))]
+        [ResCategory(nameof(Strings.SqlConnection_DataSource))]
         public override string DataSource
         {
             get
@@ -905,8 +905,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/PacketSize/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_PacketSize)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.SqlConnection_PacketSize))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int PacketSize
         {
@@ -932,8 +932,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClientConnectionId/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_ClientConnectionId)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.SqlConnection_ClientConnectionId))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Guid ClientConnectionId
         {
@@ -962,7 +962,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerVersion/*' />
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_ServerVersion)]
+        [ResDescription(nameof(Strings.SqlConnection_ServerVersion))]
         public override string ServerVersion
         {
             get => GetOpenTdsConnection().ServerVersion;
@@ -970,7 +970,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerProcessId/*' />
         [Browsable(false)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_ServerProcessId)]
+        [ResDescription(nameof(Strings.SqlConnection_ServerProcessId))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int ServerProcessId
         {
@@ -986,7 +986,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/State/*' />
         [Browsable(false)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnection_State)]
+        [ResDescription(nameof(Strings.DbConnection_State))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public override ConnectionState State
         {
@@ -1008,8 +1008,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/WorkstationId/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_WorkstationId)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.SqlConnection_WorkstationId))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string WorkstationId
         {
@@ -1030,7 +1030,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Credential/*' />
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_Credential)]
+        [ResDescription(nameof(Strings.SqlConnection_Credential))]
         public SqlCredential Credential
         {
             get
@@ -1195,8 +1195,8 @@ namespace Microsoft.Data.SqlClient
         //
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/InfoMessage/*' />
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_InfoMessage)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnection_InfoMessage)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_InfoMessage))]
+        [ResDescription(nameof(Strings.DbConnection_InfoMessage))]
 #if NET
         public event SqlInfoMessageEventHandler InfoMessage;
 #else
