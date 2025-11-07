@@ -339,7 +339,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int? observedSessions = null;
             int expectedSessions = openMarsSessions + 2;
 
-            // For these tests, the expected session count will always be at least 1:
+            // For these tests, the expected request count will always be at least 1:
             // 1 for the verification command we just executed
             int? observedRequests = null;
             int expectedRequests = openRequests + 1;
