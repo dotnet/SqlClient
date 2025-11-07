@@ -134,7 +134,7 @@ internal class TransactedConnectionPool
             lock (connections)
             {
                 int i = connections.Count - 1;
-                if (0 <= i)
+                if (i >= 0)
                 {
                     transactedObject = connections[i];
                     connections.RemoveAt(i);
