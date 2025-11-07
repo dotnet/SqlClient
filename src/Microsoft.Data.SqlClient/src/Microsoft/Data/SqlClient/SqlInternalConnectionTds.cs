@@ -1214,6 +1214,18 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
+        /// Is the given Sql error one that should prevent retrying to connect.
+        /// </summary>
+        // @TODO: Make static
+        private bool IsDoNotRetryConnectError(SqlException exc)
+        {
+            bool errorNumberMatch = exc.Number is TdsEnums.LOGON_FAILED          // Actual login failed, ie bad password
+                                               or TdsEnums.PASSWORD_EXPIRED      // Actual login failed, ie expired password
+                                               or TdsEnums.IMPERSONATION_FAILED; // Insufficient privilege for named pipe, etc
+            return errorNumberMatch || exc._doNotReconnect;
+        }
+
+        /// <summary>
         /// Returns <c>true</c> if the SQL error is transient, as per <see cref="s_transientErrors"/>.
         /// </summary>
         private bool IsTransientError(SqlException exc)

@@ -345,16 +345,6 @@ namespace Microsoft.Data.SqlClient
         // LOGIN-RELATED METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        // Is the given Sql error one that should prevent retrying
-        //   to connect.
-        private bool IsDoNotRetryConnectError(SqlException exc)
-        {
-            return (TdsEnums.LOGON_FAILED == exc.Number) // actual logon failed, i.e. bad password
-                || (TdsEnums.PASSWORD_EXPIRED == exc.Number) // actual logon failed, i.e. password isExpired
-                || (TdsEnums.IMPERSONATION_FAILED == exc.Number)  // Insufficient privilege for named pipe, among others
-                || exc._doNotReconnect; // Exception explicitly suppressed reconnection attempts
-        }
-
         // Attempt to login to a host that does not have a failover partner
         //
         //  Will repeatedly attempt to connect, but back off between each attempt so as not to clog the network.
