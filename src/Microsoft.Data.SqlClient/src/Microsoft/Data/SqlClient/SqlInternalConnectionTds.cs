@@ -1553,6 +1553,298 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
+        /// Attempt to log in to a host that has a failover partner.
+        /// </summary>
+        /// <remarks>
+        /// Connection and timeout sequence is:
+        /// - First target, timeout = interval * 1
+        /// - second target, timeout = interval * 1
+        /// - sleep for 100ms
+        /// - First target, timeout = interval * 2
+        /// - Second target, timeout = interval * 2
+        /// - sleep for 200ms
+        /// - First Target, timeout = interval * 3
+        /// - etc.
+        ///
+        /// The logic in this method is paralleled by the logic in LoginNoFailover. Changes to
+        /// either one should be examined to see if they need to be reflected in the other.
+        /// </remarks>
+        // @TODO: If it's so similar, then why don't we factor out some common code from it?
+        private void LoginWithFailover(
+            bool useFailoverHost,
+            ServerInfo primaryServerInfo,
+            string failoverHost,
+            string newPassword,
+            SecureString newSecurePassword,
+            bool redirectedUserInstance,
+            SqlConnectionString connectionOptions,
+            SqlCredential credential, // @TODO: This isn't used anywhere
+            TimeoutTimer timeout)
+        {
+            Debug.Assert(!connectionOptions.MultiSubnetFailover,
+                "MultiSubnetFailover should not be set if failover partner is used");
+
+            SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                $"SqlInternalConnectionTds.LoginWithFailover | ADV | " +
+                $"Object ID {ObjectID}, " +
+                $"useFailover={useFailoverHost}, " +
+                $"primary={primaryServerInfo.UserServerName}, " +
+                $"failover={failoverHost}");
+
+            #if NETFRAMEWORK
+            string protocol = ConnectionOptions.NetworkLibrary;
+            #endif
+
+            ServerInfo failoverServerInfo = new ServerInfo(
+                connectionOptions,
+                failoverHost,
+                connectionOptions.FailoverPartnerSPN);
+
+            ResolveExtendedServerName(primaryServerInfo, !redirectedUserInstance, connectionOptions);
+            if (ServerProvidedFailoverPartner == null)
+            {
+                ResolveExtendedServerName(
+                    failoverServerInfo,
+                    aliasLookup: !redirectedUserInstance && failoverHost != primaryServerInfo.UserServerName,
+                    connectionOptions);
+            }
+
+            // Milliseconds to sleep (back off) between attempts.
+            // @TODO: Rename to include units (or use TimeSpan!)
+            int sleepInterval = 100;
+
+            // Determine unit interval
+            // @TODO: Use ints or timespans or something that doesn't requires floating point math
+            long timeoutUnitInterval = timeout.IsInfinite
+                ? checked((long)(ADP.FailoverTimeoutStep * ADP.TimerFromSeconds(ADP.DefaultConnectionTimeout)))
+                : checked((long)(ADP.FailoverTimeoutStep * timeout.MillisecondsRemaining));
+
+            // Initialize loop variables
+            // Have we demanded for partner information yet (as necessary)?
+            bool failoverDemandDone = false;
+            int attemptNumber = 0;
+
+            // Only three ways out of this loop:
+            //  1) Successfully connected
+            //  2) Parser threw exception while main timer was expired
+            //  3) Parser threw logon failure-related exception (LOGON_FAILED, PASSWORD_EXPIRED, etc)
+            //
+            //  Of these methods, only #1 exits normally. This preserves the call stack on the exception
+            //  back into the parser for the error cases.
+            while (true)
+            {
+                // Set timeout for this attempt, but don't exceed original timer
+                long nextTimeoutInterval = checked(timeoutUnitInterval * ((attemptNumber / 2) + 1));
+                long milliseconds = timeout.MillisecondsRemaining;
+                if (nextTimeoutInterval > milliseconds)
+                {
+                    nextTimeoutInterval = milliseconds;
+                }
+
+                TimeoutTimer intervalTimer = TimeoutTimer.StartMillisecondsTimeout(nextTimeoutInterval);
+
+                // Re-allocate parser each time to make sure state is known. If parser was created
+                // by previous attempt, dispose it to properly close the socket, if created.
+                _parser?.Disconnect();
+                _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
+
+                Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext,
+                    $"SniContext should be Undefined; actual Value: {Parser._physicalStateObj.SniContext}");
+
+                ServerInfo currentServerInfo;
+                if (useFailoverHost)
+                {
+                    if (!failoverDemandDone)
+                    {
+                        #if NETFRAMEWORK
+                        FailoverPermissionDemand();
+                        #endif
+
+                        failoverDemandDone = true;
+                    }
+
+                    // Primary server may give us a different failover partner than the connection
+                    // string indicates. Update it only if we are respecting server-provided
+                    // failover partner values.
+                    if (ServerProvidedFailoverPartner != null && failoverServerInfo.ResolvedServerName != ServerProvidedFailoverPartner)
+                    {
+                        if (LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                $"SqlInternalConnectionTds.LoginWithFailover | ADV | " +
+                                $"Object ID {ObjectID}, " +
+                                $"Ignoring server provided failover partner '{ServerProvidedFailoverPartner}' " +
+                                $"due to IgnoreServerProvidedFailoverPartner AppContext switch.");
+                        }
+                        else
+                        {
+                            SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                                $"SqlInternalConnectionTds.LoginWithFailover | ADV | " +
+                                $"Object ID {ObjectID}, " +
+                                $"new failover partner={ServerProvidedFailoverPartner}");
+
+                            #if NET
+                            failoverServerInfo.SetDerivedNames(string.Empty, ServerProvidedFailoverPartner);
+                            #else
+                            failoverServerInfo.SetDerivedNames(protocol, ServerProvidedFailoverPartner);
+                            #endif
+                        }
+                    }
+
+                    currentServerInfo = failoverServerInfo;
+                    _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.Failover);
+                }
+                else
+                {
+                    currentServerInfo = primaryServerInfo;
+                    _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.Principle);
+                }
+
+                try
+                {
+                    // Attempt login. Use timerInterval for attempt timeout unless infinite timeout
+                    // was requested.
+                    AttemptOneLogin(
+                        currentServerInfo,
+                        newPassword,
+                        newSecurePassword,
+                        intervalTimer,
+                        withFailover: true);
+
+                    int routingAttempts = 0;
+                    while (RoutingInfo != null)
+                    {
+                        if (routingAttempts > MaxNumberOfRedirectRoute)
+                        {
+                            throw SQL.ROR_RecursiveRoutingNotSupported(this, MaxNumberOfRedirectRoute);
+                        }
+                        routingAttempts++;
+
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.LoginWithFailover | " +
+                            $"Routed to {RoutingInfo.ServerName}", RoutingInfo.ServerName);
+
+                        _parser?.Disconnect();
+                        _parser = new TdsParser(ConnectionOptions.MARS, connectionOptions.Asynchronous);
+
+                        Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext,
+                            $"SniContext should be Undefined; actual Value: {Parser._physicalStateObj.SniContext}");
+
+                        currentServerInfo = new ServerInfo(
+                            ConnectionOptions,
+                            RoutingInfo,
+                            currentServerInfo.ResolvedServerName,
+                            currentServerInfo.ServerSPN);
+                        _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
+                        _originalClientConnectionId = _clientConnectionId;
+                        _routingDestination = currentServerInfo.UserServerName;
+
+                        // Restore properties that could be changed by the environment tokens
+                        _currentPacketSize = connectionOptions.PacketSize;
+                        _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
+                        CurrentDatabase = _originalDatabase = connectionOptions.InitialCatalog;
+                        ServerProvidedFailoverPartner = null;
+                        _instanceName = string.Empty;
+
+                        AttemptOneLogin(
+                            currentServerInfo,
+                            newPassword,
+                            newSecurePassword,
+                            intervalTimer,
+                            withFailover: true);
+                    }
+
+                    // Leave the while loop -- we've successfully connected
+                    break;
+                }
+                catch (SqlException sqlex)
+                {
+                    if (AttemptRetryADAuthWithTimeoutError(sqlex, connectionOptions, timeout))
+                    {
+                        continue;
+                    }
+
+                    if (IsDoNotRetryConnectError(sqlex) || timeout.IsExpired)
+                    {
+                        // No more time to try again.
+                        // Caller will call LoginFailure()
+                        throw;
+                    }
+
+                    // TODO: It doesn't make sense to connect to an azure sql server instance with a failover partner
+                    // specified. Azure SQL Server does not support failover partners. Other availability technologies
+                    // like Failover Groups should be used instead.
+                    if (!ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource) && IsConnectionDoomed)
+                    {
+                        throw;
+                    }
+
+                    if (attemptNumber % 2 == 1)
+                    {
+                        // Check sleep interval to make sure we won't exceed the original timeout.
+                        // Do this in the catch block so we can re-throw the current exception
+                        if (timeout.MillisecondsRemaining <= sleepInterval)
+                        {
+                            throw;
+                        }
+                    }
+                }
+
+                // We only get here when we failed to connect, but are going to re-try
+
+                // After trying to connect to both servers fails, sleep for a bit to prevent
+                // clogging the network with requests, then update sleep interval for next
+                // iteration (max 1 second interval).
+                if (attemptNumber % 2 == 1)
+                {
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.LoginWithFailover | ADV | " +
+                        $"Object ID {ObjectID}, " +
+                        $"sleeping {sleepInterval}ms");
+
+                    Thread.Sleep(sleepInterval);
+
+                    sleepInterval = sleepInterval < 500
+                        ? sleepInterval * 2
+                        : 1000;
+                }
+
+                // Update attempt number and target host
+                attemptNumber++;
+                useFailoverHost = !useFailoverHost;
+            }
+
+            // If we get here, connection/login succeeded!  Just a few more checks & record-keeping
+            _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.HasLoggedIn;
+
+            // if connected to failover host, but said host doesn't have DbMirroring set up, throw an error
+            if (useFailoverHost && ServerProvidedFailoverPartner == null)
+            {
+                throw SQL.InvalidPartnerConfiguration(failoverHost, CurrentDatabase);
+            }
+
+            if (PoolGroupProviderInfo != null)
+            {
+                // We must wait for CompleteLogin to finish for to have the env change from the
+                // server to know its designated failover partner.
+
+                // When ignoring server provided failover partner, we must pass in the original
+                // failover partner from the connection string. Otherwise, the pool group's
+                // failover partner designation will be updated to point to the server provided
+                // value.
+                string actualFailoverPartner = LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner
+                    ? failoverHost
+                    : ServerProvidedFailoverPartner;
+
+                PoolGroupProviderInfo.FailoverCheck(useFailoverHost, connectionOptions, actualFailoverPartner);
+            }
+
+            CurrentDataSource = useFailoverHost
+                ? failoverHost
+                : primaryServerInfo.UserServerName;
+        }
+
+        /// <summary>
         /// Is the given Sql error one that should prevent retrying to connect.
         /// </summary>
         // @TODO: Make static
