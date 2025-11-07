@@ -27,41 +27,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool;
 /// </remarks>
 internal class TransactedConnectionPool
 {
-    /// <summary>
-    /// A specialized list that holds database connections associated with a specific transaction.
-    /// Maintains a reference to the transaction for proper cleanup when the transaction completes.
-    /// </summary>
-    private sealed class TransactedConnectionList : List<DbConnectionInternal>
-    {
-        private readonly Transaction _transaction;
-        
-        /// <summary>
-        /// Initializes a new instance of the TransactedConnectionList class with the specified
-        /// initial capacity and associated transaction.
-        /// </summary>
-        /// <param name="initialAllocation">The initial number of elements that the list can contain.</param>
-        /// <param name="tx">The transaction associated with the connections in this list.</param>
-        internal TransactedConnectionList(int initialAllocation, Transaction tx) : base(initialAllocation)
-        {
-            _transaction = tx;
-        }
-
-        /// <summary>
-        /// Releases the resources used by the TransactedConnectionList, including 
-        /// disposing of the associated transaction reference.
-        /// </summary>
-        internal void Dispose()
-        {
-            if (_transaction != null)
-            {
-                _transaction.Dispose();
-            }
-        }
-    }
-
     #region Fields
 
-    private readonly ConcurrentDictionary<Transaction, TransactedConnectionList> _transactedCxns;
+    private readonly ConcurrentDictionary<Transaction, List<DbConnectionInternal>> _transactedCxns;
 
     private static int _objectTypeCount;
     internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
@@ -79,7 +47,7 @@ internal class TransactedConnectionPool
     /// </remarks>
     internal TransactedConnectionPool(IDbConnectionPool pool)
     {
-        _transactedCxns = new ConcurrentDictionary<Transaction, TransactedConnectionList>();
+        _transactedCxns = new ConcurrentDictionary<Transaction, List<DbConnectionInternal>>();
     }
 
     #region Properties
@@ -121,7 +89,7 @@ internal class TransactedConnectionPool
         //   connection is probably better than unnecessarily locking
         if (_transactedCxns.TryGetValue(
             transaction,
-            out TransactedConnectionList? connections))
+            out List<DbConnectionInternal>? connections))
         {
             // synchronize multi-threaded access with PutTransactedObject (TransactionEnded should
             //   not be a concern, see comments above)
@@ -161,7 +129,7 @@ internal class TransactedConnectionPool
     /// </remarks>
     internal void PutTransactedObject(Transaction transaction, DbConnectionInternal transactedObject)
     {
-        TransactedConnectionList? connections;
+        List<DbConnectionInternal>? connections;
         bool txnFound = false;
 
         // NOTE: because TransactionEnded is an asynchronous notification, there's no guarantee
@@ -188,67 +156,38 @@ internal class TransactedConnectionPool
         //   transaction and allocating memory within a lock. Is that complexity really necessary?
         if (!txnFound)
         {
-            // create the transacted pool, making sure to clone the associated transaction
-            //   for use as a key in our internal dictionary of transactions and connections
-            Transaction? transactionClone = null;
-            TransactedConnectionList? newConnections = null;
-
-            try
+            lock (_transactedCxns)
             {
-                // This cloning is critical. It holds the internal transaction from being disposed
-                // until our clone is also disposed. This lets us safely reference the transaction
-                // and its state until we're done with our work.
-                transactionClone = transaction.Clone();
-                newConnections = new TransactedConnectionList(2, transactionClone); // start with only two connections in the list; most times we won't need that many.
-
-                lock (_transactedCxns)
+                // NOTE: in the interim between the locks on the transacted pool (this) during 
+                //   execution of this method, another thread (threadB) may have attempted to 
+                //   add a different connection to the transacted pool under the same 
+                //   transaction. As a result, threadB may have completed creating the
+                //   transacted pool while threadA was processing the above instructions.
+                if (_transactedCxns.TryGetValue(transaction, out connections)
+                    && connections is not null)
                 {
-                    // NOTE: in the interim between the locks on the transacted pool (this) during 
-                    //   execution of this method, another thread (threadB) may have attempted to 
-                    //   add a different connection to the transacted pool under the same 
-                    //   transaction. As a result, threadB may have completed creating the
-                    //   transacted pool while threadA was processing the above instructions.
-                    if (_transactedCxns.TryGetValue(transaction, out connections)
-                        && connections is not null)
+                    // synchronize multi-threaded access with GetTransactedObject
+                    lock (connections)
                     {
-                        // synchronize multi-threaded access with GetTransactedObject
-                        lock (connections)
-                        {
-                            Debug.Assert(0 > connections.IndexOf(transactedObject), "adding to pool a second time?");
-                            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Pushing.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
-                            connections.Add(transactedObject);
-                        }
-                    }
-                    else
-                    {
-                        SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Adding List to transacted pool.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
-
-                        // add the connection/transacted object to the list
-                        newConnections.Add(transactedObject);
-
-                        _transactedCxns.TryAdd(transactionClone, newConnections);
-                        transactionClone = null; // we've used it -- don't throw it or the TransactedConnectionList that references it away.                                
+                        Debug.Assert(0 > connections.IndexOf(transactedObject), "adding to pool a second time?");
+                        SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Pushing.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
+                        connections.Add(transactedObject);
                     }
                 }
-            }
-            finally
-            {
-                if (transactionClone != null)
+                else
                 {
-                    if (newConnections != null)
+                    SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Adding List to transacted pool.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
+                    
+                    // start with only two spots in the list; most times we won't need that many.
+                    List<DbConnectionInternal> newConnections = new List<DbConnectionInternal>(2)
                     {
-                        // another thread created the transaction pool and thus the new 
-                        //   TransactedConnectionList was not used, so dispose of it and
-                        //   the transaction clone that it incorporates.
-                        newConnections.Dispose();
-                    }
-                    else
-                    {
-                        // memory allocation for newConnections failed...clean up unused transactionClone
-                        transactionClone.Dispose();
-                    }
+                        transactedObject
+                    }; 
+
+                    _transactedCxns.TryAdd(transaction, newConnections);
                 }
             }
+
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Added.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
         }
 
@@ -291,10 +230,9 @@ internal class TransactedConnectionPool
         {
             if (_transactedCxns.TryGetValue(
                     transaction,
-                    out TransactedConnectionList? connections)
+                    out List<DbConnectionInternal>? connections)
                 )
             {
-                bool shouldDisposeConnections = false;
 
                 // Lock connections to avoid conflict with GetTransactionObject
                 lock (connections)
@@ -307,16 +245,7 @@ internal class TransactedConnectionPool
                     {
                         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Removing List from transacted pool.", Id, transaction.GetHashCode());
                         _transactedCxns.TryRemove(transaction, out _);
-
-                        // we really need to dispose our connection list; it may have 
-                        // native resources via the tx and GC may not happen soon enough.
-                        shouldDisposeConnections = true;
                     }
-                }
-
-                if (shouldDisposeConnections)
-                {
-                    connections.Dispose();
                 }
             }
             else
