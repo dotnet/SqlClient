@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Transactions;
@@ -60,6 +61,7 @@ internal class TransactedConnectionPool
     }
 
     #region Fields
+
     private static int _objectTypeCount;
     internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
@@ -76,7 +78,7 @@ internal class TransactedConnectionPool
     /// </remarks>
     internal TransactedConnectionPool(IDbConnectionPool pool)
     {
-        TransactedConnections = new Dictionary<Transaction, TransactedConnectionList>();
+        TransactedConnections = new ConcurrentDictionary<Transaction, TransactedConnectionList>();
     }
 
     #region Properties
@@ -87,7 +89,7 @@ internal class TransactedConnectionPool
     /// <value>A unique integer identifier used for logging and diagnostics.</value>
     internal int Id => _objectID;
 
-    internal Dictionary<Transaction, TransactedConnectionList> TransactedConnections { get; }
+    internal ConcurrentDictionary<Transaction, TransactedConnectionList> TransactedConnections { get; }
 
     #endregion
 
@@ -232,7 +234,7 @@ internal class TransactedConnectionPool
                         // add the connection/transacted object to the list
                         newConnections.Add(transactedObject);
 
-                        TransactedConnections.Add(transactionClone, newConnections);
+                        TransactedConnections.TryAdd(transactionClone, newConnections);
                         transactionClone = null; // we've used it -- don't throw it or the TransactedConnectionList that references it away.                                
                     }
                 }
@@ -312,7 +314,7 @@ internal class TransactedConnectionPool
                     if (connections.Count == 0)
                     {
                         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Removing List from transacted pool.", Id, transaction.GetHashCode());
-                        TransactedConnections.Remove(transaction);
+                        TransactedConnections.TryRemove(transaction, out _);
 
                         // we really need to dispose our connection list; it may have 
                         // native resources via the tx and GC may not happen soon enough.
