@@ -110,15 +110,7 @@ internal class TransactedConnectionPool
     /// </remarks>
     internal DbConnectionInternal? GetTransactedObject(Transaction transaction)
     {
-        DbConnectionInternal? transactedObject = null;
-
-        TransactedConnectionList? connections;
-        bool txnFound = false;
-
-        lock (_transactedCxns)
-        {
-            txnFound = _transactedCxns.TryGetValue(transaction, out connections);
-        }
+        DbConnectionInternal? transactedObject = null;;
 
         // NOTE: GetTransactedObject is only used when AutoEnlist = True and the ambient transaction 
         //   (Sys.Txns.Txn.Current) is still valid/non-null. This, in turn, means that we don't need 
@@ -127,9 +119,10 @@ internal class TransactedConnectionPool
         //   is similarly alright if a pending addition to the connections list in PutTransactedObject
         //   below is not completed prior to the lock on the connections object here...getting a new
         //   connection is probably better than unnecessarily locking
-        if (txnFound && connections is not null)
+        if (_transactedCxns.TryGetValue(
+            transaction,
+            out TransactedConnectionList? connections))
         {
-
             // synchronize multi-threaded access with PutTransactedObject (TransactionEnded should
             //   not be a concern, see comments above)
             lock (connections)
