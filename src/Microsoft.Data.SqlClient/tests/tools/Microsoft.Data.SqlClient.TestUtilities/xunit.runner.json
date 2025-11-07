@@ -1,9 +1,17 @@
 {
-    "$schema": "https://xunit.net/schema/current/xunit.runner.schema.json",
-    "diagnosticMessages": true,
-    "parallelizeAssembly": true,
-    "shadowCopy": false,
-    "printMaxEnumerableLength": 0,
-    "printMaxStringLength": 0,
-    "showLiveOutput": false
+  "_comment": "Options for v3+ are prefixed with '_v3_'",
+
+  "$schema": "https://xunit.net/schema/v2.8/xunit.runner.schema.json",
+  "_v3_$schema": "https://xunit.net/schema/current/xunit.runner.schema.json",
+  
+  "diagnosticMessages": true,
+  "parallelizeAssembly": true,
+  "shadowCopy": false,
+
+  "_v3_culture": "invariant",
+  "_v3_printMaxEnumerableLength": 0,
+  "_v3_printMaxObjectDepth": 0,
+  "_v3_printMaxObjectMemberCount": 0,
+  "_v3_printMaxStringLength": 0,
+  "_v3_showLiveOutput": true
 }
