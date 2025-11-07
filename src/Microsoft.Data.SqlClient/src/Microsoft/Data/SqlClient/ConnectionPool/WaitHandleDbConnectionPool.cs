@@ -245,10 +245,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             _objectList = new List<DbConnectionInternal>(MaxPoolSize);
 
-            _pooledDbAuthenticationContexts = new ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext>(concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary*/,
-                                                                                                                                                        capacity: 2);
+            _pooledDbAuthenticationContexts = new ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext>(
+                concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary*/,
+                capacity: 2);
 
             _transactedConnectionPool = new TransactedConnectionPool(this);
+            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactedConnectionPool|RES|CPOOL> {0}, Constructed for connection pool {1}", _transactedConnectionPool.Id, Id);
 
             _poolCreateRequest = new WaitCallback(PoolCreateRequest); // used by CleanupCallback
             State = Running;
@@ -1524,7 +1526,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             TransactedConnectionPool transactedConnectionPool = _transactedConnectionPool;
             if (transactedConnectionPool != null)
             {
-                transactedConnectionPool.TransactionEnded(transaction, transactedObject);
+                if (transactedConnectionPool.TransactionEnded(transaction, transactedObject))
+                {
+                    PutObjectFromTransactedPool(transactedObject);
+                }
             }
         }
 

@@ -78,9 +78,7 @@ internal class TransactedConnectionPool
     /// </remarks>
     internal TransactedConnectionPool(IDbConnectionPool pool)
     {
-        Pool = pool;
         _transactedCxns = new Dictionary<Transaction, TransactedConnectionList>();
-        SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactedConnectionPool|RES|CPOOL> {0}, Constructed for connection pool {1}", Id, Pool.Id);
     }
 
     #region Properties
@@ -90,12 +88,6 @@ internal class TransactedConnectionPool
     /// </summary>
     /// <value>A unique integer identifier used for logging and diagnostics.</value>
     internal int Id => _objectID;
-
-    /// <summary>
-    /// Gets the main connection pool that this transacted pool is associated with.
-    /// </summary>
-    /// <value>The IDbConnectionPool instance that owns this transacted pool.</value>
-    internal IDbConnectionPool Pool { get; }
 
     #endregion
 
@@ -184,7 +176,7 @@ internal class TransactedConnectionPool
         lock (_transactedCxns)
         {
             // Check if a transacted pool has been created for this transaction
-            if ((txnFound = _transactedCxns.TryGetValue(transaction, out connections)) 
+            if ((txnFound = _transactedCxns.TryGetValue(transaction, out connections))
                 && connections is not null)
             {
                 // synchronize multi-threaded access with GetTransactedObject
@@ -209,6 +201,9 @@ internal class TransactedConnectionPool
 
             try
             {
+                // This cloning is critical. It holds the internal transaction from being disposed
+                // until our clone is also disposed. This lets us safely reference the transaction
+                // and its state until we're done with our work.
                 transactionClone = transaction.Clone();
                 newConnections = new TransactedConnectionList(2, transactionClone); // start with only two connections in the list; most times we won't need that many.
 
@@ -268,21 +263,24 @@ internal class TransactedConnectionPool
 
     /// <summary>
     /// Handles the completion of a transaction by removing the associated connection from the 
-    /// transacted pool and returning it to the main connection pool.
+    /// transacted pool.
     /// </summary>
     /// <param name="transaction">The transaction that has completed.</param>
     /// <param name="transactedObject">The database connection that was enlisted in the completed transaction.</param>
+    /// <returns>
+    /// <c>true</c> if the connection was found in the transacted pool and removed; 
+    /// <c>false</c> if the connection was not found in the pool.
+    /// </returns>
     /// <remarks>
     /// This method is called when a transaction completes (either by committing or rolling back).
-    /// It removes the specified connection from the transacted pool and returns it to the main
-    /// connection pool for reuse. If this was the last connection in the transaction's pool,
-    /// the entire transaction pool entry is removed and disposed.
+    /// It removes the specified connection from the transacted pool. If this was the last connection 
+    /// in the transaction's pool, the entire transaction pool entry is removed and disposed.
     /// 
     /// Due to the asynchronous nature of transaction completion notifications, there's no guarantee
     /// about the order in which PutTransactedObject and TransactionEnded are called. This method
     /// handles cases where the transaction pool may not yet exist when the transaction completes.
     /// </remarks>
-    internal void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
+    internal bool TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
     {
         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transaction Completed", Id, transaction.GetHashCode(), transactedObject.ObjectID);
         TransactedConnectionList? connections;
@@ -337,16 +335,19 @@ internal class TransactedConnectionPool
             }
         }
 
+        // If we didn't find the connection in the list, return false.
+        if (entry == -1)
+        {
+            return false;
+        }
+        
         // If (and only if) we found the connection in the list of
         // connections, we'll put it back...
-        if (0 <= entry)
-        {
-            // TODO: can we give this responsibility to the main pool?
-            // The bi-directional dependency between the main pool and this pool
-            // is messy and hard to understand.
-            SqlClientEventSource.Metrics.ExitFreeConnection();
-            Pool.PutObjectFromTransactedPool(transactedObject);
-        }
+        // Need to ExitFreeConnection here because the object is not currently in any pool.
+        // Ultimately, the free connection metric will be incremented if the connection is
+        // successfully returned to the main pool.
+        SqlClientEventSource.Metrics.ExitFreeConnection();
+        return true;
     }
 
     #endregion
