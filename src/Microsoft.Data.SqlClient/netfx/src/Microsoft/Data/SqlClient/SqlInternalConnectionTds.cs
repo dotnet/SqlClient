@@ -345,49 +345,6 @@ namespace Microsoft.Data.SqlClient
         // LOGIN-RELATED METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        private void ResolveExtendedServerName(ServerInfo serverInfo, bool aliasLookup, SqlConnectionString options)
-        {
-            if (serverInfo.ExtendedServerName == null)
-            {
-                string host = serverInfo.UserServerName;
-                string protocol = serverInfo.UserProtocol;
-
-                if (aliasLookup)
-                { // We skip this for UserInstances...
-                  // Perform registry lookup to see if host is an alias.  It will appropriately set host and protocol, if an Alias.
-                  // Check if it was already resolved, during CR reconnection _currentSessionData values will be copied from
-                  // _reconnectSessonData of the previous connection
-                    if (_currentSessionData != null && !string.IsNullOrEmpty(host))
-                    {
-                        Tuple<string, string> hostPortPair;
-                        if (_currentSessionData._resolvedAliases.TryGetValue(host, out hostPortPair))
-                        {
-                            host = hostPortPair.Item1;
-                            protocol = hostPortPair.Item2;
-                        }
-                        else
-                        {
-                            TdsParserStaticMethods.AliasRegistryLookup(ref host, ref protocol);
-                            _currentSessionData._resolvedAliases.Add(serverInfo.UserServerName, new Tuple<string, string>(host, protocol));
-                        }
-                    }
-                    else
-                    {
-                        TdsParserStaticMethods.AliasRegistryLookup(ref host, ref protocol);
-                    }
-
-                    //TODO: fix local host enforcement with datadirectory and failover
-                    if (options.EnforceLocalHost)
-                    {
-                        // verify LocalHost for |DataDirectory| usage
-                        SqlConnectionString.VerifyLocalHostAndFixup(ref host, true, true /*fix-up to "."*/);
-                    }
-                }
-
-                serverInfo.SetDerivedNames(protocol, host);
-            }
-        }
-
         // Common code path for making one attempt to establish a connection and log in to server.
         private void AttemptOneLogin(ServerInfo serverInfo,
                                     string newPassword,

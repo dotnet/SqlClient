@@ -2008,6 +2008,58 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private void ResolveExtendedServerName(ServerInfo serverInfo, bool aliasLookup, SqlConnectionString options)
+        {
+            // @TODO: Invert to save on indentation
+            if (serverInfo.ExtendedServerName == null)
+            {
+                string host = serverInfo.UserServerName;
+                string protocol = serverInfo.UserProtocol;
+
+                if (aliasLookup)
+                {
+                    // We skip this for UserInstances...
+                    // Perform registry lookup to see if host is an alias. It will appropriately
+                    // set host and protocol, if an Alias. Check if it was already resolved, during
+                    // CR reconnection _currentSessionData values will be copied from
+                    // _reconnectSessionData of the previous connection.
+                    if (_currentSessionData != null && !string.IsNullOrEmpty(host))
+                    {
+                        Tuple<string, string> hostPortPair;
+                        if (_currentSessionData._resolvedAliases.TryGetValue(host, out hostPortPair))
+                        {
+                            host = hostPortPair.Item1;
+                            protocol = hostPortPair.Item2;
+                        }
+                        else
+                        {
+                            // @TODO: What are these refs doing here?? Just return the values!
+                            TdsParserStaticMethods.AliasRegistryLookup(ref host, ref protocol);
+                            _currentSessionData._resolvedAliases.Add(
+                                serverInfo.UserServerName,
+                                new Tuple<string, string>(host, protocol));
+                        }
+                    }
+                    else
+                    {
+                        TdsParserStaticMethods.AliasRegistryLookup(ref host, ref protocol);
+                    }
+
+                    // TODO: fix local host enforcement with datadirectory and failover
+                    if (options.EnforceLocalHost)
+                    {
+                        // Verify LocalHost for |DataDirectory| usage
+                        SqlConnectionString.VerifyLocalHostAndFixup(
+                            ref host,
+                            enforceLocalHost: true,
+                            fixup: true);
+                    }
+                }
+
+                serverInfo.SetDerivedNames(protocol, host);
+            }
+        }
+
         #if NETFRAMEWORK
         private bool ShouldDisableTnir(SqlConnectionString connectionOptions)
         {
