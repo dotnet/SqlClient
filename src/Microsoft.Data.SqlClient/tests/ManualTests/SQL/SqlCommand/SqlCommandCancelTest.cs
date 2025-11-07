@@ -345,26 +345,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void TimeoutCancel(string constr)
         {
-            using (SqlConnection con = new SqlConnection(constr))
-            {
-                con.Open();
-                using (SqlCommand cmd = con.CreateCommand())
-                {
-                    cmd.CommandTimeout = 1;
-                    cmd.CommandText = "WAITFOR DELAY '00:00:20';select * from Customers";
+            // Arrange
+            using SqlConnection connection = new SqlConnection(constr);
+            connection.Open();
 
-                    string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
-                    DataTestUtility.ExpectFailure<SqlException>(() => ExecuteReaderOnCmd(cmd), new string[] { errorMessage });
+            using SqlCommand command = new SqlCommand();
+            command.CommandTimeout = 1;
+            command.CommandText = @"WAITFOR DELAY '00:01:00';" +
+                                  @"SELECT * FROM customers";
+            command.CommandType = CommandType.Text;
+            command.Connection = connection;
 
-                    VerifyConnection(cmd);
-                }
-            }
-        }
+            // Act
+            Action action = () => { using SqlDataReader reader = command.ExecuteReader(); };
 
-        private static void ExecuteReaderOnCmd(SqlCommand cmd)
-        {
-            using (SqlDataReader reader = cmd.ExecuteReader())
-            { }
+            // Assert
+            // - Action throws timeout exception with timeout message
+            Exception e = Assert.Throws<SqlException>(action);
+            Assert.Contains(SystemDataResourceManager.Instance.SQL_Timeout_Execution, e.Message);
+
+            // - Connection has not faulted
+            VerifyConnection(command);
         }
 
         //InvalidOperationException from connection.Dispose if that connection has prepared command cancelled during reading of data
