@@ -522,6 +522,17 @@ namespace Microsoft.Data.SqlClient
 
         #region Public and Internal Methods
 
+        internal void BreakConnection()
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                $"SqlInternalConnectionTds.BreakConnection | RES | CPOOL " +
+                $"Object ID {ObjectID}, " +
+                $"Breaking connection.");
+
+            DoomThisConnection();   // Mark connection as unusable, so it will be destroyed
+            Connection?.Close();
+        }
+
         /// <summary>
         /// Validate the enlisted transaction state, taking into consideration the ambient
         /// transaction and transaction unbinding mode. If there is no enlisted transaction, this

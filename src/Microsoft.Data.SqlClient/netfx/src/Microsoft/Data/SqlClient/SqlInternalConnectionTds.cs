@@ -346,17 +346,6 @@ namespace Microsoft.Data.SqlClient
         // PARSER CALLBACKS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        internal void BreakConnection()
-        {
-            SqlConnection connection = Connection;
-            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.BreakConnection|RES|CPOOL> {0}, Breaking connection.", ObjectID);
-            DoomThisConnection();   // Mark connection as unusable, so it will be destroyed
-            if (connection != null)
-            {
-                connection.Close();
-            }
-        }
-
         internal void OnEnvChange(SqlEnvChange rec)
         {
             Debug.Assert(!IgnoreEnvChange, "This function should not be called if IgnoreEnvChange is set!");
