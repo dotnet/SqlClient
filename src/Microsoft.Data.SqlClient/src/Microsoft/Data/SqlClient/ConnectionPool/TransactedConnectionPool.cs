@@ -39,13 +39,12 @@ internal class TransactedConnectionPool
     /// <summary>
     /// Initializes a new instance of the TransactedConnectionPool class for the specified connection pool.
     /// </summary>
-    /// <param name="pool">The main connection pool that this transacted pool is associated with.</param>
     /// <remarks>
     /// The transacted connection pool works as a companion to the main connection pool,
     /// temporarily holding connections that are enlisted in transactions until those
     /// transactions complete.
     /// </remarks>
-    internal TransactedConnectionPool(IDbConnectionPool pool)
+    internal TransactedConnectionPool()
     {
         _transactedCxns = new ConcurrentDictionary<Transaction, List<DbConnectionInternal>>();
     }

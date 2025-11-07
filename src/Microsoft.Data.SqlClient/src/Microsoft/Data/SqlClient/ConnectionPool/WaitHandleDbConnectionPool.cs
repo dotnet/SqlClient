@@ -56,10 +56,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         public DbConnectionPoolState State { get; set; }
 
-        // This class is a way to stash our cloned Tx key for later disposal when it's no longer needed.
-        // We can't get at the key in the dictionary without enumerating entries, so we stash an extra
-        // copy as part of the value.
-
         private sealed class PendingGetConnection
         {
             public PendingGetConnection(long dueTime, DbConnection owner, TaskCompletionSource<DbConnectionInternal> completion, DbConnectionOptions userOptions)
@@ -249,7 +245,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary*/,
                 capacity: 2);
 
-            _transactedConnectionPool = new TransactedConnectionPool(this);
+            _transactedConnectionPool = new TransactedConnectionPool();
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactedConnectionPool|RES|CPOOL> {0}, Constructed for connection pool {1}", _transactedConnectionPool.Id, Id);
 
             _poolCreateRequest = new WaitCallback(PoolCreateRequest); // used by CleanupCallback
