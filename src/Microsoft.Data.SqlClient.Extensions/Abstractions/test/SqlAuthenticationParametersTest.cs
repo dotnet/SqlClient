@@ -6,10 +6,14 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 public class SqlAuthenticationParametersTest
 {
-    // Verify that the properties are set correctly when nullable arguments are
-    // null.
+    #region Tests
+
+    /// <summary>
+    /// Verify that the properties are set correctly when nullable arguments are
+    /// null.
+    /// </summary>
     [Fact]
-    public void Constructor_WithNulls()
+    public void Constructor_ValidArguments_WithNulls()
     {
         var method = SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
         var server = "server";
@@ -43,10 +47,12 @@ public class SqlAuthenticationParametersTest
         Assert.Equal(timeout, parameters.ConnectionTimeout);
     }
 
-    // Verify that the properties are set correctly when nullable arguments
-    // are non-null.
+    /// <summary>
+    /// Verify that the properties are set correctly when nullable arguments are
+    /// non-null.
+    /// </summary>
     [Fact]
-    public void Constructor_WithoutNulls()
+    public void Constructor_ValidArguments_WithoutNulls()
     {
         var method = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
         var server = "server";
@@ -79,4 +85,6 @@ public class SqlAuthenticationParametersTest
         Assert.Equal(id, parameters.ConnectionId);
         Assert.Equal(timeout, parameters.ConnectionTimeout);
     }
+
+    #endregion
 }

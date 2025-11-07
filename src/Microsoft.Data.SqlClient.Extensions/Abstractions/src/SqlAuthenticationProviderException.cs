@@ -7,6 +7,11 @@ namespace Microsoft.Data.SqlClient;
 /// <include file='../doc/SqlAuthenticationProviderException.xml' path='docs/members[@name="SqlAuthenticationProviderException"]/SqlAuthenticationProviderException/*'/>
 public abstract class SqlAuthenticationProviderException : Exception
 {
+    /// <summary>
+    /// The string value used when the failure code is not known.
+    /// </summary>
+    private const string Unknown = "Unknown";
+    
     /// <include file='../doc/SqlAuthenticationProviderException.xml' path='docs/members[@name="SqlAuthenticationProviderException"]/ctor1/*'/>
     protected SqlAuthenticationProviderException(
         string message,
@@ -54,6 +59,4 @@ public abstract class SqlAuthenticationProviderException : Exception
             $" Method={Method} FailureCode={FailureCode}" +
             $" ShouldRetry={ShouldRetry} RetryPeriod={RetryPeriod}";
     }
-
-    private const string Unknown = "Unknown";
 }

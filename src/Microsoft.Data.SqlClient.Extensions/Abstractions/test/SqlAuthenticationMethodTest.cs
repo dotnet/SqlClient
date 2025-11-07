@@ -6,9 +6,13 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 public class SqlAuthenticationMethodTest
 {
-    // Verify the number of expected enum members.
+    #region Tests
+
+    /// <summary>
+    /// Verify the number of expected enum members.
+    /// </summary>
     [Fact]
-    public void Member_Count()
+    public void Confirm_Expected_Member_Count()
     {
 #if NET
         Assert.Equal(11, Enum.GetNames<SqlAuthenticationMethod>().Length);
@@ -17,9 +21,11 @@ public class SqlAuthenticationMethodTest
 #endif
     }
 
-    // Verify each of the enum member numeric values.
+    /// <summary>
+    /// Verify each of the enum member numeric values.
+    /// </summary>
     [Fact]
-    public void Member_Values()
+    public void Confirm_Expected_Member_Values()
     {
         Assert.Equal(0, (int)SqlAuthenticationMethod.NotSpecified);
         Assert.Equal(1, (int)SqlAuthenticationMethod.SqlPassword);
@@ -35,4 +41,6 @@ public class SqlAuthenticationMethodTest
         Assert.Equal(9, (int)SqlAuthenticationMethod.ActiveDirectoryDefault);
         Assert.Equal(10, (int)SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity);
     }
+
+    #endregion
 }

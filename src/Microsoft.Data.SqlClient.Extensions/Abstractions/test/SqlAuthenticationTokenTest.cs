@@ -6,9 +6,13 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 public class SqlAuthenticationTokenTest
 {
-    // Verify that the properties are set correctly.
+    #region Tests
+
+    /// <summary>
+    /// Verify that the properties are set correctly.
+    /// </summary>
     [Fact]
-    public void Constructor()
+    public void Constructor_ValidArguments()
     {
         var token = "test";
         var expiry = DateTimeOffset.UtcNow.AddHours(1);
@@ -19,9 +23,11 @@ public class SqlAuthenticationTokenTest
         Assert.Equal(expiry, authToken.ExpiresOn);
     }
 
-    // Verify that a null token is rejected.
+    /// <summary>
+    /// Verify that a null token is rejected.
+    /// </summary>
     [Fact]
-    public void Constructor_NullToken()
+    public void Constructor_InvalidArguments_NullToken()
     {
         string? token = null;
         var expiry = DateTimeOffset.UtcNow.AddHours(1);
@@ -34,9 +40,11 @@ public class SqlAuthenticationTokenTest
         Assert.Equal("AccessToken must not be null or empty.", ex.Message);
     }
 
-    // Verify that an empty token is rejected.
+    /// <summary>
+    /// Verify that an empty token is rejected.
+    /// </summary>
     [Fact]
-    public void Constructor_EmptyToken()
+    public void Constructor_InvalidArguments_EmptyToken()
     {
         string token = string.Empty;
         var expiry = DateTimeOffset.UtcNow.AddHours(1);
@@ -48,4 +56,6 @@ public class SqlAuthenticationTokenTest
     
         Assert.Equal("AccessToken must not be null or empty.", ex.Message);
     }
+
+    #endregion
 }

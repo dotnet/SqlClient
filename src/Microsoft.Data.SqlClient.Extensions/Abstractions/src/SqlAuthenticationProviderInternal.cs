@@ -9,16 +9,26 @@ namespace Microsoft.Data.SqlClient;
 /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/SqlAuthenticationProvider/*'/>
 public abstract partial class SqlAuthenticationProvider
 {
-    // This class implements the static GetProvider and SetProvider methods by
-    // using reflection to call into the Microsoft.Data.SqlClient package's
-    // SqlAuthenticationProviderManager class, if that assembly is present.
+    /// <summary>
+    /// This class implements the static GetProvider and SetProvider methods by
+    /// using reflection to call into the Microsoft.Data.SqlClient package's
+    /// SqlAuthenticationProviderManager class, if that assembly is present.
+    /// </summary>
     private static class Internal
     {
-        // Handles to the reflected get/set methods.
+        /// <summary>
+        /// Our handle to the reflected GetProvider() method.
+        /// </summary>
         private static MethodInfo? _getProvider = null;
+
+        /// <summary>
+        /// Our handle to the reflected SetProvider() method.
+        /// </summary>
         private static MethodInfo? _setProvider = null;
 
-        // Static construction performs the reflection lookups.
+        /// <summary>
+        /// Static construction performs the reflection lookups.
+        /// </summary>
         static Internal()
         {
             // If the MDS package is present, load its
@@ -86,6 +96,7 @@ public abstract partial class SqlAuthenticationProvider
                   ex is FileLoadException ||
                   ex is FileNotFoundException)
             {
+                // TODO: Logging
                 // SqlClientEventSource.Log.TryTraceEvent(
                 //     nameof(SqlAuthenticationProviderManager) +
                 //     $": Azure extension assembly={assemblyName} not found or " +
@@ -95,12 +106,17 @@ public abstract partial class SqlAuthenticationProvider
             // Any other exceptions are fatal.
         }
 
-        // Call the reflected GetProvider method.
-        //
-        // Returns null if reflection failed or any exceptions occur.
-        // Otherwise, returns as the reflected method does.
-        //
-        public static SqlAuthenticationProvider? GetProvider(
+        /// <summary>
+        /// Call the reflected GetProvider method.
+        /// </summary>
+        /// <param name="authenticationMethod">
+        ///   The authentication method whose provider to get.
+        /// </param>
+        /// <returns>
+        ///   Returns null if reflection failed or any exceptions occur.
+        ///   Otherwise, returns as the reflected method does.
+        /// </returns>
+        internal static SqlAuthenticationProvider? GetProvider(
             SqlAuthenticationMethod authenticationMethod)
         {
             if (_getProvider is null)
@@ -124,13 +140,21 @@ public abstract partial class SqlAuthenticationProvider
             }
         }
 
-
-        // Call the reflected SetProvider method.
-        //
-        // Returns false if reflection failed, invocation fails, or any
-        // exceptions occur.  Otherwise, returns as the reflected method does.
-        //
-        public static bool SetProvider(
+        /// <summary>
+        /// Call the reflected SetProvider method.
+        /// </summary>
+        /// <param name="authenticationMethod">
+        ///   The authentication method whose provider to set.
+        /// </param>
+        /// <param name="provider">
+        ///   The provider to set.
+        /// </param>
+        /// <returns>
+        ///   Returns false if reflection failed, invocation fails, or any
+        ///   exceptions occur.  Otherwise, returns as the reflected method
+        ///   does.
+        /// </returns>
+        internal static bool SetProvider(
             SqlAuthenticationMethod authenticationMethod,
             SqlAuthenticationProvider provider)
         {

@@ -23,7 +23,13 @@
   <!-- Build Config -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions</AssemblyName>
-    <RootNamespace>$(AssemblyName)</RootNamespace>
+
+    <!--
+      Clear the root namespace since our directory structure doesn't match our
+      namespace definitions.  Otherwise, if omitted it would default to the
+      AssemblyName.
+    -->
+    <RootNamespace></RootNamespace>
 
     <!--
       We pin the AssemblyVersion of our package to the default major version

@@ -27,8 +27,15 @@ public sealed class SqlAuthenticationToken
         ExpiresOn = expiresOn;
     }
 
+    /// <summary>
+    /// The exception thrown by the SqlAuthenticationToken constructor.
+    /// </summary>
     internal sealed class TokenException : SqlAuthenticationProviderException
     {
+        /// <summary>
+        /// Construct with the exception message.
+        /// </summary>
+        /// <param name="message">The exception message.</param>
         internal TokenException(string message)
         : base(message)
         {
