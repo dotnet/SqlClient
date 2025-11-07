@@ -283,7 +283,7 @@ internal class TransactedConnectionPool
     internal bool TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
     {
         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transaction Completed", Id, transaction.GetHashCode(), transactedObject.ObjectID);
-        int entry = -1;
+        bool foundConnectionInList = false;
 
         // NOTE: because TransactionEnded is an asynchronous notification, there's no guarantee
         //   around the order in which PutTransactionObject and TransactionEnded are called. As
@@ -305,16 +305,11 @@ internal class TransactedConnectionPool
                 // Lock connections to avoid conflict with GetTransactionObject
                 lock (connections)
                 {
-                    entry = connections.IndexOf(transactedObject);
-
-                    if (entry >= 0)
-                    {
-                        connections.RemoveAt(entry);
-                    }
+                    foundConnectionInList = connections.Remove(transactedObject);
 
                     // Once we've completed all the ended notifications, we can
                     // safely remove the list from the transacted pool.
-                    if (0 >= connections.Count)
+                    if (connections.Count == 0)
                     {
                         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Removing List from transacted pool.", Id, transaction.GetHashCode());
                         _transactedCxns.Remove(transaction);
@@ -337,7 +332,7 @@ internal class TransactedConnectionPool
         }
 
         // If we didn't find the connection in the list, return false.
-        if (entry == -1)
+        if (!foundConnectionInList)
         {
             return false;
         }
