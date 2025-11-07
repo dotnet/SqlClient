@@ -345,30 +345,6 @@ namespace Microsoft.Data.SqlClient
         // LOGIN-RELATED METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        private bool ShouldDisableTnir(SqlConnectionString connectionOptions)
-        {
-            Boolean isAzureEndPoint = ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource);
-
-            Boolean isFedAuthEnabled = this._accessTokenInBytes != null ||
-            #pragma warning disable 0618 // Type or member is obsolete
-                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
-            #pragma warning restore 0618 // Type or member is obsolete
-                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated ||
-                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
-                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal ||
-                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow ||
-                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity ||
-                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI ||
-                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault ||
-                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
-
-            // Check if the user had explicitly specified the TNIR option in the connection string or the connection string builder.
-            // If the user has specified the option in the connection string explicitly, then we shouldn't disable TNIR.
-            bool isTnirExplicitlySpecifiedInConnectionOptions = connectionOptions.Parsetable.ContainsKey(DbConnectionStringKeywords.TransparentNetworkIpResolution);
-
-            return isTnirExplicitlySpecifiedInConnectionOptions ? false : (isAzureEndPoint || isFedAuthEnabled);
-        }
-
         // With possible MFA support in all AD auth providers, the duration for acquiring a token can be unpredictable.
         // If a timeout error (client or server) happened, we silently retry if a cached token exists from a previous auth attempt (see GetFedAuthToken)
         private bool AttemptRetryADAuthWithTimeoutError(SqlException sqlex, SqlConnectionString connectionOptions, TimeoutTimer timeout)

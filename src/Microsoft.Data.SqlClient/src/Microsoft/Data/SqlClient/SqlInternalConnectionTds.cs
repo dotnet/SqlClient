@@ -14,6 +14,10 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 
+#if NETFRAMEWORK
+using Microsoft.Data.Common.ConnectionString;
+#endif
+
 namespace Microsoft.Data.SqlClient
 {
     internal partial class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
@@ -1681,6 +1685,35 @@ namespace Microsoft.Data.SqlClient
                 _currentLanguage = _originalLanguage;
             }
         }
+
+        #if NETFRAMEWORK
+        private bool ShouldDisableTnir(SqlConnectionString connectionOptions)
+        {
+            bool isAzureEndPoint = ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource);
+
+            // @TODO: Turn into a HashSet and just check the list instead of this MESS.
+            bool isFedAuthEnabled = _accessTokenInBytes != null ||
+                                    #pragma warning disable 0618 // Type or member is obsolete
+                                    connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
+                                    #pragma warning restore 0618 // Type or member is obsolete
+                                    connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated ||
+                                    connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
+                                    connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal ||
+                                    connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow ||
+                                    connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity ||
+                                    connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI ||
+                                    connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault ||
+                                    connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
+
+            // Check if the user had explicitly specified the TNIR option in the connection string
+            // or the connection string builder. If the user has specified the option in the
+            // connection string explicitly, then we shouldn't disable TNIR.
+            bool isTnirExplicitlySpecifiedInConnectionOptions = connectionOptions.Parsetable.ContainsKey(
+                DbConnectionStringKeywords.TransparentNetworkIpResolution);
+
+            return isTnirExplicitlySpecifiedInConnectionOptions ? false : (isAzureEndPoint || isFedAuthEnabled);
+        }
+        #endif
 
         #endregion
     }
