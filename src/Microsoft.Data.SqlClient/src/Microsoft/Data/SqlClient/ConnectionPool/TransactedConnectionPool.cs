@@ -283,7 +283,6 @@ internal class TransactedConnectionPool
     internal bool TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
     {
         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transaction Completed", Id, transaction.GetHashCode(), transactedObject.ObjectID);
-        TransactedConnectionList? connections;
         int entry = -1;
 
         // NOTE: because TransactionEnded is an asynchronous notification, there's no guarantee
@@ -296,8 +295,10 @@ internal class TransactedConnectionPool
 
         lock (_transactedCxns)
         {
-            if (_transactedCxns.TryGetValue(transaction, out connections)
-                && connections is not null)
+            if (_transactedCxns.TryGetValue(
+                    transaction,
+                    out TransactedConnectionList? connections)
+                )
             {
                 bool shouldDisposeConnections = false;
 
