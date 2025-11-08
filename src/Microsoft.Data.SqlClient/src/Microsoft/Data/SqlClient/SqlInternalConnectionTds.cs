@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Net.Http.Headers;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Identity.Client;
 
 #if NETFRAMEWORK
 using Microsoft.Data.Common.ConnectionString;
@@ -1540,6 +1542,317 @@ namespace Microsoft.Data.SqlClient
         private void FailoverPermissionDemand() =>
             PoolGroupProviderInfo?.FailoverPermissionDemand();
         #endif
+
+        /// <summary>
+        /// Get the Federated Authentication Token.
+        /// </summary>
+        /// <param name="fedAuthInfo">Information obtained from server as Federated Authentication Info.</param>
+        private SqlFedAuthToken GetFedAuthToken(SqlFedAuthInfo fedAuthInfo)
+        {
+            Debug.Assert(fedAuthInfo != null, "fedAuthInfo should not be null.");
+
+            // Number of milliseconds to sleep for the initial back off.
+            int sleepInterval = 100;
+
+            // Number of attempts, for tracing purposes, if we underwent retries.
+            int numberOfAttempts = 0;
+
+            // Object that will be returned to the caller, containing all required data about the token.
+            _fedAuthToken = new SqlFedAuthToken();
+
+            // Username to use in error messages.
+            string username = null;
+
+            SqlAuthenticationProvider authProvider =
+                SqlAuthenticationProvider.GetProvider(ConnectionOptions.Authentication);
+
+            if (authProvider == null && _accessTokenCallback == null)
+            {
+                throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication.ToString());
+            }
+
+            // Retry getting access token once if MsalException.error_code is unknown_error.
+            // extra logic to deal with HTTP 429 (Retry after).
+            // @TODO: Can we pick one or the other?
+            // @TODO: Wait ... are we counting up but only looping while the number of attempts is <=1 ? Huh?
+            // @TODO: Can we consider using a for loop here since there's a fixed number of times to loop
+
+            #if NET
+            while (numberOfAttempts <= 1)
+            #else
+            while (numberOfAttempts <= 1 && sleepInterval <= _timeout.MillisecondsRemaining)
+            #endif
+            {
+                numberOfAttempts++;
+                try
+                {
+                    var authParamsBuilder = new SqlAuthenticationParameters.Builder(
+                        authenticationMethod: ConnectionOptions.Authentication,
+                        resource: fedAuthInfo.spn,
+                        authority: fedAuthInfo.stsurl,
+                        serverName: ConnectionOptions.DataSource,
+                        databaseName: ConnectionOptions.InitialCatalog)
+                        .WithConnectionId(_clientConnectionId)
+                        .WithConnectionTimeout(ConnectionOptions.ConnectTimeout);
+                    switch (ConnectionOptions.Authentication)
+                    {
+                        case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
+                            #if NET
+                            // In some scenarios for .NET Core, MSAL cannot detect the current user and needs it passed in
+                            // for Integrated auth. Allow the user/application to pass it in to work around those scenarios.
+                            if (!string.IsNullOrEmpty(ConnectionOptions.UserID))
+                            {
+                                username = ConnectionOptions.UserID;
+                                authParamsBuilder.WithUserId(username);
+                            }
+                            else
+                            {
+                                username = TdsEnums.NTAUTHORITYANONYMOUSLOGON;
+                            }
+                            #else
+                            username = TdsEnums.NTAUTHORITYANONYMOUSLOGON;
+                            #endif
+
+                            if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
+                            {
+                                _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
+                            }
+                            else
+                            {
+                                // We use Task.Run here in all places to execute task synchronously
+                                // in the same context. Fixes block-over-async deadlock possibilities
+                                // https://github.com/dotnet/SqlClient/issues/1209
+                                // @TODO: Verify that the wrapping/unwrapping is necessary.
+                                _fedAuthToken = Task.Run(async () =>
+                                        await authProvider.AcquireTokenAsync(authParamsBuilder))
+                                            .GetAwaiter()
+                                            .GetResult()
+                                            .ToSqlFedAuthToken();
+                                _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
+                            }
+
+                            break;
+
+                        case SqlAuthenticationMethod.ActiveDirectoryInteractive:
+                        case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
+                        case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                        case SqlAuthenticationMethod.ActiveDirectoryMSI:
+                        case SqlAuthenticationMethod.ActiveDirectoryDefault:
+                        case SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity:
+                            if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
+                            {
+                                _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
+                            }
+                            else
+                            {
+                                authParamsBuilder.WithUserId(ConnectionOptions.UserID);
+                                _fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult().ToSqlFedAuthToken();
+                                _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
+                            }
+
+                            break;
+
+                        #pragma warning disable 0618 // Type or member is obsolete
+                        case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                        #pragma warning restore 0618 // Type or member is obsolete
+
+                        case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
+                            if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
+                            {
+                                _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
+                            }
+                            else
+                            {
+                                if (_credential != null)
+                                {
+                                    username = _credential.UserId;
+                                    authParamsBuilder.WithUserId(username).WithPassword(_credential.Password);
+                                    _fedAuthToken = Task.Run(async () =>
+                                        await authProvider.AcquireTokenAsync(authParamsBuilder))
+                                            .GetAwaiter()
+                                            .GetResult()
+                                            .ToSqlFedAuthToken();
+                                }
+                                else
+                                {
+                                    username = ConnectionOptions.UserID;
+                                    authParamsBuilder.WithUserId(username).WithPassword(ConnectionOptions.Password);
+                                    _fedAuthToken = Task.Run(async () =>
+                                        await authProvider.AcquireTokenAsync(authParamsBuilder))
+                                            .GetAwaiter()
+                                            .GetResult()
+                                            .ToSqlFedAuthToken();
+                                }
+                                _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
+                            }
+
+                            break;
+
+                        default:
+                            if (_accessTokenCallback == null)
+                            {
+                                throw SQL.UnsupportedAuthenticationSpecified(ConnectionOptions.Authentication);
+                            }
+
+                            if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
+                            {
+                                _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
+                            }
+                            else
+                            {
+                                if (_credential != null)
+                                {
+                                    username = _credential.UserId;
+                                    authParamsBuilder.WithUserId(username).WithPassword(_credential.Password);
+                                }
+                                else
+                                {
+                                    authParamsBuilder.WithUserId(ConnectionOptions.UserID);
+                                    authParamsBuilder.WithPassword(ConnectionOptions.Password);
+                                }
+
+                                SqlAuthenticationParameters parameters = authParamsBuilder;
+                                CancellationTokenSource cts = new();
+
+                                // Use Connection timeout value to cancel token acquire request
+                                // after certain period of time.(int)
+                                if (_timeout.MillisecondsRemaining < int.MaxValue)
+                                {
+                                    cts.CancelAfter((int)_timeout.MillisecondsRemaining);
+                                }
+
+                                _fedAuthToken = Task.Run(async () =>
+                                    await _accessTokenCallback(parameters, cts.Token))
+                                        .GetAwaiter()
+                                        .GetResult()
+                                        .ToSqlFedAuthToken();
+                                _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
+                            }
+                            break;
+                    }
+
+                    Debug.Assert(_fedAuthToken.accessToken != null, "AccessToken should not be null.");
+
+                    #if DEBUG
+                    if (_forceMsalRetry)
+                    {
+                        // 3399614468 is 0xCAA20004L just for testing.
+                        throw new MsalServiceException(MsalError.UnknownError, "Force retry in GetFedAuthToken");
+                    }
+                    #endif
+
+                    // Break out of the retry loop in successful case.
+                    break;
+                }
+                catch (MsalServiceException serviceException)
+                {
+                    // Deal with Msal service exceptions first, retry if 429 received.
+                    if (serviceException.StatusCode == MsalHttpRetryStatusCode)
+                    {
+                        RetryConditionHeaderValue retryAfter = serviceException.Headers.RetryAfter;
+                        if (retryAfter.Delta.HasValue)
+                        {
+                            sleepInterval = retryAfter.Delta.Value.Milliseconds;
+                        }
+                        else if (retryAfter.Date.HasValue)
+                        {
+                            sleepInterval = Convert.ToInt32(retryAfter.Date.Value.Offset.TotalMilliseconds);
+                        }
+
+                        // if there's enough time to retry before timeout, then retry, otherwise
+                        // break out the retry loop.
+                        if (sleepInterval < _timeout.MillisecondsRemaining)
+                        {
+                            Thread.Sleep(sleepInterval);
+                        }
+                        else
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                $"SqlInternalConnectionTds.GetFedAuthToken.MsalServiceException | ERR | " +
+                                $"Timeout: {serviceException.ErrorCode}");
+
+                            throw SQL.ActiveDirectoryTokenRetrievingTimeout(
+                                Enum.GetName(typeof(SqlAuthenticationMethod), ConnectionOptions.Authentication),
+                                serviceException.ErrorCode,
+                                serviceException);
+                        }
+                    }
+                    else
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.GetFedAuthToken.MsalServiceException | ERR | " +
+                            $"{serviceException.ErrorCode}");
+
+                        throw ADP.CreateSqlException(serviceException, ConnectionOptions, this, username);
+                    }
+                }
+                catch (MsalException msalException)
+                {
+                    // Deal with normal MsalExceptions.
+                    if (MsalError.UnknownError != msalException.ErrorCode ||
+                        _timeout.IsExpired ||
+                        _timeout.MillisecondsRemaining <= sleepInterval)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.GetFedAuthToken.MSALException | ERR | " +
+                            $"{msalException.ErrorCode}");
+
+                        throw ADP.CreateSqlException(msalException, ConnectionOptions, this, username);
+                    }
+
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.GetFedAuthToken | ADV | " +
+                        $"Object ID: {ObjectID}, " +
+                        $"sleeping {sleepInterval}ms");
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.GetFedAuthToken | ADV | " +
+                        $"Object ID: {ObjectID}, " +
+                        $"remaining {_timeout.MillisecondsRemaining}ms");
+
+                    Thread.Sleep(sleepInterval);
+
+                    sleepInterval *= 2;
+                }
+                // All other exceptions from MSAL/Azure Identity APIs
+                catch (Exception e)
+                {
+                    SqlError error = new(
+                        infoNumber: 0,
+                        errorState: 0x00,
+                        errorClass: TdsEnums.FATAL_ERROR_CLASS,
+                        server: ConnectionOptions.DataSource,
+                        errorMessage: e.Message,
+                        procedure: ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName,
+                        lineNumber: 0);
+
+                    throw SqlException.CreateException(
+                        error,
+                        serverVersion: string.Empty,
+                        internalConnection: this,
+                        innerException: e);
+                }
+            }
+
+            Debug.Assert(_fedAuthToken != null, "fedAuthToken should not be null.");
+            Debug.Assert(_fedAuthToken.accessToken?.Length > 0,
+                "fedAuthToken.accessToken should not be null or empty.");
+
+            // Store the newly generated token in _newDbConnectionPoolAuthenticationContext, only if using pooling.
+            if (_dbConnectionPool != null)
+            {
+                DateTime expirationTime = DateTime.FromFileTimeUtc(_fedAuthToken.expirationFileTime);
+                _newDbConnectionPoolAuthenticationContext = new DbConnectionPoolAuthenticationContext(
+                    _fedAuthToken.accessToken,
+                    expirationTime);
+            }
+
+            SqlClientEventSource.Log.TryTraceEvent(
+                $"SqlInternalConnectionTds.GetFedAuthToken | " +
+                $"Object ID {ObjectID}, " +
+                $"Finished generating federated authentication token.");
+
+            return _fedAuthToken;
+        }
 
         private void Login(
             ServerInfo server,
