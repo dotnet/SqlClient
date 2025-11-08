@@ -346,22 +346,6 @@ namespace Microsoft.Data.SqlClient
         // PARSER CALLBACKS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        internal void OnLoginAck(SqlLoginAck rec)
-        {
-            _loginAck = rec;
-            if (_recoverySessionData != null)
-            {
-                if (_recoverySessionData._tdsVersion != rec.tdsVersion)
-                {
-                    throw SQL.CR_TDSVersionNotPreserved(this);
-                }
-            }
-            if (_currentSessionData != null)
-            {
-                _currentSessionData._tdsVersion = rec.tdsVersion;
-            }
-        }
-
         /// <summary>
         /// Generates (if appropriate) and sends a Federated Authentication Access token to the server, using the Federated Authentication Info.
         /// </summary>

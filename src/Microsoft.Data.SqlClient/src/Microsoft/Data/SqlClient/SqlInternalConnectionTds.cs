@@ -839,6 +839,23 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal void OnLoginAck(SqlLoginAck rec)
+        {
+            _loginAck = rec;
+            if (_recoverySessionData != null)
+            {
+                if (_recoverySessionData._tdsVersion != rec.tdsVersion)
+                {
+                    throw SQL.CR_TDSVersionNotPreserved(this);
+                }
+            }
+
+            if (_currentSessionData != null)
+            {
+                _currentSessionData._tdsVersion = rec.tdsVersion;
+            }
+        }
+
         internal override void ValidateConnectionForExecute(SqlCommand command)
         {
             TdsParser parser = _parser;
