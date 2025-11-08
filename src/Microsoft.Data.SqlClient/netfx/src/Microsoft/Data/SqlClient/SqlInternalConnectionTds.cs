@@ -347,62 +347,6 @@ namespace Microsoft.Data.SqlClient
         ////////////////////////////////////////////////////////////////////////////////////////
 
         /// <summary>
-        /// Tries to acquire a lock on the authentication context. If successful in acquiring the lock, gets a new token and assigns it in the out parameter. Else returns false.
-        /// </summary>
-        /// <param name="fedAuthInfo">Federated Authentication Info</param>
-        /// <param name="dbConnectionPoolAuthenticationContext">Authentication Context cached in the connection pool.</param>
-        /// <param name="fedAuthToken">Out parameter, carrying the token if we acquired a lock and got the token.</param>
-        /// <returns></returns>
-        internal bool TryGetFedAuthTokenLocked(SqlFedAuthInfo fedAuthInfo, DbConnectionPoolAuthenticationContext dbConnectionPoolAuthenticationContext, out SqlFedAuthToken fedAuthToken)
-        {
-
-            Debug.Assert(fedAuthInfo != null, "fedAuthInfo should not be null.");
-            Debug.Assert(dbConnectionPoolAuthenticationContext != null, "dbConnectionPoolAuthenticationContext should not be null.");
-
-            fedAuthToken = null;
-
-            // Variable which indicates if we did indeed manage to acquire the lock on the authentication context, to try update it.
-            bool authenticationContextLocked = false;
-
-            try
-            {
-                // Try to obtain a lock on the context. If acquired, this thread got the opportunity to update.
-                // Else some other thread is already updating it, so just proceed forward with the existing token in the cache.
-                if (dbConnectionPoolAuthenticationContext.LockToUpdate())
-                {
-                    if (SqlClientEventSource.Log.IsTraceEnabled())
-                    {
-                        SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.TryGetFedAuthTokenLocked> {0}, " +
-                        "Acquired the lock to update the authentication context.The expiration time is {1}. " +
-                        "Current Time is {2}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString(), DateTime.UtcNow.ToLongTimeString());
-                    }
-                    authenticationContextLocked = true;
-                }
-                else
-                {
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.TryGetFedAuthTokenLocked> {0}, Refreshing the context is already in progress by another thread.", ObjectID);
-                }
-
-                if (authenticationContextLocked)
-                {
-                    // Get the Federated Authentication Token.
-                    fedAuthToken = GetFedAuthToken(fedAuthInfo);
-                    Debug.Assert(fedAuthToken != null, "fedAuthToken should not be null.");
-                }
-            }
-            finally
-            {
-                if (authenticationContextLocked)
-                {
-                    // Release the lock we took on the authentication context, even if we have not yet updated the cache with the new context. Login process can fail at several places after this step and so there is no guarantee that the new context will make it to the cache. So we shouldn't miss resetting the flag. With the reset, at-least another thread may have a chance to update it.
-                    dbConnectionPoolAuthenticationContext.ReleaseLockToUpdate();
-                }
-            }
-
-            return authenticationContextLocked;
-        }
-
-        /// <summary>
         /// Get the Federated Authentication Token.
         /// </summary>
         /// <param name="fedAuthInfo">Information obtained from server as Federated Authentication Info.</param>
