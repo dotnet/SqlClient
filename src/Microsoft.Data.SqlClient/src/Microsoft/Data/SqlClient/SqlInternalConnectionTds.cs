@@ -839,6 +839,181 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Generates (if appropriate) and sends a Federated Authentication Access token to the
+        /// server, using the Federated Authentication Info.
+        /// </summary>
+        /// <param name="fedAuthInfo">Federated Authentication Info.</param>
+        internal void OnFedAuthInfo(SqlFedAuthInfo fedAuthInfo)
+        {
+            // @TODO: Seriously, put this into a hash set or give it a helper or something! We're gonna forget one in *one* spot and cause a big ol bug someday.
+            Debug.Assert((ConnectionOptions._hasUserIdKeyword && ConnectionOptions._hasPasswordKeyword)
+                         || _credential != null
+                         || _accessTokenCallback != null
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
+                         || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired),
+                         "Credentials aren't provided for calling MSAL");
+            Debug.Assert(fedAuthInfo != null, "info should not be null.");
+            Debug.Assert(_dbConnectionPoolAuthenticationContextKey == null,
+                "_dbConnectionPoolAuthenticationContextKey should be null.");
+            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}, Generating federated authentication token", ObjectID);
+            DbConnectionPoolAuthenticationContext dbConnectionPoolAuthenticationContext = null;
+
+            // We want to refresh the token without taking a lock on the context, allowed when the
+            // access token is expiring within the next 10 mins.
+            bool attemptRefreshTokenUnLocked = false;
+
+            // We want to refresh the token, if taking the lock on the authentication context is
+            // successful.
+            bool attemptRefreshTokenLocked = false;
+
+            if (_dbConnectionPool != null)
+            {
+                Debug.Assert(_dbConnectionPool.AuthenticationContexts != null);
+
+                // Construct the dbAuthenticationContextKey with information from FedAuthInfo and
+                // store for later use, when inserting in to the token cache.
+                _dbConnectionPoolAuthenticationContextKey = new DbConnectionPoolAuthenticationContextKey(
+                    fedAuthInfo.stsurl,
+                    fedAuthInfo.spn);
+
+                // Try to retrieve the authentication context from the pool, if one does exist for
+                // this key.
+                if (_dbConnectionPool.AuthenticationContexts.TryGetValue(_dbConnectionPoolAuthenticationContextKey, out dbConnectionPoolAuthenticationContext))
+                {
+                    Debug.Assert(dbConnectionPoolAuthenticationContext != null,
+                        "dbConnectionPoolAuthenticationContext should not be null.");
+
+                    // The timespan between UTCNow and the token expiry.
+                    TimeSpan contextValidity =
+                        dbConnectionPoolAuthenticationContext.ExpirationTime.Subtract(DateTime.UtcNow);
+
+
+                    if (contextValidity <= _dbAuthenticationContextUnLockedRefreshTimeSpan)
+                    {
+                        // If the authentication context is expiring within next 10 minutes, lets
+                        // just re-create a token for this connection attempt. And on successful
+                        // login, try to update the cache with the new token.
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.OnFedAuthInfo | " +
+                            $"Object ID {ObjectID}, " +
+                            $"The expiration time is less than 10 mins, trying to get new access " +
+                            $"token regardless of if an other thread is also trying to update it. " +
+                            $"The expiration time is {dbConnectionPoolAuthenticationContext.ExpirationTime:T}. " +
+                            $"Current Time is {DateTime.UtcNow:T}.");
+                        attemptRefreshTokenUnLocked = true;
+                    }
+                    #if DEBUG
+                    // Checking if any failpoints are enabled.
+                    else if (_forceExpiryUnLocked)
+                    {
+                        attemptRefreshTokenUnLocked = true;
+                    }
+                    else if (_forceExpiryLocked)
+                    {
+                        attemptRefreshTokenLocked = TryGetFedAuthTokenLocked(
+                            fedAuthInfo,
+                            dbConnectionPoolAuthenticationContext,
+                            out _fedAuthToken);
+                    }
+                    #endif
+                    else if (contextValidity <= _dbAuthenticationContextLockedRefreshTimeSpan)
+                    {
+                        // If the token is expiring within the next 45 mins, try to fetch a new
+                        // token, if there is no thread already doing it. If a thread is already
+                        // doing the refresh, just use the existing token in the cache and proceed.
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                            $"SqlInternalConnectionTds.OnFedAuthInfo | ADV | " +
+                            $"Object ID {ObjectID}, " +
+                            $"The authentication context needs a refresh. " +
+                            $"The expiration time is {dbConnectionPoolAuthenticationContext.ExpirationTime:T}. " +
+                            $"Current Time is {DateTime.UtcNow:T}.");
+
+                        // Call the function which tries to acquire a lock over the authentication
+                        // context before trying to update. If the lock could not be obtained, it
+                        // will return false, without attempting to fetch a new token.
+                        attemptRefreshTokenLocked = TryGetFedAuthTokenLocked(
+                            fedAuthInfo,
+                            dbConnectionPoolAuthenticationContext,
+                            out _fedAuthToken);
+
+                        // If TryGetFedAuthTokenLocked returns true, it means lock was obtained and
+                        // _fedAuthToken should not be null. If there was an exception in
+                        // retrieving the new token, TryGetFedAuthTokenLocked should have thrown,
+                        // so we won't be here.
+                        Debug.Assert(!attemptRefreshTokenLocked || _fedAuthToken != null,
+                            "Either Lock should not have been obtained or _fedAuthToken should not be null.");
+                        Debug.Assert(!attemptRefreshTokenLocked || _newDbConnectionPoolAuthenticationContext != null,
+                            "Either Lock should not have been obtained or _newDbConnectionPoolAuthenticationContext should not be null.");
+
+                        // Indicate in EventSource Trace that we are successful with the update.
+                        if (attemptRefreshTokenLocked)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                $"SqlInternalConnectionTds.OnFedAuthInfo | " +
+                                $"Object ID {ObjectID}, " +
+                                $"The attempt to get a new access token succeeded under the locked mode.");
+                        }
+                    }
+
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.OnFedAuthInfo | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Found an authentication context in the cache that does not need a refresh at this time. " +
+                        $"Re-using the cached token.");
+                }
+            }
+
+            // dbConnectionPoolAuthenticationContext will be null if either this is the first
+            // connection attempt in the pool or pooling is disabled.
+            if (dbConnectionPoolAuthenticationContext == null || attemptRefreshTokenUnLocked)
+            {
+                // Get the Federated Authentication Token.
+                _fedAuthToken = GetFedAuthToken(fedAuthInfo);
+                Debug.Assert(_fedAuthToken != null, "_fedAuthToken should not be null.");
+
+                if (_dbConnectionPool != null)
+                {
+                    // GetFedAuthToken should have updated _newDbConnectionPoolAuthenticationContext.
+                    Debug.Assert(_newDbConnectionPoolAuthenticationContext != null,
+                        "_newDbConnectionPoolAuthenticationContext should not be null.");
+
+                    if (_newDbConnectionPoolAuthenticationContext != null)
+                    {
+                        _dbConnectionPool.AuthenticationContexts.TryAdd(
+                            _dbConnectionPoolAuthenticationContextKey,
+                            _newDbConnectionPoolAuthenticationContext);
+                    }
+                }
+            }
+            else if (!attemptRefreshTokenLocked)
+            {
+                Debug.Assert(dbConnectionPoolAuthenticationContext != null,
+                    "dbConnectionPoolAuthenticationContext should not be null.");
+                Debug.Assert(_fedAuthToken == null, "_fedAuthToken should be null in this case.");
+                Debug.Assert(_newDbConnectionPoolAuthenticationContext == null,
+                    "_newDbConnectionPoolAuthenticationContext should be null.");
+
+                // If the code flow is here, then we are re-using the context from the cache for
+                // this connection attempt and not generating a new access token on this thread.
+                _fedAuthToken = new SqlFedAuthToken
+                {
+                    accessToken = dbConnectionPoolAuthenticationContext.AccessToken,
+                    expirationFileTime = dbConnectionPoolAuthenticationContext.ExpirationTime.ToFileTime()
+                };
+            }
+
+            Debug.Assert(_fedAuthToken?.accessToken != null,
+                "_fedAuthToken and _fedAuthToken.accessToken cannot be null.");
+
+            _parser.SendFedAuthToken(_fedAuthToken);
+        }
+
         internal void OnLoginAck(SqlLoginAck rec)
         {
             _loginAck = rec;
