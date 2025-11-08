@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
@@ -721,6 +722,122 @@ namespace Microsoft.Data.SqlClient
 
         internal override bool IsConnectionAlive(bool throwOnException) =>
             _parser._physicalStateObj.IsConnectionAlive(throwOnException);
+
+        // @TODO: It seems fishy to have an entire environment change processor in here. Maybe either have specialized callbacks for specific scenarios, or maybe have the connection register with the parser what env changes it can handle? Idk, just seems a bit weird to do low-level stuff up here.
+        internal void OnEnvChange(SqlEnvChange rec)
+        {
+            Debug.Assert(!IgnoreEnvChange, "This function should not be called if IgnoreEnvChange is set!");
+
+            switch (rec._type)
+            {
+                case TdsEnums.ENV_DATABASE:
+                    // If connection is not open and recovery is not in progress, store the server
+                    // value as the original.
+                    if (!_fConnectionOpen && _recoverySessionData == null)
+                    {
+                        _originalDatabase = rec._newValue;
+                    }
+
+                    CurrentDatabase = rec._newValue;
+                    break;
+
+                case TdsEnums.ENV_LANG:
+                    // If connection is not open and recovery is not in progress, store the server
+                    // value as the original.
+                    if (!_fConnectionOpen && _recoverySessionData == null)
+                    {
+                        _originalLanguage = rec._newValue;
+                    }
+
+                    _currentLanguage = rec._newValue;
+                    break;
+
+                case TdsEnums.ENV_PACKETSIZE:
+                    _currentPacketSize = int.Parse(rec._newValue, CultureInfo.InvariantCulture);
+                    break;
+
+                case TdsEnums.ENV_COLLATION:
+                    if (_currentSessionData != null)
+                    {
+                        _currentSessionData._collation = rec._newCollation;
+                    }
+                    break;
+
+                case TdsEnums.ENV_CHARSET:
+                case TdsEnums.ENV_LOCALEID:
+                case TdsEnums.ENV_COMPFLAGS:
+                case TdsEnums.ENV_BEGINTRAN:
+                case TdsEnums.ENV_COMMITTRAN:
+                case TdsEnums.ENV_ROLLBACKTRAN:
+                case TdsEnums.ENV_ENLISTDTC:
+                case TdsEnums.ENV_DEFECTDTC:
+                    // Only used on parser
+                    // @TODO: Well ... why do they have cases here? Why are they in the middle of everything? Why aren't other skipped cases handled here??
+                    break;
+
+                case TdsEnums.ENV_LOGSHIPNODE:
+                    #if NET
+                    if (ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly)
+                    {
+                        throw SQL.ROR_FailoverNotSupportedServer(this);
+                    }
+                    #endif
+
+                    ServerProvidedFailoverPartner = rec._newValue;
+                    break;
+
+                case TdsEnums.ENV_PROMOTETRANSACTION:
+                    byte[] dtcToken;
+                    if (rec._newBinRented)
+                    {
+                        dtcToken = new byte[rec._newLength];
+                        Buffer.BlockCopy(rec._newBinValue, 0, dtcToken, 0, dtcToken.Length);
+                    }
+                    else
+                    {
+                        dtcToken = rec._newBinValue;
+                        rec._newBinValue = null;
+                    }
+                    PromotedDtcToken = dtcToken;
+                    break;
+
+                case TdsEnums.ENV_TRANSACTIONENDED:
+                    break;
+
+                case TdsEnums.ENV_TRANSACTIONMANAGERADDRESS:
+                    // For now, we skip these 2005 only env change notifications
+                    break;
+
+                case TdsEnums.ENV_SPRESETCONNECTIONACK:
+                    // Connection is being reset
+                    _currentSessionData?.Reset();
+                    break;
+
+                case TdsEnums.ENV_USERINSTANCE:
+                    _instanceName = rec._newValue;
+                    break;
+
+                case TdsEnums.ENV_ROUTING:
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.OnEnvChange | ADV | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Received routing info");
+
+                    if (string.IsNullOrEmpty(rec._newRoutingInfo.ServerName) ||
+                        rec._newRoutingInfo.Protocol != 0 ||
+                        rec._newRoutingInfo.Port == 0)
+                    {
+                        throw SQL.ROR_InvalidRoutingInfo(this);
+                    }
+
+                    RoutingInfo = rec._newRoutingInfo;
+                    break;
+
+                default:
+                    Debug.Fail("Missed token in EnvChange!");
+                    break;
+            }
+        }
 
         internal override void ValidateConnectionForExecute(SqlCommand command)
         {
