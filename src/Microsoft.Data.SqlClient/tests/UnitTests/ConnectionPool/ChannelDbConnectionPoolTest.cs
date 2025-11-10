@@ -307,16 +307,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 Assert.NotNull(internalConnection);
             }
 
-            // Use multiple ManualResetEventSlim to ensure proper ordering
-            using ManualResetEventSlim firstTaskReady = new(false);
-            using ManualResetEventSlim secondTaskReady = new(false);
-            using ManualResetEventSlim startRequests = new(false);
+            // Use TaskCompletionSource for coordination to avoid mixing async/await with native synchronization
+            TaskCompletionSource<bool> firstTaskReady = new();
+            TaskCompletionSource<bool> secondTaskReady = new();
+            TaskCompletionSource<bool> startRequests = new();
 
             // Act
-            var recycledTask = Task.Run(() =>
+            var recycledTask = Task.Run(async () =>
             {
-                firstTaskReady.Set();
-                startRequests.Wait();
+                firstTaskReady.SetResult(true);
+                await startRequests.Task;
                 pool.TryGetConnection(
                     new SqlConnection("Timeout=5000"),
                     null,
@@ -326,12 +326,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 return recycledConnection;
             });
             
-            var failedTask = Task.Run(() =>
+            var failedTask = Task.Run(async () =>
             {
-                secondTaskReady.Set();
-                startRequests.Wait();
-                // Add a small delay to ensure this request comes after the first
-                Thread.Sleep(50);
+                secondTaskReady.SetResult(true);
+                await startRequests.Task;
+                // Add a small delay to ensure this request comes after the first.
+                // This is necessary because the channel-based pool queues requests in FIFO order,
+                // and we need to guarantee the order for this test to be deterministic.
+                await Task.Delay(50);
                 pool.TryGetConnection(
                     new SqlConnection("Timeout=1"),
                     null,
@@ -342,16 +344,18 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             });
 
             // Wait for both tasks to be ready before starting the requests
-            firstTaskReady.Wait();
-            secondTaskReady.Wait();
+            await firstTaskReady.Task;
+            await secondTaskReady.Task;
             
-            // Use SpinWait to ensure both tasks are actually waiting
-            SpinWait.SpinUntil(() => false, 100);
+            // Allow both tasks to reach their wait state before proceeding
+            await Task.Delay(100);
             
             // Start both requests
-            startRequests.Set();
+            startRequests.SetResult(true);
             
-            // Give time for both requests to be queued
+            // Give time for both requests to be queued.
+            // This delay ensures that both TryGetConnection calls have been made and are waiting in the channel
+            // before we return the connection, which is necessary to test FIFO ordering.
             await Task.Delay(200);
             
             // Return the connection which should satisfy the first queued request
@@ -401,7 +405,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? recycledConnection
             );
 
-            // Ensure sufficient time for the recycled connection request to be fully queued
+            // Ensure sufficient time for the recycled connection request to be fully queued.
+            // This delay is necessary because the channel-based pool queues async requests,
+            // and we need to guarantee the first request is in the queue before the second one.
             await Task.Delay(200);
 
             var exceeded2 = pool.TryGetConnection(
@@ -411,7 +417,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? failedConnection
             );
 
-            // Ensure the second request is also queued
+            // Ensure the second request is also queued before returning the connection.
+            // This guarantees that both requests are waiting in FIFO order.
             await Task.Delay(100);
 
             pool.ReturnInternalConnection(firstConnection!, firstOwningConnection);
