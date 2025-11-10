@@ -120,7 +120,9 @@
     <PackageReference Condition="'$(TargetFramework)'=='net6.0' AND $(ReferenceType)=='Package'" Include="System.Security.Cryptography.Cng" Version="$(SystemSecurityCryptographyCngVersion)" />
   </ItemGroup>
   <ItemGroup>
-    <None Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\**\*SNI*.dll" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
   </ItemGroup>
+
+  <!-- Ensure SNI DLLs are made available for .NET Framework project reference builds. -->
+  <Import Project="$(ToolsDir)/targets/CopySniDllsForNetFxProjectReferenceBuilds.targets" />
 </Project>
