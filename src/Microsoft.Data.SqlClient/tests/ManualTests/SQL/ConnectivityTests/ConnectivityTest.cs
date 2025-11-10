@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // Confirm Server Process Id stays the same after query execution
                 Assert.Equal(sessionSpid, sqlConnection.ServerProcessId);
             }
-            Assert.True(false, "No non-empty hostname found for the application");
+            Assert.Fail("No non-empty hostname found for the application");
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]

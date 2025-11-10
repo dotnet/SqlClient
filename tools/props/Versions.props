@@ -58,6 +58,7 @@
     <AzureCoreVersion>1.45.0</AzureCoreVersion>
     <AzureSecurityKeyVaultKeysVersion>4.7.0</AzureSecurityKeyVaultKeysVersion>
     <MicrosoftExtensionsCachingMemoryVersion>6.0.3</MicrosoftExtensionsCachingMemoryVersion>
+    <SystemPrivateUriVersion>4.3.2</SystemPrivateUriVersion>
   </PropertyGroup>
   <!-- Test Project Dependencies -->
   <PropertyGroup>
@@ -70,7 +71,7 @@
     <SystemSecurityCryptographyCngVersion>5.0.0</SystemSecurityCryptographyCngVersion>
     <XunitVersion>2.9.3</XunitVersion>
     <xunitrunnervisualstudioVersion>2.8.2</xunitrunnervisualstudioVersion>
-    <MicrosoftDotNetRemoteExecutorVersion>11.0.0-beta.25476.3</MicrosoftDotNetRemoteExecutorVersion>
+    <MicrosoftDotNetRemoteExecutorVersion>8.0.0-beta.25555.2</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftDotNetXunitExtensionsVersion>11.0.0-beta.25476.3</MicrosoftDotNetXunitExtensionsVersion>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
     <MicrosoftSqlServerSqlManagementObjectsVersion>172.52.0</MicrosoftSqlServerSqlManagementObjectsVersion>

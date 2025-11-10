@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         }
                         break;
                     default:
-                        Assert.False(true, "Unexpected event occurred: " + item.Message);
+                        Assert.Fail("Unexpected event occurred: " + item.Message);
                         break;
                 }
             });

@@ -106,7 +106,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                                 break;
 
                             default:
-                                Assert.True(false, "FAILED: No other data type is supported.");
+                                Assert.Fail("FAILED: No other data type is supported.");
                                 break;
                         }
 

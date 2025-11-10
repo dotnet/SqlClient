@@ -525,7 +525,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     list.Add(new ValueErrorTuple(Single.Epsilon, false));
                     break;
                 default:
-                    Assert.True(false, "We should never get here");
+                    Assert.Fail("We should never get here");
                     break;
             }
 
@@ -563,7 +563,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 try
                 {
                     sqlCmd.ExecuteNonQuery();
-                    Assert.True(false, "We should have gotten an error but passed instead.");
+                    Assert.Fail("We should have gotten an error but passed instead.");
                 }
                 catch (Exception e)
                 {

@@ -38,7 +38,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 string[] scopes = new string[] { scope };
                 SecureString password = new SecureString();
 
+                #pragma warning disable CS0618 // Type or member is obsolete
                 AuthenticationResult result = await PublicClientApplicationBuilder.Create(_appClientId)
+                #pragma warning restore CS0618 // Type or member is obsolete
                 .WithAuthority(parameters.Authority)
                 .Build().AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
                     .WithCorrelationId(parameters.ConnectionId)

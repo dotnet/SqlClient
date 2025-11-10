@@ -306,7 +306,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     if (retryAttempt >= 3 || e.Message.Contains("The transaction operation cannot be performed"))
                     {
-                        Assert.False(true, $"Retry Attempt: {retryAttempt} | Unexpected Exception occurred: {e.Message}");
+                        Assert.Fail($"Retry Attempt: {retryAttempt} | Unexpected Exception occurred: {e.Message}");
                     }
                     else
                     {

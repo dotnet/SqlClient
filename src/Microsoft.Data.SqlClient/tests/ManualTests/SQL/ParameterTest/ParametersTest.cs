@@ -761,7 +761,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }
                         catch (Exception e)
                         {
-                            Assert.False(true, $"Unexpected exception occurred: {e.Message}");
+                            Assert.Fail($"Unexpected exception occurred: {e.Message}");
                         }
                     }
                 });
@@ -804,7 +804,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return;
             else if ((Guid)cm.Parameters["@id2"].Value != expectedGuid)
             {
-                Assert.False(true, "CRITICAL : Unexpected data found in SqlCommand parameters, this is a MAJOR issue.");
+                Assert.Fail("CRITICAL : Unexpected data found in SqlCommand parameters, this is a MAJOR issue.");
             }
         }
     }
