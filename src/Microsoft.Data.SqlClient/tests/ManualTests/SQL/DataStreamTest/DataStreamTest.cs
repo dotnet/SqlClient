@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ActiveIssue(5540)]
+        [ActiveIssue("5540")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void RunAllTestsForSingleServer_TCP()
         {

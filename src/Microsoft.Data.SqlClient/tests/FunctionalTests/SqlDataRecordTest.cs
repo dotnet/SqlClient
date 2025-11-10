@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             char[] expectedValue = new char[] { 'a', 'b', 'e', 'f', 'g' };
             Assert.Equal(expectedValue.Length, record.GetChars(3, 0, cb2, 0, 5));
-            Assert.Equal<char>(expectedValue, new string(cb2, 0, (int)record.GetChars(3, 0, null, 0, 0)));
+            Assert.Equal(expectedValue, new string(cb2, 0, (int)record.GetChars(3, 0, null, 0, 0)).ToCharArray());
 
             record.SetString(3, "");
             string xyz = "xyz";

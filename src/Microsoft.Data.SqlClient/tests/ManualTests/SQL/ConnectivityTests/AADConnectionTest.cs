@@ -575,7 +575,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Test passes locally everytime, but in pieplines fails randomly with uncertainity.
         // e.g. Second AAD connection too slow (802ms)! (More than 30% of the first (576ms).)
-        [ActiveIssue(16058)]
+        [ActiveIssue("16058")]
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void ConnectionSpeed()
         {

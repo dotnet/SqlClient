@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <MdsVersionDefault>5.1.7</MdsVersionDefault>
+    <MdsVersionDefault>5.1.8</MdsVersionDefault>
     <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
     <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">$(MdsVersionDefault).$(BuildNumber)</AssemblyFileVersion>
     <FileVersion>$(AssemblyFileVersion)</FileVersion>
@@ -27,8 +27,8 @@
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
-    <AzureIdentityVersion>1.11.4</AzureIdentityVersion>
-    <MicrosoftIdentityClientVersion>4.61.3</MicrosoftIdentityClientVersion>
+    <AzureIdentityVersion>1.12.1</AzureIdentityVersion>
+    <MicrosoftIdentityClientVersion>4.78.0</MicrosoftIdentityClientVersion>
     <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>6.35.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
     <MicrosoftIdentityModelJsonWebTokensVersion>6.35.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
@@ -55,27 +55,30 @@
   </PropertyGroup>
   <!-- AKV Provider project dependencies -->
   <PropertyGroup>
-    <AzureCoreVersion>[1.38.0,2.0.0)</AzureCoreVersion>
-    <AzureSecurityKeyVaultKeysVersion>[4.4.0,5.0.0)</AzureSecurityKeyVaultKeysVersion>
+    <AzureCoreVersion>1.45.0</AzureCoreVersion>
+    <AzureSecurityKeyVaultKeysVersion>4.7.0</AzureSecurityKeyVaultKeysVersion>
     <MicrosoftExtensionsCachingMemoryVersion>6.0.3</MicrosoftExtensionsCachingMemoryVersion>
   </PropertyGroup>
   <!-- Test Project Dependencies -->
   <PropertyGroup>
     <MicrosoftDotNetPlatformAbstractionsVersion>3.1.6</MicrosoftDotNetPlatformAbstractionsVersion>
-    <MicrosoftNETTestSdkVersion>17.4.1</MicrosoftNETTestSdkVersion>
+    <MicrosoftNETTestSdkVersion>17.12.0</MicrosoftNETTestSdkVersion>
     <NewtonsoftJsonVersion>13.0.1</NewtonsoftJsonVersion>
     <SystemRuntimeInteropServicesRuntimeInformationVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationVersion>
     <SystemDataOdbcVersion>6.0.1</SystemDataOdbcVersion>
+    <SystemFormatsAsn1Version>6.0.1</SystemFormatsAsn1Version>
     <SystemSecurityCryptographyCngVersion>5.0.0</SystemSecurityCryptographyCngVersion>
-    <XunitVersion>2.4.2</XunitVersion>
-    <xunitrunnervisualstudioVersion>2.4.5</xunitrunnervisualstudioVersion>
-    <MicrosoftDotNetRemoteExecutorVersion>7.0.0-beta.22316.1</MicrosoftDotNetRemoteExecutorVersion>
+    <XunitVersion>2.9.3</XunitVersion>
+    <xunitrunnervisualstudioVersion>2.8.2</xunitrunnervisualstudioVersion>
+    <MicrosoftDotNetRemoteExecutorVersion>11.0.0-beta.25476.3</MicrosoftDotNetRemoteExecutorVersion>
+    <MicrosoftDotNetXunitExtensionsVersion>11.0.0-beta.25476.3</MicrosoftDotNetXunitExtensionsVersion>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
-    <MicrosoftSqlServerSqlManagementObjectsVersion>170.8.0</MicrosoftSqlServerSqlManagementObjectsVersion>
+    <MicrosoftSqlServerSqlManagementObjectsVersion>172.52.0</MicrosoftSqlServerSqlManagementObjectsVersion>
     <MicrosoftSqlServerTypesVersion>10.50.1600.1</MicrosoftSqlServerTypesVersion>
     <BenchmarkDotNetVersion>0.13.2</BenchmarkDotNetVersion>
     <SystemServiceProcessServiceControllerVersion>6.0.0</SystemServiceProcessServiceControllerVersion>
     <MicrosoftExtensionsHostingVersion>6.0.1</MicrosoftExtensionsHostingVersion>
+    <MicrosoftNetFrameworkReferenceAssembliesVersion>1.0.3</MicrosoftNetFrameworkReferenceAssembliesVersion>
   </PropertyGroup>
   <PropertyGroup>
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>

@@ -105,4 +105,9 @@
   <Import Project="$(ToolsDir)props\AssemblyRef.props" />  
   <Import Project="$(ToolsDir)targets\RepositoryInfo.targets" />
 
+  <!-- Fix GetTargetPath issues - see https://github.com/dotnet/msbuild/issues/4303#issuecomment-482345617 -->
+  <PropertyGroup>
+    <AddSyntheticProjectReferencesForSolutionDependencies>false</AddSyntheticProjectReferencesForSolutionDependencies>
+  </PropertyGroup>
+
 </Project>

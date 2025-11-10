@@ -220,7 +220,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (!string.IsNullOrEmpty(parameters.UserId))
                     {
+                        #pragma warning disable CS0618 // Type or member is obsolete
                         result = await app.AcquireTokenByIntegratedWindowsAuth(scopes)
+                        #pragma warning restore CS0618 // Type or member is obsolete
                             .WithCorrelationId(parameters.ConnectionId)
                             .WithUsername(parameters.UserId)
                             .ExecuteAsync(cancellationToken: cts.Token)
@@ -228,7 +230,9 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
+                        #pragma warning disable CS0618 // Type or member is obsolete
                         result = await app.AcquireTokenByIntegratedWindowsAuth(scopes)
+                        #pragma warning restore CS0618 // Type or member is obsolete
                             .WithCorrelationId(parameters.ConnectionId)
                             .ExecuteAsync(cancellationToken: cts.Token)
                             .ConfigureAwait(false);
@@ -252,7 +256,9 @@ namespace Microsoft.Data.SqlClient
 
                 if (null == result)
                 {
+                    #pragma warning disable CS0618 // Type or member is obsolete
                     result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
+                    #pragma warning restore CS0618 // Type or member is obsolete
                        .WithCorrelationId(parameters.ConnectionId)
                        .ExecuteAsync(cancellationToken: cts.Token)
                        .ConfigureAwait(false);

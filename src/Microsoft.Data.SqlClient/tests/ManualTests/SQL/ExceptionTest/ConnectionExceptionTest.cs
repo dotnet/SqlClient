@@ -144,7 +144,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Fact]
-        [SkipOnTargetFramework(~TargetFrameworkMonikers.Uap)]
+        [SkipOnTargetFramework(~(TargetFrameworkMonikers)0x4)]
         public static void LocalDBNotSupportedOnUapTest()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(@$"server=(localdb)\{DataTestUtility.LocalDbAppName}")

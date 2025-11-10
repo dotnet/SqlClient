@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    [ActiveIssue(5538)] // Only testable on localhost
+    [ActiveIssue("5538")] // Only testable on localhost
     public class SplitPacketTest
     {
         private int Port = -1;

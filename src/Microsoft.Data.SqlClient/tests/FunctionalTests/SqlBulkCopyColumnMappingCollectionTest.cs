@@ -420,7 +420,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Same(item3, list[2]);
 
             list.Clear();
-            Assert.Equal(0, list.Count);
+            Assert.Empty(list);
 
             list.Add(item1);
             list.Add(item3);
@@ -435,7 +435,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Same(item3, list[2]);
 
             list.Clear();
-            Assert.Equal(0, list.Count);
+            Assert.Empty(list);
         }
 
         [Fact]
@@ -463,12 +463,11 @@ namespace Microsoft.Data.SqlClient.Tests
             IList list = CreateCollection(item1, item2);
 
             list.Remove(item1);
-            Assert.Equal(1, list.Count);
+            Assert.Single(list);
             Assert.Same(item2, list[0]);
 
             list.Remove(item2);
-            Assert.Equal(0, list.Count);
-
+            Assert.Empty(list);
             AssertExtensions.Throws<ArgumentException>(null, () => list.Remove(item2));
             AssertExtensions.Throws<ArgumentException>(null, () => list.Remove(new SqlBulkCopyColumnMapping(2, 2)));
             AssertExtensions.Throws<ArgumentException>(null, () => list.Remove("bogus"));
@@ -504,11 +503,11 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Same(item3, list[1]);
 
             list.RemoveAt(1);
-            Assert.Equal(1, list.Count);
+            Assert.Single(list);
             Assert.Same(item2, list[0]);
 
             list.RemoveAt(0);
-            Assert.Equal(0, list.Count);
+            Assert.Empty(list);
         }
 
         [Fact]

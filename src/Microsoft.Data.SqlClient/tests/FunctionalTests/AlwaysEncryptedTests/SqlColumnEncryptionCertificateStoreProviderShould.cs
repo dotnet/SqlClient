@@ -303,7 +303,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                     break;
 
                 default:
-                    Assert.True(false, "unexpected data type.");
+                    Assert.Fail("unexpected data type.");
                     break;
             }
 

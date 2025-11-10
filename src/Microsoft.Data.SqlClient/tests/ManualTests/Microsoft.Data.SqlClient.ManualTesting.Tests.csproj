@@ -279,7 +279,6 @@
     <Compile Include="SQL\Common\SystemDataInternals\DataReaderHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserStateObjectHelper.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Helpers.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\TestBulkCopyWithUTF8.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
     <Compile Include="TracingTests\TestTdsServer.cs" />
@@ -287,6 +286,16 @@
     <Compile Include="$(CommonTestPath)\System\Collections\DictionaryExtensions.cs">
       <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
     </Compile>
+  </ItemGroup>
+  <!-- xUnit and extensions -->
+  <ItemGroup>
+    <PackageReference Include="xunit" Version="$(xunitversion)" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="$(xunitrunnervisualstudioversion)">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" Version="$(MicrosoftDotNetRemoteExecutorVersion)" />
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" Version="$(MicrosoftDotNetXUnitExtensionsVersion)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="SQL\UdtTest\UDTs\Address\Address.csproj">
@@ -301,9 +310,9 @@
     <ProjectReference Include="SQL\UdtTest\UDTs\Utf8String\Utf8String.csproj">
       <Name>Utf8String</Name>
     </ProjectReference>
-    <ProjectReference Include="$(TestsPath)tools\Microsoft.DotNet.XUnitExtensions\Microsoft.DotNet.XUnitExtensions.csproj">
+    <!-- <ProjectReference Include="$(TestsPath)tools\Microsoft.DotNet.XUnitExtensions\Microsoft.DotNet.XUnitExtensions.csproj">
       <Name>Microsoft.DotNet.XUnitExtensions</Name>
-    </ProjectReference>
+    </ProjectReference> -->
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
@@ -325,7 +334,6 @@
     <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
     <PackageReference Condition="'$(TargetGroup)'=='netfx'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersion)" />
-    <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.DotNet.RemoteExecutor" Version="$(MicrosoftDotnetRemoteExecutorVersion)" /> 
     <PackageReference Condition="'$(TargetGroup)'!='netfx'" Include="System.ServiceProcess.ServiceController" Version="$(SystemServiceProcessServiceControllerVersion)" />
   </ItemGroup>
   <ItemGroup>

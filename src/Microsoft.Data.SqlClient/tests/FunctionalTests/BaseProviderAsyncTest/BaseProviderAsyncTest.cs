@@ -19,21 +19,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Fact]
-        public static void TestDbConnection()
+        public static async Task TestDbConnection()
         {
             MockConnection connection = new MockConnection();
             CancellationTokenSource source = new CancellationTokenSource();
 
             // ensure OpenAsync() calls OpenAsync(CancellationToken.None)
             AssertEqualsWithDescription(ConnectionState.Closed, connection.State, "Connection state should have been marked as Closed");
-            connection.OpenAsync().Wait();
+            await connection.OpenAsync();
             Assert.False(connection.CancellationToken.CanBeCanceled, "Default cancellation token should not be cancellable");
             AssertEqualsWithDescription(ConnectionState.Open, connection.State, "Connection state should have been marked as Open");
             connection.Close();
 
             // Verify cancellationToken over-ride
             AssertEqualsWithDescription(ConnectionState.Closed, connection.State, "Connection state should have been marked as Closed");
-            connection.OpenAsync(source.Token).Wait();
+            await connection.OpenAsync(source.Token);
             AssertEqualsWithDescription(ConnectionState.Open, connection.State, "Connection state should have been marked as Open");
             connection.Close();
 
@@ -48,12 +48,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Verify base implementation does not call Open when passed an already cancelled cancellation token
             source.Cancel();
             AssertEqualsWithDescription(ConnectionState.Closed, connection.State, "Connection state should have been marked as Closed");
-            connection.OpenAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnCanceled).Wait();
+            await connection.OpenAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnCanceled);
             AssertEqualsWithDescription(ConnectionState.Closed, connection.State, "Connection state should have been marked as Closed");
         }
 
         [Fact]
-        public static void TestDbCommand()
+        public static async Task TestDbCommand()
         {
             MockCommand command = new MockCommand()
             {
@@ -63,30 +63,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             CancellationTokenSource source = new CancellationTokenSource();
 
             // Verify parameter routing and correct synchronous implementation is called
-            command.ExecuteNonQueryAsync().Wait();
+            await command.ExecuteNonQueryAsync();
             Assert.False(command.CancellationToken.CanBeCanceled, "Default cancellation token should not be cancellable");
             AssertEqualsWithDescription("ExecuteNonQuery", command.LastCommand, "Last command was not as expected");
-            command.ExecuteReaderAsync().Wait();
+            await command.ExecuteReaderAsync();
             AssertEqualsWithDescription(CommandBehavior.Default, command.CommandBehavior, "Command behavior should have been marked as Default");
             Assert.False(command.CancellationToken.CanBeCanceled, "Default cancellation token should not be cancellable");
             AssertEqualsWithDescription("ExecuteReader", command.LastCommand, "Last command was not as expected");
-            command.ExecuteScalarAsync().Wait();
+            await command.ExecuteScalarAsync();
             Assert.False(command.CancellationToken.CanBeCanceled, "Default cancellation token should not be cancellable");
             AssertEqualsWithDescription("ExecuteScalar", command.LastCommand, "Last command was not as expected");
 
-            command.ExecuteNonQueryAsync(source.Token).Wait();
+            await command.ExecuteNonQueryAsync(source.Token);
             AssertEqualsWithDescription("ExecuteNonQuery", command.LastCommand, "Last command was not as expected");
-            command.ExecuteReaderAsync(source.Token).Wait();
+            await command.ExecuteReaderAsync(source.Token);
             AssertEqualsWithDescription("ExecuteReader", command.LastCommand, "Last command was not as expected");
-            command.ExecuteScalarAsync(source.Token).Wait();
+            await command.ExecuteScalarAsync(source.Token);
             AssertEqualsWithDescription("ExecuteScalar", command.LastCommand, "Last command was not as expected");
 
-            command.ExecuteReaderAsync(CommandBehavior.SequentialAccess).Wait();
+            await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess);
             AssertEqualsWithDescription(CommandBehavior.SequentialAccess, command.CommandBehavior, "Command behavior should have been marked as SequentialAccess");
             Assert.False(command.CancellationToken.CanBeCanceled, "Default cancellation token should not be cancellable");
             AssertEqualsWithDescription("ExecuteReader", command.LastCommand, "Last command was not as expected");
 
-            command.ExecuteReaderAsync(CommandBehavior.SingleRow, source.Token).Wait();
+            await command.ExecuteReaderAsync(CommandBehavior.SingleRow, source.Token);
             AssertEqualsWithDescription(CommandBehavior.SingleRow, command.CommandBehavior, "Command behavior should have been marked as SingleRow");
             AssertEqualsWithDescription("ExecuteReader", command.LastCommand, "Last command was not as expected");
 
@@ -107,56 +107,55 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Verify base implementation does not call Open when passed an already cancelled cancellation token
             source.Cancel();
             command.LastCommand = "Nothing";
-            command.ExecuteNonQueryAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnCanceled).Wait();
+            await command.ExecuteNonQueryAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnCanceled);
             AssertEqualsWithDescription("Nothing", command.LastCommand, "Expected last command to be 'Nothing'");
-            command.ExecuteReaderAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnCanceled).Wait();
+            await command.ExecuteReaderAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnCanceled);
             AssertEqualsWithDescription("Nothing", command.LastCommand, "Expected last command to be 'Nothing'");
-            command.ExecuteReaderAsync(CommandBehavior.SequentialAccess, source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnCanceled).Wait();
+            await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess, source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnCanceled);
             AssertEqualsWithDescription("Nothing", command.LastCommand, "Expected last command to be 'Nothing'");
-            command.ExecuteScalarAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnCanceled).Wait();
+            await command.ExecuteScalarAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnCanceled);
             AssertEqualsWithDescription("Nothing", command.LastCommand, "Expected last command to be 'Nothing'");
 
             // Verify cancellation
             command.WaitForCancel = true;
             source = new CancellationTokenSource();
-            Task.Factory.StartNew(() => { command.WaitForWaitingForCancel(); source.Cancel(); });
+            var task = Task.Factory.StartNew(() => { command.WaitForWaitingForCancel(); source.Cancel(); });
             Task result = command.ExecuteNonQueryAsync(source.Token);
             Assert.True(result.Exception != null, "Task result should be faulted");
+            await task;
 
             source = new CancellationTokenSource();
-            Task.Factory.StartNew(() => { command.WaitForWaitingForCancel(); source.Cancel(); });
+            task = Task.Factory.StartNew(() => { command.WaitForWaitingForCancel(); source.Cancel(); });
             result = command.ExecuteReaderAsync(source.Token);
             Assert.True(result.Exception != null, "Task result should be faulted");
+            await task;
 
             source = new CancellationTokenSource();
-            Task.Factory.StartNew(() => { command.WaitForWaitingForCancel(); source.Cancel(); });
+            task = Task.Factory.StartNew(() => { command.WaitForWaitingForCancel(); source.Cancel(); });
             result = command.ExecuteScalarAsync(source.Token);
             Assert.True(result.Exception != null, "Task result should be faulted");
+            await task;
         }
 
         [Fact]
-        public static void TestDbDataReader()
+        public static async Task TestDbDataReader()
         {
             var query = Enumerable.Range(1, 2).Select((x) => new object[] { x, x.ToString(), DBNull.Value });
             MockDataReader reader = new MockDataReader { Results = query.GetEnumerator() };
             CancellationTokenSource source = new CancellationTokenSource();
 
-            Task<bool> result;
-
-            result = reader.ReadAsync();
-            result.Wait();
+            var result = await reader.ReadAsync();
             AssertEqualsWithDescription("Read", reader.LastCommand, "Last command was not as expected");
-            Assert.True(result.Result, "Should have received a Result from the ReadAsync");
+            Assert.True(result, "Should have received a Result from the ReadAsync");
             Assert.False(reader.CancellationToken.CanBeCanceled, "Default cancellation token should not be cancellable");
 
             GetFieldValueAsync(reader, 0, 1);
             Assert.False(reader.CancellationToken.CanBeCanceled, "Default cancellation token should not be cancellable");
             GetFieldValueAsync(reader, source.Token, 1, "1");
 
-            result = reader.ReadAsync(source.Token);
-            result.Wait();
+            result = await reader.ReadAsync(source.Token);
             AssertEqualsWithDescription("Read", reader.LastCommand, "Last command was not as expected");
-            Assert.True(result.Result, "Should have received a Result from the ReadAsync");
+            Assert.True(result, "Should have received a Result from the ReadAsync");
 
             GetFieldValueAsync<object>(reader, 2, DBNull.Value);
             GetFieldValueAsync<DBNull>(reader, 2, DBNull.Value);
@@ -165,18 +164,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AssertTaskFaults(reader.GetFieldValueAsync<bool>(2));
             AssertEqualsWithDescription("GetValue", reader.LastCommand, "Last command was not as expected");
 
-            result = reader.ReadAsync();
-            result.Wait();
+            result = await reader.ReadAsync();
             AssertEqualsWithDescription("Read", reader.LastCommand, "Last command was not as expected");
-            Assert.False(result.Result, "Should NOT have received a Result from the ReadAsync");
+            Assert.False(result, "Should NOT have received a Result from the ReadAsync");
 
-            result = reader.NextResultAsync();
+            result = await reader.NextResultAsync();
             AssertEqualsWithDescription("NextResult", reader.LastCommand, "Last command was not as expected");
-            Assert.False(result.Result, "Should NOT have received a Result from NextResultAsync");
+            Assert.False(result, "Should NOT have received a Result from NextResultAsync");
             Assert.False(reader.CancellationToken.CanBeCanceled, "Default cancellation token should not be cancellable");
-            result = reader.NextResultAsync(source.Token);
+            result = await reader.NextResultAsync(source.Token);
             AssertEqualsWithDescription("NextResult", reader.LastCommand, "Last command was not as expected");
-            Assert.False(result.Result, "Should NOT have received a Result from NextResultAsync");
+            Assert.False(result, "Should NOT have received a Result from NextResultAsync");
 
             MockDataReader readerFail = new MockDataReader { Results = query.GetEnumerator(), Fail = true };
             AssertTaskFaults(readerFail.ReadAsync());
@@ -188,11 +186,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             source.Cancel();
             reader.LastCommand = "Nothing";
-            reader.ReadAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnCanceled).Wait();
+            await reader.ReadAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnCanceled);
             AssertEqualsWithDescription("Nothing", reader.LastCommand, "Expected last command to be 'Nothing'");
-            reader.NextResultAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnCanceled).Wait();
+            await reader.NextResultAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnCanceled);
             AssertEqualsWithDescription("Nothing", reader.LastCommand, "Expected last command to be 'Nothing'");
-            reader.GetFieldValueAsync<object>(0, source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnCanceled).Wait();
+            await reader.GetFieldValueAsync<object>(0, source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnCanceled);
             AssertEqualsWithDescription("Nothing", reader.LastCommand, "Expected last command to be 'Nothing'");
         }
 

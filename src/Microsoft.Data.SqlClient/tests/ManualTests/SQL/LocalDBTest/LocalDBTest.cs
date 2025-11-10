@@ -27,14 +27,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_localDbNamedPipeConnectionString = @$"server={GetLocalDbNamedPipe()}";
 
         #region LocalDbTests
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+        [SkipOnTargetFramework((TargetFrameworkMonikers)0x4)] // No Registry support on UAP
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void SqlLocalDbConnectionTest()
         {
             ConnectionTest(s_localDbConnectionString);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+        [SkipOnTargetFramework((TargetFrameworkMonikers)0x4)] // No Registry support on UAP
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void LocalDBEncryptionNotSupportedTest()
         {
@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ConnectionWithEncryptionTest(s_localDbConnectionString);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+        [SkipOnTargetFramework((TargetFrameworkMonikers)0x4)] // No Registry support on UAP
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void LocalDBMarsTest()
         {
@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ConnectionWithMarsTest(s_localDbConnectionString);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+        [SkipOnTargetFramework((TargetFrameworkMonikers)0x4)] // No Registry support on UAP
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void InvalidLocalDBTest()
         {
@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #endregion
 
         #region SharedLocalDb tests
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+        [SkipOnTargetFramework((TargetFrameworkMonikers)0x4)] // No Registry support on UAP
         [ConditionalFact(nameof(IsLocalDbSharedInstanceSet))]
         public static void SharedLocalDbEncryptionTest()
         {
@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+        [SkipOnTargetFramework((TargetFrameworkMonikers)0x4)] // No Registry support on UAP
         [ConditionalFact(nameof(IsLocalDbSharedInstanceSet))]
         public static void SharedLocalDbMarsTest()
         {
@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+        [SkipOnTargetFramework((TargetFrameworkMonikers)0x4)] // No Registry support on UAP
         [ConditionalFact(nameof(IsLocalDbSharedInstanceSet))]
         public static void SqlLocalDbSharedInstanceConnectionTest()
         {
@@ -97,16 +97,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region NamedPipeTests
 
         [Fact]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
-        [ActiveIssue(20245)] //pending pipeline configuration
+        [SkipOnTargetFramework((TargetFrameworkMonikers)0x4)] // No Registry support on UAP
+        [ActiveIssue("20245")] //pending pipeline configuration
         public static void SqlLocalDbNamedPipeConnectionTest()
         {
             ConnectionTest(s_localDbNamedPipeConnectionString);
         }
 
         [Fact]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
-        [ActiveIssue(20245)] //pending pipeline configuration
+        [SkipOnTargetFramework((TargetFrameworkMonikers)0x4)] // No Registry support on UAP
+        [ActiveIssue("20245")] //pending pipeline configuration
         public static void LocalDBNamedPipeEncryptionNotSupportedTest()
         {
             // Encryption is not supported by SQL Local DB.
@@ -115,8 +115,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Fact]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
-        [ActiveIssue(20245)] //pending pipeline configuration
+        [SkipOnTargetFramework((TargetFrameworkMonikers)0x4)] // No Registry support on UAP
+        [ActiveIssue("20245")] //pending pipeline configuration
         public static void LocalDBNamepipeMarsTest()
         {
             ConnectionWithMarsTest(s_localDbNamedPipeConnectionString);
@@ -126,7 +126,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         #region Failures
         // ToDo: After adding shared memory support on managed SNI, the IsNativeSNI could be taken out
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+        [SkipOnTargetFramework((TargetFrameworkMonikers)0x4)] // No Registry support on UAP
         [ConditionalTheory(nameof(IsLocalDBEnvironmentSet), nameof(IsNativeSNI))]
         [InlineData("lpc:")]
         public static void SharedMemoryAndSqlLocalDbConnectionTest(string prefix)
@@ -137,7 +137,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains("A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: SQL Network Interfaces, error: 41 - Cannot open a Shared Memory connection to a remote SQL server)", ex.Message);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+        [SkipOnTargetFramework((TargetFrameworkMonikers)0x4)] // No Registry support on UAP
         [InlineData("tcp:")]
         [InlineData("np:")]
         [InlineData("undefinded:")]
@@ -150,7 +150,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains("A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: SQL Network Interfaces, error: 26 - Error Locating Server/Instance Specified)", ex.Message);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+        [SkipOnTargetFramework((TargetFrameworkMonikers)0x4)] // No Registry support on UAP
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void InvalidSqlLocalDbConnectionTest()
         {

@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
-        [ActiveIssue(4830, TestPlatforms.AnyUnix)]
+        [ActiveIssue("4830", TestPlatforms.AnyUnix)]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void IntegratedAuthConnectionTest()
         {
@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 {
                     Assert.Equal(ConnectionState.Closed, connection.State);
                 }
-                Assert.False(true, e.Message);
+                Assert.Fail(e.Message);
             }
         }
 
