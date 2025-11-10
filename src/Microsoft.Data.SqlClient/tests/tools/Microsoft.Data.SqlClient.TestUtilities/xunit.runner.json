@@ -1,0 +1,9 @@
+{
+    "$schema": "https://xunit.net/schema/current/xunit.runner.schema.json",
+    "diagnosticMessages": true,
+    "parallelizeAssembly": true,
+    "shadowCopy": false,
+    "printMaxEnumerableLength": 0,
+    "printMaxStringLength": 0,
+    "showLiveOutput": false
+}
