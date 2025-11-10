@@ -157,6 +157,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TimeoutCancel(tcp_connStr);
         }
 
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3755")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public static void TimeoutCancelNamedPipe()
