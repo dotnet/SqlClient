@@ -42,7 +42,7 @@
       <GenAPIArgs>$(GenAPIArgs) -o:"$(NotSupportedSourceFile)"</GenAPIArgs>
       <GenAPIArgs Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true' OR '$(GeneratePlatformNotSupportedAssemblyMessage)' != ''">$(GenAPIArgs) -t:"$(GeneratePlatformNotSupportedAssemblyMessage)"</GenAPIArgs>
       <GenAPIArgs Condition="'$(GeneratePlatformNotSupportedAssemblyWithGlobalPrefix)' == 'true'">$(GenAPIArgs) -global</GenAPIArgs>
-      <GenAPIPath Condition="'$(MSBuildRuntimeType)' == 'core'"> "$(DotNetCmd) $(ToolsArtifactsDir)net6.0\Microsoft.DotNet.GenAPI.dll"</GenAPIPath>
+      <GenAPIPath Condition="'$(MSBuildRuntimeType)' == 'core'"> "$(DotnetPath)dotnet" "$(ToolsArtifactsDir)net6.0\Microsoft.DotNet.GenAPI.dll"</GenAPIPath>
       <GenAPIPath Condition="'$(MSBuildRuntimeType)' != 'core'"> "$(ToolsArtifactsDir)net472\Microsoft.DotNet.GenAPI.exe"</GenAPIPath>
     </PropertyGroup>
     <Exec Command="$(GenAPIPath) $(GenAPIArgs)" WorkingDirectory="$(ToolRuntimePath)"/>

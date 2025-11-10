@@ -5,7 +5,7 @@
 using System;
 using System.Data.Common;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.SqlBulkCopyTest
+namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL
 {
     public class Helpers
     {
