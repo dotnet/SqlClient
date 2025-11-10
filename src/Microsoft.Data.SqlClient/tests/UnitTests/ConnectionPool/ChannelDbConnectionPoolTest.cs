@@ -346,7 +346,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             secondTaskReady.Wait();
             
             // Use SpinWait to ensure both tasks are actually waiting
-            SpinWait.SpinUntil(() => false, 100);
+            Thread.Sleep(100);
             
             // Start both requests
             startRequests.Set();
