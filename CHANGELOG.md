@@ -88,6 +88,19 @@ This update brings the following changes since [7.0.0-preview1.25257.1]
   - Updated `System.Security.Cryptography.Pkcs` to v9.0.9 (net9)
   - Updated `System.Text.Json` to v8.0.6 (net8), v9.0.9 (net9)
 
+## [Stable Release 6.1.3] - 2025-11-12
+
+This update brings the below changes over the previous stable release:
+
+### Fixed
+
+- Fixed an issue which ensures reliable metrics initialization during startup, preventing missed telemetry when EventSource is enabled early. [#3718](https://github.com/dotnet/SqlClient/pull/3718)
+
+### Changed
+
+- Added AppContext switch IgnoreServerProvidedFailoverPartner to allow applications to override server-provided failover partner information, enabling explicit control for BAG scenarios (e.g., custom ports).  [#3702](https://github.com/dotnet/SqlClient/pull/3702)
+- Refactored TDS test server infrastructure for better maintainability and test coverage, including modernized naming, consolidated utilities, and enhanced transient fault and failover testing. [#3715](https://github.com/dotnet/SqlClient/pull/3715)
+  
 ## [Stable Release 6.1.2] - 2025-10-07
 
 This update brings the below changes over the previous stable release:
