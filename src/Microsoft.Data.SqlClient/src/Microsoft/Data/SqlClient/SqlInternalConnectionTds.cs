@@ -9,6 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Security;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -838,6 +839,457 @@ namespace Microsoft.Data.SqlClient
                 default:
                     Debug.Fail("Missed token in EnvChange!");
                     break;
+            }
+        }
+
+        // @TODO: This feature is *far* too big, and has the same issues as the above OnEnvChange
+        // @TODO: Consider individual callbacks for the supported features and perhaps an interface of feature callbacks. Or registering with the parser what features are handleable.
+        // @TODO: This class should not do low-level parsing of data from the server.
+        internal void OnFeatureExtAck(int featureId, byte[] data)
+        {
+            if (RoutingInfo != null && featureId != TdsEnums.FEATUREEXT_SQLDNSCACHING)
+            {
+                return;
+            }
+
+            switch (featureId)
+            {
+                case TdsEnums.FEATUREEXT_SRECOVERY:
+                {
+                    // Session recovery not requested
+                    if (!_sessionRecoveryRequested)
+                    {
+                        throw SQL.ParsingError();
+                    }
+
+                    _sessionRecoveryAcknowledged = true;
+
+                    #if DEBUG
+                    foreach (var s in _currentSessionData._delta)
+                    {
+                        Debug.Assert(s == null, "Delta should be null at this point");
+                    }
+                    #endif
+
+                    Debug.Assert(_currentSessionData._unrecoverableStatesCount == 0,
+                        "Unrecoverable states count should be 0");
+
+                    int i = 0;
+                    while (i < data.Length)
+                    {
+                        byte stateId = data[i];
+                        i++;
+                        int len;
+                        byte bLen = data[i];
+                        i++;
+                        if (bLen == 0xFF)
+                        {
+                            len = BitConverter.ToInt32(data, i);
+                            i += 4;
+                        }
+                        else
+                        {
+                            len = bLen;
+                        }
+
+                        byte[] stateData = new byte[len];
+                        Buffer.BlockCopy(data, i, stateData, 0, len);
+                        i += len;
+                        if (_recoverySessionData == null)
+                        {
+                            _currentSessionData._initialState[stateId] = stateData;
+                        }
+                        else
+                        {
+                            _currentSessionData._delta[stateId] = new SessionStateRecord
+                            {
+                                _data = stateData, _dataLength = len, _recoverable = true, _version = 0
+                            };
+                            _currentSessionData._deltaDirty = true;
+                        }
+                    }
+
+                    break;
+                }
+
+                case TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS:
+                {
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Received feature extension acknowledgement for GlobalTransactions");
+
+                    if (data.Length < 1)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                            $"Object ID {ObjectID}, " +
+                            $"Unknown version number for GlobalTransactions");
+
+                        throw SQL.ParsingError();
+                    }
+
+                    IsGlobalTransaction = true;
+                    if (data[0] == 0x01)
+                    {
+                        IsGlobalTransactionsEnabledForServer = true;
+                    }
+
+                    break;
+                }
+
+                case TdsEnums.FEATUREEXT_FEDAUTH:
+                {
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
+                        $"Object ID {0}, " +
+                        $"Received feature extension acknowledgement for federated authentication");
+
+                    if (!_federatedAuthenticationRequested)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                            $"Object ID {ObjectID}, " +
+                            $"Did not request federated authentication");
+
+                        throw SQL.ParsingErrorFeatureId(ParsingErrorState.UnrequestedFeatureAckReceived, featureId);
+                    }
+
+                    Debug.Assert(_fedAuthFeatureExtensionData != null,
+                        "_fedAuthFeatureExtensionData must not be null when _federatedAuthenticationRequested == true");
+
+                    switch (_fedAuthFeatureExtensionData.libraryType)
+                    {
+                        case TdsEnums.FedAuthLibrary.MSAL:
+                        case TdsEnums.FedAuthLibrary.SecurityToken:
+                            // The server shouldn't have sent any additional data with the ack (like a nonce)
+                            if (data.Length != 0)
+                            {
+                                SqlClientEventSource.Log.TryTraceEvent(
+                                    $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                                    $"Object ID {ObjectID}, " +
+                                    $"Federated authentication feature extension ack for MSAL and Security Token includes extra data");
+
+                                throw SQL.ParsingError(ParsingErrorState.FedAuthFeatureAckContainsExtraData);
+                            }
+
+                            break;
+
+                        default:
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                                $"Object ID {ObjectID}, " +
+                                $"Attempting to use unknown federated authentication library");
+
+                            Debug.Fail("Unknown _fedAuthLibrary type");
+                            throw SQL.ParsingErrorLibraryType(
+                                ParsingErrorState.FedAuthFeatureAckUnknownLibraryType,
+                                (int)_fedAuthFeatureExtensionData.libraryType);
+                    }
+
+                    _federatedAuthenticationAcknowledged = true;
+
+                    // If a new authentication context was used as part of this login attempt, try
+                    // to update the new context in the cache, i.e.
+                    // dbConnectionPool.AuthenticationContexts. ChooseAuthenticationContextToUpdate
+                    // will take care that only the context which has more validity will remain in
+                    // the cache, based on the Update logic.
+                    if (_newDbConnectionPoolAuthenticationContext != null)
+                    {
+                        Debug.Assert(_dbConnectionPool != null,
+                            "_dbConnectionPool should not be null when _newDbConnectionPoolAuthenticationContext != null.");
+
+                        DbConnectionPoolAuthenticationContext newAuthenticationContextInCacheAfterAddOrUpdate =
+                            _dbConnectionPool.AuthenticationContexts.AddOrUpdate(
+                                _dbConnectionPoolAuthenticationContextKey,
+                                _newDbConnectionPoolAuthenticationContext,
+                                (_, oldValue) =>
+                                    DbConnectionPoolAuthenticationContext.ChooseAuthenticationContextToUpdate(
+                                        oldValue,
+                                        _newDbConnectionPoolAuthenticationContext));
+
+                        Debug.Assert(newAuthenticationContextInCacheAfterAddOrUpdate != null,
+                            "newAuthenticationContextInCacheAfterAddOrUpdate should not be null.");
+
+                        #if DEBUG
+                        // For debug purposes, assert and trace if we ended up updating the cache
+                        // with the new one or some other thread's context won the expiration race.
+                        if (newAuthenticationContextInCacheAfterAddOrUpdate == _newDbConnectionPoolAuthenticationContext)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                                $"Object ID {ObjectID}, " +
+                                $"Updated the new dbAuthenticationContext in the _dbConnectionPool.AuthenticationContexts.");
+                        }
+                        else
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                                $"Object ID {ObjectID }, " +
+                                $"AddOrUpdate attempted on _dbConnectionPool.AuthenticationContexts, but it did not update the new value.",
+                                ObjectID);
+                        }
+                        #endif
+                    }
+
+                    break;
+                }
+                case TdsEnums.FEATUREEXT_TCE:
+                {
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Received feature extension acknowledgement for TCE");
+
+                    if (data.Length < 1)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                            $"Object ID {ObjectID}, " +
+                            $"Unknown version number for TCE");
+
+                        throw SQL.ParsingError(ParsingErrorState.TceUnknownVersion);
+                    }
+
+                    byte supportedTceVersion = data[0];
+                    if (supportedTceVersion == 0 || supportedTceVersion > TdsEnums.MAX_SUPPORTED_TCE_VERSION)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                            $"Object ID {ObjectID}, " +
+                            $"Invalid version number for TCE");
+
+                        throw SQL.ParsingErrorValue(ParsingErrorState.TceInvalidVersion, supportedTceVersion);
+                    }
+
+                    _tceVersionSupported = supportedTceVersion;
+
+                    Debug.Assert(_tceVersionSupported <= TdsEnums.MAX_SUPPORTED_TCE_VERSION,
+                        "Client support TCE version 2");
+
+                    _parser.IsColumnEncryptionSupported = true;
+                    _parser.TceVersionSupported = _tceVersionSupported;
+                    _parser.AreEnclaveRetriesSupported = _tceVersionSupported == 3;
+
+                    if (data.Length > 1)
+                    {
+                        // Extract the type of enclave being used by the server.
+                        _parser.EnclaveType = Encoding.Unicode.GetString(data, 2, data.Length - 2);
+                    }
+                    break;
+                }
+                case TdsEnums.FEATUREEXT_AZURESQLSUPPORT:
+                {
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Received feature extension acknowledgement for AzureSQLSupport");
+
+                    if (data.Length < 1)
+                    {
+                        throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                    }
+
+                    IsAzureSqlConnection = true;
+
+                    // Bit 0 for RO/FP support
+                    // @TODO: Add a constant somewhere for that
+                    if ((data[0] & 1) == 1 && SqlClientEventSource.Log.IsTraceEnabled())
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                            $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
+                            $"Object ID {ObjectID}, " +
+                            $"FailoverPartner enabled with Readonly intent for AzureSQL DB");
+                    }
+
+                    break;
+                }
+                case TdsEnums.FEATUREEXT_DATACLASSIFICATION:
+                {
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Received feature extension acknowledgement for DATACLASSIFICATION");
+
+                    if (data.Length < 1)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                            $"Object ID {ObjectID}, " +
+                            $"Unknown token for DATACLASSIFICATION");
+
+                        throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                    }
+
+                    byte supportedDataClassificationVersion = data[0];
+                    if (supportedDataClassificationVersion == 0 ||
+                        supportedDataClassificationVersion > TdsEnums.DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                            $"Object ID {ObjectID}, " +
+                            $"Invalid version number for DATACLASSIFICATION");
+
+                        throw SQL.ParsingErrorValue(
+                            ParsingErrorState.DataClassificationInvalidVersion,
+                            supportedDataClassificationVersion);
+                    }
+
+                    if (data.Length != 2)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                            $"Object ID {ObjectID}, " +
+                            $"Unknown token for DATACLASSIFICATION");
+
+                        throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                    }
+
+                    byte enabled = data[1];
+                    _parser.DataClassificationVersion = enabled == 0
+                        ? TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED
+                        : supportedDataClassificationVersion;
+
+                    break;
+                }
+
+                case TdsEnums.FEATUREEXT_UTF8SUPPORT:
+                {
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Received feature extension acknowledgement for UTF8 support");
+
+                    if (data.Length < 1)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                            $"Object ID {ObjectID}, " +
+                            $"Unknown value for UTF8 support", ObjectID);
+
+                        throw SQL.ParsingError();
+                    }
+                    break;
+                }
+                case TdsEnums.FEATUREEXT_SQLDNSCACHING:
+                {
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Received feature extension acknowledgement for SQLDNSCACHING");
+
+                    if (data.Length < 1)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                            $"Object ID {ObjectID}, " +
+                            $"Unknown token for SQLDNSCACHING");
+
+                        throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                    }
+
+                    if (data[0] == 1)
+                    {
+                        IsSQLDNSCachingSupported = true;
+                        _cleanSQLDNSCaching = false;
+
+                        if (RoutingInfo != null)
+                        {
+                            IsDNSCachingBeforeRedirectSupported = true;
+                        }
+                    }
+                    else
+                    {
+                        // we receive the IsSupported whose value is 0
+                        IsSQLDNSCachingSupported = false;
+                        _cleanSQLDNSCaching = true;
+                    }
+
+                    // TODO: need to add more steps for phase 2
+                    // get IPv4 + IPv6 + Port number
+                    // not put them in the DNS cache at this point but need to store them somewhere
+                    // generate pendingSQLDNSObject and turn on IsSQLDNSRetryEnabled flag
+                    break;
+                }
+                case TdsEnums.FEATUREEXT_JSONSUPPORT:
+                {
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Received feature extension acknowledgement for JSONSUPPORT");
+
+                    if (data.Length != 1)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                            $"Object ID {ObjectID}, " +
+                            $"Unknown token for JSONSUPPORT");
+                        
+                        throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                    }
+
+                    byte jsonSupportVersion = data[0];
+                    if (jsonSupportVersion == 0 || jsonSupportVersion > TdsEnums.MAX_SUPPORTED_JSON_VERSION)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                            $"Object ID {ObjectID}, " +
+                            $"Invalid version number for JSONSUPPORT");
+
+                        throw SQL.ParsingError();
+                    }
+
+                    IsJsonSupportEnabled = true;
+                    break;
+                }
+                case TdsEnums.FEATUREEXT_VECTORSUPPORT:
+                {
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Received feature extension acknowledgement for VECTORSUPPORT");
+
+                    if (data.Length != 1)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                            $"Object ID {ObjectID}, " +
+                            $"Unknown token for VECTORSUPPORT");
+
+                        throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                    }
+
+                    byte vectorSupportVersion = data[0];
+                    if (vectorSupportVersion == 0 || vectorSupportVersion > TdsEnums.MAX_SUPPORTED_VECTOR_VERSION)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                            $"Object ID {ObjectID}, " +
+                            $"Invalid version number {vectorSupportVersion} for VECTORSUPPORT, " +
+                            $"Max supported version is {TdsEnums.MAX_SUPPORTED_VECTOR_VERSION}");
+
+                        throw SQL.ParsingError();
+                    }
+
+                    IsVectorSupportEnabled = true;
+
+                    break;
+                }
+                case TdsEnums.FEATUREEXT_USERAGENT:
+                {
+                    // Unexpected ack from server but we ignore it entirely
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Received feature extension acknowledgement for USERAGENTSUPPORT (ignored)");
+
+                    break;
+                }
+                default:
+                {
+                    // Unknown feature ack
+                    throw SQL.ParsingError();
+                }
             }
         }
 
