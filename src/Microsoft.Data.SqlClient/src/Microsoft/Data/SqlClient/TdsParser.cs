@@ -12,31 +12,27 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Security.Authentication;
-#if NETFRAMEWORK
-using System.Runtime.CompilerServices;
-#endif
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Interop.Common.Sni;
-#if NETFRAMEWORK
-using Interop.Windows.Sni;
-#endif
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlClient.UserAgent;
 using Microsoft.Data.SqlClient.Utilities;
-
+using Microsoft.SqlServer.Server;
 
 #if NETFRAMEWORK
+using System.Runtime.CompilerServices;
+using Interop.Windows.Sni;
 using Microsoft.Data.SqlTypes;
 #endif
-using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
 {

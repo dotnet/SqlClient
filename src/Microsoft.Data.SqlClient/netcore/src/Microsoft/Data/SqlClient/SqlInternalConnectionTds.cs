@@ -17,19 +17,12 @@ using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Identity.Client;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed class SessionStateRecord
-    {
-        internal bool _recoverable;
-        internal uint _version;
-        internal int _dataLength;
-        internal byte[] _data;
-    }
-
     internal sealed class SessionData
     {
         internal const int _maxNumberOfSessionStates = 256;
