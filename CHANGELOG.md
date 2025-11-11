@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable release 6.0.4] - 2025-11-11
+
+This update brings the below changes over the previous stable release:
+
+### Fixed
+
+- Fixed Basic Availability Group failover to ignore server-supplied failover
+  host and use connection string host based on a new AppContext switch.
+  ([#3703](https://github.com/dotnet/SqlClient/pull/3703))
+
 ## [Preview Release 7.0.0-preview2.25289.6] - 2025-10-16
 
 This update brings the following changes since [7.0.0-preview1.25257.1]
