@@ -43,7 +43,7 @@ jobs:
     parameters:
       analyzeType: all
       product: AKV
-      nugetPackageRefVersion: $(MDS_PackageRef_Version)
+      nugetPackageRefVersion: ${{ parameters.mdsPackageVersion }}
 
   - template: ../steps/esrp-code-signing-step.yml@self
     parameters:

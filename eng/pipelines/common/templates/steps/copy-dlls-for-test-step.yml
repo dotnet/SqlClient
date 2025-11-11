@@ -58,7 +58,7 @@ steps:
         
         if ($tf.StartsWith('net4'))
         {
-          Copy-Item "artifacts\${{parameters.referenceType }}\bin\Windows_NT\${{parameters.Configuration }}.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" "$software\win\$tf" -recurse
+          Copy-Item "artifacts\${{parameters.referenceType }}\bin\Windows_NT\${{parameters.Configuration }}.AnyCPU\Microsoft.Data.SqlClient\netfx\$tf\Microsoft.Data.SqlClient.dll" "$software\win\$tf" -recurse
         }
         else
         {
@@ -70,16 +70,16 @@ steps:
         
         if ($tf.StartsWith('net4'))
         {
-          Copy-Item "artifacts\Project\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.pdb" "$symbols\win\$tf" -recurse
+          Copy-Item "artifacts\${{parameters.referenceType }}\bin\Windows_NT\${{parameters.Configuration }}.AnyCPU\Microsoft.Data.SqlClient\netfx\$tf\Microsoft.Data.SqlClient.pdb" "$symbols\win\$tf" -recurse
         }
         else
         {
-          Copy-Item "artifacts\Project\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\$tf\Microsoft.Data.SqlClient.pdb" "$symbols\win\$tf" -recurse
+          Copy-Item "artifacts\${{parameters.referenceType }}\bin\Windows_NT\${{parameters.Configuration }}.AnyCPU\Microsoft.Data.SqlClient\netcore\$tf\Microsoft.Data.SqlClient.pdb" "$symbols\win\$tf" -recurse
         }
             
         Write-Host "Artifacts fetched for testing"
         Get-Location
-      displayName: 'Prepare ${{ targetFramework }} Arifacts for Testing'
+      displayName: 'Prepare ${{ targetFramework }} Artifacts for Testing'
 
   - ${{ if eq(parameters.product, 'AKV') }}:
     - powershell: |
@@ -96,7 +96,7 @@ steps:
             
         Write-Host "Artifacts fetched for testing"
         Get-Location
-      displayName: 'Prepare ${{ targetFramework }} Arifacts for Testing'
+      displayName: 'Prepare ${{ targetFramework }} Artifacts for Testing'
 
 - powershell: |
     $software = '${{parameters.softwareFolder}}'
