@@ -477,19 +477,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             Task taskToContinue = Task.CompletedTask;
             TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             const int state1 = 123;
+            const int state2 = 234
 
             // - mockOnSuccess handler throws
-            Mock<Action<int>> mockOnSuccess = new();
-            mockOnSuccess.Setup(o => o(It.IsAny<int>())).Throws<Exception>();
+            Mock<Action<int, int>> mockOnSuccess = new();
+            mockOnSuccess.Setup(o => o(It.IsAny<int>(), It.IsAny<int>())).Throws<Exception>();
 
-            Mock<Action<int, Exception>> mockOnFailure = new();
-            Mock<Action<int>> mockOnCancellation = new();
+            Mock<Action<int, int, Exception>> mockOnFailure = new();
+            Mock<Action<int, int>> mockOnCancellation = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
                 taskToContinue,
                 taskCompletionSource,
                 state1,
+                state2,
                 mockOnSuccess.Object,
                 mockOnFailure.Object,
                 mockOnCancellation.Object);
@@ -500,7 +502,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
 
             // - mockOnSuccess was called with state obj
-            mockOnSuccess.Verify(action => action(state1), Times.Once);
+            mockOnSuccess.Verify(action => action(state1, state2), Times.Once);
             mockOnFailure.VerifyNeverCalled();
             mockOnCancellation.VerifyNeverCalled();
         }
