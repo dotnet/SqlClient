@@ -6,16 +6,26 @@
 
 variables:
   - group: AKV Release Variables
-  - name: AKVMajor
+
+  # The above Library contains variables named AKVMajor, AKVMinor, and AKVPatch.
+  # We don't want to use those (since they are shared with other pipelines), so
+  # we specify our own variables here.  These are the only variables that affect
+  # the NuGet package version and assembly version for AKV official builds for
+  # this branch (5.1).
+  #
+  # There are other variables in that Library that we still need, so we can't
+  # omit it entirely.
+  #
+  - name: LocalAkvMajor
     value: 5
-  - name: AKVMinor
+  - name: LocalAkvMinor
     value: 1
-  - name: AKVPatch
+  - name: LocalAkvPatch
     value: 0
 
   - name: AKVNugetPackageVersion
-    value: $(AKVMajor).$(AKVMinor).$(AKVPatch)
+    value: $(LocalAkvMajor).$(LocalAkvMinor).$(LocalAkvPatch)
   - name: AKVAssemblyFileVersion
-    value: '$(AKVMajor).$(AKVMinor)$(AKVPatch).$(Build.BuildNumber)'
+    value: '$(LocalAkvMajor).$(LocalAkvMinor)$(LocalAkvPatch).$(Build.BuildNumber)'
   - name: akvNuspecPath
     value: tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec
