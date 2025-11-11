@@ -853,6 +853,12 @@ This update brings the following changes since the [5.1.7](release-notes/5.1/5.1
    [#3591](https://github.com/dotnet/SqlClient/pull/3591),
    [#3204](https://github.com/dotnet/SqlClient/pull/3204),
    [#3542](https://github.com/dotnet/SqlClient/pull/3542))
+- Updated the following dependencies
+  ([#3754](https://github.com/dotnet/SqlClient/pull/3754)):
+  - Azure.Core 1.45.0
+    (Avoids transitive [vulnerability](https://github.com/Azure/azure-sdk-for-net/issues/44817))
+  - Azure.Identity 1.12.1
+  - Microsoft.Identity.Client 4.78.0
 
 ## [Stable release 5.1.7] - 2025-04-25
 
