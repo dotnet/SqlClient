@@ -368,7 +368,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static DisposableArray<SqlCommand> GetCommands(SqlConnection connection, CommandType commandType)
         {
-            SqlCommand[] result = new SqlCommand[ConcurrentCommands];
+            DisposableArray<SqlCommand> result = new(ConcurrentCommands);
             for (int i = 0; i < result.Length; i++)
             {
                 switch (commandType)
@@ -401,7 +401,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
 
-            return new DisposableArray<SqlCommand>(result);
+            return result;
         }
 
         private static SqlConnection GetConnection()
