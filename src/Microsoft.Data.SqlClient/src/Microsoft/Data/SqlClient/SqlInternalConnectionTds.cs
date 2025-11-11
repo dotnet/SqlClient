@@ -3563,5 +3563,34 @@ namespace Microsoft.Data.SqlClient
         }
 
         #endregion
+
+        /// <remarks>
+        /// How to use these locks:
+        /// 1. Whenever writing to the connection (except Cancellation) the _parserLock MUST be
+        ///    taken.
+        /// 2. _parserLock will also be taken during close (to prevent closing in the middle of a
+        ///    write operation)
+        /// 3. Whenever you have the _parserLock and are calling a method that would cause the
+        ///    connection to close if it failed (except for any writing method), you MUST set
+        ///    ThreadHasParserLockForClose to true.
+        ///    a. This is to prevent the connection deadlocking with itself (since you already have
+        ///       the _parserLock, and Closing the connection will attempt to re-take that lock).
+        ///    b. It is safe to set ThreadHasParserLockForClose to true when writing as well, but
+        ///       it is unnecessary.
+        ///    c. If you have a method that takes _parserLock, it is a good idea check
+        ///       ThreadHasParserLockForClose first (if you don't expect _parserLock to be taken by
+        ///       something higher on the stack, then you should at least assert that it is false).
+        /// 4. ThreadHasParserLockForClose is thread-specific - this means that you must set it to
+        ///    false before returning a Task, and set it back to true in the continuation.
+        /// 5. ThreadHasParserLockForClose should only be modified if you currently own the _parserLock
+        /// 6. Reading ThreadHasParserLockForClose is thread-safe
+        /// </remarks>
+        // @TODO: This really should be private
+        // @TODO: This is a ridiculous number of rules to use this class - it is guaranteed someone will fail these rules.
+        internal partial class SyncAsyncLock
+        {
+
+        }
+
     }
 }

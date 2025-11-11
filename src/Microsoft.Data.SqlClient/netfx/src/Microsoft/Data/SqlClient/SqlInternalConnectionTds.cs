@@ -118,7 +118,7 @@ namespace Microsoft.Data.SqlClient
         // 4. ThreadHasParserLockForClose is thread-specific - this means that you must set it to false before returning a Task, and set it back to true in the continuation
         // 5. ThreadHasParserLockForClose should only be modified if you currently own the _parserLock
         // 6. Reading ThreadHasParserLockForClose is thread-safe
-        internal class SyncAsyncLock
+        internal partial class SyncAsyncLock
         {
             private SemaphoreSlim _semaphore = new SemaphoreSlim(1);
 
