@@ -23,7 +23,7 @@ using Microsoft.Identity.Client;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed class SessionData
+    internal sealed partial class SessionData
     {
         internal const int _maxNumberOfSessionStates = 256;
         internal uint _tdsVersion;
