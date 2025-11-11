@@ -3589,7 +3589,7 @@ namespace Microsoft.Data.SqlClient
         /// </remarks>
         // @TODO: This really should be private
         // @TODO: This is a ridiculous number of rules to use this class - it is guaranteed someone will fail these rules.
-        internal partial class SyncAsyncLock
+        internal class SyncAsyncLock
         {
             private SemaphoreSlim _semaphore = new SemaphoreSlim(1);
 
@@ -3607,7 +3607,78 @@ namespace Microsoft.Data.SqlClient
             {
                 get => Monitor.IsEntered(_semaphore) || CanBeReleasedFromAnyThread;
             }
-        }
 
+            internal void Release()
+            {
+                if (_semaphore.CurrentCount == 0)
+                {
+                    // Semaphore methods were used for locking
+                    _semaphore.Release();
+                }
+                else
+                {
+                    Monitor.Exit(_semaphore);
+                }
+            }
+
+            internal void Wait(bool canReleaseFromAnyThread)
+            {
+                // Semaphore is used as lock object, no relation to SemaphoreSlim.Wait/Release methods
+                Monitor.Enter(_semaphore);
+                if (canReleaseFromAnyThread || CanBeReleasedFromAnyThread)
+                {
+                    _semaphore.Wait();
+                    if (canReleaseFromAnyThread)
+                    {
+                        Monitor.Exit(_semaphore);
+                    }
+                    else
+                    {
+                        _semaphore.Release();
+                    }
+                }
+            }
+
+            internal void Wait(bool canReleaseFromAnyThread, int timeout, ref bool lockTaken)
+            {
+                lockTaken = false;
+                bool hasMonitor = false;
+                try
+                {
+                    // semaphore is used as lock object, no relation to SemaphoreSlim.Wait/Release methods
+                    Monitor.TryEnter(_semaphore, timeout, ref hasMonitor);
+                    if (hasMonitor)
+                    {
+                        if (canReleaseFromAnyThread || CanBeReleasedFromAnyThread)
+                        {
+                            if (_semaphore.Wait(timeout))
+                            {
+                                if (canReleaseFromAnyThread)
+                                {
+                                    Monitor.Exit(_semaphore);
+                                    hasMonitor = false;
+                                }
+                                else
+                                {
+                                    _semaphore.Release();
+                                }
+                                lockTaken = true;
+                            }
+                        }
+                        else
+                        {
+                            lockTaken = true;
+                        }
+                    }
+                }
+                finally
+                {
+                    if (!lockTaken && hasMonitor)
+                    {
+                        Monitor.Exit(_semaphore);
+                    }
+                }
+            }
+        }
     }
 }
