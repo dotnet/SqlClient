@@ -106,12 +106,6 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    internal sealed partial class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
-    {
-
-        internal SyncAsyncLock _parserLock = new SyncAsyncLock();
-    }
-
     internal sealed class ServerInfo
     {
         internal string ExtendedServerName { get; private set; } // the resolved servername with protocol

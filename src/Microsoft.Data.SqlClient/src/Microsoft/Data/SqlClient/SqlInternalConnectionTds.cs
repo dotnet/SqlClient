@@ -22,7 +22,7 @@ using Microsoft.Identity.Client;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal partial class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
+    internal class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
     {
         #region Constants
 
@@ -201,6 +201,9 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         // @TODO: Should be private and accessed via internal property
         internal bool IsVectorSupportEnabled = false;
+
+        // @TODO: This should be private
+        internal SyncAsyncLock _parserLock = new SyncAsyncLock();
 
         // @TODO: Should be private and accessed via internal property
         internal SQLDNSInfo pendingSQLDNSObject = null;
