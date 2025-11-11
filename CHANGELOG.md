@@ -98,7 +98,7 @@ This update brings the below changes over the previous stable release:
 
 ### Changed
 
-- Added AppContext switch IgnoreServerProvidedFailoverPartner to allow applications to override server-provided failover partner information, enabling explicit control for BAG scenarios (e.g., custom ports).  [#3702](https://github.com/dotnet/SqlClient/pull/3702)
+- Added AppContext switch IgnoreServerProvidedFailoverPartner to allow applications to override server-provided failover partner information, enabling explicit control for BAG scenarios (e.g., custom ports). [#3702](https://github.com/dotnet/SqlClient/pull/3702)
 - Refactored TDS test server infrastructure for better maintainability and test coverage, including modernized naming, consolidated utilities, and enhanced transient fault and failover testing. [#3715](https://github.com/dotnet/SqlClient/pull/3715)
   
 ## [Stable Release 6.1.2] - 2025-10-07
