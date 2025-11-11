@@ -642,8 +642,10 @@ namespace Microsoft.Data.SqlClient
             get => _threadIdOwningParserLock == Thread.CurrentThread.ManagedThreadId;
             set
             {
-                Debug.Assert(_parserLock.ThreadMayHaveLock(), "Should not modify ThreadHasParserLockForClose without taking the lock first");
-                Debug.Assert(_threadIdOwningParserLock == -1 || _threadIdOwningParserLock == Thread.CurrentThread.ManagedThreadId, "Another thread already claims to own the parser lock");
+                Debug.Assert(_parserLock.ThreadMayHaveLock,
+                    "Should not modify ThreadHasParserLockForClose without taking the lock first");
+                Debug.Assert(_threadIdOwningParserLock == -1 || _threadIdOwningParserLock == Thread.CurrentThread.ManagedThreadId,
+                    "Another thread already claims to own the parser lock");
 
                 if (value)
                 {
@@ -1805,7 +1807,7 @@ namespace Microsoft.Data.SqlClient
         {
             bool obtainParserLock = !ThreadHasParserLockForClose;
 
-            Debug.Assert(obtainParserLock || _parserLock.ThreadMayHaveLock(),
+            Debug.Assert(obtainParserLock || _parserLock.ThreadMayHaveLock,
                 "Thread claims to have lock, but lock is not taken");
 
             if (obtainParserLock)
@@ -2050,7 +2052,7 @@ namespace Microsoft.Data.SqlClient
             bool mustPutSession = false;
             bool releaseConnectionLock = false;
 
-            Debug.Assert(!ThreadHasParserLockForClose || _parserLock.ThreadMayHaveLock(),
+            Debug.Assert(!ThreadHasParserLockForClose || _parserLock.ThreadMayHaveLock,
                 "Thread claims to have parser lock, but lock is not taken");
 
             if (!ThreadHasParserLockForClose)
@@ -3589,7 +3591,22 @@ namespace Microsoft.Data.SqlClient
         // @TODO: This is a ridiculous number of rules to use this class - it is guaranteed someone will fail these rules.
         internal partial class SyncAsyncLock
         {
+            private SemaphoreSlim _semaphore = new SemaphoreSlim(1);
 
+            internal bool CanBeReleasedFromAnyThread
+            {
+                get => _semaphore.CurrentCount == 0;
+            }
+
+            /// <remarks>
+            /// Necessary but not sufficient condition for thread to have lock (since semaphore may
+            /// be obtained by any thread).
+            /// </remarks>
+            // @TODO: This is only used for debug checks. It's really dicey, too, calling it "May Have" - it should either have it or not!
+            internal bool ThreadMayHaveLock
+            {
+                get => Monitor.IsEntered(_semaphore) || CanBeReleasedFromAnyThread;
+            }
         }
 
     }

@@ -110,8 +110,6 @@ namespace Microsoft.Data.SqlClient
     {
         internal partial class SyncAsyncLock
         {
-            private SemaphoreSlim _semaphore = new SemaphoreSlim(1);
-
             internal void Wait(bool canReleaseFromAnyThread)
             {
                 Monitor.Enter(_semaphore); // semaphore is used as lock object, no relation to SemaphoreSlim.Wait/Release methods
@@ -179,21 +177,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     Monitor.Exit(_semaphore);
                 }
-            }
-
-
-            internal bool CanBeReleasedFromAnyThread
-            {
-                get
-                {
-                    return _semaphore.CurrentCount == 0;
-                }
-            }
-
-            // Necessary but not sufficient condition for thread to have lock (since semaphore may be obtained by any thread)
-            internal bool ThreadMayHaveLock()
-            {
-                return Monitor.IsEntered(_semaphore) || _semaphore.CurrentCount == 0;
             }
         }
 
