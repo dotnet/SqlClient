@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -14,13 +15,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Identity.Client;
-
-#if NETFRAMEWORK
-using Microsoft.Data.Common.ConnectionString;
-#endif
 
 namespace Microsoft.Data.SqlClient
 {
@@ -303,6 +301,177 @@ namespace Microsoft.Data.SqlClient
         private readonly TimeoutTimer _timeout;
 
         private SqlConnectionTimeoutErrorInternal _timeoutErrorInternal;
+
+        #endregion
+
+        #region Constructors
+
+        /// <remarks>
+        /// - Although the new password is generally not used it must be passed to the ctor. The
+        ///   new Login7 packet will always write out the new password (or a length of zero and no
+        ///   bytes if not present).
+        /// - userConnectionOptions may be different to connectionOptions if the connection string
+        ///   has been expanded (see SqlConnectionString.Expand)
+        /// </remarks>
+        // @TODO: We really really need simplify what we pass into this. All these optional parameters need to go!
+        internal SqlInternalConnectionTds(
+            DbConnectionPoolIdentity identity,
+            SqlConnectionString connectionOptions,
+            SqlCredential credential,
+            DbConnectionPoolGroupProviderInfo providerInfo,
+            string newPassword,
+            SecureString newSecurePassword,
+            bool redirectedUserInstance,
+            SqlConnectionString userConnectionOptions = null,
+            SessionData reconnectSessionData = null,
+            bool applyTransientFaultHandling = false,
+            string accessToken = null,
+            IDbConnectionPool pool = null,
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null,
+            SspiContextProvider sspiContextProvider = null) : base(connectionOptions)
+        {
+            #if DEBUG
+            if (reconnectSessionData != null)
+            {
+                reconnectSessionData._debugReconnectDataApplied = true;
+            }
+
+            #if NETFRAMEWORK
+            try
+            {
+                // use this to help validate this object is only created after the following
+                // permission has been previously demanded in the current codepath
+                if (userConnectionOptions != null)
+                {
+                    // As mentioned above, userConnectionOptions may be different to
+                    // connectionOptions, so we need to demand on the correct connection string
+                    userConnectionOptions.DemandPermission();
+                }
+                else
+                {
+                    connectionOptions.DemandPermission();
+                }
+            }
+            catch (SecurityException)
+            {
+                Debug.Assert(false, "unexpected SecurityException for current codepath");
+                throw;
+            }
+            #endif
+            #endif
+
+            Debug.Assert(reconnectSessionData == null || connectionOptions.ConnectRetryCount > 0,
+                "Reconnect data supplied with CR turned off");
+
+            _dbConnectionPool = pool;
+
+            if (connectionOptions.ConnectRetryCount > 0)
+            {
+                _recoverySessionData = reconnectSessionData;
+                if (reconnectSessionData == null)
+                {
+                    _currentSessionData = new SessionData();
+                }
+                else
+                {
+                    _currentSessionData = new SessionData(_recoverySessionData);
+                    _originalDatabase = _recoverySessionData._initialDatabase;
+                    _originalLanguage = _recoverySessionData._initialLanguage;
+                }
+            }
+
+            if (accessToken != null)
+            {
+                _accessTokenInBytes = Encoding.Unicode.GetBytes(accessToken);
+            }
+
+            _accessTokenCallback = accessTokenCallback;
+            _sspiContextProvider = sspiContextProvider;
+
+            _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
+
+            _identity = identity;
+
+            Debug.Assert(newSecurePassword != null || newPassword != null,
+                "cannot have both new secure change password and string based change password to be null");
+            Debug.Assert(credential == null || (string.IsNullOrEmpty(connectionOptions.UserID) &&
+                                                string.IsNullOrEmpty(connectionOptions.Password)),
+                "cannot mix the new secure password system and the connection string based password");
+
+            Debug.Assert(credential == null || !connectionOptions.IntegratedSecurity,
+                "Cannot use SqlCredential and Integrated Security");
+
+            _poolGroupProviderInfo = (SqlConnectionPoolGroupProviderInfo)providerInfo;
+            _fResetConnection = connectionOptions.ConnectionReset;
+            if (_fResetConnection && _recoverySessionData == null)
+            {
+                _originalDatabase = connectionOptions.InitialCatalog;
+                _originalLanguage = connectionOptions.CurrentLanguage;
+            }
+
+            _timeoutErrorInternal = new SqlConnectionTimeoutErrorInternal();
+            _credential = credential;
+
+            _parserLock.Wait(canReleaseFromAnyThread: false);
+
+            // In case of error, let ourselves know that we already own the parser lock
+            ThreadHasParserLockForClose = true;
+
+            try
+            {
+                _timeout = TimeoutTimer.StartSecondsTimeout(connectionOptions.ConnectTimeout);
+
+                // If transient fault handling is enabled then we can retry the login up to the
+                // ConnectRetryCount.
+                int connectionEstablishCount = applyTransientFaultHandling
+                    ? connectionOptions.ConnectRetryCount + 1
+                    : 1;
+
+                // Max value of transientRetryInterval is 60*1000 ms. The max value allowed for
+                // ConnectRetryInterval is 60
+                int transientRetryIntervalInMilliSeconds = connectionOptions.ConnectRetryInterval * 1000;
+                for (int i = 0; i < connectionEstablishCount; i++)
+                {
+                    try
+                    {
+                        OpenLoginEnlist(
+                            _timeout,
+                            connectionOptions,
+                            credential,
+                            newPassword,
+                            newSecurePassword,
+                            redirectedUserInstance);
+                        break;
+                    }
+                    catch (SqlException sqlex)
+                    {
+                        if (connectionEstablishCount == i + 1
+                            || !applyTransientFaultHandling
+                            || _timeout.IsExpired
+                            || _timeout.MillisecondsRemaining < transientRetryIntervalInMilliSeconds
+                            || !IsTransientError(sqlex))
+                        {
+                            throw;
+                        }
+                        else
+                        {
+                            Thread.Sleep(transientRetryIntervalInMilliSeconds);
+                        }
+                    }
+                }
+            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            finally
+            {
+                ThreadHasParserLockForClose = false;
+                _parserLock.Release();
+            }
+
+            SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                $"SqlInternalConnectionTds.ctor | ADV | " +
+                $"Object ID {ObjectID}, " +
+                $"constructed new TDS internal connection");
+        }
 
         #endregion
 
@@ -1483,6 +1652,15 @@ namespace Microsoft.Data.SqlClient
             {
                 _currentSessionData._tdsVersion = rec.tdsVersion;
             }
+        }
+
+        internal override bool TryReplaceConnection(
+            DbConnection outerConnection,
+            SqlConnectionFactory connectionFactory,
+            TaskCompletionSource<DbConnectionInternal> retry,
+            DbConnectionOptions userOptions)
+        {
+            return TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
         }
 
         internal override void ValidateConnectionForExecute(SqlCommand command)
