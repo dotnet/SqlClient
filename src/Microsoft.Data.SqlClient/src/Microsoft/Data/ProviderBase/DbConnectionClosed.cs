@@ -55,6 +55,8 @@ namespace Microsoft.Data.ProviderBase
             TaskCompletionSource<DbConnectionInternal> retry,
             DbConnectionOptions userOptions) =>
             TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
+
+        internal override void ResetConnection() => throw ADP.ClosedConnectionError();
     }
 
     internal abstract class DbConnectionBusy : DbConnectionClosed

@@ -731,6 +731,10 @@ public class TransactedConnectionPoolTest
             // Mock implementation - do nothing
         }
 
+        internal override void ResetConnection()
+        {
+            // Mock implementation - do nothing
+        }
         public override string ToString() => $"MockConnection_{MockId}";
     }
 

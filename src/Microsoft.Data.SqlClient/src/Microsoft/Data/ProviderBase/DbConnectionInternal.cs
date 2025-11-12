@@ -795,6 +795,8 @@ namespace Microsoft.Data.ProviderBase
         internal void RemoveWeakReference(object value) =>
             ReferenceCollection?.Remove(value);
 
+        internal abstract void ResetConnection();
+
         internal void SetInStasis()
         {
             IsTxRootWaitingForTxEnd = true;
