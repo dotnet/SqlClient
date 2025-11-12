@@ -463,41 +463,6 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(CurrentTransaction == null, "unenlisted transaction with non-null current transaction?");   // verify it!
         }
 
-        override public void EnlistTransaction(Transaction transaction)
-        {
-#if NETFRAMEWORK
-            SqlConnection.VerifyExecutePermission();
-#endif
-            ValidateConnectionForExecute(null);
-
-            // If a connection has a local transaction outstanding and you try
-            // to enlist in a DTC transaction, SQL Server will rollback the
-            // local transaction and then do the enlist (7.0 and 2000).  So, if
-            // the user tries to do this, throw.
-            if (HasLocalTransaction)
-            {
-                throw ADP.LocalTransactionPresent();
-            }
-
-            if (transaction != null && transaction.Equals(EnlistedTransaction))
-            {
-                // No-op if this is the current transaction
-                return;
-            }
-
-            // If a connection is already enlisted in a DTC transaction and you
-            // try to enlist in another one, in 7.0 the existing DTC transaction
-            // would roll back and then the connection would enlist in the new
-            // one. In SQL 2000 & 2005, when you enlist in a DTC transaction
-            // while the connection is already enlisted in a DTC transaction,
-            // the connection simply switches enlistments.  Regardless, simply
-            // enlist in the user specified distributed transaction.  This
-            // behavior matches OLEDB and ODBC.
-
-            Enlist(transaction);
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
-        }
-
         abstract internal void ExecuteTransaction(TransactionRequest transactionRequest, string name, System.Data.IsolationLevel iso, SqlInternalTransaction internalTransaction, bool isDelegateControlRequest);
 
         internal SqlDataReader FindLiveReader(SqlCommand command)
