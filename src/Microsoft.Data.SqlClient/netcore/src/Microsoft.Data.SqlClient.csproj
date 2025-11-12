@@ -210,6 +210,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs">
       <Link>Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Connection\ServerInfo.cs">
+      <Link>Microsoft\Data\SqlClient\Connection\ServerInfo.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Connection\SessionData.cs">
       <Link>Microsoft\Data\SqlClient\Connection\SessionData.cs</Link>
     </Compile>
