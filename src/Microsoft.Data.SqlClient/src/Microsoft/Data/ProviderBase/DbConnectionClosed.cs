@@ -43,6 +43,8 @@ namespace Microsoft.Data.ProviderBase
 
         internal override bool TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
             => base.TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
+
+        internal override void ResetConnection() => throw ADP.ClosedConnectionError();
     }
 
     internal abstract class DbConnectionBusy : DbConnectionClosed
