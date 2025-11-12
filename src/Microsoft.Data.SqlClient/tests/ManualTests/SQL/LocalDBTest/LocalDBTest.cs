@@ -27,7 +27,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_localDbNamedPipeConnectionString = @$"server={GetLocalDbNamedPipe()}";
 
         #region LocalDbTests
-        [SkipOnTargetFramework((TargetFrameworkMonikers)0x4)] // No Registry support on UAP
+        [SkipOnTargetFramework(
+            // We had defined Uap to be 0x4 in our fork/copy of XUnitExtensions.
+            // Now that we're using the NuGet package, I can't add enum members,
+            // so I kept the functionality here by casting from the old raw
+            // value.  XUnitExtensions's TargetFrameworkMonikers currently only
+            // includes enum values up to 0x2, so this is safe - for now.
+            (TargetFrameworkMonikers)0x4)] // No Registry support on UAP
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void SqlLocalDbConnectionTest()
         {

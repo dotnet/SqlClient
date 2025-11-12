@@ -38,8 +38,12 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
+    <!--
+      Azure.Core is explicitly referenced to avoid a transitive dependency on
+      a vulnerable version via Azure.Identity.
+    -->
     <PackageReference Include="Azure.Core" Version="$(AzureCoreVersion)" />
+    <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
     <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
