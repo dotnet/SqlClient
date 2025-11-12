@@ -606,7 +606,10 @@ namespace Microsoft.Data.SqlClient
             get => _parser;
         }
 
-        internal override SqlInternalTransaction PendingTransaction
+        /// <summary>
+        /// TODO: need to understand this property better
+        /// </summary>
+        internal SqlInternalTransaction PendingTransaction
         {
             get => _parser.PendingTransaction;
         }
@@ -880,7 +883,7 @@ namespace Microsoft.Data.SqlClient
             Interlocked.Decrement(ref _asyncCommandCount);
         }
 
-        internal override void DisconnectTransaction(SqlInternalTransaction internalTransaction) =>
+        internal void DisconnectTransaction(SqlInternalTransaction internalTransaction) =>
             _parser?.DisconnectTransaction(internalTransaction);
 
         // @TODO: Make internal by making the SqlInternalConnection implementation internal
@@ -947,7 +950,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(CurrentTransaction == null, "unenlisted transaction with non-null current transaction?");
         }
 
-        internal override void ExecuteTransaction(
+        internal void ExecuteTransaction(
             TransactionRequest transactionRequest,
             string name,
             System.Data.IsolationLevel iso,
@@ -1340,8 +1343,8 @@ namespace Microsoft.Data.SqlClient
                             SqlClientEventSource.Log.TryTraceEvent(
                                 $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
                                 $"Object ID {ObjectID }, " +
-                                $"AddOrUpdate attempted on _dbConnectionPool.AuthenticationContexts, but it did not update the new value.",
-                                ObjectID);
+                                $"AddOrUpdate attempted on _dbConnectionPool.AuthenticationContexts, " +
+                                $"but it did not update the new value.");
                         }
                         #endif
                     }
@@ -1886,7 +1889,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // @TODO: Rename to match guidelines
-        protected override byte[] GetDTCAddress()
+        protected byte[] GetDTCAddress()
         {
             byte[] dtcAddress = _parser.GetDTCAddress(ConnectionOptions.ConnectTimeout, _parser.GetSession(this));
 
@@ -1940,7 +1943,7 @@ namespace Microsoft.Data.SqlClient
             return obtainParserLock;
         }
 
-        protected override void PropagateTransactionCookie(byte[] cookie)
+        protected void PropagateTransactionCookie(byte[] cookie)
         {
             _parser.PropagateDistributedTransaction(
                 cookie,
