@@ -233,54 +233,7 @@ namespace Microsoft.Data.SqlClient
             base.Dispose();
         }
 
-        protected void Enlist(Transaction tx)
-        {
-            // This method should not be called while the connection has a
-            // reference to an active delegated transaction.
-            // Manual enlistment via SqlConnection.EnlistTransaction
-            // should catch this case and throw an exception.
-            //
-            // Automatic enlistment isn't possible because
-            // Sys.Tx keeps the connection alive until the transaction is completed.
-            // TODO: why do we assert pooling status? shouldn't we just be checking
-            // whether the connection is the root of the transaction?
-            Debug.Assert(!(IsTransactionRoot && Pool == null), "cannot defect an active delegated transaction!");  // potential race condition, but it's an assert
-
-            if (tx == null)
-            {
-                if (IsEnlistedInTransaction)
-                {
-                    EnlistNull();
-                }
-                else
-                {
-                    // When IsEnlistedInTransaction is false, it means we are in one of two states:
-                    // 1. EnlistTransaction is null, so the connection is truly not enlisted in a transaction, or
-                    // 2. Connection is enlisted in a SqlDelegatedTransaction.
-                    //
-                    // For #2, we have to consider whether or not the delegated transaction is active.
-                    // If it is not active, we allow the enlistment in the NULL transaction.
-                    //
-                    // If it is active, technically this is an error.
-                    // However, no exception is thrown as this was the precedent (and this case is silently ignored, no error, but no enlistment either).
-                    // There are two mitigations for this:
-                    // 1. SqlConnection.EnlistTransaction checks that the enlisted transaction has completed before allowing a different enlistment.
-                    // 2. For debug builds, the assert at the beginning of this method checks for an enlistment in an active delegated transaction.
-                    Transaction enlistedTransaction = EnlistedTransaction;
-                    if (enlistedTransaction != null && enlistedTransaction.TransactionInformation.Status != TransactionStatus.Active)
-                    {
-                        EnlistNull();
-                    }
-                }
-            }
-            // Only enlist if it's different...
-            else if (!tx.Equals(EnlistedTransaction))
-            { // WebData 20000024 - Must use Equals, not !=
-                EnlistNonNull(tx);
-            }
-        }
-
-        private void EnlistNonNull(Transaction tx)
+        protected void EnlistNonNull(Transaction tx)
         {
             Debug.Assert(tx != null, "null transaction?");
             SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.EnlistNonNull | ADV | Object {0}, Transaction Id {1}, attempting to delegate.", ObjectID, tx?.TransactionInformation?.LocalIdentifier);
