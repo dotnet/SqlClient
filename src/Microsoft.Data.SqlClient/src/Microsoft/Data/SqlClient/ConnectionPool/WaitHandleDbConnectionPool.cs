@@ -1694,6 +1694,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             if (State is Running && obj.CanBePooled)
             {
+                obj.ResetConnection();
                 PutNewObject(obj);
             }
             else
