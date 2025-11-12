@@ -1775,7 +1775,7 @@ namespace Microsoft.Data.SqlClient
             return TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
         }
 
-        internal override void ValidateConnectionForExecute(SqlCommand command)
+        internal void ValidateConnectionForExecute(SqlCommand command)
         {
             TdsParser parser = _parser;
             if (parser == null || parser.State is TdsParserState.Broken or TdsParserState.Closed)

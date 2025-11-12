@@ -515,7 +515,5 @@ namespace Microsoft.Data.SqlClient
         }
 
         abstract protected void PropagateTransactionCookie(byte[] transactionCookie);
-
-        abstract internal void ValidateConnectionForExecute(SqlCommand command);
     }
 }
