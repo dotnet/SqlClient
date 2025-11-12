@@ -164,11 +164,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// TODO: need to understand this property better
-        /// </summary>
-        abstract internal SqlInternalTransaction PendingTransaction { get; }
-
-        /// <summary>
         /// A token returned by the server when we promote transaction.
         /// </summary>
         internal byte[] PromotedDtcToken { get; set; }
@@ -224,15 +219,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        abstract internal void DisconnectTransaction(SqlInternalTransaction internalTransaction);
-
         override public void Dispose()
         {
             _whereAbouts = null;
             base.Dispose();
         }
-
-        abstract internal void ExecuteTransaction(TransactionRequest transactionRequest, string name, System.Data.IsolationLevel iso, SqlInternalTransaction internalTransaction, bool isDelegateControlRequest);
 
         internal SqlDataReader FindLiveReader(SqlCommand command)
         {
@@ -244,8 +235,6 @@ namespace Microsoft.Data.SqlClient
             }
             return reader;
         }
-
-        abstract protected byte[] GetDTCAddress();
 
         static protected byte[] GetTransactionCookie(Transaction transaction, byte[] whereAbouts)
         {
@@ -282,7 +271,5 @@ namespace Microsoft.Data.SqlClient
                 throw exception;
             }
         }
-
-        abstract protected void PropagateTransactionCookie(byte[] transactionCookie);
     }
 }
