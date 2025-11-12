@@ -33,9 +33,9 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
           Azure.Core is explicitly referenced to avoid a transitive dependency
           on a vulnerable version via Azure.Identity.
         -->
-        <dependency id="Azure.Core" version="1.45.0" />
+        <dependency id="Azure.Core" version="1.41.0" />
         <dependency id="Azure.Identity" version="1.12.1" />
-        <dependency id="Microsoft.Identity.Client" version="4.78.0" />
+        <dependency id="Microsoft.Identity.Client" version="4.76.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.35.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.35.0" />
         <dependency id="System.Buffers" version="4.5.1" />
@@ -50,9 +50,9 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
           Azure.Core is explicitly referenced to avoid a transitive dependency
           on a vulnerable version via Azure.Identity.
         -->
-        <dependency id="Azure.Core" version="1.45.0" />
+        <dependency id="Azure.Core" version="1.41.0" />
         <dependency id="Azure.Identity" version="1.12.1" />
-        <dependency id="Microsoft.Identity.Client" version="4.78.0" exclude="Compile"/>
+        <dependency id="Microsoft.Identity.Client" version="4.76.0" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.35.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.35.0" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
@@ -70,9 +70,9 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
           Azure.Core is explicitly referenced to avoid a transitive dependency
           on a vulnerable version via Azure.Identity.
         -->
-        <dependency id="Azure.Core" version="1.45.0" />
+        <dependency id="Azure.Core" version="1.41.0" />
         <dependency id="Azure.Identity" version="1.12.1" />
-        <dependency id="Microsoft.Identity.Client" version="4.78.0" exclude="Compile"/>
+        <dependency id="Microsoft.Identity.Client" version="4.76.0" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.35.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.35.0" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
@@ -92,9 +92,9 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
           Azure.Core is explicitly referenced to avoid a transitive dependency
           on a vulnerable version via Azure.Identity.
         -->
-        <dependency id="Azure.Core" version="1.45.0" />
+        <dependency id="Azure.Core" version="1.41.0" />
         <dependency id="Azure.Identity" version="1.12.1" />
-        <dependency id="Microsoft.Identity.Client" version="4.78.0" exclude="Compile"/>
+        <dependency id="Microsoft.Identity.Client" version="4.76.0" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.35.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.35.0" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
