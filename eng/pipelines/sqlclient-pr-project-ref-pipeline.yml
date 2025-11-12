@@ -45,14 +45,6 @@ pr:
     - azurepipelines-coverage.yml
     - build.proj
     - NuGet.config
-    - .azuredevops
-    - .config
-    - src
-    - eng
-    - tools
-    - azurepipelines-coverage.yml
-    - build.proj
-    - NuGet.config
 
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
