@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient
         //  or notifications of same. Updates to the connection's association with the transaction or to the connection pool
         //  may be initiated here AFTER the connection lock is released, but should NOT fall under this class's locking strategy.
 
-        private SqlInternalConnection _connection;            // the internal connection that is the root of the transaction
+        private SqlInternalConnectionTds _connection;            // the internal connection that is the root of the transaction
         private System.Data.IsolationLevel _isolationLevel;        // the IsolationLevel of the transaction we delegated to the server
         private SqlInternalTransaction _internalTransaction;   // the SQL Server transaction we're delegating to
 
@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlDelegatedTransaction(SqlInternalConnection connection, Transaction tx)
         {
             Debug.Assert(connection != null, "null connection?");
-            _connection = connection;
+            _connection = (SqlInternalConnectionTds)connection;
             _atomicTransaction = tx;
             _active = false;
             System.Transactions.IsolationLevel systxIsolationLevel = tx.IsolationLevel;
@@ -78,7 +78,7 @@ namespace Microsoft.Data.SqlClient
         {
             // if we get here, then we know for certain that we're the delegated
             // transaction.
-            SqlInternalConnection connection = _connection;
+            SqlInternalConnectionTds connection = _connection;
             SqlConnection usersConnection = connection.Connection;
             SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Initialize | RES | CPOOL | Object Id {0}, Client Connection Id {1}, delegating transaction.", ObjectID, usersConnection?.ClientConnectionId);
 
@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient
             //  Don't read values off of the connection outside the lock unless it doesn't really matter
             //  from an operational standpoint (i.e. logging connection's ObjectID should be fine,
             //  but the PromotedDTCToken can change over calls. so that must be protected).
-            SqlInternalConnection connection = GetValidConnection();
+            SqlInternalConnectionTds connection = GetValidConnection();
             Exception promoteException;
             byte[] returnValue = null;
 
@@ -212,7 +212,7 @@ namespace Microsoft.Data.SqlClient
         public void Rollback(SinglePhaseEnlistment enlistment)
         {
             Debug.Assert(enlistment != null, "null enlistment?");
-            SqlInternalConnection connection = GetValidConnection();
+            SqlInternalConnectionTds connection = GetValidConnection();
 
             if (connection != null)
             {
@@ -280,7 +280,7 @@ namespace Microsoft.Data.SqlClient
         public void SinglePhaseCommit(SinglePhaseEnlistment enlistment)
         {
             Debug.Assert(enlistment != null, "null enlistment?");
-            SqlInternalConnection connection = GetValidConnection();
+            SqlInternalConnectionTds connection = GetValidConnection();
 
             if (connection != null)
             {
@@ -385,7 +385,7 @@ namespace Microsoft.Data.SqlClient
         //  the transaction).
         internal void TransactionEnded(Transaction transaction)
         {
-            SqlInternalConnection connection = _connection;
+            SqlInternalConnectionTds connection = _connection;
 
             if (connection != null)
             {
@@ -406,9 +406,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Check for connection validity
-        private SqlInternalConnection GetValidConnection()
+        private SqlInternalConnectionTds GetValidConnection()
         {
-            SqlInternalConnection connection = _connection;
+            SqlInternalConnectionTds connection = _connection;
             if (connection == null && Transaction.TransactionInformation.Status != TransactionStatus.Aborted)
             {
                 throw ADP.ObjectDisposed(this);
@@ -420,7 +420,7 @@ namespace Microsoft.Data.SqlClient
         // Dooms connection and throws and error if not a valid, active, delegated transaction for the given
         //  connection. Designed to be called AFTER a lock is placed on the connection, otherwise a normal return
         //  may not be trusted.
-        private void ValidateActiveOnConnection(SqlInternalConnection connection)
+        private void ValidateActiveOnConnection(SqlInternalConnectionTds connection)
         {
             bool valid = _active && (connection == _connection) && (connection.DelegatedTransaction == this);
 

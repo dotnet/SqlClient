@@ -906,7 +906,7 @@ namespace Microsoft.Data.SqlClient
         
         private void SetCachedCommandExecuteNonQueryAsyncContext(ExecuteNonQueryAsyncCallContext instance)
         {
-            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            if (_activeConnection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
             {
                 // @TODO: Add this to SqlInternalConnection
                 Interlocked.CompareExchange(
