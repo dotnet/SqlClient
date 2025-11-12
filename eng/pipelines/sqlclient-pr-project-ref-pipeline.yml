@@ -11,7 +11,8 @@
 #   - Microsoft.Data.SqlClient
 #   - Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 #
-# It is triggered by pushes to PRs for dev/topic/feature branches in GitHub.
+# It is triggered by pushes to PRs that target dev/ and feature/ branches, and
+# the main branch in GitHub.
 #
 # It maps to the "PR-SqlClient-Project" pipeline in the Public project:
 #
@@ -37,8 +38,9 @@ pr:
     include:
     - .azuredevops
     - .config
-    - src
+    - doc
     - eng
+    - src
     - tools
     - azurepipelines-coverage.yml
     - build.proj
