@@ -983,7 +983,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        [SuppressMessage("Microsoft.Globalization", "CA1303:DoNotPassLiteralsAsLocalizedParameters")] // copied from Triaged.cs
+        /// <inheritdoc/>
         internal override void ResetConnection()
         {
             // For implicit pooled connections, if connection reset behavior is specified,
