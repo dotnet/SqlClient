@@ -816,10 +816,8 @@ namespace Microsoft.Data.SqlClient
             // just return what the connection string had.
             get
             {
-                SqlInternalConnection innerConnection = (InnerConnection as SqlInternalConnection);
                 string result;
-
-                if (innerConnection != null)
+                if (InnerConnection is SqlInternalConnectionTds innerConnection)
                 {
                     result = innerConnection.CurrentDatabase;
                 }
@@ -828,6 +826,7 @@ namespace Microsoft.Data.SqlClient
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
                     result = constr != null ? constr.InitialCatalog : DbConnectionStringDefaults.InitialCatalog;
                 }
+
                 return result;
             }
         }
@@ -889,10 +888,8 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                SqlInternalConnection innerConnection = (InnerConnection as SqlInternalConnection);
                 string result;
-
-                if (innerConnection != null)
+                if (InnerConnection is SqlInternalConnectionTds innerConnection)
                 {
                     result = innerConnection.CurrentDataSource;
                 }
@@ -901,6 +898,7 @@ namespace Microsoft.Data.SqlClient
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
                     result = constr != null ? constr.DataSource : DbConnectionStringDefaults.DataSource;
                 }
+
                 return result;
             }
         }

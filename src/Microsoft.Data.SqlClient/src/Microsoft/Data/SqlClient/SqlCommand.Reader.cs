@@ -979,7 +979,7 @@ namespace Microsoft.Data.SqlClient
             {
                 returnedTask = RegisterForConnectionCloseNotification(returnedTask);
 
-                if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+                if (_activeConnection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
                 {
                     context = Interlocked.Exchange(
                         ref sqlInternalConnection.CachedCommandExecuteReaderAsyncContext,
@@ -1787,7 +1787,7 @@ namespace Microsoft.Data.SqlClient
 
         private void SetCachedCommandExecuteReaderAsyncContext(ExecuteReaderAsyncCallContext instance)
         {
-            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            if (_activeConnection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
             {
                 // @TODO: This should be part of the sql internal connection class.
                 Interlocked.CompareExchange(

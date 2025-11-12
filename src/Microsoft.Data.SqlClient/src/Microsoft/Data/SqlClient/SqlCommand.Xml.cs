@@ -486,7 +486,7 @@ namespace Microsoft.Data.SqlClient
 
             // @TODO: This can be cleaned up to lines if InnerConnection is always SqlInternalConnection 
             ExecuteXmlReaderAsyncCallContext context = null;
-            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            if (_activeConnection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
             {
                 context = Interlocked.Exchange(
                     ref sqlInternalConnection.CachedCommandExecuteXmlReaderAsyncContext,
@@ -549,7 +549,7 @@ namespace Microsoft.Data.SqlClient
 
         private void SetCachedCommandExecuteXmlReaderContext(ExecuteXmlReaderAsyncCallContext instance)
         {
-            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            if (_activeConnection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
             {
                 // @TODO: Move this compare exchange into the SqlInternalConnection class (or better yet, do away with this context)
                 Interlocked.CompareExchange(
