@@ -4,7 +4,7 @@
 
 using System.Diagnostics;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Connection
 {
     internal sealed class ServerInfo
     {

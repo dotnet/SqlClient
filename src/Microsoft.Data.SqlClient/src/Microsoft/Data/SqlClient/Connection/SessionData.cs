@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Data.SqlClient.Connection;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Connection
 {
      internal sealed class SessionData
     {

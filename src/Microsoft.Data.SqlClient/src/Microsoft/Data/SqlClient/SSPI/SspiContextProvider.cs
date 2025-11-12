@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.Diagnostics;
+using Microsoft.Data.SqlClient.Connection;
 
 #nullable enable
 
