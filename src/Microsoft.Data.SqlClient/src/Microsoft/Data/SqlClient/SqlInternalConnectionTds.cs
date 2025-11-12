@@ -705,6 +705,34 @@ namespace Microsoft.Data.SqlClient
         public override DbTransaction BeginTransaction(IsolationLevel iso) =>
             BeginSqlTransaction(iso, transactionName: null, shouldReconnect: false);
 
+        public override void ChangeDatabase(string database)
+        {
+            if (string.IsNullOrEmpty(database))
+            {
+                throw ADP.EmptyDatabaseName();
+            }
+
+            ValidateConnectionForExecute(null);
+
+            // MDAC 73598 - add brackets around database
+            database = SqlConnection.FixupDatabaseTransactionName(database); // @TODO: Should go to a utility method
+            Task executeTask = _parser.TdsExecuteSQLBatch(
+                $@"USE {database}",
+                ConnectionOptions.ConnectTimeout,
+                notificationRequest: null,
+                _parser._physicalStateObj,
+                sync: true);
+
+            Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
+
+            _parser.Run(
+                RunBehavior.UntilDone,
+                cmdHandler: null,
+                dataStream: null,
+                bulkCopyHandler: null,
+                _parser._physicalStateObj);
+        }
+
         internal SqlTransaction BeginSqlTransaction(
             IsolationLevel iso,
             string transactionName,
@@ -1788,29 +1816,6 @@ namespace Microsoft.Data.SqlClient
             {
                 Enlist(null);
             }
-        }
-
-        // @TODO: Is this suppression still required
-        [SuppressMessage("Microsoft.Globalization", "CA1303:DoNotPassLiteralsAsLocalizedParameters")] // copied from Triaged.cs
-        protected override void ChangeDatabaseInternal(string database)
-        {
-            // MDAC 73598 - add brackets around database
-            database = SqlConnection.FixupDatabaseTransactionName(database); // @TODO: Should go to a utility method
-            Task executeTask = _parser.TdsExecuteSQLBatch(
-                $@"USE {database}",
-                ConnectionOptions.ConnectTimeout,
-                notificationRequest: null,
-                _parser._physicalStateObj,
-                sync: true);
-
-            Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
-
-            _parser.Run(
-                RunBehavior.UntilDone,
-                cmdHandler: null,
-                dataStream: null,
-                bulkCopyHandler: null,
-                _parser._physicalStateObj);
         }
 
         // @TODO: Rename to match guidelines

@@ -175,20 +175,6 @@ namespace Microsoft.Data.SqlClient
 
         #endregion
 
-        override public void ChangeDatabase(string database)
-        {
-            if (string.IsNullOrEmpty(database))
-            {
-                throw ADP.EmptyDatabaseName();
-            }
-
-            ValidateConnectionForExecute(null);
-
-            ChangeDatabaseInternal(database);  // do the real work...
-        }
-
-        abstract protected void ChangeDatabaseInternal(string database);
-
         override protected void CleanupTransactionOnCompletion(Transaction transaction)
         {
             // Note: unlocked, potentially multi-threaded code, so pull delegate to local to
