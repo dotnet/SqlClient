@@ -914,6 +914,39 @@ namespace Microsoft.Data.SqlClient
             base.Dispose();
         }
 
+        internal void EnlistNull()
+        {
+            SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                $"SqlInternalConnection.EnlistNull | ADV | " +
+                $"Object ID {ObjectID}, " +
+                $"unenlisting.");
+
+            // We were in a transaction, but now we are not - so send message to server with empty
+            // transaction - confirmed proper behavior from Sameet Agarwal.
+
+            // The connection pooler maintains separate pools for enlisted transactions. Only when
+            // that transaction is committed or rolled back will those connections be taken from
+            // that separate pool and returned to the general pool of connections that are not
+            // affiliated with any transactions.  When this occurs, we will have a new transaction
+            // of null, and we are required to send an empty transaction payload to the server.
+
+            PropagateTransactionCookie(null);
+
+            // Tell the base class about our enlistment
+            IsEnlistedInTransaction = false;
+            EnlistedTransaction = null;
+
+            SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                $"SqlInternalConnection.EnlistNull | ADV | " +
+                $"Object ID {ObjectID}, " +
+                $"unenlisted.");
+
+            // The EnlistTransaction above will return an TransactionEnded event, which causes the
+            // TdsParser to clear the current transaction. In either case, when we're working with
+            // a 2005 or newer server we better not have a current transaction at this point.
+            Debug.Assert(CurrentTransaction == null, "unenlisted transaction with non-null current transaction?");
+        }
+
         internal override void ExecuteTransaction(
             TransactionRequest transactionRequest,
             string name,
