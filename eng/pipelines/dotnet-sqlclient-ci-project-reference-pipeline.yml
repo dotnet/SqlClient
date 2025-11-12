@@ -154,7 +154,7 @@ extends:
   parameters:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
-    buildType: Package
+    buildType: Project
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
     debug: ${{ parameters.debug }}
     enableStressTests: ${{ parameters.enableStressTests }}
@@ -165,10 +165,10 @@ extends:
     # specified.  We choose different values depending on the build
     # configuration.
     ${{ if eq(parameters.testJobTimeout, 'Default') }}:
-      # If the build configuration is Debug, double the test job timeout value.
-      # Some of our tests currently take much longer to run in Debug mode.
+      # If the build configuration is Debug, we allow a bit of extra time since
+      # some tests run more slowly, and some tests are Debug only.
       ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
-        testJobTimeout: 180
+        testJobTimeout: 110
       ${{ else }}:
         testJobTimeout: 90
     ${{ else }}:

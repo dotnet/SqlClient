@@ -45,6 +45,14 @@ pr:
     - azurepipelines-coverage.yml
     - build.proj
     - NuGet.config
+    - .azuredevops
+    - .config
+    - src
+    - eng
+    - tools
+    - azurepipelines-coverage.yml
+    - build.proj
+    - NuGet.config
 
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
@@ -122,10 +130,10 @@ extends:
     # specified.  We choose different values depending on the build
     # configuration.
     ${{ if eq(parameters.testJobTimeout, 'Default') }}:
-      # If the build configuration is Debug, double the test job timeout value.
-      # Some of our tests currently take much longer to run in Debug mode.
+      # If the build configuration is Debug, we allow a bit of extra time since
+      # some tests run more slowly, and some tests are Debug only.
       ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
-        testJobTimeout: 180
+        testJobTimeout: 110
       ${{ else }}:
         testJobTimeout: 90
     ${{ else }}:
