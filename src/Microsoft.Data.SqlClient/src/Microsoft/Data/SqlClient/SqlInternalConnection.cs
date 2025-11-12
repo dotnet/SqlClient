@@ -175,47 +175,6 @@ namespace Microsoft.Data.SqlClient
 
         #endregion
 
-        override public DbTransaction BeginTransaction(System.Data.IsolationLevel iso)
-        {
-            return BeginSqlTransaction(iso, null, false);
-        }
-
-        virtual internal SqlTransaction BeginSqlTransaction(System.Data.IsolationLevel iso, string transactionName, bool shouldReconnect)
-        {
-            SqlStatistics statistics = null;
-            try
-            {
-                statistics = SqlStatistics.StartTimer(Connection.Statistics);
-
-                #if NETFRAMEWORK
-                SqlConnection.ExecutePermission.Demand(); // MDAC 81476
-                #endif
-
-                ValidateConnectionForExecute(null);
-
-                if (HasLocalTransactionFromAPI)
-                {
-                    throw ADP.ParallelTransactionsNotSupported(Connection);
-                }
-
-                if (iso == System.Data.IsolationLevel.Unspecified)
-                {
-                    iso = System.Data.IsolationLevel.ReadCommitted; // Default to ReadCommitted if unspecified.
-                }
-
-                SqlTransaction transaction = new(this, Connection, iso, AvailableInternalTransaction);
-                transaction.InternalTransaction.RestoreBrokenConnection = shouldReconnect;
-                ExecuteTransaction(TransactionRequest.Begin, transactionName, iso, transaction.InternalTransaction, false);
-                transaction.InternalTransaction.RestoreBrokenConnection = false;
-                return transaction;
-            }
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-            }
-        }
-
         override public void ChangeDatabase(string database)
         {
             if (string.IsNullOrEmpty(database))

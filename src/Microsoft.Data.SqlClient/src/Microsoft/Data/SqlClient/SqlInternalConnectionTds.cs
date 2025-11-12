@@ -20,6 +20,7 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Identity.Client;
+using IsolationLevel = System.Data.IsolationLevel;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -700,6 +701,49 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Public and Internal Methods
+
+        public override DbTransaction BeginTransaction(IsolationLevel iso) =>
+            BeginSqlTransaction(iso, transactionName: null, shouldReconnect: false);
+
+        internal SqlTransaction BeginSqlTransaction(
+            IsolationLevel iso,
+            string transactionName,
+            bool shouldReconnect)
+        {
+            SqlStatistics statistics = null;
+            try
+            {
+                statistics = SqlStatistics.StartTimer(Connection.Statistics);
+
+                #if NETFRAMEWORK
+                SqlConnection.ExecutePermission.Demand(); // MDAC 81476
+                #endif
+
+                ValidateConnectionForExecute(null);
+
+                if (HasLocalTransactionFromAPI)
+                {
+                    throw ADP.ParallelTransactionsNotSupported(Connection);
+                }
+
+                if (iso == IsolationLevel.Unspecified)
+                {
+                    // Default to ReadCommitted if unspecified.
+                    iso = IsolationLevel.ReadCommitted;
+                }
+
+                SqlTransaction transaction = new(this, Connection, iso, AvailableInternalTransaction);
+                transaction.InternalTransaction.RestoreBrokenConnection = shouldReconnect;
+                ExecuteTransaction(TransactionRequest.Begin, transactionName, iso, transaction.InternalTransaction, false);
+                transaction.InternalTransaction.RestoreBrokenConnection = false;
+                return transaction;
+            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            finally
+            {
+                SqlStatistics.StopTimer(statistics);
+            }
+        }
 
         internal void BreakConnection()
         {
