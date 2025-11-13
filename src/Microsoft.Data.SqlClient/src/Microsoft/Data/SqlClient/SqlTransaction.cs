@@ -48,7 +48,8 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                Debug.Assert(internalConnection.CurrentTransaction == internalTransaction, "Unexpected Parser.CurrentTransaction state!");
+                Debug.Assert(((SqlInternalConnectionTds)internalConnection).CurrentTransaction == internalTransaction,
+                    "Unexpected Parser.CurrentTransaction state!");
                 InternalTransaction = internalTransaction;
                 InternalTransaction.InitParent(this);
             }

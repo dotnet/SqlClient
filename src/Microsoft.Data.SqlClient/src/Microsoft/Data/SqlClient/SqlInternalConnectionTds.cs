@@ -505,11 +505,6 @@ namespace Microsoft.Data.SqlClient
             get => $"{_loginAck.majorVersion:00}.{(short)_loginAck.minorVersion:00}.{_loginAck.buildNum:0000}";
         }
 
-        internal override SqlInternalTransaction AvailableInternalTransaction
-        {
-            get => _parser._fResetConnection ? null : CurrentTransaction;
-        }
-
         /// <summary>
         /// Gets the collection of async call contexts that belong to this connection.
         /// </summary>
@@ -534,9 +529,30 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override SqlInternalTransaction CurrentTransaction
+        /// <summary>
+        /// The Transaction currently associated with this connection.
+        /// </summary>
+        internal SqlInternalTransaction CurrentTransaction
         {
             get => _parser.CurrentTransaction;
+        }
+
+        /// <summary>
+        /// Whether this connection has a local (non-delegated) transaction.
+        /// </summary>
+        internal bool HasLocalTransaction
+        {
+            get => CurrentTransaction?.IsLocal == true;
+        }
+
+        /// <summary>
+        /// Whether this connection has a local transaction started from the API (i.e.,
+        /// SqlConnection.BeginTransaction) or had a TSQL transaction and later got wrapped by an
+        /// API transaction.
+        /// </summary>
+        internal bool HasLocalTransactionFromAPI
+        {
+            get => CurrentTransaction?.HasParentTransaction == true;
         }
 
         // @TODO: Make auto-property
@@ -721,6 +737,16 @@ namespace Microsoft.Data.SqlClient
                    ConnectionOptions.ConnectTimeout >= ADP.MaxBufferAccessTokenExpiry
                 ? ADP.MaxBufferAccessTokenExpiry
                 : ConnectionOptions.ConnectTimeout;
+        }
+
+        // SQLBU 415870
+        //  Get the internal transaction that should be hooked to a new outer transaction
+        //  during a BeginTransaction API call.  In some cases (i.e. connection is going to
+        //  be reset), CurrentTransaction should not be hooked up this way.
+        // TODO: (mdaigle) need to understand this property better
+        private SqlInternalTransaction AvailableInternalTransaction
+        {
+            get => _parser._fResetConnection ? null : CurrentTransaction;
         }
 
         #endregion

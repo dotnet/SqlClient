@@ -20,15 +20,6 @@ namespace Microsoft.Data.SqlClient
     {
         #region Properties
 
-        // SQLBU 415870
-        //  Get the internal transaction that should be hooked to a new outer transaction
-        //  during a BeginTransaction API call.  In some cases (i.e. connection is going to
-        //  be reset), CurrentTransaction should not be hooked up this way.
-        /// <summary>
-        /// TODO: need to understand this property better
-        /// </summary>
-        virtual internal SqlInternalTransaction AvailableInternalTransaction => CurrentTransaction;
-
         /// <summary>
         /// A reference to the SqlConnection that owns this internal connection.
         /// </summary>
@@ -56,41 +47,9 @@ namespace Microsoft.Data.SqlClient
         internal string CurrentDataSource { get; set; }
 
         /// <summary>
-        /// The Transaction currently associated with this connection.
-        /// </summary>
-        abstract internal SqlInternalTransaction CurrentTransaction { get; }
-
-        /// <summary>
         /// The delegated (or promoted) transaction this connection is responsible for.
         /// </summary>
         internal SqlDelegatedTransaction DelegatedTransaction { get; set; }
-
-        /// <summary>
-        /// Whether this connection has a local (non-delegated) transaction.
-        /// </summary>
-        internal bool HasLocalTransaction
-        {
-            get
-            {
-                SqlInternalTransaction currentTransaction = CurrentTransaction;
-                bool result = currentTransaction != null && currentTransaction.IsLocal;
-                return result;
-            }
-        }
-
-        /// <summary>
-        /// Whether this connection has a local transaction started from the API (i.e., SqlConnection.BeginTransaction)
-        /// or had a TSQL transaction and later got wrapped by an API transaction.
-        /// </summary>
-        internal bool HasLocalTransactionFromAPI
-        {
-            get
-            {
-                SqlInternalTransaction currentTransaction = CurrentTransaction;
-                bool result = currentTransaction != null && currentTransaction.HasParentTransaction;
-                return result;
-            }
-        }
 
         /// <summary>
         /// Whether the server version is SQL Server 2008 or newer.
