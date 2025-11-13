@@ -6,18 +6,25 @@
 parameters:
   - name: publishDestination
     type: string
+
   - name: dryRun
     type: boolean
+
   - name: internalFeedSource
     type: string
+
   - name: publicNuGetSource
     type: string
+
   - name: publishSymbols
     type: boolean
+
   - name: packageFolderName
     type: string
+
   - name: nugetPackageVersion
     type: string
+
   - name: product
     type: string
 
@@ -38,9 +45,6 @@ jobs:
   - script: |
       echo "NuGet Package Version: ${{ parameters.nugetPackageVersion }}"
     displayName: 'Echo NuGet Package Version'
-  - template: ../steps/list-packages-step.yml
-    parameters:
-      path: $(Pipeline.Workspace)/release/packages
   - ${{ if ne(parameters.publishDestination, 'Public') }}:
     - template: ../steps/publish-internal-feed-step.yml
       parameters:

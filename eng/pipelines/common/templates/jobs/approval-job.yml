@@ -6,16 +6,23 @@
 parameters:
   - name: approvalAliases
     type: string
+    default: '[ADO.Net]\\SqlClient Admins'
+
   - name: publishDestination
     type: string
+
   - name: dryRun
     type: boolean
+
   - name: isPreview
     type: boolean
+
   - name: publishSymbols
     type: boolean
+
   - name: nugetPackageVersion
     type: string
+
   - name: product
     type: string
 
@@ -26,7 +33,7 @@ jobs:
   steps:
   - task: ManualValidation@0
     displayName: 'Manual Approval'
-    timeoutInMinutes: 4320
+    timeoutInMinutes: 4320 # 3 days
     inputs:
       notifyUsers: ${{ parameters.approvalAliases }}
       instructions: |

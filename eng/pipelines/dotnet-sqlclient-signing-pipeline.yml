@@ -99,13 +99,13 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   default: 'https://api.nuget.org/v3/index.json'
 
 - name: product
-  displayName: 'Product code (mds|akv)'
+  displayName: 'Product code (MDS|MSS|AKV)'
   type: string
-  default: 'mds'
+  default: 'MDS'
   values:
-  - mds
-  - mss
-  - akv
+  - MDS
+  - MSS
+  - AKV
 
 variables:
   - template: /eng/pipelines/libraries/variables.yml@self

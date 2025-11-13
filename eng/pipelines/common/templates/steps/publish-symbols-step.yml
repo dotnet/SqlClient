@@ -9,36 +9,45 @@ parameters:
   - name: SymAccount
     type: string
     default: 'SqlClientDrivers'
+
   - name: publishSymbols
     type: boolean
     default: false
+
   - name: symbolsVersion
     type: string
     default: '$(NugetPackageVersion)'
+
   - name: symbolServer
     type: string
     default: '$(SymbolServer)'
+
   - name: symbolTokenUri
     type: string
     default: '$(SymbolTokenUri)'
+
   - name: symbolsArtifactName
     type: string
+
   - name: publishToServers
     type: object
     default:
       internal: true
       public: true
+
   - name: referenceType
     default: project
     values:
-      - project
-      - package
+    - project
+    - package
+
   - name: product
     default: MDS
     values:
-      - MDS
-      - MSS
-      - AKV
+    - MDS
+    - MSS
+    - AKV
+    
   - name: azureSubscription
     type: string
     default: 'Symbols publishing Workload Identity federation service-ADO.Net'
@@ -64,10 +73,10 @@ steps:
       SymbolsVersion: ${{parameters.symbolsVersion }}
       SymbolsArtifactName: ${{parameters.symbolsArtifactName }}
       Pat: $(System.AccessToken)
-    condition: and(succeeded(), ${{ eq(parameters.publishSymbols, 'true') }})
+    condition: and(succeeded(), eq(parameters.publishSymbols, true))
   - task: AzureCLI@2
     displayName: 'Publish MDS symbols'
-    condition: and(succeeded(), ${{ eq(parameters.publishSymbols, 'true') }})
+    condition: and(succeeded(), eq(parameters.publishSymbols, true))
     inputs:
       azureSubscription: ${{ parameters.azureSubscription }}
       scriptType: ps

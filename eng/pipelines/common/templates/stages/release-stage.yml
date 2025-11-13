@@ -6,24 +6,37 @@
 parameters:
   - name: runRelease
     type: boolean
+    default: false
+
   - name: publishDestination
     type: string
+
   - name: dryRun
     type: boolean
+    default: false
+
   - name: approvalAliases
     type: string
+
   - name: internalFeedSource
     type: string
+
   - name: publicNuGetSource
     type: string
+
   - name: publishSymbols
     type: boolean
+    default: false
+    
   - name: isPreview
     type: boolean
+
   - name: product
     type: string
+
   - name: nugetPackageVersion
     type: string
+    
   - name: packageFolderName
     type: string
 
