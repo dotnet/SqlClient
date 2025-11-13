@@ -493,6 +493,11 @@ namespace Microsoft.Data.SqlClient
             get => _parser._fResetConnection ? null : CurrentTransaction;
         }
 
+        /// <summary>
+        /// Gets the collection of async call contexts that belong to this connection.
+        /// </summary>
+        internal CachedContexts CachedContexts { get; private set; } = new CachedContexts();
+
         // @TODO: Make auto-property
         internal Guid ClientConnectionId
         {

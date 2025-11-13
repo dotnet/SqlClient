@@ -10,6 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
@@ -981,9 +982,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (_activeConnection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
                 {
-                    context = Interlocked.Exchange(
-                        ref sqlInternalConnection.CachedCommandExecuteReaderAsyncContext,
-                        null);
+                    context = sqlInternalConnection.CachedContexts.ClearCommandExecuteReaderAsyncContext();
                 }
 
                 context ??= new ExecuteReaderAsyncCallContext();
@@ -1785,18 +1784,6 @@ namespace Microsoft.Data.SqlClient
                 this,
                 () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method));
 
-        private void SetCachedCommandExecuteReaderAsyncContext(ExecuteReaderAsyncCallContext instance)
-        {
-            if (_activeConnection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
-            {
-                // @TODO: This should be part of the sql internal connection class.
-                Interlocked.CompareExchange(
-                    ref sqlInternalConnection.CachedCommandExecuteReaderAsyncContext,
-                    instance,
-                    null);
-            }
-        }
-
         #endregion
 
         internal sealed class ExecuteReaderAsyncCallContext
@@ -1824,7 +1811,11 @@ namespace Microsoft.Data.SqlClient
 
             protected override void AfterCleared(SqlCommand owner)
             {
-                owner?.SetCachedCommandExecuteReaderAsyncContext(this);
+                DbConnectionInternal internalConnection = owner?._activeConnection?.InnerConnection;
+                if (internalConnection is SqlInternalConnectionTds sqlInternalConnection)
+                {
+                    sqlInternalConnection.CachedContexts.TrySetCommandExecuteReaderAsyncContext(this);
+                }
             }
 
             protected override void Clear()
