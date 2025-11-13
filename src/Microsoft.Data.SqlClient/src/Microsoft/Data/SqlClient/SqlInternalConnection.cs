@@ -202,15 +202,5 @@ namespace Microsoft.Data.SqlClient
             }
             return reader;
         }
-
-        static protected byte[] GetTransactionCookie(Transaction transaction, byte[] whereAbouts)
-        {
-            byte[] transactionCookie = null;
-            if (transaction != null)
-            {
-                transactionCookie = TransactionInterop.GetExportCookie(transaction, whereAbouts);
-            }
-            return transactionCookie;
-        }
     }
 }

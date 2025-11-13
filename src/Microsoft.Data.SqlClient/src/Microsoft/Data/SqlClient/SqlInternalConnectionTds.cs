@@ -2017,6 +2017,13 @@ namespace Microsoft.Data.SqlClient
 
         #region Private Methods
 
+        private static byte[] GetTransactionCookie(Transaction transaction, byte[] whereAbouts)
+        {
+            return transaction is not null
+                ? TransactionInterop.GetExportCookie(transaction, whereAbouts)
+                : null;
+        }
+
         /// <summary>
         /// Common code path for making one attempt to establish a connection and log in to server.
         /// </summary>
