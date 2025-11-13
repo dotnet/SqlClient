@@ -169,21 +169,5 @@ namespace Microsoft.Data.SqlClient
         internal byte[] PromotedDtcToken { get; set; }
 
         #endregion
-
-        override protected void CleanupTransactionOnCompletion(Transaction transaction)
-        {
-            // Note: unlocked, potentially multi-threaded code, so pull delegate to local to
-            //  ensure it doesn't change between test and call.
-            SqlDelegatedTransaction delegatedTransaction = DelegatedTransaction;
-            if (delegatedTransaction != null)
-            {
-                delegatedTransaction.TransactionEnded(transaction);
-            }
-        }
-
-        override protected DbReferenceCollection CreateReferenceCollection()
-        {
-            return new SqlReferenceCollection();
-        }
     }
 }
