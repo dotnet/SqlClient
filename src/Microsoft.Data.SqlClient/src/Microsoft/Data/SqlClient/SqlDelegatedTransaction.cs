@@ -32,10 +32,10 @@ namespace Microsoft.Data.SqlClient
 
         private bool _active;                // Is the transaction active?
 
-        internal SqlDelegatedTransaction(SqlInternalConnection connection, Transaction tx)
+        internal SqlDelegatedTransaction(SqlInternalConnectionTds connection, Transaction tx)
         {
             Debug.Assert(connection != null, "null connection?");
-            _connection = (SqlInternalConnectionTds)connection;
+            _connection = connection;
             _atomicTransaction = tx;
             _active = false;
             System.Transactions.IsolationLevel systxIsolationLevel = tx.IsolationLevel;

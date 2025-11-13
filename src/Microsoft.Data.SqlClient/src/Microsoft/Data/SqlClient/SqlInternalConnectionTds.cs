@@ -24,7 +24,7 @@ using IsolationLevel = System.Data.IsolationLevel;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
+    internal class SqlInternalConnectionTds : DbConnectionInternal, IDisposable
     {
         #region Constants
 
