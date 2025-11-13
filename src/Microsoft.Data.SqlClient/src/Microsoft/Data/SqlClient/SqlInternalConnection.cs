@@ -185,11 +185,5 @@ namespace Microsoft.Data.SqlClient
         {
             return new SqlReferenceCollection();
         }
-
-        override public void Dispose()
-        {
-            _whereAbouts = null;
-            base.Dispose();
-        }
     }
 }

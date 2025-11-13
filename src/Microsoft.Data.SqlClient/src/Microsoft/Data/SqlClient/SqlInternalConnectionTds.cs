@@ -914,7 +914,7 @@ namespace Microsoft.Data.SqlClient
                 _fConnectionOpen = false;
             }
 
-            base.Dispose();
+            _whereAbouts = null;
         }
 
         internal void EnlistNull()
