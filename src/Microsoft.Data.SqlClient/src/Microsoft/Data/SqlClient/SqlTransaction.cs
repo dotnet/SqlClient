@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Diagnostics;
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
@@ -28,7 +29,7 @@ namespace Microsoft.Data.SqlClient
         private bool _isFromApi;
 
         internal SqlTransaction(
-            SqlInternalConnectionTds internalConnection,
+            SqlConnectionInternal internalConnection,
             SqlConnection con,
             IsolationLevel iso,
             SqlInternalTransaction internalTransaction)
@@ -293,7 +294,7 @@ namespace Microsoft.Data.SqlClient
             // For Yukon, we have to defer "zombification" until we get past the users' next
             // rollback, else we'll throw an exception there that is a breaking change. Of course,
             // if the connection is already closed, then we're free to zombify...
-            if (_connection.InnerConnection is SqlInternalConnectionTds && !_isFromApi)
+            if (_connection.InnerConnection is SqlConnectionInternal && !_isFromApi)
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent(
                     "SqlTransaction.Zombie | ADV | Object Id {0} yukon deferred zombie",

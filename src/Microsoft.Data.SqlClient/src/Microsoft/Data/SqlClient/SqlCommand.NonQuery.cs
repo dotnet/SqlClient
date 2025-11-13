@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
@@ -929,7 +930,7 @@ namespace Microsoft.Data.SqlClient
             protected override void AfterCleared(SqlCommand owner)
             {
                 DbConnectionInternal internalConnection = owner?._activeConnection?.InnerConnection;
-                if (internalConnection is SqlInternalConnectionTds sqlInternalConnection)
+                if (internalConnection is SqlConnectionInternal sqlInternalConnection)
                 {
                     sqlInternalConnection.CachedContexts.TrySetCommandExecuteNonQueryAsyncContext(this);
                 }

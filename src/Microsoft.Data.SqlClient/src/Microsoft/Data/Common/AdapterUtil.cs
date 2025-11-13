@@ -25,6 +25,7 @@ using Microsoft.Identity.Client;
 using Microsoft.SqlServer.Server;
 using System.Security.Authentication;
 using System.Collections.Generic;
+using Microsoft.Data.SqlClient.Connection;
 
 #if NETFRAMEWORK
 using System.Reflection;
@@ -465,7 +466,11 @@ namespace Microsoft.Data.Common
 
         internal static ArgumentException MustBeReadOnly(string argumentName) => Argument(StringsHelper.GetString(Strings.ADP_MustBeReadOnly, argumentName));
 
-        internal static Exception CreateSqlException(MsalException msalException, SqlConnectionString connectionOptions, SqlInternalConnectionTds sender, string username)
+        internal static Exception CreateSqlException(
+            MsalException msalException,
+            SqlConnectionString connectionOptions,
+            SqlConnectionInternal sender,
+            string username)
         {
             // Error[0]
             SqlErrorCollection sqlErs = new();

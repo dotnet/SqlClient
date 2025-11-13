@@ -645,7 +645,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (pool == null || (pool != null && pool.Count <= 0))
                 { // Non-pooled or pooled and no connections in the pool.
-                    SqlInternalConnectionTds sseConnection = null;
+                    SqlConnectionInternal sseConnection = null;
                     try
                     {
                         // We throw an exception in case of a failure
@@ -653,7 +653,17 @@ namespace Microsoft.Data.SqlClient
                         //       This first connection is established to SqlExpress to get the instance name
                         //       of the UserInstance.
                         SqlConnectionString sseopt = new SqlConnectionString(opt, opt.DataSource, userInstance: true, setEnlistValue: false);
-                        sseConnection = new SqlInternalConnectionTds(identity, sseopt, key.Credential, null, "", null, false, applyTransientFaultHandling: applyTransientFaultHandling, sspiContextProvider: key.SspiContextProvider);
+                        sseConnection = new SqlConnectionInternal(
+                            identity,
+                            sseopt,
+                            key.Credential,
+                            providerInfo: null,
+                            newPassword: string.Empty,
+                            newSecurePassword: null,
+                            redirectedUserInstance: false,
+                            applyTransientFaultHandling: applyTransientFaultHandling,
+                            sspiContextProvider: key.SspiContextProvider);
+
                         // NOTE: Retrieve <UserInstanceName> here. This user instance name will be used below to connect to the Sql Express User Instance.
                         instanceName = sseConnection.InstanceName;
 
@@ -694,7 +704,7 @@ namespace Microsoft.Data.SqlClient
                 poolGroupProviderInfo = null; // null so we do not pass to constructor below...
             }
 
-            return new SqlInternalConnectionTds(
+            return new SqlConnectionInternal(
                 identity,
                 opt,
                 key.Credential,

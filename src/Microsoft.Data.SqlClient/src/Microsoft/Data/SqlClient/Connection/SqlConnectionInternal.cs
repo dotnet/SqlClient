@@ -22,9 +22,9 @@ using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Identity.Client;
 using IsolationLevel = System.Data.IsolationLevel;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Connection
 {
-    internal class SqlInternalConnectionTds : DbConnectionInternal, IDisposable
+    internal class SqlConnectionInternal : DbConnectionInternal, IDisposable
     {
         #region Constants
 
@@ -332,7 +332,7 @@ namespace Microsoft.Data.SqlClient
         ///   has been expanded (see SqlConnectionString.Expand)
         /// </remarks>
         // @TODO: We really really need simplify what we pass into this. All these optional parameters need to go!
-        internal SqlInternalConnectionTds(
+        internal SqlConnectionInternal(
             DbConnectionPoolIdentity identity,
             SqlConnectionString connectionOptions,
             SqlCredential credential,

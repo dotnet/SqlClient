@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
@@ -980,7 +981,7 @@ namespace Microsoft.Data.SqlClient
             {
                 returnedTask = RegisterForConnectionCloseNotification(returnedTask);
 
-                if (_activeConnection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
+                if (_activeConnection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
                 {
                     context = sqlInternalConnection.CachedContexts.ClearCommandExecuteReaderAsyncContext();
                 }
@@ -1576,7 +1577,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (decrementAsyncCountOnFailure)
                 {
-                    if (_activeConnection.InnerConnection is SqlInternalConnectionTds innerConnectionTds)
+                    if (_activeConnection.InnerConnection is SqlConnectionInternal innerConnectionTds)
                     {
                         // It may be closed
                         innerConnectionTds.DecrementAsyncCount();
@@ -1812,7 +1813,7 @@ namespace Microsoft.Data.SqlClient
             protected override void AfterCleared(SqlCommand owner)
             {
                 DbConnectionInternal internalConnection = owner?._activeConnection?.InnerConnection;
-                if (internalConnection is SqlInternalConnectionTds sqlInternalConnection)
+                if (internalConnection is SqlConnectionInternal sqlInternalConnection)
                 {
                     sqlInternalConnection.CachedContexts.TrySetCommandExecuteReaderAsyncContext(this);
                 }

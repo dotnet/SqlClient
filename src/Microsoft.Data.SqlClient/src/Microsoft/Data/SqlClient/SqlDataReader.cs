@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
@@ -4101,7 +4102,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // reset snapshot to save memory use.  We can safely do that here because all SqlDataReader values are stable.
                     // The retry logic can use the current values to get back to the right state.
-                    if (_connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
+                    if (_connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
                     {
                         sqlInternalConnection.CachedContexts.TrySetDataReaderSnapshot(_snapshot);
                     }
@@ -5039,7 +5040,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 ReadAsyncCallContext context = null;
-                if (_connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
+                if (_connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
                 {
                     context = sqlInternalConnection.CachedContexts.ClearDataReaderReadAsyncContext();
                 }
@@ -5086,7 +5087,7 @@ namespace Microsoft.Data.SqlClient
                     if (!hasReadRowToken)
                     {
                         hasReadRowToken = true;
-                        if (reader.Connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
+                        if (reader.Connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
                         {
                             sqlInternalConnection.CachedContexts.TrySetDataReaderSnapshot(reader._snapshot);
                         }
@@ -5208,7 +5209,7 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     IsDBNullAsyncCallContext context = null;
-                    if (_connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
+                    if (_connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
                     {
                         context = sqlInternalConnection.CachedContexts.ClearDataReaderIsDbNullContext();
                     }
@@ -5490,7 +5491,7 @@ namespace Microsoft.Data.SqlClient
             protected override void AfterCleared(SqlDataReader owner)
             {
                 DbConnectionInternal internalConnection = owner?._connection?.InnerConnection;
-                if (internalConnection is SqlInternalConnectionTds sqlInternalConnection)
+                if (internalConnection is SqlConnectionInternal sqlInternalConnection)
                 {
                     sqlInternalConnection.CachedContexts.TrySetDataReaderReadAsyncContext(this);
                 }
@@ -5510,7 +5511,7 @@ namespace Microsoft.Data.SqlClient
             protected override void AfterCleared(SqlDataReader owner)
             {
                 DbConnectionInternal internalConnection = owner?._connection?.InnerConnection;
-                if (internalConnection is SqlInternalConnectionTds sqlInternalConnection)
+                if (internalConnection is SqlConnectionInternal sqlInternalConnection)
                 {
                     sqlInternalConnection.CachedContexts.TrySetDataReaderIsDbNullContext(this);
                 }
@@ -5794,7 +5795,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (_snapshot == null)
                 {
-                    if (_connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
+                    if (_connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
                     {
                         _snapshot = sqlInternalConnection.CachedContexts.ClearDataReaderSnapshot() ?? new Snapshot();
                     }
@@ -5874,7 +5875,7 @@ namespace Microsoft.Data.SqlClient
             stateObj._permitReplayStackTraceToDiffer = false;
 #endif
 
-            if (_connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
+            if (_connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
             {
                 sqlInternalConnection.CachedContexts.TrySetDataReaderSnapshot(_snapshot);
             }
@@ -5917,7 +5918,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_snapshot != null, "Should currently have a snapshot");
             Debug.Assert(_stateObj != null && !_stateObj._asyncReadWithoutSnapshot, "Already in async without snapshot");
 
-            if (_connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
+            if (_connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
             {
                 sqlInternalConnection.CachedContexts.TrySetDataReaderSnapshot(_snapshot);
             }
