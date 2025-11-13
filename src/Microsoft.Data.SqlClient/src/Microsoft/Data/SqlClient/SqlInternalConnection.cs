@@ -250,27 +250,5 @@ namespace Microsoft.Data.SqlClient
         virtual protected void InternalDeactivate()
         {
         }
-
-        // If wrapCloseInAction is defined, then the action it defines will be run with the connection close action passed in as a parameter
-        // The close action also supports being run asynchronously
-        internal void OnError(SqlException exception, bool breakConnection, Action<Action> wrapCloseInAction = null)
-        {
-            if (breakConnection)
-            {
-                DoomThisConnection();
-            }
-
-            SqlConnection connection = Connection;
-            if (connection != null)
-            {
-                connection.OnError(exception, breakConnection, wrapCloseInAction);
-            }
-            else if (exception.Class >= TdsEnums.MIN_ERROR_CLASS)
-            {
-                // It is an error, and should be thrown.  Class of TdsEnums.MIN_ERROR_CLASS
-                // or above is an error, below TdsEnums.MIN_ERROR_CLASS denotes an info message.
-                throw exception;
-            }
-        }
     }
 }
