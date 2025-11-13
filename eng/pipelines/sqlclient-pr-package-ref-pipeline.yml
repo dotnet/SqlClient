@@ -131,3 +131,6 @@ extends:
     ${{ else }}:
       testJobTimeout: ${{ parameters.testJobTimeout }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
+    # Don't run the AE tests in Debug mode; they rarely succeed.
+    ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
+      runAlwaysEncryptedTests: false
