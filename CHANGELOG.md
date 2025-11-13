@@ -827,15 +827,33 @@ This update brings the below changes over the previous release:
 - Added Microsoft.SqlServer.Types to verify support for SqlHierarchyId and Spatial for .NET Core. [#1848](https://github.com/dotnet/SqlClient/pull/1848)
 - Code health improvements:[#1943](https://github.com/dotnet/SqlClient/pull/1943)[#1949](https://github.com/dotnet/SqlClient/pull/1949)[#1198](https://github.com/dotnet/SqlClient/pull/1198)[#1829](https://github.com/dotnet/SqlClient/pull/1829)
 
-## [Stable release 5.1.8] - 2025-11-12
+## [Stable release 5.1.8] - 2025-11-14
 
 This update brings the following changes since the [5.1.7](release-notes/5.1/5.1.7.md) release:
 
 ### Added
 
-- Added Basic Availability Group failover to ignore server-supplied failover
-  host and use connection string host based on a new AppContext switch.
-  ([#3704](https://github.com/dotnet/SqlClient/pull/3704))
+#### App Context Switch for Ignoring Server-Provided Failover Partner
+
+*What Changed:*
+
+- A new app context switch `Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner` was introduced to let the client ignore server-provided failover partner info in Basic Availability Groups (BAGs). When the switch is enabled, only the failover partner specified in the connection string is used; server-supplied partner values are skipped. This context switch was introduced in PR [#3704](https://github.com/dotnet/SqlClient/pull/3704).
+
+*Who Benefits:*
+
+- Applications connecting to SQL Server BAGs using TCP and custom ports, especially where the server's provided partner name lacks the protocol, host, or port. This avoids connection failures when the server-provided partner is incompatible or incomplete.
+- Teams who manage availability groups and rely on client-side control of failover behavior in heterogeneous networking environments.
+
+*Impact:*
+
+- If your environment might be affected (i.e., you operate a BAG with custom ports, or have experienced failures after failover), you can enable the new switch in your application:
+
+```c#
+AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner", true);
+```
+
+- Then, ensure your connection string includes your preferred failover partner (with correct `tcp:host,port`) so that the client uses that instead of the server's suggestion.
+- Without enabling this, by default, the client continues to prefer the server-provided partner, maintaining backwards compatibility.
 
 ### Fixed
 
