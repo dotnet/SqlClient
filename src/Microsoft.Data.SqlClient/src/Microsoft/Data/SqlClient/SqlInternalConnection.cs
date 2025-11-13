@@ -186,40 +186,6 @@ namespace Microsoft.Data.SqlClient
             return new SqlReferenceCollection();
         }
 
-        /// <inheritdoc/>
-        override protected void Deactivate()
-        {
-            try
-            {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.Deactivate | ADV | Object Id {0} deactivating, Client Connection Id {1}", ObjectID, Connection?.ClientConnectionId);
-
-                SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
-                if (referenceCollection != null)
-                {
-                    referenceCollection.Deactivate();
-                }
-
-                // Invoke subclass-specific deactivation logic
-                InternalDeactivate();
-            }
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
-            catch (Exception e)
-            {
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
-
-                // if an exception occurred, the inner connection will be
-                // marked as unusable and destroyed upon returning to the
-                // pool
-                DoomThisConnection();
-#if NETFRAMEWORK
-                ADP.TraceExceptionWithoutRethrow(e);
-#endif
-            }
-        }
-
         override public void Dispose()
         {
             _whereAbouts = null;
@@ -245,10 +211,6 @@ namespace Microsoft.Data.SqlClient
                 transactionCookie = TransactionInterop.GetExportCookie(transaction, whereAbouts);
             }
             return transactionCookie;
-        }
-
-        virtual protected void InternalDeactivate()
-        {
         }
     }
 }

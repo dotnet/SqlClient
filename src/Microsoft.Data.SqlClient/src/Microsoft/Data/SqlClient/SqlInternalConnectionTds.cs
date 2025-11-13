@@ -1913,6 +1913,64 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <inheritdoc/>
+        protected override void Deactivate()
+        {
+            try
+            {
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    $"SqlInternalConnection.Deactivate | ADV | " +
+                    $"Object ID {ObjectID} deactivating, " +
+                    $"Client Connection Id {Connection?.ClientConnectionId}");
+
+                SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
+                referenceCollection?.Deactivate();
+
+                // When we're deactivated, the user must have called End on all the async commands,
+                // or we don't know that we're in a state that we can recover from. We doom the
+                // connection in this case, to prevent odd cases when we go to the wire.
+                if (_asyncCommandCount != 0)
+                {
+                    DoomThisConnection();
+                }
+
+                // If we're deactivating with a delegated transaction, we should not be cleaning up
+                // the parser just yet, that will cause our transaction to be rolled back and the
+                // connection to be reset. We'll get called again once the delegated transaction is
+                // completed, and we can do it all then.
+                // TODO: I think this logic cares about pooling because the pool will handle deactivation of pool-associated trasaction roots?
+                if (!(IsTransactionRoot && Pool == null))
+                {
+                    Debug.Assert(_parser != null || IsConnectionDoomed, "Deactivating a disposed connection?");
+                    if (_parser != null)
+                    {
+                        _parser.Deactivate(IsConnectionDoomed);
+
+                        if (!IsConnectionDoomed)
+                        {
+                            ResetConnection();
+                        }
+                    }
+                }
+            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            catch (Exception e)
+            {
+                if (!ADP.IsCatchableExceptionType(e))
+                {
+                    throw;
+                }
+
+                // If an exception occurred, the inner connection will be marked as unusable and
+                // destroyed upon returning to the pool
+                DoomThisConnection();
+
+                #if NETFRAMEWORK
+                ADP.TraceExceptionWithoutRethrow(e);
+                #endif
+            }
+        }
+
         // @TODO: Rename to match guidelines
         protected byte[] GetDTCAddress()
         {
@@ -1920,36 +1978,6 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(dtcAddress != null, "null dtcAddress?");
             return dtcAddress;
-        }
-
-        protected override void InternalDeactivate()
-        {
-            // When we're deactivated, the user must have called End on all the async commands, or
-            // we don't know that we're in a state that we can recover from. We doom the connection
-            // in this case, to prevent odd cases when we go to the wire.
-            if (_asyncCommandCount != 0)
-            {
-                DoomThisConnection();
-            }
-
-            // If we're deactivating with a delegated transaction, we should not be cleaning up the
-            // parser just yet, that will cause our transaction to be rolled back and the
-            // connection to be reset.  We'll get called again once the delegated transaction is
-            // completed, and we can do it all then.
-            // TODO: I think this logic cares about pooling because the pool will handle deactivation of pool-associated trasaction roots?
-            if (!(IsTransactionRoot && Pool == null))
-            {
-                Debug.Assert(_parser != null || IsConnectionDoomed, "Deactivating a disposed connection?");
-                if (_parser != null)
-                {
-                    _parser.Deactivate(IsConnectionDoomed);
-
-                    if (!IsConnectionDoomed)
-                    {
-                        ResetConnection();
-                    }
-                }
-            }
         }
 
         protected override bool ObtainAdditionalLocksForClose()
