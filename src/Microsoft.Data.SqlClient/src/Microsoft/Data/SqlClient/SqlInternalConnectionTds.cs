@@ -984,6 +984,17 @@ namespace Microsoft.Data.SqlClient
             ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
         }
 
+        internal SqlDataReader FindLiveReader(SqlCommand command)
+        {
+            SqlDataReader reader = null;
+            SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
+            if (referenceCollection != null)
+            {
+                reader = referenceCollection.FindLiveReader(command);
+            }
+            return reader;
+        }
+
         /// <summary>
         /// Called by SqlConnection.RepairConnection which is a relatively expensive way of repair
         /// inner connection prior to execution of request, used from EnlistTransaction,

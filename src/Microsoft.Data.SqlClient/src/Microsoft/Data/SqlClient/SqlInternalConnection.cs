@@ -191,16 +191,5 @@ namespace Microsoft.Data.SqlClient
             _whereAbouts = null;
             base.Dispose();
         }
-
-        internal SqlDataReader FindLiveReader(SqlCommand command)
-        {
-            SqlDataReader reader = null;
-            SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
-            if (referenceCollection != null)
-            {
-                reader = referenceCollection.FindLiveReader(command);
-            }
-            return reader;
-        }
     }
 }
