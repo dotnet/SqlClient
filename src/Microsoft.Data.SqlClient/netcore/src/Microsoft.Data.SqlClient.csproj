@@ -222,6 +222,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Connection\SessionStateRecord.cs">
       <Link>Microsoft\Data\SqlClient\Connection\SessionStateRecord.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Connection\SqlConnectionInternal.cs">
+      <Link>Microsoft\Data\SqlClient\Connection\SqlConnectionInternal.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs">
       <Link>Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs</Link>
     </Compile>
@@ -701,9 +704,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs">
-      <Link>Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlInternalTransaction.cs">
       <Link>Microsoft\Data\SqlClient\SqlInternalTransaction.cs</Link>
