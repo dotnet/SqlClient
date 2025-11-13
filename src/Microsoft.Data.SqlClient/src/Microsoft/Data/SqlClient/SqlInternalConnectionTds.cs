@@ -769,7 +769,6 @@ namespace Microsoft.Data.SqlClient
             // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
-
         internal SqlTransaction BeginSqlTransaction(
             IsolationLevel iso,
             string transactionName,
@@ -886,7 +885,7 @@ namespace Microsoft.Data.SqlClient
         internal void DisconnectTransaction(SqlInternalTransaction internalTransaction) =>
             _parser?.DisconnectTransaction(internalTransaction);
 
-        // @TODO: Make internal by making the SqlInternalConnection implementation internal
+        // @TODO: Make internal by making the DbConnectionInternal implementation internal
         public override void Dispose()
         {
             SqlClientEventSource.Log.TryAdvancedTraceEvent(
@@ -1923,6 +1922,12 @@ namespace Microsoft.Data.SqlClient
                 Enlist(null);
             }
         }
+
+        protected override void CleanupTransactionOnCompletion(Transaction transaction) =>
+            DelegatedTransaction?.TransactionEnded(transaction);
+
+        protected override DbReferenceCollection CreateReferenceCollection() =>
+            new SqlReferenceCollection();
 
         /// <inheritdoc/>
         protected override void Deactivate()
