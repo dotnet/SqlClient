@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Server;
 
 #if NETFRAMEWORK
@@ -487,7 +488,7 @@ namespace Microsoft.Data.SqlClient
 
             // @TODO: This can be cleaned up to lines if InnerConnection is always SqlInternalConnection 
             ExecuteXmlReaderAsyncCallContext context = null;
-            if (_activeConnection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
+            if (_activeConnection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
             {
                 context = sqlInternalConnection.CachedContexts.ClearCommandExecuteXmlReaderAsyncContext();
             }
@@ -570,7 +571,7 @@ namespace Microsoft.Data.SqlClient
             protected override void AfterCleared(SqlCommand owner)
             {
                 DbConnectionInternal internalConnection = owner?._activeConnection?.InnerConnection;
-                if (internalConnection is SqlInternalConnectionTds sqlInternalConnection)
+                if (internalConnection is SqlConnectionInternal sqlInternalConnection)
                 {
                     sqlInternalConnection.CachedContexts.TrySetCommandExecuteXmlReaderAsyncContext(this);
                 }

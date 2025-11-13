@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Connection;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -266,8 +267,7 @@ namespace Microsoft.Data.SqlClient
                         // If it is async, then TryFetchInputParameterEncryptionInfo ->
                         // RunExecuteReaderTds would have incremented the async count. Decrement it
                         // when we are about to complete async execute reader.
-                        SqlInternalConnectionTds internalConnectionTds =
-                            command._activeConnection.GetOpenTdsConnection();
+                        SqlConnectionInternal internalConnectionTds = command._activeConnection.GetOpenTdsConnection();
                         if (internalConnectionTds is not null)
                         {
                             internalConnectionTds.DecrementAsyncCount();
@@ -345,7 +345,7 @@ namespace Microsoft.Data.SqlClient
                     // If it is async, then TryFetchInputParameterEncryptionInfo ->
                     // RunExecuteReaderTds would have incremented the async count. Decrement it
                     // when we are about to complete async execute reader.
-                    SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
+                    SqlConnectionInternal internalConnectionTds = _activeConnection.GetOpenTdsConnection();
                     if (internalConnectionTds is not null)
                     {
                         internalConnectionTds.DecrementAsyncCount();
@@ -769,7 +769,7 @@ namespace Microsoft.Data.SqlClient
             if (decrementAsyncCount)
             {
                 // Decrement the async count
-                SqlInternalConnectionTds internalConnection = _activeConnection.GetOpenTdsConnection();
+                SqlConnectionInternal internalConnection = _activeConnection.GetOpenTdsConnection();
                 internalConnection?.DecrementAsyncCount();
             }
 
