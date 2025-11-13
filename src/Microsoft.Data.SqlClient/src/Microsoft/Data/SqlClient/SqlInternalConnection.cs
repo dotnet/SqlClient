@@ -30,7 +30,6 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlDataReader.Snapshot CachedDataReaderSnapshot;
         internal SqlDataReader.IsDBNullAsyncCallContext CachedDataReaderIsDBNullContext;
-        internal SqlDataReader.ReadAsyncCallContext CachedDataReaderReadAsyncContext;
 
         /// <summary>
         /// Constructs a new SqlInternalConnection object using the provided connection options.
