@@ -4101,10 +4101,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     // reset snapshot to save memory use.  We can safely do that here because all SqlDataReader values are stable.
                     // The retry logic can use the current values to get back to the right state.
-                    if (_connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection && sqlInternalConnection.CachedDataReaderSnapshot is null)
+                    if (_connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
                     {
-                        sqlInternalConnection.CachedDataReaderSnapshot = _snapshot;
+                        sqlInternalConnection.CachedContexts.TrySetDataReaderSnapshot(_snapshot);
                     }
+
                     _snapshot = null;
                     PrepareAsyncInvocation(useSnapshot: true);
                 }
@@ -5085,10 +5086,11 @@ namespace Microsoft.Data.SqlClient
                     if (!hasReadRowToken)
                     {
                         hasReadRowToken = true;
-                        if (reader.Connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection && sqlInternalConnection.CachedDataReaderSnapshot is null)
+                        if (reader.Connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
                         {
-                            sqlInternalConnection.CachedDataReaderSnapshot = reader._snapshot;
+                            sqlInternalConnection.CachedContexts.TrySetDataReaderSnapshot(reader._snapshot);
                         }
+
                         reader._snapshot = null;
                         reader.PrepareAsyncInvocation(useSnapshot: true);
                     }
@@ -5794,7 +5796,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
                     {
-                        _snapshot = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderSnapshot, null) ?? new Snapshot();
+                        _snapshot = sqlInternalConnection.CachedContexts.ClearDataReaderSnapshot() ?? new Snapshot();
                     }
                     else
                     {
@@ -5872,10 +5874,11 @@ namespace Microsoft.Data.SqlClient
             stateObj._permitReplayStackTraceToDiffer = false;
 #endif
 
-            if (_connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection && sqlInternalConnection.CachedDataReaderSnapshot is null)
+            if (_connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
             {
-                sqlInternalConnection.CachedDataReaderSnapshot = _snapshot;
+                sqlInternalConnection.CachedContexts.TrySetDataReaderSnapshot(_snapshot);
             }
+
             // We are setting this to null inside the if-statement because stateObj==null means that the reader hasn't been initialized or has been closed (either way _snapshot should already be null)
             _snapshot = null;
         }
@@ -5914,10 +5917,11 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_snapshot != null, "Should currently have a snapshot");
             Debug.Assert(_stateObj != null && !_stateObj._asyncReadWithoutSnapshot, "Already in async without snapshot");
 
-            if (_connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection && sqlInternalConnection.CachedDataReaderSnapshot is null)
+            if (_connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
             {
-                sqlInternalConnection.CachedDataReaderSnapshot = _snapshot;
+                sqlInternalConnection.CachedContexts.TrySetDataReaderSnapshot(_snapshot);
             }
+
             _snapshot = null;
             _stateObj.ResetSnapshot();
             _stateObj._asyncReadWithoutSnapshot = true;

@@ -41,6 +41,11 @@ namespace Microsoft.Data.SqlClient.Connection
         /// </summary>
         private SqlDataReader.ReadAsyncCallContext? _dataReaderReadAsyncContext;
 
+        /// <summary>
+        /// Stores a data reader snapshot.
+        /// </summary>
+        private SqlDataReader.Snapshot? _dataReaderSnapshot;
+
         #endregion
 
         #region Access Methods
@@ -79,6 +84,13 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <returns>The previously cached context or null when empty.</returns>
         internal SqlDataReader.IsDBNullAsyncCallContext? ClearDataReaderIsDbNullContext() =>
             Interlocked.Exchange(ref _dataReaderIsDbNullContext, null);
+
+        /// <summary>
+        /// Removes and returns the cached data reader snapshot.
+        /// </summary>
+        /// <returns>The previously cached snapshot or null when empty.</returns>
+        internal SqlDataReader.Snapshot? ClearDataReaderSnapshot() =>
+            Interlocked.Exchange(ref _dataReaderSnapshot, null);
 
         /// <summary>
         /// Attempts to cache the provided ExecuteNonQueryAsync context.
@@ -129,6 +141,16 @@ namespace Microsoft.Data.SqlClient.Connection
         /// </returns>
         internal bool TrySetDataReaderIsDbNullContext(SqlDataReader.IsDBNullAsyncCallContext value) =>
             TrySetContext(value, ref _dataReaderIsDbNullContext);
+
+        /// <summary>
+        /// Attempts to cache the provided data reader snapshot context.
+        /// </summary>
+        /// <param name="value">Context instance to store.</param>
+        /// <returns>
+        /// True when the snapshot is cached; false if an existing snapshot is preserved.
+        /// </returns>
+        internal bool TrySetDataReaderSnapshot(SqlDataReader.Snapshot value) =>
+            TrySetContext(value, ref _dataReaderSnapshot);
 
         #endregion
 
