@@ -831,34 +831,32 @@ This update brings the below changes over the previous release:
 
 This update brings the following changes since the [5.1.7](release-notes/5.1/5.1.7.md) release:
 
+### Added
+
+- Added Basic Availability Group failover to ignore server-supplied failover
+  host and use connection string host based on a new AppContext switch.
+  ([#3704](https://github.com/dotnet/SqlClient/pull/3704))
+
 ### Fixed
 
 - Fixed a bulk copy bug that incorrectly prepended a UTF-8 Byte-Order-Marker
   when processing row data.
   ([#3617](https://github.com/dotnet/SqlClient/pull/3617))
-- Fixed Basic Availability Group failover to ignore server-supplied failover
-  host and use connection string host based on a new AppContext switch.
-  ([#3704](https://github.com/dotnet/SqlClient/pull/3704))
 
 ### Changed
 
 - Modernized creation of `Microsoft.Identity.Client.PublicClientApplication`
   instances to use its builder pattern.
   ([#3367](https://github.com/dotnet/SqlClient/pull/3367))
-- Replaced use of undocumented .NET Framework internals when reading `SqlDecimal` values.
+- Replaced use of undocumented .NET Framework internals when reading
+  `SqlDecimal` values.
   ([#3465](https://github.com/dotnet/SqlClient/pull/3465))
-- Back-ported several test and pipeline changes to stabilize CI and Official pipelines.
-  ([#3599](https://github.com/dotnet/SqlClient/pull/3599),
-   [#3494](https://github.com/dotnet/SqlClient/pull/3494),
-   [#3591](https://github.com/dotnet/SqlClient/pull/3591),
-   [#3204](https://github.com/dotnet/SqlClient/pull/3204),
-   [#3542](https://github.com/dotnet/SqlClient/pull/3542))
 - Updated the following dependencies
   ([#3754](https://github.com/dotnet/SqlClient/pull/3754)):
-  - Azure.Core 1.45.0
+  - Azure.Core 1.41.0
     (Avoids transitive [vulnerability](https://github.com/Azure/azure-sdk-for-net/issues/44817))
   - Azure.Identity 1.12.1
-  - Microsoft.Identity.Client 4.78.0
+  - Microsoft.Identity.Client 4.76.0
 
 ## [Stable release 5.1.7] - 2025-04-25
 
