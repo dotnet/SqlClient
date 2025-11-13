@@ -16,9 +16,8 @@ namespace Microsoft.Data.SqlClient.Connection
         private SqlCommand.ExecuteNonQueryAsyncCallContext? _commandExecuteNonQueryAsyncContext;
         private SqlCommand.ExecuteReaderAsyncCallContext? _commandExecuteReaderAsyncContext;
         private SqlCommand.ExecuteXmlReaderAsyncCallContext? _commandExecuteXmlReaderAsyncContext;
-        // private SqlDataReader.IsDBNullAsyncCallContext? _dataReaderIsDbNullContext;
+        private SqlDataReader.IsDBNullAsyncCallContext? _dataReaderIsDbNullContext;
         private SqlDataReader.ReadAsyncCallContext? _dataReaderReadAsyncContext;
-        // private SqlDataReader.Snapshot? _dataReaderSnapshot;
 
         #endregion
 
@@ -36,6 +35,9 @@ namespace Microsoft.Data.SqlClient.Connection
         internal SqlDataReader.ReadAsyncCallContext? ClearDataReaderReadAsyncContext() =>
             Interlocked.Exchange(ref _dataReaderReadAsyncContext, null);
 
+        internal SqlDataReader.IsDBNullAsyncCallContext? ClearDataReaderIsDbNullContext() =>
+            Interlocked.Exchange(ref _dataReaderIsDbNullContext, null);
+
         internal bool TrySetCommandExecuteNonQueryAsyncContext(SqlCommand.ExecuteNonQueryAsyncCallContext value) =>
             TrySetContext(value, ref _commandExecuteNonQueryAsyncContext);
 
@@ -47,6 +49,9 @@ namespace Microsoft.Data.SqlClient.Connection
 
         internal bool TrySetDataReaderReadAsyncContext(SqlDataReader.ReadAsyncCallContext value) =>
             TrySetContext(value, ref _dataReaderReadAsyncContext);
+
+        internal bool TrySetDataReaderIsDbNullContext(SqlDataReader.IsDBNullAsyncCallContext value) =>
+            TrySetContext(value, ref _dataReaderIsDbNullContext);
 
         #endregion
 

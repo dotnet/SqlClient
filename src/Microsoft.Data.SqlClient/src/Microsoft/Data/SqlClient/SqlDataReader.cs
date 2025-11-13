@@ -5208,7 +5208,7 @@ namespace Microsoft.Data.SqlClient
                     IsDBNullAsyncCallContext context = null;
                     if (_connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
                     {
-                        context = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderIsDBNullContext, null);
+                        context = sqlInternalConnection.CachedContexts.ClearDataReaderIsDbNullContext();
                     }
                     if (context is null)
                     {
@@ -5246,14 +5246,6 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 return reader.ExecuteAsyncCall(context);
-            }
-        }
-
-        private void SetCachedIDBNullAsyncCallContext(IsDBNullAsyncCallContext instance)
-        {
-            if (_connection?.InnerConnection is SqlInternalConnectionTds sqlInternalConnection)
-            {
-                Interlocked.CompareExchange(ref sqlInternalConnection.CachedDataReaderIsDBNullContext, instance, null);
             }
         }
 
@@ -5515,7 +5507,11 @@ namespace Microsoft.Data.SqlClient
 
             protected override void AfterCleared(SqlDataReader owner)
             {
-                owner.SetCachedIDBNullAsyncCallContext(this);
+                DbConnectionInternal internalConnection = owner?._connection?.InnerConnection;
+                if (internalConnection is SqlInternalConnectionTds sqlInternalConnection)
+                {
+                    sqlInternalConnection.CachedContexts.TrySetDataReaderIsDbNullContext(this);
+                }
             }
         }
 
