@@ -516,6 +516,32 @@ namespace Microsoft.Data.SqlClient
             get => _clientConnectionId;
         }
 
+        /// <summary>
+        /// A reference to the SqlConnection that owns this internal connection.
+        /// </summary>
+        internal SqlConnection Connection => (SqlConnection)Owner;
+
+        /// <summary>
+        /// The connection options to be used for this connection.
+        /// </summary>
+        internal SqlConnectionString ConnectionOptions { get; }
+
+        /// <summary>
+        /// The current database for this connection. Null if the connection is not open yet.
+        /// </summary>
+        internal string CurrentDatabase { get; private set; }
+
+        /// <summary>
+        /// The current data source for this connection.
+        /// </summary>
+        /// <remarks>
+        /// If connection is not open yet, CurrentDataSource is null
+        /// If connection is open:
+        /// * for regular connections, it is set to the Data Source value from connection string
+        /// * for failover connections, it is set to the FailoverPartner value from the connection string
+        /// </remarks>
+        internal string CurrentDataSource { get; set; }
+
         internal SessionData CurrentSessionData
         {
             get
@@ -536,6 +562,11 @@ namespace Microsoft.Data.SqlClient
         {
             get => _parser.CurrentTransaction;
         }
+
+        /// <summary>
+        /// The delegated (or promoted) transaction this connection is responsible for.
+        /// </summary>
+        internal SqlDelegatedTransaction DelegatedTransaction { get; set; }
 
         /// <summary>
         /// Whether this connection has a local (non-delegated) transaction.
@@ -576,7 +607,7 @@ namespace Microsoft.Data.SqlClient
             get => _instanceName;
         }
 
-        internal override bool Is2008OrNewer
+        internal bool Is2008OrNewer
         {
             get => _parser.Is2008OrNewer;
         }
@@ -592,7 +623,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Get or set if the control ring send redirect token and feature ext ack with true for DNSCaching
+        /// Get or set if the control ring send redirect token and feature ext ack with true for
+        /// DNSCaching.
         /// </summary>
         /// @TODO: Make auto-property
         internal bool IsDNSCachingBeforeRedirectSupported
@@ -601,7 +633,27 @@ namespace Microsoft.Data.SqlClient
             set => _dnsCachingBeforeRedirect = value;
         }
 
-        internal override bool IsLockedForBulkCopy
+        /// <summary>
+        /// Indicates whether the connection is currently enlisted in a transaction.
+        /// </summary>
+        internal bool IsEnlistedInTransaction { get; set; }
+
+        /// <summary>
+        /// Whether this is a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
+        /// TODO: overlaps with IsGlobalTransactionsEnabledForServer, need to consolidate to avoid bugs
+        /// </summary>
+        internal bool IsGlobalTransaction { get; private set; }
+
+        /// <summary>
+        /// Whether Global Transactions are enabled. Only supported by Azure SQL. False if disabled
+        /// or connected to on-prem SQL Server.
+        /// </summary>
+        internal bool IsGlobalTransactionsEnabledForServer { get; private set; }
+
+        /// <summary>
+        /// Whether this connection is locked for bulk copy operations.
+        /// </summary>
+        internal bool IsLockedForBulkCopy
         {
             get => !_parser.MARSOn && _parser._physicalStateObj.BcpLock;
         }
@@ -624,6 +676,14 @@ namespace Microsoft.Data.SqlClient
         {
             get => _SQLDNSRetryEnabled;
             set => _SQLDNSRetryEnabled = value;
+        }
+
+        /// <summary>
+        /// Whether this connection is the root of a delegated or promoted transaction.
+        /// </summary>
+        internal override bool IsTransactionRoot
+        {
+            get => DelegatedTransaction?.IsActive == true;
         }
 
         // @TODO: Make auto-property
@@ -657,6 +717,11 @@ namespace Microsoft.Data.SqlClient
         {
             get => _poolGroupProviderInfo;
         }
+
+        /// <summary>
+        /// A token returned by the server when we promote transaction.
+        /// </summary>
+        internal byte[] PromotedDtcToken { get; private set; }
 
         // @TODO: Make auto-property
         internal string RoutingDestination
@@ -748,6 +813,12 @@ namespace Microsoft.Data.SqlClient
         {
             get => _parser._fResetConnection ? null : CurrentTransaction;
         }
+
+        /// <summary>
+        /// Whether this connection is to an Azure SQL Database.
+        /// </summary>
+        // @TODO: Make private field.
+        private bool IsAzureSqlConnection { get; set; }
 
         #endregion
 
