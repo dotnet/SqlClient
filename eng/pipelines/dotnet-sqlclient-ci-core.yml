@@ -66,11 +66,10 @@ parameters:
     - Package
 
 - name: buildConfiguration
-  displayName: 'Build Configuration'
-  default: Release
+  type: string
   values:
-    - Release
     - Debug
+    - Release
 
 - name: defaultPoolName
   type: string
@@ -82,9 +81,8 @@ parameters:
   default: false
 
 # The timeout, in minutes, for each test job.
-- name: testsTimeout
-  type: string
-  default: 90
+- name: testJobTimeout
+  type: number
 
 variables:
   - template: libraries/ci-build-variables.yml@self
@@ -101,7 +99,7 @@ stages:
     jobs:
     - template: common/templates/jobs/ci-build-nugets-job.yml@self
       parameters:
-        configuration: ${{ parameters.buildConfiguration }}
+        buildConfiguration: ${{ parameters.buildConfiguration }}
         artifactName: $(artifactName)
         ${{if ne(parameters.SNIVersion, '')}}:
           prebuildSteps:
@@ -123,8 +121,9 @@ stages:
   - template: common/templates/stages/ci-run-tests-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
+      buildConfiguration: ${{ parameters.buildConfiguration }}
       buildType: ${{ parameters.buildType }}
-      testsTimeout: ${{ parameters.testsTimeout }}
+      testJobTimeout: ${{ parameters.testJobTimeout }}
       ${{ if eq(parameters.buildType, 'Package') }}:
         dependsOn: build_nugets
 
@@ -139,6 +138,7 @@ stages:
               debug: ${{ parameters.debug }}
               artifactName: $(artifactName)
               buildType: ${{ parameters.buildType }}
+              buildConfiguration: ${{ parameters.buildConfiguration }}
       ${{else}}:
         prebuildSteps: # steps to run prior to building and running tests on each job
           - template: common/templates/steps/ci-prebuild-step.yml@self
@@ -146,6 +146,7 @@ stages:
               debug: ${{ parameters.debug }}
               artifactName: $(artifactName)
               buildType: ${{ parameters.buildType }}
+              buildConfiguration: ${{ parameters.buildConfiguration }}
 
       ${{ if eq(parameters.buildType, 'Project') }}: # only run the code coverage job if the build type is project
         postTestJobs: # jobs to run after the tests are done

@@ -7,6 +7,9 @@
 parameters:
     - name: buildConfiguration
       type: string
+      values:
+        - Debug
+        - Release
 
     - name: generateSymbolsPackage
       type: boolean

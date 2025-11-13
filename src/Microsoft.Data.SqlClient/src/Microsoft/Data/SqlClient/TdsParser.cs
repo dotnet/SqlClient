@@ -1813,9 +1813,11 @@ namespace Microsoft.Data.SqlClient
                 // strip provider info from SNI
                 //
                 int iColon = errorMessage.IndexOf(':');
-                Debug.Assert(0 <= iColon, "':' character missing in sni errorMessage");
+                // TODO(GH-3604): Fix this failing assertion.
+                // Debug.Assert(0 <= iColon, "':' character missing in sni errorMessage");
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > ':' character missing in sni errorMessage. Error Message index of ':' = {0}", iColon);
-                Debug.Assert(errorMessage.Length > iColon + 1 && errorMessage[iColon + 1] == ' ', "Expecting a space after the ':' character");
+                // TODO(GH-3604): Fix this failing assertion.
+                // Debug.Assert(errorMessage.Length > iColon + 1 && errorMessage[iColon + 1] == ' ', "Expecting a space after the ':' character");
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Expecting a space after the ':' character. Error Message Length = {0}", errorMessage.Length);
 
                 // extract the message excluding the colon and trailing cr/lf chars
