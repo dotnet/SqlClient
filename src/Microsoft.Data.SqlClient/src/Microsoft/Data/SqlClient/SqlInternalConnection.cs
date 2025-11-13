@@ -18,16 +18,6 @@ namespace Microsoft.Data.SqlClient
 {
     internal abstract class SqlInternalConnection : DbConnectionInternal
     {
-        /// <summary>
-        /// Constructs a new SqlInternalConnection object using the provided connection options.
-        /// </summary>
-        /// <param name="connectionOptions">The options to use for this connection.</param>
-        internal SqlInternalConnection(SqlConnectionString connectionOptions) : base()
-        {
-            Debug.Assert(connectionOptions != null, "null connectionOptions?");
-            ConnectionOptions = connectionOptions;
-        }
-
         #region Properties
 
         // SQLBU 415870
