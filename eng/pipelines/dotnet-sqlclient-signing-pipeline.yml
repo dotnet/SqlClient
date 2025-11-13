@@ -68,6 +68,45 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: string
   default: 90
 
+# Manual Release Parameters
+# Release stage runs ONLY when build is manually queued AND runRelease = true.
+- name: runRelease
+  displayName: 'Run manual release stage'
+  type: boolean
+  default: false
+
+- name: publishDestination
+  displayName: 'Publish destination'
+  type: string
+  default: Internal
+  values:
+  - Internal
+  - Public
+
+- name: dryRun
+  displayName: 'Dry run (no publish)'
+  type: boolean
+  default: false
+
+- name: internalFeedSource
+  displayName: 'Internal feed source URL'
+  type: string
+  default: ''
+
+- name: publicNuGetSource
+  displayName: 'Public NuGet source URL'
+  type: string
+  default: 'https://api.nuget.org/v3/index.json'
+
+- name: product
+  displayName: 'Product code (mds|akv)'
+  type: string
+  default: 'mds'
+  values:
+  - mds
+  - mss
+  - akv
+
 variables:
   - template: /eng/pipelines/libraries/variables.yml@self
   - name: packageFolderName
@@ -174,3 +213,18 @@ extends:
 #            artifact: $(packageFolderName)
 #            patterns: '**/*.nupkg'
 #            displayName: 'Download NuGet Package'
+
+    # Manual Release Stage (templated)
+    - template: eng/pipelines/common/templates/stages/release-stage.yml@self
+      parameters:
+        runRelease: ${{ parameters.runRelease }}
+        publishDestination: ${{ parameters.publishDestination }}
+        dryRun: ${{ parameters.dryRun }}
+        approvalAliases: '[ADO.Net]\\SqlClient Admins'
+        internalFeedSource: ${{ parameters.internalFeedSource }}
+        publicNuGetSource: ${{ parameters.publicNuGetSource }}
+        publishSymbols: ${{ parameters.publishSymbols }}
+        isPreview: ${{ parameters.isPreview }}
+        packageFolderName: $(packageFolderName)
+        nugetPackageVersion: $(NugetPackageVersion)
+        product: ${{ parameters.product }}

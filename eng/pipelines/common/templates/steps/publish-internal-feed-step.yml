@@ -1,0 +1,32 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: dryRun
+    type: boolean
+  - name: internalFeedSource
+    type: string
+  - name: packagesGlob
+    type: string
+    default: '$(System.DefaultWorkingDirectory)/_dotnet-sqlclient-Official/drop_buildMDS_build_signed_package/*.nupkg'
+
+steps:
+- script: |
+    set -e
+    SRC='${{ parameters.internalFeedSource }}'
+    if [ -z "$SRC" ]; then
+      echo "Internal feed source parameter not set."
+      exit 1
+    fi
+    if [ "${{ parameters.dryRun }}" = "true" ]; then
+      echo "[DRY RUN] Would push to $SRC"
+      find "${{ parameters.packagesGlob }}" -name "*.nupkg"
+      exit 0
+    fi
+    for f in $(find "${{ parameters.packagesGlob }}" -name "*.nupkg"); do
+      echo "Push $f"
+      dotnet nuget push --source "$SRC" --api-key az "$f"
+    done
+  displayName: 'Publish to Internal Feed'

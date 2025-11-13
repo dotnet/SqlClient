@@ -1,0 +1,53 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: runRelease
+    type: boolean
+  - name: publishDestination
+    type: string
+  - name: dryRun
+    type: boolean
+  - name: approvalAliases
+    type: string
+  - name: internalFeedSource
+    type: string
+  - name: publicNuGetSource
+    type: string
+  - name: publishSymbols
+    type: boolean
+  - name: isPreview
+    type: boolean
+  - name: product
+    type: string
+  - name: nugetPackageVersion
+    type: string
+  - name: packageFolderName
+    type: string
+
+stages:
+- stage: releaseMDS
+  displayName: 'Release (Manual)'
+  condition: and(succeeded(), eq(variables['Build.Reason'],'Manual'), eq(${{ parameters.runRelease }}, true))
+  jobs:
+  - template: ../jobs/approval-job.yml
+    parameters:
+      approvalAliases: ${{ parameters.approvalAliases }}
+      publishDestination: ${{ parameters.publishDestination }}
+      dryRun: ${{ parameters.dryRun }}
+      isPreview: ${{ parameters.isPreview }}
+      publishSymbols: ${{ parameters.publishSymbols }}
+      nugetPackageVersion: ${{ parameters.nugetPackageVersion }}
+      product: ${{ parameters.product }}
+  - template: ../jobs/publish-packages-job.yml
+    parameters:
+      publishDestination: ${{ parameters.publishDestination }}
+      dryRun: ${{ parameters.dryRun }}
+      internalFeedSource: ${{ parameters.internalFeedSource }}
+      publicNuGetSource: ${{ parameters.publicNuGetSource }}
+      publishSymbols: ${{ parameters.publishSymbols }}
+      packageFolderName: ${{ parameters.packageFolderName }}
+      nugetPackageVersion: ${{ parameters.nugetPackageVersion }}
+      product: ${{ parameters.product }}

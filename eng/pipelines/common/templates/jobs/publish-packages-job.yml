@@ -1,0 +1,60 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: publishDestination
+    type: string
+  - name: dryRun
+    type: boolean
+  - name: internalFeedSource
+    type: string
+  - name: publicNuGetSource
+    type: string
+  - name: publishSymbols
+    type: boolean
+  - name: packageFolderName
+    type: string
+  - name: nugetPackageVersion
+    type: string
+  - name: product
+    type: string
+
+jobs:
+- job: PublishPackages
+  displayName: 'Publish Packages'
+  dependsOn: AwaitApproval
+  condition: succeeded()
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - task: DownloadPipelineArtifact@2
+    displayName: 'Download Signed Packages'
+    inputs:
+      buildType: current
+      artifactName: ${{ parameters.packageFolderName }}
+      targetPath: $(Pipeline.Workspace)/release/packages
+  - script: |
+      echo "NuGet Package Version: ${{ parameters.nugetPackageVersion }}"
+    displayName: 'Echo NuGet Package Version'
+  - template: ../steps/list-packages-step.yml
+    parameters:
+      path: $(Pipeline.Workspace)/release/packages
+  - ${{ if ne(parameters.publishDestination, 'Public') }}:
+    - template: ../steps/publish-internal-feed-step.yml
+      parameters:
+        dryRun: ${{ parameters.dryRun }}
+        internalFeedSource: ${{ parameters.internalFeedSource }}
+  - ${{ if eq(parameters.publishDestination, 'Public') }}:
+    - template: ../steps/publish-public-nuget-step.yml
+      parameters:
+        dryRun: ${{ parameters.dryRun }}
+        publicNuGetSource: ${{ parameters.publicNuGetSource }}
+  - ${{ if parameters.publishSymbols }}:
+    - template: ../steps/publish-symbols-step.yml
+      parameters:
+        dryRun: ${{ parameters.dryRun }}
+        publishSymbols: ${{ parameters.publishSymbols }}
+        symbolsArtifactName: ${{ parameters.product }}_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.nugetPackageVersion }}_$(System.TimelineId)
+        product: ${{ parameters.product }}

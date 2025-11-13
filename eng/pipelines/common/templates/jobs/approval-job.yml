@@ -1,0 +1,40 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: approvalAliases
+    type: string
+  - name: publishDestination
+    type: string
+  - name: dryRun
+    type: boolean
+  - name: isPreview
+    type: boolean
+  - name: publishSymbols
+    type: boolean
+  - name: nugetPackageVersion
+    type: string
+  - name: product
+    type: string
+
+jobs:
+- job: AwaitApproval
+  displayName: 'Await Release Approval'
+  pool: server
+  steps:
+  - task: ManualValidation@0
+    displayName: 'Manual Approval'
+    timeoutInMinutes: 4320
+    inputs:
+      notifyUsers: ${{ parameters.approvalAliases }}
+      instructions: |
+        Release Checklist:
+         * Destination: ${{ parameters.publishDestination }}
+         * Preview build: ${{ parameters.isPreview }}
+         * Dry run: ${{ parameters.dryRun }}
+         * Symbols: ${{ parameters.publishSymbols }}
+         * NuGet package version: ${{ parameters.nugetPackageVersion }}
+         * Product: ${{ parameters.product }}
+        Approve to continue or Reject to abort.
