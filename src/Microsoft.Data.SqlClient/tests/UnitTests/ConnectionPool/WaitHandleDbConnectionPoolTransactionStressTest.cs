@@ -66,12 +66,12 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
         return pool;
     }
 
-    private void AssertPoolMetrics(WaitHandleDbConnectionPool pool, int expectedMaxCount, string context)
+    private void AssertPoolMetrics(WaitHandleDbConnectionPool pool, int expectedMaxCount)
     {
         Assert.True(pool.Count <= expectedMaxCount,
-            $"{context}: Pool count ({pool.Count}) exceeded max pool size ({expectedMaxCount})");
+            $"Pool count ({pool.Count}) exceeded max pool size ({expectedMaxCount})");
         Assert.True(pool.Count >= 0,
-            $"{context}: Pool count ({pool.Count}) is negative");
+            $"Pool count ({pool.Count}) is negative");
 
 
 #if DEBUG
@@ -115,7 +115,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
             }
 
             // Assert
-            AssertPoolMetrics(pool, 10, "After rapid single-threaded transactions");
+            AssertPoolMetrics(pool, 10);
         }
         finally
         {
@@ -174,7 +174,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
 
             // Assert
             Assert.Empty(exceptions);
-            AssertPoolMetrics(pool, 20, "After concurrent transactions");
+            AssertPoolMetrics(pool, 20);
         }
         finally
         {
@@ -241,7 +241,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
 
             // Assert
             Assert.Empty(exceptions);
-            AssertPoolMetrics(pool, 30, "After intermingled transactions");
+            AssertPoolMetrics(pool, 30);
         }
         finally
         {
@@ -302,7 +302,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
 
             // Assert
             Assert.Empty(exceptions);
-            AssertPoolMetrics(pool, 40, "After mixed transacted/non-transacted operations");
+            AssertPoolMetrics(pool, 40);
         }
         finally
         {
@@ -364,7 +364,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
 
             // Assert
             Assert.Empty(exceptions);
-            AssertPoolMetrics(pool, 25, "After pool saturation with transactions");
+            AssertPoolMetrics(pool, 25);
         }
         finally
         {
@@ -415,7 +415,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
             // Assert
             Assert.Empty(exceptions);
             Assert.True(completedOperations > 0, "No operations completed successfully");
-            AssertPoolMetrics(pool, 30, "After thousands of rapid operations");
+            AssertPoolMetrics(pool, 30);
         }
         finally
         {
@@ -487,7 +487,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
 
             // Assert
             Assert.Empty(exceptions);
-            AssertPoolMetrics(pool, 20, "After transaction affinity test");
+            AssertPoolMetrics(pool, 20);
             // We should see some connection reuse
             Assert.True(connectionReuseCounts.Values.Sum() > 0, "Expected some connection reuse within transactions");
         }
@@ -548,7 +548,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
             // Assert
             Assert.Empty(exceptions);
             Assert.Equal(transactionCount, transactionConnections.Count);
-            AssertPoolMetrics(pool, 30, "After transaction isolation test");
+            AssertPoolMetrics(pool, 30);
         }
         finally
         {
@@ -608,7 +608,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
 
             // Assert
             Assert.Empty(exceptions);
-            AssertPoolMetrics(pool, 30, "After async transactions");
+            AssertPoolMetrics(pool, 30);
         }
         finally
         {
@@ -674,7 +674,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
             // Assert
             Assert.Empty(exceptions);
             Assert.True(rollbackCount > 0, "Expected some rollbacks");
-            AssertPoolMetrics(pool, 20, "After transaction rollbacks");
+            AssertPoolMetrics(pool, 20);
         }
         finally
         {
@@ -732,7 +732,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
 
             // Assert
             Assert.Empty(exceptions);
-            AssertPoolMetrics(pool, 30, "After mixed transaction outcomes");
+            AssertPoolMetrics(pool, 30);
             Assert.True(outcomes.Values.Sum() > 0, "Expected some transactions to complete");
         }
         finally
@@ -801,7 +801,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
         }
 
         // Assert - Just verify no crash occurred and pool count is valid
-        AssertPoolMetrics(pool, 15, "After rapid shutdown during transactions");
+        AssertPoolMetrics(pool, 15);
     }
 
     [Fact]
@@ -857,7 +857,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
             // Assert
             Assert.Empty(exceptions);
             Assert.True(successCount > 0, "Expected some successful operations despite high contention");
-            AssertPoolMetrics(pool, 1, "After high contention on single connection");
+            AssertPoolMetrics(pool, 1);
         }
         finally
         {
@@ -917,7 +917,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
             // Assert
             Assert.Empty(exceptions);
             Assert.Equal(threadCount * iterationsPerThread, successCount);
-            AssertPoolMetrics(pool, 20, "After returning before transaction complete");
+            AssertPoolMetrics(pool, 20);
         }
         finally
         {
@@ -977,7 +977,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
             // Assert
             Assert.Empty(exceptions);
             Assert.Equal(threadCount * iterationsPerThread, successCount);
-            AssertPoolMetrics(pool, 20, "After completing before return");
+            AssertPoolMetrics(pool, 20);
         }
         finally
         {
@@ -1043,7 +1043,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
             Assert.Equal(2, orderCounts.Count); // Should have both order types
             Assert.True(orderCounts["ReturnFirst"] > 0);
             Assert.True(orderCounts["CompleteFirst"] > 0);
-            AssertPoolMetrics(pool, 25, "After mixed completion order");
+            AssertPoolMetrics(pool, 25);
         }
         finally
         {
@@ -1137,7 +1137,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
 
             // Assert
             Assert.Empty(exceptions);
-            AssertPoolMetrics(pool, 30, "After interleaved completion order patterns");
+            AssertPoolMetrics(pool, 30);
         }
         finally
         {
@@ -1194,7 +1194,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
 
             // Assert
             Assert.Empty(exceptions);
-            AssertPoolMetrics(pool, 20, "After delayed return post-disposal");
+            AssertPoolMetrics(pool, 20);
         }
         finally
         {
@@ -1274,7 +1274,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
 
             // Assert
             Assert.Empty(exceptions);
-            AssertPoolMetrics(pool, 30, "After varied return order for multiple connections");
+            AssertPoolMetrics(pool, 30);
         }
         finally
         {
@@ -1348,7 +1348,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
 
             // Assert
             Assert.Empty(exceptions);
-            AssertPoolMetrics(pool, 25, "After async mixed completion patterns");
+            AssertPoolMetrics(pool, 25);
         }
         finally
         {
