@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient
         private bool _isFromApi;
 
         internal SqlTransaction(
-            SqlInternalConnection internalConnection,
+            SqlInternalConnectionTds internalConnection,
             SqlConnection con,
             IsolationLevel iso,
             SqlInternalTransaction internalTransaction)
@@ -42,13 +42,13 @@ namespace Microsoft.Data.SqlClient
             if (internalTransaction == null)
             {
                 InternalTransaction = new SqlInternalTransaction(
-                    (SqlInternalConnectionTds)internalConnection,
+                    internalConnection,
                     TransactionType.LocalFromAPI,
                     this);
             }
             else
             {
-                Debug.Assert(((SqlInternalConnectionTds)internalConnection).CurrentTransaction == internalTransaction,
+                Debug.Assert(internalConnection.CurrentTransaction == internalTransaction,
                     "Unexpected Parser.CurrentTransaction state!");
                 InternalTransaction = internalTransaction;
                 InternalTransaction.InitParent(this);
