@@ -29,7 +29,6 @@ namespace Microsoft.Data.SqlClient
         protected static readonly Guid s_globalTransactionTMID = new("1c742caf-6680-40ea-9c26-6b6846079764");
 
         internal SqlDataReader.Snapshot CachedDataReaderSnapshot;
-        internal SqlDataReader.IsDBNullAsyncCallContext CachedDataReaderIsDBNullContext;
 
         /// <summary>
         /// Constructs a new SqlInternalConnection object using the provided connection options.
