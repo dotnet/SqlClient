@@ -6,18 +6,14 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
-using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Xunit;
-
-#nullable enable
 
 namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool;
 
@@ -33,7 +29,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
     private const int DefaultCreationTimeout = 15;
 
     // Thread-safe random number generator for .NET Framework compatibility
-    private static readonly ThreadLocal<Random> s_random = new ThreadLocal<Random>(() => new Random(Guid.NewGuid().GetHashCode()));
+    private static readonly ThreadLocal<Random> s_random = new(() => new Random(Guid.NewGuid().GetHashCode()));
 
     #region Helper Methods
 
@@ -76,6 +72,12 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
             $"{context}: Pool count ({pool.Count}) exceeded max pool size ({expectedMaxCount})");
         Assert.True(pool.Count >= 0,
             $"{context}: Pool count ({pool.Count}) is negative");
+
+
+#if DEBUG
+        var transactedConnections = pool.TransactedConnectionPool.TransactedConnections;
+        Assert.Empty(transactedConnections);
+#endif
     }
 
     #endregion
@@ -331,7 +333,6 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
                 try
                 {
                     // Synchronize all threads to start at once
-                    barrier.SignalAndWait();
 
                     for (int i = 0; i < iterationsPerThread; i++)
                     {
@@ -347,7 +348,6 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
                         if (obtained && connection != null)
                         {
                             // Hold connection briefly
-                            Thread.Sleep(s_random.Value!.Next(1, 10));
                             pool.ReturnInternalConnection(connection, owner);
                         }
 

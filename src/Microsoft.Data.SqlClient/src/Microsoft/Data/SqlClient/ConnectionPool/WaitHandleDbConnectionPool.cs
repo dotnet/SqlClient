@@ -328,6 +328,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private bool UsingIntegrateSecurity => _identity != null && DbConnectionPoolIdentity.NoIdentity != _identity;
 
+        #if DEBUG
+        internal TransactedConnectionPool TransactedConnectionPool => _transactedConnectionPool;
+        #endif
+
         private void CleanupCallback(object state)
         {
             // Called when the cleanup-timer ticks over.

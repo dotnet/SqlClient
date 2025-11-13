@@ -30,7 +30,7 @@ internal class TransactedConnectionPool
     /// A specialized list that holds database connections associated with a specific transaction.
     /// Maintains a reference to the transaction for proper cleanup when the transaction completes.
     /// </summary>
-    private sealed class TransactedConnectionList : List<DbConnectionInternal>
+    internal sealed class TransactedConnectionList : List<DbConnectionInternal>
     {
         private readonly Transaction _transaction;
         
@@ -96,6 +96,10 @@ internal class TransactedConnectionPool
     /// </summary>
     /// <value>The IDbConnectionPool instance that owns this transacted pool.</value>
     internal IDbConnectionPool Pool { get; }
+
+    #if DEBUG
+    internal Dictionary<Transaction, TransactedConnectionList> TransactedConnections => _transactedCxns;
+    #endif
 
     #endregion
 
