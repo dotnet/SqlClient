@@ -6,11 +6,14 @@
 parameters:
   - name: dryRun
     type: boolean
+
   - name: publicNuGetSource
     type: string
+    
   - name: nugetServiceConnection
     type: string
     default: 'ADO Nuget Org Connection'
+    
   - name: packagesGlob
     type: string
     default: '$(System.DefaultWorkingDirectory)/_dotnet-sqlclient-Official/drop_buildMDS_build_signed_package/*.nupkg'
