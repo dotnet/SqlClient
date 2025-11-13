@@ -151,7 +151,7 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         // @TODO: Should be private and accessed via internal property
-        internal byte[] _accessTokenInBytes;
+        internal readonly byte[] _accessTokenInBytes;
 
         // @TODO: Should be private and accessed via internal property
         // @TODO: Probably a good idea to introduce a delegate type
@@ -204,7 +204,7 @@ namespace Microsoft.Data.SqlClient
         internal bool IsVectorSupportEnabled = false;
 
         // @TODO: This should be private
-        internal SyncAsyncLock _parserLock = new SyncAsyncLock();
+        internal readonly SyncAsyncLock _parserLock = new SyncAsyncLock();
 
         // @TODO: Should be private and accessed via internal property
         internal SQLDNSInfo pendingSQLDNSObject = null;
@@ -228,7 +228,7 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Rename for naming conventions (remove f prefix)
         private bool _fConnectionOpen = false;
 
-        private SqlCredential _credential;
+        private readonly SqlCredential _credential;
 
         private string _currentLanguage;
 
@@ -240,7 +240,7 @@ namespace Microsoft.Data.SqlClient
         private IDbConnectionPool _dbConnectionPool;
 
         /// <summary>
-        /// Ley of the authentication context, built from information found in the FedAuthInfoToken.
+        /// Key of the authentication context, built from information found in the FedAuthInfoToken.
         /// </summary>
         private DbConnectionPoolAuthenticationContextKey _dbConnectionPoolAuthenticationContextKey;
 
@@ -254,7 +254,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Used to lookup info for notification matching Start().
         /// </summary>
-        private DbConnectionPoolIdentity _identity;
+        private readonly DbConnectionPoolIdentity _identity;
 
         private string _instanceName = string.Empty;
 
@@ -287,7 +287,7 @@ namespace Microsoft.Data.SqlClient
         private SessionData _recoverySessionData;
 
         // @TODO: Rename to match naming conventions (remove f prefix)
-        private bool _fResetConnection;
+        private readonly bool _fResetConnection;
 
         private string _routingDestination = null;
 
@@ -304,7 +304,7 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Rename to indicate this has to do with routing
         private readonly TimeoutTimer _timeout;
 
-        private SqlConnectionTimeoutErrorInternal _timeoutErrorInternal;
+        private readonly SqlConnectionTimeoutErrorInternal _timeoutErrorInternal;
 
         #endregion
 
@@ -1792,6 +1792,7 @@ namespace Microsoft.Data.SqlClient
             // parser just yet, that will cause our transaction to be rolled back and the
             // connection to be reset.  We'll get called again once the delegated transaction is
             // completed, and we can do it all then.
+            // TODO: I think this logic cares about pooling because the pool will handle deactivation of pool-associated trasaction roots?
             if (!(IsTransactionRoot && Pool == null))
             {
                 Debug.Assert(_parser != null || IsConnectionDoomed, "Deactivating a disposed connection?");
@@ -2299,6 +2300,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
+                                // @TODO: _fedAuthToken assignment is identical in both cases - move outside
                                 if (_credential != null)
                                 {
                                     username = _credential.UserId;
@@ -2348,7 +2350,7 @@ namespace Microsoft.Data.SqlClient
                                 }
 
                                 SqlAuthenticationParameters parameters = authParamsBuilder;
-                                CancellationTokenSource cts = new();
+                                using CancellationTokenSource cts = new();
 
                                 // Use Connection timeout value to cancel token acquire request
                                 // after certain period of time.(int)
@@ -3595,7 +3597,7 @@ namespace Microsoft.Data.SqlClient
         // @TODO: This is a ridiculous number of rules to use this class - it is guaranteed someone will fail these rules.
         internal class SyncAsyncLock
         {
-            private SemaphoreSlim _semaphore = new SemaphoreSlim(1);
+            private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1);
 
             internal bool CanBeReleasedFromAnyThread
             {

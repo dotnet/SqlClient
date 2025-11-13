@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
+using System.Globalization;
 
 namespace Microsoft.Data.SqlClient.Connection
 {
@@ -64,9 +65,10 @@ namespace Microsoft.Data.SqlClient.Connection
             Debug.Assert(routing.ServerName != null, "server name should never be null");
 
             // Ensure user server name is not null
+            // NOTE: string.Format should be used here to ensure invariant culture is used for port number.
             UserServerName = routing == null || routing.ServerName == null
                 ? string.Empty
-                : $"{routing.ServerName}.{routing.Port}";
+                : string.Format(CultureInfo.InvariantCulture, "{0},{1}", routing.ServerName, routing.Port);
 
             PreRoutingServerName = preRoutingServerName;
             UserProtocol = TdsEnums.TCP;

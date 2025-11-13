@@ -23,17 +23,17 @@ namespace Microsoft.Data.SqlClient.Connection
 
         internal SqlCollation _collation;
         internal string _database;
-        internal SessionStateRecord[] _delta = new SessionStateRecord[_maxNumberOfSessionStates];
+        internal readonly SessionStateRecord[] _delta = new SessionStateRecord[_maxNumberOfSessionStates];
         internal bool _deltaDirty = false;
         internal bool _encrypted;
         internal SqlCollation _initialCollation;
         internal string _initialLanguage;
         internal string _initialDatabase;
-        internal byte[][] _initialState = new byte[_maxNumberOfSessionStates][];
+        internal readonly byte[][] _initialState = new byte[_maxNumberOfSessionStates][];
         internal string _language;
 
         // @TODO: Introduce record/struct type to replace the tuple.
-        internal Dictionary<string, Tuple<string, string>> _resolvedAliases;
+        internal readonly Dictionary<string, Tuple<string, string>> _resolvedAliases;
 
         internal uint _tdsVersion;
         internal byte _unrecoverableStatesCount = 0;
