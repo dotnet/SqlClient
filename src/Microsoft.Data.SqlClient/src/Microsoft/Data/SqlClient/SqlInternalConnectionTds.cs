@@ -58,7 +58,14 @@ namespace Microsoft.Data.SqlClient
         /// same.
         /// </summary>
         // @TODO: Rename to match naming conventions (s_camelCase or PascalCase)
-        private static readonly TimeSpan _dbAuthenticationContextUnLockedRefreshTimeSpan = new TimeSpan(hours: 0, minutes: 10, seconds: 00);
+        private static readonly TimeSpan _dbAuthenticationContextUnLockedRefreshTimeSpan =
+            new TimeSpan(hours: 0, minutes: 10, seconds: 00);
+
+        /// <summary>
+        /// ID of the Azure SQL DB Transaction Manager (Non-MSDTC)
+        /// </summary>
+        // @TODO: Rename to a match naming conventions (s_camelCase or PascalCase)
+        private static readonly Guid s_globalTransactionTMID = new("1C742CAF-6680-40EA-9C26-6B6846079764");
 
         private static readonly HashSet<int> s_transientErrors =
         [
@@ -306,6 +313,12 @@ namespace Microsoft.Data.SqlClient
         private readonly TimeoutTimer _timeout;
 
         private readonly SqlConnectionTimeoutErrorInternal _timeoutErrorInternal;
+
+        /// <summary>
+        /// Cache the whereabouts (DTC Address) for exporting.
+        /// </summary>
+        // @TODO: This name ... doesn't make a whole lot of sense.
+        private byte[] _whereAbouts;
 
         #endregion
 

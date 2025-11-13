@@ -19,16 +19,6 @@ namespace Microsoft.Data.SqlClient
     internal abstract class SqlInternalConnection : DbConnectionInternal
     {
         /// <summary>
-        /// Cache the whereabouts (DTC Address) for exporting.
-        /// </summary>
-        protected byte[] _whereAbouts;
-
-        /// <summary>
-        /// ID of the Azure SQL DB Transaction Manager (Non-MSDTC)
-        /// </summary>
-        protected static readonly Guid s_globalTransactionTMID = new("1c742caf-6680-40ea-9c26-6b6846079764");
-
-        /// <summary>
         /// Constructs a new SqlInternalConnection object using the provided connection options.
         /// </summary>
         /// <param name="connectionOptions">The options to use for this connection.</param>
