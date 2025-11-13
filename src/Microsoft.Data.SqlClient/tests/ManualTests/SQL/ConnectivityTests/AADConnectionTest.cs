@@ -38,7 +38,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 string[] scopes = new string[] { scope };
                 SecureString password = new SecureString();
 
+                #pragma warning disable CS0618 // Type or member is obsolete
                 AuthenticationResult result = await PublicClientApplicationBuilder.Create(_appClientId)
+                #pragma warning restore CS0618 // Type or member is obsolete
                 .WithAuthority(parameters.Authority)
                 .Build().AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
                     .WithCorrelationId(parameters.ConnectionId)
@@ -575,7 +577,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Test passes locally everytime, but in pieplines fails randomly with uncertainity.
         // e.g. Second AAD connection too slow (802ms)! (More than 30% of the first (576ms).)
-        [ActiveIssue(16058)]
+        [ActiveIssue("16058")]
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void ConnectionSpeed()
         {

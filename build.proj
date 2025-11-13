@@ -53,7 +53,6 @@
     <FunctionalTests Include="**/tools/TDS/TDS/TDS.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
-    <FunctionalTests Include="**/tools/Microsoft.DotNet.XUnitExtensions/Microsoft.DotNet.XUnitExtensions.csproj" />
     <FunctionalTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
     <FunctionalTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
     <FunctionalTests Include="**/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" />
@@ -64,7 +63,6 @@
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
-    <ManualTests Include="**/tools/Microsoft.DotNet.XUnitExtensions/Microsoft.DotNet.XUnitExtensions.csproj" />
     <ManualTests Include="**/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj"/>
     <ManualTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
     <ManualTests Include="**/CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
@@ -105,7 +103,7 @@
 
   <Target Name="BuildTools" Condition="'$(BuildTools)' == 'true'">
     <PropertyGroup>
-      <DotnetBuildCmd>$(DotNetCmd) dotnet build -c Release -p:ReferenceType=$(ReferenceType)</DotnetBuildCmd>
+      <DotnetBuildCmd>$(DotnetPath)dotnet build -c Release -p:ReferenceType=$(ReferenceType)</DotnetBuildCmd>
     </PropertyGroup>
     <Exec Command="$(DotnetBuildCmd)" WorkingDirectory="$(GenAPISrcDir)Microsoft.DotNet.GenAPI\" />
   </Target>

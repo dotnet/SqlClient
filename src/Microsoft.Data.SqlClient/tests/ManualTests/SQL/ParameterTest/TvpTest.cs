@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        [ActiveIssue(5531)]
+        [ActiveIssue("5531")]
         public void TestPacketNumberWraparound()
         {
             // this test uses a specifically crafted sql record enumerator and data to put the TdsParserStateObject.WritePacket(byte,bool)
@@ -120,7 +120,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 cmd.CommandTimeout = 100;
                 AddCommandParameters(cmd, parameters);
                 new SqlDataAdapter(cmd).Fill(new("BadFunc"));
-                Assert.False(true, "Expected exception did not occur");
+                Assert.Fail("Expected exception did not occur");
             }
             catch (Exception e)
             {
@@ -140,7 +140,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                Assert.False(true, $"Unexpected error occurred: {e.Message}");
+                Assert.Fail($"Unexpected error occurred: {e.Message}");
             }
         }
 

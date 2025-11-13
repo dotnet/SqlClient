@@ -117,8 +117,6 @@
     <Compile Include="SQL\RetryLogic\SqlConfigurationManagerReliabilityTest.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\AdjustPrecScaleForBulkCopy.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\AzureDistributedTransaction.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\ErrorOnRowsMarkedAsDeleted.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\DestinationTableNameWithSpecialChar.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Bug84548.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Bug85007.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Bug903514.cs" />
@@ -138,32 +136,35 @@
     <Compile Include="SQL\SqlBulkCopyTest\CopySomeFromRowArray.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\CopySomeFromRowArrayAsync.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\CopyVariants.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopyWidenNullInexactNumerics.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\CopyWithEvent.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\CopyWithEvent1.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\InvalidAccessFromEvent.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\CopyWithEventAsync.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\DataConversionErrorMessageTest.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\DestinationTableNameWithSpecialChar.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\ErrorOnRowsMarkedAsDeleted.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\FireTrigger.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Helpers.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\InvalidAccessFromEvent.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\KeepNulls.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\MissingTargetColumn.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\MissingTargetTable.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\SqlBulkCopyTest.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Transaction.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Transaction1.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Transaction2.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Transaction3.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Transaction4.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\TransactionTestAsync.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\SpecialCharacterNames.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\KeepNulls.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHint.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintAsync.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintDuplicateColumn.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintIdentityColumn.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintMissingTargetColumn.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintTransaction.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\SpecialCharacterNames.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\SqlBulkCopyTest.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\TableLock.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\DataConversionErrorMessageTest.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopyWidenNullInexactNumerics.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\TestBulkCopyWithUTF8.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\Transaction.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\Transaction1.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\Transaction2.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\Transaction3.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\Transaction4.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\TransactionTestAsync.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetsWindows)' == 'true' AND ('$(TestSet)' == '' OR '$(TestSet)' == '2')">
     <Compile Include="SQL\SqlDSEnumeratorTest\SqlDataSourceEnumeratorTest.cs" />
@@ -279,14 +280,28 @@
     <Compile Include="SQL\Common\SystemDataInternals\DataReaderHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserStateObjectHelper.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Helpers.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\TestBulkCopyWithUTF8.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
     <Compile Include="TracingTests\TestTdsServer.cs" />
     <Compile Include="XUnitAssemblyAttributes.cs" />
     <Compile Include="$(CommonTestPath)\System\Collections\DictionaryExtensions.cs">
       <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
     </Compile>
+  </ItemGroup>
+  <!-- xUnit and extensions -->
+  <ItemGroup>
+    <PackageReference Include="xunit" Version="$(xunitversion)" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="$(xunitrunnervisualstudioversion)">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" Version="$(MicrosoftDotNetRemoteExecutorVersion)" />
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" Version="$(MicrosoftDotNetXUnitExtensionsVersion)" />
+  </ItemGroup>
+  <ItemGroup>
+    <ContentWithTargetPath Include="..\tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>xunit.runner.json</TargetPath>
+    </ContentWithTargetPath>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="SQL\UdtTest\UDTs\Address\Address.csproj">
@@ -300,9 +315,6 @@
     </ProjectReference>
     <ProjectReference Include="SQL\UdtTest\UDTs\Utf8String\Utf8String.csproj">
       <Name>Utf8String</Name>
-    </ProjectReference>
-    <ProjectReference Include="$(TestsPath)tools\Microsoft.DotNet.XUnitExtensions\Microsoft.DotNet.XUnitExtensions.csproj">
-      <Name>Microsoft.DotNet.XUnitExtensions</Name>
     </ProjectReference>
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
@@ -325,10 +337,11 @@
     <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
     <PackageReference Condition="'$(TargetGroup)'=='netfx'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersion)" />
-    <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.DotNet.RemoteExecutor" Version="$(MicrosoftDotnetRemoteExecutorVersion)" /> 
     <PackageReference Condition="'$(TargetGroup)'!='netfx'" Include="System.ServiceProcess.ServiceController" Version="$(SystemServiceProcessServiceControllerVersion)" />
+    <PackageReference Include="System.Private.Uri" Version="$(SystemPrivateUriVersion)" />
   </ItemGroup>
-  <ItemGroup>
-    <None Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\**\*SNI*.dll" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
+
+  <!-- Ensure SNI DLLs are made available for .NET Framework project reference builds. -->
+  <Import Project="$(ToolsDir)/targets/CopySniDllsForNetFxProjectReferenceBuilds.targets" />
+
 </Project>

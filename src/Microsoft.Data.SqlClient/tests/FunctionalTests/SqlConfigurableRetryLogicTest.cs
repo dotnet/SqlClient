@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -10,7 +11,7 @@ namespace Microsoft.Data.SqlClient.Tests
     public class SqlConfigurableRetryLogicTest
     {
         [Fact]
-        public void InvalidExecute()
+        public async Task InvalidExecute()
         {
             SqlRetryLogicOption option = new SqlRetryLogicOption()
             {
@@ -23,8 +24,8 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlRetryLogicBaseProvider retryLogicProvider = SqlConfigurableRetryFactory.CreateFixedRetryProvider(option);
 
             Assert.Throws<ArgumentNullException>(() => retryLogicProvider.Execute<int>(null, null));
-            Assert.ThrowsAsync<ArgumentNullException>(() => retryLogicProvider.ExecuteAsync(null, null));
-            Assert.ThrowsAsync<ArgumentNullException>(() => retryLogicProvider.ExecuteAsync<int>(null, null));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => retryLogicProvider.ExecuteAsync(null, null));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => retryLogicProvider.ExecuteAsync<int>(null, null));
         }
 
         [Fact]

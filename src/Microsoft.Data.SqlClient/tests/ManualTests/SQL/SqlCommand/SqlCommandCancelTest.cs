@@ -157,7 +157,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TimeoutCancel(tcp_connStr);
         }
 
-        [ActiveIssue(12167)]
+        [ActiveIssue("12167")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public static void TimeoutCancelNP()
@@ -178,14 +178,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             CancelAndDisposePreparedCommand(np_connStr);
         }
 
-        [ActiveIssue(5541)]
+        [ActiveIssue("5541")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TimeOutDuringRead()
         {
             TimeOutDuringRead(tcp_connStr);
         }
 
-        [ActiveIssue(5541)]
+        [ActiveIssue("5541")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public static void TimeOutDuringReadNP()
@@ -306,7 +306,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     if (retryAttempt >= 3 || e.Message.Contains("The transaction operation cannot be performed"))
                     {
-                        Assert.False(true, $"Retry Attempt: {retryAttempt} | Unexpected Exception occurred: {e.Message}");
+                        Assert.Fail($"Retry Attempt: {retryAttempt} | Unexpected Exception occurred: {e.Message}");
                     }
                     else
                     {

@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TryOpenConnectionWithIntegratedAuthentication(builder.ConnectionString);
         }
 
-        [ActiveIssue(21707)]
+        [ActiveIssue("21707")]
         [ConditionalFact(nameof(IsIntegratedSecurityEnvironmentSet), nameof(AreConnectionStringsSetup))]
         public static void IntegratedAuthenticationTest_InvalidServerSPN()
         {

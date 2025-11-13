@@ -7,18 +7,27 @@
 variables:
   - group: Release Variables
 
-  - name: Major
+  # The above Library contains variables named Major, Minor, and Patch.  We
+  # don't want to use those (since they are shared with other pipelines), so we
+  # specify our own variables here.  These are the only variables that affect
+  # the NuGet package version and assembly version for MDS official builds for
+  # this branch (5.1).
+  #
+  # There are other variables in that Library that we still need, so we can't
+  # omit it entirely.
+  #
+  - name: LocalMdsMajor
     value: 5
-  - name: Minor
+  - name: LocalMdsMinor
     value: 1
-  - name: Patch
-    value: 7
+  - name: LocalMdsPatch
+    value: 8
   - name: Packaging.EnableSBOMSigning
     value: true
   
   - name: NugetPackageVersion
-    value: $(Major).$(Minor).$(Patch)
+    value: $(LocalMdsMajor).$(LocalMdsMinor).$(LocalMdsPatch)
   - name: AssemblyFileVersion
-    value: '$(Major).$(Minor)$(Patch).$(Build.BuildNumber)'
+    value: '$(LocalMdsMajor).$(LocalMdsMinor)$(LocalMdsPatch).$(Build.BuildNumber)'
   - name: nuspecPath
     value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'

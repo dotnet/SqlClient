@@ -310,11 +310,11 @@ namespace System
             {
                 Assert.Equal(expected, actual);
             }
-            catch (AssertActualExpectedException)
+            catch (EqualException)
             {
                 string expectedString = string.Join(", ", expected);
                 string actualString = string.Join(", ", actual);
-                throw new AssertActualExpectedException(expectedString, actualString, null);
+                throw EqualException.ForMismatchedStrings(expectedString, actualString, 0, 0);
             }
         }
     }

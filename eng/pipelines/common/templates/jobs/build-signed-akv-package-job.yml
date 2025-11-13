@@ -4,6 +4,9 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  - name: mdsPackageVersion
+    type: string
+
   - name: symbolsFolder
     type: string
     default: symbols
@@ -33,14 +36,14 @@ jobs:
   - template: ../steps/build-all-configurations-signed-dlls-step.yml@self
     parameters:
       product: AKV
-      nugetPackageRefVersion: $(MDS_PackageRef_Version)
+      nugetPackageRefVersion: ${{ parameters.mdsPackageVersion }}
       AssemblyFileVersion: $(AKVAssemblyFileVersion)
 
   - template: ../steps/code-analyze-step.yml@self
     parameters:
       analyzeType: all
       product: AKV
-      nugetPackageRefVersion: $(MDS_PackageRef_Version)
+      nugetPackageRefVersion: ${{ parameters.mdsPackageVersion }}
 
   - template: ../steps/esrp-code-signing-step.yml@self
     parameters:

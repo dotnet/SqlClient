@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     default:
                         break;
                 }
-                Assert.False(true, "Exception did not occur.");
+                Assert.Fail("Exception did not occur.");
             }
             catch
             {
@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     default:
                         break;
                 }
-                Assert.False(true, "Exception did not occur.");
+                Assert.Fail("Exception did not occur.");
             }
             catch
             {

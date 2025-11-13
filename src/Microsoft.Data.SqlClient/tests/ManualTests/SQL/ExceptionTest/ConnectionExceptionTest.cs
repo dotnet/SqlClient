@@ -144,7 +144,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Fact]
-        [SkipOnTargetFramework(~TargetFrameworkMonikers.Uap)]
+        [SkipOnTargetFramework(
+            // We had defined Uap to be 0x4 in our fork/copy of XUnitExtensions.
+            // Now that we're using the NuGet package, I can't add enum members,
+            // so I kept the functionality here by casting from the old raw
+            // value.  XUnitExtensions's TargetFrameworkMonikers currently only
+            // includes enum values up to 0x2, so this is safe - for now.
+            ~(TargetFrameworkMonikers)0x4)]
         public static void LocalDBNotSupportedOnUapTest()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(@$"server=(localdb)\{DataTestUtility.LocalDbAppName}")

@@ -105,4 +105,16 @@
   <Import Project="$(ToolsDir)props\AssemblyRef.props" />  
   <Import Project="$(ToolsDir)targets\RepositoryInfo.targets" />
 
+  <!-- Fix GetTargetPath issues - see https://github.com/dotnet/msbuild/issues/4303#issuecomment-482345617 -->
+  <PropertyGroup>
+    <AddSyntheticProjectReferencesForSolutionDependencies>false</AddSyntheticProjectReferencesForSolutionDependencies>
+  </PropertyGroup>
+
+  <!--
+    We target .NET 6.0 and modern SDK tooling produces warnings since it is
+    out of support.  Suppress these warnings to avoid noise in the builds.
+  -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);NETSDK1138</NoWarn>
+  </PropertyGroup>
 </Project>

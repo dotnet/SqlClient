@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection.Open();
                 System.Transactions.Transaction.Current.EnlistDurable(EnlistmentForPrepare.s_id, new EnlistmentForPrepare(), EnlistmentOptions.None);
                 txScope.Complete();
-                Assert.False(true, "Expected exception not thrown.");
+                Assert.Fail("Expected exception not thrown.");
             });
         }
 

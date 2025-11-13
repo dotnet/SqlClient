@@ -159,7 +159,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (SqlException e)
             {
-                Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
+                Assert.Fail($"Unexpected Exception occurred: {e.Message}");
             }
             finally
             {

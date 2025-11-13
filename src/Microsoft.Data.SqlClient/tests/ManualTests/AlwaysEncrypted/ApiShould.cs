@@ -2918,7 +2918,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             catch (Exception e)
             {
                 testAsyncCallBackStateObject.Completion.SetException(e);
-                Assert.True(false, $"{e.Message}");
+                Assert.Fail($"{e.Message}");
             }
         }
 
