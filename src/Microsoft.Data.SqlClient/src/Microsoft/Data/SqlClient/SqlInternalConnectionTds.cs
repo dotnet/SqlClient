@@ -346,8 +346,12 @@ namespace Microsoft.Data.SqlClient
             string accessToken = null,
             IDbConnectionPool pool = null,
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null,
-            SspiContextProvider sspiContextProvider = null) : base(connectionOptions)
+            SspiContextProvider sspiContextProvider = null)
         {
+            Debug.Assert(connectionOptions is not null, "null connectionOptions");
+
+            ConnectionOptions = connectionOptions;
+
             #if DEBUG
             if (reconnectSessionData != null)
             {
