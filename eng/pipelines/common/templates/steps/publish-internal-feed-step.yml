@@ -21,9 +21,21 @@ steps:
       exit 1
     fi
     if [ "${{ parameters.dryRun }}" = "true" ]; then
-      echo "[DRY RUN] Would push to $SRC"
-      find "${{ parameters.packagesGlob }}" -name "*.nupkg"
-      exit 0
+      echo "[DRY RUN] Listing packages targeted for push to: ${{ parameters.publicNuGetSource }}"
+      echo "Using glob pattern: ${{ parameters.packagesGlob }}"
+      # Derive directory and filename pattern from the glob for a precise find (handles nested patterns minimally)
+      glob='${{ parameters.packagesGlob }}'
+      dir="${glob%/*}"
+      name="${glob##*/}"
+      echo "Resolved directory: $dir"
+      echo "Filename pattern: $name"
+      if [ -d "$dir" ]; then
+        echo "Matched files:" || true
+        # Print all matched files to identify what would be pushed
+        find "$dir" -type f -name "$name" -print || true
+      else
+        echo "Directory does not exist yet: $dir"
+      fi
     fi
     for f in $(find "${{ parameters.packagesGlob }}" -name "*.nupkg"); do
       echo "Push $f"

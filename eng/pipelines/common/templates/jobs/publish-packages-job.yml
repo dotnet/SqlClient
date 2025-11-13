@@ -46,15 +46,16 @@ jobs:
       parameters:
         dryRun: ${{ parameters.dryRun }}
         internalFeedSource: ${{ parameters.internalFeedSource }}
+        packagesGlob: $(System.DefaultWorkingDirectory)/_dotnet-sqlclient-Official/drop_buildMDS_build_signed_package/*.nupkg
   - ${{ if eq(parameters.publishDestination, 'Public') }}:
     - template: ../steps/publish-public-nuget-step.yml
       parameters:
         dryRun: ${{ parameters.dryRun }}
         publicNuGetSource: ${{ parameters.publicNuGetSource }}
-  - ${{ if parameters.publishSymbols }}:
+        packagesGlob: $(System.DefaultWorkingDirectory)/_dotnet-sqlclient-Official/drop_buildMDS_build_signed_package/*.nupkg
+  - ${{ if and(parameters.publishSymbols, ne(parameters.dryRun, true)) }}:
     - template: ../steps/publish-symbols-step.yml
       parameters:
-        dryRun: ${{ parameters.dryRun }}
         publishSymbols: ${{ parameters.publishSymbols }}
         symbolsArtifactName: ${{ parameters.product }}_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.nugetPackageVersion }}_$(System.TimelineId)
         product: ${{ parameters.product }}

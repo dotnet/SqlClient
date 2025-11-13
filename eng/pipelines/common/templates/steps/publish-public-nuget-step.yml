@@ -31,8 +31,8 @@ steps:
     echo "Filename pattern: $name"
     if [ -d "$dir" ]; then
       echo "Matched files:" || true
-      # Limit depth to avoid traversing unrelated trees; adjust if patterns intentionally include deeper globs
-      find "$dir" -maxdepth 2 -type f -name "$name" -print || true
+      # Print all matched files to identify what would be pushed
+      find "$dir" -type f -name "$name" -print || true
     else
       echo "Directory does not exist yet: $dir"
     fi
