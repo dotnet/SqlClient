@@ -4,32 +4,31 @@
 
 #if NET
 
-using System.Threading;
+using System;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
     /// <summary>
     /// Global SNI settings and status
     /// </summary>
-    internal class SniLoadHandle
+    internal static class SniLoadHandle
     {
-        public static readonly SniLoadHandle SingletonInstance = new SniLoadHandle();
-
-        public ThreadLocal<SniError> _lastError = new ThreadLocal<SniError>(static () => new SniError(SniProviders.INVALID_PROV, 0, TdsEnums.SNI_SUCCESS, string.Empty));
+        [ThreadStatic]
+        private static SniError s_lastError;
 
         /// <summary>
         /// Last SNI error
         /// </summary>
-        public SniError LastError
+        public static SniError LastError
         {
             get
             {
-                return _lastError.Value;
+                return s_lastError ??= SniError.Success;
             }
 
             set
             {
-                _lastError.Value = value;
+                s_lastError = value;
             }
         }
 
