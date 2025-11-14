@@ -3387,9 +3387,8 @@ namespace Microsoft.Data.SqlClient
             #endif
         }
 
-        // @TODO: Is this suppression still required
-        [SuppressMessage("Microsoft.Globalization", "CA1303:DoNotPassLiteralsAsLocalizedParameters")] // copied from Triaged.cs
-        private void ResetConnection()
+        /// <inheritdoc/>
+        internal override void ResetConnection()
         {
             // For implicit pooled connections, if connection reset behavior is specified, reset
             // the database and language properties back to default. It is important to do this on

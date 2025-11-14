@@ -246,6 +246,7 @@ namespace Microsoft.Data.SqlClient
             return new SqlReferenceCollection();
         }
 
+        /// <inheritdoc/>
         override protected void Deactivate()
         {
             try
