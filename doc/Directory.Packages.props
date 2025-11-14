@@ -1,0 +1,9 @@
+<Project>
+  <!-- Import parent Directory.Packages.props -->
+  <Import Project="..\Directory.Packages.props" />
+  <ItemGroup>
+    <!-- Reference latest stable version of MDS and AKV provider -->
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.1.2" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider" Version="6.1.2" />
+  </ItemGroup>
+</Project>
