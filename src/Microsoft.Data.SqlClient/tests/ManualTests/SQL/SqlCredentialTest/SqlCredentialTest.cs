@@ -16,11 +16,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void CreateSqlConnectionWithCredential()
         {
             var user = "u" + Guid.NewGuid().ToString().Replace("-", "");
-            var passStr = "Pax561O$T5K#jD";
+            const string passStr = "Pax561O$T5K#jD";
 
             try
             {
-                createTestUser(user, passStr);
+                CreateTestUser(user, passStr);
 
                 var csb = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
                 csb.Remove("User ID");
@@ -40,21 +40,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                dropTestUser(user);
+                DropTestUser(user);
             }
         }
 
-        [ActiveIssue("9196")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void SqlConnectionChangePasswordPlaintext()
         {
             var user = "u" + Guid.NewGuid().ToString().Replace("-", "");
-            var pass = "!21Ja3Ims7LI&n";
-            var newPass = "fmVCNf@24Dg*8j";
+            const string pass = "!21Ja3Ims7LI&n";
+            const string newPass = "fmVCNf@24Dg*8j";
 
             try
             {
-                createTestUser(user, pass);
+                CreateTestUser(user, pass);
 
                 var csb = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
                 csb.UserID = user;
@@ -74,21 +73,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                dropTestUser(user);
+                DropTestUser(user);
             }
         }
 
-        [ActiveIssue("9196")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void SqlConnectionChangePasswordSecureString()
         {
             var user = "u" + Guid.NewGuid().ToString().Replace("-", "");
-            var passStr = "tcM0qB^izt%3u7";
-            var newPassStr = "JSG2e(Vp0WCXE&";
+            const string passStr = "tcM0qB^izt%3u7";
+            const string newPassStr = "JSG2e(Vp0WCXE&";
 
             try
             {
-                createTestUser(user, passStr);
+                CreateTestUser(user, passStr);
 
                 var csb = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
                 csb.Remove("User ID");
@@ -115,19 +113,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                dropTestUser(user);
+                DropTestUser(user);
             }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void OldCredentialsShouldFail()
         {
-            String user = "u" + Guid.NewGuid().ToString().Replace("-", "");
-            String passStr = "Pax561O$T5K#jD";
+            string user = "u" + Guid.NewGuid().ToString().Replace("-", "");
+            const string passStr = "Pax561O$T5K#jD";
 
             try
             {
-                createTestUser(user, passStr);
+                CreateTestUser(user, passStr);
 
                 SqlConnectionStringBuilder sqlConnectionStringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
                 sqlConnectionStringBuilder.Remove("User ID");
@@ -178,11 +176,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                dropTestUser(user);
+                DropTestUser(user);
             }
         }
 
-        private static void createTestUser(string username, string password)
+        private static void CreateTestUser(string username, string password)
         {
             // Creates a test user with read permissions.
             string createUserCmd = $"CREATE LOGIN {username} WITH PASSWORD = '{password}', CHECK_POLICY=OFF;"
@@ -196,7 +194,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static void dropTestUser(string username)
+        private static void DropTestUser(string username)
         {
             // Removes a created test user.
             string dropUserCmd = $"IF EXISTS (SELECT * FROM sys.schemas WHERE name = '{username}') BEGIN DROP SCHEMA {username} END;"
