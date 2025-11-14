@@ -156,7 +156,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void StasisCounters_Functional()
         {
             var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = false, Enlist = false };
