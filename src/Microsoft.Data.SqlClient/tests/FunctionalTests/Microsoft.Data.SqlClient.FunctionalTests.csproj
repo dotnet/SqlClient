@@ -63,7 +63,6 @@
     <Compile Include="SqlConnectionStringBuilderTest.cs" />
     <Compile Include="SerializeSqlTypesTest.cs" />
     <Compile Include="TdsParserStateObject.TestHarness.cs" />
-    <Compile Include="SqlHelperTest.cs" />
     <Compile Include="..\..\src\Microsoft\Data\Common\MultipartIdentifier.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserStateObject.Multiplexer.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Packet.cs" />
