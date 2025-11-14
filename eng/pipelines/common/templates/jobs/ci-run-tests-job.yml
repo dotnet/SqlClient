@@ -65,9 +65,14 @@ parameters:
   - name: operatingSystem
     type: string
     default: ''
+
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
   
   - name: buildType
-    displayName: 'Build Type'
     default: Project
     values:
       - Project
@@ -75,8 +80,7 @@ parameters:
 
   # The timeout, in minutes, for this job.
   - name: timeout
-    type: string
-    default: 90
+    type: number
 
 jobs:
 - job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.image, 'unknown_image')) }}
@@ -227,6 +231,7 @@ jobs:
     - template: ../steps/build-all-tests-step.yml@self # build tests
       parameters:
         targetFramework: ${{ parameters.targetFramework }}
+        buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.buildType }}
         testSet: ${{ parameters.testSet }}
         ${{ if ne(parameters.operatingSystem, 'Windows') }}:
@@ -237,6 +242,7 @@ jobs:
       parameters:
         debug: ${{ parameters.debug }}
         targetFramework: ${{ parameters.targetFramework }}
+        buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.buildType }}
         testSet: ${{ parameters.testSet }}
         operatingSystem: ${{ parameters.operatingSystem }}
@@ -279,6 +285,7 @@ jobs:
       parameters:
         debug: ${{ parameters.debug }}
         targetFramework: ${{ parameters.targetFramework }}
+        buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.buildType }}
         testSet: ${{ parameters.testSet }}
         msbuildArchitecture: x86
@@ -291,3 +298,4 @@ jobs:
         debug: ${{ parameters.debug }}
         targetFramework: ${{ parameters.targetFramework }}
         operatingSystem: ${{ parameters.operatingSystem }}
+        buildConfiguration: ${{ parameters.buildConfiguration }}
