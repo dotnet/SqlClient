@@ -8,6 +8,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 > **Note:** This changelog is sorted chronologically by release date, with the most recent releases appearing first.
 
 
+## [Stable Release 6.1.3] - 2025-11-12
+
+This update includes the following changes since the [6.1.2](release-notes/6.1/6.1.2.md) release:
+
+### Added
+
+#### App Context Switch for Ignoring Server-Provided Failover Partner
+
+*What Changed:*
+
+- A new app context switch `Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner` was introduced to let the client ignore server-provided failover partner info in Basic Availability Groups (BAGs). When the switch is enabled, only the failover partner specified in the connection string is used; server-supplied partner values are skipped. This context switch was introduced in PR [#3702](https://github.com/dotnet/SqlClient/pull/3702).
+
+*Who Benefits:*
+
+- Applications connecting to SQL Server BAGs using TCP and custom ports, especially where the server's provided partner name lacks the protocol, host, or port. This avoids connection failures when the server-provided partner is incompatible or incomplete.
+- Teams who manage availability groups and rely on client-side control of failover behavior in heterogeneous networking environments.
+
+*Impact:*
+
+- If your environment might be affected (i.e., you operate a BAG with custom ports, or have experienced failures after failover), you can enable the new switch in your application:
+
+```c#
+AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner", true);
+```
+
+- Then, ensure your connection string includes your preferred failover partner (with correct `tcp:host,port`) so that the client uses that instead of the server's suggestion.
+- Without enabling this, by default, the client continues to prefer the server-provided partner, maintaining backwards compatibility.
+
+### Fixed
+
+- Fixed an issue to ensure reliable metrics initialization during startup,
+  preventing missed telemetry when EventSource is enabled early.
+  ([#3718](https://github.com/dotnet/SqlClient/pull/3718))
+
 ## [Preview Release 7.0.0-preview2.25289.6] - 2025-10-16
 
 This update brings the following changes since [7.0.0-preview1.25257.1]
@@ -91,6 +125,31 @@ This update brings the following changes since [7.0.0-preview1.25257.1]
   - Updated `System.Configuration.ConfigurationManager` to v9.0.9 (net9)
   - Updated `System.Security.Cryptography.Pkcs` to v9.0.9 (net9)
   - Updated `System.Text.Json` to v8.0.6 (net8), v9.0.9 (net9)
+
+## [Stable Release 6.1.2] - 2025-10-07
+
+This update includes the following changes since the [6.1.1](release-notes/6.1/6.1.1.md) release:
+
+### Fixed
+
+- Fixed an issue where initializing PerformanceCounters would throw `System.InvalidOperationException` [#3629](https://github.com/dotnet/sqlclient/pull/3629)
+- Fixed an issue where a Custom SqlClientAuthenticationProvider was being overwritten by default implementation. [#3651](https://github.com/dotnet/SqlClient/pull/3651)
+- Fixed a concurrency issue in connection pooling where the number of active connections could be lower than the configured maximum pool size. [#3653](https://github.com/dotnet/SqlClient/pull/3653)
+
+## [Stable release 6.0.3] - 2025-10-07
+
+This update brings the below changes over the previous stable release:
+
+### Fixed
+
+- Fixed an issue where a Custom SqlClientAuthenticationProvider was being overwritten by default implementation. [#3652](https://github.com/dotnet/SqlClient/pull/3652)
+- Fixed a concurrency issue in connection pooling where the number of active connections could be lower than the configured maximum pool size. [#3654](https://github.com/dotnet/SqlClient/pull/3654)
+
+### Changed
+
+- Updated MSAL usage as per code compliance requirements [#3360](https://github.com/dotnet/SqlClient/pull/3360)
+- Updated `SqlDecimal` implementation to improve code compliance [#3466](https://github.com/dotnet/SqlClient/pull/3466)
+- Updated Azure.Identity and related dependencies [#3553](https://github.com/dotnet/SqlClient/pull/3553)
 
 ## [Preview Release 7.0.0-preview1.25257.1] - 2025-09-12
 
