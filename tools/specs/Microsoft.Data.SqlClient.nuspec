@@ -36,9 +36,9 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="7.5.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.5.0" />
         <dependency id="System.Buffers" version="4.5.1" />
+        <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1"/>
         <dependency id="System.Text.Encodings.Web" version="8.0.0" />
         <dependency id="System.Text.Json" version="8.0.5" />
-        <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1"/>
       </group>
       <group targetFramework="net8.0">
         <dependency id="Azure.Identity" version="1.14.2" />
