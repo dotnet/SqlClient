@@ -213,7 +213,6 @@ release:
 - Updated `Azure.Identity` dependency to v1.14.2.
   ([#3538](https://github.com/dotnet/SqlClient/pull/3538))
 
-## [Stable Release 6.1.3] - 2025-11-12
 
 This update includes the following changes since the [6.1.2](release-notes/6.1/6.1.2.md) release:
 
@@ -247,7 +246,6 @@ AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailov
   preventing missed telemetry when EventSource is enabled early.
   ([#3718](https://github.com/dotnet/SqlClient/pull/3718))
 
-## [Stable Release 6.1.2] - 2025-10-07
 
 This update includes the following changes since the [6.1.1](release-notes/6.1/6.1.1.md) release:
 
@@ -522,7 +520,6 @@ This update brings the following changes over the previous release:
 - Code merge towards a unified SqlClient project, aligning .NET Framework and .NET Core implementations. ([#2957](https://github.com/dotnet/sqlclient/pull/2957), [#2963](https://github.com/dotnet/sqlclient/pull/2963), [#2984](https://github.com/dotnet/sqlclient/pull/2984), [#2982](https://github.com/dotnet/sqlclient/pull/2982), [#3023](https://github.com/dotnet/sqlclient/pull/3023), [#3015](https://github.com/dotnet/sqlclient/pull/3015), [#2967](https://github.com/dotnet/sqlclient/pull/2967), [#3164](https://github.com/dotnet/sqlclient/pull/3164), [#3163](https://github.com/dotnet/sqlclient/pull/3163), [#3171](https://github.com/dotnet/sqlclient/pull/3171), [#3182](https://github.com/dotnet/sqlclient/pull/3182), [#3179](https://github.com/dotnet/sqlclient/pull/3179), [#3156](https://github.com/dotnet/sqlclient/pull/3156), [#3213](https://github.com/dotnet/sqlclient/pull/3213), [#3232](https://github.com/dotnet/sqlclient/pull/3232), [#3236](https://github.com/dotnet/sqlclient/pull/3236), [#3231](https://github.com/dotnet/sqlclient/pull/3231), [#3241](https://github.com/dotnet/sqlclient/pull/3241), [#3246](https://github.com/dotnet/sqlclient/pull/3246), [#3247](https://github.com/dotnet/sqlclient/pull/3247), [#3222](https://github.com/dotnet/sqlclient/pull/3222), [#3255](https://github.com/dotnet/sqlclient/pull/3255), [#3254](https://github.com/dotnet/sqlclient/pull/3254), [#3259](https://github.com/dotnet/sqlclient/pull/3259), [#3264](https://github.com/dotnet/sqlclient/pull/3264), [#3256](https://github.com/dotnet/sqlclient/pull/3256), [#3251](https://github.com/dotnet/sqlclient/pull/3251), [#3275](https://github.com/dotnet/sqlclient/pull/3275), [#3277](https://github.com/dotnet/sqlclient/pull/3277), [#3263](https://github.com/dotnet/sqlclient/pull/3263), [#3292](https://github.com/dotnet/sqlclient/pull/3292), [#3208](https://github.com/dotnet/sqlclient/pull/3208)).
 - Test improvements include updates to test references, removal of hardcoded certificates, improved stability, and better coverage ([#3041](https://github.com/dotnet/sqlclient/pull/3041), [#3034](https://github.com/dotnet/sqlclient/pull/3034), [#3130](https://github.com/dotnet/sqlclient/pull/3130), [#3128](https://github.com/dotnet/sqlclient/pull/3128), [#3181](https://github.com/dotnet/sqlclient/pull/3181), [#3060](https://github.com/dotnet/sqlclient/pull/3060), [#3184](https://github.com/dotnet/sqlclient/pull/3184), [#3033](https://github.com/dotnet/sqlclient/pull/3033), [#3186](https://github.com/dotnet/sqlclient/pull/3186), [#3025](https://github.com/dotnet/sqlclient/pull/3025), [#3230](https://github.com/dotnet/sqlclient/pull/3230), [#3237](https://github.com/dotnet/sqlclient/pull/3237), [#3059](https://github.com/dotnet/sqlclient/pull/3059), [#3061](https://github.com/dotnet/sqlclient/pull/3061)).
 
-## [Stable release 6.0.3] - 2025-10-07
 
 This update brings the below changes over the previous stable release:
 
