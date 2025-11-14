@@ -861,6 +861,55 @@ This update brings the below changes over the previous release:
 - Added Microsoft.SqlServer.Types to verify support for SqlHierarchyId and Spatial for .NET Core. [#1848](https://github.com/dotnet/SqlClient/pull/1848)
 - Code health improvements:[#1943](https://github.com/dotnet/SqlClient/pull/1943)[#1949](https://github.com/dotnet/SqlClient/pull/1949)[#1198](https://github.com/dotnet/SqlClient/pull/1198)[#1829](https://github.com/dotnet/SqlClient/pull/1829)
 
+## [Stable release 5.1.8] - 2025-11-14
+
+This update brings the following changes since the [5.1.7](release-notes/5.1/5.1.7.md) release:
+
+### Added
+
+#### App Context Switch for Ignoring Server-Provided Failover Partner
+
+*What Changed:*
+
+- A new app context switch `Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner` was introduced to let the client ignore server-provided failover partner info in Basic Availability Groups (BAGs). When the switch is enabled, only the failover partner specified in the connection string is used; server-supplied partner values are skipped. This context switch was introduced in PR [#3704](https://github.com/dotnet/SqlClient/pull/3704).
+
+*Who Benefits:*
+
+- Applications connecting to SQL Server BAGs using TCP and custom ports, especially where the server's provided partner name lacks the protocol, host, or port. This avoids connection failures when the server-provided partner is incompatible or incomplete.
+- Teams who manage availability groups and rely on client-side control of failover behavior in heterogeneous networking environments.
+
+*Impact:*
+
+- If your environment might be affected (i.e., you operate a BAG with custom ports, or have experienced failures after failover), you can enable the new switch in your application:
+
+```c#
+AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner", true);
+```
+
+- Then, ensure your connection string includes your preferred failover partner (with correct `tcp:host,port`) so that the client uses that instead of the server's suggestion.
+- Without enabling this, by default, the client continues to prefer the server-provided partner, maintaining backwards compatibility.
+
+### Fixed
+
+- Fixed a bulk copy bug that incorrectly prepended a UTF-8 Byte-Order-Marker
+  when processing row data.
+  ([#3617](https://github.com/dotnet/SqlClient/pull/3617))
+
+### Changed
+
+- Modernized creation of `Microsoft.Identity.Client.PublicClientApplication`
+  instances to use its builder pattern.
+  ([#3367](https://github.com/dotnet/SqlClient/pull/3367))
+- Replaced use of undocumented .NET Framework internals when reading
+  `SqlDecimal` values.
+  ([#3465](https://github.com/dotnet/SqlClient/pull/3465))
+- Updated the following dependencies
+  ([#3754](https://github.com/dotnet/SqlClient/pull/3754)):
+  - Azure.Core 1.41.0
+    (Avoids transitive [vulnerability](https://github.com/Azure/azure-sdk-for-net/issues/44817))
+  - Azure.Identity 1.12.1
+  - Microsoft.Identity.Client 4.76.0
+
 ## [Stable release 5.1.7] - 2025-04-25
 
 This update brings the following changes since the 5.1.6 release:
