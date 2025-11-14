@@ -1087,8 +1087,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ApplicationIntent/*' />
         [DisplayName(DbConnectionStringKeywords.ApplicationIntent)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Initialization)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ApplicationIntent)]
+        [ResCategory(nameof(Strings.DataCategory_Initialization))]
+        [ResDescription(nameof(Strings.DbConnectionString_ApplicationIntent))]
         [RefreshProperties(RefreshProperties.All)]
         public ApplicationIntent ApplicationIntent
         {
@@ -1107,8 +1107,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ApplicationName/*' />
         [DisplayName(DbConnectionStringKeywords.ApplicationName)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Context)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ApplicationName)]
+        [ResCategory(nameof(Strings.DataCategory_Context))]
+        [ResDescription(nameof(Strings.DbConnectionString_ApplicationName))]
         [RefreshProperties(RefreshProperties.All)]
         public string ApplicationName
         {
@@ -1122,8 +1122,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttachDBFilename/*' />
         [DisplayName(DbConnectionStringKeywords.AttachDbFilename)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_AttachDBFilename)]
+        [ResCategory(nameof(Strings.DataCategory_Source))]
+        [ResDescription(nameof(Strings.DbConnectionString_AttachDBFilename))]
         [Editor("System.Windows.Forms.Design.FileNameEditor, System.Design, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", "System.Drawing.Design.UITypeEditor, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
         [RefreshProperties(RefreshProperties.All)]
         public string AttachDBFilename
@@ -1138,8 +1138,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CommandTimeout/*' />
         [DisplayName(DbConnectionStringKeywords.CommandTimeout)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Initialization)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandTimeout)]
+        [ResCategory(nameof(Strings.DataCategory_Initialization))]
+        [ResDescription(nameof(Strings.DbCommand_CommandTimeout))]
         [RefreshProperties(RefreshProperties.All)]
         public int CommandTimeout
         {
@@ -1157,8 +1157,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectTimeout/*' />
         [DisplayName(DbConnectionStringKeywords.ConnectTimeout)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Initialization)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ConnectTimeout)]
+        [ResCategory(nameof(Strings.DataCategory_Initialization))]
+        [ResDescription(nameof(Strings.DbConnectionString_ConnectTimeout))]
         [RefreshProperties(RefreshProperties.All)]
         public int ConnectTimeout
         {
@@ -1176,8 +1176,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CurrentLanguage/*' />
         [DisplayName(DbConnectionStringKeywords.CurrentLanguage)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Initialization)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_CurrentLanguage)]
+        [ResCategory(nameof(Strings.DataCategory_Initialization))]
+        [ResDescription(nameof(Strings.DbConnectionString_CurrentLanguage))]
         [RefreshProperties(RefreshProperties.All)]
         public string CurrentLanguage
         {
@@ -1191,8 +1191,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/DataSource/*' />
         [DisplayName(DbConnectionStringKeywords.DataSource)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_DataSource)]
+        [ResCategory(nameof(Strings.DataCategory_Source))]
+        [ResDescription(nameof(Strings.DbConnectionString_DataSource))]
         [RefreshProperties(RefreshProperties.All)]
         [TypeConverter("Microsoft.Data.SqlClient.SqlConnectionStringBuilder+SqlDataSourceConverter, Microsoft.Data.SqlClient")]
         public string DataSource
@@ -1207,8 +1207,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ServerSPN/*' />
         [DisplayName(DbConnectionStringKeywords.ServerSpn)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ServerSPN)]
+        [ResCategory(nameof(Strings.DataCategory_Source))]
+        [ResDescription(nameof(Strings.DbConnectionString_ServerSPN))]
         [RefreshProperties(RefreshProperties.All)]
         public string ServerSPN
         {
@@ -1222,8 +1222,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Encrypt/*' />
         [DisplayName(DbConnectionStringKeywords.Encrypt)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Encrypt)]
+        [ResCategory(nameof(Strings.DataCategory_Security))]
+        [ResDescription(nameof(Strings.DbConnectionString_Encrypt))]
         [RefreshProperties(RefreshProperties.All)]
         public SqlConnectionEncryptOption Encrypt
         {
@@ -1238,8 +1238,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/HostNameInCertificate/*' />
         [DisplayName(DbConnectionStringKeywords.HostNameInCertificate)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_HostNameInCertificate)]
+        [ResCategory(nameof(Strings.DataCategory_Security))]
+        [ResDescription(nameof(Strings.DbConnectionString_HostNameInCertificate))]
         [RefreshProperties(RefreshProperties.All)]
         public string HostNameInCertificate
         {
@@ -1253,8 +1253,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ServerCertificate/*' />
         [DisplayName(DbConnectionStringKeywords.ServerCertificate)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ServerCertificate)]
+        [ResCategory(nameof(Strings.DataCategory_Security))]
+        [ResDescription(nameof(Strings.DbConnectionString_ServerCertificate))]
         [RefreshProperties(RefreshProperties.All)]
         public string ServerCertificate
         {
@@ -1268,8 +1268,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ColumnEncryptionSetting/*' />
         [DisplayName(DbConnectionStringKeywords.ColumnEncryptionSetting)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescription(StringsHelper.ResourceNames.TCE_DbConnectionString_ColumnEncryptionSetting)]
+        [ResCategory(nameof(Strings.DataCategory_Security))]
+        [ResDescription(nameof(Strings.TCE_DbConnectionString_ColumnEncryptionSetting))]
         [RefreshProperties(RefreshProperties.All)]
         public SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting
         {
@@ -1288,8 +1288,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/EnclaveAttestationUrl/*' />
         [DisplayName(DbConnectionStringKeywords.EnclaveAttestationUrl)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescription(StringsHelper.ResourceNames.TCE_DbConnectionString_EnclaveAttestationUrl)]
+        [ResCategory(nameof(Strings.DataCategory_Security))]
+        [ResDescription(nameof(Strings.TCE_DbConnectionString_EnclaveAttestationUrl))]
         [RefreshProperties(RefreshProperties.All)]
         public string EnclaveAttestationUrl
         {
@@ -1303,8 +1303,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttestationProtocol/*' />
         [DisplayName(DbConnectionStringKeywords.AttestationProtocol)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescription(StringsHelper.ResourceNames.TCE_DbConnectionString_AttestationProtocol)]
+        [ResCategory(nameof(Strings.DataCategory_Security))]
+        [ResDescription(nameof(Strings.TCE_DbConnectionString_AttestationProtocol))]
         [RefreshProperties(RefreshProperties.All)]
         public SqlConnectionAttestationProtocol AttestationProtocol
         {
@@ -1323,8 +1323,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IPAddressPreference/*' />
         [DisplayName(DbConnectionStringKeywords.IpAddressPreference)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescription(StringsHelper.ResourceNames.TCE_DbConnectionString_IPAddressPreference)]
+        [ResCategory(nameof(Strings.DataCategory_Security))]
+        [ResDescription(nameof(Strings.TCE_DbConnectionString_IPAddressPreference))]
         [RefreshProperties(RefreshProperties.All)]
         public SqlConnectionIPAddressPreference IPAddressPreference
         {
@@ -1343,8 +1343,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TrustServerCertificate/*' />
         [DisplayName(DbConnectionStringKeywords.TrustServerCertificate)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_TrustServerCertificate)]
+        [ResCategory(nameof(Strings.DataCategory_Security))]
+        [ResDescription(nameof(Strings.DbConnectionString_TrustServerCertificate))]
         [RefreshProperties(RefreshProperties.All)]
         public bool TrustServerCertificate
         {
@@ -1358,8 +1358,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Enlist/*' />
         [DisplayName(DbConnectionStringKeywords.Enlist)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Enlist)]
+        [ResCategory(nameof(Strings.DataCategory_Pooling))]
+        [ResDescription(nameof(Strings.DbConnectionString_Enlist))]
         [RefreshProperties(RefreshProperties.All)]
         public bool Enlist
         {
@@ -1373,8 +1373,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/FailoverPartner/*' />
         [DisplayName(DbConnectionStringKeywords.FailoverPartner)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_FailoverPartner)]
+        [ResCategory(nameof(Strings.DataCategory_Source))]
+        [ResDescription(nameof(Strings.DbConnectionString_FailoverPartner))]
         [RefreshProperties(RefreshProperties.All)]
         [TypeConverter("Microsoft.Data.SqlClient.SqlConnectionStringBuilder+SqlDataSourceConverter, Microsoft.Data.SqlClient")]
         public string FailoverPartner
@@ -1389,8 +1389,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/FailoverPartnerSPN/*' />
         [DisplayName(DbConnectionStringKeywords.FailoverPartnerSpn)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_FailoverPartnerSPN)]
+        [ResCategory(nameof(Strings.DataCategory_Source))]
+        [ResDescription(nameof(Strings.DbConnectionString_FailoverPartnerSPN))]
         [RefreshProperties(RefreshProperties.All)]
         public string FailoverPartnerSPN
         {
@@ -1404,8 +1404,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/InitialCatalog/*' />
         [DisplayName(DbConnectionStringKeywords.InitialCatalog)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_InitialCatalog)]
+        [ResCategory(nameof(Strings.DataCategory_Source))]
+        [ResDescription(nameof(Strings.DbConnectionString_InitialCatalog))]
         [RefreshProperties(RefreshProperties.All)]
         [TypeConverter(typeof(SqlInitialCatalogConverter))]
         public string InitialCatalog
@@ -1420,8 +1420,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IntegratedSecurity/*' />
         [DisplayName(DbConnectionStringKeywords.IntegratedSecurity)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_IntegratedSecurity)]
+        [ResCategory(nameof(Strings.DataCategory_Security))]
+        [ResDescription(nameof(Strings.DbConnectionString_IntegratedSecurity))]
         [RefreshProperties(RefreshProperties.All)]
         public bool IntegratedSecurity
         {
@@ -1435,8 +1435,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Authentication/*' />
         [DisplayName(DbConnectionStringKeywords.Authentication)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Authentication)]
+        [ResCategory(nameof(Strings.DataCategory_Security))]
+        [ResDescription(nameof(Strings.DbConnectionString_Authentication))]
         [RefreshProperties(RefreshProperties.All)]
         public SqlAuthenticationMethod Authentication
         {
@@ -1455,8 +1455,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/LoadBalanceTimeout/*' />
         [DisplayName(DbConnectionStringKeywords.LoadBalanceTimeout)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_LoadBalanceTimeout)]
+        [ResCategory(nameof(Strings.DataCategory_Pooling))]
+        [ResDescription(nameof(Strings.DbConnectionString_LoadBalanceTimeout))]
         [RefreshProperties(RefreshProperties.All)]
         public int LoadBalanceTimeout
         {
@@ -1474,8 +1474,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MaxPoolSize/*' />
         [DisplayName(DbConnectionStringKeywords.MaxPoolSize)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_MaxPoolSize)]
+        [ResCategory(nameof(Strings.DataCategory_Pooling))]
+        [ResDescription(nameof(Strings.DbConnectionString_MaxPoolSize))]
         [RefreshProperties(RefreshProperties.All)]
         public int MaxPoolSize
         {
@@ -1493,8 +1493,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*' />
         [DisplayName(DbConnectionStringKeywords.ConnectRetryCount)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_ConnectionResiliency)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ConnectRetryCount)]
+        [ResCategory(nameof(Strings.DataCategory_ConnectionResiliency))]
+        [ResDescription(nameof(Strings.DbConnectionString_ConnectRetryCount))]
         [RefreshProperties(RefreshProperties.All)]
         public int ConnectRetryCount
         {
@@ -1512,8 +1512,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryInterval/*' />
         [DisplayName(DbConnectionStringKeywords.ConnectRetryInterval)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_ConnectionResiliency)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ConnectRetryInterval)]
+        [ResCategory(nameof(Strings.DataCategory_ConnectionResiliency))]
+        [ResDescription(nameof(Strings.DbConnectionString_ConnectRetryInterval))]
         [RefreshProperties(RefreshProperties.All)]
         public int ConnectRetryInterval
         {
@@ -1532,8 +1532,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MinPoolSize/*' />
         [DisplayName(DbConnectionStringKeywords.MinPoolSize)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_MinPoolSize)]
+        [ResCategory(nameof(Strings.DataCategory_Pooling))]
+        [ResDescription(nameof(Strings.DbConnectionString_MinPoolSize))]
         [RefreshProperties(RefreshProperties.All)]
         public int MinPoolSize
         {
@@ -1551,8 +1551,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MultipleActiveResultSets/*' />
         [DisplayName(DbConnectionStringKeywords.MultipleActiveResultSets)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Advanced)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_MultipleActiveResultSets)]
+        [ResCategory(nameof(Strings.DataCategory_Advanced))]
+        [ResDescription(nameof(Strings.DbConnectionString_MultipleActiveResultSets))]
         [RefreshProperties(RefreshProperties.All)]
         public bool MultipleActiveResultSets
         {
@@ -1567,8 +1567,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MultiSubnetFailover/*' />
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", Justification = "Reviewed and Approved by UE")]
         [DisplayName(DbConnectionStringKeywords.MultiSubnetFailover)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_MultiSubnetFailover)]
+        [ResCategory(nameof(Strings.DataCategory_Source))]
+        [ResDescription(nameof(Strings.DbConnectionString_MultiSubnetFailover))]
         [RefreshProperties(RefreshProperties.All)]
         public bool MultiSubnetFailover
         {
@@ -1582,8 +1582,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PacketSize/*' />
         [DisplayName(DbConnectionStringKeywords.PacketSize)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Advanced)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_PacketSize)]
+        [ResCategory(nameof(Strings.DataCategory_Advanced))]
+        [ResDescription(nameof(Strings.DbConnectionString_PacketSize))]
         [RefreshProperties(RefreshProperties.All)]
         public int PacketSize
         {
@@ -1601,8 +1601,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Password/*' />
         [DisplayName(DbConnectionStringKeywords.Password)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Password)]
+        [ResCategory(nameof(Strings.DataCategory_Security))]
+        [ResDescription(nameof(Strings.DbConnectionString_Password))]
         [PasswordPropertyText(true)]
         [RefreshProperties(RefreshProperties.All)]
         public string Password
@@ -1617,8 +1617,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PersistSecurityInfo/*' />
         [DisplayName(DbConnectionStringKeywords.PersistSecurityInfo)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_PersistSecurityInfo)]
+        [ResCategory(nameof(Strings.DataCategory_Security))]
+        [ResDescription(nameof(Strings.DbConnectionString_PersistSecurityInfo))]
         [RefreshProperties(RefreshProperties.All)]
         public bool PersistSecurityInfo
         {
@@ -1632,8 +1632,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PoolBlockingPeriod/*' />
         [DisplayName(DbConnectionStringKeywords.PoolBlockingPeriod)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_PoolBlockingPeriod)]
+        [ResCategory(nameof(Strings.DataCategory_Pooling))]
+        [ResDescription(nameof(Strings.DbConnectionString_PoolBlockingPeriod))]
         [RefreshProperties(RefreshProperties.All)]
         public PoolBlockingPeriod PoolBlockingPeriod
         {
@@ -1652,8 +1652,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Pooling/*' />
         [DisplayName(DbConnectionStringKeywords.Pooling)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Pooling)]
+        [ResCategory(nameof(Strings.DataCategory_Pooling))]
+        [ResDescription(nameof(Strings.DbConnectionString_Pooling))]
         [RefreshProperties(RefreshProperties.All)]
         public bool Pooling
         {
@@ -1667,8 +1667,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Replication/*' />
         [DisplayName(DbConnectionStringKeywords.Replication)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Replication)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Replication)]
+        [ResCategory(nameof(Strings.DataCategory_Replication))]
+        [ResDescription(nameof(Strings.DbConnectionString_Replication))]
         [RefreshProperties(RefreshProperties.All)]
         public bool Replication
         {
@@ -1682,8 +1682,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransactionBinding/*' />
         [DisplayName(DbConnectionStringKeywords.TransactionBinding)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Advanced)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_TransactionBinding)]
+        [ResCategory(nameof(Strings.DataCategory_Advanced))]
+        [ResDescription(nameof(Strings.DbConnectionString_TransactionBinding))]
         [RefreshProperties(RefreshProperties.All)]
         public string TransactionBinding
         {
@@ -1697,8 +1697,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TypeSystemVersion/*' />
         [DisplayName(DbConnectionStringKeywords.TypeSystemVersion)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Advanced)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_TypeSystemVersion)]
+        [ResCategory(nameof(Strings.DataCategory_Advanced))]
+        [ResDescription(nameof(Strings.DbConnectionString_TypeSystemVersion))]
         [RefreshProperties(RefreshProperties.All)]
         public string TypeSystemVersion
         {
@@ -1712,8 +1712,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/UserID/*' />
         [DisplayName(DbConnectionStringKeywords.UserId)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_UserID)]
+        [ResCategory(nameof(Strings.DataCategory_Security))]
+        [ResDescription(nameof(Strings.DbConnectionString_UserID))]
         [RefreshProperties(RefreshProperties.All)]
         public string UserID
         {
@@ -1727,8 +1727,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/UserInstance/*' />
         [DisplayName(DbConnectionStringKeywords.UserInstance)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_UserInstance)]
+        [ResCategory(nameof(Strings.DataCategory_Source))]
+        [ResDescription(nameof(Strings.DbConnectionString_UserInstance))]
         [RefreshProperties(RefreshProperties.All)]
         public bool UserInstance
         {
@@ -1742,8 +1742,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/WorkstationID/*' />
         [DisplayName(DbConnectionStringKeywords.WorkstationId)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Context)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_WorkstationID)]
+        [ResCategory(nameof(Strings.DataCategory_Context))]
+        [ResDescription(nameof(Strings.DbConnectionString_WorkstationID))]
         [RefreshProperties(RefreshProperties.All)]
         public string WorkstationID
         {
@@ -1833,8 +1833,8 @@ namespace Microsoft.Data.SqlClient
         [Browsable(false)]
         [DisplayName(DbConnectionStringKeywords.ConnectionReset)]
         [Obsolete("ConnectionReset has been deprecated. SqlConnection will ignore the 'connection reset' keyword and always reset the connection.")] // SQLPT 41700
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ConnectionReset)]
+        [ResCategory(nameof(Strings.DataCategory_Pooling))]
+        [ResDescription(nameof(Strings.DbConnectionString_ConnectionReset))]
         [RefreshProperties(RefreshProperties.All)]
         public bool ConnectionReset
         {
@@ -1848,8 +1848,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransparentNetworkIPResolution/*' />
         [DisplayName(DbConnectionStringKeywords.TransparentNetworkIpResolution)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_TransparentNetworkIPResolution)]
+        [ResCategory(nameof(Strings.DataCategory_Source))]
+        [ResDescription(nameof(Strings.DbConnectionString_TransparentNetworkIPResolution))]
         [RefreshProperties(RefreshProperties.All)]
         public bool TransparentNetworkIPResolution
         {
@@ -1863,8 +1863,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/NetworkLibrary/*' />
         [DisplayName(DbConnectionStringKeywords.NetworkLibrary)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Advanced)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_NetworkLibrary)]
+        [ResCategory(nameof(Strings.DataCategory_Advanced))]
+        [ResDescription(nameof(Strings.DbConnectionString_NetworkLibrary))]
         [RefreshProperties(RefreshProperties.All)]
         [TypeConverter(typeof(NetworkLibraryConverter))]
         public string NetworkLibrary

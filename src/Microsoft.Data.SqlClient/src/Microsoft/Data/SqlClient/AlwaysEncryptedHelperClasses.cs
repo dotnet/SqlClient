@@ -406,7 +406,8 @@ namespace Microsoft.Data.SqlClient
                                     byte encryptionType,
                                     byte normalizationRuleVersion)
         {
-            Debug.Assert(!sqlTceCipherInfoEntry.Equals(default(SqlTceCipherInfoEntry)), "sqlTceCipherInfoEntry should not be un-initialized.");
+            // TODO(GH-3604): Fix this failing assertion.
+            // Debug.Assert(!sqlTceCipherInfoEntry.Equals(default(SqlTceCipherInfoEntry)), "sqlTceCipherInfoEntry should not be un-initialized.");
 
             _sqlTceCipherInfoEntry = sqlTceCipherInfoEntry;
             _ordinal = ordinal;

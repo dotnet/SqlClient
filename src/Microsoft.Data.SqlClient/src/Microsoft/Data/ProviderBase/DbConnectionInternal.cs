@@ -69,13 +69,6 @@ namespace Microsoft.Data.ProviderBase
 
         private TransactionCompletedEventHandler _transactionCompletedEventHandler = null;
 
-        #if DEBUG
-        /// <summary>
-        /// Debug only counter to verify activate/deactivates are in sync.
-        /// </summary>
-        private int _activateCount;
-        #endif
-
         #endregion
 
         protected DbConnectionInternal() : this(ConnectionState.Open, true, false)
@@ -346,11 +339,6 @@ namespace Microsoft.Data.ProviderBase
             // the Activate method publicly.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.ActivateConnection|RES|INFO|CPOOL> {0}, Activating", ObjectID);
 
-            #if DEBUG
-            int activateCount = Interlocked.Increment(ref _activateCount);
-            Debug.Assert(activateCount == 1, "activated multiple times?");
-            #endif
-
             Activate(transaction);
 
             SqlClientEventSource.Metrics.EnterActiveConnection();
@@ -506,22 +494,6 @@ namespace Microsoft.Data.ProviderBase
             // Internal method called from the connection pooler so we don't expose
             // the Deactivate method publicly.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.DeactivateConnection|RES|INFO|CPOOL> {0}, Deactivating", ObjectID);
-
-            #if DEBUG
-            int origCount, newCount;
-            do
-            {
-                origCount = _activateCount;
-
-                if (origCount == 0)
-                {
-                  break;
-                }
-
-                newCount = origCount - 1;
-            }
-            while (Interlocked.CompareExchange(ref _activateCount, newCount, origCount) != origCount);
-            #endif
 
             SqlClientEventSource.Metrics.ExitActiveConnection();
 

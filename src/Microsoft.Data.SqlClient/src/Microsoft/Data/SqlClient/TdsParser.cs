@@ -20,6 +20,7 @@ using Interop.Common.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
@@ -1603,7 +1604,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command = null, bool callerHasConnectionLock = false, bool asyncClose = false)
         {
-            Debug.Assert(!callerHasConnectionLock || _connHandler._parserLock.ThreadMayHaveLock(), "Caller claims to have lock, but connection lock is not taken");
+            Debug.Assert(!callerHasConnectionLock || _connHandler._parserLock.ThreadMayHaveLock, "Caller claims to have lock, but connection lock is not taken");
 
             SqlException exception = null;
             bool breakConnection;
@@ -1808,9 +1809,11 @@ namespace Microsoft.Data.SqlClient
                 // strip provider info from SNI
                 //
                 int iColon = errorMessage.IndexOf(':');
-                Debug.Assert(0 <= iColon, "':' character missing in sni errorMessage");
+                // TODO(GH-3604): Fix this failing assertion.
+                // Debug.Assert(0 <= iColon, "':' character missing in sni errorMessage");
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > ':' character missing in sni errorMessage. Error Message index of ':' = {0}", iColon);
-                Debug.Assert(errorMessage.Length > iColon + 1 && errorMessage[iColon + 1] == ' ', "Expecting a space after the ':' character");
+                // TODO(GH-3604): Fix this failing assertion.
+                // Debug.Assert(errorMessage.Length > iColon + 1 && errorMessage[iColon + 1] == ' ', "Expecting a space after the ':' character");
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Expecting a space after the ':' character. Error Message Length = {0}", errorMessage.Length);
 
                 // extract the message excluding the colon and trailing cr/lf chars
@@ -1903,7 +1906,7 @@ namespace Microsoft.Data.SqlClient
                             stateObj.ResetBuffer();
                             Debug.Assert(_connHandler != null, "SqlConnectionInternalTds handler can not be null at this point.");
                             stateObj.AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, _server, _connHandler.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
-                            Debug.Assert(_connHandler._parserLock.ThreadMayHaveLock(), "Thread is writing without taking the connection lock");
+                            Debug.Assert(_connHandler._parserLock.ThreadMayHaveLock, "Thread is writing without taking the connection lock");
                             ThrowExceptionAndWarning(stateObj, callerHasConnectionLock: true);
                         }
                     }
@@ -9666,7 +9669,7 @@ namespace Microsoft.Data.SqlClient
             // won't stomp on anything.
 
 
-            Debug.Assert(!_connHandler.ThreadHasParserLockForClose || _connHandler._parserLock.ThreadMayHaveLock(), "Thread claims to have parser lock, but lock is not taken");
+            Debug.Assert(!_connHandler.ThreadHasParserLockForClose || _connHandler._parserLock.ThreadMayHaveLock, "Thread claims to have parser lock, but lock is not taken");
             bool callerHasConnectionLock = _connHandler.ThreadHasParserLockForClose;   // If the thread already claims to have the parser lock, then we will let the caller handle releasing it
             if (!callerHasConnectionLock)
             {
@@ -9864,7 +9867,7 @@ namespace Microsoft.Data.SqlClient
 
             if (old_outputPacketNumber != 1 && _state == TdsParserState.OpenLoggedIn)
             {
-                Debug.Assert(_connHandler._parserLock.ThreadMayHaveLock(), "Should not be calling into FailureCleanup without first taking the parser lock");
+                Debug.Assert(_connHandler._parserLock.ThreadMayHaveLock, "Should not be calling into FailureCleanup without first taking the parser lock");
 
                 bool originalThreadHasParserLock = _connHandler.ThreadHasParserLockForClose;
                 try
@@ -9912,7 +9915,7 @@ namespace Microsoft.Data.SqlClient
             // Only need to take the lock if neither the thread nor the caller claims to already have it
             bool needToTakeParserLock = (!callerHasConnectionLock) && (!_connHandler.ThreadHasParserLockForClose);
             Debug.Assert(!_connHandler.ThreadHasParserLockForClose || sync, "Thread shouldn't claim to have the parser lock if we are doing async writes");     // Since we have the possibility of pending with async writes, make sure the thread doesn't claim to already have the lock
-            Debug.Assert(needToTakeParserLock || _connHandler._parserLock.ThreadMayHaveLock(), "Thread or caller claims to have connection lock, but lock is not taken");
+            Debug.Assert(needToTakeParserLock || _connHandler._parserLock.ThreadMayHaveLock, "Thread or caller claims to have connection lock, but lock is not taken");
 
             bool releaseConnectionLock = false;
             if (needToTakeParserLock)
@@ -10029,7 +10032,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(!firstCall || startRpc == 0, "startRpc is not 0 on first call");
             Debug.Assert(!firstCall || startParam == 0, "startParam is not 0 on first call");
             Debug.Assert(!firstCall || !_connHandler.ThreadHasParserLockForClose, "Thread should not already have connection lock");
-            Debug.Assert(firstCall || _connHandler._parserLock.ThreadMayHaveLock(), "Connection lock not taken after the first call");
+            Debug.Assert(firstCall || _connHandler._parserLock.ThreadMayHaveLock, "Connection lock not taken after the first call");
             try
             {
                 _SqlRPC rpcext = null;

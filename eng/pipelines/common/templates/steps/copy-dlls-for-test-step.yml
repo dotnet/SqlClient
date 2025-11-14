@@ -4,9 +4,11 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: Configuration
+  - name: buildConfiguration
     type: string
-    default: '$(Configuration)'
+    values:
+      - Debug
+      - Release
 
   - name: symbolsFolder
     type: string
@@ -56,11 +58,11 @@ steps:
         
         if ($tf.StartsWith('net4'))
         {
-          Copy-Item "artifacts\${{parameters.referenceType }}\bin\Windows_NT\${{parameters.Configuration }}.AnyCPU\Microsoft.Data.SqlClient\netfx\$tf\Microsoft.Data.SqlClient.dll" "$software\win\$tf" -recurse
+          Copy-Item "artifacts\${{parameters.referenceType }}\bin\Windows_NT\${{parameters.buildConfiguration }}.AnyCPU\Microsoft.Data.SqlClient\netfx\$tf\Microsoft.Data.SqlClient.dll" "$software\win\$tf" -recurse
         }
         else
         {
-          Copy-Item "artifacts\${{parameters.referenceType }}\bin\Windows_NT\${{parameters.Configuration }}.AnyCPU\Microsoft.Data.SqlClient\netcore\$tf\Microsoft.Data.SqlClient.dll" "$software\win\$tf" -recurse
+          Copy-Item "artifacts\${{parameters.referenceType }}\bin\Windows_NT\${{parameters.buildConfiguration }}.AnyCPU\Microsoft.Data.SqlClient\netcore\$tf\Microsoft.Data.SqlClient.dll" "$software\win\$tf" -recurse
         }
         
         $symbols = '${{parameters.symbolsFolder}}'

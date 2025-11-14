@@ -3191,7 +3191,7 @@ namespace Microsoft.Data.SqlClient
                 _outBuff.AsSpan(0, _outBytesUsed).Clear();
             }
 
-            Debug.Assert(Parser.Connection._parserLock.ThreadMayHaveLock(), "Thread is writing without taking the connection lock");
+            Debug.Assert(Parser.Connection._parserLock.ThreadMayHaveLock, "Thread is writing without taking the connection lock");
             Task task = SNIWritePacket(packet, out _, canAccumulate, callerHasConnectionLock: true);
 
             // Check to see if the timeout has occurred.  This time out code is special case code to allow BCP writes to timeout. Eventually we should make all writes timeout.
