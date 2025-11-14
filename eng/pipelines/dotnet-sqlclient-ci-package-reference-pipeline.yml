@@ -11,12 +11,13 @@
 #   - Microsoft.Data.SqlClient
 #   - Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 #
-# It runs via CI push triggers and schedules:
+# It runs via CI push triggers and schedules and uses the Release build
+# configuration:
 #
 #   - Commits to GitHub main
 #   - Commits to ADO internal/main
-#   - Weekdays at 01:00 UTC on GitHub main
-#   - Thursdays at 03:00 UTC on ADO internal/main
+#   - Weekdays at 03:00 UTC on GitHub main
+#   - Thursdays at 07:00 UTC on ADO internal/main
 #
 # GOTCHA: This pipeline definition is triggered by GitHub _and_ ADO CI.  We are
 # able to define different triggers and schedules using branch filters:
@@ -45,7 +46,8 @@ name: $(DayOfYear)$(Rev:rr)
 # Trigger this pipeline on commits to certain branches.
 trigger:
   
-  # Don't trigger a new run until the previous one completes.
+  # Don't trigger a new run until the previous one completes.  This may cause
+  # multiple commits to be batched into a single run.
   batch: true
   
   branches:
@@ -60,8 +62,9 @@ trigger:
     include:
     - .azuredevops
     - .config
-    - src
+    - doc
     - eng
+    - src
     - tools
     - azurepipelines-coverage.yml
     - build.proj
@@ -72,15 +75,15 @@ schedules:
 
   # GitHub main on weekdays
   - cron: '0 3 * * Mon-Fri'
-    displayName: Weekday Release Build
+    displayName: Weekday Run (Release Config)
     branches:
       include:
       - main
     always: true
 
   # ADO internal/main on Thursdays.
-  - cron: '0 5 * * Thu'
-    displayName: Thursday Release Build
+  - cron: '0 7 * * Thu'
+    displayName: Thursday Run (Release Config)
     branches:
       include:
       - internal/main
@@ -162,10 +165,10 @@ extends:
     # specified.  We choose different values depending on the build
     # configuration.
     ${{ if eq(parameters.testJobTimeout, 'Default') }}:
-      # If the build configuration is Debug, double the test job timeout value.
-      # Some of our tests currently take much longer to run in Debug mode.
+      # If the build configuration is Debug, we allow a bit of extra time since
+      # some tests run more slowly, and some tests are Debug only.
       ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
-        testJobTimeout: 180
+        testJobTimeout: 110
       ${{ else }}:
         testJobTimeout: 90
     ${{ else }}:

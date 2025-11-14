@@ -116,31 +116,6 @@ This update brings the following changes since [7.0.0-preview1.25257.1]
   - Updated `System.Security.Cryptography.Pkcs` to v9.0.9 (net9)
   - Updated `System.Text.Json` to v8.0.6 (net8), v9.0.9 (net9)
 
-## [Stable Release 6.1.2] - 2025-10-07
-
-This update brings the below changes over the previous stable release:
-
-### Fixed
-
-- Fixed an issue where initializing PerformanceCounters would throw `System.InvalidOperationException` [#3629](https://github.com/dotnet/sqlclient/pull/3629)
-- Fixed an issue where a Custom SqlClientAuthenticationProvider was being overwritten by default implementation. [#3651](https://github.com/dotnet/SqlClient/pull/3651)
-- Fixed a concurrency issue in connection pooling where the number of active connections could be lower than the configured maximum pool size. [#3653](https://github.com/dotnet/SqlClient/pull/3653)
-
-## [Stable release 6.0.3] - 2025-10-07
-
-This update brings the below changes over the previous stable release:
-
-### Fixed
-
-- Fixed an issue where a Custom SqlClientAuthenticationProvider was being overwritten by default implementation. [#3652](https://github.com/dotnet/SqlClient/pull/3652)
-- Fixed a concurrency issue in connection pooling where the number of active connections could be lower than the configured maximum pool size. [#3654](https://github.com/dotnet/SqlClient/pull/3654)
-
-### Changed
-
-- Updated MSAL usage as per code compliance requirements [#3360](https://github.com/dotnet/SqlClient/pull/3360)
-- Updated `SqlDecimal` implementation to improve code compliance [#3466](https://github.com/dotnet/SqlClient/pull/3466)
-- Updated Azure.Identity and related dependencies [#3553](https://github.com/dotnet/SqlClient/pull/3553)
-
 ## [Preview Release 7.0.0-preview1.25257.1] - 2025-09-12
 
 This update brings the following changes since the [6.1.0](release-notes/6.1/6.1.0.md)
@@ -203,9 +178,53 @@ release:
 - Updated `Azure.Identity` dependency to v1.14.2.
   ([#3538](https://github.com/dotnet/SqlClient/pull/3538))
 
+## [Stable Release 6.1.3] - 2025-11-12
+
+This update includes the following changes since the [6.1.2](release-notes/6.1/6.1.2.md) release:
+
+### Added
+
+#### App Context Switch for Ignoring Server-Provided Failover Partner
+
+*What Changed:*
+
+- A new app context switch `Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner` was introduced to let the client ignore server-provided failover partner info in Basic Availability Groups (BAGs). When the switch is enabled, only the failover partner specified in the connection string is used; server-supplied partner values are skipped. This context switch was introduced in PR [#3702](https://github.com/dotnet/SqlClient/pull/3702).
+
+*Who Benefits:*
+
+- Applications connecting to SQL Server BAGs using TCP and custom ports, especially where the server's provided partner name lacks the protocol, host, or port. This avoids connection failures when the server-provided partner is incompatible or incomplete.
+- Teams who manage availability groups and rely on client-side control of failover behavior in heterogeneous networking environments.
+
+*Impact:*
+
+- If your environment might be affected (i.e., you operate a BAG with custom ports, or have experienced failures after failover), you can enable the new switch in your application:
+
+```c#
+AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner", true);
+```
+
+- Then, ensure your connection string includes your preferred failover partner (with correct `tcp:host,port`) so that the client uses that instead of the server's suggestion.
+- Without enabling this, by default, the client continues to prefer the server-provided partner, maintaining backwards compatibility.
+
+### Fixed
+
+- Fixed an issue to ensure reliable metrics initialization during startup,
+  preventing missed telemetry when EventSource is enabled early.
+  ([#3718](https://github.com/dotnet/SqlClient/pull/3718))
+
+## [Stable Release 6.1.2] - 2025-10-07
+
+This update includes the following changes since the [6.1.1](release-notes/6.1/6.1.1.md) release:
+
+### Fixed
+
+- Fixed an issue where initializing PerformanceCounters would throw `System.InvalidOperationException` [#3629](https://github.com/dotnet/sqlclient/pull/3629)
+- Fixed an issue where a Custom SqlClientAuthenticationProvider was being overwritten by default implementation. [#3651](https://github.com/dotnet/SqlClient/pull/3651)
+- Fixed a concurrency issue in connection pooling where the number of active connections could be lower than the configured maximum pool size. [#3653](https://github.com/dotnet/SqlClient/pull/3653)
+
 ## [Stable Release 6.1.1] - 2025-08-14
 
-This update includes the following changes since the [6.1.0](6.1.0.md) release:
+This update includes the following changes since the [6.1.0](release-notes/6.1/6.1.0.md) release:
 
 ### Fixed
 
@@ -467,6 +486,21 @@ This update brings the following changes over the previous release:
   - Microsoft.Identity.Model.Protocols.OpenIdConnect to v7.7.1
 - Code merge towards a unified SqlClient project, aligning .NET Framework and .NET Core implementations. ([#2957](https://github.com/dotnet/sqlclient/pull/2957), [#2963](https://github.com/dotnet/sqlclient/pull/2963), [#2984](https://github.com/dotnet/sqlclient/pull/2984), [#2982](https://github.com/dotnet/sqlclient/pull/2982), [#3023](https://github.com/dotnet/sqlclient/pull/3023), [#3015](https://github.com/dotnet/sqlclient/pull/3015), [#2967](https://github.com/dotnet/sqlclient/pull/2967), [#3164](https://github.com/dotnet/sqlclient/pull/3164), [#3163](https://github.com/dotnet/sqlclient/pull/3163), [#3171](https://github.com/dotnet/sqlclient/pull/3171), [#3182](https://github.com/dotnet/sqlclient/pull/3182), [#3179](https://github.com/dotnet/sqlclient/pull/3179), [#3156](https://github.com/dotnet/sqlclient/pull/3156), [#3213](https://github.com/dotnet/sqlclient/pull/3213), [#3232](https://github.com/dotnet/sqlclient/pull/3232), [#3236](https://github.com/dotnet/sqlclient/pull/3236), [#3231](https://github.com/dotnet/sqlclient/pull/3231), [#3241](https://github.com/dotnet/sqlclient/pull/3241), [#3246](https://github.com/dotnet/sqlclient/pull/3246), [#3247](https://github.com/dotnet/sqlclient/pull/3247), [#3222](https://github.com/dotnet/sqlclient/pull/3222), [#3255](https://github.com/dotnet/sqlclient/pull/3255), [#3254](https://github.com/dotnet/sqlclient/pull/3254), [#3259](https://github.com/dotnet/sqlclient/pull/3259), [#3264](https://github.com/dotnet/sqlclient/pull/3264), [#3256](https://github.com/dotnet/sqlclient/pull/3256), [#3251](https://github.com/dotnet/sqlclient/pull/3251), [#3275](https://github.com/dotnet/sqlclient/pull/3275), [#3277](https://github.com/dotnet/sqlclient/pull/3277), [#3263](https://github.com/dotnet/sqlclient/pull/3263), [#3292](https://github.com/dotnet/sqlclient/pull/3292), [#3208](https://github.com/dotnet/sqlclient/pull/3208)).
 - Test improvements include updates to test references, removal of hardcoded certificates, improved stability, and better coverage ([#3041](https://github.com/dotnet/sqlclient/pull/3041), [#3034](https://github.com/dotnet/sqlclient/pull/3034), [#3130](https://github.com/dotnet/sqlclient/pull/3130), [#3128](https://github.com/dotnet/sqlclient/pull/3128), [#3181](https://github.com/dotnet/sqlclient/pull/3181), [#3060](https://github.com/dotnet/sqlclient/pull/3060), [#3184](https://github.com/dotnet/sqlclient/pull/3184), [#3033](https://github.com/dotnet/sqlclient/pull/3033), [#3186](https://github.com/dotnet/sqlclient/pull/3186), [#3025](https://github.com/dotnet/sqlclient/pull/3025), [#3230](https://github.com/dotnet/sqlclient/pull/3230), [#3237](https://github.com/dotnet/sqlclient/pull/3237), [#3059](https://github.com/dotnet/sqlclient/pull/3059), [#3061](https://github.com/dotnet/sqlclient/pull/3061)).
+
+## [Stable release 6.0.3] - 2025-10-07
+
+This update brings the below changes over the previous stable release:
+
+### Fixed
+
+- Fixed an issue where a Custom SqlClientAuthenticationProvider was being overwritten by default implementation. [#3652](https://github.com/dotnet/SqlClient/pull/3652)
+- Fixed a concurrency issue in connection pooling where the number of active connections could be lower than the configured maximum pool size. [#3654](https://github.com/dotnet/SqlClient/pull/3654)
+
+### Changed
+
+- Updated MSAL usage as per code compliance requirements [#3360](https://github.com/dotnet/SqlClient/pull/3360)
+- Updated `SqlDecimal` implementation to improve code compliance [#3466](https://github.com/dotnet/SqlClient/pull/3466)
+- Updated Azure.Identity and related dependencies [#3553](https://github.com/dotnet/SqlClient/pull/3553)
 
 ## [Stable release 6.0.2] - 2025-04-25
 
@@ -854,6 +888,55 @@ This update brings the below changes over the previous release:
 - Removed reference to Microsoft.Win32.Registry since it's shipped starting with .NET 6.0. [#1974](https://github.com/dotnet/SqlClient/pull/1974)
 - Added Microsoft.SqlServer.Types to verify support for SqlHierarchyId and Spatial for .NET Core. [#1848](https://github.com/dotnet/SqlClient/pull/1848)
 - Code health improvements:[#1943](https://github.com/dotnet/SqlClient/pull/1943)[#1949](https://github.com/dotnet/SqlClient/pull/1949)[#1198](https://github.com/dotnet/SqlClient/pull/1198)[#1829](https://github.com/dotnet/SqlClient/pull/1829)
+
+## [Stable release 5.1.8] - 2025-11-14
+
+This update brings the following changes since the [5.1.7](release-notes/5.1/5.1.7.md) release:
+
+### Added
+
+#### App Context Switch for Ignoring Server-Provided Failover Partner
+
+*What Changed:*
+
+- A new app context switch `Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner` was introduced to let the client ignore server-provided failover partner info in Basic Availability Groups (BAGs). When the switch is enabled, only the failover partner specified in the connection string is used; server-supplied partner values are skipped. This context switch was introduced in PR [#3704](https://github.com/dotnet/SqlClient/pull/3704).
+
+*Who Benefits:*
+
+- Applications connecting to SQL Server BAGs using TCP and custom ports, especially where the server's provided partner name lacks the protocol, host, or port. This avoids connection failures when the server-provided partner is incompatible or incomplete.
+- Teams who manage availability groups and rely on client-side control of failover behavior in heterogeneous networking environments.
+
+*Impact:*
+
+- If your environment might be affected (i.e., you operate a BAG with custom ports, or have experienced failures after failover), you can enable the new switch in your application:
+
+```c#
+AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner", true);
+```
+
+- Then, ensure your connection string includes your preferred failover partner (with correct `tcp:host,port`) so that the client uses that instead of the server's suggestion.
+- Without enabling this, by default, the client continues to prefer the server-provided partner, maintaining backwards compatibility.
+
+### Fixed
+
+- Fixed a bulk copy bug that incorrectly prepended a UTF-8 Byte-Order-Marker
+  when processing row data.
+  ([#3617](https://github.com/dotnet/SqlClient/pull/3617))
+
+### Changed
+
+- Modernized creation of `Microsoft.Identity.Client.PublicClientApplication`
+  instances to use its builder pattern.
+  ([#3367](https://github.com/dotnet/SqlClient/pull/3367))
+- Replaced use of undocumented .NET Framework internals when reading
+  `SqlDecimal` values.
+  ([#3465](https://github.com/dotnet/SqlClient/pull/3465))
+- Updated the following dependencies
+  ([#3754](https://github.com/dotnet/SqlClient/pull/3754)):
+  - Azure.Core 1.41.0
+    (Avoids transitive [vulnerability](https://github.com/Azure/azure-sdk-for-net/issues/44817))
+  - Azure.Identity 1.12.1
+  - Microsoft.Identity.Client 4.76.0
 
 ## [Stable release 5.1.7] - 2025-04-25
 

@@ -84,6 +84,12 @@ parameters:
 - name: testJobTimeout
   type: number
 
+# If true, the Always Encrypted (AE) test set will be run, which requires
+# Enclave-enabled SQL Server instances.
+- name: runAlwaysEncryptedTests
+  type: boolean
+  default: true
+
 variables:
   - template: libraries/ci-build-variables.yml@self
   
@@ -394,7 +400,9 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
-        ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}: # only run enclave jobs if the password is available
+        # Only run the AE tests if enable and if we have access to the necessary
+        # secrets.
+        ${{ if and(eq(parameters.runAlwaysEncryptedTests, true), eq(variables['system.pullRequest.isFork'], 'False')) }}:
           windows_enclave_sql:
             pool: ADO-CI-AE-1ES-Pool
             images: 
@@ -481,7 +489,9 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
-        ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}: # only run enclave jobs if the password is available
+        # Only run the AE tests if enable and if we have access to the necessary
+        # secrets.
+        ${{ if and(eq(parameters.runAlwaysEncryptedTests, true), eq(variables['system.pullRequest.isFork'], 'False')) }}:
           linux_enclave_sql:
             pool: ADO-CI-AE-1ES-Pool
             images:
