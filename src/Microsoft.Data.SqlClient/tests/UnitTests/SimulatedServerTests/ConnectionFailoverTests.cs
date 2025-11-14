@@ -4,7 +4,7 @@
 
 using System;
 using System.Data;
-using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
@@ -563,7 +563,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Connect once to the primary to trigger it to send the failover partner
             connection.Open();
-            Assert.Equal("invalidhost", (connection.InnerConnection as SqlInternalConnectionTds)!.ServerProvidedFailoverPartner);
+            Assert.Equal("invalidhost", (connection.InnerConnection as SqlConnectionInternal)!.ServerProvidedFailoverPartner);
 
             // Close the connection to return it to the pool
             connection.Close();
