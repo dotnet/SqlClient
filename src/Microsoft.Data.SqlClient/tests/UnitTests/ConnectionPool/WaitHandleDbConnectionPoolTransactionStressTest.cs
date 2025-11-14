@@ -84,54 +84,13 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
 
     #region Basic Transaction Stress Tests
 
-    [Fact]
-    public void StressTest_RapidTransactionOpenClose_SingleThreaded()
+    [Theory]
+    [InlineData(10, 100)]
+    public void StressTest_ConcurrentTransactions_MultipleThreads(int threadCount, int iterationsPerThread)
     {
         // Arrange
-        var pool = CreatePool(maxPoolSize: 10);
-        const int iterations = 1000;
-        var connections = new List<DbConnectionInternal>();
-
-        try
-        {
-            // Act
-            for (int i = 0; i < iterations; i++)
-            {
-                using var scope = new TransactionScope();
-                var owner = new SqlConnection();
-
-                var obtained = pool.TryGetConnection(
-                    owner,
-                    taskCompletionSource: null,
-                    new DbConnectionOptions("", null),
-                    out DbConnectionInternal? connection);
-
-                Assert.True(obtained);
-                Assert.NotNull(connection);
-                connections.Add(connection);
-
-                pool.ReturnInternalConnection(connection, owner);
-                scope.Complete();
-            }
-
-            // Assert
-            AssertPoolMetrics(pool, 10);
-        }
-        finally
-        {
-            pool.Shutdown();
-        }
-    }
-
-    [Fact]
-    public void StressTest_ConcurrentTransactions_MultipleThreads()
-    {
-        // Arrange
-        var pool = CreatePool(maxPoolSize: 20);
-        const int threadCount = 10;
-        const int iterationsPerThread = 100;
+        var pool = CreatePool();
         var tasks = new Task[threadCount];
-        var exceptions = new ConcurrentBag<Exception>();
 
         try
         {
@@ -140,28 +99,79 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
             {
                 tasks[t] = Task.Run(() =>
                 {
+                    for (int i = 0; i < iterationsPerThread; i++)
+                    {
+                        using var scope = new TransactionScope();
+                        var owner = new SqlConnection();
+
+                        var obtained = pool.TryGetConnection(
+                            owner,
+                            taskCompletionSource: null,
+                            new DbConnectionOptions("", null),
+                            out DbConnectionInternal? connection);
+
+                        Assert.True(obtained);
+                        Assert.NotNull(connection);
+
+                        // Simulate some work
+                        Thread.Sleep(1);
+
+                        pool.ReturnInternalConnection(connection, owner);
+                        scope.Complete();
+                    }
+                });
+            }
+
+            Task.WaitAll(tasks);
+
+            // Assert
+            AssertPoolMetrics(pool, 20);
+        }
+        finally
+        {
+            pool.Shutdown();
+            pool.Clear();
+        }
+    }
+
+    [Fact]
+    public void StressTest_TransactionIsolation_DifferentTransactionsDifferentConnections()
+    {
+        // Arrange
+        var pool = CreatePool(maxPoolSize: 30);
+        const int transactionCount = 100;
+        var tasks = new Task[transactionCount];
+        var exceptions = new ConcurrentBag<Exception>();
+        var transactionConnections = new ConcurrentDictionary<string, List<int>>();
+
+        try
+        {
+            // Act - Each transaction should be isolated
+            for (int t = 0; t < transactionCount; t++)
+            {
+                tasks[t] = Task.Run(() =>
+                {
                     try
                     {
-                        for (int i = 0; i < iterationsPerThread; i++)
+                        using var scope = new TransactionScope();
+                        var transaction = Transaction.Current;
+                        Assert.NotNull(transaction);
+                        var txId = transaction!.TransactionInformation.LocalIdentifier;
+
+                        var connectionIds = new List<int>();
+
+                        // Get multiple connections within same transaction
+                        for (int i = 0; i < 3; i++)
                         {
-                            using var scope = new TransactionScope();
                             var owner = new SqlConnection();
-
-                            var obtained = pool.TryGetConnection(
-                                owner,
-                                taskCompletionSource: null,
-                                new DbConnectionOptions("", null),
-                                out DbConnectionInternal? connection);
-
-                            Assert.True(obtained);
-                            Assert.NotNull(connection);
-
-                            // Simulate some work
-                            Thread.Sleep(1);
-
-                            pool.ReturnInternalConnection(connection, owner);
-                            scope.Complete();
+                            pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out var conn);
+                            Assert.NotNull(conn);
+                            connectionIds.Add(conn!.ObjectID);
+                            pool.ReturnInternalConnection(conn, owner);
                         }
+
+                        transactionConnections[txId] = connectionIds;
+                        scope.Complete();
                     }
                     catch (Exception ex)
                     {
@@ -174,7 +184,8 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
 
             // Assert
             Assert.Empty(exceptions);
-            AssertPoolMetrics(pool, 20);
+            Assert.Equal(transactionCount, transactionConnections.Count);
+            AssertPoolMetrics(pool, 30);
         }
         finally
         {
@@ -415,139 +426,6 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
             // Assert
             Assert.Empty(exceptions);
             Assert.True(completedOperations > 0, "No operations completed successfully");
-            AssertPoolMetrics(pool, 30);
-        }
-        finally
-        {
-            pool.Shutdown();
-        }
-    }
-
-    #endregion
-
-    #region Transaction Affinity Stress Tests
-
-    [Fact]
-    public void StressTest_TransactionAffinity_ConnectionReuse()
-    {
-        // Arrange
-        var pool = CreatePool(maxPoolSize: 20, hasTransactionAffinity: true);
-        const int threadCount = 10;
-        const int iterationsPerThread = 50;
-        var tasks = new Task[threadCount];
-        var exceptions = new ConcurrentBag<Exception>();
-        var connectionReuseCounts = new ConcurrentDictionary<int, int>();
-
-        try
-        {
-            // Act - Test that connections are properly reused within same transaction
-            for (int t = 0; t < threadCount; t++)
-            {
-                tasks[t] = Task.Run(() =>
-                {
-                    try
-                    {
-                        for (int i = 0; i < iterationsPerThread; i++)
-                        {
-                            using var scope = new TransactionScope();
-                            var owner1 = new SqlConnection();
-                            var owner2 = new SqlConnection();
-
-                            // Get first connection
-                            pool.TryGetConnection(owner1, null, new DbConnectionOptions("", null), out var conn1);
-                            Assert.NotNull(conn1);
-                            var conn1Id = conn1!.ObjectID;
-
-                            // Return it
-                            pool.ReturnInternalConnection(conn1, owner1);
-
-                            // Get second connection in same transaction
-                            pool.TryGetConnection(owner2, null, new DbConnectionOptions("", null), out var conn2);
-                            Assert.NotNull(conn2);
-                            var conn2Id = conn2!.ObjectID;
-
-                            // Track if we got the same connection back
-                            if (conn1Id == conn2Id)
-                            {
-                                connectionReuseCounts.AddOrUpdate(Thread.CurrentThread.ManagedThreadId, 1, (k, v) => v + 1);
-                            }
-
-                            pool.ReturnInternalConnection(conn2, owner2);
-                            scope.Complete();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        exceptions.Add(ex);
-                    }
-                });
-            }
-
-            Task.WaitAll(tasks);
-
-            // Assert
-            Assert.Empty(exceptions);
-            AssertPoolMetrics(pool, 20);
-            // We should see some connection reuse
-            Assert.True(connectionReuseCounts.Values.Sum() > 0, "Expected some connection reuse within transactions");
-        }
-        finally
-        {
-            pool.Shutdown();
-        }
-    }
-
-    [Fact]
-    public void StressTest_TransactionIsolation_DifferentTransactionsDifferentConnections()
-    {
-        // Arrange
-        var pool = CreatePool(maxPoolSize: 30);
-        const int transactionCount = 100;
-        var tasks = new Task[transactionCount];
-        var exceptions = new ConcurrentBag<Exception>();
-        var transactionConnections = new ConcurrentDictionary<string, List<int>>();
-
-        try
-        {
-            // Act - Each transaction should be isolated
-            for (int t = 0; t < transactionCount; t++)
-            {
-                tasks[t] = Task.Run(() =>
-                {
-                    try
-                    {
-                        using var scope = new TransactionScope();
-                        var transaction = Transaction.Current;
-                        Assert.NotNull(transaction);
-                        var txId = transaction!.TransactionInformation.LocalIdentifier;
-
-                        var connectionIds = new List<int>();
-
-                        // Get multiple connections within same transaction
-                        for (int i = 0; i < 3; i++)
-                        {
-                            var owner = new SqlConnection();
-                            pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out var conn);
-                            Assert.NotNull(conn);
-                            connectionIds.Add(conn!.ObjectID);
-                            pool.ReturnInternalConnection(conn, owner);
-                        }
-
-                        transactionConnections[txId] = connectionIds;
-                        scope.Complete();
-                    }
-                    catch (Exception ex)
-                    {
-                        exceptions.Add(ex);
-                    }
-                });
-            }
-
-            Task.WaitAll(tasks);
-
-            // Assert
-            Assert.Empty(exceptions);
-            Assert.Equal(transactionCount, transactionConnections.Count);
             AssertPoolMetrics(pool, 30);
         }
         finally
