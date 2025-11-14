@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Stable release 6.0.4] - 2025-11-14
+## [Stable release 6.0.4] - 2025-11-15
 
 This update brings the below changes over the previous stable release:
 
