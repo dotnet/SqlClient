@@ -6,6 +6,8 @@
 
 using System;
 
+#nullable enable
+
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
     /// <summary>
@@ -14,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     internal static class SniLoadHandle
     {
         [ThreadStatic]
-        private static SniError s_lastError;
+        private static SniError? s_lastError;
 
         /// <summary>
         /// Last SNI error
