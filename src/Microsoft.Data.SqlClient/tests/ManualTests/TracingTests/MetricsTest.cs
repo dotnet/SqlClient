@@ -177,6 +177,73 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(0, SqlClientEventSourceProps.StasisConnections);
         }
 
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public void TransactedConnectionPool_VerifyActiveConnectionCounters()
+        {
+            // This test verifies that the active connection count metric never goes negative
+            // when connections are returned to the pool while enlisted in a transaction.
+            // This is a regression test for issue #3640 where an extra DeactivateConnection
+            // call was causing the active connection count to go negative.
+
+            // Arrange
+            var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            {
+                Pooling = true,
+                Enlist = false,
+                MinPoolSize = 0,
+                MaxPoolSize = 10
+            };
+
+            // Clear pools to start fresh
+            ClearConnectionPools();
+
+            long initialActiveSoftConnections = SqlClientEventSourceProps.ActiveSoftConnections;
+            long initialActiveHardConnections = SqlClientEventSourceProps.ActiveHardConnections;
+            long initialActiveConnections = SqlClientEventSourceProps.ActiveConnections;
+
+            // Act and Assert
+            // Verify counters at each step in the lifecycle of a transacted connection
+            using (var txScope = new TransactionScope())
+            {
+                using (var conn = new SqlConnection(stringBuilder.ToString()))
+                {
+                    conn.Open();
+                    conn.EnlistTransaction(System.Transactions.Transaction.Current);
+
+                    if (SupportsActiveConnectionCounters)
+                    {
+                        // Connection should be active
+                        Assert.Equal(initialActiveSoftConnections + 1, SqlClientEventSourceProps.ActiveSoftConnections);
+                        Assert.Equal(initialActiveHardConnections + 1, SqlClientEventSourceProps.ActiveHardConnections);
+                        Assert.Equal(initialActiveConnections + 1, SqlClientEventSourceProps.ActiveConnections);
+                    }
+
+                    conn.Close();
+
+                    // Connection is returned to pool but still in transaction (stasis)
+                    if (SupportsActiveConnectionCounters)
+                    {
+                        // Connection should be deactivated (returned to pool)
+                        Assert.Equal(initialActiveSoftConnections, SqlClientEventSourceProps.ActiveSoftConnections);
+                        Assert.Equal(initialActiveHardConnections + 1, SqlClientEventSourceProps.ActiveHardConnections);
+                        Assert.Equal(initialActiveConnections, SqlClientEventSourceProps.ActiveConnections);
+                    }
+                }
+
+                // Completing the transaction after the connection is closed ensures that the connection
+                // is in the transacted pool at the time the transaction ends. This verifies that the
+                // transition from the transacted pool back to the main pool properly updates the counters.
+                txScope.Complete();
+            }
+
+            if (SupportsActiveConnectionCounters)
+            {
+                Assert.Equal(initialActiveSoftConnections, SqlClientEventSourceProps.ActiveSoftConnections);
+                Assert.Equal(initialActiveHardConnections+1, SqlClientEventSourceProps.ActiveHardConnections);
+                Assert.Equal(initialActiveConnections, SqlClientEventSourceProps.ActiveConnections);
+            }
+        }
+
         [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3031")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void ReclaimedConnectionsCounter_Functional()
