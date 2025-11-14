@@ -61,7 +61,6 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
         <dependency id="System.Configuration.ConfigurationManager" version="9.0.4" exclude="Compile" />
         <dependency id="System.Security.Cryptography.Pkcs" version="9.0.4" />
-        <dependency id="System.Text.Json" version="9.0.5" />
       </group>
     </dependencies>
     <frameworkAssemblies>
