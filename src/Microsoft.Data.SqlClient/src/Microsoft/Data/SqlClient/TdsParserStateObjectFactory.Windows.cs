@@ -15,14 +15,14 @@ namespace Microsoft.Data.SqlClient
 
         public EncryptionOptions EncryptionOptions =>
 #if NET
-            LocalAppContextSwitches.UseManagedNetworking ? ManagedSni.SniLoadHandle.SingletonInstance.Options : SNILoadHandle.SingletonInstance.Options;
+            LocalAppContextSwitches.UseManagedNetworking ? ManagedSni.SniLoadHandle.Options : SNILoadHandle.SingletonInstance.Options;
 #else
             SNILoadHandle.SingletonInstance.Options;
 #endif
 
         public uint SNIStatus =>
 #if NET
-            LocalAppContextSwitches.UseManagedNetworking ? ManagedSni.SniLoadHandle.SingletonInstance.Status : SNILoadHandle.SingletonInstance.Status;
+            LocalAppContextSwitches.UseManagedNetworking ? ManagedSni.SniLoadHandle.Status : SNILoadHandle.SingletonInstance.Status;
 #else
             SNILoadHandle.SingletonInstance.Status;
 #endif
@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         public bool ClientOSEncryptionSupport =>
 #if NET
-            LocalAppContextSwitches.UseManagedNetworking ? ManagedSni.SniLoadHandle.SingletonInstance.ClientOSEncryptionSupport : SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
+            LocalAppContextSwitches.UseManagedNetworking ? ManagedSni.SniLoadHandle.ClientOSEncryptionSupport : SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
 #else
             SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
 #endif
