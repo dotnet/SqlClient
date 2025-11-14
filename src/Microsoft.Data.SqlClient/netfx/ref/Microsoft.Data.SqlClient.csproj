@@ -32,8 +32,6 @@
     <Reference Include="System.Transactions" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Azure.Core" />
-    <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI">
       <PrivateAssets>All</PrivateAssets>

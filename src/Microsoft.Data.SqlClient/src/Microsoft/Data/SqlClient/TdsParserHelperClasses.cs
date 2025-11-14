@@ -13,6 +13,7 @@ using System.Globalization;
 using System.Security;
 using System.Security.Authentication;
 using System.Text;
+using System.Text.Encodings;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 
@@ -128,23 +129,53 @@ namespace Microsoft.Data.SqlClient
         internal uint tdsVersion;
     }
 
+    #nullable enable
+
     internal sealed class SqlFedAuthInfo
     {
-        internal string spn;
-        internal string stsurl;
+        internal string Spn { get; }
+        internal string StsUrl { get; }
+
+        internal SqlFedAuthInfo(string spn, string stsurl)
+        {
+            Spn = spn;
+            StsUrl = stsurl;
+        }
+        
         public override string ToString()
         {
-            return $"STSURL: {stsurl}, SPN: {spn}";
+            return $"SPN: {Spn}, STSURL: {StsUrl}";
         }
     }
 
     internal sealed class SqlFedAuthToken
     {
-        internal uint dataLen;
-        internal byte[] accessToken;
-        internal long expirationFileTime;
+        internal byte[] AccessToken { get; }
+        internal uint DataLen { get; }
+        internal long ExpirationFileTime { get; }
+
+        internal SqlFedAuthToken(
+            byte[] accessToken,
+            long expirationFileTime)
+        {
+            AccessToken = accessToken;
+            DataLen = (uint)AccessToken.Length;
+            ExpirationFileTime = expirationFileTime;
+        }
+
+        /// <summary>
+        /// Convert from a SqlAuthenticationToken.
+        /// </summary>
+        internal SqlFedAuthToken(SqlAuthenticationToken token)
+        {
+            AccessToken = Encoding.Unicode.GetBytes(token.AccessToken);
+            DataLen = (uint)AccessToken.Length;
+            ExpirationFileTime = token.ExpiresOn.ToFileTime();
+        }
     }
 
+    #nullable disable
+    
     internal sealed class _SqlMetaData : SqlMetaDataPriv
     {
         [Flags]
