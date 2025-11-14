@@ -133,13 +133,7 @@ internal static class UserAgentInfo
         // - If the payload exceeds 2,047 bytes but remains within sensible limits, we still send it, but note that
         //   some servers may silently drop or reject such packets — behavior we may use for future probing or diagnostics.
         // - If payload exceeds 10KB even after dropping fields , we send an empty payload.
-        var options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = null,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            WriteIndented = false
-        };
-        byte[] payload = JsonSerializer.SerializeToUtf8Bytes(dto, options);
+        byte[] payload = JsonSerializer.SerializeToUtf8Bytes(dto, UserAgentInfoDtoSerializerContext.Default.UserAgentInfoDto);
 
         // We try to send the payload if it is within the limits.
         // Otherwise we drop some fields to reduce the size of the payload and try one last time
@@ -157,7 +151,7 @@ internal static class UserAgentInfo
             dto.OS.Details = null; // drop OS.Details
         }
 
-        payload = JsonSerializer.SerializeToUtf8Bytes(dto, options);
+        payload = JsonSerializer.SerializeToUtf8Bytes(dto, UserAgentInfoDtoSerializerContext.Default.UserAgentInfoDto);
         if (payload.Length <= JsonPayloadMaxBytes)
         {
             return payload;
@@ -166,7 +160,7 @@ internal static class UserAgentInfo
         dto.OS = null; // drop OS entirely
         // Last attempt to send minimal payload driver + version only
         // As per the comment in AdjustJsonPayloadSize, we know driver + version cannot be larger than the max
-        return JsonSerializer.SerializeToUtf8Bytes(dto, options);
+        return JsonSerializer.SerializeToUtf8Bytes(dto, UserAgentInfoDtoSerializerContext.Default.UserAgentInfoDto);
     }
 
     internal static UserAgentInfoDto BuildDto()
