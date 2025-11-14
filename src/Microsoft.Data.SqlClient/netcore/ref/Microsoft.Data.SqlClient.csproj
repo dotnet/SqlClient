@@ -32,8 +32,6 @@
     <Compile Include="..\..\ref\Microsoft.Data.SqlClient.Batch.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Azure.Core" />
-    <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />

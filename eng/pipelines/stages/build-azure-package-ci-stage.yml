@@ -1,0 +1,162 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This stage builds the Azure package, runs tests, and publishes the resulting
+# NuGet packages as pipeline artifacts.
+#
+# The NuGet packages have the following properties:
+#
+#   Name:     Microsoft.Data.SqlClient.Extensions.Azure
+#   Version:  azurePackageVersion (from parameters)
+#
+# The following NuGet packages are published:
+#
+#   Microsoft.Data.SqlClient.Extensions.Azure.<version>.nupkg
+#   Microsoft.Data.SqlClient.Extensions.Azure.<version>.snupkg (symbols)
+#
+# The packages are published to pipeline artifacts with the name specified by
+# the azureArtifactName parameter.
+#
+# This template defines a stage named 'build_azure_package_stage' that
+# can be depended on by downstream stages.
+
+parameters:
+
+  # The name of the Abstractions pipeline artifact to download.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: abstractionsArtifactName
+    type: string
+    default: Abstractions.Artifact
+
+  # The Abstractions package verion to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: abstractionsPackageVersion
+    type: string
+
+  # The name of the pipeline artifact to publish.
+  - name: azureArtifactName
+    type: string
+    default: Azure.Artifact
+
+  # The version to apply to the NuGet package and DLLs.
+  - name: azurePackageVersion
+    type: string
+
+  # The type of build to produce (Release or Debug)
+  - name: buildConfiguration
+    type: string
+    default: Release
+    values:
+    - Release
+    - Debug
+
+  # The stages we depend on, if any.
+  - name: dependsOn
+    type: object
+    default: []
+  
+  # The reference type to use:
+  #
+  # Project - dependent projects are referenced directly.
+  # Package - dependent projects are referenced via NuGet packages.
+  #
+  - name: referenceType
+    type: string
+    values:
+    - Package
+    - Project
+
+  # The dotnet CLI verbosity to use.
+  - name: verbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+stages:
+
+  - stage: build_azure_package_stage
+    displayName: Build Azure Package
+    
+    dependsOn: ${{ parameters.dependsOn }}
+    
+    jobs:
+
+      # ------------------------------------------------------------------------
+      # Build and test on Linux.
+
+      - template: ../jobs/test-azure-package-ci-job.yml@self
+        parameters:
+          abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
+          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          displayNamePrefix: Linux
+          jobNameSuffix: linux
+          netFrameworkRuntimes: []
+          netRuntimes: [net8.0, net9.0]
+          poolName: Azure Pipelines
+          referenceType: ${{ parameters.referenceType }}
+          verbosity: ${{ parameters.verbosity }}
+          vmImage: ubuntu-latest
+
+      # ------------------------------------------------------------------------
+      # Build and test on Windows
+
+      - template: ../jobs/test-azure-package-ci-job.yml@self
+        parameters:
+          abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
+          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          displayNamePrefix: Win
+          jobNameSuffix: windows
+          netFrameworkRuntimes: [net462]
+          netRuntimes: [net8.0, net9.0]
+          poolName: Azure Pipelines
+          referenceType: ${{ parameters.referenceType }}
+          verbosity: ${{ parameters.verbosity }}
+          vmImage: windows-latest
+
+      # ------------------------------------------------------------------------
+      # Build and test on macOS.
+
+      - template: ../jobs/test-azure-package-ci-job.yml
+        parameters:
+          abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
+          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          displayNamePrefix: macOS
+          jobNameSuffix: macos
+          netFrameworkRuntimes: []
+          netRuntimes: [net8.0, net9.0]
+          poolName: Azure Pipelines
+          referenceType: ${{ parameters.referenceType }}
+          verbosity: ${{ parameters.verbosity }}
+          vmImage: macos-latest
+
+      # ------------------------------------------------------------------------
+      # Create and publish the NuGet package.
+
+      - template: ../jobs/pack-azure-package-ci-job.yml@self
+        parameters:
+          abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
+          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          azureArtifactName: ${{ parameters.azureArtifactName }}
+          azurePackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          dependsOn:
+            # We depend on all of the test jobs to ensure the tests pass before
+            # producing the NuGet package.
+            - test_azure_package_job_linux
+            - test_azure_package_job_windows
+            - test_azure_package_job_macos
+          referenceType: ${{ parameters.referenceType }}
+          verbosity: ${{ parameters.verbosity }}

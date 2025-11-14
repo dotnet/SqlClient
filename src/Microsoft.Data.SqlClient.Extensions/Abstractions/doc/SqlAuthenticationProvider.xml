@@ -1,4 +1,9 @@
-﻿<docs>
+﻿<!--
+Licensed to the .NET Foundation under one or more agreements.
+The .NET Foundation licenses this file to you under the MIT license.
+See the LICENSE file in the project root for more information.
+-->
+<docs>
   <members name="SqlAuthenticationProvider">
     <SqlAuthenticationProvider>
       <summary>Defines the core behavior of authentication providers and provides a base class for derived classes.</summary>
@@ -89,49 +94,50 @@
         </code>
       </example>
     </SqlAuthenticationProvider>
-    <ctor>
-      <summary>
-        Called from constructors in derived classes to initialize the <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationProvider" /> class.
-      </summary>
-    </ctor>
-    <GetProvider>
+    <BeforeLoad>
+      <summary>This method is called immediately before the provider is added to the SQL authentication provider registry.</summary>
+      <remarks>
+        Avoid performing long-waiting tasks in this method, since it can block other threads from accessing the provider registry.
+
+        This method must not throw.
+      </remarks>
       <param name="authenticationMethod">The authentication method.</param>
+    </BeforeLoad>
+    <BeforeUnload>
+      <summary>This method is called immediately before the provider is removed from the SQL authentication provider registry.</summary>
+      <remarks>
+        For example, this method is called when a different provider with the same authentication method overrides this provider in the SQL authentication provider registry. Avoid performing long-waiting task in this method, since it can block other threads from accessing the provider registry.
+
+        This method must not throw.
+      </remarks>
+      <param name="authenticationMethod">The authentication method.</param>
+    </BeforeUnload>
+    <IsSupported>
+      <summary>Indicates whether the specified authentication method is supported.</summary>
+      <remarks>This method must not throw.</remarks>
+      <returns>
+        <see langword="true" /> if the specified authentication method is supported; otherwise, <see langword="false" />.
+      </returns>
+      <param name="authenticationMethod">The authentication method.</param>
+    </IsSupported>
+    <AcquireTokenAsync>
+      <summary>Acquires an access token from the authority.</summary>
+      <param name="parameters">The parameters passed to the provider by the driver.</param>
+      <throws cref="SqlAuthenticationProviderException">If any errors occur.</throws>
+      <returns>Represents an asynchronous operation that returns the AD authentication token.</returns>
+    </AcquireTokenAsync>
+    <GetProvider>
       <summary>Gets an authentication provider by method.</summary>
+      <param name="authenticationMethod">The authentication method.</param>
       <returns>The authentication provider or <see langword="null" /> if not found.</returns>
     </GetProvider>
     <SetProvider>
+      <summary>Sets an authentication provider by method.</summary>
       <param name="authenticationMethod">The authentication method.</param>
       <param name="provider">The authentication provider.</param>
-      <summary>Sets an authentication provider by method.</summary>
       <returns>
         <see langword="true" /> if the operation succeeded; otherwise, <see langword="false" /> (for example, the existing provider disallows overriding).
       </returns>
     </SetProvider>
-    <BeforeLoad>
-      <param name="authenticationMethod">The authentication method.</param>
-      <summary>This method is called immediately before the provider is added to the SQL authentication provider registry.</summary>
-      <remarks>
-        Avoid performing long-waiting tasks in this method, since it can block other threads from accessing the provider registry.
-      </remarks>
-    </BeforeLoad>
-    <BeforeUnload>
-      <param name="authenticationMethod">The authentication method.</param>
-      <summary>This method is called immediately before the provider is removed from the SQL authentication provider registry.</summary>
-      <remarks>
-        For example, this method is called when a different provider with the same authentication method overrides this provider in the SQL authentication provider registry. Avoid performing long-waiting task in this method, since it can block other threads from accessing the provider registry.
-      </remarks>
-    </BeforeUnload>
-    <IsSupported>
-      <param name="authenticationMethod">The authentication method.</param>
-      <summary>Indicates whether the specified authentication method is supported.</summary>
-      <returns>
-        <see langword="true" /> if the specified authentication method is supported; otherwise, <see langword="false" />.
-      </returns>
-    </IsSupported>
-    <AcquireTokenAsync>
-      <param name="parameters">The Active Directory authentication parameters passed by the driver to authentication providers.</param>
-      <summary>Acquires a security token from the authority.</summary>
-      <returns>Represents an asynchronous operation that returns the AD authentication token.</returns>
-    </AcquireTokenAsync>
   </members>
 </docs>

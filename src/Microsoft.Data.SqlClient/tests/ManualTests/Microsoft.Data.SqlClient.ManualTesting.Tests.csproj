@@ -293,6 +293,8 @@
     <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
     <Compile Include="XUnitAssemblyAttributes.cs" />
   </ItemGroup>
+
+  <!-- Unconditional Project References -->
   <ItemGroup>
     <ProjectReference Include="$(TestsPath)Common\Common.csproj">
       <Name>Common</Name>
@@ -313,11 +315,32 @@
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
     <ProjectReference Include="$(TestsPath)tools\Microsoft.Data.SqlClient.TestUtilities\Microsoft.Data.SqlClient.TestUtilities.csproj" />
-    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Condition="!$(ReferenceType.Contains('Package'))" Include="$(SqlServerSource)Microsoft.SqlServer.Server.csproj" />
     <ProjectReference Include="$(TestsPath)CustomConfigurableRetryLogic\CustomRetryLogicProvider.csproj" />
   </ItemGroup>
+
+  <!-- Conditional Project References -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
+    <!--
+      Include the .NET or .NET Framework MDS project depending on which
+      framework we are targeting.
+    -->
+    <ProjectReference
+      Condition="'$(TargetGroup)'=='netcoreapp'"
+      Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference
+      Condition="'$(TargetGroup)'=='netfx'"
+      Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Include="../../../Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj" />
+    <ProjectReference Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
+  </ItemGroup>
+
+  <!-- Conditional Package References -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure" />
+    <PackageReference Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider" />
+  </ItemGroup>
+
   <!-- XUnit and XUnit extensions -->
   <ItemGroup>
     <PackageReference Include="xunit" />

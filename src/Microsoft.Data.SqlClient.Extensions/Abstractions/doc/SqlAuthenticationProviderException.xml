@@ -1,0 +1,82 @@
+<!--
+Licensed to the .NET Foundation under one or more agreements.
+The .NET Foundation licenses this file to you under the MIT license.
+See the LICENSE file in the project root for more information.
+-->
+<docs>
+  <members name="SqlAuthenticationProviderException">
+    <SqlAuthenticationProviderException>
+      <summary>
+        This exception is thrown for any errors that occur during the
+        authentication process.
+      </summary>
+    </SqlAuthenticationProviderException>
+    <ctor1>
+      <summary>
+        Protected construction for derived classes to supply a minimal set of
+        values.
+
+        Method will be NotSpecified.
+        FailureCode will be "Unknown".
+        ShouldRetry will be false.
+        RetryPeriod will be 0.
+      </summary>
+      <param name="message">The error message.</param>
+      <param name="causedBy">The exception that caused this exception, if any.</param>
+    </ctor1>
+    <ctor2>
+      <summary>
+        Protected construction for derived classes to supply values for all
+        public properties.
+      </summary>
+      <param name="method">
+        The authentication method that failed, or NotSpecified if not known.
+      </param>
+      <param name="failureCode">
+        The failure code, or "Unknown" if not known.
+      </param>
+      <param name="shouldRetry">
+        True if the action should be retried, false otherwise.
+      </param>
+      <param name="retryPeriod">
+        The period of time, in milliseconds, to wait before retrying the action.
+        Specify 0 if no retry period is suggested.  Ignored if negative.  Not
+        used when ShouldRetry is false, in which cases 0 is assumed.
+      </param>
+      <param name="message">
+        The error message.
+      </param>
+      <param name="causedBy">
+        The exception that caused this exception, if any.
+      </param>
+    </ctor2>
+    <Method>
+      <summary>
+        The authentication method that failed, or NotSpecified if not known.
+      </summary>
+    </Method>
+    <FailureCode>
+      <summary>
+        The failure code, or "Unknown" if not known.
+      </summary>
+    </FailureCode>
+    <ShouldRetry>
+      <summary>
+        True if the action should be retried, false otherwise.
+      </summary>
+    </ShouldRetry>
+    <RetryPeriod>
+      <summary>
+        The period of time, in milliseconds, to wait before retrying the action.
+        0 if no retry period is suggested.  Never negative.  Always 0 when
+        ShouldRetry is false.
+      </summary>
+    </RetryPeriod>
+    <ToString>
+      <returns>
+        A string that includes the base exception information along with all
+        property values.
+      </returns>
+    </ToString>
+  </members>
+</docs>

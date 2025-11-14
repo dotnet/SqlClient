@@ -23,26 +23,41 @@
   <!-- Build Config -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions</AssemblyName>
-    <RootNamespace>Microsoft.Data.SqlClient.Extensions.Abstractions</RootNamespace>
+
+    <!--
+      Clear the root namespace since our directory structure doesn't match our
+      namespace definitions.  Otherwise, if omitted it would default to the
+      AssemblyName.
+    -->
+    <RootNamespace></RootNamespace>
 
     <!--
       We pin the AssemblyVersion of our package to the default major version
       number, with all remaining parts set to 0.
     -->
-    <AssemblyVersion>$(_DefaultMajorVersion).0.0.0</AssemblyVersion>
+    <AssemblyVersion>$(AbstractionsDefaultMajorVersion).0.0.0</AssemblyVersion>
 
     <AssemblyFileVersion>$(AbstractionsAssemblyFileVersion)</AssemblyFileVersion>
     <FileVersion>$(AbstractionsAssemblyFileVersion)</FileVersion>
     <Version>$(AbstractionsPackageVersion)</Version>
+
+    <DocumentationFile>$(Artifacts)/doc/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <!-- Our API is CLS Compliant. -->
     <AssemblyAttribute Include="System.CLSCompliantAttribute">
       <_Parameter1>true</_Parameter1>
     </AssemblyAttribute>
+  </ItemGroup>
+  <!--
+    Our unit tests have access to our internal types, but only for non-official
+    builds.  This prevents downstream consumers from creating an assembly with
+    our test assembly name and gaining non-reflective access to our internals.
 
-    <!-- Our unit tests have access to our internal types. -->
-    <InternalsVisibleTo Include="Microsoft.Data.SqlClient.Extensions.Abstractions.Test" />
+    CDP_BUILD_TYPE is a OneBranch governed pipeline variable.
+  -->
+  <ItemGroup Condition="'$(CDP_BUILD_TYPE)' != 'Official'">
+    <InternalsVisibleTo Include="$(AssemblyName).Test" />
   </ItemGroup>
 
   <!--

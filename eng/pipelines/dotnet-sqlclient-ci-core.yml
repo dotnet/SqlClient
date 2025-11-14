@@ -108,6 +108,9 @@ variables:
   
   - name: abstractionsArtifactName
     value: Abstractions.Artifact
+  
+  - name: azureArtifactName
+    value: Azure.Artifact
 
   - name: mdsArtifactName
     value: MDS.Artifact
@@ -118,7 +121,7 @@ stages:
   # under the given artifact name.
   - template: stages/build-abstractions-package-ci-stage.yml@self
     parameters:
-      buildConfiguration: Release
+      buildConfiguration: ${{ parameters.buildConfiguration }}
       abstractionsPackageVersion: $(abstractionsPackageVersion)
       artifactName: $(abstractionsArtifactName)
       ${{if eq(parameters.debug, 'true')}}:
@@ -152,6 +155,24 @@ stages:
                 SNIVersion: ${{parameters.SNIVersion}}
                 SNIValidationFeed: ${{parameters.SNIValidationFeed}}
 
+  # Build the Azure package, and publish it to the pipeline artifacts under the
+  # given artifact name.
+  - template: stages/build-azure-package-ci-stage.yml@self
+    parameters:
+      abstractionsArtifactName: $(abstractionsArtifactName)
+      abstractionsPackageVersion: $(abstractionsPackageVersion)
+      azureArtifactName: $(azureArtifactName)
+      azurePackageVersion: $(azurePackageVersion)
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      # When building via package references, we must depend on the Abstractions
+      # package.
+      ${{ if eq(parameters.referenceType, 'Package') }}:
+        dependsOn:
+          - build_abstractions_package_stage
+      referenceType: ${{ parameters.referenceType }}
+      ${{if eq(parameters.debug, 'true')}}:
+        verbosity: diagnostic
+
   # Run the stress tests, if desired.
   - ${{ if eq(parameters.enableStressTests, true) }}:
     - template: stages/stress-tests-ci-stage.yml@self
@@ -171,17 +192,20 @@ stages:
       referenceType: ${{ parameters.referenceType }}
       abstractionsArtifactName: $(abstractionsArtifactName)
       abstractionsPackageVersion: $(abstractionsPackageVersion)
+      azureArtifactName: $(azureArtifactName)
+      azurePackageVersion: $(azurePackageVersion)
       mdsArtifactName: $(mdsArtifactName)
       mdsPackageVersion: $(mdsPackageVersion)
       testJobTimeout: ${{ parameters.testJobTimeout }}
       ${{ if eq(parameters.buildType, 'Package') }}:
         dependsOn: build_nugets
 
-      # When testing MDS via packages, we must depend on the Abstractions and
-      # MDS packages.
+      # When testing MDS via packages, we must depend on the Abstractions,
+      # Azure, and MDS packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
         dependsOn:
           - build_abstractions_package_stage
+          - build_azure_package_stage
           - build_mds_akv_packages_stage
 
       prebuildSteps: # steps to run prior to building and running tests on each job

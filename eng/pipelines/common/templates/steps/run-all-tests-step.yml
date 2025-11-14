@@ -64,9 +64,9 @@ steps:
         platform: '${{parameters.platform }}'
         configuration: '${{parameters.buildConfiguration }}'
         ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:   
-          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.mdsPackageVersion }}'
+          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:MdsPackageVersion=${{parameters.mdsPackageVersion }}'
         ${{ else }}: # x86
-          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.mdsPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
+          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:MdsPackageVersion=${{parameters.mdsPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
         condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
         retryCountOnTaskFailure: 1
 
@@ -78,9 +78,9 @@ steps:
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.buildConfiguration }}'
       ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:      
-        msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.mdsPackageVersion }}'
+        msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:MdsPackageVersion=${{parameters.mdsPackageVersion }}'
       ${{ else }}: # x86
-        msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.mdsPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
+        msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:MdsPackageVersion=${{parameters.mdsPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
     condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
     retryCountOnTaskFailure: 1
 
@@ -92,9 +92,9 @@ steps:
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.buildConfiguration }}'
       ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
-        msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.mdsPackageVersion }}'
+        msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:MdsPackageVersion=${{parameters.mdsPackageVersion }}'
       ${{ else }}: # x86
-        msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.mdsPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
+        msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:MdsPackageVersion=${{parameters.mdsPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
     condition: eq(variables['Agent.OS'], 'Windows_NT')
     retryCountOnTaskFailure: 2
 
@@ -106,7 +106,7 @@ steps:
         command: custom
         projects: build.proj
         custom: msbuild
-        arguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.mdsPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.buildConfiguration }}'
+        arguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:MdsPackageVersion=${{parameters.mdsPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.buildConfiguration }}'
         verbosityRestore: Detailed
         verbosityPack: Detailed
       retryCountOnTaskFailure: 1
@@ -118,7 +118,7 @@ steps:
       command: custom
       projects: build.proj
       custom: msbuild
-      arguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.mdsPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.buildConfiguration }}'
+      arguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:MdsPackageVersion=${{parameters.mdsPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.buildConfiguration }}'
       verbosityRestore: Detailed
       verbosityPack: Detailed
     retryCountOnTaskFailure: 1
@@ -130,7 +130,7 @@ steps:
       command: custom
       projects: build.proj
       custom: msbuild
-      arguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.mdsPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.buildConfiguration }}'
+      arguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:MdsPackageVersion=${{parameters.mdsPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.buildConfiguration }}'
       verbosityRestore: Detailed
       verbosityPack: Detailed
     retryCountOnTaskFailure: 2

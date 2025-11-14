@@ -254,8 +254,6 @@ namespace Microsoft.Data.SqlClient
             Exception innerException = null,
             SqlBatchCommand batchCommand = null)
         {
-            Debug.Assert(errorCollection != null && errorCollection.Count > 0, "no errorCollection?");
-
             StringBuilder message = new();
             for (int i = 0; i < errorCollection.Count; i++)
             {
@@ -266,7 +264,11 @@ namespace Microsoft.Data.SqlClient
                 message.Append(errorCollection[i].Message);
             }
 
-            if (innerException == null && errorCollection[0].Win32ErrorCode != 0 && errorCollection[0].Win32ErrorCode != -1)
+            if (innerException is null &&
+                errorCollection is not null &&
+                errorCollection.Count > 0 &&
+                errorCollection[0].Win32ErrorCode != 0 &&
+                errorCollection[0].Win32ErrorCode != -1)
             {
                 innerException = new Win32Exception(errorCollection[0].Win32ErrorCode);
             }
@@ -279,7 +281,10 @@ namespace Microsoft.Data.SqlClient
                 exception.Data.Add("HelpLink.ProdVer", serverVersion);
             }
             exception.Data.Add("HelpLink.EvtSrc", "MSSQLServer");
-            exception.Data.Add("HelpLink.EvtID", errorCollection[0].Number.ToString(CultureInfo.InvariantCulture));
+            if (errorCollection is not null && errorCollection.Count > 0)
+            {
+                exception.Data.Add("HelpLink.EvtID", errorCollection[0].Number.ToString(CultureInfo.InvariantCulture));
+            }
             exception.Data.Add("HelpLink.BaseHelpUrl", "https://go.microsoft.com/fwlink");
             exception.Data.Add("HelpLink.LinkId", "20476");
 
