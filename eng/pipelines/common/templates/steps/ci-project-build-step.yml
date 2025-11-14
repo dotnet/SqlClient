@@ -40,6 +40,12 @@ steps:
 - template: ./ensure-dotnet-version.yml@self
   parameters:
       packageType: 'sdk'
+      version: '10.0'
+      usePreview: true
+
+- template: ./ensure-dotnet-version.yml@self
+  parameters:
+      packageType: 'sdk'
       version: '9.0'
 
 - template: ./ensure-dotnet-version.yml@self
