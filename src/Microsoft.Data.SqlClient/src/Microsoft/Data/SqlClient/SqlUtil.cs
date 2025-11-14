@@ -1383,17 +1383,6 @@ namespace Microsoft.Data.SqlClient
             return exc;
         }
 
-        internal static Exception Azure_ManagedIdentityException(string msg)
-        {
-            SqlErrorCollection errors = new SqlErrorCollection
-            {
-                new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, msg, "", 0)
-            };
-            SqlException exc = SqlException.CreateException(errors, null);
-            exc._doNotReconnect = true; // disable open retry logic on this error
-            return exc;
-        }
-
         #region Always Encrypted Errors
 
         #region Always Encrypted - Certificate Store Provider Errors

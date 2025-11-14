@@ -90,7 +90,7 @@ jobs:
             displayName: 'Output Job Parameters'
 
           # Perform analysis before building, since this step will clobber build
-          # output
+          # output.
           - template: ../steps/roslyn-analyzers-akv-step.yml@self
             parameters:
                 akvPackageVersion: '${{ parameters.akvPackageVersion }}'

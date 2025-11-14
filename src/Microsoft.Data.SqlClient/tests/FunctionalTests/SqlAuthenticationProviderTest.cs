@@ -25,17 +25,12 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.IsType<ActiveDirectoryAuthenticationProvider>(SqlAuthenticationProvider.GetProvider(method));
         }
 
-        #if NETFRAMEWORK
-        // This test is only valid for .NET Framework
-
         // Overridden by app.config in this project
-        [Theory]
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNetFramework))]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryInteractive)]
         public void DefaultAuthenticationProviders_Interactive(SqlAuthenticationMethod method)
         {
             Assert.IsType<DummySqlAuthenticationProvider>(SqlAuthenticationProvider.GetProvider(method));
         }
-        
-        #endif
     }
 }

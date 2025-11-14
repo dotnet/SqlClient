@@ -192,19 +192,51 @@ dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlCl
 
 ## Testing with Custom ReferenceType
 
-Tests can be built and run with custom "Reference Type" property that enables different styles of testing:
+The MDS driver consists of several components, each of which produces its own
+NuGet package.  During development, components reference each other via
+`<ProjectReference>` properties by default.  This means that building
+and testing one component will implicitly build its project referenced
+dependencies.
 
-- "Project" => Build and run tests with Microsoft.Data.SqlClient as a Project Reference
-- "Package" => Build and run tests with Microsoft.Data.SqlClient as a Package Reference with configured "TestMicrosoftDataSqlClientVersion" in "Versions.props" file.
+Alternatively, the `ReferenceType` build property property may be specified with
+a value of `Package`.  This will change inter-component dependencies to use
+`<PackageReference>` dependencies, and require that dependent components be
+built and packaged before building the depending component.  In this scenario,
+the root `NuGet.config` file must be updated to include the following entry
+under the `<packageSources>` element:
 
-> ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" REFERENCE TYPE ***************
-> CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION
->
-> ```bash
-> msbuild -p:Configuration=Release
-> ```
+```xml
+<configuration>
+  <packageSources>
+    ...  
+    <add key="local" value="packages/" />
+  </packageSources>
+</configuration>
+```
 
-A non-AnyCPU platform reference can only be used with package reference type. Otherwise, the specified platform will be replaced with AnyCPU in the build process.
+As a convenience, a `NuGet.config.local` file is supplied with the above
+package source already present.  You may simply copy it over `NuGet.config`
+when using `Package` references.
+
+Then, you can specify `Package` references be used, for example:
+
+```bash
+dotnet build -t:BuildAbstractions
+dotnet build -t:BuildAzure -p:ReferenceType=Package
+dotnet build -t:BuildAll -p:ReferenceType=Package
+dotnet build -t:BuildAKVNetCore -p:ReferenceType=Package
+dotnet build -t:GenerateMdsPackage
+dotnet build -t:GenerateAkvPackage
+dotnet build -t:BuildTestsNetCore -p:ReferenceType=Package
+```
+
+The above will build the Abstractions, Azure, MDS, and AKV components, place
+their NuGet packages into the `packages/` directory, and then build the tests
+using those packages.
+
+A non-AnyCPU platform reference can only be used with package reference type.
+Otherwise, the specified platform will be replaced with AnyCPU in the build
+process.
 
 ### Building Tests with Reference Type
 
