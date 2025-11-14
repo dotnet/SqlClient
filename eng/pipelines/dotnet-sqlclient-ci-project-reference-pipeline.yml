@@ -43,7 +43,7 @@ trigger:
 # Scheduled runs.
 schedules:
 
-  # GitHub main on Sundays
+  # GitHub on Sundays 04:00 UTC.
   - cron: '0 4 * * Sun'
     displayName: Sunday Run
     branches:
@@ -51,7 +51,7 @@ schedules:
       - release/6.1
     always: true
 
-  # ADO internal/main on Sundays.
+  # ADO on Sundays 05:00 UTC.
   - cron: '0 5 * * Sun'
     displayName: Sunday Run
     branches:
