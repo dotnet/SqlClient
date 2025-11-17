@@ -6780,7 +6780,7 @@ namespace Microsoft.Data.SqlClient
 
                     // Now read the 4 next integers which contain the actual value.
                     length = checked((int)length - 1);
-                    int[] bits = new int[4];
+                    Span<int> bits = stackalloc int[4];
                     int decLength = length >> 2;
                     ReadOnlySpan<byte> span = unencryptedBytes.AsSpan();
                     for (int i = 0; i < decLength; i++)
@@ -7700,8 +7700,15 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLNUMERICN:
                     {
+#if NET
+                        Span<int> decimalBits = stackalloc int[4];
+                        decimal.GetBits((decimal)value, decimalBits);
+#else
+                        int[] decimalBits = decimal.GetBits((decimal)value);
+#endif
+
                         stateObj.WriteByte(mt.Precision); //propbytes: precision
-                        stateObj.WriteByte((byte)((decimal.GetBits((decimal)value)[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
+                        stateObj.WriteByte((byte)((decimalBits[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
                         WriteDecimal((decimal)value, stateObj);
                         break;
                     }
@@ -7862,9 +7869,15 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLNUMERICN:
                     {
+#if NET
+                        Span<int> decimalBits = stackalloc int[4];
+                        decimal.GetBits((decimal)value, decimalBits);
+#else
+                        int[] decimalBits = decimal.GetBits((decimal)value);
+#endif
                         WriteSqlVariantHeader(21, metatype.TDSType, metatype.PropBytes, stateObj);
                         stateObj.WriteByte(metatype.Precision); //propbytes: precision
-                        stateObj.WriteByte((byte)((decimal.GetBits((decimal)value)[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
+                        stateObj.WriteByte((byte)((decimalBits[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
                         WriteDecimal((decimal)value, stateObj);
                         break;
                     }
@@ -7921,7 +7934,12 @@ namespace Microsoft.Data.SqlClient
         private void WriteSqlMoney(SqlMoney value, int length, TdsParserStateObject stateObj)
         {
             // UNDONE: can I use SqlMoney.ToInt64()?
+#if NET
+            Span<int> bits = stackalloc int[4];
+            decimal.GetBits(value.Value, bits);
+#else
             int[] bits = decimal.GetBits(value.Value);
+#endif
 
             // this decimal should be scaled by 10000 (regardless of what the incoming decimal was scaled by)
             bool isNeg = (0 != (bits[3] & unchecked((int)0x80000000)));
@@ -7954,7 +7972,12 @@ namespace Microsoft.Data.SqlClient
         private byte[] SerializeCurrency(Decimal value, int length, TdsParserStateObject stateObj)
         {
             SqlMoney m = new SqlMoney(value);
-            int[] bits = Decimal.GetBits(m.Value);
+#if NET
+            Span<int> bits = stackalloc int[4];
+            decimal.GetBits(m.Value, bits);
+#else
+            int[] bits = decimal.GetBits(m.Value);
+#endif
 
             // this decimal should be scaled by 10000 (regardless of what the incoming decimal was scaled by)
             bool isNeg = (0 != (bits[3] & unchecked((int)0x80000000)));
@@ -7999,7 +8022,12 @@ namespace Microsoft.Data.SqlClient
         private void WriteCurrency(decimal value, int length, TdsParserStateObject stateObj)
         {
             SqlMoney m = new SqlMoney(value);
+#if NET
+            Span<int> bits = stackalloc int[4];
+            decimal.GetBits(m.Value, bits);
+#else
             int[] bits = decimal.GetBits(m.Value);
+#endif
 
             // this decimal should be scaled by 10000 (regardless of what the incoming decimal was scaled by)
             bool isNeg = (0 != (bits[3] & unchecked((int)0x80000000)));
@@ -8136,8 +8164,8 @@ namespace Microsoft.Data.SqlClient
 
             length = checked((int)length - 1);
 
-            int[] bits;
-            result = TryReadDecimalBits(length, stateObj, out bits);
+            Span<int> bits = stackalloc int[4];
+            result = TryReadDecimalBits(length, stateObj, bits);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
@@ -8149,31 +8177,16 @@ namespace Microsoft.Data.SqlClient
 
         // @devnote: length should be size of decimal without the sign
         // @devnote: sign should have already been read off the wire
-        private TdsOperationStatus TryReadDecimalBits(int length, TdsParserStateObject stateObj, out int[] bits)
+        private TdsOperationStatus TryReadDecimalBits(int length, TdsParserStateObject stateObj, Span<int> bits)
         {
-            bits = stateObj._decimalBits; // used alloc'd array if we have one already
-            int i;
-
-            if (bits == null)
-            {
-                bits = new int[4];
-                stateObj._decimalBits = bits;
-            }
-            else
-            {
-                for (i = 0; i < bits.Length; i++)
-                {
-                    bits[i] = 0;
-                }
-            }
-
+            Debug.Assert(bits.Length == 4);
             Debug.Assert((length > 0) &&
                          (length <= TdsEnums.MAX_NUMERIC_LEN - 1) &&
                          (length % 4 == 0), "decimal should have 4, 8, 12, or 16 bytes of data");
 
             int decLength = length >> 2;
 
-            for (i = 0; i < decLength; i++)
+            for (int i = 0; i < decLength; i++)
             {
                 // up to 16 bytes of data following the sign byte
                 TdsOperationStatus result = stateObj.TryReadInt32(out bits[i]);
@@ -8199,7 +8212,13 @@ namespace Microsoft.Data.SqlClient
 
         internal static decimal AdjustDecimalScale(decimal value, int newScale)
         {
-            int oldScale = (decimal.GetBits(value)[3] & 0x00ff0000) >> 0x10;
+#if NET
+            Span<int> decimalBits = stackalloc int[4];
+            decimal.GetBits(value, decimalBits);
+#else
+            int[] decimalBits = decimal.GetBits(value);
+#endif
+            int oldScale = (decimalBits[3] & 0x00ff0000) >> 0x10;
 
             if (newScale != oldScale)
             {
@@ -8281,7 +8300,12 @@ namespace Microsoft.Data.SqlClient
 
         private byte[] SerializeDecimal(decimal value, TdsParserStateObject stateObj)
         {
-            int[] decimalBits = Decimal.GetBits(value);
+#if NET
+            Span<int> decimalBits = stackalloc int[4];
+            decimal.GetBits(value, decimalBits);
+#else
+            int[] decimalBits = decimal.GetBits(value);
+#endif
             if (stateObj._bDecimalBytes == null)
             {
                 stateObj._bDecimalBytes = new byte[17];
@@ -8336,8 +8360,12 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteDecimal(decimal value, TdsParserStateObject stateObj)
         {
-            stateObj._decimalBits = decimal.GetBits(value);
-            Debug.Assert(stateObj._decimalBits != null, "decimalBits should be filled in at TdsExecuteRPC time");
+#if NET
+            Span<int> decimalBits = stackalloc int[4];
+            decimal.GetBits(value, decimalBits);
+#else
+            int[] decimalBits = decimal.GetBits(value);
+#endif
 
             /*
              Returns a binary representation of a Decimal. The return value is an integer
@@ -8359,7 +8387,7 @@ namespace Microsoft.Data.SqlClient
             */
 
             // write the sign (note that COM and SQL are opposite)
-            if (0x80000000 == (stateObj._decimalBits[3] & 0x80000000))
+            if ((decimalBits[3] & 0x80000000) == 0x80000000)
             {
                 stateObj.WriteByte(0);
             }
@@ -8368,9 +8396,9 @@ namespace Microsoft.Data.SqlClient
                 stateObj.WriteByte(1);
             }
 
-            WriteInt(stateObj._decimalBits[0], stateObj);
-            WriteInt(stateObj._decimalBits[1], stateObj);
-            WriteInt(stateObj._decimalBits[2], stateObj);
+            WriteInt(decimalBits[0], stateObj);
+            WriteInt(decimalBits[1], stateObj);
+            WriteInt(decimalBits[2], stateObj);
             WriteInt(0, stateObj);
         }
 
