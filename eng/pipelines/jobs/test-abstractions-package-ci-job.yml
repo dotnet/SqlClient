@@ -19,12 +19,28 @@ parameters:
     - Release
     - Debug
 
+  # True to enable extra debug steps and logging.
+  - name: debug
+    type: boolean
+    default: false
+
   # The prefix to prepend to the job's display name:
   #
   #   [<prefix>] Run Stress Tests
   #
   - name: displayNamePrefix
     type: string
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
 
   # The suffix to append to the job name.
   - name: jobNameSuffix
@@ -43,17 +59,6 @@ parameters:
   # The name of the Azure Pipelines pool to use.
   - name: poolName
     type: string
-
-  # The verbosity level for the dotnet CLI commands.
-  - name: verbosity
-    type: string
-    default: normal
-    values:
-    - quiet
-    - minimal
-    - normal
-    - detailed
-    - diagnostic
 
   # The pool VM image to use.
   - name: vmImage
@@ -83,13 +88,14 @@ jobs:
       # dotnet CLI arguments common to all commands.
       - name: commonArguments
         value: >-
-          --verbosity ${{ parameters.verbosity }}
+          --verbosity ${{ parameters.dotnetVerbosity }}
 
       # dotnet CLI arguments for build/test/pack commands
       - name: buildArguments
         value: >-
           $(commonArguments)
           --configuration ${{ parameters.buildConfiguration }}
+          -p:ForceMdsAssemblyNameSuffix=true
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public project.
@@ -115,6 +121,11 @@ jobs:
 
     steps:
 
+      # Emit environment variables if debug is enabled.
+      - ${{ if eq(parameters.debug, true) }}:
+        - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
+          displayName: '[Debug] Print Environment Variables'
+
       # Install the .NET 9.0 SDK.
       - task: UseDotNet@2
         displayName: Install .NET 9.0 SDK
@@ -135,18 +146,18 @@ jobs:
       # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't
       # support all of our argument combinations for the different build steps.
 
-      # Restore the solution.
+      # Restore the project.
       - task: DotNetCoreCLI@2
-        displayName: Restore Solution
+        displayName: Restore Project
         inputs:
           command: custom
           custom: restore
           projects: $(project)
           arguments: $(commonArguments)
 
-      # Build the solution.
+      # Build the project.
       - task: DotNetCoreCLI@2
-        displayName: Build Solution
+        displayName: Build Project
         inputs:
           command: custom
           custom: build

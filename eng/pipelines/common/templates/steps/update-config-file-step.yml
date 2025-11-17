@@ -124,6 +124,10 @@ parameters:
     type: boolean
     default: true
 
+  - name: WorkloadIdentityFederationServiceConnectionId
+    type: string
+    default: ''
+
 steps:
 # All properties should be added here, and this template should be used for any manipulation of the config.json file.
 - pwsh: |
@@ -180,6 +184,7 @@ steps:
         $p.IsDNSCachingSupportedCR=[System.Convert]::ToBoolean("${{parameters.IsDNSCachingSupportedCR }}")
         $p.TracingEnabled=[System.Convert]::ToBoolean("${{parameters.TracingEnabled }}")
         $p.EnclaveEnabled=[System.Convert]::ToBoolean("${{parameters.EnclaveEnabled }}")
+        $p.WorkloadIdentityFederationServiceConnectionId="${{parameters.WorkloadIdentityFederationServiceConnectionId }}"
     }
     $jdata | ConvertTo-Json | Set-Content "config.json"
   workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
@@ -196,4 +201,4 @@ steps:
           }
       }
     workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
-    displayName: 'Read config.json [debug]'
+    displayName: '[Debug] Read config.json'
