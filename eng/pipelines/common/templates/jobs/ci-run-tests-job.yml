@@ -96,10 +96,6 @@ parameters:
     type: boolean
     default: false
 
-  - name: usemanagedSNI
-    type: boolean
-    default: false
-
 jobs:
 - job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.image, 'unknown_image')) }}
 
