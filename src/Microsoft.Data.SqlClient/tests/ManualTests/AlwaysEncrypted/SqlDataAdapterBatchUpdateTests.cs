@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             // Mutate values for update
             MutateForUpdate(dataTable);
 
-            // Act - This is where NullReferenceException was being thrown previously (which is now fixed)
+            // Act - With batch updates (UpdateBatchSize > 1), this previously threw NullReferenceException due to null systemParams in batch RPC mode
             var updated = await Task.Run(() => adapter.Update(dataTable));
 
             // Assert
