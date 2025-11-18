@@ -767,6 +767,13 @@ namespace Microsoft.Data.ProviderBase
         internal void RemoveWeakReference(object value) =>
             ReferenceCollection?.Remove(value);
 
+        /// <summary>
+        /// Idempotently resets the connection so that it may be recycled without leaking state.
+        /// May preserve transaction state if the connection is enlisted in a distributed transaction.
+        /// Should be called before the first action is taken on a recycled connection.
+        /// </summary>
+        internal abstract void ResetConnection();
+
         internal void SetInStasis()
         {
             IsTxRootWaitingForTxEnd = true;
@@ -804,6 +811,11 @@ namespace Microsoft.Data.ProviderBase
 
         #region Protected Methods
 
+        /// <summary>
+        /// Activates the connection, preparing it for active use.
+        /// An activated connection has an owner and is checked out from the connection pool (if pooling is enabled).
+        /// </summary>
+        /// <param name="transaction">The transaction in which the connection should enlist.</param>
         protected abstract void Activate(Transaction transaction);
 
         /// <summary>
@@ -820,6 +832,11 @@ namespace Microsoft.Data.ProviderBase
             throw ADP.InternalError(ADP.InternalErrorCode.AttemptingToConstructReferenceCollectionOnStaticObject);
         }
 
+        /// <summary>
+        /// Deactivates the connection, cleaning up any state as necessary.
+        /// A deactivated connection is one that is no longer in active use and does not have an owner.
+        /// A deactivated connection may be open (connected to a server) and is checked into the connection pool (if pooling is enabled).
+        /// </summary>
         protected abstract void Deactivate();
 
         protected internal void DoNotPoolThisConnection()
