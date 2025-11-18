@@ -10,8 +10,20 @@ using System.Threading;
 namespace Microsoft.Data.SqlClient.Connection
 {
     /// <summary>
-    /// Provides cached asynchronous call contexts shared between objects in a connection's context.
+    /// Provides thread-safe caching and sharing of asynchronous call contexts between objects
+    /// within a single SQL connection context.
     /// </summary>
+    /// <remarks>
+    /// This internal class manages reusable context objects for various asynchronous operations
+    /// such as ExecuteNonQueryAsync, ExecuteReaderAsync, etc, performed on a connection, enabling
+    /// efficient reuse and reducing allocations.
+    ///
+    /// Thread safety is ensured via interlocked operations, allowing concurrent access and
+    /// updates without explicit locking. All accessors and mutators are designed to be safe for
+    /// use by multiple threads.
+    ///
+    /// Intended for internal use by connection management infrastructure.
+    /// </remarks>
     internal class CachedContexts
     {
         #region Fields
