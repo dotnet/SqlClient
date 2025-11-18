@@ -28,9 +28,6 @@
   <PropertyGroup>
     <DebugType>full</DebugType>
   </PropertyGroup>
-  <PropertyGroup>
-    <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)\$(TargetFramework)','$(GeneratedSourceFileName)'))</TargetFrameworkMonikerAssemblyAttributesPath>
-  </PropertyGroup>
   <ItemGroup Condition="$(CDP_BUILD_TYPE)!=Official">
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>UnitTests</_Parameter1>
@@ -38,7 +35,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
-    <EmbeddedFiles Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" />
   </ItemGroup>
   <PropertyGroup>
     <!-- CSC Compiler Options -->
@@ -345,6 +341,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolProviderInfo.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolProviderInfo.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\TransactedConnectionPool.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\TransactedConnectionPool.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\WaitHandleDbConnectionPool.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\WaitHandleDbConnectionPool.cs</Link>
     </Compile>
@@ -479,6 +478,15 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs">
       <Link>Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Connection\ServerInfo.cs">
+      <Link>Microsoft\Data\SqlClient\Connection\ServerInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Connection\SessionData.cs">
+      <Link>Microsoft\Data\SqlClient\Connection\SessionData.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Connection\SessionStateRecord.cs">
+      <Link>Microsoft\Data\SqlClient\Connection\SessionStateRecord.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs">
       <Link>Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs</Link>
@@ -858,6 +866,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlInternalConnection.cs">
       <Link>Microsoft\Data\SqlClient\SqlInternalConnection.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs">
+      <Link>Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlInternalTransaction.cs">
       <Link>Microsoft\Data\SqlClient\SqlInternalTransaction.cs</Link>
     </Compile>
@@ -1020,8 +1031,6 @@
     <Compile Include="$(CommonSourceRoot)System\Runtime\CompilerServices\IsExternalInit.netfx.cs">
       <Link>System\Runtime\CompilerServices\IsExternalInit.netfx.cs</Link>
     </Compile>
-
-    <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
   </ItemGroup>
   <!-- Resources  -->
   <ItemGroup>
@@ -1071,7 +1080,6 @@
     <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="System.Threading.Channels" />
   </ItemGroup>
-  <Import Project="$(CommonSourceRoot)tools\targets\GenerateResourceStringsSource.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyRef.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyInfo.targets" />
