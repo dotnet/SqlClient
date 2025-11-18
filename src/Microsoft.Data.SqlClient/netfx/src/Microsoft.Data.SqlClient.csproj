@@ -1080,7 +1080,7 @@
     <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="System.Threading.Channels" />
   </ItemGroup>
-  <Import Project="$(NetFxSource)tools\targets\GenerateThisAssemblyCs.targets" />
+  <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyRef.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyInfo.targets" />
 </Project>
