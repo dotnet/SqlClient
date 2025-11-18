@@ -643,56 +643,58 @@ namespace Microsoft.Data.SqlClient
                 redirectedUserInstance = true;
                 string instanceName;
 
-                if (pool == null || (pool != null && pool.Count <= 0))
-                { // Non-pooled or pooled and no connections in the pool.
-                    SqlConnectionInternal sseConnection = null;
-                    try
-                    {
-                        // We throw an exception in case of a failure
-                        // NOTE: Cloning connection option opt to set 'UserInstance=True' and 'Enlist=False'
-                        //       This first connection is established to SqlExpress to get the instance name
-                        //       of the UserInstance.
-                        SqlConnectionString sseopt = new SqlConnectionString(opt, opt.DataSource, userInstance: true, setEnlistValue: false);
-                        sseConnection = new SqlConnectionInternal(
-                            identity,
-                            sseopt,
-                            key.Credential,
-                            providerInfo: null,
-                            newPassword: string.Empty,
-                            newSecurePassword: null,
-                            redirectedUserInstance: false,
-                            applyTransientFaultHandling: applyTransientFaultHandling,
-                            sspiContextProvider: key.SspiContextProvider);
+                if (pool == null || pool.Count <= 0)
+                {
+                    // Non-pooled or pooled and no connections in the pool.
 
-                        // NOTE: Retrieve <UserInstanceName> here. This user instance name will be used below to connect to the Sql Express User Instance.
+                    // NOTE: Cloning connection option opt to set 'UserInstance=True' and 'Enlist=False'
+                    //       This first connection is established to SqlExpress to get the instance name
+                    //       of the UserInstance.
+                    SqlConnectionString sseopt = new SqlConnectionString(
+                        opt,
+                        opt.DataSource,
+                        userInstance: true,
+                        setEnlistValue: false);
+
+                    SqlConnectionInternal sseConnection = new SqlConnectionInternal(
+                        identity,
+                        sseopt,
+                        key.Credential,
+                        providerInfo: null,
+                        newPassword: string.Empty,
+                        newSecurePassword: null,
+                        redirectedUserInstance: false,
+                        applyTransientFaultHandling: applyTransientFaultHandling,
+                        sspiContextProvider: key.SspiContextProvider);
+                    using (sseConnection)
+                    {
+                        // NOTE: Retrieve <UserInstanceName> here. This user instance name will be
+                        //     used below to connect to the SQL Express User Instance.
                         instanceName = sseConnection.InstanceName;
 
                         // Set future transient fault handling based on connection options
                         sqlOwningConnection._applyTransientFaultHandling = opt != null && opt.ConnectRetryCount > 0;
 
-                        if (!instanceName.StartsWith("\\\\.\\", StringComparison.Ordinal))
+                        if (!instanceName.StartsWith(@"\\.\", StringComparison.Ordinal))
                         {
                             throw SQL.NonLocalSSEInstance();
                         }
 
                         if (pool != null)
-                        { // Pooled connection - cache result
+                        {
+                            // Pooled connection - cache result
                             SqlConnectionPoolProviderInfo providerInfo = (SqlConnectionPoolProviderInfo)pool.ProviderInfo;
+
                             // No lock since we are already in creation mutex
                             providerInfo.InstanceName = instanceName;
                         }
                     }
-                    finally
-                    {
-                        if (sseConnection != null)
-                        {
-                            sseConnection.Dispose();
-                        }
-                    }
                 }
                 else
-                { // Cached info from pool.
+                {
+                    // Cached info from pool.
                     SqlConnectionPoolProviderInfo providerInfo = (SqlConnectionPoolProviderInfo)pool.ProviderInfo;
+
                     // No lock since we are already in creation mutex
                     instanceName = providerInfo.InstanceName;
                 }
