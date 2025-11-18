@@ -220,7 +220,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             try
             { ExecuteQuery(connection, commandText); }
-            catch (SqlException) { /* Swallow for cleanup */ }
+            catch (SqlException ex)
+            {
+                // Only swallow "object does not exist" (error 208), log others
+                bool onlyObjectNotExist = true;
+                foreach (SqlError err in ex.Errors)
+                {
+                    if (err.Number != 208)
+                    {
+                        onlyObjectNotExist = false;
+                        break;
+                    }
+                }
+                if (!onlyObjectNotExist)
+                {
+                    Console.WriteLine($"SilentRunCommand: Unexpected SqlException during cleanup: {ex}");
+                }
+                // Swallow all exceptions, but log unexpected ones
+            }
         }
 
         public void Dispose()
