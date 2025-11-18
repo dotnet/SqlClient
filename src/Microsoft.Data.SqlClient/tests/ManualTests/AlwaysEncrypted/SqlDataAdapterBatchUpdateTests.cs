@@ -12,7 +12,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class SqlDataAdapterBatchUpdateTests : IClassFixture<SQLSetupStrategyCertStoreProvider>
+    public sealed class SqlDataAdapterBatchUpdateTests : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
         private readonly SQLSetupStrategy _fixture;
         private readonly Dictionary<string, string> tableNames = new();
@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
-        public async Task dapterUpdate_BatchSizeGreaterThanOne_Succeeds(string connectionString)
+        public async Task AdapterUpdate_BatchSizeGreaterThanOne_Succeeds(string connectionString)
         {
             // Arrange
             // Ensure baseline rows exist
@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             // Mutate values for update
             MutateForUpdate(dataTable);
 
-            // Act - This is where NullReferenceException was being thrown previously(which is now fixed)
+            // Act - This is where NullReferenceException was being thrown previously (which is now fixed)
             var updated = await Task.Run(() => adapter.Update(dataTable));
 
             // Assert
@@ -190,8 +190,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             foreach (var (id, s1, s2) in rows)
             {
-                ExecuteQuery(connection,
-                    $@"INSERT INTO [dbo].[{tableNames[tableName]}] (BuyerSellerID, SSN1, SSN2) VALUES ({id}, '{s1}', '{s2}')");
+                using var cmd = new SqlCommand(
+                    $@"INSERT INTO [dbo].[{tableNames[tableName]}] (BuyerSellerID, SSN1, SSN2) VALUES (@id, @s1, @s2)",
+                    connection,
+                    null,
+                    SqlCommandColumnEncryptionSetting.Enabled);
+
+                cmd.Parameters.Add(new SqlParameter("@id", SqlDbType.Int) { Value = id });
+                cmd.Parameters.Add(new SqlParameter("@s1", SqlDbType.VarChar, 255) { Value = s1 });
+                cmd.Parameters.Add(new SqlParameter("@s2", SqlDbType.VarChar, 255) { Value = s2 });
+
+                cmd.ExecuteNonQuery();
             }
         }
 
@@ -220,8 +229,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 using var connection = new SqlConnection(GetOpenConnectionString(connectionString, encryptionEnabled: true));
                 connection.Open();
-                using var cmd = new SqlCommand($"DELETE FROM [dbo].[{tableNames["BuyerSeller"]}]", connection);
-                cmd.ExecuteNonQuery();
+                SilentRunCommand($"DELETE FROM [dbo].[{tableNames["BuyerSeller"]}]", connection);
             }
         }
     }

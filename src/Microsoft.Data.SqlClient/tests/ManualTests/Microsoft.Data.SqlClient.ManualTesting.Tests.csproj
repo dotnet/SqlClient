@@ -16,6 +16,7 @@
     <Compile Include="AlwaysEncrypted\CoreCryptoTests.cs" />
     <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
     <Compile Include="AlwaysEncrypted\ExceptionsGenericError.cs" />
+    <Compile Include="AlwaysEncrypted\SqlDataAdapterBatchUpdateTests.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoVector.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoNativeBaselineReader.cs" />
     <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
@@ -331,7 +332,6 @@
   </ItemGroup>
   <!-- XUnit and XUnit extensions -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
