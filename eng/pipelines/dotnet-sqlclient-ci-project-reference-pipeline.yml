@@ -5,28 +5,59 @@
 #################################################################################
 
 name: $(DayOfYear)$(Rev:rr)
+
+# Trigger PR validation runs for all pushes to PRs that target the specified
+# branches.
+#
+# https://learn.microsoft.com/en-us/azure/devops/pipelines/repos/github?view=azure-devops&tabs=yaml#pr-triggers
+#
+pr:
+  branches:
+    include:
+    - release/6.0
+
+  paths:
+    include:
+    - .azuredevops
+    - .config
+    - doc
+    - eng
+    - src
+    - tools
+    - azurepipelines-coverage.yml
+    - build.proj
+    - NuGet.config
+
+# Commit triggers for CI runs on specified branches.
+#
+# No paths filters are specified, so all commits to the branches will trigger a
+# build.
+#
 trigger:
   batch: true
   branches:
     include:
     - release/6.0
     - internal/release/6.0
-  paths:
-    include:
-    - src
-    - eng
-    - tools
-    - .config
-    - build.proj
-    - Nuget.config
 
+# Scheduled runs.
 schedules:
-- cron: '0 5 * * Sat'
-  displayName: Weekly Friday 10:00 PM (UTC - 7) Build
-  branches:
-    include:
-    - internal/release/6.0
-  always: true
+
+  # GitHub on Sundays 06:00 UTC.
+  - cron: '0 6 * * Sun'
+    displayName: Sunday Run
+    branches:
+      include:
+      - release/6.0
+    always: true
+
+  # ADO on Sundays 07:00 UTC.
+  - cron: '0 7 * * Sun'
+    displayName: Sunday Run
+    branches:
+      include:
+      - internal/release/6.0
+    always: true
 
 parameters: # parameters are shown up in ADO UI in a build queue time
 - name: 'debug'
