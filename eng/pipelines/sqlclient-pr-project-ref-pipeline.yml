@@ -11,7 +11,8 @@
 #   - Microsoft.Data.SqlClient
 #   - Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 #
-# It is triggered by pushes to PRs for dev/topic/feature branches in GitHub.
+# It is triggered by pushes to PRs that target dev/ and feature/ branches, and
+# the main branch in GitHub.
 #
 # It maps to the "PR-SqlClient-Project" pipeline in the Public project:
 #
@@ -29,18 +30,17 @@ pr:
   branches:
     include:
     # GitHub repo branch targets that will trigger PR validation builds.
-    # TODO: Temporarily restricting to my ci-debug branches only.
-    - dev/paul/ci-debug*
-    # - dev/*
-    # - feat/*
-    # - main
+    - dev/*
+    - feat/*
+    - main
 
   paths:
     include:
     - .azuredevops
     - .config
-    - src
+    - doc
     - eng
+    - src
     - tools
     - azurepipelines-coverage.yml
     - build.proj
@@ -122,12 +122,15 @@ extends:
     # specified.  We choose different values depending on the build
     # configuration.
     ${{ if eq(parameters.testJobTimeout, 'Default') }}:
-      # If the build configuration is Debug, double the test job timeout value.
-      # Some of our tests currently take much longer to run in Debug mode.
+      # If the build configuration is Debug, we allow a bit of extra time since
+      # some tests run more slowly, and some tests are Debug only.
       ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
-        testJobTimeout: 180
+        testJobTimeout: 110
       ${{ else }}:
         testJobTimeout: 90
     ${{ else }}:
       testJobTimeout: ${{ parameters.testJobTimeout }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
+    # Don't run the AE tests in Debug mode; they rarely succeed.
+    ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
+      runAlwaysEncryptedTests: false

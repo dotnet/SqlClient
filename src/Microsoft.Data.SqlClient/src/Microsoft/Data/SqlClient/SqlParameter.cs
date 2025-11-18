@@ -2251,7 +2251,13 @@ namespace Microsoft.Data.SqlClient
         {
             if (value is decimal decimalValue)
             {
-                return (byte)((decimal.GetBits(decimalValue)[3] & 0x00ff0000) >> 0x10);
+#if NET
+                Span<int> decimalBits = stackalloc int[4];
+                decimal.GetBits(decimalValue, decimalBits);
+#else
+                int[] decimalBits = decimal.GetBits(decimalValue);
+#endif
+                return (byte)((decimalBits[3] & 0x00ff0000) >> 0x10);
             }
             return 0;
         }
