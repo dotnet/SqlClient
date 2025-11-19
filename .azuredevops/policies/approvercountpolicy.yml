@@ -6,7 +6,7 @@
 # https://eng.ms/docs/coreai/devdiv/one-engineering-system-1es/1es-docs/policy-service/policy-as-code/approver-count-policy-overview
 
 name: approver_count
-description: Approver count policy for dotnet-sqlclient 6.1
+description: Approver count policy for dotnet-sqlclient [internal/release/6.1]
 resource: repository
 where: 
 configuration:
@@ -23,4 +23,4 @@ configuration:
     blockLastPusherVote: true
     branchNames:
     - internal/release/6.1
-    displayName: dotnet-sqlclient Approver Count Policy 6.1
+    displayName: dotnet-sqlclient Approver Count Policy [internal/release/6.1]
