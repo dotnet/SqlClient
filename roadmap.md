@@ -19,12 +19,12 @@ The best way to give feedback is to create issues in the [dotnet/sqlclient](http
 
 Although mostly obvious, please give us feedback that will give us insight on the following points:
 
-* Existing features are missing some capability or otherwise don't work well enough.
-* Missing features that should be added to the product.
-* Design choices for a feature that is currently in-progress.
+- Existing features are missing some capability or otherwise don't work well enough.
+- Missing features that should be added to the product.
+- Design choices for a feature that is currently in-progress.
 
 Some important caveats / notes:
 
-* It is best to give design feedback quickly for improvements that are in-development. We're unlikely to hold a feature being part of a release on late feedback.
-* We are most likely to include improvements that either have a positive impact on a broad scenario or have very significant positive impact on a niche scenario. This means that we are unlikely to prioritize modest improvements to niche scenarios.
-* Compatibility will almost always be given a higher priority than improvements.
+- It is best to give design feedback quickly for improvements that are in-development. We're unlikely to hold a feature being part of a release on late feedback.
+- We are most likely to include improvements that either have a positive impact on a broad scenario or have very significant positive impact on a niche scenario. This means that we are unlikely to prioritize modest improvements to niche scenarios.
+- Compatibility will almost always be given a higher priority than improvements.

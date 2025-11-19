@@ -8,10 +8,12 @@ parameters:
     type: string
     default: $(Platform)
   
-  - name: configuration
+  - name: buildConfiguration
     type: string
-    default: $(Configuration)
-  
+    values:
+      - Debug
+      - Release
+
   - name: buildNumber
     type: string
     default: $(BuildNumber)
@@ -64,7 +66,7 @@ steps:
           solution: build.proj
           msbuildArchitecture: x64
           platform: '${{ parameters.platform }}'
-          configuration: '${{ parameters.configuration }}'
+          configuration: '${{ parameters.buildConfiguration }}'
           msbuildArguments: '-t:BuildAllConfigurations -p:GenerateDocumentationFile=false -p:GenerateNuGet=false -p:BuildNumber=${{ parameters.buildNumber }}'
           clean: true
 
@@ -76,7 +78,7 @@ steps:
           solution: build.proj
           msbuildArchitecture: x64
           platform: '${{ parameters.platform }}'
-          configuration: '${{ parameters.configuration }}'
+          configuration: '${{ parameters.buildConfiguration }}'
           msbuildArguments: '-t:BuildAllConfigurations -p:GenerateNuGet=false -p:BuildNumber=${{ parameters.buildNumber }}'
           clean: true
 
@@ -88,7 +90,7 @@ steps:
         solution: build.proj
         msbuildArchitecture: x64
         platform: '${{ parameters.platform }}'
-        configuration: '${{ parameters.configuration }}'
+        configuration: '${{ parameters.buildConfiguration }}'
         msbuildArguments: '-t:BuildAKVNetFx -p:BuildNumber=${{ parameters.buildNumber }}'
 
     - task: MSBuild@1
@@ -98,7 +100,7 @@ steps:
         solution: build.proj
         msbuildArchitecture: x64
         platform: '${{ parameters.platform }}'
-        configuration: '${{ parameters.configuration }}'
+        configuration: '${{ parameters.buildConfiguration }}'
         msbuildArguments: '-t:BuildAKVNetCoreAllOS -p:BuildNumber=${{ parameters.buildNumber }}'
 
 - ${{ if or(eq(parameters.operatingSystem, 'Linux'), eq(parameters.operatingSystem, 'MacOS'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
@@ -109,7 +111,7 @@ steps:
       command: custom
       projects: build.proj
       custom: msbuild
-      arguments: '-t:BuildAll -p:TestEnabled=true -p:GenerateDocumentationFile=false -p:configuration=${{ parameters.configuration }}'
+      arguments: '-t:BuildAll -p:TestEnabled=true -p:GenerateDocumentationFile=false -p:configuration=${{ parameters.buildConfiguration }}'
       verbosityRestore: Detailed
       verbosityPack: Detailed
     retryCountOnTaskFailure: 1

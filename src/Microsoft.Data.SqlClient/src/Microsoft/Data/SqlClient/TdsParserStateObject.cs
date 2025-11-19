@@ -223,7 +223,6 @@ namespace Microsoft.Data.SqlClient
         // TDS stream processing variables
         internal ulong _longlen;                                     // plp data length indicator
         internal ulong _longlenleft;                                 // Length of data left to read (64 bit lengths)
-        internal int[] _decimalBits;                // scratch buffer for decimal/numeric data
         internal byte[] _bTmp = new byte[TdsEnums.SQL2005_HEADER_LEN];  // Scratch buffer for misc use
         internal int _bTmpRead;                   // Counter for number of temporary bytes read
         internal Decoder _plpdecoder;             // Decoder object to process plp character data
@@ -3196,7 +3195,7 @@ namespace Microsoft.Data.SqlClient
                 _outBuff.AsSpan(0, _outBytesUsed).Clear();
             }
 
-            Debug.Assert(Parser.Connection._parserLock.ThreadMayHaveLock(), "Thread is writing without taking the connection lock");
+            Debug.Assert(Parser.Connection._parserLock.ThreadMayHaveLock, "Thread is writing without taking the connection lock");
             Task task = SNIWritePacket(packet, out _, canAccumulate, callerHasConnectionLock: true);
 
             // Check to see if the timeout has occurred.  This time out code is special case code to allow BCP writes to timeout. Eventually we should make all writes timeout.

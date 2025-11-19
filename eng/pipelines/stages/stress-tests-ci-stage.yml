@@ -20,14 +20,14 @@
 # depended on by downstream stages.
 
 parameters:
-  # The type of build to produce (Release or Debug)
+  # The type of build to produce (Debug or Release)
   - name: buildConfiguration
     displayName: Build Configuration
     type: string
-    default: Release
+    default: Debug
     values:
-    - Release
-    - Debug
+      - Debug
+      - Release
 
   # The names of any stages this stage depends on, for example the stages
   # that publish the MDS package artifacts we will test.
