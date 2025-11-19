@@ -146,7 +146,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         private void LoadCurrentRowsIntoDataTable(DataTable dt, SqlConnection conn)
         {
-            using var cmd = new SqlCommand($"SELECT BuyerSellerID, SSN1, SSN2 FROM [dbo].[{tableNames["BuyerSeller"]}] ORDER BY BuyerSellerID", conn);
+            using var cmd = new SqlCommand($"SELECT BuyerSellerID, SSN1, SSN2 FROM [dbo].[{SqlCommandHelper.EscapeIdentifier(tableNames["BuyerSeller"])}] ORDER BY BuyerSellerID", conn);
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -157,11 +157,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private void MutateForUpdate(DataTable dt)
         {
             int i = 0;
+            var fixedTime = new DateTime(2023, 01, 01, 12, 34, 56); // Use any fixed value
+            string timeStr = fixedTime.ToString("HHmm");
             foreach (DataRow row in dt.Rows)
             {
                 i++;
-                row["SSN1"] = $"{i:000}-11-{DateTime.Now:HHmm}";
-                row["SSN2"] = $"{i:000}-22-{DateTime.Now:HHmm}";
+                row["SSN1"] = $"{i:000}-11-{timeStr}";
+                row["SSN2"] = $"{i:000}-22-{timeStr}";
             }
         }
 
@@ -169,7 +171,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             using var connection = new SqlConnection(GetOpenConnectionString(connectionString, encryptionEnabled: true));
             connection.Open();
-            SilentRunCommand($@"TRUNCATE TABLE [dbo].[{tableNames[tableName]}]", connection);
+            SilentRunCommand($@"TRUNCATE TABLE [dbo].[{SqlCommandHelper.EscapeIdentifier(tableNames[tableName])}]", connection);
         }
 
         internal void ExecuteQuery(SqlConnection connection, string commandText)
@@ -191,7 +193,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             foreach (var (id, s1, s2) in rows)
             {
                 using var cmd = new SqlCommand(
-                    $@"INSERT INTO [dbo].[{tableNames[tableName]}] (BuyerSellerID, SSN1, SSN2) VALUES (@id, @s1, @s2)",
+                    $@"INSERT INTO [dbo].[{SqlCommandHelper.EscapeIdentifier(tableNames[tableName])}] (BuyerSellerID, SSN1, SSN2) VALUES (@id, @s1, @s2)",
                     connection,
                     null,
                     SqlCommandColumnEncryptionSetting.Enabled);
@@ -246,7 +248,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 using var connection = new SqlConnection(GetOpenConnectionString(connectionString, encryptionEnabled: true));
                 connection.Open();
-                SilentRunCommand($"DELETE FROM [dbo].[{tableNames["BuyerSeller"]}]", connection);
+                SilentRunCommand($"DELETE FROM [dbo].[{SqlCommandHelper.EscapeIdentifier(tableNames["BuyerSeller"])}]", connection);
             }
         }
     }

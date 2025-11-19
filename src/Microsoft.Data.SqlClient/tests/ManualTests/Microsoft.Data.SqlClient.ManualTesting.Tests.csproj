@@ -15,9 +15,6 @@
   <ItemGroup Condition="'$(TestSet)' == 'AE'">
     <Compile Include="AlwaysEncrypted\SqlDataAdapterBatchUpdateTests.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetsWindows)' == 'true' AND '$(TestSet)' == 'AE'">
-    <Compile Include="AlwaysEncrypted\SqlDataAdapterBatchUpdateTests.cs" />
-  </ItemGroup>
   <ItemGroup Condition="'$(TestSet)' == '' or '$(TestSet)' == 'AE'">
     <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
     <Compile Include="AlwaysEncrypted\ExceptionsGenericError.cs" />
