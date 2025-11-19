@@ -32,6 +32,7 @@ namespace Microsoft.Data.ProviderBase
             // not much to do here...
         }
 
+        /// <inheritdoc/>
         protected override void Deactivate() => ADP.ClosedConnectionError();
 
         public override void EnlistTransaction(System.Transactions.Transaction transaction) => throw ADP.ClosedConnectionError();
@@ -43,6 +44,9 @@ namespace Microsoft.Data.ProviderBase
 
         internal override bool TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
             => base.TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
+
+        /// <inheritdoc/>
+        internal override void ResetConnection() => throw ADP.ClosedConnectionError();
     }
 
     internal abstract class DbConnectionBusy : DbConnectionClosed
