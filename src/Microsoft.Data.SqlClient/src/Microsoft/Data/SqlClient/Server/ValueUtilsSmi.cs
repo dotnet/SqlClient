@@ -35,7 +35,9 @@ namespace Microsoft.Data.SqlClient.Server
 
         // Constants
         private const int DefaultBinaryBufferSize = 4096;  // Size of the buffer used to read input parameter of type Stream
-        private const int DefaultTextBufferSize = 4096; // Size of the buffer (in chars) user to read input parameter of type TextReader       
+        private const int DefaultTextBufferSize = 4096; // Size of the buffer (in chars) user to read input parameter of type TextReader
+
+        private static XmlWriterSettings s_writerSettings;
 
         //
         //  User-visible semantics-laden Getter/Setter support methods
@@ -3457,7 +3459,7 @@ namespace Microsoft.Data.SqlClient.Server
         private static void SetXmlReader_Unchecked(ITypedSettersV3 setters, int ordinal, XmlReader xmlReader)
         {
             // set up writer
-            XmlWriterSettings WriterSettings = new XmlWriterSettings
+            s_writerSettings ??= new XmlWriterSettings
             {
                 CloseOutput = false, // don't close the memory stream
                 ConformanceLevel = ConformanceLevel.Fragment,
@@ -3466,7 +3468,7 @@ namespace Microsoft.Data.SqlClient.Server
             };
 
             using (Stream target = new SmiSettersStream(setters, ordinal, SmiMetaData.DefaultXml))
-            using (XmlWriter xmlWriter = XmlWriter.Create(target, WriterSettings))
+            using (XmlWriter xmlWriter = XmlWriter.Create(target, s_writerSettings))
             {
                 // now spool the data into the writer (WriteNode will call Read())
                 xmlReader.Read();
