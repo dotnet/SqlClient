@@ -76,11 +76,7 @@ namespace Microsoft.Data.SqlClient
             TrimCacheIfNeeded();
 
             // By default evict after 10 days.
-            MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(10)
-            };
-            _cache.Set<bool>(cacheLookupKey, result, options);
+            _cache.Set<bool>(cacheLookupKey, result, absoluteExpirationRelativeToNow: TimeSpan.FromDays(10));
         }
 
         private void ValidateSignatureNotNullOrEmpty(byte[] signature, string methodName)

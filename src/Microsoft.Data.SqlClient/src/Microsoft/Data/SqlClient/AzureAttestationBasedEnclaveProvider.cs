@@ -349,11 +349,7 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.AttestationFailed(string.Format(Strings.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
                 }
 
-                MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1)
-                };
-                OpenIdConnectConfigurationCache.Set<OpenIdConnectConfiguration>(url, openIdConnectConfig, options);
+                OpenIdConnectConfigurationCache.Set<OpenIdConnectConfiguration>(url, openIdConnectConfig, absoluteExpirationRelativeToNow: TimeSpan.FromDays(1));
             }
 
             return openIdConnectConfig;

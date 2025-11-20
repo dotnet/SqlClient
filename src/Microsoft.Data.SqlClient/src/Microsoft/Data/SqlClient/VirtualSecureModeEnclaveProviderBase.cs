@@ -211,11 +211,7 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.AttestationFailed(string.Format(Strings.GetAttestationSigningCertificateFailedInvalidCertificate, attestationUrl), exception);
                 }
 
-                MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1)
-                };
-                rootSigningCertificateCache.Set<X509Certificate2Collection>(attestationUrl, certificateCollection, options);
+                rootSigningCertificateCache.Set<X509Certificate2Collection>(attestationUrl, certificateCollection, absoluteExpirationRelativeToNow: TimeSpan.FromDays(1));
             }
 
             return rootSigningCertificateCache.Get<X509Certificate2Collection>(attestationUrl);

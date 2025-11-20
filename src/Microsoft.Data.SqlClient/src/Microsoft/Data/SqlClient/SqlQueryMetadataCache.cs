@@ -236,15 +236,13 @@ namespace Microsoft.Data.SqlClient
             }
 
             // By default evict after 10 hours.
-            MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(10)
-            };
-            _cache.Set<Dictionary<string, SqlCipherMetadata>>(cacheLookupKey, cipherMetadataDictionary, options);
+            TimeSpan expirationPeriod = TimeSpan.FromHours(10);
+
+            _cache.Set<Dictionary<string, SqlCipherMetadata>>(cacheLookupKey, cipherMetadataDictionary, absoluteExpirationRelativeToNow: expirationPeriod);
             if (sqlCommand.requiresEnclaveComputations)
             {
                 ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeCached = CreateCopyOfEnclaveKeys(sqlCommand.keysToBeSentToEnclave);
-                _cache.Set<ConcurrentDictionary<int, SqlTceCipherInfoEntry>>(enclaveLookupKey, keysToBeCached, options);
+                _cache.Set<ConcurrentDictionary<int, SqlTceCipherInfoEntry>>(enclaveLookupKey, keysToBeCached, absoluteExpirationRelativeToNow: expirationPeriod);
             }
         }
 

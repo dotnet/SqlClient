@@ -18,9 +18,6 @@ namespace Microsoft.Data.SqlClient
         // given that for Always Encrypted scenarios, the server is considered an "untrusted" man-in-the-middle.
         private long _counter;
 
-        // Cache timeout of 8 hours to be consistent with jwt validity.
-        private static int enclaveCacheTimeOutInHours = 8;
-
         // Retrieves a SqlEnclaveSession from the cache
         internal SqlEnclaveSession GetEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, out long counter)
         {
@@ -62,11 +59,8 @@ namespace Microsoft.Data.SqlClient
             lock (enclaveCacheLock)
             {
                 enclaveSession = new SqlEnclaveSession(sharedSecret, sessionId);
-                MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(enclaveCacheTimeOutInHours)
-                };
-                enclaveMemoryCache.Set<SqlEnclaveSession>(cacheKey, enclaveSession, options);
+                // Cache timeout of 8 hours to be consistent with JWT validity.
+                enclaveMemoryCache.Set<SqlEnclaveSession>(cacheKey, enclaveSession, absoluteExpirationRelativeToNow: TimeSpan.FromHours(8));
                 counter = Interlocked.Increment(ref _counter);
             }
 
