@@ -102,6 +102,7 @@ namespace Microsoft.Data.SqlTypes
             FileOptions options,
             long allocationSize)
         {
+            // @TODO: Adopt netcore style format
             #if NETFRAMEWORK
             const string scopeFormat = "<sc.SqlFileStream.ctor|API> {0} access={1} options={2} path='{3}'";
             #else
