@@ -46,6 +46,9 @@ pr:
     - build.proj
     - NuGet.config
 
+# Do not trigger commit or schedule runs for this pipeline.
+trigger: none
+
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
 

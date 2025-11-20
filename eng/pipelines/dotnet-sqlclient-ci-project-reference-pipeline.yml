@@ -43,6 +43,9 @@
 # Set the pipeline run name to the day-of-year and the daily run counter.
 name: $(DayOfYear)$(Rev:rr)
 
+# Do not trigger this pipeline for PRs.
+pr: none
+
 # Trigger this pipeline on commits to certain branches.
 trigger:
   
