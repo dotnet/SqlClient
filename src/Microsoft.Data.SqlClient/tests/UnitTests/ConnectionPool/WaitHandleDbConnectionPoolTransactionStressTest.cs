@@ -72,12 +72,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
             $"Pool count ({pool.Count}) exceeded max pool size ({expectedMaxCount})");
         Assert.True(pool.Count >= 0,
             $"Pool count ({pool.Count}) is negative");
-
-
-#if DEBUG
-        var transactedConnections = pool.TransactedConnectionPool.TransactedConnections;
-        Assert.Empty(transactedConnections);
-#endif
+        Assert.Empty(pool.TransactedConnectionPool.TransactedConnections);
     }
 
     #endregion
