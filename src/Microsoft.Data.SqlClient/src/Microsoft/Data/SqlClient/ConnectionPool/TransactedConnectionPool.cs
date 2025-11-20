@@ -59,9 +59,6 @@ internal class TransactedConnectionPool
     }
 
     #region Fields
-
-    private readonly Dictionary<Transaction, TransactedConnectionList> _transactedCxns;
-
     private static int _objectTypeCount;
     internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
@@ -79,7 +76,7 @@ internal class TransactedConnectionPool
     internal TransactedConnectionPool(IDbConnectionPool pool)
     {
         Pool = pool;
-        _transactedCxns = new Dictionary<Transaction, TransactedConnectionList>();
+        TransactedConnections = new Dictionary<Transaction, TransactedConnectionList>();
         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactedConnectionPool|RES|CPOOL> {0}, Constructed for connection pool {1}", Id, Pool.Id);
     }
 
@@ -97,9 +94,7 @@ internal class TransactedConnectionPool
     /// <value>The IDbConnectionPool instance that owns this transacted pool.</value>
     internal IDbConnectionPool Pool { get; }
 
-    #if DEBUG
-    internal Dictionary<Transaction, TransactedConnectionList> TransactedConnections => _transactedCxns;
-    #endif
+    internal Dictionary<Transaction, TransactedConnectionList> TransactedConnections { get; private set; }
 
     #endregion
 
@@ -126,9 +121,9 @@ internal class TransactedConnectionPool
         TransactedConnectionList? connections;
         bool txnFound = false;
 
-        lock (_transactedCxns)
+        lock (TransactedConnections)
         {
-            txnFound = _transactedCxns.TryGetValue(transaction, out connections);
+            txnFound = TransactedConnections.TryGetValue(transaction, out connections);
         }
 
         // NOTE: GetTransactedObject is only used when AutoEnlist = True and the ambient transaction 
@@ -185,10 +180,10 @@ internal class TransactedConnectionPool
         // NOTE: because TransactionEnded is an asynchronous notification, there's no guarantee
         //   around the order in which PutTransactionObject and TransactionEnded are called. 
 
-        lock (_transactedCxns)
+        lock (TransactedConnections)
         {
             // Check if a transacted pool has been created for this transaction
-            if ((txnFound = _transactedCxns.TryGetValue(transaction, out connections)) 
+            if ((txnFound = TransactedConnections.TryGetValue(transaction, out connections)) 
                 && connections is not null)
             {
                 // synchronize multi-threaded access with GetTransactedObject
@@ -216,14 +211,14 @@ internal class TransactedConnectionPool
                 transactionClone = transaction.Clone();
                 newConnections = new TransactedConnectionList(2, transactionClone); // start with only two connections in the list; most times we won't need that many.
 
-                lock (_transactedCxns)
+                lock (TransactedConnections)
                 {
                     // NOTE: in the interim between the locks on the transacted pool (this) during 
                     //   execution of this method, another thread (threadB) may have attempted to 
                     //   add a different connection to the transacted pool under the same 
                     //   transaction. As a result, threadB may have completed creating the
                     //   transacted pool while threadA was processing the above instructions.
-                    if (_transactedCxns.TryGetValue(transaction, out connections)
+                    if (TransactedConnections.TryGetValue(transaction, out connections)
                         && connections is not null)
                     {
                         // synchronize multi-threaded access with GetTransactedObject
@@ -241,7 +236,7 @@ internal class TransactedConnectionPool
                         // add the connection/transacted object to the list
                         newConnections.Add(transactedObject);
 
-                        _transactedCxns.Add(transactionClone, newConnections);
+                        TransactedConnections.Add(transactionClone, newConnections);
                         transactionClone = null; // we've used it -- don't throw it or the TransactedConnectionList that references it away.                                
                     }
                 }
@@ -300,9 +295,9 @@ internal class TransactedConnectionPool
         // TODO:   that the pending creation of a transacted pool for this transaction is aborted when
         // TODO:   PutTransactedObject finally gets some CPU time?
 
-        lock (_transactedCxns)
+        lock (TransactedConnections)
         {
-            if (_transactedCxns.TryGetValue(transaction, out connections)
+            if (TransactedConnections.TryGetValue(transaction, out connections)
                 && connections is not null)
             {
                 bool shouldDisposeConnections = false;
@@ -322,7 +317,7 @@ internal class TransactedConnectionPool
                     if (0 >= connections.Count)
                     {
                         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Removing List from transacted pool.", Id, transaction.GetHashCode());
-                        _transactedCxns.Remove(transaction);
+                        TransactedConnections.Remove(transaction);
 
                         // we really need to dispose our connection list; it may have 
                         // native resources via the tx and GC may not happen soon enough.
