@@ -153,9 +153,11 @@ stages:
               artifactName: $(artifactName)
               buildType: ${{ parameters.buildType }}
               buildConfiguration: ${{ parameters.buildConfiguration }}
-
-      ${{ if eq(parameters.buildType, 'Project') }}: # only run the code coverage job if the build type is project
-        postTestJobs: # jobs to run after the tests are done
+  
+      # Include the code coverage job if the build type is Project.
+      ${{ if eq(parameters.buildType, 'Project') }}:
+         # Jobs to run as part of the tests stage, after the tests are done.
+        postTestJobs:
         - template: common/templates/jobs/ci-code-coverage-job.yml@self
           parameters:
             debug: ${{ parameters.debug }}
