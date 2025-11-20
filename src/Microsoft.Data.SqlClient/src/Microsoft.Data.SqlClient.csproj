@@ -8,7 +8,7 @@
   <!-- OS Constants ==================================================== -->
   <PropertyGroup>
     <!-- If a target OS was not specified, use the current OS as the target OS. -->
-    <TargetOs Condition="'$(OsGroup)' == ''">$(OS)</TargetOs>
+    <TargetOs Condition="'$(TargetOs)' == ''">$(OS)</TargetOs>
 
 
     <!-- Uncomment the following line to override the OS you are developing for -->
@@ -20,6 +20,12 @@
     <DefineConstants Condition="'$(TargetOs.ToUpper())' == 'UNIX'">_UNIX</DefineConstants>
     <DefineConstants Condition="'$(TargetOs.ToUpper())' == 'WINDOWS_NT'">_WINDOWS</DefineConstants>
   </PropertyGroup>
+
+  <!-- Embedded resources ============================================== -->
+  <ItemGroup>
+    <EmbeddedResource Include="Resources/ILLink.Substitutions.xml"
+                      Condition="'$(TargetOs.ToUpper())' == 'WINDOWS_NT'" />
+  </ItemGroup>
 
   <!-- References ====================================================== -->
   <ItemGroup>
