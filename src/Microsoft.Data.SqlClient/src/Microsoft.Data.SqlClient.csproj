@@ -4,7 +4,23 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<RootNamespace />
 	</PropertyGroup>
-  
+
+  <!-- OS Constants ==================================================== -->
+  <PropertyGroup>
+    <!-- If a target OS was not specified, use the current OS as the target OS. -->
+    <TargetOs Condition="'$(OsGroup)' == ''">$(OS)</TargetOs>
+
+
+    <!-- Uncomment the following line to override the OS you are developing for -->
+    <!--<TargetOs>Unix</TargetOs>-->
+    <!--<TargetOs>Windows_NT</TargetOs>-->
+
+    <!-- NOTE: These constants are prefixed with _ to keep them separate from .NET 5+ precompiler -->
+    <!--     flags. Those only apply to OS-specific target frameworks, and would interfere here. -->
+    <DefineConstants Condition="'$(TargetOs.ToUpper())' == 'UNIX'">_UNIX</DefineConstants>
+    <DefineConstants Condition="'$(TargetOs.ToUpper())' == 'WINDOWS_NT'">_WINDOWS</DefineConstants>
+  </PropertyGroup>
+
   <!-- References ====================================================== -->
   <ItemGroup>
     <!-- References that apply to all target frameworks -->
