@@ -8,6 +8,8 @@ using System.Data;
 using System.Data.Common;
 using System.IO;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 
@@ -26,7 +28,7 @@ namespace Microsoft.Data.SqlClient
                 base(XMLStream, serverVersion, serverVersionNormalized)
         { }
 
-        private void addUDTsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, string ServerVersion)
+        private async ValueTask AddUDTsToDataTypesTableAsync(DataTable dataTypesTable, SqlConnection connection, string ServerVersion, bool isAsync, CancellationToken cancellationToken)
         {
             const string sqlCommand =
                 "select " +
@@ -52,7 +54,7 @@ namespace Microsoft.Data.SqlClient
 
             SqlCommand engineEditionCommand = connection.CreateCommand();
             engineEditionCommand.CommandText = "SELECT SERVERPROPERTY('EngineEdition');";
-            var engineEdition = (int)engineEditionCommand.ExecuteScalar();
+            var engineEdition = (int)(isAsync ? await engineEditionCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) : engineEditionCommand.ExecuteScalar());
 
             if (_assemblyPropertyUnsupportedEngines.Contains(engineEdition))
             {
@@ -97,13 +99,12 @@ namespace Microsoft.Data.SqlClient
             const int publicKeyIndex = 7;
 
 
-            using (IDataReader reader = command.ExecuteReader())
+            using (DbDataReader reader = isAsync ? await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false) : command.ExecuteReader())
             {
 
                 object[] values = new object[11];
-                while (reader.Read())
+                while (isAsync ? await reader.ReadAsync(cancellationToken).ConfigureAwait(false) : reader.Read())
                 {
-
                     reader.GetValues(values);
                     DataRow newRow = dataTypesTable.NewRow();
 
@@ -173,11 +174,12 @@ namespace Microsoft.Data.SqlClient
                         newRow.AcceptChanges();
                     } // if assembly name
 
+                    cancellationToken.ThrowIfCancellationRequested();
                 }//end while
             } // end using
         }
 
-        private void AddTVPsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, string ServerVersion)
+        private async ValueTask AddTVPsToDataTypesTableAsync(DataTable dataTypesTable, SqlConnection connection, string ServerVersion, bool isAsync, CancellationToken cancellationToken)
         {
 
             const string sqlCommand =
@@ -219,11 +221,11 @@ namespace Microsoft.Data.SqlClient
             const int isNullableIndex = 1;
             const int typeNameIndex = 0;
 
-            using (IDataReader reader = command.ExecuteReader())
+            using (DbDataReader reader = isAsync ? await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false) : command.ExecuteReader())
             {
 
                 object[] values = new object[11];
-                while (reader.Read())
+                while (isAsync ? await reader.ReadAsync(cancellationToken).ConfigureAwait(false) : reader.Read())
                 {
 
                     reader.GetValues(values);
@@ -249,11 +251,13 @@ namespace Microsoft.Data.SqlClient
                         dataTypesTable.Rows.Add(newRow);
                         newRow.AcceptChanges();
                     } // if type name
+
+                    cancellationToken.ThrowIfCancellationRequested();
                 }//end while
             } // end using
         }
 
-        private DataTable GetDataTypesTable(SqlConnection connection)
+        private async ValueTask<DataTable> GetDataTypesTableAsync(SqlConnection connection, bool isAsync, CancellationToken cancellationToken)
         {
             // verify the existence of the table in the data set
             DataTable dataTypesTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.DataTypes];
@@ -262,17 +266,18 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.UnableToBuildCollection(DbMetaDataCollectionNames.DataTypes);
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
             // copy the table filtering out any rows that don't apply to tho current version of the provider
             dataTypesTable = CloneAndFilterCollection(DbMetaDataCollectionNames.DataTypes, null);
 
-            addUDTsToDataTypesTable(dataTypesTable, connection, ServerVersionNormalized);
-            AddTVPsToDataTypesTable(dataTypesTable, connection, ServerVersionNormalized);
+            await AddUDTsToDataTypesTableAsync(dataTypesTable, connection, ServerVersionNormalized, isAsync, cancellationToken).ConfigureAwait(false);
+            await AddTVPsToDataTypesTableAsync(dataTypesTable, connection, ServerVersionNormalized, isAsync, cancellationToken).ConfigureAwait(false);
 
             dataTypesTable.AcceptChanges();
             return dataTypesTable;
         }
 
-        protected override DataTable PrepareCollection(string collectionName, string[] restrictions, DbConnection connection)
+        protected async override ValueTask<DataTable> PrepareCollectionAsync(string collectionName, string[] restrictions, DbConnection connection, bool isAsync, CancellationToken cancellationToken)
         {
             SqlConnection sqlConnection = (SqlConnection)connection;
             DataTable resultTable = null;
@@ -283,7 +288,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.TooManyRestrictions(DbMetaDataCollectionNames.DataTypes);
                 }
-                resultTable = GetDataTypesTable(sqlConnection);
+                resultTable = await GetDataTypesTableAsync(sqlConnection, isAsync, cancellationToken).ConfigureAwait(false);
             }
 
             if (resultTable == null)
