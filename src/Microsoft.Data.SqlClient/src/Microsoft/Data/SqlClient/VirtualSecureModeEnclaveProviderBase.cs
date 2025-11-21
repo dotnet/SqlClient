@@ -24,6 +24,7 @@ namespace Microsoft.Data.SqlClient
 
         private const int DiffieHellmanKeySize = 384;
         private const int VsmHGSProtocolId = (int)SqlConnectionAttestationProtocol.HGS;
+        private const int RootSigningCertificateCacheTimeOutInDays = 1;
 
         // ENCLAVE_IDENTITY related constants
         private static readonly EnclaveIdentity ExpectedPolicy = new EnclaveIdentity()
@@ -211,7 +212,8 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.AttestationFailed(string.Format(Strings.GetAttestationSigningCertificateFailedInvalidCertificate, attestationUrl), exception);
                 }
 
-                rootSigningCertificateCache.Set<X509Certificate2Collection>(attestationUrl, certificateCollection, absoluteExpirationRelativeToNow: TimeSpan.FromDays(1));
+                rootSigningCertificateCache.Set<X509Certificate2Collection>(attestationUrl, certificateCollection,
+                    absoluteExpirationRelativeToNow: TimeSpan.FromDays(RootSigningCertificateCacheTimeOutInDays));
             }
 
             return rootSigningCertificateCache.Get<X509Certificate2Collection>(attestationUrl);

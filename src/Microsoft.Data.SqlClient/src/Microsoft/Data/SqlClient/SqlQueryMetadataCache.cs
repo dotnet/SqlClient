@@ -21,6 +21,7 @@ namespace Microsoft.Data.SqlClient
     {
         const int CacheSize = 2000; // Cache size in number of entries.
         const int CacheTrimThreshold = 300; // Threshold above the cache size when we start trimming.
+        private const int MetadataCacheTimeOutInHours = 10;
 
         private readonly MemoryCache _cache;
         private static readonly SqlQueryMetadataCache s_singletonInstance = new();
@@ -235,8 +236,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // By default evict after 10 hours.
-            TimeSpan expirationPeriod = TimeSpan.FromHours(10);
+            TimeSpan expirationPeriod = TimeSpan.FromHours(MetadataCacheTimeOutInHours);
 
             _cache.Set<Dictionary<string, SqlCipherMetadata>>(cacheLookupKey, cipherMetadataDictionary, absoluteExpirationRelativeToNow: expirationPeriod);
             if (sqlCommand.requiresEnclaveComputations)

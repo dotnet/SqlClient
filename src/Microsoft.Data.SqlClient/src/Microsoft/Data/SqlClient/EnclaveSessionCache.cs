@@ -11,6 +11,9 @@ namespace Microsoft.Data.SqlClient
     // Maintains a cache of SqlEnclaveSession instances
     internal class EnclaveSessionCache
     {
+        // Cache timeout of 8 hours to be consistent with JWT validity.
+        private const int EnclaveCacheTimeOutInHours = 8;
+
         private readonly MemoryCache enclaveMemoryCache = new MemoryCache(new MemoryCacheOptions());
         private readonly object enclaveCacheLock = new object();
 
@@ -59,8 +62,8 @@ namespace Microsoft.Data.SqlClient
             lock (enclaveCacheLock)
             {
                 enclaveSession = new SqlEnclaveSession(sharedSecret, sessionId);
-                // Cache timeout of 8 hours to be consistent with JWT validity.
-                enclaveMemoryCache.Set<SqlEnclaveSession>(cacheKey, enclaveSession, absoluteExpirationRelativeToNow: TimeSpan.FromHours(8));
+                enclaveMemoryCache.Set<SqlEnclaveSession>(cacheKey, enclaveSession,
+                    absoluteExpirationRelativeToNow: TimeSpan.FromHours(EnclaveCacheTimeOutInHours));
                 counter = Interlocked.Increment(ref _counter);
             }
 

@@ -68,6 +68,7 @@ namespace Microsoft.Data.SqlClient
     {
         #region Constants
         private const int NonceSize = 256;
+        private const int ThreadRetryCacheTimeoutInMinutes = 10;
         private const int LockTimeoutMaxInMilliseconds = 15 * 1000; // 15 seconds
         #endregion
 
@@ -166,7 +167,8 @@ namespace Microsoft.Data.SqlClient
                         retryThreadID = Thread.CurrentThread.ManagedThreadId.ToString();
                     }
 
-                    ThreadRetryCache.Set<string>(Thread.CurrentThread.ManagedThreadId.ToString(), retryThreadID, absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(10));
+                    ThreadRetryCache.Set<string>(Thread.CurrentThread.ManagedThreadId.ToString(), retryThreadID,
+                        absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(ThreadRetryCacheTimeoutInMinutes));
                 }
             }
         }
