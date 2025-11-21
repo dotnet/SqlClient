@@ -388,6 +388,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return true;
         }
 
+        /// <summary>
+        /// Determines whether the SQL Server supports the 'vector' data type.
+        /// </summary>
+        /// <remarks>This method attempts to connect to the SQL Server and check for the existence of the
+        /// 'vector' data type. If a connection cannot be established or an error occurs during the query, the method
+        /// returns <see langword="false"/>.</remarks>
+        /// <returns><see langword="true"/> if the 'vector' data type is supported; otherwise, <see langword="false"/>.</returns>
+        public static bool IsSupportedSqlVector()
+        {
+            try
+            {
+                using var connection = new SqlConnection(TCPConnectionString);
+                using var command = new SqlCommand("SELECT COUNT(1) FROM SYS.TYPES WHERE [name] = 'vector'", connection);
+
+                connection.Open();
+                return (int)command.ExecuteScalar() > 0;
+            }
+            catch (SqlException)
+            {
+                return false;
+            }
+        }
+
         public static bool IsDNSCachingSetup() => !string.IsNullOrEmpty(DNSCachingConnString);
 
         // Synapse: Always Encrypted is not supported with Azure Synapse.
