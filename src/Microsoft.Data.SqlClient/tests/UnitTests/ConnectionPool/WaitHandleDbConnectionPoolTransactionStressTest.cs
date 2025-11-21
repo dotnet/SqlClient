@@ -1490,6 +1490,11 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
         }
 
         public override string ToString() => $"MockConnection_{MockId}";
+
+        internal override void ResetConnection()
+        {
+            // Do nothing
+        }
     }
 
     #endregion
