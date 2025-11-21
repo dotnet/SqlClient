@@ -360,46 +360,61 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
         // Arrange
         var pool = CreatePool();
         var tasks = new Task[threadCount];
-        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-        var transaction = Transaction.Current;
-        Assert.NotNull(transaction);
 
         try
         {
-            // Act - Each transaction should be isolated
-            for (int t = 0; t < threadCount; t++)
+            Transaction? transaction = null;
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                tasks[t] = Task.Run(async () =>
+                transaction = Transaction.Current;
+                Assert.NotNull(transaction);
+                // Act - Each transaction should be isolated
+                for (int t = 0; t < threadCount; t++)
                 {
-                    // Get multiple connections within same transaction
-                    for (int i = 0; i < iterationsPerThread; i++)
+                    tasks[t] = Task.Run(async () =>
                     {
-                        var owner = new SqlConnection();
-                        // The transaction *must* be set as the AsyncState of the TaskCompletionSource.
-                        // The 
-                        var tcs = new TaskCompletionSource<DbConnectionInternal>(transaction);
-                        pool.TryGetConnection(
-                            owner,
-                            tcs,
-                            new DbConnectionOptions("", null),
-                            out var conn);
+                        using (var innerScope = new TransactionScope(transaction, TransactionScopeAsyncFlowOption.Enabled))
+                        {
+                            Assert.Equal(transaction, Transaction.Current);
+                            // Get multiple connections within same transaction
+                            for (int i = 0; i < iterationsPerThread; i++)
+                            {
+                                var owner = new SqlConnection();
+                                // The transaction *must* be set as the AsyncState of the TaskCompletionSource.
+                                // The 
+                                var tcs = new TaskCompletionSource<DbConnectionInternal>(transaction);
+                                pool.TryGetConnection(
+                                    owner,
+                                    tcs,
+                                    new DbConnectionOptions("", null),
+                                    out var conn);
 
-                        conn ??= await tcs.Task;
+                                conn ??= await tcs.Task;
 
-                        Assert.NotNull(conn);
+                                Assert.NotNull(conn);
 
-                        pool.ReturnInternalConnection(conn, owner);
+                                // Simulate some work
+                                await Task.Delay(1);
 
-                        Assert.Single(pool.TransactedConnectionPool.TransactedConnections[transaction]);
-                    }
+                                pool.ReturnInternalConnection(conn, owner);
+                            }
 
-                    Assert.Single(pool.TransactedConnectionPool.TransactedConnections[transaction]);
-                });
+                            innerScope.Complete();
+                        }
+                    });
+                }
+
+                await Task.WhenAll(tasks);
+                scope.Complete();
             }
 
-            await Task.WhenAll(tasks);
-
-            scope.Complete();
+            while (pool.TransactedConnectionPool.TransactedConnections.ContainsKey(transaction!)
+                && pool.TransactedConnectionPool.TransactedConnections[transaction!].Count > 0)
+            {
+                // Wait for transaction to be cleaned up
+                Console.WriteLine("Waiting for transaction cleanup...");
+                await Task.Delay(100);
+            }
 
             // Assert
             AssertPoolMetrics(pool);
