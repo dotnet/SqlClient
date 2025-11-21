@@ -11,11 +11,9 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Authentication;
-using System.Security.Permissions;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,6 +23,17 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Identity.Client;
 using Microsoft.SqlServer.Server;
 using IsolationLevel = System.Data.IsolationLevel;
+
+#if NETFRAMEWORK
+using System.Reflection;
+using System.Security.Permissions;
+using Microsoft.SqlServer.Server;
+#endif
+
+#if _WINDOWS
+using System.Runtime.Versioning;
+using Microsoft.Win32;
+#endif
 
 namespace Microsoft.Data.Common
 {
@@ -37,6 +46,7 @@ namespace Microsoft.Data.Common
     /// This class is used so that there will be compile time checking of error messages.
     /// The resource Framework.txt will ensure proper string text based on the appropriate locale.
     /// </summary>
+    // @TODO: This file needs to be broken up
     internal static partial class ADP
     {
         // NOTE: Initializing a Task in SQL CLR requires the "UNSAFE" permission set (http://msdn.microsoft.com/en-us/library/ms172338.aspx)
@@ -426,6 +436,46 @@ namespace Microsoft.Data.Common
 
             return InvalidEnumerationValue(typeof(CommandBehavior), (int)value);
         }
+
+
+        #if _UNIX
+        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
+        {
+            // No registry in non-Windows environments
+            return null;
+        }
+        #endif
+        #if _WINDOWS
+        [ResourceExposure(ResourceScope.Machine)]
+        [ResourceConsumption(ResourceScope.Machine)]
+        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
+        {
+            #if NETFRAMEWORK
+            new RegistryPermission(RegistryPermissionAccess.Read, $@"HKEY_LOCAL_MACHINE\{subkey}").Assert();
+            #endif
+
+            try
+            {
+                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(subkey, false))
+                {
+                    return key?.GetValue(queryvalue);
+                }
+            }
+            catch (SecurityException e)
+            {
+                // Even though we assert permission - it's possible there are
+                // ACL's on registry that cause SecurityException to be thrown.
+                ADP.TraceExceptionWithoutRethrow(e);
+                return null;
+            }
+            #if NETFRAMEWORK
+            finally
+            {
+                CodeAccessPermission.RevertAssert();
+            }
+            #endif
+        }
+        #endif
 
         internal static void ValidateCommandBehavior(CommandBehavior value)
         {
