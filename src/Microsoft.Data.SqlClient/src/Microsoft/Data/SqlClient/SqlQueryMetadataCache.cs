@@ -19,8 +19,8 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     sealed internal class SqlQueryMetadataCache
     {
-        const int CacheSize = 2000; // Cache size in number of entries.
-        const int CacheTrimThreshold = 300; // Threshold above the cache size when we start trimming.
+        private const int CacheSize = 2000; // Cache size in number of entries.
+        private const int CacheTrimThreshold = 300; // Threshold above the cache size when we start trimming.
         private const int MetadataCacheTimeOutInHours = 10;
 
         private readonly MemoryCache _cache;
