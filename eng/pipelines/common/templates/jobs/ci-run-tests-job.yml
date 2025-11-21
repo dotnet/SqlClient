@@ -262,7 +262,7 @@ jobs:
           packageType: sdk
           useGlobalJson: true
         env:
-          # Override the architecture to install the x86 SDK.
+          # Override the architecture to install for x86.
           PROCESSOR_ARCHITECTURE: x86
 
       # Install the .NET 8.0 runtime to run tests that target it.
@@ -271,9 +271,9 @@ jobs:
         inputs:
           installationPath: $(dotnetx86RootPath)
           packageType: runtime
-          version: 8.0
+          version: 8.x
         env:
-          # Override the architecture to install the x86 SDK.
+          # Override the architecture to install for x86.
           PROCESSOR_ARCHITECTURE: x86
 
     - template: ../steps/run-all-tests-step.yml@self
