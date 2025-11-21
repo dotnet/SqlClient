@@ -22,8 +22,7 @@ parameters:
 
   # The timeout, in minutes, for this job.
   - name: timeout
-    type: string
-    default: 90
+    type: number
 
 jobs:
 - job: run_tests_package_reference
@@ -67,12 +66,14 @@ jobs:
   - template: ../steps/build-and-run-tests-netfx-step.yml
     parameters:
       referenceType: Package
+      buildConfiguration: Release
       ${{ if parameters.isPreview }}:
         nugetPackageVersion: $(PreviewNugetPackageVersion)
 
   - template: ../steps/build-and-run-tests-netcore-step.yml
     parameters:
       referenceType: Package
+      buildConfiguration: Release
       cleanFirst: true
       ${{ if parameters.isPreview }}:
         nugetPackageVersion: $(PreviewNugetPackageVersion)

@@ -8,9 +8,11 @@ parameters:
     type: string
     default: $(AssemblyFileVersion)
   
-  - name: Configuration
+  - name: buildConfiguration
     type: string
-    default: '$(Configuration)'
+    values:
+      - Debug
+      - Release
 
   - name: packageRefMdsVersion
     type: string
@@ -46,5 +48,5 @@ steps:
     displayName: 'BuildAllConfigurations using build.proj'
     inputs:
       solution: '**/build.proj'
-      configuration: '${{parameters.Configuration }}'
+      configuration: '${{parameters.buildConfiguration }}'
       msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAllConfigurations -p:GenerateNuget=false -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'
