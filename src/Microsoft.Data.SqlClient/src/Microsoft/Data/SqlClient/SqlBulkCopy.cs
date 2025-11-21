@@ -152,11 +152,16 @@ namespace Microsoft.Data.SqlClient
         // Transaction count has only one value in one column and one row
         // MetaData has n columns but no rows
         // Collation has 4 columns and n rows
+        // Column aliases has 3 columns and n rows
 
         private const int MetaDataResultId = 1;
 
         private const int CollationResultId = 2;
         private const int CollationId = 3;
+
+        private const int ColumnAliasesResultId = 3;
+        private const int ColumnCanonicalNameColumnId = 0;
+        private const int ColumnAliasColumnId = 1;
 
         private const int MAX_LENGTH = 0x7FFFFFFF;
 
@@ -467,13 +472,36 @@ namespace Microsoft.Data.SqlClient
             // query will then continue to fail with "Invalid object name" rather than with an unusual error because the query being executed
             // is NULL.
             // Some hidden columns (e.g. SQL Graph columns) cannot be selected, so we need to exclude them explicitly.
+            // We also include a list of column aliases. This allows someone to write data to $to_id, $from_id, and other "virtual" columns
+            // in SQL Server which don't physically exist, but which can be queried by name.
+            // SQL Server also allows columns to be created with the same name as a "virtual" column; a user may create a SQL Graph Node table
+            // with a real column named "$node_id".
+            // In such cases, querying for $node_id will return the virtual column and querying for [$node_id] will return the physical column.
+            // SqlBulkCopy does not follow this convention; if the table has a real column named "$node_id", mapping to the $node_id column
+            // will map to the real column rather than the column alias. This is for backwards compatibility purposes.
             return $"""
 SELECT @@TRANCOUNT;
 
 DECLARE @Column_Names NVARCHAR(MAX) = NULL;
+DECLARE @Column_Aliases AS TABLE
+(
+    [Canonical_Column_Name] SYSNAME,
+    [Canonical_Column_Id] INT,
+    [Aliased_Column_Name] SYSNAME
+)
+
 IF EXISTS (SELECT TOP 1 * FROM sys.all_columns WHERE [object_id] = OBJECT_ID('sys.all_columns') AND [name] = 'graph_type')
 BEGIN
     SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME([name]) FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{escapedObjectName}') AND COALESCE([graph_type], 0) NOT IN (1, 3, 4, 6, 7) ORDER BY [column_id] ASC;
+    
+    INSERT INTO @Column_Aliases ([Canonical_Column_Name], [Canonical_Column_Id], [Aliased_Column_Name])
+        SELECT [name], [column_id], '$to_id' FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{escapedObjectName}') AND COALESCE([graph_type], 0) = 8
+    UNION ALL
+        SELECT [name], [column_id], '$from_id' FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{escapedObjectName}') AND COALESCE([graph_type], 0) = 5
+    UNION ALL
+        SELECT [name], [column_id], '$edge_id' FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{escapedObjectName}') AND COALESCE([graph_type], 0) = 2 AND [name] LIKE '$edge[_]id[_]%'
+    UNION ALL
+        SELECT [name], [column_id], '$node_id' FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{escapedObjectName}') AND COALESCE([graph_type], 0) = 2 AND [name] LIKE '$node[_]id[_]%'
 END
 ELSE
 BEGIN
@@ -487,6 +515,11 @@ EXEC(N'SELECT ' + @Column_Names + N' FROM {escapedObjectName}');
 SET FMTONLY OFF;
 
 EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
+
+SELECT [Canonical_Column_Name], [Aliased_Column_Name]
+FROM @Column_Aliases
+WHERE [Aliased_Column_Name] NOT IN (SELECT [name] FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{escapedObjectName}'))
+ORDER BY [Canonical_Column_Id] ASC
 """;
         }
 
@@ -560,9 +593,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             // Keep track of any result columns that we don't have a local
             // mapping for.
             #if NETFRAMEWORK
-            HashSet<string> unmatchedColumns = new();
+            HashSet<string> unmatchedColumns = new(StringComparer.OrdinalIgnoreCase);
             #else
-            HashSet<string> unmatchedColumns = new(_localColumnMappings.Count);
+            HashSet<string> unmatchedColumns = new(_localColumnMappings.Count, StringComparer.OrdinalIgnoreCase);
             #endif
 
             // Start by assuming all locally mapped Destination columns will be
@@ -570,6 +603,50 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             for (int i = 0; i < _localColumnMappings.Count; ++i)
             {
                 unmatchedColumns.Add(_localColumnMappings[i].DestinationColumn);
+            }
+
+            // Apply any necessary column aliases. If an aliased name exists in the
+            // local column mappings but the canonical name does not, update them.
+            Result columnAliasResults = internalResults[ColumnAliasesResultId];
+            for (int i = 0; i < columnAliasResults.Count; i++)
+            {
+                Row aliasRow = columnAliasResults[i];
+                SqlString canonicalName = (SqlString)aliasRow[ColumnCanonicalNameColumnId];
+                SqlString aliasedName = (SqlString)aliasRow[ColumnAliasColumnId];
+
+                if (canonicalName.IsNull || aliasedName.IsNull)
+                {
+                    continue;
+                }
+
+                string canonical = canonicalName.Value;
+                bool canonicalNameExists = unmatchedColumns.Contains(canonical)
+                    // The destination columns might be escaped. If so, search for those instead
+                    || unmatchedColumns.Contains(SqlServerEscapeHelper.EscapeIdentifier(canonical));
+
+                if (canonicalNameExists)
+                {
+                    continue;
+                }
+
+                // The canonical name does not exist. Look for a local column mapping which matches
+                // the alias (or its escaped variant) and replace its name with its canonical name.
+                string alias = aliasedName.Value;
+                string escapedAlias = SqlServerEscapeHelper.EscapeIdentifier(alias);
+
+                for (int j = 0; j < _localColumnMappings.Count; j++)
+                {
+                    if (unmatchedColumns.Comparer.Equals(_localColumnMappings[j].DestinationColumn, alias)
+                        || unmatchedColumns.Comparer.Equals(_localColumnMappings[j].DestinationColumn, escapedAlias))
+                    {
+                        unmatchedColumns.Remove(_localColumnMappings[j].DestinationColumn);
+
+                        unmatchedColumns.Add(canonical);
+                        _localColumnMappings[j].MappedDestinationColumn = canonical;
+
+                        break;
+                    }
+                }
             }
 
             // Flag to remember whether or not we need to append a comma before
@@ -594,7 +671,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     // Are we missing a mapping between the result column and
                     // this local column (by ordinal or name)?
                     if (localColumn._destinationColumnOrdinal != metadata.ordinal
-                        && UnquotedName(localColumn._destinationColumnName) != metadata.column)
+                        && UnquotedName(localColumn.MappedDestinationColumn) != metadata.column)
                     {
                         // Yes, so move on to the next local column.
                         continue;
@@ -604,7 +681,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     matched = true;
 
                     // Remove it from our unmatched set.
-                    unmatchedColumns.Remove(localColumn.DestinationColumn);
+                    unmatchedColumns.Remove(localColumn.MappedDestinationColumn);
                     
                     // Check for column types that we refuse to bulk load, even
                     // though we found a match.
