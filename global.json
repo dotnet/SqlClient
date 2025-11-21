@@ -1,0 +1,16 @@
+{
+  "sdk":
+  {
+    // We currently require the .NET 9 SDK to build and test the project.
+    "version": "9.0.0",
+
+    // Any 9.0.x version is acceptable.
+    "rollForward": "feature",
+
+    // Do not allow pre-release versions.
+    //
+    // Set this to true if you are testing the viability of pre-release SDK
+    // versions in your local workspace.
+    "allowPrerelease": false
+  }
+}
