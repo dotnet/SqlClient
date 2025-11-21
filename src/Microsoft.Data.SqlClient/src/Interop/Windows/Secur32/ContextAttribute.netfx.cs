@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _WINDOWS
+
 namespace Interop.Windows.Secur32
 {
     internal enum ContextAttribute
@@ -29,3 +31,5 @@ namespace Interop.Windows.Secur32
         SECPKG_ATTR_UI_INFO = 0x68, // sets SEcPkgContext_UiInfo  
     }
 }
+
+#endif
