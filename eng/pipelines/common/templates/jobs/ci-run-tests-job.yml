@@ -253,33 +253,28 @@ jobs:
     # it should be acceptable to just install a specific version in all cases.
     # @TODO: This setup is very confusing. Ideally we should just be utilizing the dotnet installation
     #    earlier in the job. There has to be a cleaner way of doing this.
-    #    As it stands now, we install dotnet LTS if we're running netfx tests, and the appropriate netX
-    #    version if we're running netcore tests. Technically LTS is not supported by the UseDotNet task
-    #    but we know we're using install-dotnet since we're on windows (for now ... this will not work
-    #    forever and needs a serious rethinking).
     - ${{ if ne(variables['dotnetx86RootPath'], '') }}:
-      - ${{ if startswith(parameters.targetFramework, 'net4')}}:
-        - template: ../steps/ensure-dotnet-version.yml
-          parameters:
-            installDir: "$(dotnetx86RootPath)"
-            packageType: "sdk"
-            usePreview: "false"
-            version: "LTS"
-            windowsArchitecture: "x86"
-      - ${{ else }}:
-        - script: |
-            set FrameworkVersion=${{ parameters.targetFramework }}
-            echo %FrameworkVersion%
-            set TrimmedFrameworkVersion=%FrameworkVersion:~3%
-            echo %TrimmedFrameworkVersion%
-            echo ##vso[task.setvariable variable=netVersionX86]%TrimmedFrameworkVersion%
-          displayName: "Trim dotnet version"
-        - template: ../steps/ensure-dotnet-version.yml
-          parameters:
-            installDir: "$(dotnetx86RootPath)"
-            packageType: "sdk"
-            usePreview: "false"
-            version: $(netVersionX86)
+      # Install whichever .NET SDKs are specified in our global.json.
+      - task: UseDotNet@2
+        displayName: Install .NET SDKs
+        inputs:
+          installationPath: $(dotnetx86RootPath)
+          packageType: sdk
+          useGlobalJson: true
+        env:
+          # Override the architecture to install for x86.
+          PROCESSOR_ARCHITECTURE: x86
+
+      # Install the .NET 8.0 runtime to run tests that target it.
+      - task: UseDotNet@2
+        displayName: Install .NET 8.0 Runtime
+        inputs:
+          installationPath: $(dotnetx86RootPath)
+          packageType: runtime
+          version: 8.x
+        env:
+          # Override the architecture to install for x86.
+          PROCESSOR_ARCHITECTURE: x86
 
     - template: ../steps/run-all-tests-step.yml@self
       parameters:
