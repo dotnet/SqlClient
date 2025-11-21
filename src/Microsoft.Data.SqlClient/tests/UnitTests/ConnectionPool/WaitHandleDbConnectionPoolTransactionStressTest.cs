@@ -290,44 +290,54 @@ public class WaitHandleDbConnectionPoolTransactionStressTest
     }
     
     [Theory]
-    [InlineData(1, 100)]
+    [InlineData(10, 100)]
     public void StressTest_SingleSharedTransaction(int threadCount, int iterationsPerThread)
     {
         // Arrange
         var pool = CreatePool();
         var tasks = new Task[threadCount];
-        using var scope = new TransactionScope();
-        var transaction = Transaction.Current;
-        Assert.NotNull(transaction);
 
         try
         {
-            // Act - Each transaction should be isolated
-            for (int t = 0; t < threadCount; t++)
+            Transaction? transaction = null;
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                tasks[t] = Task.Run(() =>
+                transaction = Transaction.Current;
+                Assert.NotNull(transaction);
+                // Act - Each transaction should be isolated
+                for (int t = 0; t < threadCount; t++)
                 {
-
-
-                    // Get multiple connections within same transaction
-                    for (int i = 0; i < iterationsPerThread; i++)
+                    tasks[t] = Task.Run(() =>
                     {
-                        using var owner = new SqlConnection();
-                        pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out var conn);
-                        Assert.NotNull(conn);
-                    }
+                        using (var innerScope = new TransactionScope(transaction))
+                        {
+                            Assert.Equal(transaction, Transaction.Current);
+                            // Get multiple connections within same transaction
+                            for (int i = 0; i < iterationsPerThread; i++)
+                            {
+                                using var owner = new SqlConnection();
+                                pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out var conn);
+                                Assert.NotNull(conn);
 
-                    
-                });
+                                // We bypass the SqlConnection.Open flow, so SqlConnection.InnerConnection is never set
+                                // Therefore, SqlConnection.Close doesn't return the connection to the pool, we have to
+                                // do it manually.
+                                pool.ReturnInternalConnection(conn, owner);
+                            }
+
+                            innerScope.Complete();
+                        }
+                    });
+                }
+
+                Task.WaitAll(tasks);
+
+                //Console.WriteLine($"{pool.TransactedConnectionPool.TransactedConnections[transaction].Count} transacted connections");
+                scope.Complete();
             }
 
-            Task.WaitAll(tasks);
-
-            Console.WriteLine($"{pool.TransactedConnectionPool.TransactedConnections[transaction].Count} transacted connections");
-            scope.Complete();
-
-            while (pool.TransactedConnectionPool.TransactedConnections.ContainsKey(transaction)
-            && pool.TransactedConnectionPool.TransactedConnections[transaction].Count > 0)
+            while (pool.TransactedConnectionPool.TransactedConnections.ContainsKey(transaction!)
+            && pool.TransactedConnectionPool.TransactedConnections[transaction!].Count > 0)
             {
                 // Wait for transaction to be cleaned up
                 Console.WriteLine("Waiting for transaction cleanup...");
