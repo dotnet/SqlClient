@@ -141,28 +141,6 @@ namespace Microsoft.Data.Common
 
         #region Exception Throwing Methods (sorted by users)
 
-        // IDbConnection.BeginTransaction
-        internal static ArgumentOutOfRangeException InvalidIsolationLevel(IsolationLevel value)
-        {
-            // @TODO: Use a one line debug assert?
-            #if DEBUG
-            switch (value)
-            {
-                case IsolationLevel.Unspecified:
-                case IsolationLevel.Chaos:
-                case IsolationLevel.ReadUncommitted:
-                case IsolationLevel.ReadCommitted:
-                case IsolationLevel.RepeatableRead:
-                case IsolationLevel.Serializable:
-                case IsolationLevel.Snapshot:
-                    Debug.Assert(false, "valid IsolationLevel " + value.ToString());
-                    break;
-            }
-            #endif
-
-            return InvalidEnumerationValue(typeof(IsolationLevel), (int)value);
-        }
-
         #region DbConnectionOptions, DataAccess
 
         internal static ArgumentException InvalidKeyname(string parameterName) =>
@@ -213,25 +191,6 @@ namespace Microsoft.Data.Common
         // DbDataReader
         internal static Exception NumericToDecimalOverflow() =>
             InvalidCast(StringsHelper.GetString(Strings.ADP_NumericToDecimalOverflow));
-
-        // IDataParameter.Direction
-        internal static ArgumentOutOfRangeException InvalidParameterDirection(ParameterDirection value)
-        {
-            // @TODO: Use a one line debug assert?
-            #if DEBUG
-            switch (value)
-            {
-                case ParameterDirection.Input:
-                case ParameterDirection.Output:
-                case ParameterDirection.InputOutput:
-                case ParameterDirection.ReturnValue:
-                    Debug.Assert(false, "valid ParameterDirection " + value.ToString());
-                    break;
-            }
-            #endif
-
-            return InvalidEnumerationValue(typeof(ParameterDirection), (int)value);
-        }
 
         // SNI
         internal static PlatformNotSupportedException SNIPlatformNotSupported(string platform) =>

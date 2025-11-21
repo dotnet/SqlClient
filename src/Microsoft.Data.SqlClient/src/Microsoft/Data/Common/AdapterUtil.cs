@@ -4,15 +4,17 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
-
 using System.Security;
+using System.Security.Authentication;
 using System.Security.Permissions;
 using System.Text;
 using System.Threading;
@@ -20,19 +22,9 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
-using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Identity.Client;
 using Microsoft.SqlServer.Server;
-using System.Security.Authentication;
-using System.Collections.Generic;
-
-#if NETFRAMEWORK
-using System.Reflection;
-using System.Runtime.ConstrainedExecution;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
-using Interop.Windows.Kernel32;
-#endif
+using IsolationLevel = System.Data.IsolationLevel;
 
 namespace Microsoft.Data.Common
 {
@@ -76,6 +68,7 @@ namespace Microsoft.Data.Common
         /// </summary>
         internal static InvalidUdtException CreateInvalidUdtException(Type udtType, string resourceReasonName)
         {
+            // @TODO: Can we adopt the netcore version?
             InvalidUdtException e =
 #if NETFRAMEWORK
                 (InvalidUdtException)s_method.Invoke(null, new object[] { udtType, resourceReasonName });
@@ -954,6 +947,27 @@ namespace Microsoft.Data.Common
             };
         }
 
+        internal static ArgumentOutOfRangeException InvalidIsolationLevel(IsolationLevel value)
+        {
+            // @TODO: Use single line debug assert?
+            #if DEBUG
+            switch (value)
+            {
+                case IsolationLevel.Unspecified:
+                case IsolationLevel.Chaos:
+                case IsolationLevel.ReadUncommitted:
+                case IsolationLevel.ReadCommitted:
+                case IsolationLevel.RepeatableRead:
+                case IsolationLevel.Serializable:
+                case IsolationLevel.Snapshot:
+                    Debug.Fail("valid IsolationLevel " + value.ToString());
+                    break;
+            }
+            #endif
+
+            return InvalidEnumerationValue(typeof(IsolationLevel), (int)value);
+        }
+
         internal static InvalidOperationException NoConnectionString()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_NoConnectionString));
 
@@ -1296,6 +1310,24 @@ namespace Microsoft.Data.Common
         internal static ArgumentException InvalidOffsetValue(int value)
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidOffsetValue, value.ToString(CultureInfo.InvariantCulture)));
 
+        internal static ArgumentOutOfRangeException InvalidParameterDirection(ParameterDirection value)
+        {
+            // @TODO: Use single line debug assert?
+            #if DEBUG
+            switch (value)
+            {
+                case ParameterDirection.Input:
+                case ParameterDirection.Output:
+                case ParameterDirection.InputOutput:
+                case ParameterDirection.ReturnValue:
+                    Debug.Fail("valid ParameterDirection " + value.ToString());
+                    break;
+            }
+            #endif
+
+            return InvalidEnumerationValue(typeof(ParameterDirection), (int)value);
+        }
+
         internal static ArgumentException InvalidSizeValue(int value)
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidSizeValue, value.ToString(CultureInfo.InvariantCulture)));
 
@@ -1396,55 +1428,5 @@ namespace Microsoft.Data.Common
         #endregion
 
         internal static readonly IntPtr s_ptrZero = IntPtr.Zero;
-#if NETFRAMEWORK
-#else
-#region netcore project only
-
-        //
-        // COM+ exceptions
-        //
-        internal static PlatformNotSupportedException DbTypeNotSupported(string dbType) => new(StringsHelper.GetString(Strings.SQL_DbTypeNotSupportedOnThisPlatform, dbType));
-
-        // IDbConnection.BeginTransaction, OleDbTransaction.Begin
-        internal static ArgumentOutOfRangeException InvalidIsolationLevel(IsolationLevel value)
-        {
-#if DEBUG
-            switch (value)
-            {
-                case IsolationLevel.Unspecified:
-                case IsolationLevel.Chaos:
-                case IsolationLevel.ReadUncommitted:
-                case IsolationLevel.ReadCommitted:
-                case IsolationLevel.RepeatableRead:
-                case IsolationLevel.Serializable:
-                case IsolationLevel.Snapshot:
-                    Debug.Fail("valid IsolationLevel " + value.ToString());
-                    break;
-            }
-#endif
-            return InvalidEnumerationValue(typeof(IsolationLevel), (int)value);
-        }
-
-        // ConnectionUtil
-        internal static Exception IncorrectPhysicalConnectionType() => new ArgumentException(StringsHelper.GetString(StringsHelper.SNI_IncorrectPhysicalConnectionType));
-
-        // IDataParameter.Direction
-        internal static ArgumentOutOfRangeException InvalidParameterDirection(ParameterDirection value)
-        {
-#if DEBUG
-            switch (value)
-            {
-                case ParameterDirection.Input:
-                case ParameterDirection.Output:
-                case ParameterDirection.InputOutput:
-                case ParameterDirection.ReturnValue:
-                    Debug.Fail("valid ParameterDirection " + value.ToString());
-                    break;
-            }
-#endif
-            return InvalidEnumerationValue(typeof(ParameterDirection), (int)value);
-        }
-#endregion
-#endif
     }
 }
