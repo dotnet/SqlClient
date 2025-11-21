@@ -25,24 +25,6 @@ parameters:
       - Package
 
 steps:
-- template: ensure-dotnet-version.yml
-  parameters:
-    packageType: sdk
-    usePreview: false
-    version: 10.0
-
-- template: ensure-dotnet-version.yml
-  parameters:
-    packageType: runtime
-    usePreview: false
-    version: 9.0
-
-- template: ensure-dotnet-version.yml
-  parameters:
-    packageType: runtime
-    usePreview: false
-    version: 8.0
-
 - ${{if eq(parameters.debug, true)}}:
   - powershell: |
       Get-ChildItem env: | Sort-Object Name
@@ -61,9 +43,3 @@ steps:
     parameters:
       downloadedNugetPath: $(Pipeline.Workspace)\${{parameters.artifactName }}
       debug: ${{ parameters.debug }}
-
-- ${{ else }}: # project
-  - template: ci-project-build-step.yml@self
-    parameters:
-      build: allNoDocs
-      buildConfiguration: ${{ parameters.buildConfiguration }}
