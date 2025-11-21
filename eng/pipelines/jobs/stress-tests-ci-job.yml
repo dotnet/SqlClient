@@ -131,14 +131,14 @@ jobs:
 
   steps:
 
-  # Install the .NET 9.0 SDK.
+  # Install whichever .NET SDKs are specified in our global.json.
   - task: UseDotNet@2
-    displayName: Install .NET 9.0 SDK
+    displayName: Install .NET SDKs
     inputs:
       packageType: sdk
-      version: 9.x
+      useGlobalJson: true
 
-  # Install the .NET 8.0 runtime.
+  # Install the .NET 8.0 runtime to run tests that target it.
   - task: UseDotNet@2
     displayName: Install .NET 8.0 Runtime
     inputs:

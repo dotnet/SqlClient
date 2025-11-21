@@ -60,7 +60,7 @@ parameters:
   - name: netFrameworkTestRuntimes
     displayName: .NET Framework Test Runtimes
     type: object
-    default: [net462, net47, net471, net472, net48, net481]
+    default: [net462]
 
   # The verbosity level for the dotnet CLI commands.
   - name: verbosity
