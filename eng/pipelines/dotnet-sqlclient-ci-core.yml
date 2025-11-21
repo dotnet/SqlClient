@@ -220,11 +220,7 @@ stages:
           pool: ${{parameters.defaultPoolName }} # pool name
           images: # list of images to run tests on
             Win22_Sql19_x86: ADO-MMS22-SQL19 # stage display name: image name from the pool
-          # We cannot _run_ .NET Framework tests for x86 because we're using
-          # an x64 agent which comes with the .NET Framework x64 runtime only.
-          # However, we can install x86 versions of .NET SDKs and runtimes to
-          # alternate locations and use those to build and run tests for x86.
-          TargetFrameworks: [net8.0, net9.0]
+          TargetFrameworks: [net462, net8.0, net9.0]
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
@@ -245,10 +241,7 @@ stages:
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
             # extra config properties
-            #
-            # See above for an explanation why we're omitting .NET Framework
-            # here.
-            x86TestTargetFrameworks: [net8.0, net9.0]
+            x86TestTargetFrameworks: [net462, net8.0, net9.0]
             SQLRootPath: $(SQL19RootPath)
             enableLocalDB: true
             # instanceName: default: MSSQLSERVER
@@ -298,7 +291,7 @@ stages:
           pool: ${{parameters.defaultPoolName }}
           images:
             Win22_Sql22_x86: ADO-MMS22-SQL22 
-          TargetFrameworks: [net462]
+          TargetFrameworks: [net462, net8.0, net9.0]
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
@@ -319,7 +312,7 @@ stages:
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
             # extra config properties
-            x86TestTargetFrameworks: [net462] # target frameworks should run tests on x86 as well
+            x86TestTargetFrameworks: [net462, net8.0, net9.0]
             SQLRootPath: $(SQL22RootPath)
             enableLocalDB: true
 
