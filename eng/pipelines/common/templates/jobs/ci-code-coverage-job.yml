@@ -60,16 +60,14 @@ jobs:
         - pwsh: 'Get-ChildItem env: | Sort-Object Name'
           displayName: '[Debug] List Environment Variables'
 
-      - template: ../steps/ensure-dotnet-version.yml@self
-        parameters:
-            packageType: sdk
-            version: '10.0'
+      # Install whichever .NET SDKs are specified in our global.json.
+      - task: UseDotNet@2
+        displayName: Install .NET SDKs
+        inputs:
+          packageType: sdk
+          useGlobalJson: true
 
-      - template: ../steps/ensure-dotnet-version.yml@self
-        parameters:
-            packageType: runtime
-            version: '9.0'
-
+      # Install additional dotnet tools.
       - pwsh: |
           dotnet tool install --global dotnet-coverage
           dotnet tool install --global dotnet-reportgenerator-globaltool
