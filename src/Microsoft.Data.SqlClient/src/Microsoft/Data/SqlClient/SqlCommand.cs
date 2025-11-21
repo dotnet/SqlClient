@@ -17,6 +17,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Diagnostics;
 
 #if NETFRAMEWORK
@@ -958,10 +959,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         // @TODO: Should be used in more than one place to justify its existence
-        private SqlInternalConnectionTds InternalTdsConnection
+        private SqlConnectionInternal InternalTdsConnection
         {
             // @TODO: Should check for null? Should use Connection?
-            get => (SqlInternalConnectionTds)_activeConnection.InnerConnection;
+            get => (SqlConnectionInternal)_activeConnection.InnerConnection;
         }
 
         private bool IsColumnEncryptionEnabled
@@ -1084,7 +1085,7 @@ namespace Microsoft.Data.SqlClient
                 // Note that this model is implementable because we only allow one active command
                 // at any one time. This code will have to change we allow multiple outstanding
                 // batches.
-                if (_activeConnection?.InnerConnection is not SqlInternalConnectionTds connection)
+                if (_activeConnection?.InnerConnection is not SqlConnectionInternal connection)
                 {
                     // @TODO: Really this case only applies if the connection is null.
                     // Fail without locking
@@ -1100,7 +1101,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // Make sure the connection did not get changed getting the connection and
                     // taking the lock. If it has, the connection has been closed.
-                    if (connection != _activeConnection.InnerConnection as SqlInternalConnectionTds)
+                    if (connection != _activeConnection.InnerConnection as SqlConnectionInternal)
                     {
                         return;
                     }
@@ -2380,9 +2381,8 @@ namespace Microsoft.Data.SqlClient
                         // 3) database
 
                         // Obtain identity from connection.
-                        // @TODO: Remove cast when possible.
-                        SqlInternalConnectionTds internalConnection =
-                            (SqlInternalConnectionTds)_activeConnection.InnerConnection;
+                        SqlConnectionInternal internalConnection =
+                            (SqlConnectionInternal)_activeConnection.InnerConnection;
 
                         SqlDependency.IdentityUserNamePair identityUserName = internalConnection.Identity is not null
                             ? new SqlDependency.IdentityUserNamePair(
@@ -2951,8 +2951,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Ensure that the connection is open and that the parser is in the correct state
-            // @TODO: Remove cast when possible.
-            SqlInternalConnectionTds tdsConnection = _activeConnection.InnerConnection as SqlInternalConnectionTds;
+            SqlConnectionInternal tdsConnection = _activeConnection.InnerConnection as SqlConnectionInternal;
 
             // Ensure that if column encryption override was used then server supports it
             // @TODO: This is kinda clunky

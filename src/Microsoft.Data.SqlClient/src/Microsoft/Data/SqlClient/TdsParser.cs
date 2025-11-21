@@ -101,7 +101,7 @@ namespace Microsoft.Data.SqlClient
         private int _nonTransactedOpenResultCount = 0;
 
         // Connection reference
-        private SqlInternalConnectionTds _connHandler;
+        private SqlConnectionInternal _connHandler;
 
         // Async/Mars variables
         private bool _fMARS = false;
@@ -209,7 +209,7 @@ namespace Microsoft.Data.SqlClient
             DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
         }
 
-        internal SqlInternalConnectionTds Connection
+        internal SqlConnectionInternal Connection
         {
             get
             {
@@ -359,17 +359,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void Connect(ServerInfo serverInfo,
-                              SqlInternalConnectionTds connHandler,
-                              TimeoutTimer timeout,
-                              SqlConnectionString connectionOptions,
-#if NETFRAMEWORK
-                              bool withFailover,
-                              bool isFirstTransparentAttempt,
-                              bool disableTnir
-#else
-                              bool withFailover
-#endif
+        internal void Connect(
+            ServerInfo serverInfo,
+            SqlConnectionInternal connHandler,
+            TimeoutTimer timeout,
+            SqlConnectionString connectionOptions,
+
+            #if NETFRAMEWORK
+            bool withFailover,
+            bool isFirstTransparentAttempt,
+            bool disableTnir
+            #else
+            bool withFailover
+            #endif
             )
         {
             SqlConnectionEncryptOption encrypt = connectionOptions.Encrypt;
@@ -1689,7 +1691,7 @@ namespace Microsoft.Data.SqlClient
                 if (asyncClose)
                 {
                     // Wait until we have the parser lock, then try to close
-                    SqlInternalConnectionTds connHandler = _connHandler;
+                    SqlConnectionInternal connHandler = _connHandler;
                     Action<Action> wrapCloseAction = closeAction =>
                     {
                         Task.Factory.StartNew(() =>
@@ -6236,7 +6238,9 @@ namespace Microsoft.Data.SqlClient
         /// Determines if a column value should be transparently decrypted (based on SqlCommand and Connection String settings).
         /// </summary>
         /// <returns>true if the value should be transparently decrypted, false otherwise</returns>
-        internal static bool ShouldHonorTceForRead(SqlCommandColumnEncryptionSetting columnEncryptionSetting, SqlInternalConnectionTds connection)
+        internal static bool ShouldHonorTceForRead(
+            SqlCommandColumnEncryptionSetting columnEncryptionSetting,
+            SqlConnectionInternal connection)
         {
             // Command leve setting trumps all
             switch (columnEncryptionSetting)
@@ -6259,7 +6263,7 @@ namespace Microsoft.Data.SqlClient
         internal static object GetNullSqlValue(SqlBuffer nullVal,
             SqlMetaDataPriv md,
             SqlCommandColumnEncryptionSetting columnEncryptionSetting,
-            SqlInternalConnectionTds connection)
+            SqlConnectionInternal connection)
         {
             SqlDbType type = md.type;
 
@@ -10000,10 +10004,10 @@ namespace Microsoft.Data.SqlClient
                         static (Task task, object state) =>
                         {
                             Debug.Assert(!task.IsCanceled, "Task should not be canceled");
-                            var parameters = (Tuple<TdsParser, TdsParserStateObject, SqlInternalConnectionTds>)state;
+                            var parameters = (Tuple<TdsParser, TdsParserStateObject, SqlConnectionInternal>)state;
                             TdsParser parser = parameters.Item1;
                             TdsParserStateObject tdsParserStateObject = parameters.Item2;
-                            SqlInternalConnectionTds internalConnectionTds = parameters.Item3;
+                            SqlConnectionInternal internalConnectionTds = parameters.Item3;
                             try
                             {
                                 if (task.IsFaulted)
@@ -10237,7 +10241,7 @@ namespace Microsoft.Data.SqlClient
                                     if (releaseConnectionLock)
                                     {
                                         task.ContinueWith(
-                                            static (Task _, object state) => ((SqlInternalConnectionTds)state)._parserLock.Release(),
+                                            static (Task _, object state) => ((SqlConnectionInternal)state)._parserLock.Release(),
                                             state: _connHandler,
                                             TaskScheduler.Default
                                         );
