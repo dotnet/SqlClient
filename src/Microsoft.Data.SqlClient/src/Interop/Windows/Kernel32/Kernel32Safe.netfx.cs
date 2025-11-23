@@ -21,18 +21,9 @@ namespace Interop.Windows.Kernel32
     {
         private const string Kernel32 = "kernel32.dll";
 
-        // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/sysinfo/base/getcomputernameex.asp
-        [DllImport(Kernel32, CharSet = CharSet.Unicode, EntryPoint = "GetComputerNameExW", SetLastError = true)]
-        [ResourceExposure(ResourceScope.None)]
-        internal static extern int GetComputerNameEx(int nameType, StringBuilder nameBuffer, ref int bufferSize);
-
         [DllImport(Kernel32, CharSet = CharSet.Auto)]
         [ResourceExposure(ResourceScope.Process)]
         internal static extern int GetCurrentProcessId();
-
-        [DllImport(Kernel32, CharSet = CharSet.Auto, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        [ResourceExposure(ResourceScope.Process)]
-        internal static extern IntPtr GetModuleHandle([MarshalAs(UnmanagedType.LPTStr), In] string moduleName);
 
         [DllImport(Kernel32, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true, SetLastError = true)]
         [ResourceExposure(ResourceScope.None)]
