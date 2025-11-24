@@ -889,7 +889,10 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                         new DbConnectionOptions("", null), 
                         out var conn);
 
-                    _pool.ReturnInternalConnection(conn!, owner);
+                    if (conn is not null)
+                    {
+                        _pool.ReturnInternalConnection(conn, owner);
+                    }
 
                     scope.Complete();
                 }
