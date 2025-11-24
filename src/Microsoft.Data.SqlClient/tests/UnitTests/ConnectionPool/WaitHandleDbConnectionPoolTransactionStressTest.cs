@@ -26,7 +26,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
 {
     private const int DefaultMaxPoolSize = 50;
     private const int DefaultMinPoolSize = 0;
-    private readonly int DefaultCreationTimeout = TimeSpan.FromSeconds(15).Milliseconds;
+    private readonly int DefaultCreationTimeoutInMilliseconds = 15000;
 
     private WaitHandleDbConnectionPool? pool;
 
@@ -47,7 +47,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
             poolByIdentity: false,
             minPoolSize: minPoolSize,
             maxPoolSize: maxPoolSize,
-            creationTimeout: DefaultCreationTimeout,
+            creationTimeout: DefaultCreationTimeoutInMilliseconds,
             loadBalanceTimeout: 0,
             hasTransactionAffinity: hasTransactionAffinity
         );
@@ -102,13 +102,12 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                     using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
                     var owner = new SqlConnection();
 
-                    var obtained = pool.TryGetConnection(
+                    pool.TryGetConnection(
                         owner,
                         taskCompletionSource: null,
                         new DbConnectionOptions("", null),
                         out DbConnectionInternal? connection);
 
-                    Assert.True(obtained);
                     Assert.NotNull(connection);
 
                     pool.ReturnInternalConnection(connection, owner);
@@ -142,7 +141,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                     var owner = new SqlConnection();
 
                     var tcs = new TaskCompletionSource<DbConnectionInternal>();
-                    var obtained = pool.TryGetConnection(
+                    pool.TryGetConnection(
                         owner,
                         taskCompletionSource: tcs,
                         new DbConnectionOptions("", null),
@@ -225,7 +224,6 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                 {
                     var owner = new SqlConnection();
                     // The transaction *must* be set as the AsyncState of the TaskCompletionSource.
-                    // The 
                     var tcs = new TaskCompletionSource<DbConnectionInternal>(transaction);
                     pool.TryGetConnection(
                         owner,
@@ -295,16 +293,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
 
             Task.WaitAll(tasks);
 
-            //Console.WriteLine($"{pool.TransactedConnectionPool.TransactedConnections[transaction].Count} transacted connections");
             scope.Complete();
-        }
-
-        while (pool.TransactedConnectionPool.TransactedConnections.ContainsKey(transaction!)
-        && pool.TransactedConnectionPool.TransactedConnections[transaction!].Count > 0)
-        {
-            // Wait for transaction to be cleaned up
-            Console.WriteLine("Waiting for transaction cleanup...");
-            Thread.Sleep(100);
         }
 
         // Assert
@@ -329,7 +318,9 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
             {
                 tasks[t] = Task.Run(async () =>
                 {
-                    using (var innerScope = new TransactionScope(transaction, TransactionScopeAsyncFlowOption.Enabled))
+                    using (var innerScope = new TransactionScope(
+                        transaction, 
+                        TransactionScopeAsyncFlowOption.Enabled))
                     {
                         Assert.Equal(transaction, Transaction.Current);
                         // Get multiple connections within same transaction
@@ -337,7 +328,6 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                         {
                             var owner = new SqlConnection();
                             // The transaction *must* be set as the AsyncState of the TaskCompletionSource.
-                            // The 
                             var tcs = new TaskCompletionSource<DbConnectionInternal>(transaction);
                             pool.TryGetConnection(
                                 owner,
@@ -357,16 +347,8 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                 });
             }
 
-            //await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks);
             scope.Complete();
-        }
-
-        while (pool.TransactedConnectionPool.TransactedConnections.ContainsKey(transaction!)
-            && pool.TransactedConnectionPool.TransactedConnections[transaction!].Count > 0)
-        {
-            // Wait for transaction to be cleaned up
-            Console.WriteLine("Waiting for transaction cleanup...");
-            await Task.Delay(100);
         }
 
         // Assert
@@ -387,7 +369,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         var waitingTasks = new Task[waitingThreadCount];
         var exceptions = new ConcurrentBag<Exception>();
         var completedWithoutConnection = 0;
-        var barrier = new Barrier(saturatingThreadCount + 1);
+        using var barrier = new Barrier(saturatingThreadCount + 1);
 
         // Act - Saturate the pool with long-held connections in transactions
         for (int t = 0; t < saturatingThreadCount; t++)
@@ -473,8 +455,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
         var owner = new SqlConnection();
 
-        var tcs = new TaskCompletionSource<DbConnectionInternal>(Transaction.Current);
-        var obtained = pool.TryGetConnection(
+        pool.TryGetConnection(
             owner,
             null,
             new DbConnectionOptions("", null),
@@ -610,7 +591,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         var owner = new SqlConnection();
 
         var tcs = new TaskCompletionSource<DbConnectionInternal>(Transaction.Current);
-        var obtained = pool.TryGetConnection(
+        pool.TryGetConnection(
             owner,
             tcs,
             new DbConnectionOptions("", null),
@@ -629,7 +610,11 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
     [Theory]
     [InlineData(5, 3, 10, TransactionScopeOption.RequiresNew)]
     [InlineData(5, 3, 10, TransactionScopeOption.Required)]
-    public void StressTest_NestedTransactions(int threadCount, int nestingLevel, int iterationsPerThread, TransactionScopeOption transactionScopeOption)
+    public void StressTest_NestedTransactions(
+        int threadCount, 
+        int nestingLevel, 
+        int iterationsPerThread,
+        TransactionScopeOption transactionScopeOption)
     {
         // Arrange - Test nested transactions with multiple nesting levels
         pool = CreatePool(maxPoolSize: 20);
@@ -665,7 +650,10 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         AssertPoolMetrics(pool);
     }
 
-    private void ExecuteNestedTransaction(WaitHandleDbConnectionPool pool, int nestingLevel, TransactionScopeOption transactionScopeOption)
+    private void ExecuteNestedTransaction(
+        WaitHandleDbConnectionPool pool, 
+        int nestingLevel, 
+        TransactionScopeOption transactionScopeOption)
     {
         if (nestingLevel <= 0)
         {
@@ -691,7 +679,11 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
     [Theory]
     [InlineData(5, 3, 10, TransactionScopeOption.RequiresNew)]
     [InlineData(5, 3, 10, TransactionScopeOption.Required)]
-    public async Task StressTest_NestedTransactions_Async(int threadCount, int nestingLevel, int iterationsPerThread, TransactionScopeOption transactionScopeOption)
+    public async Task StressTest_NestedTransactions_Async(
+        int threadCount, 
+        int nestingLevel, 
+        int iterationsPerThread, 
+        TransactionScopeOption transactionScopeOption)
     {
         // Arrange - Test nested transactions with multiple nesting levels
         pool = CreatePool(maxPoolSize: 20);
@@ -727,7 +719,10 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         AssertPoolMetrics(pool);
     }
 
-    private async Task ExecuteNestedTransactionAsync(WaitHandleDbConnectionPool pool, int nestingLevel, TransactionScopeOption transactionScopeOption)
+    private async Task ExecuteNestedTransactionAsync(
+        WaitHandleDbConnectionPool pool, 
+        int nestingLevel, 
+        TransactionScopeOption transactionScopeOption)
     {
         if (nestingLevel <= 0)
         {
@@ -875,38 +870,29 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         // Arrange
         pool = CreatePool(maxPoolSize: 15);
         const int threadCount = 20;
-        var barrier = new Barrier(threadCount);
+        using var barrier = new Barrier(threadCount);
         var tasks = new Task[threadCount];
-        var exceptions = new ConcurrentBag<Exception>();
 
         // Act
         for (int t = 0; t < threadCount; t++)
         {
             tasks[t] = Task.Run(() =>
             {
-                try
+                barrier.SignalAndWait();
+
+                for (int i = 0; i < 50; i++)
                 {
-                    barrier.SignalAndWait();
+                    using var scope = new TransactionScope();
+                    var owner = new SqlConnection();
 
-                    for (int i = 0; i < 50; i++)
-                    {
-                        using var scope = new TransactionScope();
-                        var owner = new SqlConnection();
+                    pool.TryGetConnection(owner, 
+                        null, 
+                        new DbConnectionOptions("", null), 
+                        out var conn);
 
-                        var obtained = pool.TryGetConnection(owner, null, new DbConnectionOptions("Timeout=5", null), out var conn);
+                    pool.ReturnInternalConnection(conn, owner);
 
-                        if (obtained && conn != null)
-                        {
-                            pool.ReturnInternalConnection(conn, owner);
-                        }
-
-                        scope.Complete();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Some exceptions expected during shutdown
-                    exceptions.Add(ex);
+                    scope.Complete();
                 }
             });
         }
@@ -954,7 +940,6 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                         } // Transaction completes here
 
                         // Return connection AFTER transaction scope disposal
-                        // TODO: questionable, make sure we're not double returning
                         pool.ReturnInternalConnection(conn!, owner!);
                         Interlocked.Increment(ref successCount);
                     }
