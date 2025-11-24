@@ -13,8 +13,7 @@ parameters:
   # True to include debug steps.
   - name: debug
     type: boolean
-    # TODO: Set back to false.
-    default: true
+    default: false
 
   # Array of target frameworks to process code coverage for:
   #
