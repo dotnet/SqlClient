@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Threading;
@@ -28,12 +27,12 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
     private const int DefaultMinPoolSize = 0;
     private readonly int DefaultCreationTimeoutInMilliseconds = 15000;
 
-    private WaitHandleDbConnectionPool? pool;
+    private IDbConnectionPool? _pool;
 
     public void Dispose()
     {
-        pool?.Shutdown();
-        pool?.Clear();
+        _pool?.Shutdown();
+        _pool?.Clear();
     }
 
     #region Helper Methods
@@ -71,11 +70,11 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         return pool;
     }
 
-    private void AssertPoolMetrics(WaitHandleDbConnectionPool pool)
+    private void AssertPoolMetrics(IDbConnectionPool pool)
     {
-        Assert.True(pool.Count <= pool.MaxPoolSize,
-            $"Pool count ({pool.Count}) exceeded max pool size ({pool.MaxPoolSize})");
-        Assert.True(pool.Count >= 0,
+        Assert.True(pool.Count <= pool.PoolGroupOptions.MaxPoolSize,
+            $"Pool count ({pool.Count}) exceeded max pool size ({pool.PoolGroupOptions.MaxPoolSize})");
+        Assert.True(pool.Count >= pool.PoolGroupOptions.MinPoolSize,
             $"Pool count ({pool.Count}) is negative");
         Assert.Empty(pool.TransactedConnectionPool.TransactedConnections);
     }
@@ -89,7 +88,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
     public void StressTest_TransactionPerIteration(int threadCount, int iterationsPerThread)
     {
         // Arrange
-        pool = CreatePool();
+        _pool = CreatePool();
         var tasks = new Task[threadCount];
 
         // Act
@@ -102,7 +101,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                     using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
                     var owner = new SqlConnection();
 
-                    pool.TryGetConnection(
+                    _pool.TryGetConnection(
                         owner,
                         taskCompletionSource: null,
                         new DbConnectionOptions("", null),
@@ -110,7 +109,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
 
                     Assert.NotNull(connection);
 
-                    pool.ReturnInternalConnection(connection, owner);
+                    _pool.ReturnInternalConnection(connection, owner);
                     scope.Complete();
                 }
             });
@@ -119,7 +118,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         Task.WaitAll(tasks);
 
         // Assert
-        AssertPoolMetrics(pool);
+        AssertPoolMetrics(_pool);
     }
 
     [Theory]
@@ -127,7 +126,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
     public async Task StressTest_TransactionPerIteration_Async(int threadCount, int iterationsPerThread)
     {
         // Arrange
-        pool = CreatePool();
+        _pool = CreatePool();
         var tasks = new Task[threadCount];
 
         // Act
@@ -141,7 +140,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                     var owner = new SqlConnection();
 
                     var tcs = new TaskCompletionSource<DbConnectionInternal>();
-                    pool.TryGetConnection(
+                    _pool.TryGetConnection(
                         owner,
                         taskCompletionSource: tcs,
                         new DbConnectionOptions("", null),
@@ -152,7 +151,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
 
                     Assert.NotNull(connection);
 
-                    pool.ReturnInternalConnection(connection, owner);
+                    _pool.ReturnInternalConnection(connection, owner);
                     scope.Complete();
                 }
             });
@@ -161,7 +160,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         await Task.WhenAll(tasks);
 
         // Assert
-        AssertPoolMetrics(pool);
+        AssertPoolMetrics(_pool);
     }
 
     [Theory]
@@ -169,7 +168,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
     public void StressTest_TransactionPerThread(int threadCount, int iterationsPerThread)
     {
         // Arrange
-        pool = CreatePool();
+        _pool = CreatePool();
         var tasks = new Task[threadCount];
 
         // Act - Each transaction should be isolated
@@ -185,12 +184,12 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                 for (int i = 0; i < iterationsPerThread; i++)
                 {
                     var owner = new SqlConnection();
-                    pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out var conn);
+                    _pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out var conn);
                     Assert.NotNull(conn);
-                    pool.ReturnInternalConnection(conn, owner);
+                    _pool.ReturnInternalConnection(conn, owner);
                 }
 
-                Assert.Single(pool.TransactedConnectionPool.TransactedConnections[transaction]);
+                Assert.Single(_pool.TransactedConnectionPool.TransactedConnections[transaction]);
 
                 scope.Complete();
             });
@@ -199,7 +198,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         Task.WaitAll(tasks);
 
         // Assert
-        AssertPoolMetrics(pool);
+        AssertPoolMetrics(_pool);
     }
 
     [Theory]
@@ -207,7 +206,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
     public async Task StressTest_TransactionPerThread_Async(int threadCount, int iterationsPerThread)
     {
         // Arrange
-        pool = CreatePool();
+        _pool = CreatePool();
         var tasks = new Task[threadCount];
 
         // Act - Each transaction should be isolated
@@ -225,7 +224,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                     var owner = new SqlConnection();
                     // The transaction *must* be set as the AsyncState of the TaskCompletionSource.
                     var tcs = new TaskCompletionSource<DbConnectionInternal>(transaction);
-                    pool.TryGetConnection(
+                    _pool.TryGetConnection(
                         owner,
                         tcs,
                         new DbConnectionOptions("", null),
@@ -235,12 +234,12 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
 
                     Assert.NotNull(conn);
 
-                    pool.ReturnInternalConnection(conn, owner);
+                    _pool.ReturnInternalConnection(conn, owner);
 
-                    Assert.Single(pool.TransactedConnectionPool.TransactedConnections[transaction]);
+                    Assert.Single(_pool.TransactedConnectionPool.TransactedConnections[transaction]);
                 }
 
-                Assert.Single(pool.TransactedConnectionPool.TransactedConnections[transaction]);
+                Assert.Single(_pool.TransactedConnectionPool.TransactedConnections[transaction]);
 
                 scope.Complete();
             });
@@ -249,7 +248,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         await Task.WhenAll(tasks);
 
         // Assert
-        AssertPoolMetrics(pool);
+        AssertPoolMetrics(_pool);
     }
     
     [Theory]
@@ -257,7 +256,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
     public void StressTest_SingleSharedTransaction(int threadCount, int iterationsPerThread)
     {
         // Arrange
-        pool = CreatePool();
+        _pool = CreatePool();
         var tasks = new Task[threadCount];
 
         Transaction? transaction = null;
@@ -277,13 +276,13 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                         for (int i = 0; i < iterationsPerThread; i++)
                         {
                             using var owner = new SqlConnection();
-                            pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out var conn);
+                            _pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out var conn);
                             Assert.NotNull(conn);
 
                             // We bypass the SqlConnection.Open flow, so SqlConnection.InnerConnection is never set
                             // Therefore, SqlConnection.Close doesn't return the connection to the pool, we have to
                             // do it manually.
-                            pool.ReturnInternalConnection(conn, owner);
+                            _pool.ReturnInternalConnection(conn, owner);
                         }
 
                         innerScope.Complete();
@@ -297,7 +296,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         }
 
         // Assert
-        AssertPoolMetrics(pool);
+        AssertPoolMetrics(_pool);
     }
 
     [Theory]
@@ -305,7 +304,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
     public async Task StressTest_SingleSharedTransaction_Async(int threadCount, int iterationsPerThread)
     {
         // Arrange
-        pool = CreatePool();
+        _pool = CreatePool();
         var tasks = new Task[threadCount];
 
         Transaction? transaction = null;
@@ -329,7 +328,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                             var owner = new SqlConnection();
                             // The transaction *must* be set as the AsyncState of the TaskCompletionSource.
                             var tcs = new TaskCompletionSource<DbConnectionInternal>(transaction);
-                            pool.TryGetConnection(
+                            _pool.TryGetConnection(
                                 owner,
                                 tcs,
                                 new DbConnectionOptions("", null),
@@ -339,7 +338,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
 
                             Assert.NotNull(conn);
 
-                            pool.ReturnInternalConnection(conn, owner);
+                            _pool.ReturnInternalConnection(conn, owner);
                         }
 
                         innerScope.Complete();
@@ -352,7 +351,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         }
 
         // Assert
-        AssertPoolMetrics(pool);
+        AssertPoolMetrics(_pool);
     }
     #endregion
 
@@ -362,7 +361,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
     public void StressTest_PoolSaturation_WithOpenTransactions_VerifyTimeout()
     {
         // Arrange - Test that when pool is saturated with transactions, new requests behave correctly
-        pool = CreatePool(maxPoolSize: 3);
+        _pool = CreatePool(maxPoolSize: 3);
         const int saturatingThreadCount = 3;
         const int waitingThreadCount = 5;
         var saturatingTasks = new Task[saturatingThreadCount];
@@ -382,7 +381,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                     using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
                     var owner = new SqlConnection();
 
-                    pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out var conn);
+                    _pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out var conn);
                     Assert.NotNull(conn);
 
                     // Signal that we've acquired a connection
@@ -392,7 +391,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                     // Hold the connection briefly
                     await Task.Delay(200);
 
-                    pool.ReturnInternalConnection(conn, owner);
+                    _pool.ReturnInternalConnection(conn, owner);
                     scope.Complete();
                 }
                 catch (Exception ex)
@@ -420,7 +419,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                     using var scope = new TransactionScope();
                     var owner = new SqlConnection();
 
-                    var obtained = pool.TryGetConnection(
+                    var obtained = _pool.TryGetConnection(
                         owner,
                         null,
                         new DbConnectionOptions("", null),
@@ -432,7 +431,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                     }
                     else
                     {
-                        pool.ReturnInternalConnection(conn, owner);
+                        _pool.ReturnInternalConnection(conn, owner);
                         scope.Complete();
                     }
                 }
@@ -455,7 +454,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
         var owner = new SqlConnection();
 
-        pool.TryGetConnection(
+        _pool.TryGetConnection(
             owner,
             null,
             new DbConnectionOptions("", null),
@@ -469,7 +468,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
     public async Task StressTest_PoolSaturation_WithOpenTransactions_VerifyTimeout_Async()
     {
         // Arrange - Test that when pool is saturated with transactions, new requests behave correctly
-        pool = CreatePool(maxPoolSize: 3);
+        _pool = CreatePool(maxPoolSize: 3);
         const int saturatingThreadCount = 3;
         const int waitingThreadCount = 5;
         var saturatingTasks = new Task[saturatingThreadCount];
@@ -492,7 +491,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                     var owner = new SqlConnection();
 
                     var tcs = new TaskCompletionSource<DbConnectionInternal>(Transaction.Current);
-                    pool.TryGetConnection(owner, tcs, new DbConnectionOptions("", null), out var conn);
+                    _pool.TryGetConnection(owner, tcs, new DbConnectionOptions("", null), out var conn);
                     conn ??= await tcs.Task;
 
                     Assert.NotNull(conn);
@@ -509,7 +508,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                     // Hold the connection briefly
                     await Task.Delay(200);
 
-                    pool.ReturnInternalConnection(conn, owner);
+                    _pool.ReturnInternalConnection(conn, owner);
                     scope.Complete();
                 }
                 catch (Exception ex)
@@ -538,7 +537,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                     var owner = new SqlConnection();
 
                     var tcs = new TaskCompletionSource<DbConnectionInternal>(Transaction.Current);
-                    var obtained = pool.TryGetConnection(
+                    var obtained = _pool.TryGetConnection(
                         owner,
                         tcs,
                         new DbConnectionOptions("", null),
@@ -557,13 +556,13 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                         else
                         {
                             conn = tcs.Task.Result;
-                            pool.ReturnInternalConnection(conn, owner);
+                            _pool.ReturnInternalConnection(conn, owner);
                             scope.Complete();
                         }
                     }
                     else if (conn != null)
                     {
-                        pool.ReturnInternalConnection(conn, owner);
+                        _pool.ReturnInternalConnection(conn, owner);
                         scope.Complete();
                     }
                     else
@@ -591,7 +590,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         var owner = new SqlConnection();
 
         var tcs = new TaskCompletionSource<DbConnectionInternal>(Transaction.Current);
-        pool.TryGetConnection(
+        _pool.TryGetConnection(
             owner,
             tcs,
             new DbConnectionOptions("", null),
@@ -617,7 +616,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         TransactionScopeOption transactionScopeOption)
     {
         // Arrange - Test nested transactions with multiple nesting levels
-        pool = CreatePool(maxPoolSize: 20);
+        _pool = CreatePool(maxPoolSize: 20);
         var tasks = new Task[threadCount];
         var exceptions = new ConcurrentBag<Exception>();
         var successCount = 0;
@@ -631,7 +630,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                 {
                     for (int i = 0; i < iterationsPerThread; i++)
                     {
-                        ExecuteNestedTransaction(pool, nestingLevel, transactionScopeOption);
+                        ExecuteNestedTransaction(_pool, nestingLevel, transactionScopeOption);
                         Interlocked.Increment(ref successCount);
                     }
                 }
@@ -647,11 +646,11 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         // Assert
         Assert.Empty(exceptions);
         Assert.Equal(threadCount * iterationsPerThread, successCount);
-        AssertPoolMetrics(pool);
+        AssertPoolMetrics(_pool);
     }
 
     private void ExecuteNestedTransaction(
-        WaitHandleDbConnectionPool pool, 
+        IDbConnectionPool pool, 
         int nestingLevel, 
         TransactionScopeOption transactionScopeOption)
     {
@@ -686,7 +685,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         TransactionScopeOption transactionScopeOption)
     {
         // Arrange - Test nested transactions with multiple nesting levels
-        pool = CreatePool(maxPoolSize: 20);
+        _pool = CreatePool(maxPoolSize: 20);
         var tasks = new Task[threadCount];
         var exceptions = new ConcurrentBag<Exception>();
         var successCount = 0;
@@ -700,7 +699,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                 {
                     for (int i = 0; i < iterationsPerThread; i++)
                     {
-                        await ExecuteNestedTransactionAsync(pool, nestingLevel, transactionScopeOption);
+                        await ExecuteNestedTransactionAsync(_pool, nestingLevel, transactionScopeOption);
                         Interlocked.Increment(ref successCount);
                     }
                 }
@@ -716,11 +715,11 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         // Assert
         Assert.Empty(exceptions);
         Assert.Equal(threadCount * iterationsPerThread, successCount);
-        AssertPoolMetrics(pool);
+        AssertPoolMetrics(_pool);
     }
 
     private async Task ExecuteNestedTransactionAsync(
-        WaitHandleDbConnectionPool pool, 
+        IDbConnectionPool pool, 
         int nestingLevel, 
         TransactionScopeOption transactionScopeOption)
     {
@@ -757,7 +756,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
     public void StressTest_MixedTransactedAndNonTransacted_HighConcurrency()
     {
         // Arrange
-        pool = CreatePool(maxPoolSize: 40);
+        _pool = CreatePool(maxPoolSize: 40);
         const int threadCount = 20;
         const int iterationsPerThread = 50;
         var tasks = new Task[threadCount];
@@ -777,17 +776,17 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                         {
                             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
                             var owner = new SqlConnection();
-                            pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out var conn);
+                            _pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out var conn);
                             Assert.NotNull(conn);
-                            pool.ReturnInternalConnection(conn, owner);
+                            _pool.ReturnInternalConnection(conn, owner);
                             scope.Complete();
                         }
                         else
                         {
                             var owner = new SqlConnection();
-                            pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out var conn);
+                            _pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out var conn);
                             Assert.NotNull(conn);
-                            pool.ReturnInternalConnection(conn, owner);
+                            _pool.ReturnInternalConnection(conn, owner);
                         }
                     }
                 }
@@ -802,7 +801,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
 
         // Assert
         Assert.Empty(exceptions);
-        AssertPoolMetrics(pool);
+        AssertPoolMetrics(_pool);
     }
 
     #endregion
@@ -813,7 +812,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
     public void StressTest_TransactionRollback_ManyOperations()
     {
         // Arrange
-        pool = CreatePool(maxPoolSize: 20);
+        _pool = CreatePool(maxPoolSize: 20);
         const int threadCount = 10;
         const int iterationsPerThread = 100;
         var tasks = new Task[threadCount];
@@ -832,7 +831,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                         using var scope = new TransactionScope();
                         var owner = new SqlConnection();
 
-                        pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out var conn);
+                        _pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out var conn);
                         Assert.NotNull(conn);
 
                         // Randomly commit or rollback
@@ -846,7 +845,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                             // Don't call Complete - let it rollback
                         }
 
-                        pool.ReturnInternalConnection(conn!, owner);
+                        _pool.ReturnInternalConnection(conn!, owner);
                     }
                 }
                 catch (Exception ex)
@@ -861,14 +860,14 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         // Assert
         Assert.Empty(exceptions);
         Assert.True(rollbackCount > 0, "Expected some rollbacks");
-        AssertPoolMetrics(pool);
+        AssertPoolMetrics(_pool);
     }
 
     [Fact]
     public void StressTest_PoolShutdownDuringTransactions()
     {
         // Arrange
-        pool = CreatePool(maxPoolSize: 15);
+        _pool = CreatePool(maxPoolSize: 15);
         const int threadCount = 20;
         using var barrier = new Barrier(threadCount);
         var tasks = new Task[threadCount];
@@ -885,12 +884,12 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                     using var scope = new TransactionScope();
                     var owner = new SqlConnection();
 
-                    pool.TryGetConnection(owner, 
+                    _pool.TryGetConnection(owner,
                         null, 
                         new DbConnectionOptions("", null), 
                         out var conn);
 
-                    pool.ReturnInternalConnection(conn, owner);
+                    _pool.ReturnInternalConnection(conn!, owner);
 
                     scope.Complete();
                 }
@@ -898,19 +897,19 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         }
 
         // Shutdown pool while operations are in progress
-        pool.Shutdown();
+        _pool.Shutdown();
 
         Task.WaitAll(tasks);
 
         // Assert - Just verify no crash occurred and pool count is valid
-        AssertPoolMetrics(pool);
+        AssertPoolMetrics(_pool);
     }
 
     [Fact]
     public void StressTest_TransactionCompleteBeforeReturn()
     {
         // Arrange - Test completing transaction before returning connection
-        pool = CreatePool(maxPoolSize: 20);
+        _pool = CreatePool(maxPoolSize: 20);
         const int threadCount = 15;
         const int iterationsPerThread = 100;
         var tasks = new Task[threadCount];
@@ -932,7 +931,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                         using (var scope = new TransactionScope())
                         {
                             owner = new SqlConnection();
-                            pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out conn);
+                            _pool.TryGetConnection(owner, null, new DbConnectionOptions("", null), out conn);
                             Assert.NotNull(conn);
 
                             // Complete transaction BEFORE returning
@@ -940,7 +939,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
                         } // Transaction completes here
 
                         // Return connection AFTER transaction scope disposal
-                        pool.ReturnInternalConnection(conn!, owner!);
+                        _pool.ReturnInternalConnection(conn!, owner!);
                         Interlocked.Increment(ref successCount);
                     }
                 }
@@ -956,7 +955,7 @@ public class WaitHandleDbConnectionPoolTransactionStressTest : IDisposable
         // Assert
         Assert.Empty(exceptions);
         Assert.Equal(threadCount * iterationsPerThread, successCount);
-        AssertPoolMetrics(pool);
+        AssertPoolMetrics(_pool);
     }
 
     #endregion

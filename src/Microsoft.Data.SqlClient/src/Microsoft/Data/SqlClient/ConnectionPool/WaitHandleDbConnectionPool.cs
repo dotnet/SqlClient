@@ -328,7 +328,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private bool UsingIntegrateSecurity => _identity != null && DbConnectionPoolIdentity.NoIdentity != _identity;
 
-        internal TransactedConnectionPool TransactedConnectionPool => _transactedConnectionPool;
+        public TransactedConnectionPool TransactedConnectionPool => _transactedConnectionPool;
 
         private void CleanupCallback(object state)
         {
