@@ -1033,49 +1033,53 @@
     <Compile Include="$(CommonSourceRoot)Resources\ResDescriptionAttribute.cs">
       <Link>Resources\ResDescriptionAttribute.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Resources\StringsHelper.cs">
+      <Link>Resources\StringsHelper.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)TypeForwards.netcore.cs">
       <Link>TypeForwards.netcore.cs</Link>
     </Compile>
   </ItemGroup>
 
-  <!-- Windows only -->
-  <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
-
-    <EmbeddedResource Include="$(CommonSourceRoot)Resources\ILLink.Substitutions.windows.xml">
-      <LogicalName>ILLink.Substitutions.xml</LogicalName>
-      <Link>Resources\ILLink.Substitutions.windows.xml</Link>
-    </EmbeddedResource>
-  </ItemGroup>
-
-  <!-- Resources -->
+  <!-- Resource Files ================================================== -->
   <ItemGroup>
-    <Compile Include="$(CommonSourceRoot)Resources\StringsHelper.cs">
-      <Link>Resources\StringsHelper.cs</Link>
-    </Compile>
+    <!-- Linker directives to replace UseManagedNetworking with a constant if consumer specifies -->
+    <!-- the app context switch in their csproj. -->
+    <EmbeddedResource Include="$(CommonSourceRoot)Resources\ILLink.Substitutions.xml"
+                      Condition="'$(OSGroup.ToUpper())' == 'WINDOWS_NT'">
+      <Link>Resources\ILLink.Substitutions.xml</Link>
+    </EmbeddedResource>
+
+    <EmbeddedResource Include="$(CommonSourceRoot)Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
+      <Link>Resources\Microsoft.Data.SqlCLient.SqlMetaData.xml</Link>
+      <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName> <!-- @TODO: How necessary is this? -->
+    </EmbeddedResource>
+
+    <!-- Base strings in English -->
+    <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
+      <Link>Resources\Strings.resx</Link>
+      <LogicalName>Microsoft.Data.SqlCLient.Resources.Strings.resources</LogicalName>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+      <CustomToolNamespace>System</CustomToolNamespace>
+    </EmbeddedResource>
+
+    <!-- Includes all strings that have been translated -->
+    <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.*.resx">
+      <Link>Resources\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <LogicalName>Microsoft.Data.SqlCLient.Resources.%(Filename).resources</LogicalName>
+    </EmbeddedResource>
+
+    <!-- Strings designer that depends on the resx -->
     <Compile Include="$(CommonSourceRoot)Resources\Strings.Designer.cs">
       <Link>Resources\Strings.Designer.cs</Link>
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
-      <Link>Resources\Strings.resx</Link>
-      <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
-      <CustomToolNamespace>System</CustomToolNamespace>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(CommonSourceRoot)Resources\$(ResxFileName).*.resx">
-      <Link>Resources\%(RecursiveDir)%(Filename)%(Extension)</Link>
-      <LogicalName>Microsoft.Data.SqlClient.Resources.%(Filename).resources</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(CommonSourceRoot)Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
-      <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
-      <Link>Resources\Microsoft.Data.SqlClient.SqlMetaData.xml</Link>
-    </EmbeddedResource>
   </ItemGroup>
 
-  <!-- Package References Etc -->
+  <!-- Package References ============================================== -->
   <ItemGroup>
     <PackageReference Include="Azure.Core" />
     <PackageReference Include="Azure.Identity" />
@@ -1092,6 +1096,7 @@
     <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
+  <!-- CodeGen Targets ================================================= -->
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
   <Import Project="$(ToolsDir)targets\NotSupported.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
