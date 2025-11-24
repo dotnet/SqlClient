@@ -1393,12 +1393,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             // Disposal stops and drops the XEvent session.
+            //
+            // Disposal isn't perfect - tests can abort without cleaning up the
+            // events they have created.  For Azure SQL targets that outlive the
+            // test pipelines, it is beneficial to periodically log into the
+            // database and drop old XEvent sessions using T-SQL similar to
+            // this:
+            //
+            // DECLARE @sql NVARCHAR(MAX) = N'';
+            //
+            // -- Identify inactive (stopped) event sessions and generate DROP commands
+            // SELECT @sql += N'DROP EVENT SESSION [' + name + N'] ON SERVER;' + CHAR(13) + CHAR(10)
+            // FROM sys.server_event_sessions
+            // WHERE running = 0; -- Filter for sessions that are not running (inactive)
+            //
+            // -- Print the generated commands for review (optional, but recommended)
+            // PRINT @sql;
+            //
+            // -- Execute the generated commands
+            // EXEC sys.sp_executesql @sql;
+            //
             public void Dispose()
             {
                 string dropXEventSessionCommand = _isAzureSql
-                    ? $"IF EXISTS (select * from sys.dm_xe_database_sessions where name ='{SessionName}')" +
+                    // We choose the sys.(database|server)_event_sessions views
+                    // here to ensure we find sessions that may not be running.
+                    ? $"IF EXISTS (select * from sys.database_event_sessions where name ='{SessionName}')" +
                         $" DROP EVENT SESSION [{SessionName}] ON DATABASE"
-                    : $"IF EXISTS (select * from sys.dm_xe_sessions where name ='{SessionName}')" +
+                    : $"IF EXISTS (select * from sys.server_event_sessions where name ='{SessionName}')" +
                         $" DROP EVENT SESSION [{SessionName}] ON SERVER";
 
                 using SqlCommand command = new SqlCommand(dropXEventSessionCommand, _connection);
