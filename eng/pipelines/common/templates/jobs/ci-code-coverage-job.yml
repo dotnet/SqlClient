@@ -123,8 +123,8 @@ jobs:
           MergeFiles -InputDirectoryPath "$(netCoreDir)" -OutputDirectoryName "coverageNetCoreXml"
           
           Write-Host "Removing original coverage files..."
-          Remove-Item $(netFxDir) -Recurse -Force
-          Remove-Item $(netCoreDir) -Recurse -Force
+          Remove-Item $(netFxDir) -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item $(netCoreDir) -Recurse -Force -ErrorAction SilentlyContinue
         displayName: Convert coverage files to xml
 
       - ${{if eq(parameters.debug, true)}}:
@@ -158,8 +158,8 @@ jobs:
           }
 
           Write-Host "Removing merged XML files..."
-          Remove-Item coverageNetFxXml -Recurse -Force
-          Remove-Item coverageNetCoreXml -Recurse -Force
+          Remove-Item coverageNetFxXml -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item coverageNetCoreXml -Recurse -Force -ErrorAction SilentlyContinue
         displayName: Run ReportGenerator
 
       - ${{if eq(parameters.debug, true)}}:
