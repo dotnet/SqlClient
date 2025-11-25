@@ -157,9 +157,7 @@ stages:
         postTestJobs:
         - template: common/templates/jobs/ci-code-coverage-job.yml@self
           parameters:
-            # TODO(ADO-40602): Revert to the parameter once the issue is fixed.
-            debug: true
-            # debug: ${{ parameters.debug }}
+            debug: ${{ parameters.debug }}
             targetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
 
 # test stages configurations
