@@ -15,6 +15,14 @@ parameters:
     type: boolean
     default: false
 
+  # The pool image to use.
+  - name: image
+    type: string
+
+  # The agent pool name.
+  - name: pool
+    type: string
+
   # Array of target frameworks to process code coverage for:
   #
   #   e.g. [net462, net8.0, net9.0]
@@ -31,9 +39,13 @@ jobs:
   - job: CodeCoverage
     displayName: Publish Code Coverage
 
-    pool: 
-      name: Azure Pipelines
-      vmImage: windows-2022
+    pool:
+      name: ${{ parameters.pool }}
+      ${{ if eq(parameters.pool, 'Azure Pipelines') }}:
+        vmImage: ${{ parameters.image }}
+      ${{ else }}:
+        demands:
+        - imageOverride -equals ${{ parameters.image }}
 
     variables:
       netFxDir: $(Build.SourcesDirectory)\coverageNetFx

@@ -158,6 +158,8 @@ stages:
         - template: common/templates/jobs/ci-code-coverage-job.yml@self
           parameters:
             debug: ${{ parameters.debug }}
+            image: ADO-MMS22-CodeCov
+            pool: ${{ parameters.defaultPoolName }}
             targetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
 
 # test stages configurations
