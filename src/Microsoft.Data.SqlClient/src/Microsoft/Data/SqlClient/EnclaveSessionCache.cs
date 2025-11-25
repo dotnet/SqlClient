@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient
     internal class EnclaveSessionCache
     {
         // Cache timeout of 8 hours to be consistent with JWT validity.
-        private const int EnclaveCacheTimeOutInHours = 8;
+        private static readonly TimeSpan s_enclaveCacheTimeout = TimeSpan.FromHours(8);
 
         private readonly MemoryCache enclaveMemoryCache = new MemoryCache(new MemoryCacheOptions());
         private readonly object enclaveCacheLock = new object();
@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient
             {
                 enclaveSession = new SqlEnclaveSession(sharedSecret, sessionId);
                 enclaveMemoryCache.Set<SqlEnclaveSession>(cacheKey, enclaveSession,
-                    absoluteExpirationRelativeToNow: TimeSpan.FromHours(EnclaveCacheTimeOutInHours));
+                    absoluteExpirationRelativeToNow: s_enclaveCacheTimeout);
                 counter = Interlocked.Increment(ref _counter);
             }
 

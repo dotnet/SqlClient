@@ -21,10 +21,10 @@ namespace Microsoft.Data.SqlClient
     {
         private const int CacheSize = 2000; // Cache size in number of entries.
         private const int CacheTrimThreshold = 300; // Threshold above the cache size when we start trimming.
-        private const int MetadataCacheTimeOutInHours = 10;
 
         private readonly MemoryCache _cache;
         private static readonly SqlQueryMetadataCache s_singletonInstance = new();
+        private static readonly TimeSpan s_metadataCacheTimeout = TimeSpan.FromHours(10);
         private int _inTrim = 0;
         private long _cacheHits = 0;
         private long _cacheMisses = 0;
@@ -236,13 +236,11 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            TimeSpan expirationPeriod = TimeSpan.FromHours(MetadataCacheTimeOutInHours);
-
-            _cache.Set<Dictionary<string, SqlCipherMetadata>>(cacheLookupKey, cipherMetadataDictionary, absoluteExpirationRelativeToNow: expirationPeriod);
+            _cache.Set<Dictionary<string, SqlCipherMetadata>>(cacheLookupKey, cipherMetadataDictionary, absoluteExpirationRelativeToNow: s_metadataCacheTimeout);
             if (sqlCommand.requiresEnclaveComputations)
             {
                 ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeCached = CreateCopyOfEnclaveKeys(sqlCommand.keysToBeSentToEnclave);
-                _cache.Set<ConcurrentDictionary<int, SqlTceCipherInfoEntry>>(enclaveLookupKey, keysToBeCached, absoluteExpirationRelativeToNow: expirationPeriod);
+                _cache.Set<ConcurrentDictionary<int, SqlTceCipherInfoEntry>>(enclaveLookupKey, keysToBeCached, absoluteExpirationRelativeToNow: s_metadataCacheTimeout);
             }
         }
 

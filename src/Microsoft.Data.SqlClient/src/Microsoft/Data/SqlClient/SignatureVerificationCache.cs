@@ -16,7 +16,6 @@ namespace Microsoft.Data.SqlClient
     {
         private const int CacheSize = 2000; // Cache size in number of entries.
         private const int CacheTrimThreshold = 300; // Threshold above the cache size when we start trimming.
-        private const int VerificationCacheTimeOutInDays = 10;
 
         private const string _className = "ColumnMasterKeyMetadataSignatureVerificationCache";
         private const string _getSignatureVerificationResultMethodName = "GetSignatureVerificationResult";
@@ -27,6 +26,7 @@ namespace Microsoft.Data.SqlClient
         private const string _cacheLookupKeySeparator = ":";
 
         private static readonly ColumnMasterKeyMetadataSignatureVerificationCache _signatureVerificationCache = new ColumnMasterKeyMetadataSignatureVerificationCache();
+        private static readonly TimeSpan s_verificationCacheTimeout = TimeSpan.FromDays(10);
 
         //singleton instance
         internal static ColumnMasterKeyMetadataSignatureVerificationCache Instance { get { return _signatureVerificationCache; } }
@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient
             TrimCacheIfNeeded();
 
             // By default evict after 10 days.
-            _cache.Set<bool>(cacheLookupKey, result, absoluteExpirationRelativeToNow: TimeSpan.FromDays(VerificationCacheTimeOutInDays));
+            _cache.Set<bool>(cacheLookupKey, result, absoluteExpirationRelativeToNow: s_verificationCacheTimeout);
         }
 
         private void ValidateSignatureNotNullOrEmpty(byte[] signature, string methodName)

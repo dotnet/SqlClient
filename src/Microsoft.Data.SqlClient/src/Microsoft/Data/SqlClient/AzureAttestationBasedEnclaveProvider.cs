@@ -60,6 +60,7 @@ namespace Microsoft.Data.SqlClient
         private const string AttestationUrlSuffix = @"/.well-known/openid-configuration";
 
         private static readonly MemoryCache OpenIdConnectConfigurationCache = new MemoryCache(new MemoryCacheOptions());
+        private static readonly TimeSpan s_openIdConnectConfigurationCacheTimeout = TimeSpan.FromDays(1);
         #endregion
 
         #region Internal methods
@@ -349,7 +350,7 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.AttestationFailed(string.Format(Strings.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
                 }
 
-                OpenIdConnectConfigurationCache.Set<OpenIdConnectConfiguration>(url, openIdConnectConfig, absoluteExpirationRelativeToNow: TimeSpan.FromDays(1));
+                OpenIdConnectConfigurationCache.Set<OpenIdConnectConfiguration>(url, openIdConnectConfig, absoluteExpirationRelativeToNow: s_openIdConnectConfigurationCacheTimeout);
             }
 
             return openIdConnectConfig;
