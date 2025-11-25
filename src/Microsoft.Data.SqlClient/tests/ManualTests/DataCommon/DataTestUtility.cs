@@ -1319,19 +1319,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             #region Properties
 
-            // The name of the XEvent session, derived from the session name
-            // provided at construction time, with a unique suffix appended.
+            /// <summary>
+            /// The name of the XEvent session, derived from the session name
+            /// provided at construction time, with a unique suffix appended.
+            /// </summary>
             public string SessionName { get; }
 
             #endregion
 
             #region Construction
 
-            // Construct with the specified parameters.
-            //
-            // This will use the connection to query the server properties and
-            // setup and start the XEvent session.
-            //
+            /// <summary>
+            /// Construct with the specified parameters.
+            /// 
+            /// This will use the connection to query the server properties and
+            /// setup and start the XEvent session.
+            /// </summary>
+            /// <param name="sessionName">The base name of the session.</param>
+            /// <param name="connection">The SQL connection to use. (Must already be open.)</param>
+            /// <param name="eventSpecification">The event specification T-SQL string.</param>
+            /// <param name="targetSpecification">The target specification T-SQL string.</param>
+            /// <param name="durationInMinutes">The duration of the session in minutes.</param>
             public XEventScope(
                 string sessionName,
                 // The connection must already be open.
@@ -1392,27 +1400,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 createXEventSession.ExecuteNonQuery();
             }
 
-            // Disposal stops and drops the XEvent session.
-            //
-            // Disposal isn't perfect - tests can abort without cleaning up the
-            // events they have created.  For Azure SQL targets that outlive the
-            // test pipelines, it is beneficial to periodically log into the
-            // database and drop old XEvent sessions using T-SQL similar to
-            // this:
-            //
-            // DECLARE @sql NVARCHAR(MAX) = N'';
-            //
-            // -- Identify inactive (stopped) event sessions and generate DROP commands
-            // SELECT @sql += N'DROP EVENT SESSION [' + name + N'] ON SERVER;' + CHAR(13) + CHAR(10)
-            // FROM sys.server_event_sessions
-            // WHERE running = 0; -- Filter for sessions that are not running (inactive)
-            //
-            // -- Print the generated commands for review (optional, but recommended)
-            // PRINT @sql;
-            //
-            // -- Execute the generated commands
-            // EXEC sys.sp_executesql @sql;
-            //
+            /// <summary>
+            /// Disposal stops and drops the XEvent session.
+            /// </summary>
+            /// <remarks>
+            /// Disposal isn't perfect - tests can abort without cleaning up the
+            /// events they have created.  For Azure SQL targets that outlive the
+            /// test pipelines, it is beneficial to periodically log into the
+            /// database and drop old XEvent sessions using T-SQL similar to
+            /// this:
+            ///
+            /// DECLARE @sql NVARCHAR(MAX) = N'';
+            ///
+            /// -- Identify inactive (stopped) event sessions and generate DROP commands
+            /// SELECT @sql += N'DROP EVENT SESSION [' + name + N'] ON SERVER;' + CHAR(13) + CHAR(10)
+            /// FROM sys.server_event_sessions
+            /// WHERE running = 0; -- Filter for sessions that are not running (inactive)
+            ///
+            /// -- Print the generated commands for review (optional, but recommended)
+            /// PRINT @sql;
+            ///
+            /// -- Execute the generated commands
+            /// EXEC sys.sp_executesql @sql;
+            /// </remarks>
             public void Dispose()
             {
                 string dropXEventSessionCommand = _isAzureSql
@@ -1431,8 +1441,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             #region Public Methods
 
-            // Query the XEvent session for its collected events, returning them
-            // as an XML document.
+            /// <summary>
+            /// Query the XEvent session for its collected events, returning
+            /// them as an XML document.
+            ///
+            /// This always blocks the thread for MaxDispatchLatencySeconds to
+            /// ensure that all events have been flushed into the ring buffer.
+            /// </summary>
             public System.Xml.XmlDocument GetEvents()
             {
                 string xEventQuery = _isAzureSql
@@ -1449,6 +1464,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using SqlCommand command = new SqlCommand(xEventQuery, _connection);
 
+                // Wait for maximum dispatch latency to ensure all events
+                // have been flushed to the ring buffer.
                 Thread.Sleep(MaxDispatchLatencySeconds * 1000);
 
                 string? targetData = command.ExecuteScalar() as string;
