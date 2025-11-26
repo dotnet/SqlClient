@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _WINDOWS
+
 using System;
 
 namespace Interop.Windows.Kernel32
@@ -31,3 +33,5 @@ namespace Interop.Windows.Kernel32
         FILE_WRITE_DATA = 0x02
     }
 }
+
+#endif

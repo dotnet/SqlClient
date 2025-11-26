@@ -2,7 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET
+// @TODO: See if we can throw this when we would create this object
+#if NET && _UNIX
 
 using System;
 
