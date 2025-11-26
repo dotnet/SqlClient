@@ -1,6 +1,6 @@
 # CI Builds by Branch
 
-See also: [Public CI runs]( https://sqlclientdrivers.visualstudio.com/public/_dashboards/dashboard/8435c7fd-1243-461b-96b7-6244356d23aa)
+See also: [Public CI runs](https://sqlclientdrivers.visualstudio.com/public/_dashboards/dashboard/8435c7fd-1243-461b-96b7-6244356d23aa)
 
 ## Triggers
 
