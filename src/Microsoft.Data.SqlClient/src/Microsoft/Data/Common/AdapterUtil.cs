@@ -27,7 +27,6 @@ using IsolationLevel = System.Data.IsolationLevel;
 #if NETFRAMEWORK
 using System.Reflection;
 using System.Security.Permissions;
-using Microsoft.SqlServer.Server;
 #endif
 
 #if _WINDOWS
