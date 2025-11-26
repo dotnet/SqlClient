@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <ProjectGuid>{407890AC-9876-4FEF-A6F1-F36A876BAADE}</ProjectGuid>
-    <RootNamespace></RootNamespace>
+    <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <TargetFramework>net462</TargetFramework>
     <OSGroup Condition="'$(OSGroup)' == ''">$(OS)</OSGroup>
+    <ProjectGuid>{407890AC-9876-4FEF-A6F1-F36A876BAADE}</ProjectGuid>
+    <RootNamespace />
     <EnableLocalAppContext>true</EnableLocalAppContext>
-    <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <OutputPlatform>AnyCPU</OutputPlatform>
     <BinPath>$(BinFolder)$(Configuration).$(OutputPlatform)\</BinPath>
     <ObjPath>$(ObjFolder)$(Configuration).$(OutputPlatform)\</ObjPath>
