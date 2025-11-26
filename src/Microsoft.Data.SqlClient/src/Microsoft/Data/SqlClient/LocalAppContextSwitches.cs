@@ -27,13 +27,17 @@ namespace Microsoft.Data.SqlClient
         private const string TruncateScaledDecimalString = @"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal";
         private const string IgnoreServerProvidedFailoverPartnerString = @"Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner";
         private const string EnableUserAgentString = @"Switch.Microsoft.Data.SqlClient.EnableUserAgent";
-#if NET
+
+        #if NET
         private const string GlobalizationInvariantModeString = @"System.Globalization.Invariant";
         private const string GlobalizationInvariantModeEnvironmentVariable = "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT";
+
+        #if _WINDOWS
         private const string UseManagedNetworkingOnWindowsString = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
-#else
+        #endif
+        #else
         private const string DisableTnirByDefaultString = @"Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString";
-#endif
+        #endif
 
         // this field is accessed through reflection in tests and should not be renamed or have the type changed without refactoring NullRow related tests
         private static Tristate s_legacyRowVersionNullBehavior;
@@ -48,12 +52,16 @@ namespace Microsoft.Data.SqlClient
         private static Tristate s_truncateScaledDecimal;
         private static Tristate s_ignoreServerProvidedFailoverPartner;
         private static Tristate s_enableUserAgent;
-#if NET
+
+        #if NET
         private static Tristate s_globalizationInvariantMode;
+
+        #if _WINDOWS
         private static Tristate s_useManagedNetworking;
-#else
+        #endif
+        #else
         private static Tristate s_disableTnirByDefault;
-#endif
+        #endif
 
         #if NET
         static LocalAppContextSwitches()
@@ -459,14 +467,14 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// .NET Core on Unix does not support the native SNI, so this will always be false.
         /// </summary>
-        public const bool UseManagedNetworking = false;
+        public static bool UseManagedNetworking => false;
         #endif
 
         #else
         /// <summary>
         /// .NET Framework does not support the managed SNI, so this will always be false.
         /// </summary>
-        public const bool UseManagedNetworking = false;
+        public static bool UseManagedNetworking => false;
         #endif
 
         #if NETFRAMEWORK
