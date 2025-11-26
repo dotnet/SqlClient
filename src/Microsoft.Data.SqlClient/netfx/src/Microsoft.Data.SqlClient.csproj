@@ -1023,6 +1023,9 @@
     <Compile Include="$(CommonSourceRoot)Resources\ResCategoryAttribute.cs">
       <Link>Resources\ResCategoryAttribute.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Resources\StringsHelper.cs">
+      <Link>Resources\StringsHelper.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Resources\ResDescriptionAttribute.cs">
       <Link>Resources\ResDescriptionAttribute.cs</Link>
     </Compile>
@@ -1040,17 +1043,15 @@
     </Compile>
   </ItemGroup>
 
-  <!-- Resources  -->
+  <!-- Resource Files ================================================== -->
   <ItemGroup>
-    <Compile Include="$(CommonSourceRoot)Resources\StringsHelper.cs">
-      <Link>Resources\StringsHelper.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Resources\Strings.Designer.cs">
-      <Link>Resources\Strings.Designer.cs</Link>
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Strings.resx</DependentUpon>
-    </Compile>
+    <EmbeddedResource Include="$(CommonSourceRoot)Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
+      <Link>Resources\Microsoft.Data.SqlClient.SqlMetaData.xml</Link>
+      <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName> <!-- @TODO: How necessary is this? -->
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+
+    <!-- Base strings in English -->
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
       <Link>Resources\Strings.resx</Link>
       <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
@@ -1058,16 +1059,23 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Strings.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+
+    <!-- Includes all strings that have been translated -->
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\$(ResxFileName).*.resx">
       <Link>Resources\%(RecursiveDir)%(Filename)%(Extension)</Link>
       <LogicalName>Microsoft.Data.SqlClient.Resources.%(Filename).resources</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="$(CommonSourceRoot)Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
-      <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
-      <Link>Resources\Microsoft.Data.SqlClient.SqlMetaData.xml</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
+
+    <!-- Strings designer that depends on the resx -->
+    <Compile Include="$(CommonSourceRoot)Resources\Strings.Designer.cs">
+      <Link>Resources\Strings.Designer.cs</Link>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Strings.resx</DependentUpon>
+    </Compile>
   </ItemGroup>
+
+  <!-- Package References ============================================== -->
   <ItemGroup>
     <PackageReference Include="Azure.Core" />
     <PackageReference Include="Azure.Identity" />
@@ -1084,10 +1092,14 @@
     <PackageReference Include="System.Memory" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.Text.Encodings.Web" />
-    <PackageReference Include="System.Text.Json" />
-    <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="System.Threading.Channels" />
+    <PackageReference Include="System.ValueTuple" />
+
+    <!-- Transitive dependencies that would otherwise bring in older, vulnerable versions. -->
+    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
+
+  <!-- CodeGen Targets ================================================= -->
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyRef.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyInfo.targets" />
