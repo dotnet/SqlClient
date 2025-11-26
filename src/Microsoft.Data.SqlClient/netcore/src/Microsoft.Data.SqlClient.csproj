@@ -1056,7 +1056,7 @@
     <!-- Base strings in English -->
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
       <Link>Resources\Strings.resx</Link>
-      <LogicalName>Microsoft.Data.SqlCLient.Resources.Strings.resources</LogicalName>
+      <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Strings.Designer.cs</LastGenOutput>
       <CustomToolNamespace>System</CustomToolNamespace>

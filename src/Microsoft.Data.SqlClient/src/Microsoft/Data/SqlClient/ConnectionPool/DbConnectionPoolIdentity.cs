@@ -93,19 +93,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 : $@"{domainString}\{Environment.UserName}";
 
             var lastIdentity = s_lastIdentity;
-
-            DbConnectionPoolIdentity current;
-            if (lastIdentity != null &&
-                lastIdentity._sidString == sidString &&
-                !lastIdentity._isRestricted &&
-                !lastIdentity._isNetwork)
-            {
-                current = lastIdentity;
-            }
-            else
-            {
-                current = new DbConnectionPoolIdentity(sidString, isRestricted: false, isNetwork: false);
-            }
+            
+            DbConnectionPoolIdentity current = lastIdentity != null &&
+                                               lastIdentity._sidString == sidString &&
+                                               !lastIdentity._isRestricted &&
+                                               !lastIdentity._isNetwork
+                ? lastIdentity
+                : new DbConnectionPoolIdentity(sidString, isRestricted: false, isNetwork: false);
 
             s_lastIdentity = current;
             return current;
