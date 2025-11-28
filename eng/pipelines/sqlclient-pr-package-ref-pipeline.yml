@@ -39,7 +39,7 @@ pr:
     - .azuredevops
     - .config
     - doc
-    - eng
+    - eng/pipelines
     - src
     - tools
     - azurepipelines-coverage.yml
