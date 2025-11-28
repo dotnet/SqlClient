@@ -1,0 +1,65 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: publishDestination
+    type: string
+
+  - name: dryRun
+    type: boolean
+
+  - name: internalFeedSource
+    type: string
+
+  - name: publicNuGetSource
+    type: string
+
+  - name: publishSymbols
+    type: boolean
+
+  - name: packageFolderName
+    type: string
+
+  - name: nugetPackageVersion
+    type: string
+
+  - name: product
+    type: string
+
+jobs:
+- job: PublishPackages
+  displayName: 'Publish Packages'
+  dependsOn: AwaitApproval
+  condition: succeeded()
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - task: DownloadPipelineArtifact@2
+    displayName: 'Download Signed Packages'
+    inputs:
+      buildType: current
+      artifactName: ${{ parameters.packageFolderName }}
+      targetPath: $(Pipeline.Workspace)/release/packages
+  - script: |
+      echo "NuGet Package Version: ${{ parameters.nugetPackageVersion }}"
+    displayName: 'Echo NuGet Package Version'
+  - ${{ if ne(parameters.publishDestination, 'Public') }}:
+    - template: ../steps/publish-internal-feed-step.yml
+      parameters:
+        dryRun: ${{ parameters.dryRun }}
+        internalFeedSource: ${{ parameters.internalFeedSource }}
+        packagesGlob: $(System.DefaultWorkingDirectory)/_dotnet-sqlclient-Official/drop_buildMDS_build_signed_package/*.nupkg
+  - ${{ if eq(parameters.publishDestination, 'Public') }}:
+    - template: ../steps/publish-public-nuget-step.yml
+      parameters:
+        dryRun: ${{ parameters.dryRun }}
+        publicNuGetSource: ${{ parameters.publicNuGetSource }}
+        packagesGlob: $(System.DefaultWorkingDirectory)/_dotnet-sqlclient-Official/drop_buildMDS_build_signed_package/*.nupkg
+  - ${{ if and(parameters.publishSymbols, ne(parameters.dryRun, true)) }}:
+    - template: ../steps/publish-symbols-step.yml
+      parameters:
+        publishSymbols: ${{ parameters.publishSymbols }}
+        symbolsArtifactName: ${{ parameters.product }}_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.nugetPackageVersion }}_$(System.TimelineId)
+        product: ${{ parameters.product }}
