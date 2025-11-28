@@ -4439,10 +4439,6 @@ namespace Microsoft.Data.SqlClient
             _snapshotStatus = SnapshotStatus.NotActive;
         }
 
-        internal bool IsSnapshotAvailable()
-        {
-            return _snapshot != null && _snapshot.ContinueEnabled;
-        }
         /// <summary>
         /// Returns true if the state object is in the state of continuing from a previously stored snapshot packet 
         /// meaning that consumers should resume from the point where they last needed more data instead of beginning
