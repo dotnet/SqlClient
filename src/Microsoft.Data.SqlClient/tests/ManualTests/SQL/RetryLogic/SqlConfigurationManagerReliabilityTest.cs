@@ -3,15 +3,16 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using Xunit;
 using System.Data;
 using System.Threading.Tasks;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class SqlConfigurationManagerReliabilityTest
     {
-        private static readonly SqlConnectionReliabilityTest s_connectionCRLTest = new SqlConnectionReliabilityTest();
+        private readonly SqlConnectionReliabilityTest _connectionCRLTest;
         private static readonly SqlCommandReliabilityTest s_commandCRLTest = new SqlCommandReliabilityTest();
 
         private static readonly string s_upperCaseRetryMethodName_Fix = RetryLogicConfigHelper.RetryMethodName_Fix.ToUpper();
@@ -21,6 +22,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static string TcpCnnString => DataTestUtility.TCPConnectionString;
         private static string InvalidTcpCnnString => new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
         { InitialCatalog = SqlConnectionReliabilityTest.InvalidInitialCatalog, ConnectTimeout = 1 }.ConnectionString;
+
+        public SqlConfigurationManagerReliabilityTest(ITestOutputHelper outputHelper)
+        {
+            _connectionCRLTest = new(outputHelper);
+        }
 
         #region Internal Functions
         // Test relies on error 4060 for automatic retry, which is not returned when using AAD auth
@@ -44,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RetryLogicConfigHelper.AssessProvider(cmdProvider, cmdCfg);
 
             // check the retry in action
-            s_connectionCRLTest.ConnectionRetryOpenInvalidCatalogFailed(TcpCnnString, cnnProvider);
+            _connectionCRLTest.ConnectionRetryOpenInvalidCatalogFailed(TcpCnnString, cnnProvider);
             s_commandCRLTest.RetryExecuteFail(TcpCnnString, cmdProvider);
             if (DataTestUtility.IsNotAzureSynapse())
             {
@@ -107,7 +113,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
             Assert.NotNull(loaderObj);
 
-            s_connectionCRLTest.DefaultOpenWithoutRetry(TcpCnnString, cnnProvider);
+            _connectionCRLTest.DefaultOpenWithoutRetry(TcpCnnString, cnnProvider);
             s_commandCRLTest.NoneRetriableExecuteFail(TcpCnnString, cmdProvider);
         }
         #endregion
@@ -127,7 +133,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.NotNull(loaderObj);
 
             // none retriable logic applies.
-            s_connectionCRLTest.DefaultOpenWithoutRetry(TcpCnnString, cnnProvider);
+            _connectionCRLTest.DefaultOpenWithoutRetry(TcpCnnString, cnnProvider);
             s_commandCRLTest.NoneRetriableExecuteFail(TcpCnnString, cmdProvider);
         }
 
@@ -153,7 +159,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RetryLogicConfigHelper.AssessProvider(cmdProvider, cmdCfg);
 
             // internal type used to resolve the specified method
-            s_connectionCRLTest.ConnectionRetryOpenInvalidCatalogFailed(TcpCnnString, cnnProvider);
+            _connectionCRLTest.ConnectionRetryOpenInvalidCatalogFailed(TcpCnnString, cnnProvider);
             s_commandCRLTest.RetryExecuteFail(TcpCnnString, cmdProvider);
         }
 
