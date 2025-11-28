@@ -36,7 +36,6 @@ steps:
   inputs:
     packageType: sdk
     version: '10.x'
-    includePreviewVersions: true
 
 - task: UseDotNet@2
   displayName: 'Use .NET 9.x sdk'
