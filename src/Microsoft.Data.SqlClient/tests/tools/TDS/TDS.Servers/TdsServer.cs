@@ -21,6 +21,15 @@ namespace Microsoft.SqlServer.TDS.Servers
         }
 
         /// <summary>
+        /// Constructor with a query engine.  Uses the engine's servers arguments.
+        /// </summary>
+        /// <param name="queryEngine">Query engine</param>
+        public TdsServer(QueryEngine queryEngine)
+        : base(queryEngine.ServerArguments, queryEngine)
+        {
+        }
+
+        /// <summary>
         /// Constructor with arguments and query engine
         /// </summary>
         /// <param name="queryEngine">Query engine</param>
