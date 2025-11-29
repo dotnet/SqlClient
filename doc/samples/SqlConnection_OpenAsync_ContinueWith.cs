@@ -1,3 +1,5 @@
+namespace SqlConnection_OpenAsync_ContinueWith;
+
 using System;
 using System.Data;
 // <Snippet2>

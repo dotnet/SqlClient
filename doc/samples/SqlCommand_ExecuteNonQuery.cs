@@ -3,7 +3,7 @@ using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
 
-namespace SqlCommandCS
+namespace SqlCommand_ExecuteNonQuery
 {
     class Program
     {

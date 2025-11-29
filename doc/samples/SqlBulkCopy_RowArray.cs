@@ -1,3 +1,5 @@
+namespace SqlBulkCopy_RowArray;
+
 using System;
 using System.Data;
 // <Snippet1>

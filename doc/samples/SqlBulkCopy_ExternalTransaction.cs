@@ -1,3 +1,5 @@
+namespace SqlBulkCopy_ExternalTransaction;
+
 using System;
 using System.Data;
 // <Snippet1>

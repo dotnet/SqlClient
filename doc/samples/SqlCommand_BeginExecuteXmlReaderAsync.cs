@@ -1,3 +1,4 @@
+/* This does not compile, as multiple methods are missing.
 // <Snippet1>
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using System.Windows.Forms;
 using Microsoft.Data.SqlClient;
 using System.Xml;
 
-namespace Microsoft.AdoDotNet.CodeSamples
+namespace SqlCommand_BeginExecuteXmlReaderAsync
 {
     public partial class Form1 : Form
     {
@@ -188,3 +189,4 @@ namespace Microsoft.AdoDotNet.CodeSamples
     }
 }
 // </Snippet1>
+*/

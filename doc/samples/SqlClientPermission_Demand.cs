@@ -1,3 +1,6 @@
+#if NETFRAMEWORK
+namespace SqlClientPermission_Demand;
+
 using System;
 using System.Data;
 // <Snippet1>
@@ -31,3 +34,4 @@ class Program
     }
 }
 // </Snippet1>
+#endif
