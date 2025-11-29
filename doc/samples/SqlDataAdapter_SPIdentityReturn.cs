@@ -1,4 +1,6 @@
-﻿// <Snippet1>
+﻿namespace SqlDataAdapter_SPIdentityReturn;
+
+// <Snippet1>
 using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
@@ -49,7 +51,7 @@ class Program
             adapter.Update(categories);
 
             // Retrieve the ReturnValue.
-            Int rowCount = (Int)adapter.InsertCommand.Parameters["@RowCount"].Value;
+            int rowCount = (int)adapter.InsertCommand.Parameters["@RowCount"].Value;
 
             Console.WriteLine("ReturnValue: {0}", rowCount.ToString());
             Console.WriteLine("All Rows:");

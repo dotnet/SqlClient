@@ -1,8 +1,10 @@
+namespace SqlUserDefinedAggregate1;
+
 //-----------------------------------------------------------------------------
 //<Snippet2>
 using System;
 using System.Data.SqlTypes;
-using Microsoft.Data.SqlClient.Server;
+using Microsoft.SqlServer.Server;
 
 [Serializable]
 [SqlUserDefinedAggregate(Format.Native)]
