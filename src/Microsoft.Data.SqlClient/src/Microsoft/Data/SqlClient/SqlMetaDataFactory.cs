@@ -20,10 +20,8 @@ namespace Microsoft.Data.SqlClient
         private const string ServerVersionNormalized10 = "10.00.0000";
         private readonly HashSet<int> _assemblyPropertyUnsupportedEngines = new() { 6, 9, 11 };
 
-        public SqlMetaDataFactory(Stream XMLStream,
-                                    string serverVersion,
-                                    string serverVersionNormalized) :
-                base(XMLStream, serverVersion, serverVersionNormalized)
+        public SqlMetaDataFactory(Stream XMLStream, string serverVersion) :
+                base(XMLStream, serverVersion)
         { }
 
         private void addUDTsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, string ServerVersion)
@@ -265,8 +263,8 @@ namespace Microsoft.Data.SqlClient
             // copy the table filtering out any rows that don't apply to tho current version of the provider
             dataTypesTable = CloneAndFilterCollection(DbMetaDataCollectionNames.DataTypes, null);
 
-            addUDTsToDataTypesTable(dataTypesTable, connection, ServerVersionNormalized);
-            AddTVPsToDataTypesTable(dataTypesTable, connection, ServerVersionNormalized);
+            addUDTsToDataTypesTable(dataTypesTable, connection, ServerVersion);
+            AddTVPsToDataTypesTable(dataTypesTable, connection, ServerVersion);
 
             dataTypesTable.AcceptChanges();
             return dataTypesTable;

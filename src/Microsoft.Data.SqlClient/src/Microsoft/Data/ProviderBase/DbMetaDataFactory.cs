@@ -18,8 +18,6 @@ namespace Microsoft.Data.ProviderBase
     {
 
         private DataSet _metaDataCollectionsDataSet;
-        private string _normalizedServerVersion;
-        private string _serverVersionString;
         // well known column names
         private const string CollectionNameKey = "CollectionName";
         private const string PopulationMechanismKey = "PopulationMechanism";
@@ -37,23 +35,19 @@ namespace Microsoft.Data.ProviderBase
         private const string SqlCommandKey = "SQLCommand";
         private const string PrepareCollectionKey = "PrepareCollection";
 
-        public DbMetaDataFactory(Stream xmlStream, string serverVersion, string normalizedServerVersion)
+        public DbMetaDataFactory(Stream xmlStream, string serverVersion)
         {
             ADP.CheckArgumentNull(xmlStream, nameof(xmlStream));
             ADP.CheckArgumentNull(serverVersion, nameof(serverVersion));
-            ADP.CheckArgumentNull(normalizedServerVersion, nameof(normalizedServerVersion));
 
-            _serverVersionString = serverVersion;
-            _normalizedServerVersion = normalizedServerVersion;
+            ServerVersion = serverVersion;
 
             LoadDataSetFromXml(xmlStream);
         }
 
         protected DataSet CollectionDataSet => _metaDataCollectionsDataSet;
 
-        protected string ServerVersion => _serverVersionString;
-
-        protected string ServerVersionNormalized => _normalizedServerVersion;
+        protected string ServerVersion { get; }
 
         protected DataTable CloneAndFilterCollection(string collectionName, string[] hiddenColumnNames)
         {
@@ -100,8 +94,6 @@ namespace Microsoft.Data.ProviderBase
         {
             if (disposing)
             {
-                _normalizedServerVersion = null;
-                _serverVersionString = null;
                 _metaDataCollectionsDataSet.Dispose();
             }
         }
@@ -321,8 +313,8 @@ namespace Microsoft.Data.ProviderBase
             Debug.Assert(dataSourceInfoRow.Table.Columns.Contains(DbMetaDataColumnNames.DataSourceProductVersion));
             Debug.Assert(dataSourceInfoRow.Table.Columns.Contains(DbMetaDataColumnNames.DataSourceProductVersionNormalized));
 
-            dataSourceInfoRow[DbMetaDataColumnNames.DataSourceProductVersion] = _serverVersionString;
-            dataSourceInfoRow[DbMetaDataColumnNames.DataSourceProductVersionNormalized] = _normalizedServerVersion;
+            dataSourceInfoRow[DbMetaDataColumnNames.DataSourceProductVersion] = ServerVersion;
+            dataSourceInfoRow[DbMetaDataColumnNames.DataSourceProductVersionNormalized] = ServerVersion;
         }
 
 
@@ -722,7 +714,7 @@ namespace Microsoft.Data.ProviderBase
                 {
                     if (version != DBNull.Value)
                     {
-                        if (0 > string.Compare(_normalizedServerVersion, (string)version, StringComparison.OrdinalIgnoreCase))
+                        if (0 > string.Compare(ServerVersion, (string)version, StringComparison.OrdinalIgnoreCase))
                         {
                             result = false;
                         }
@@ -741,7 +733,7 @@ namespace Microsoft.Data.ProviderBase
                     {
                         if (version != DBNull.Value)
                         {
-                            if (0 < string.Compare(_normalizedServerVersion, (string)version, StringComparison.OrdinalIgnoreCase))
+                            if (0 < string.Compare(ServerVersion, (string)version, StringComparison.OrdinalIgnoreCase))
                             {
                                 result = false;
                             }
