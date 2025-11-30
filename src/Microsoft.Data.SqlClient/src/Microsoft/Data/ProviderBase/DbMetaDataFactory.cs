@@ -341,7 +341,7 @@ namespace Microsoft.Data.ProviderBase
                 DataColumnCollection restrictionColumns = restrictionsTable.Columns;
                 if (restrictionColumns != null)
                 {
-                    collectionName = restrictionColumns[DbMetaDataFactory.CollectionNameKey];
+                    collectionName = restrictionColumns[CollectionNameKey];
                     parameterName = restrictionColumns[ParameterNameKey];
                     restrictionName = restrictionColumns[RestrictionNameKey];
                     restrictionNumber = restrictionColumns[RestrictionNumberKey];

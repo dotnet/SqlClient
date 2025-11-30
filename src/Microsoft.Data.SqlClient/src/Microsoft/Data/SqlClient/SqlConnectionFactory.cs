@@ -265,7 +265,7 @@ namespace Microsoft.Data.SqlClient
             return connectionPoolGroup;
         }
 
-        internal DbMetaDataFactory GetMetaDataFactory(
+        internal SqlMetaDataFactory GetMetaDataFactory(
             DbConnectionPoolGroup poolGroup,
             DbConnectionInternal internalConnection)
         {
@@ -273,7 +273,7 @@ namespace Microsoft.Data.SqlClient
 
             // Get the matadatafactory from the pool entry. If it does not already have one
             // create one and save it on the pool entry
-            DbMetaDataFactory metaDataFactory = poolGroup.MetaDataFactory;
+            SqlMetaDataFactory metaDataFactory = poolGroup.MetaDataFactory;
 
             // CONSIDER: serializing this so we don't construct multiple metadata factories
             // if two threads happen to hit this at the same time. One will be GC'd
@@ -756,7 +756,7 @@ namespace Microsoft.Data.SqlClient
             return poolingOptions;
         }
 
-        private static DbMetaDataFactory CreateMetaDataFactory(
+        private static SqlMetaDataFactory CreateMetaDataFactory(
             DbConnectionInternal internalConnection,
             out bool cacheMetaDataFactory)
         {
