@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using Microsoft.Data.Common;
@@ -18,15 +19,16 @@ namespace Microsoft.Data.SqlClient
 
         private const string ServerVersionNormalized90 = "09.00.0000";
         private const string ServerVersionNormalized10 = "10.00.0000";
-        private readonly HashSet<int> _assemblyPropertyUnsupportedEngines = new() { 6, 9, 11 };
+        private static readonly HashSet<int> s_assemblyPropertyUnsupportedEngines = new() { 6, 9, 11 };
 
         public SqlMetaDataFactory(Stream XMLStream, string serverVersion) :
                 base(XMLStream, serverVersion)
         { }
 
-        private void addUDTsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, string ServerVersion)
+        private static void AddUDTsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, string serverVersion)
         {
-            const string sqlCommand =
+            const string GetEngineEditionSqlCommand = "SELECT SERVERPROPERTY('EngineEdition');";
+            const string ListUdtSqlCommand =
                 "select " +
                     "assemblies.name, " +
                     "types.assembly_class, " +
@@ -41,18 +43,30 @@ namespace Microsoft.Data.SqlClient
                     "max_length " +
                 "from sys.assemblies as assemblies  join sys.assembly_types as types " +
                 "on assemblies.assembly_id = types.assembly_id ";
+            const int AssemblyNameSqlIndex = 0;
+            const int AssemblyClassSqlIndex = 1;
+            const int VersionMajorSqlIndex = 2;
+            const int VersionMinorSqlIndex = 3;
+            const int VersionBuildSqlIndex = 4;
+            const int VersionRevisionSqlIndex = 5;
+            const int CultureInfoSqlIndex = 6;
+            const int PublicKeySqlIndex = 7;
+            const int IsNullableSqlIndex = 8;
+            const int IsFixedLengthSqlIndex = 9;
+            const int ColumnSizeSqlIndex = 10;
 
             // pre 9.0/2005 servers do not have UDTs
-            if (0 > string.Compare(ServerVersion, ServerVersionNormalized90, StringComparison.OrdinalIgnoreCase))
+            if (0 > string.Compare(serverVersion, ServerVersionNormalized90, StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }
 
-            SqlCommand engineEditionCommand = connection.CreateCommand();
-            engineEditionCommand.CommandText = "SELECT SERVERPROPERTY('EngineEdition');";
-            var engineEdition = (int)engineEditionCommand.ExecuteScalar();
+            using SqlCommand command = connection.CreateCommand();
 
-            if (_assemblyPropertyUnsupportedEngines.Contains(engineEdition))
+            command.CommandText = GetEngineEditionSqlCommand;
+            int engineEdition = (int)command.ExecuteScalar();
+
+            if (s_assemblyPropertyUnsupportedEngines.Contains(engineEdition))
             {
                 // Azure SQL Edge (9) throws an exception when querying sys.assemblies
                 // Azure Synapse Analytics (6) and Azure Synapse serverless SQL pool (11)
@@ -60,10 +74,7 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
-            // Execute the SELECT statement
-            SqlCommand command = connection.CreateCommand();
-            command.CommandText = sqlCommand;
-            DataColumn providerDbtype = dataTypesTable.Columns[DbMetaDataColumnNames.ProviderDbType];
+            DataColumn providerDbType = dataTypesTable.Columns[DbMetaDataColumnNames.ProviderDbType];
             DataColumn columnSize = dataTypesTable.Columns[DbMetaDataColumnNames.ColumnSize];
             DataColumn isFixedLength = dataTypesTable.Columns[DbMetaDataColumnNames.IsFixedLength];
             DataColumn isSearchable = dataTypesTable.Columns[DbMetaDataColumnNames.IsSearchable];
@@ -71,199 +82,154 @@ namespace Microsoft.Data.SqlClient
             DataColumn typeName = dataTypesTable.Columns[DbMetaDataColumnNames.TypeName];
             DataColumn isNullable = dataTypesTable.Columns[DbMetaDataColumnNames.IsNullable];
 
-            if ((providerDbtype == null) ||
-                (columnSize == null) ||
-                (isFixedLength == null) ||
-                (isSearchable == null) ||
-                (isLiteralSupported == null) ||
-                (typeName == null) ||
-                (isNullable == null))
+            Debug.Assert(providerDbType is not null, "providerDbType column not found");
+            Debug.Assert(columnSize is not null, "columnSize column not found");
+            Debug.Assert(isFixedLength is not null, "isFixedLength column not found");
+            Debug.Assert(isSearchable is not null, "isSearchable column not found");
+            Debug.Assert(isLiteralSupported is not null, "isLiteralSupported column not found");
+            Debug.Assert(typeName is not null, "typeName column not found");
+            Debug.Assert(isNullable is not null, "isNullable column not found");
+
+            // Execute the SELECT statement
+            command.CommandText = ListUdtSqlCommand;
+
+            using SqlDataReader reader = command.ExecuteReader();
+            object[] values = new object[11];
+
+            while (reader.Read())
             {
-                throw ADP.InvalidXml();
-            }
+                reader.GetValues(values);
+                DataRow newRow = dataTypesTable.NewRow();
 
-            const int columnSizeIndex = 10;
-            const int isFixedLengthIndex = 9;
-            const int isNullableIndex = 8;
-            const int assemblyNameIndex = 0;
-            const int assemblyClassIndex = 1;
-            const int versionMajorIndex = 2;
-            const int versionMinorIndex = 3;
-            const int versionBuildIndex = 4;
-            const int versionRevisionIndex = 5;
-            const int cultureInfoIndex = 6;
-            const int publicKeyIndex = 7;
+                newRow[providerDbType] = SqlDbType.Udt;
+                newRow[columnSize] = values[ColumnSizeSqlIndex];
 
+                if (values[IsFixedLengthSqlIndex] != DBNull.Value)
+                {
+                    newRow[isFixedLength] = values[IsFixedLengthSqlIndex];
+                }
 
-            using (IDataReader reader = command.ExecuteReader())
-            {
+                newRow[isSearchable] = true;
+                newRow[isLiteralSupported] = false;
+                if (values[IsNullableSqlIndex] != DBNull.Value)
+                {
+                    newRow[isNullable] = values[IsNullableSqlIndex];
+                }
 
-                object[] values = new object[11];
-                while (reader.Read())
+                if ((values[AssemblyClassSqlIndex] != DBNull.Value) &&
+                    (values[VersionMajorSqlIndex] != DBNull.Value) &&
+                    (values[VersionMinorSqlIndex] != DBNull.Value) &&
+                    (values[VersionBuildSqlIndex] != DBNull.Value) &&
+                    (values[VersionRevisionSqlIndex] != DBNull.Value))
                 {
 
-                    reader.GetValues(values);
-                    DataRow newRow = dataTypesTable.NewRow();
+                    StringBuilder nameString = new();
+                    nameString.Append($"{values[AssemblyClassSqlIndex]}, {values[AssemblyNameSqlIndex]}"
+                        + $", Version={values[VersionMajorSqlIndex]}.{values[VersionMinorSqlIndex]}.{values[VersionBuildSqlIndex]}.{values[VersionRevisionSqlIndex]}");
 
-                    newRow[providerDbtype] = SqlDbType.Udt;
-
-                    if (values[columnSizeIndex] != DBNull.Value)
+                    if (values[CultureInfoSqlIndex] != DBNull.Value)
                     {
-                        newRow[columnSize] = values[columnSizeIndex];
+                        nameString.Append($", Culture={values[CultureInfoSqlIndex]}");
                     }
 
-                    if (values[isFixedLengthIndex] != DBNull.Value)
-                    {
-                        newRow[isFixedLength] = values[isFixedLengthIndex];
-                    }
-
-                    newRow[isSearchable] = true;
-                    newRow[isLiteralSupported] = false;
-                    if (values[isNullableIndex] != DBNull.Value)
-                    {
-                        newRow[isNullable] = values[isNullableIndex];
-                    }
-
-                    if ((values[assemblyNameIndex] != DBNull.Value) &&
-                        (values[assemblyClassIndex] != DBNull.Value) &&
-                        (values[versionMajorIndex] != DBNull.Value) &&
-                        (values[versionMinorIndex] != DBNull.Value) &&
-                        (values[versionBuildIndex] != DBNull.Value) &&
-                        (values[versionRevisionIndex] != DBNull.Value))
+                    if (values[PublicKeySqlIndex] != DBNull.Value)
                     {
 
-                        StringBuilder nameString = new();
-                        nameString.Append(values[assemblyClassIndex].ToString());
-                        nameString.Append(", ");
-                        nameString.Append(values[assemblyNameIndex].ToString());
-                        nameString.Append(", Version=");
+                        nameString.Append(", PublicKeyToken=");
 
-                        nameString.Append(values[versionMajorIndex].ToString());
-                        nameString.Append(".");
-                        nameString.Append(values[versionMinorIndex].ToString());
-                        nameString.Append(".");
-                        nameString.Append(values[versionBuildIndex].ToString());
-                        nameString.Append(".");
-                        nameString.Append(values[versionRevisionIndex].ToString());
-
-                        if (values[cultureInfoIndex] != DBNull.Value)
+                        byte[] byteArrayValue = (byte[])values[PublicKeySqlIndex];
+#if NET9_0_OR_GREATER
+                        nameString.Append(Convert.ToHexStringLower(byteArrayValue));
+#elif NET8_0
+                        nameString.Append(Convert.ToHexString(byteArrayValue).ToLowerInvariant());
+#else
+                        foreach (byte b in byteArrayValue)
                         {
-                            nameString.Append(", Culture=");
-                            nameString.Append(values[cultureInfoIndex].ToString());
+                            nameString.Append(string.Format("{0,-2:x2}", b));
                         }
+#endif
+                    }
 
-                        if (values[publicKeyIndex] != DBNull.Value)
-                        {
-
-                            nameString.Append(", PublicKeyToken=");
-
-                            StringBuilder resultString = new();
-                            byte[] byteArrayValue = (byte[])values[publicKeyIndex];
-                            foreach (byte b in byteArrayValue)
-                            {
-                                resultString.Append(string.Format("{0,-2:x2}", b));
-                            }
-                            nameString.Append(resultString.ToString());
-                        }
-
-                        newRow[typeName] = nameString.ToString();
-                        dataTypesTable.Rows.Add(newRow);
-                        newRow.AcceptChanges();
-                    } // if assembly name
-
-                }//end while
-            } // end using
+                    newRow[typeName] = nameString.ToString();
+                    dataTypesTable.Rows.Add(newRow);
+                    newRow.AcceptChanges();
+                } // if assembly name
+            }//end while
         }
 
-        private void AddTVPsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, string ServerVersion)
+        private static void AddTVPsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, string serverVersion)
         {
-
-            const string sqlCommand =
+            const string ListTvpsSqlCommand =
                 "select " +
                     "name, " +
                     "is_nullable, " +
                     "max_length " +
                 "from sys.types " +
                 "where is_table_type = 1";
+            const int TypeNameSqlIndex = 0;
+            const int IsNullableSqlIndex = 1;
+            const int ColumnSizeSqlIndex = 2;
 
             // TODO: update this check once the server upgrades major version number!!!
             // pre 9.0/2005 servers do not have Table types
-            if (0 > string.Compare(ServerVersion, ServerVersionNormalized10, StringComparison.OrdinalIgnoreCase))
+            if (0 > string.Compare(serverVersion, ServerVersionNormalized10, StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }
 
             // Execute the SELECT statement
-            SqlCommand command = connection.CreateCommand();
-            command.CommandText = sqlCommand;
-            DataColumn providerDbtype = dataTypesTable.Columns[DbMetaDataColumnNames.ProviderDbType];
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = ListTvpsSqlCommand;
+
+            DataColumn providerDbType = dataTypesTable.Columns[DbMetaDataColumnNames.ProviderDbType];
             DataColumn columnSize = dataTypesTable.Columns[DbMetaDataColumnNames.ColumnSize];
             DataColumn isSearchable = dataTypesTable.Columns[DbMetaDataColumnNames.IsSearchable];
             DataColumn isLiteralSupported = dataTypesTable.Columns[DbMetaDataColumnNames.IsLiteralSupported];
             DataColumn typeName = dataTypesTable.Columns[DbMetaDataColumnNames.TypeName];
             DataColumn isNullable = dataTypesTable.Columns[DbMetaDataColumnNames.IsNullable];
 
-            if ((providerDbtype == null) ||
-                (columnSize == null) ||
-                (isSearchable == null) ||
-                (isLiteralSupported == null) ||
-                (typeName == null) ||
-                (isNullable == null))
-            {
-                throw ADP.InvalidXml();
-            }
+            Debug.Assert(providerDbType is not null, "providerDbType column not found");
+            Debug.Assert(columnSize is not null, "columnSize column not found");
+            Debug.Assert(isSearchable is not null, "isSearchable column not found");
+            Debug.Assert(isLiteralSupported is not null, "isLiteralSupported column not found");
+            Debug.Assert(typeName is not null, "typeName column not found");
+            Debug.Assert(isNullable is not null, "isNullable column not found");
 
-            const int columnSizeIndex = 2;
-            const int isNullableIndex = 1;
-            const int typeNameIndex = 0;
+            using SqlDataReader reader = command.ExecuteReader();
 
-            using (IDataReader reader = command.ExecuteReader())
+            object[] values = new object[11];
+            while (reader.Read())
             {
 
-                object[] values = new object[11];
-                while (reader.Read())
+                reader.GetValues(values);
+                DataRow newRow = dataTypesTable.NewRow();
+
+                newRow[providerDbType] = SqlDbType.Structured;
+                newRow[columnSize] = values[ColumnSizeSqlIndex];
+                newRow[isSearchable] = false;
+                newRow[isLiteralSupported] = false;
+
+                if (values[IsNullableSqlIndex] != DBNull.Value)
                 {
+                    newRow[isNullable] = values[IsNullableSqlIndex];
+                }
 
-                    reader.GetValues(values);
-                    DataRow newRow = dataTypesTable.NewRow();
+                newRow[typeName] = values[TypeNameSqlIndex];
 
-                    newRow[providerDbtype] = SqlDbType.Structured;
-
-                    if (values[columnSizeIndex] != DBNull.Value)
-                    {
-                        newRow[columnSize] = values[columnSizeIndex];
-                    }
-
-                    newRow[isSearchable] = false;
-                    newRow[isLiteralSupported] = false;
-                    if (values[isNullableIndex] != DBNull.Value)
-                    {
-                        newRow[isNullable] = values[isNullableIndex];
-                    }
-
-                    if (values[typeNameIndex] != DBNull.Value)
-                    {
-                        newRow[typeName] = values[typeNameIndex];
-                        dataTypesTable.Rows.Add(newRow);
-                        newRow.AcceptChanges();
-                    } // if type name
-                }//end while
-            } // end using
+                dataTypesTable.Rows.Add(newRow);
+                newRow.AcceptChanges();
+            }//end while
         }
 
         private DataTable GetDataTypesTable(SqlConnection connection)
         {
             // verify the existence of the table in the data set
-            DataTable dataTypesTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.DataTypes];
-            if (dataTypesTable == null)
-            {
-                throw ADP.UnableToBuildCollection(DbMetaDataCollectionNames.DataTypes);
-            }
+            Debug.Assert(CollectionDataSet.Tables.Contains(DbMetaDataCollectionNames.DataTypes), "DataTypes collection not found in the DataSet");
 
             // copy the table filtering out any rows that don't apply to tho current version of the provider
-            dataTypesTable = CloneAndFilterCollection(DbMetaDataCollectionNames.DataTypes, null);
+            DataTable dataTypesTable = CloneAndFilterCollection(DbMetaDataCollectionNames.DataTypes, null);
 
-            addUDTsToDataTypesTable(dataTypesTable, connection, ServerVersion);
+            AddUDTsToDataTypesTable(dataTypesTable, connection, ServerVersion);
             AddTVPsToDataTypesTable(dataTypesTable, connection, ServerVersion);
 
             dataTypesTable.AcceptChanges();
@@ -290,10 +256,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             return resultTable;
-
         }
-
-
-
     }
 }
