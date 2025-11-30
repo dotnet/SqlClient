@@ -16,8 +16,6 @@ namespace Microsoft.Data.ProviderBase
 {
     internal class DbMetaDataFactory
     {
-
-        private DataSet _metaDataCollectionsDataSet;
         // well known column names
         private const string CollectionNameKey = "CollectionName";
         private const string PopulationMechanismKey = "PopulationMechanism";
@@ -42,10 +40,10 @@ namespace Microsoft.Data.ProviderBase
 
             ServerVersion = serverVersion;
 
-            LoadDataSetFromXml(xmlStream);
+            CollectionDataSet = LoadDataSetFromXml(xmlStream);
         }
 
-        protected DataSet CollectionDataSet => _metaDataCollectionsDataSet;
+        protected DataSet CollectionDataSet { get; }
 
         protected string ServerVersion { get; }
 
@@ -56,7 +54,7 @@ namespace Microsoft.Data.ProviderBase
             DataColumnCollection destinationColumns;
             DataRow newRow;
 
-            DataTable sourceTable = _metaDataCollectionsDataSet.Tables[collectionName];
+            DataTable sourceTable = CollectionDataSet.Tables[collectionName];
 
             if ((sourceTable == null) || (collectionName != sourceTable.TableName))
             {
@@ -94,13 +92,13 @@ namespace Microsoft.Data.ProviderBase
         {
             if (disposing)
             {
-                _metaDataCollectionsDataSet.Dispose();
+                CollectionDataSet.Dispose();
             }
         }
 
         private DataTable ExecuteCommand(DataRow requestedCollectionRow, string[] restrictions, DbConnection connection)
         {
-            DataTable metaDataCollectionsTable = _metaDataCollectionsDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
+            DataTable metaDataCollectionsTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
             DataColumn populationStringColumn = metaDataCollectionsTable.Columns[PopulationStringKey];
             DataColumn numberOfRestrictionsColumn = metaDataCollectionsTable.Columns[NumberOfRestrictionsKey];
             DataColumn collectionNameColumn = metaDataCollectionsTable.Columns[CollectionNameKey];
@@ -224,7 +222,7 @@ namespace Microsoft.Data.ProviderBase
             bool haveMultipleInexactMatches;
             string candidateCollectionName;
 
-            DataTable metaDataCollectionsTable = _metaDataCollectionsDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
+            DataTable metaDataCollectionsTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
             if (metaDataCollectionsTable == null)
             {
                 throw ADP.InvalidXml();
@@ -327,7 +325,7 @@ namespace Microsoft.Data.ProviderBase
 
             string result = null;
 
-            DataTable restrictionsTable = _metaDataCollectionsDataSet.Tables[DbMetaDataCollectionNames.Restrictions];
+            DataTable restrictionsTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.Restrictions];
             if (restrictionsTable != null)
             {
                 DataColumnCollection restrictionColumns = restrictionsTable.Columns;
@@ -368,9 +366,9 @@ namespace Microsoft.Data.ProviderBase
 
         public virtual DataTable GetSchema(DbConnection connection, string collectionName, string[] restrictions)
         {
-            Debug.Assert(_metaDataCollectionsDataSet != null);
+            Debug.Assert(CollectionDataSet != null);
 
-            DataTable metaDataCollectionsTable = _metaDataCollectionsDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
+            DataTable metaDataCollectionsTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
             DataColumn populationMechanismColumn = metaDataCollectionsTable.Columns[PopulationMechanismKey];
             DataColumn collectionNameColumn = metaDataCollectionsTable.Columns[DbMetaDataColumnNames.CollectionName];
 
@@ -468,7 +466,7 @@ namespace Microsoft.Data.ProviderBase
             return result;
         }
 
-        private void LoadDataSetFromXml(Stream XmlStream)
+        private DataSet LoadDataSetFromXml(Stream XmlStream)
         {
             DataSet metaDataCollectionsDataSet = new DataSet("NewDataSet")
             {
@@ -542,7 +540,7 @@ namespace Microsoft.Data.ProviderBase
                 }
             }
 
-            _metaDataCollectionsDataSet = metaDataCollectionsDataSet;
+            return metaDataCollectionsDataSet;
         }
 
         private static void LoadDataTable(XmlReader reader, DataTable table, Action<DataRow> rowFixup)
