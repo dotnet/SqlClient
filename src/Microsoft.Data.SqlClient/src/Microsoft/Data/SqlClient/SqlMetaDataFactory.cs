@@ -36,18 +36,17 @@ namespace Microsoft.Data.SqlClient
 
         private static readonly HashSet<int> s_assemblyPropertyUnsupportedEngines = new() { 6, 9, 11 };
 
-        private DataSet CollectionDataSet { get; }
-
-        private string ServerVersion { get; }
+        private readonly DataSet _collectionDataSet;
+        private readonly string _serverVersion;
 
         public SqlMetaDataFactory(Stream xmlStream, string serverVersion)
         {
             ADP.CheckArgumentNull(xmlStream, nameof(xmlStream));
             ADP.CheckArgumentNull(serverVersion, nameof(serverVersion));
 
-            ServerVersion = serverVersion;
+            _serverVersion = serverVersion;
 
-            CollectionDataSet = LoadDataSetFromXml(xmlStream);
+            _collectionDataSet = LoadDataSetFromXml(xmlStream);
         }
 
         private bool SupportedByCurrentVersion(DataRow requestedCollectionRow)
@@ -63,7 +62,7 @@ namespace Microsoft.Data.SqlClient
                 version = requestedCollectionRow[versionColumn];
 
                 if (version is string minVersion
-                    && string.Compare(ServerVersion, minVersion, StringComparison.OrdinalIgnoreCase) < 0)
+                    && string.Compare(_serverVersion, minVersion, StringComparison.OrdinalIgnoreCase) < 0)
                 {
                     return false;
                 }
@@ -76,7 +75,7 @@ namespace Microsoft.Data.SqlClient
                 version = requestedCollectionRow[versionColumn];
 
                 if (version is string maxVersion
-                    && string.Compare(ServerVersion, maxVersion, StringComparison.OrdinalIgnoreCase) > 0)
+                    && string.Compare(_serverVersion, maxVersion, StringComparison.OrdinalIgnoreCase) > 0)
                 {
                     return false;
                 }
@@ -91,7 +90,7 @@ namespace Microsoft.Data.SqlClient
             bool haveExactMatch = false;
             bool haveMultipleInexactMatches = false;
 
-            DataTable metaDataCollectionsTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
+            DataTable metaDataCollectionsTable = _collectionDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
             Debug.Assert(metaDataCollectionsTable is not null);
 
             DataColumn collectionNameColumn = metaDataCollectionsTable.Columns[DbMetaDataColumnNames.CollectionName];
@@ -167,9 +166,9 @@ namespace Microsoft.Data.SqlClient
             const string SqlCommandKey = "SQLCommand";
             const string PrepareCollectionKey = "PrepareCollection";
 
-            Debug.Assert(CollectionDataSet is not null);
+            Debug.Assert(_collectionDataSet is not null);
 
-            DataTable metaDataCollectionsTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
+            DataTable metaDataCollectionsTable = _collectionDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
             DataColumn populationMechanismColumn = metaDataCollectionsTable.Columns[PopulationMechanismKey];
             DataColumn collectionNameColumn = metaDataCollectionsTable.Columns[DbMetaDataColumnNames.CollectionName];
             DataRow requestedCollectionRow = FindMetaDataCollectionRow(collectionName);
@@ -229,7 +228,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (disposing)
             {
-                CollectionDataSet.Dispose();
+                _collectionDataSet.Dispose();
             }
         }
 
@@ -288,7 +287,7 @@ namespace Microsoft.Data.SqlClient
             DataColumnCollection destinationColumns;
             DataRow newRow;
 
-            DataTable sourceTable = CollectionDataSet.Tables[collectionName];
+            DataTable sourceTable = _collectionDataSet.Tables[collectionName];
 
             if (sourceTable?.TableName != collectionName)
             {
@@ -324,7 +323,7 @@ namespace Microsoft.Data.SqlClient
         #region GetSchema Helpers: ExecuteCommand Population Method
         private string GetParameterName(string neededCollectionName, int neededRestrictionNumber)
         {
-            DataTable restrictionsTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.Restrictions];
+            DataTable restrictionsTable = _collectionDataSet.Tables[DbMetaDataCollectionNames.Restrictions];
 
             Debug.Assert(restrictionsTable is not null);
 
@@ -366,7 +365,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(requestedCollectionRow is not null);
 
-            DataTable metaDataCollectionsTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
+            DataTable metaDataCollectionsTable = _collectionDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
             DataColumn populationStringColumn = metaDataCollectionsTable.Columns[PopulationStringKey];
             DataColumn numberOfRestrictionsColumn = metaDataCollectionsTable.Columns[NumberOfRestrictionsKey];
             DataColumn collectionNameColumn = metaDataCollectionsTable.Columns[CollectionNameKey];
@@ -649,13 +648,13 @@ namespace Microsoft.Data.SqlClient
         private DataTable GetDataTypesTable(SqlConnection connection)
         {
             // verify the existence of the table in the data set
-            Debug.Assert(CollectionDataSet.Tables.Contains(DbMetaDataCollectionNames.DataTypes), "DataTypes collection not found in the DataSet");
+            Debug.Assert(_collectionDataSet.Tables.Contains(DbMetaDataCollectionNames.DataTypes), "DataTypes collection not found in the DataSet");
 
             // copy the table filtering out any rows that don't apply to tho current version of the provider
             DataTable dataTypesTable = CloneAndFilterCollection(DbMetaDataCollectionNames.DataTypes, []);
 
-            AddUDTsToDataTypesTable(dataTypesTable, connection, ServerVersion);
-            AddTVPsToDataTypesTable(dataTypesTable, connection, ServerVersion);
+            AddUDTsToDataTypesTable(dataTypesTable, connection, _serverVersion);
+            AddTVPsToDataTypesTable(dataTypesTable, connection, _serverVersion);
 
             dataTypesTable.AcceptChanges();
             return dataTypesTable;
@@ -817,8 +816,8 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(dataSourceInfoRow.Table.Columns.Contains(DbMetaDataColumnNames.DataSourceProductVersion));
             Debug.Assert(dataSourceInfoRow.Table.Columns.Contains(DbMetaDataColumnNames.DataSourceProductVersionNormalized));
 
-            dataSourceInfoRow[DbMetaDataColumnNames.DataSourceProductVersion] = ServerVersion;
-            dataSourceInfoRow[DbMetaDataColumnNames.DataSourceProductVersionNormalized] = ServerVersion;
+            dataSourceInfoRow[DbMetaDataColumnNames.DataSourceProductVersion] = _serverVersion;
+            dataSourceInfoRow[DbMetaDataColumnNames.DataSourceProductVersionNormalized] = _serverVersion;
         }
 
         private static DataTable CreateMetaDataCollectionsDataTable()
