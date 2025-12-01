@@ -156,15 +156,6 @@
     <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\SecurityQualityOfService.cs">
       <Link>Interop\Windows\NtDll\SecurityQualityOfService.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Secur32\CredHandle.netfx.cs">
-      <Link>Interop\Windows\Secur32\CredHandle.netfx.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Secur32\ContextAttribute.netfx.cs">
-      <Link>Interop\Windows\Secur32\ContextAttribute.netfx.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Secur32\Secur32.netfx.cs">
-      <Link>Interop\Windows\Secur32\Secur32.netfx.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Windows\Sni\AuthProviderInfo.cs">
       <Link>Interop\Windows\Sni\AuthProviderInfo.cs</Link>
     </Compile>
@@ -924,8 +915,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlUtil.cs">
       <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NativeSspiContextProvider.cs">
-      <Link>Microsoft\Data\SqlClient\SSPI\NativeSspiContextProvider.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NativeSspiContextProvider.windows.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\NativeSspiContextProvider.windows..cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NegotiateSspiContextProvider.cs">
       <Link>Microsoft\Data\SqlClient\SSPI\NegotiateSspiContextProvider.cs</Link>

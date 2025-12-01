@@ -13,10 +13,6 @@ namespace Microsoft.Data.Common
 {
     internal static partial class ADP
     {
-        // COM+
-        internal static PlatformNotSupportedException DbTypeNotSupported(string dbType) =>
-            new(StringsHelper.GetString(Strings.SQL_DbTypeNotSupportedOnThisPlatform, dbType));
-
         // ConnectionUtil
         internal static Exception IncorrectPhysicalConnectionType() =>
             new ArgumentException(StringsHelper.GetString(Strings.SNI_IncorrectPhysicalConnectionType));

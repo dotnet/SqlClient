@@ -363,13 +363,6 @@ namespace Microsoft.Data.Common
             return e;
         }
 
-        internal static ArgumentOutOfRangeException ArgumentOutOfRange(string message, string parameterName, object value)
-        {
-            ArgumentOutOfRangeException e = new(parameterName, value, message);
-            TraceExceptionAsReturnValue(e);
-            return e;
-        }
-
         internal static AuthenticationException SSLCertificateAuthenticationException(string message)
         {
             AuthenticationException e = new(message);
@@ -498,9 +491,6 @@ namespace Microsoft.Data.Common
 #endif
             return InvalidEnumerationValue(typeof(Format), (int)value);
         }
-
-        internal static ArgumentOutOfRangeException NotSupportedUserDefinedTypeSerializationFormat(Format value, string method)
-            => NotSupportedEnumerationValue(typeof(Format), value.ToString(), method);
 
         internal static ArgumentException InvalidArgumentLength(string argumentName, int limit)
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidArgumentLength, argumentName, limit));
@@ -1142,9 +1132,6 @@ namespace Microsoft.Data.Common
         internal static bool CompareInsensitiveInvariant(string strvalue, string strconst)
             => 0 == CultureInfo.InvariantCulture.CompareInfo.Compare(strvalue, strconst, CompareOptions.IgnoreCase);
 
-        internal static int DstCompare(string strA, string strB) // this is null safe
-            => CultureInfo.CurrentCulture.CompareInfo.Compare(strA, strB, ADP.DefaultCompareOptions);
-
         internal static void SetCurrentTransaction(Transaction transaction) => Transaction.Current = transaction;
 
         internal static Exception NonSeqByteAccess(long badIndex, long currIndex, string method)
@@ -1299,11 +1286,6 @@ namespace Microsoft.Data.Common
 
         internal static Exception AmbiguousCollectionName(string collectionName)
             => Argument(StringsHelper.GetString(Strings.MDF_AmbiguousCollectionName, collectionName));
-
-        internal static Exception MissingDataSourceInformationColumn() => Argument(StringsHelper.GetString(Strings.MDF_MissingDataSourceInformationColumn));
-
-        internal static Exception IncorrectNumberOfDataSourceInformationRows()
-            => Argument(StringsHelper.GetString(Strings.MDF_IncorrectNumberOfDataSourceInformationRows));
 
         internal static Exception MissingRestrictionColumn() => Argument(StringsHelper.GetString(Strings.MDF_MissingRestrictionColumn));
 
