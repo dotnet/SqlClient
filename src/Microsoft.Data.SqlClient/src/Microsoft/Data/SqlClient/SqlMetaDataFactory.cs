@@ -144,6 +144,134 @@ namespace Microsoft.Data.SqlClient
         }
         #endregion
 
+        #region GetSchema Helpers: ExecuteCommand Population Method
+        private string GetParameterName(string neededCollectionName, int neededRestrictionNumber)
+        {
+            DataTable restrictionsTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.Restrictions];
+
+            Debug.Assert(restrictionsTable is not null);
+
+            DataColumnCollection restrictionColumns = restrictionsTable.Columns;
+            DataColumn collectionName = restrictionColumns[CollectionNameKey];
+            DataColumn parameterName = restrictionColumns[ParameterNameKey];
+            DataColumn restrictionName = restrictionColumns[RestrictionNameKey];
+            DataColumn restrictionNumber = restrictionColumns[RestrictionNumberKey];
+
+            Debug.Assert(parameterName is not null);
+            Debug.Assert(collectionName is not null);
+            Debug.Assert(restrictionName is not null);
+            Debug.Assert(restrictionNumber is not null);
+
+            string result = null;
+
+            foreach (DataRow restriction in restrictionsTable.Rows)
+            {
+
+                if (((string)restriction[collectionName] == neededCollectionName) &&
+                    ((int)restriction[restrictionNumber] == neededRestrictionNumber) &&
+                    (SupportedByCurrentVersion(restriction)))
+                {
+
+                    result = (string)restriction[parameterName];
+                    break;
+                }
+            }
+
+            if (result is null)
+            {
+                throw ADP.MissingRestrictionRow();
+            }
+
+            return result;
+        }
+
+        protected override DataTable ExecuteCommand(DataRow requestedCollectionRow, string[] restrictions, DbConnection connection)
+        {
+            Debug.Assert(requestedCollectionRow is not null);
+
+            DataTable metaDataCollectionsTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
+            DataColumn populationStringColumn = metaDataCollectionsTable.Columns[PopulationStringKey];
+            DataColumn numberOfRestrictionsColumn = metaDataCollectionsTable.Columns[NumberOfRestrictionsKey];
+            DataColumn collectionNameColumn = metaDataCollectionsTable.Columns[CollectionNameKey];
+
+            DataTable resultTable = null;
+            string sqlCommand = requestedCollectionRow[populationStringColumn, DataRowVersion.Current] as string;
+            int numberOfRestrictions = (int)requestedCollectionRow[numberOfRestrictionsColumn, DataRowVersion.Current];
+            string collectionName = requestedCollectionRow[collectionNameColumn, DataRowVersion.Current] as string;
+
+            if ((restrictions is not null) && (restrictions.Length > numberOfRestrictions))
+            {
+                throw ADP.TooManyRestrictions(collectionName);
+            }
+
+            SqlConnection castConnection = connection as SqlConnection;
+            using SqlCommand command = castConnection.CreateCommand();
+
+            command.CommandText = sqlCommand;
+            command.CommandTimeout = Math.Max(command.CommandTimeout, 180);
+            command.Transaction = castConnection?.GetOpenTdsConnection()?.CurrentTransaction?.Parent;
+
+            for (int i = 0; i < numberOfRestrictions; i++)
+            {
+                SqlParameter restrictionParameter = command.CreateParameter();
+
+                if ((restrictions is not null) && (i < restrictions.Length) && (restrictions[i] is not null))
+                {
+                    restrictionParameter.Value = restrictions[i];
+                }
+                else
+                {
+                    // This is where we have to assign null to the value of the parameter.
+                    restrictionParameter.Value = DBNull.Value;
+                }
+
+                restrictionParameter.ParameterName = GetParameterName(collectionName, i + 1);
+                restrictionParameter.Direction = ParameterDirection.Input;
+                command.Parameters.Add(restrictionParameter);
+            }
+
+            SqlDataReader reader = null;
+            try
+            {
+                try
+                {
+                    reader = command.ExecuteReader();
+                }
+                catch (Exception e)
+                {
+                    if (!ADP.IsCatchableExceptionType(e))
+                    {
+                        throw;
+                    }
+                    throw ADP.QueryFailed(collectionName, e);
+                }
+
+                // Build a DataTable from the reader
+                resultTable = new DataTable(collectionName)
+                {
+                    Locale = CultureInfo.InvariantCulture
+                };
+
+                System.Collections.ObjectModel.ReadOnlyCollection<DbColumn> colSchema = reader.GetColumnSchema();
+                foreach (DbColumn col in colSchema)
+                {
+                    resultTable.Columns.Add(col.ColumnName, col.DataType);
+                }
+                object[] values = new object[resultTable.Columns.Count];
+                while (reader.Read())
+                {
+                    reader.GetValues(values);
+                    resultTable.Rows.Add(values);
+                }
+            }
+            finally
+            {
+                reader?.Dispose();
+            }
+            return resultTable;
+        }
+        #endregion
+
         #region GetSchema Helpers: PrepareCollection Population Method
         private static void AddUDTsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, string serverVersion)
         {
