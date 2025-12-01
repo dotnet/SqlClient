@@ -32,43 +32,9 @@ namespace Microsoft.Data.ProviderBase
 
         protected string ServerVersion { get; set; }
 
-        protected DataTable CloneAndFilterCollection(string collectionName, ReadOnlySpan<string> hiddenColumnNames)
+        protected virtual DataTable CloneAndFilterCollection(string collectionName, ReadOnlySpan<string> hiddenColumnNames)
         {
-            DataTable destinationTable;
-            DataColumn[] filteredSourceColumns;
-            DataColumnCollection destinationColumns;
-            DataRow newRow;
-
-            DataTable sourceTable = CollectionDataSet.Tables[collectionName];
-
-            if (sourceTable?.TableName != collectionName)
-            {
-                throw ADP.DataTableDoesNotExist(collectionName);
-            }
-
-            destinationTable = new DataTable(collectionName)
-            {
-                Locale = CultureInfo.InvariantCulture
-            };
-            destinationColumns = destinationTable.Columns;
-
-            filteredSourceColumns = FilterColumns(sourceTable, hiddenColumnNames, destinationColumns);
-
-            foreach (DataRow row in sourceTable.Rows)
-            {
-                if (SupportedByCurrentVersion(row))
-                {
-                    newRow = destinationTable.NewRow();
-                    for (int i = 0; i < destinationColumns.Count; i++)
-                    {
-                        newRow[destinationColumns[i]] = row[filteredSourceColumns[i], DataRowVersion.Current];
-                    }
-                    destinationTable.Rows.Add(newRow);
-                    newRow.AcceptChanges();
-                }
-            }
-
-            return destinationTable;
+            throw ADP.MethodNotImplemented();
         }
 
         private DataTable ExecuteCommand(DataRow requestedCollectionRow, string[] restrictions, DbConnection connection)
@@ -155,38 +121,6 @@ namespace Microsoft.Data.ProviderBase
                 reader?.Dispose();
             }
             return resultTable;
-        }
-
-        private static DataColumn[] FilterColumns(DataTable sourceTable, ReadOnlySpan<string> hiddenColumnNames, DataColumnCollection destinationColumns)
-        {
-            int columnCount = 0;
-            foreach (DataColumn sourceColumn in sourceTable.Columns)
-            {
-                if (IncludeThisColumn(sourceColumn, hiddenColumnNames))
-                {
-                    columnCount++;
-                }
-            }
-
-            if (columnCount == 0)
-            {
-                throw ADP.NoColumns();
-            }
-
-            int currentColumn = 0;
-            DataColumn[] filteredSourceColumns = new DataColumn[columnCount];
-
-            foreach (DataColumn sourceColumn in sourceTable.Columns)
-            {
-                if (IncludeThisColumn(sourceColumn, hiddenColumnNames))
-                {
-                    DataColumn newDestinationColumn = new(sourceColumn.ColumnName, sourceColumn.DataType);
-                    destinationColumns.Add(newDestinationColumn);
-                    filteredSourceColumns[currentColumn] = sourceColumn;
-                    currentColumn++;
-                }
-            }
-            return filteredSourceColumns;
         }
 
         private DataRow FindMetaDataCollectionRow(string collectionName)
@@ -367,27 +301,12 @@ namespace Microsoft.Data.ProviderBase
             return requestedSchema;
         }
 
-        private static bool IncludeThisColumn(DataColumn sourceColumn, ReadOnlySpan<string> hiddenColumnNames)
-        {
-            string sourceColumnName = sourceColumn.ColumnName;
-
-            return sourceColumnName switch
-            {
-                MinimumVersionKey or MaximumVersionKey => false,
-#if NET
-                _ => !hiddenColumnNames.Contains(sourceColumnName),
-#else
-                _ => hiddenColumnNames.IndexOf(sourceColumnName) == -1,
-#endif
-            };
-        }
-
         protected virtual DataTable PrepareCollection(string collectionName, string[] restrictions, DbConnection connection)
         {
             throw ADP.NotSupported();
         }
 
-        private bool SupportedByCurrentVersion(DataRow requestedCollectionRow)
+        protected bool SupportedByCurrentVersion(DataRow requestedCollectionRow)
         {
             DataColumnCollection tableColumns = requestedCollectionRow.Table.Columns;
             DataColumn versionColumn;

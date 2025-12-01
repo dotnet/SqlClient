@@ -56,6 +56,95 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        #region GetSchema Helpers: DataTable Population Method
+        private static bool IncludeThisColumn(DataColumn sourceColumn, ReadOnlySpan<string> hiddenColumnNames)
+        {
+            string sourceColumnName = sourceColumn.ColumnName;
+
+            return sourceColumnName switch
+            {
+                MinimumVersionKey or MaximumVersionKey => false,
+#if NET
+                _ => !hiddenColumnNames.Contains(sourceColumnName),
+#else
+                _ => hiddenColumnNames.IndexOf(sourceColumnName) == -1,
+#endif
+            };
+        }
+
+        private static DataColumn[] FilterColumns(DataTable sourceTable, ReadOnlySpan<string> hiddenColumnNames, DataColumnCollection destinationColumns)
+        {
+            int columnCount = 0;
+            foreach (DataColumn sourceColumn in sourceTable.Columns)
+            {
+                if (IncludeThisColumn(sourceColumn, hiddenColumnNames))
+                {
+                    columnCount++;
+                }
+            }
+
+            if (columnCount == 0)
+            {
+                throw ADP.NoColumns();
+            }
+
+            int currentColumn = 0;
+            DataColumn[] filteredSourceColumns = new DataColumn[columnCount];
+
+            foreach (DataColumn sourceColumn in sourceTable.Columns)
+            {
+                if (IncludeThisColumn(sourceColumn, hiddenColumnNames))
+                {
+                    DataColumn newDestinationColumn = new(sourceColumn.ColumnName, sourceColumn.DataType);
+                    destinationColumns.Add(newDestinationColumn);
+                    filteredSourceColumns[currentColumn] = sourceColumn;
+                    currentColumn++;
+                }
+            }
+            return filteredSourceColumns;
+        }
+
+        protected override DataTable CloneAndFilterCollection(string collectionName, ReadOnlySpan<string> hiddenColumnNames)
+        {
+            DataTable destinationTable;
+            DataColumn[] filteredSourceColumns;
+            DataColumnCollection destinationColumns;
+            DataRow newRow;
+
+            DataTable sourceTable = CollectionDataSet.Tables[collectionName];
+
+            if (sourceTable?.TableName != collectionName)
+            {
+                throw ADP.DataTableDoesNotExist(collectionName);
+            }
+
+            destinationTable = new DataTable(collectionName)
+            {
+                Locale = CultureInfo.InvariantCulture
+            };
+            destinationColumns = destinationTable.Columns;
+
+            filteredSourceColumns = FilterColumns(sourceTable, hiddenColumnNames, destinationColumns);
+
+            foreach (DataRow row in sourceTable.Rows)
+            {
+                if (SupportedByCurrentVersion(row))
+                {
+                    newRow = destinationTable.NewRow();
+                    for (int i = 0; i < destinationColumns.Count; i++)
+                    {
+                        newRow[destinationColumns[i]] = row[filteredSourceColumns[i], DataRowVersion.Current];
+                    }
+                    destinationTable.Rows.Add(newRow);
+                    newRow.AcceptChanges();
+                }
+            }
+
+            return destinationTable;
+        }
+        #endregion
+
+        #region GetSchema Helpers: PrepareCollection Population Method
         private static void AddUDTsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, string serverVersion)
         {
             const string GetEngineEditionSqlCommand = "SELECT SERVERPROPERTY('EngineEdition');";
@@ -288,6 +377,7 @@ namespace Microsoft.Data.SqlClient
 
             return resultTable;
         }
+        #endregion
 
         #region Create MetaDataCollections DataSet from XML
         private DataSet LoadDataSetFromXml(Stream XmlStream)
