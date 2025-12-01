@@ -68,9 +68,6 @@ variables:
   - name: artifactName
     value: Artifacts
 
-  - name: defaultHostedPoolName
-    value: 'Azure Pipelines'
-
 stages:
   - stage: build_nugets
     displayName: 'Build NuGet Packages'
@@ -99,16 +96,9 @@ stages:
         - template: common/templates/jobs/ci-code-coverage-job.yml@self
           parameters:
             debug: ${{ parameters.debug }}
-            downloadArtifactsSteps:
-              - ${{ each targetFramework in parameters.codeCovTargetFrameworks }}:
-                - task: DownloadPipelineArtifact@2
-                  displayName: 'Download Coverage Reports [${{ targetFramework }}]'
-                  inputs:
-                    itemPattern: '**\${{ targetFramework }}*'
-                    ${{ if contains(targetFramework, 'net4') }}:
-                      targetPath: '$(Build.SourcesDirectory)\coverageNetFx'
-                    ${{ else }}:
-                      targetPath: '$(Build.SourcesDirectory)\coverageNetCore'
+            image: ADO-MMS22-CodeCov
+            pool: ${{ parameters.defaultPoolName }}
+            targetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
 
 # test stages configurations
   # self hosted SQL Server on Windows
