@@ -45,7 +45,7 @@ steps:
 
 - template: ./ensure-dotnet-version.yml@self
   parameters:
-      packageType: 'sdk'
+      packageType: 'runtime'
       version: '9.0'
 
 - template: ./ensure-dotnet-version.yml@self
