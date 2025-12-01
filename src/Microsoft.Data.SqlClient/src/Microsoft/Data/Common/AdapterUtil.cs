@@ -1172,7 +1172,7 @@ namespace Microsoft.Data.Common
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidCommandTimeout, value.ToString(CultureInfo.InvariantCulture)), property);
 #endregion
 
-#region DbMetaDataFactory
+#region SqlMetaDataFactory
         internal static Exception DataTableDoesNotExist(string collectionName)
             => Argument(StringsHelper.GetString(Strings.MDF_DataTableDoesNotExist, collectionName));
 
@@ -1225,11 +1225,6 @@ namespace Microsoft.Data.Common
 
         internal static Exception AmbiguousCollectionName(string collectionName)
             => Argument(StringsHelper.GetString(Strings.MDF_AmbiguousCollectionName, collectionName));
-
-        internal static Exception MissingDataSourceInformationColumn() => Argument(StringsHelper.GetString(Strings.MDF_MissingDataSourceInformationColumn));
-
-        internal static Exception IncorrectNumberOfDataSourceInformationRows()
-            => Argument(StringsHelper.GetString(Strings.MDF_IncorrectNumberOfDataSourceInformationRows));
 
         internal static Exception MissingRestrictionRow() => Argument(StringsHelper.GetString(Strings.MDF_MissingRestrictionRow));
 

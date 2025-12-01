@@ -12,11 +12,10 @@ using System.IO;
 using System.Text;
 using System.Xml;
 using Microsoft.Data.Common;
-using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed class SqlMetaDataFactory : DbMetaDataFactory, IDisposable
+    internal sealed class SqlMetaDataFactory : IDisposable
     {
         // Well-known column names
         private const string CollectionNameKey = "CollectionName";
