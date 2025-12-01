@@ -675,9 +675,6 @@ namespace Microsoft.Data.ProviderBase
             Pool = connectionPool;
         }
 
-        internal void NotifyWeakReference(int message) =>
-            ReferenceCollection?.Notify(message);
-
         internal virtual void OpenConnection(DbConnection outerConnection, SqlConnectionFactory connectionFactory)
         {
             if (!TryOpenConnection(outerConnection, connectionFactory, null, null))
