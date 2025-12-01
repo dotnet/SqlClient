@@ -28,11 +28,6 @@ namespace Microsoft.Data.ProviderBase
         private const string RestrictionNameKey = "RestrictionName";
         private const string ParameterNameKey = "ParameterName";
 
-        // population mechanisms
-        private const string DataTableKey = "DataTable";
-        private const string SqlCommandKey = "SQLCommand";
-        private const string PrepareCollectionKey = "PrepareCollection";
-
         public DbMetaDataFactory(Stream xmlStream, string serverVersion)
         {
             ADP.CheckArgumentNull(xmlStream, nameof(xmlStream));
@@ -47,7 +42,7 @@ namespace Microsoft.Data.ProviderBase
 
         protected string ServerVersion { get; }
 
-        protected DataTable CloneAndFilterCollection(string collectionName, string[] hiddenColumnNames)
+        protected DataTable CloneAndFilterCollection(string collectionName, ReadOnlySpan<string> hiddenColumnNames)
         {
             DataTable destinationTable;
             DataColumn[] filteredSourceColumns;
@@ -56,7 +51,7 @@ namespace Microsoft.Data.ProviderBase
 
             DataTable sourceTable = CollectionDataSet.Tables[collectionName];
 
-            if ((sourceTable == null) || (collectionName != sourceTable.TableName))
+            if (sourceTable?.TableName != collectionName)
             {
                 throw ADP.DataTableDoesNotExist(collectionName);
             }
@@ -98,25 +93,25 @@ namespace Microsoft.Data.ProviderBase
 
         private DataTable ExecuteCommand(DataRow requestedCollectionRow, string[] restrictions, DbConnection connection)
         {
+            Debug.Assert(requestedCollectionRow is not null);
+
             DataTable metaDataCollectionsTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
             DataColumn populationStringColumn = metaDataCollectionsTable.Columns[PopulationStringKey];
             DataColumn numberOfRestrictionsColumn = metaDataCollectionsTable.Columns[NumberOfRestrictionsKey];
             DataColumn collectionNameColumn = metaDataCollectionsTable.Columns[CollectionNameKey];
 
             DataTable resultTable = null;
-
-            Debug.Assert(requestedCollectionRow != null);
             string sqlCommand = requestedCollectionRow[populationStringColumn, DataRowVersion.Current] as string;
             int numberOfRestrictions = (int)requestedCollectionRow[numberOfRestrictionsColumn, DataRowVersion.Current];
             string collectionName = requestedCollectionRow[collectionNameColumn, DataRowVersion.Current] as string;
 
-            if ((restrictions != null) && (restrictions.Length > numberOfRestrictions))
+            if ((restrictions is not null) && (restrictions.Length > numberOfRestrictions))
             {
                 throw ADP.TooManyRestrictions(collectionName);
             }
 
-            DbCommand command = connection.CreateCommand();
             SqlConnection castConnection = connection as SqlConnection;
+            using SqlCommand command = castConnection.CreateCommand();
 
             command.CommandText = sqlCommand;
             command.CommandTimeout = Math.Max(command.CommandTimeout, 180);
@@ -124,10 +119,9 @@ namespace Microsoft.Data.ProviderBase
 
             for (int i = 0; i < numberOfRestrictions; i++)
             {
+                SqlParameter restrictionParameter = command.CreateParameter();
 
-                DbParameter restrictionParameter = command.CreateParameter();
-
-                if ((restrictions != null) && (restrictions.Length > i) && (restrictions[i] != null))
+                if ((restrictions is not null) && (i < restrictions.Length) && (restrictions[i] is not null))
                 {
                     restrictionParameter.Value = restrictions[i];
                 }
@@ -142,7 +136,7 @@ namespace Microsoft.Data.ProviderBase
                 command.Parameters.Add(restrictionParameter);
             }
 
-            DbDataReader reader = null;
+            SqlDataReader reader = null;
             try
             {
                 try
@@ -164,10 +158,10 @@ namespace Microsoft.Data.ProviderBase
                     Locale = CultureInfo.InvariantCulture
                 };
 
-                DataTable schemaTable = reader.GetSchemaTable();
-                foreach (DataRow row in schemaTable.Rows)
+                System.Collections.ObjectModel.ReadOnlyCollection<DbColumn> colSchema = reader.GetColumnSchema();
+                foreach (DbColumn col in colSchema)
                 {
-                    resultTable.Columns.Add(row["ColumnName"] as string, (Type)row["DataType"] as Type);
+                    resultTable.Columns.Add(col.ColumnName, col.DataType);
                 }
                 object[] values = new object[resultTable.Columns.Count];
                 while (reader.Read())
@@ -183,7 +177,7 @@ namespace Microsoft.Data.ProviderBase
             return resultTable;
         }
 
-        private DataColumn[] FilterColumns(DataTable sourceTable, string[] hiddenColumnNames, DataColumnCollection destinationColumns)
+        private static DataColumn[] FilterColumns(DataTable sourceTable, ReadOnlySpan<string> hiddenColumnNames, DataColumnCollection destinationColumns)
         {
             int columnCount = 0;
             foreach (DataColumn sourceColumn in sourceTable.Columns)
@@ -215,77 +209,62 @@ namespace Microsoft.Data.ProviderBase
             return filteredSourceColumns;
         }
 
-        internal DataRow FindMetaDataCollectionRow(string collectionName)
+        private DataRow FindMetaDataCollectionRow(string collectionName)
         {
-            bool versionFailure;
-            bool haveExactMatch;
-            bool haveMultipleInexactMatches;
-            string candidateCollectionName;
+            bool versionFailure = false;
+            bool haveExactMatch = false;
+            bool haveMultipleInexactMatches = false;
 
             DataTable metaDataCollectionsTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
-            if (metaDataCollectionsTable == null)
-            {
-                throw ADP.InvalidXml();
-            }
+            Debug.Assert(metaDataCollectionsTable is not null);
 
             DataColumn collectionNameColumn = metaDataCollectionsTable.Columns[DbMetaDataColumnNames.CollectionName];
-
-            if (collectionNameColumn == null || (typeof(string) != collectionNameColumn.DataType))
-            {
-                throw ADP.InvalidXmlMissingColumn(DbMetaDataCollectionNames.MetaDataCollections, DbMetaDataColumnNames.CollectionName);
-            }
+            Debug.Assert(collectionNameColumn is not null && collectionNameColumn.DataType == typeof(string));
 
             DataRow requestedCollectionRow = null;
             string exactCollectionName = null;
 
             // find the requested collection
-            versionFailure = false;
-            haveExactMatch = false;
-            haveMultipleInexactMatches = false;
-
             foreach (DataRow row in metaDataCollectionsTable.Rows)
             {
+                string candidateCollectionName = row[collectionNameColumn, DataRowVersion.Current] as string;
 
-                candidateCollectionName = row[collectionNameColumn, DataRowVersion.Current] as string;
                 if (string.IsNullOrEmpty(candidateCollectionName))
                 {
                     throw ADP.InvalidXmlInvalidValue(DbMetaDataCollectionNames.MetaDataCollections, DbMetaDataColumnNames.CollectionName);
                 }
 
-                if (ADP.CompareInsensitiveInvariant(candidateCollectionName, collectionName))
+                if (string.Equals(candidateCollectionName, collectionName, StringComparison.InvariantCultureIgnoreCase))
                 {
                     if (!SupportedByCurrentVersion(row))
                     {
                         versionFailure = true;
                     }
-                    else
+                    else if (collectionName == candidateCollectionName)
                     {
-                        if (collectionName == candidateCollectionName)
+                        if (haveExactMatch)
                         {
-                            if (haveExactMatch)
-                            {
-                                throw ADP.CollectionNameIsNotUnique(collectionName);
-                            }
-                            requestedCollectionRow = row;
-                            exactCollectionName = candidateCollectionName;
-                            haveExactMatch = true;
+                            throw ADP.CollectionNameIsNotUnique(collectionName);
                         }
-                        else if (!haveExactMatch)
+                        requestedCollectionRow = row;
+                        exactCollectionName = candidateCollectionName;
+                        haveExactMatch = true;
+                    }
+                    else if (!haveExactMatch)
+                    {
+                        // have an inexact match - ok only if it is the only one
+                        if (exactCollectionName is not null)
                         {
-                            // have an inexact match - ok only if it is the only one
-                            if (exactCollectionName != null)
-                            {
-                                // can't fail here becasue we may still find an exact match
-                                haveMultipleInexactMatches = true;
-                            }
-                            requestedCollectionRow = row;
-                            exactCollectionName = candidateCollectionName;
+                            // can't fail here because we may still find an exact match
+                            haveMultipleInexactMatches = true;
                         }
+                        requestedCollectionRow = row;
+                        exactCollectionName = candidateCollectionName;
                     }
                 }
             }
 
-            if (requestedCollectionRow == null)
+            if (requestedCollectionRow is null)
             {
                 if (!versionFailure)
                 {
@@ -315,33 +294,24 @@ namespace Microsoft.Data.ProviderBase
             dataSourceInfoRow[DbMetaDataColumnNames.DataSourceProductVersionNormalized] = ServerVersion;
         }
 
-
         private string GetParameterName(string neededCollectionName, int neededRestrictionNumber)
         {
-            DataColumn collectionName = null;
-            DataColumn parameterName = null;
-            DataColumn restrictionName = null;
-            DataColumn restrictionNumber = null;
+            DataTable restrictionsTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.Restrictions];
+
+            Debug.Assert(restrictionsTable is not null);
+
+            DataColumnCollection restrictionColumns = restrictionsTable.Columns;
+            DataColumn collectionName = restrictionColumns[CollectionNameKey];
+            DataColumn parameterName = restrictionColumns[ParameterNameKey];
+            DataColumn restrictionName = restrictionColumns[RestrictionNameKey];
+            DataColumn restrictionNumber = restrictionColumns[RestrictionNumberKey];
+
+            Debug.Assert(parameterName is not null);
+            Debug.Assert(collectionName is not null);
+            Debug.Assert(restrictionName is not null);
+            Debug.Assert(restrictionNumber is not null);
 
             string result = null;
-
-            DataTable restrictionsTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.Restrictions];
-            if (restrictionsTable != null)
-            {
-                DataColumnCollection restrictionColumns = restrictionsTable.Columns;
-                if (restrictionColumns != null)
-                {
-                    collectionName = restrictionColumns[CollectionNameKey];
-                    parameterName = restrictionColumns[ParameterNameKey];
-                    restrictionName = restrictionColumns[RestrictionNameKey];
-                    restrictionNumber = restrictionColumns[RestrictionNumberKey];
-                }
-            }
-
-            if ((parameterName == null) || (collectionName == null) || (restrictionName == null) || (restrictionNumber == null))
-            {
-                throw ADP.MissingRestrictionColumn();
-            }
 
             foreach (DataRow restriction in restrictionsTable.Rows)
             {
@@ -356,7 +326,7 @@ namespace Microsoft.Data.ProviderBase
                 }
             }
 
-            if (result == null)
+            if (result is null)
             {
                 throw ADP.MissingRestrictionRow();
             }
@@ -366,14 +336,15 @@ namespace Microsoft.Data.ProviderBase
 
         public virtual DataTable GetSchema(DbConnection connection, string collectionName, string[] restrictions)
         {
-            Debug.Assert(CollectionDataSet != null);
+            const string DataTableKey = "DataTable";
+            const string SqlCommandKey = "SQLCommand";
+            const string PrepareCollectionKey = "PrepareCollection";
+
+            Debug.Assert(CollectionDataSet is not null);
 
             DataTable metaDataCollectionsTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
             DataColumn populationMechanismColumn = metaDataCollectionsTable.Columns[PopulationMechanismKey];
             DataColumn collectionNameColumn = metaDataCollectionsTable.Columns[DbMetaDataColumnNames.CollectionName];
-
-            string[] hiddenColumns;
-
             DataRow requestedCollectionRow = FindMetaDataCollectionRow(collectionName);
             string exactCollectionName = requestedCollectionRow[collectionNameColumn, DataRowVersion.Current] as string;
 
@@ -382,7 +353,7 @@ namespace Microsoft.Data.ProviderBase
 
                 for (int i = 0; i < restrictions.Length; i++)
                 {
-                    if ((restrictions[i] != null) && (restrictions[i].Length > 4096))
+                    if ((restrictions[i] is not null) && (restrictions[i].Length > 4096))
                     {
                         // use a non-specific error because no new beta 2 error messages are allowed
                         // TODO: will add a more descriptive error in RTM
@@ -396,24 +367,16 @@ namespace Microsoft.Data.ProviderBase
             DataTable requestedSchema;
             switch (populationMechanism)
             {
-
                 case DataTableKey:
-                    if (exactCollectionName == DbMetaDataCollectionNames.MetaDataCollections)
-                    {
-                        hiddenColumns = new string[2];
-                        hiddenColumns[0] = PopulationMechanismKey;
-                        hiddenColumns[1] = PopulationStringKey;
-                    }
-                    else
-                    {
-                        hiddenColumns = null;
-                    }
+                    ReadOnlySpan<string> hiddenColumns = exactCollectionName == DbMetaDataCollectionNames.MetaDataCollections
+                        ? [ PopulationMechanismKey, PopulationStringKey ]
+                        : [];
+
                     // none of the datatable collections support restrictions
                     if (!ADP.IsEmptyArray(restrictions))
                     {
                         throw ADP.TooManyRestrictions(exactCollectionName);
                     }
-
 
                     requestedSchema = CloneAndFilterCollection(exactCollectionName, hiddenColumns);
                     break;
@@ -433,42 +396,24 @@ namespace Microsoft.Data.ProviderBase
             return requestedSchema;
         }
 
-        private bool IncludeThisColumn(DataColumn sourceColumn, string[] hiddenColumnNames)
+        private static bool IncludeThisColumn(DataColumn sourceColumn, ReadOnlySpan<string> hiddenColumnNames)
         {
-
-            bool result = true;
             string sourceColumnName = sourceColumn.ColumnName;
 
-            switch (sourceColumnName)
+            return sourceColumnName switch
             {
-
-                case MinimumVersionKey:
-                case MaximumVersionKey:
-                    result = false;
-                    break;
-
-                default:
-                    if (hiddenColumnNames == null)
-                    {
-                        break;
-                    }
-                    for (int i = 0; i < hiddenColumnNames.Length; i++)
-                    {
-                        if (hiddenColumnNames[i] == sourceColumnName)
-                        {
-                            result = false;
-                            break;
-                        }
-                    }
-                    break;
-            }
-
-            return result;
+                MinimumVersionKey or MaximumVersionKey => false,
+#if NET
+                _ => !hiddenColumnNames.Contains(sourceColumnName),
+#else
+                _ => hiddenColumnNames.IndexOf(sourceColumnName) == -1,
+#endif
+            };
         }
 
         private DataSet LoadDataSetFromXml(Stream XmlStream)
         {
-            DataSet metaDataCollectionsDataSet = new DataSet("NewDataSet")
+            DataSet metaDataCollectionsDataSet = new("NewDataSet")
             {
                 Locale = CultureInfo.InvariantCulture
             };
@@ -532,7 +477,7 @@ namespace Microsoft.Data.ProviderBase
                         break;
                 }
 
-                if (dataTable != null)
+                if (dataTable is not null)
                 {
                     LoadDataTable(reader, dataTable, rowFixup);
 
@@ -569,7 +514,7 @@ namespace Microsoft.Data.ProviderBase
                     Debug.Assert(reader.NodeType == XmlNodeType.Element);
 
                     column = table.Columns[reader.Name];
-                    Debug.Assert(column != null);
+                    Debug.Assert(column is not null);
 
                     successfulRead = reader.Read();
                     Debug.Assert(successfulRead);
@@ -594,7 +539,7 @@ namespace Microsoft.Data.ProviderBase
         }
 
         private static DataTable CreateMetaDataCollectionsDataTable()
-            => new DataTable(DbMetaDataCollectionNames.MetaDataCollections)
+            => new(DbMetaDataCollectionNames.MetaDataCollections)
             {
                 Columns =
                 {
@@ -609,7 +554,7 @@ namespace Microsoft.Data.ProviderBase
             };
 
         private static DataTable CreateRestrictionsDataTable()
-            => new DataTable(DbMetaDataCollectionNames.Restrictions)
+            => new(DbMetaDataCollectionNames.Restrictions)
             {
                 Columns =
                 {
@@ -624,7 +569,7 @@ namespace Microsoft.Data.ProviderBase
             };
 
         private static DataTable CreateDataSourceInformationDataTable()
-            => new DataTable(DbMetaDataCollectionNames.DataSourceInformation)
+            => new(DbMetaDataCollectionNames.DataSourceInformation)
             {
                 Columns =
                 {
@@ -649,7 +594,7 @@ namespace Microsoft.Data.ProviderBase
             };
 
         private static DataTable CreateDataTypesDataTable()
-            => new DataTable(DbMetaDataCollectionNames.DataTypes)
+            => new(DbMetaDataCollectionNames.DataTypes)
             {
                 Columns =
                 {
@@ -681,7 +626,7 @@ namespace Microsoft.Data.ProviderBase
             };
 
         private static DataTable CreateReservedWordsDataTable()
-            => new DataTable(DbMetaDataCollectionNames.ReservedWords)
+            => new(DbMetaDataCollectionNames.ReservedWords)
             {
                 Columns =
                 {
@@ -698,48 +643,37 @@ namespace Microsoft.Data.ProviderBase
 
         private bool SupportedByCurrentVersion(DataRow requestedCollectionRow)
         {
-            bool result = true;
             DataColumnCollection tableColumns = requestedCollectionRow.Table.Columns;
             DataColumn versionColumn;
             object version;
 
             // check the minimum version first
             versionColumn = tableColumns[MinimumVersionKey];
-            if (versionColumn != null)
+            if (versionColumn is not null)
             {
                 version = requestedCollectionRow[versionColumn];
-                if (version != null)
+
+                if (version is string minVersion
+                    && string.Compare(ServerVersion, minVersion, StringComparison.OrdinalIgnoreCase) < 0)
                 {
-                    if (version != DBNull.Value)
-                    {
-                        if (0 > string.Compare(ServerVersion, (string)version, StringComparison.OrdinalIgnoreCase))
-                        {
-                            result = false;
-                        }
-                    }
+                    return false;
                 }
             }
 
             // if the minimum version was ok what about the maximum version
-            if (result)
+            versionColumn = tableColumns[MaximumVersionKey];
+            if (versionColumn is not null)
             {
-                versionColumn = tableColumns[MaximumVersionKey];
-                if (versionColumn != null)
+                version = requestedCollectionRow[versionColumn];
+
+                if (version is string maxVersion
+                    && string.Compare(ServerVersion, maxVersion, StringComparison.OrdinalIgnoreCase) > 0)
                 {
-                    version = requestedCollectionRow[versionColumn];
-                    if (version != null)
-                    {
-                        if (version != DBNull.Value)
-                        {
-                            if (0 < string.Compare(ServerVersion, (string)version, StringComparison.OrdinalIgnoreCase))
-                            {
-                                result = false;
-                            }
-                        }
-                    }
+                    return false;
                 }
             }
-            return result;
+
+            return true;
         }
     }
 }

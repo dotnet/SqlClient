@@ -227,7 +227,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(CollectionDataSet.Tables.Contains(DbMetaDataCollectionNames.DataTypes), "DataTypes collection not found in the DataSet");
 
             // copy the table filtering out any rows that don't apply to tho current version of the provider
-            DataTable dataTypesTable = CloneAndFilterCollection(DbMetaDataCollectionNames.DataTypes, null);
+            DataTable dataTypesTable = CloneAndFilterCollection(DbMetaDataCollectionNames.DataTypes, []);
 
             AddUDTsToDataTypesTable(dataTypesTable, connection, ServerVersion);
             AddTVPsToDataTypesTable(dataTypesTable, connection, ServerVersion);
