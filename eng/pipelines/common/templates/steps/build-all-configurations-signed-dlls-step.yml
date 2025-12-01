@@ -38,9 +38,9 @@ steps:
     version: '10.x'
 
 - task: UseDotNet@2
-  displayName: 'Use .NET 9.x sdk'
+  displayName: 'Use .NET 9.x runtime'
   inputs:
-    packageType: sdk
+    packageType: runtime
     version: '9.x'
 
 - task: UseDotNet@2
