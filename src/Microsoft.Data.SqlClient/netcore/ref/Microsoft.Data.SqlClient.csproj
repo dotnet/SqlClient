@@ -43,11 +43,9 @@
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     
-    <!-- Transitive dependencies that would otherwise bring in older, vulnerable versions. -->
-    <!--<PackageReference Include="System.Text.Json" />-->
   </ItemGroup>
 
-  <ItemGroup Condition="$([MSBuild]::VersionLessThan('$(NETCoreSdkVersion)', '10.0.100'))">
+  <ItemGroup Condition="$([MSBuild]::VersionLessThan($([MSBuild]::GetTargetFrameworkVersion($(TargetFramework))), '10.0'))">
     <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
