@@ -7,12 +7,22 @@ using System.Collections.Generic;
 using System.Xml;
 using System.Xml.XPath;
 using Xunit;
+using Xunit.Abstractions;
+
+#nullable enable
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class XEventsTracingTest
     {
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        private readonly string _testName;
+
+        public XEventsTracingTest(ITestOutputHelper outputHelper)
+        {
+            _testName = DataTestUtility.CurrentTestName(outputHelper);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         [InlineData("SELECT @@VERSION", System.Data.CommandType.Text, "sql_statement_starting")]
         [InlineData("sp_help", System.Data.CommandType.StoredProcedure, "rpc_starting")]
         public void XEventActivityIDConsistentWithTracing(string query, System.Data.CommandType commandType, string xEvent)
@@ -28,10 +38,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             HashSet<string> ids;
 
             using SqlConnection xEventManagementConnection = new(DataTestUtility.TCPConnectionString);
-            using DataTestUtility.XEventScope xEventSession = new(xEventManagementConnection,
+            xEventManagementConnection.Open();
+            
+            using DataTestUtility.XEventScope xEventSession = new(
+                _testName,
+                xEventManagementConnection,
                 $@"ADD EVENT SQL_STATEMENT_STARTING (ACTION (client_connection_id) WHERE (client_connection_id='{connectionId}')),
                     ADD EVENT RPC_STARTING (ACTION (client_connection_id) WHERE (client_connection_id='{connectionId}'))",
-                    "ADD TARGET ring_buffer");
+                "ADD TARGET ring_buffer");
 
             using (DataTestUtility.MDSEventListener TraceListener = new())
             {
@@ -54,7 +68,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static string GetCommandActivityId(string commandText, string eventName, Guid connectionId, XmlDocument xEvents)
         {
-            XPathNavigator xPathRoot = xEvents.CreateNavigator();
+            XPathNavigator? xPathRoot = xEvents.CreateNavigator();
+            Assert.NotNull(xPathRoot);
+
             // The transferred activity ID is attached to the "attach_activity_id_xfer" action within
             // the "sql_statement_starting" and the "rpc_starting" events.
             XPathNodeIterator statementStartingQuery = xPathRoot.Select(
@@ -65,7 +81,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(1, statementStartingQuery.Count);
             Assert.True(statementStartingQuery.MoveNext());
 
-            XPathNavigator activityIdElement = statementStartingQuery.Current.SelectSingleNode("action[@name='attach_activity_id_xfer']/value");
+            XPathNavigator? current = statementStartingQuery.Current;
+            Assert.NotNull(current);
+            XPathNavigator? activityIdElement = current.SelectSingleNode("action[@name='attach_activity_id_xfer']/value");
             
             Assert.NotNull(activityIdElement);
             Assert.NotNull(activityIdElement.Value);
