@@ -465,9 +465,9 @@ namespace Microsoft.Data.SqlClient
         }
         #else
         /// <summary>
-        /// .NET Core on Unix does not support the native SNI, so this will always be false.
+        /// .NET Core on Unix does not support the native SNI, so this will always be true.
         /// </summary>
-        public static bool UseManagedNetworking => false;
+        public static bool UseManagedNetworking => true;
         #endif
 
         #else

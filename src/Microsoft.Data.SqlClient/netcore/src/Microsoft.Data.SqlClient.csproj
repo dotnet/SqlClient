@@ -41,8 +41,8 @@
 
   <!-- OS Constants ==================================================== -->
   <PropertyGroup>
-    <DefineConstants Condition="'$(OSGroup.ToUpper())'=='UNIX'">_UNIX</DefineConstants>
-    <DefineConstants Condition="'$(OSGroup.ToUpper())'=='WINDOWS_NT'">_WINDOWS</DefineConstants>
+    <DefineConstants Condition="'$(OSGroup.ToUpper())'=='UNIX'">$(DefineConstants),_UNIX</DefineConstants>
+    <DefineConstants Condition="'$(OSGroup.ToUpper())'=='WINDOWS_NT'">$(DefineConstants),_WINDOWS</DefineConstants>
   </PropertyGroup>
 
   <!-- Compiled Files ================================================== -->
