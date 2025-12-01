@@ -636,7 +636,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <summary>
         /// Indicates whether the connection is currently enlisted in a transaction.
         /// </summary>
-        internal bool IsEnlistedInTransaction { get; set; }
+        internal bool IsEnlistedInTransaction { get; private set; }
 
         /// <summary>
         /// Whether this is a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
@@ -1033,6 +1033,8 @@ namespace Microsoft.Data.SqlClient.Connection
             }
 
             _whereAbouts = null;
+
+            base.Dispose();
         }
 
         internal void EnlistNull()
