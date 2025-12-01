@@ -16,7 +16,7 @@ using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed class SqlMetaDataFactory : DbMetaDataFactory
+    internal sealed class SqlMetaDataFactory : DbMetaDataFactory, IDisposable
     {
         // Well-known column names
         private const string CollectionNameKey = "CollectionName";
@@ -44,6 +44,16 @@ namespace Microsoft.Data.SqlClient
             ServerVersion = serverVersion;
 
             CollectionDataSet = LoadDataSetFromXml(xmlStream);
+        }
+
+        public void Dispose() => Dispose(true);
+
+        private void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                CollectionDataSet.Dispose();
+            }
         }
 
         private static void AddUDTsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, string serverVersion)

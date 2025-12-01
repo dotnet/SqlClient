@@ -71,16 +71,6 @@ namespace Microsoft.Data.ProviderBase
             return destinationTable;
         }
 
-        public void Dispose() => Dispose(true);
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                CollectionDataSet.Dispose();
-            }
-        }
-
         private DataTable ExecuteCommand(DataRow requestedCollectionRow, string[] restrictions, DbConnection connection)
         {
             Debug.Assert(requestedCollectionRow is not null);
