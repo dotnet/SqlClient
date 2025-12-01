@@ -36,6 +36,10 @@ namespace Microsoft.Data.SqlClient
 
         private static readonly HashSet<int> s_assemblyPropertyUnsupportedEngines = new() { 6, 9, 11 };
 
+        private DataSet CollectionDataSet { get; }
+
+        private string ServerVersion { get; }
+
         public SqlMetaDataFactory(Stream xmlStream, string serverVersion)
         {
             ADP.CheckArgumentNull(xmlStream, nameof(xmlStream));
@@ -44,6 +48,41 @@ namespace Microsoft.Data.SqlClient
             ServerVersion = serverVersion;
 
             CollectionDataSet = LoadDataSetFromXml(xmlStream);
+        }
+
+        private bool SupportedByCurrentVersion(DataRow requestedCollectionRow)
+        {
+            DataColumnCollection tableColumns = requestedCollectionRow.Table.Columns;
+            DataColumn versionColumn;
+            object version;
+
+            // check the minimum version first
+            versionColumn = tableColumns[MinimumVersionKey];
+            if (versionColumn is not null)
+            {
+                version = requestedCollectionRow[versionColumn];
+
+                if (version is string minVersion
+                    && string.Compare(ServerVersion, minVersion, StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    return false;
+                }
+            }
+
+            // if the minimum version was ok what about the maximum version
+            versionColumn = tableColumns[MaximumVersionKey];
+            if (versionColumn is not null)
+            {
+                version = requestedCollectionRow[versionColumn];
+
+                if (version is string maxVersion
+                    && string.Compare(ServerVersion, maxVersion, StringComparison.OrdinalIgnoreCase) > 0)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private DataRow FindMetaDataCollectionRow(string collectionName)
@@ -242,7 +281,7 @@ namespace Microsoft.Data.SqlClient
             return filteredSourceColumns;
         }
 
-        protected override DataTable CloneAndFilterCollection(string collectionName, ReadOnlySpan<string> hiddenColumnNames)
+        private DataTable CloneAndFilterCollection(string collectionName, ReadOnlySpan<string> hiddenColumnNames)
         {
             DataTable destinationTable;
             DataColumn[] filteredSourceColumns;
@@ -323,7 +362,7 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-        protected override DataTable ExecuteCommand(DataRow requestedCollectionRow, string[] restrictions, DbConnection connection)
+        private DataTable ExecuteCommand(DataRow requestedCollectionRow, string[] restrictions, DbConnection connection)
         {
             Debug.Assert(requestedCollectionRow is not null);
 
@@ -622,7 +661,7 @@ namespace Microsoft.Data.SqlClient
             return dataTypesTable;
         }
 
-        protected override DataTable PrepareCollection(string collectionName, string[] restrictions, DbConnection connection)
+        private DataTable PrepareCollection(string collectionName, string[] restrictions, DbConnection connection)
         {
             SqlConnection sqlConnection = (SqlConnection)connection;
             DataTable resultTable = null;

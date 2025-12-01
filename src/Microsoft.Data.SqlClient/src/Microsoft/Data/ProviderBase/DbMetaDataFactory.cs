@@ -27,59 +27,5 @@ namespace Microsoft.Data.ProviderBase
         private const string NumberOfRestrictionsKey = "NumberOfRestrictions";
         private const string RestrictionNameKey = "RestrictionName";
         private const string ParameterNameKey = "ParameterName";
-
-        protected DataSet CollectionDataSet { get; set; }
-
-        protected string ServerVersion { get; set; }
-
-        protected virtual DataTable CloneAndFilterCollection(string collectionName, ReadOnlySpan<string> hiddenColumnNames)
-        {
-            throw ADP.MethodNotImplemented();
-        }
-
-        protected virtual DataTable ExecuteCommand(DataRow requestedCollectionRow, string[] restrictions, DbConnection connection)
-        {
-            throw ADP.MethodNotImplemented();
-        }
-
-        protected virtual DataTable PrepareCollection(string collectionName, string[] restrictions, DbConnection connection)
-        {
-            throw ADP.NotSupported();
-        }
-
-        protected bool SupportedByCurrentVersion(DataRow requestedCollectionRow)
-        {
-            DataColumnCollection tableColumns = requestedCollectionRow.Table.Columns;
-            DataColumn versionColumn;
-            object version;
-
-            // check the minimum version first
-            versionColumn = tableColumns[MinimumVersionKey];
-            if (versionColumn is not null)
-            {
-                version = requestedCollectionRow[versionColumn];
-
-                if (version is string minVersion
-                    && string.Compare(ServerVersion, minVersion, StringComparison.OrdinalIgnoreCase) < 0)
-                {
-                    return false;
-                }
-            }
-
-            // if the minimum version was ok what about the maximum version
-            versionColumn = tableColumns[MaximumVersionKey];
-            if (versionColumn is not null)
-            {
-                version = requestedCollectionRow[versionColumn];
-
-                if (version is string maxVersion
-                    && string.Compare(ServerVersion, maxVersion, StringComparison.OrdinalIgnoreCase) > 0)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
     }
 }
