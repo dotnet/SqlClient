@@ -1,4 +1,10 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+#if _TESTSET_1
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -296,3 +302,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private HashSet<string> _exceptionDetails = new HashSet<string>();
     }
 }
+
+#endif
