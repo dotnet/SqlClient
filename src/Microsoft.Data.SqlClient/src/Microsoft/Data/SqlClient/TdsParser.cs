@@ -18,13 +18,13 @@ using System.Threading.Tasks;
 using System.Xml;
 using Interop.Common.Sni;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
-using Microsoft.Data.SqlClient.UserAgent;
 using Microsoft.Data.SqlClient.Utilities;
 using Microsoft.SqlServer.Server;
 
@@ -1306,7 +1306,8 @@ namespace Microsoft.Data.SqlClient
             int length = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
 
             // Obtain the client interface name.
-            string clientInterfaceName = ClientInterface.Name;
+            string clientInterfaceName = DbConnectionStringDefaults.ApplicationName;
+            Debug.Assert(clientInterfaceName.Length <= TdsEnums.MAXLEN_CLIENTINTERFACE);
 
             // add up variable-len portions (multiply by 2 for byte len of char strings)
             checked
@@ -1363,7 +1364,7 @@ namespace Microsoft.Data.SqlClient
                     requestedFeatures, 
                     recoverySessionData, 
                     fedAuthFeatureExtensionData,
-                    UserAgentInfo.UserAgentCachedJsonPayload.ToArray(),
+                    UserAgent.Ucs2Bytes,
                     useFeatureExt, 
                     length
                     );
@@ -9174,7 +9175,7 @@ namespace Microsoft.Data.SqlClient
         /// Writes the User Agent feature request to the physical state object.
         /// The request includes the feature ID, feature data length, version number and encoded JSON payload.
         /// </summary>
-        /// <param name="userAgentJsonPayload"> Byte array of UTF-8 encoded JSON payload for User Agent</param>
+        /// <param name="userAgent"> UCS-2 UserAgent payload.</param>
         /// <param name="write">
         /// If true, writes the feature request to the physical state object.
         /// If false, just calculates the length.
@@ -9187,11 +9188,11 @@ namespace Microsoft.Data.SqlClient
         /// - 1 byte for the version number.
         /// - N bytes for the JSON payload
         /// </remarks>
-        internal int WriteUserAgentFeatureRequest(byte[] userAgentJsonPayload,
+        internal int WriteUserAgentFeatureRequest(ReadOnlyMemory<byte> userAgent,
                                                   bool write)
         {
             // 1byte (Feature Version) + size of UTF-8 encoded JSON payload 
-            int dataLen = 1 + userAgentJsonPayload.Length;
+            int dataLen = 1 + userAgent.Length;
             // 1byte (Feature ID) + 4bytes (Feature Data Length) + 1byte (Version) + N(JSON payload size)
             int totalLen = 1 + 4 + dataLen;
 
@@ -9207,7 +9208,7 @@ namespace Microsoft.Data.SqlClient
                 _physicalStateObj.WriteByte(TdsEnums.SUPPORTED_USER_AGENT_VERSION);
 
                 // Write encoded JSON payload
-                _physicalStateObj.WriteByteArray(userAgentJsonPayload, userAgentJsonPayload.Length, 0);
+                _physicalStateObj.WriteByteSpan(userAgent.Span);
             }
 
             return totalLen;
@@ -9487,7 +9488,7 @@ namespace Microsoft.Data.SqlClient
                     requestedFeatures,
                     recoverySessionData,
                     fedAuthFeatureExtensionData,
-                    UserAgentInfo.UserAgentCachedJsonPayload.ToArray(),
+                    UserAgent.Ucs2Bytes,
                     useFeatureExt,
                     length,
                     true
@@ -9510,7 +9511,7 @@ namespace Microsoft.Data.SqlClient
         private int ApplyFeatureExData(TdsEnums.FeatureExtension requestedFeatures,
                                        SessionData recoverySessionData,
                                        FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
-                                       byte[] userAgentJsonPayload,
+                                       ReadOnlyMemory<byte> userAgent,
                                        bool useFeatureExt,
                                        int length,
                                        bool write = false)
@@ -9522,7 +9523,7 @@ namespace Microsoft.Data.SqlClient
                     // NOTE: As part of TDS spec UserAgent feature extension should be the first feature extension in the list.
                     if (LocalAppContextSwitches.EnableUserAgent && ((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) != 0))
                     {
-                        length += WriteUserAgentFeatureRequest(userAgentJsonPayload, write);
+                        length += WriteUserAgentFeatureRequest(userAgent, write);
                     }
                     if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)
                     {

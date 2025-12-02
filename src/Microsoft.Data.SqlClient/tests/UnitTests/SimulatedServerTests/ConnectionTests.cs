@@ -830,31 +830,32 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
         }
 
-        // Test to verify that the client sends a UserAgent version
-        // and driver behaves correctly even if server sent an Ack
+        // Test that the driver sends the UserAgent feature extension when
+        // the context switch is enabled, and that the presence or absence of
+        // an ack from the server has no effect.
         [Theory]
-        [InlineData(false)] // We do not force test server to send an Ack
-        [InlineData(true)] // Server is forced to send an Ack
-        public void TestConnWithUserAgentFeatureExtension(bool forceAck)
+        // Allow the server to ack.
+        [InlineData(true)]
+        // Don't allow the server to send an ack.
+        [InlineData(false)]
+        public void TestConnWithUserAgentFeatureExtension(bool sendAck)
         {
-            // Make sure needed switch is enabled
+            // Enable sending the UserAgent if desired.
             using LocalAppContextSwitchesHelper switchesHelper = new();
             switchesHelper.EnableUserAgentField = LocalAppContextSwitchesHelper.Tristate.True;
 
-            using var server = new TdsServer();
+            // Start the test server.
+            using TdsServer server = new();
             server.Start();
 
-            // Configure the server to support UserAgent version 0x01
-            server.ServerSupportedUserAgentFeatureExtVersion = 0x01;
-
-            // Opt in to forced ACK for UserAgentSupport (no negotiation)
-            server.EnableUserAgentFeatureExt = forceAck;
+            // Configure the server to send a UserAgent ack if desired.
+            server.EnableUserAgentFeatureExt = sendAck;
 
             bool loginFound = false;
 
             // Captured from LOGIN7 as parsed by the test server
             byte observedVersion = 0;
-            byte[] observedJsonBytes = Array.Empty<byte>();
+            byte[] observedPayload = Array.Empty<byte>();
 
             bool firstFeatureIsUserAgent = false;
             bool tokenWasNotNull = false;
@@ -881,7 +882,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
                 if (data.Length >= 2)
                 {
-                    observedJsonBytes = data.AsSpan(1).ToArray();
+                    observedPayload = data.AsSpan(1).ToArray();
                 }
 
                 loginFound = true;
@@ -894,7 +895,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Encrypt = SqlConnectionEncryptOption.Optional,
             }.ConnectionString;
 
-            // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
             using var connection = new SqlConnection(connStr);
             connection.Open();
 
@@ -908,23 +908,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True(dataLengthAtLeast2);
             Assert.Equal(0x1, observedVersion);
 
-            // Note: Accessing UserAgentInfo via Reflection.
-            // We cannot use InternalsVisibleTo here because making internals visible to FunctionalTests
-            // causes the *.TestHarness.cs stubs to clash with the real internal types in SqlClient.
-            var asm = typeof(SqlConnection).Assembly;
-            var userAgentInfoType =
-                asm.GetTypes().FirstOrDefault(t => string.Equals(t.Name, "UserAgentInfo", StringComparison.Ordinal)) ??
-                asm.GetTypes().FirstOrDefault(t => t.FullName?.EndsWith(".UserAgentInfo", StringComparison.Ordinal) == true);
+            Assert.Equal(UserAgent.Ucs2Bytes, observedPayload);
 
-            Assert.NotNull(userAgentInfoType);
-
-            // Try to get the property
-            var prop = userAgentInfoType.GetProperty("UserAgentCachedJsonPayload",
-                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-            Assert.NotNull(prop);
-
-            ReadOnlyMemory<byte> cachedPayload = (ReadOnlyMemory<byte>)prop.GetValue(null)!;
-            Assert.Equal(cachedPayload.ToArray(), observedJsonBytes.ToArray());
+            // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
         }
 
         /// <summary>

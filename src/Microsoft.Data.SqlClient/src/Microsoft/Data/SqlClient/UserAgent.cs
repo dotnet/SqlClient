@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient
     ///     </see>
     ///   </para>
     /// </summary>
-    internal static class ClientInterface
+    internal static class UserAgent
     {
         #region Properties
         
@@ -112,7 +112,12 @@ namespace Microsoft.Data.SqlClient
         ///     allocation errors.
         ///   </para>
         /// </summary>
-        public static string Name => _name;
+        internal static string Value { get; }
+
+        /// <summary>
+        /// The Value as UCS-2 encoded bytes.
+        /// </summary>
+        internal static ReadOnlyMemory<byte> Ucs2Bytes { get; }
 
         #endregion Properties
         
@@ -125,7 +130,7 @@ namespace Microsoft.Data.SqlClient
         ///   <para>Static construction builds the Client Interface Name.</para>
         ///   <para>All known exceptions are consumed.</para>
         /// </summary>
-        static ClientInterface()
+        static UserAgent()
         {
             // Determine the OS type.
             //
@@ -154,13 +159,16 @@ namespace Microsoft.Data.SqlClient
 #endif // NET
 
             // Build it!
-            _name = Build(
+            Value = Build(
                 MaxLenOverall,
                 DriverName,
                 osType,
                 RuntimeInformation.ProcessArchitecture,
                 RuntimeInformation.OSDescription,
                 RuntimeInformation.FrameworkDescription);
+            
+            // Convert it to USC-2 bytes.
+            Ucs2Bytes = Encoding.Unicode.GetBytes(Value);
         }
 
         /// <summary>
@@ -193,7 +201,7 @@ namespace Microsoft.Data.SqlClient
         ///   The Client Interface Name value, never null, never empty, and
         ///   never longer than <paramref name="maxLen"/>.
         /// </returns>
-        public static string Build(
+        internal static string Build(
             ushort maxLen,
             string driverName,
             string osType,
@@ -295,7 +303,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="value">The value to clean.</param>
         /// <returns>The cleaned value, or the fallback value.</returns>
-        public static string Clean(string? value)
+        internal static string Clean(string? value)
         {
             if (string.IsNullOrWhiteSpace(value)
 #if NETFRAMEWORK
@@ -370,7 +378,7 @@ namespace Microsoft.Data.SqlClient
         ///   The truncated value, or the original <paramref name="value"/>
         ///   if no truncation occurred.
         /// </returns>
-        public static string Truncate(string value, ushort maxLength)
+        internal static string Truncate(string value, ushort maxLength)
         {
             if (value.Length <= maxLength)
             {
@@ -388,9 +396,6 @@ namespace Microsoft.Data.SqlClient
 
         // ====================================================================
         // Private Fields
-
-        // The client interface name.
-        private static readonly string _name;
 
         // Our well-known .NET driver name.
         private const string DriverName = "MS-MDS";

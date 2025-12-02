@@ -13,16 +13,15 @@ using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
-    public sealed class ClientInterfaceTests
+    public sealed class UserAgentTests
     {
         #region Test Setup
 
         // ====================================================================
         // Test Setup
 
-        // Setup to test by acquiring handles to the internal ClientInterface
-        // APIs we need.
-        public ClientInterfaceTests(ITestOutputHelper output)
+        // Setup to test by saving the xUnit output helper.
+        public UserAgentTests(ITestOutputHelper output)
         {
             // Use --logger option to see the output for successful test runs:
             //
@@ -31,58 +30,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // The output will appear by default if a test fails.
             //
             _output = output;
-
-            // The ClientInterface class is internal, so we need to use
-            // reflection to access it.
-            //
-            // Alternatively, we could use the [assembly:InternalsVisibleTo]
-            // attribute in the main project to allow these tests to access
-            // internals directly.
-            
-            // Find the internal ClientInterface class' type.
-            var clientInterfaceType =
-              // Get the assembly of a public type from the same assembly as
-              // ClientInterface, and then use that to find its type.
-                typeof(SqlCommand).Assembly
-                .GetType("Microsoft.Data.SqlClient.ClientInterface");
-            Assert.NotNull(clientInterfaceType);
-            _output.WriteLine($"ClientInterface type: {clientInterfaceType}");
-
-            // Find the Name property.
-            var nameProperty =
-                clientInterfaceType.GetProperty(
-                    "Name",
-                    BindingFlags.Public | BindingFlags.Static);
-            Assert.NotNull(nameProperty);
-            _nameProperty = nameProperty;
-            _output.WriteLine($"Name property: {_nameProperty}");
-
-            // Find the Build() function.
-            var buildFunction =
-                clientInterfaceType.GetMethod(
-                    "Build",
-                    BindingFlags.Public | BindingFlags.Static);
-            Assert.NotNull(buildFunction);
-            _buildFunction = buildFunction;
-            _output.WriteLine($"Build function: {_buildFunction}");
-
-            // Find the Clean() function.
-            var cleanFunction =
-                clientInterfaceType.GetMethod(
-                    "Clean",
-                    BindingFlags.Public | BindingFlags.Static);
-            Assert.NotNull(cleanFunction);
-            _cleanFunction = cleanFunction;
-            _output.WriteLine($"Clean function: {_cleanFunction}");
-
-            // Find the Truncate() function.
-            var truncateFunction =
-                clientInterfaceType.GetMethod(
-                    "Truncate",
-                    BindingFlags.Public | BindingFlags.Static);
-            Assert.NotNull(truncateFunction);
-            _truncateFunction = truncateFunction;
-            _output.WriteLine($"Truncate function: {_truncateFunction}");
         }
 
         #endregion Test Setup
@@ -102,16 +49,16 @@ namespace Microsoft.Data.SqlClient.Tests
         // runtime values have changed in a meaningful way.
         //
         [Fact]
-        public void Name()
+        public void Value()
         {
-            var name = _nameProperty.GetValue(null) as string;
+            string value = UserAgent.Value;
 
-            _output.WriteLine($"ClientInterface.Name: {name}");
+            _output.WriteLine($"UserAgent.Value: {value}");
 
-            // Check the basic properties of the name.
-            Assert.NotNull(name);
-            Assert.True(name.Length > 0);
-            Assert.True(name.Length <= 128);
+            // Check the basic properties of the value.
+            Assert.NotNull(value);
+            Assert.True(value.Length > 0);
+            Assert.True(value.Length <= 128);
 
             // Ensure we can split it into the expected parts.
             //
@@ -119,7 +66,7 @@ namespace Microsoft.Data.SqlClient.Tests
             //
             // MS-MDS|{OS Type}|{Arch}|{OS Info}|{Runtime Info}
             //
-            var parts = name.Split('|');
+            var parts = value.Split('|');
             Assert.Equal(5, parts.Length);
             Assert.Equal("MS-MDS", parts[0]);
             
@@ -180,7 +127,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             Assert.Equal(
                 expected,
-                DoBuild(maxLen, "A", "B", Architecture.X64, "C", "D"));
+                UserAgent.Build(maxLen, "A", "B", Architecture.X64, "C", "D"));
         }
 
         // Test the Build() function when it truncates the driver name.
@@ -190,12 +137,12 @@ namespace Microsoft.Data.SqlClient.Tests
             // The driver name is longer than max length.
             Assert.Equal(
                 "DriverNa",
-                DoBuild(8, "DriverName", "B", Architecture.X64, "C", "D"));
+                UserAgent.Build(8, "DriverName", "B", Architecture.X64, "C", "D"));
             
             // The driver name is longer than its per-field max length of 16.
             Assert.Equal(
                 "ReallyLongDriver|B|X64|C|D",
-                DoBuild(
+                UserAgent.Build(
                     128, "ReallyLongDriverName", "B", Architecture.X64, "C",
                     "D"));
         }
@@ -207,12 +154,12 @@ namespace Microsoft.Data.SqlClient.Tests
             // The OS Type puts the overall length over the max.
             Assert.Equal(
                 "A|LongOs",
-                DoBuild(8, "A", "LongOsName", Architecture.X64, "C", "D"));
+                UserAgent.Build(8, "A", "LongOsName", Architecture.X64, "C", "D"));
             
             // The OS Type is longer than its per-field max length of 10.
             Assert.Equal(
                 "A|VeryLongOs|X64|C|D",
-                DoBuild(
+                UserAgent.Build(
                     128, "A", "VeryLongOsName", Architecture.X64, "C", "D"));
         }
 
@@ -223,7 +170,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // The Architecture puts the overall length over the max.
             Assert.Equal(
                 "A|B|Arm6",
-                DoBuild(8, "A", "B", Architecture.Arm64, "C", "D"));
+                UserAgent.Build(8, "A", "B", Architecture.Arm64, "C", "D"));
 
 #if NET
             // There are no Architecture enum values defined in .NET Framework
@@ -233,7 +180,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // The Architecture is longer than its per-field max length of 10.
             Assert.Equal(
                 "A|B|LoongArch6|C|D",
-                DoBuild(
+                UserAgent.Build(
                     128, "A", "B", Architecture.LoongArch64, "C", "D"));
 #endif // NET
         }
@@ -245,12 +192,12 @@ namespace Microsoft.Data.SqlClient.Tests
             // The OS Info puts the overall length over the max.
             Assert.Equal(
                 "A|B|X64|LongOsI",
-                DoBuild(15, "A", "B", Architecture.X64, "LongOsInfo", "D"));
+                UserAgent.Build(15, "A", "B", Architecture.X64, "LongOsInfo", "D"));
             
             // The OS Type is longer than its per-field max length of 44.
             Assert.Equal(
                 "A|B|X64|01234567890123456789012345678901234567890123|D",
-                DoBuild(
+                UserAgent.Build(
                     128, "A", "B", Architecture.X64,
                     "01234567890123456789012345678901234567890123456789",
                     "D"));
@@ -263,13 +210,13 @@ namespace Microsoft.Data.SqlClient.Tests
             // The Runtime Info puts the overall length over the max.
             Assert.Equal(
                 "A|B|X64|C|LongRunt",
-                DoBuild(18, "A", "B", Architecture.X64, "C",
+                UserAgent.Build(18, "A", "B", Architecture.X64, "C",
                 "LongRuntimeInfo"));
             
             // The Runtime Type is longer than its per-field max length of 44.
             Assert.Equal(
                 "A|B|X64|C|01234567890123456789012345678901234567890123",
-                DoBuild(
+                UserAgent.Build(
                     128, "A", "B", Architecture.X64, "C",
                     "01234567890123456789012345678901234567890123456789"));
         }
@@ -279,7 +226,7 @@ namespace Microsoft.Data.SqlClient.Tests
         public void Build_Truncate_Most()
         {
             var name = 
-                DoBuild(
+                UserAgent.Build(
                     128,
                     // Driver name > 16 chars.
                     "A01234567890123456789",
@@ -308,7 +255,7 @@ namespace Microsoft.Data.SqlClient.Tests
         public void Build_Truncate_All()
         {
             var name = 
-                DoBuild(
+                UserAgent.Build(
                     128,
                     // Driver name > 16 chars.
                     "A01234567890123456789",
@@ -336,22 +283,22 @@ namespace Microsoft.Data.SqlClient.Tests
         public void Clean()
         {
             // Null becomes "Unknown".
-            Assert.Equal("Unknown", DoClean(null));
+            Assert.Equal("Unknown", UserAgent.Clean(null));
 
             // Empty string becomes "Unknown".
-            Assert.Equal("Unknown", DoClean(string.Empty));
+            Assert.Equal("Unknown", UserAgent.Clean(string.Empty));
 
             // Whitespace string becomes "Unknown".
-            Assert.Equal("Unknown", DoClean(" "));
-            Assert.Equal("Unknown", DoClean("\t"));
-            Assert.Equal("Unknown", DoClean("\r"));
-            Assert.Equal("Unknown", DoClean("\n"));
-            Assert.Equal("Unknown", DoClean(" \t\r\n"));
+            Assert.Equal("Unknown", UserAgent.Clean(" "));
+            Assert.Equal("Unknown", UserAgent.Clean("\t"));
+            Assert.Equal("Unknown", UserAgent.Clean("\r"));
+            Assert.Equal("Unknown", UserAgent.Clean("\n"));
+            Assert.Equal("Unknown", UserAgent.Clean(" \t\r\n"));
 
             // Leading and trailing whitespace are removed.
-            Assert.Equal("A", DoClean(" A"));
-            Assert.Equal("A", DoClean("A\t"));
-            Assert.Equal("A", DoClean("\rA\n"));
+            Assert.Equal("A", UserAgent.Clean(" A"));
+            Assert.Equal("A", UserAgent.Clean("A\t"));
+            Assert.Equal("A", UserAgent.Clean("\rA\n"));
 
             // All permitted characters are preserved.
             const string AllPermitted =
@@ -359,20 +306,20 @@ namespace Microsoft.Data.SqlClient.Tests
                 "abcdefghijklmnopqrstuvwxyz" +
                 "0123456789" +
                 " .+_-";
-            Assert.Equal(AllPermitted, DoClean(AllPermitted));
+            Assert.Equal(AllPermitted, UserAgent.Clean(AllPermitted));
 
             // Each disallowed character is replaced with underscore.
             Assert.Equal(
                 "A_B_C_D_E_F_G_H_I_J_K_L_M_N_O_P",
-                DoClean("A|B,C;D:E'F\"G[H{I]J}K\\L/M<N>O?P"));
+                UserAgent.Clean("A|B,C;D:E'F\"G[H{I]J}K\\L/M<N>O?P"));
             Assert.Equal(
                 "Q_R_S_T_U_V_W_X+Y-Z_a.b_c_d_e_f_g_h_i_j_k_l_m_n_o",
-                DoClean("Q^R_S`T~U(V)W*X+Y-Z_a.b,c/d:e<f>g'h\"i[j]k{l}m|n\\o"));
+                UserAgent.Clean("Q^R_S`T~U(V)W*X+Y-Z_a.b,c/d:e<f>g'h\"i[j]k{l}m|n\\o"));
 
             // All disallowed characters are replaced with underscore.
             for (char c = (char)0u; /* see condition below */ ; ++c)
             {
-                var clean = DoClean(c.ToString());
+                var clean = UserAgent.Clean(c.ToString());
 
                 // Whitespace becomes "Unknown".
                 if (char.IsWhiteSpace(c))
@@ -409,82 +356,31 @@ namespace Microsoft.Data.SqlClient.Tests
         public void Trunc()
         {
             // Max length of 0.
-            Assert.Equal("", DoTruncate("", 0));
-            Assert.Equal("", DoTruncate(" ", 0));
-            Assert.Equal("", DoTruncate("A", 0));
-            Assert.Equal("", DoTruncate("ABCDE FGHIJ", 0));
+            Assert.Equal("", UserAgent.Truncate("", 0));
+            Assert.Equal("", UserAgent.Truncate(" ", 0));
+            Assert.Equal("", UserAgent.Truncate("A", 0));
+            Assert.Equal("", UserAgent.Truncate("ABCDE FGHIJ", 0));
             
             // Max length of 1.
-            Assert.Equal("", DoTruncate("", 1));
-            Assert.Equal(" ", DoTruncate(" ", 1));
-            Assert.Equal("A", DoTruncate("A", 1));
-            Assert.Equal("A", DoTruncate("ABCDE FGHIJ", 1));
+            Assert.Equal("", UserAgent.Truncate("", 1));
+            Assert.Equal(" ", UserAgent.Truncate(" ", 1));
+            Assert.Equal("A", UserAgent.Truncate("A", 1));
+            Assert.Equal("A", UserAgent.Truncate("ABCDE FGHIJ", 1));
             
             // Max length of 5.
-            Assert.Equal("", DoTruncate("", 5));
-            Assert.Equal(" ", DoTruncate(" ", 5));
-            Assert.Equal("A", DoTruncate("A", 5));
-            Assert.Equal("ABCDE", DoTruncate("ABCDE FGHIJ", 5));
+            Assert.Equal("", UserAgent.Truncate("", 5));
+            Assert.Equal(" ", UserAgent.Truncate(" ", 5));
+            Assert.Equal("A", UserAgent.Truncate("A", 5));
+            Assert.Equal("ABCDE", UserAgent.Truncate("ABCDE FGHIJ", 5));
             
             // Max length of 100.
-            Assert.Equal("", DoTruncate("", 100));
-            Assert.Equal(" ", DoTruncate(" ", 100));
-            Assert.Equal("A", DoTruncate("A", 100));
-            Assert.Equal("ABCDE FGHIJ", DoTruncate("ABCDE FGHIJ", 100));
+            Assert.Equal("", UserAgent.Truncate("", 100));
+            Assert.Equal(" ", UserAgent.Truncate(" ", 100));
+            Assert.Equal("A", UserAgent.Truncate("A", 100));
+            Assert.Equal("ABCDE FGHIJ", UserAgent.Truncate("ABCDE FGHIJ", 100));
         }
 
         #endregion Tests
-
-        #region Private Helpers
-
-        // ====================================================================
-        // Private Helpers
-        
-        // Convenience helper to call the Build() function.
-        private string DoBuild(
-            ushort maxLen,
-            string driverName,
-            string osType,
-            Architecture arch,
-            string osDesc,
-            string frameworkDesc)
-        {
-            var result =
-                _buildFunction.Invoke(
-                    null,
-                    new object[]
-                    {
-                        maxLen,
-                        driverName,
-                        osType,
-                        arch,
-                        osDesc,
-                        frameworkDesc
-                    }) as string;
-            Assert.NotNull(result);
-            return result;
-        }
-        
-        // Convenience helper to call the Clean() function.
-        private string DoClean(string? value)
-        {
-            var result =
-                _cleanFunction.Invoke(null, new object?[] { value }) as string;
-            Assert.NotNull(result);
-            return result;
-        }
-        
-        // Convenience helper to call the Truncate() function.
-        private string DoTruncate(string value, ushort maxLen)
-        {
-            var result =
-                _truncateFunction.Invoke(
-                    null, new object?[] { value, maxLen }) as string;
-            Assert.NotNull(result);
-            return result;
-        }
-
-        #endregion Private Helpers
 
         #region Private Fields
 
@@ -493,18 +389,6 @@ namespace Microsoft.Data.SqlClient.Tests
         
         // The xUnit output helper.
         private readonly ITestOutputHelper _output;
-        
-        // The ClientInterface.Name property.
-        private readonly PropertyInfo _nameProperty;
-        
-        // The ClientInterface.Build() function.
-        private readonly MethodInfo _buildFunction;
-        
-        // The ClientInterface.Clean() function.
-        private readonly MethodInfo _cleanFunction;
-        
-        // The ClientInterface.Truncate() function.
-        private readonly MethodInfo _truncateFunction;
 
         #endregion Private Fields
     }
