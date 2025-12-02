@@ -26,6 +26,7 @@
     <PackageReference Include="System.Threading.Channels" />
 	</ItemGroup>
 
+  <!-- System.Buffers, System.Memory, and System.Runtime.InteropServices.RuntimeInformation are included in .NET 10+ BCL -->
   <ItemGroup Condition="$([MSBuild]::VersionLessThan($([MSBuild]::GetTargetFrameworkVersion($(TargetFramework))), '10.0'))">
     <PackageReference Include="System.Buffers" />
     <PackageReference Include="System.Memory" />

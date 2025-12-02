@@ -1106,6 +1106,7 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
 
+  <!-- System.Text.Json is included in .NET 10+ BCL -->
   <ItemGroup Condition="$([MSBuild]::VersionLessThan($([MSBuild]::GetTargetFrameworkVersion($(TargetFramework))), '10.0'))">
     <PackageReference Include="System.Text.Json" />
   </ItemGroup>
