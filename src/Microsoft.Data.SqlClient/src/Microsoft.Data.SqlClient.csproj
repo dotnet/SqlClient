@@ -10,7 +10,6 @@
     <!-- If a target OS was not specified, use the current OS as the target OS. -->
     <TargetOs Condition="'$(TargetOs)' == ''">$(OS)</TargetOs>
 
-
     <!-- Uncomment the following line to override the OS you are developing for -->
     <!--<TargetOs>Unix</TargetOs>-->
     <!--<TargetOs>Windows_NT</TargetOs>-->

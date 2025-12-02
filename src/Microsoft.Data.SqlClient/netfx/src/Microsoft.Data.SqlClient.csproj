@@ -489,8 +489,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalAppContextSwitches.cs">
       <Link>Microsoft\Data\SqlClient\LocalAppContextSwitches.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceROot)Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Windows.cs</Link>
+    <Compile Include="$(CommonSourceROot)Microsoft\Data\SqlClient\LocalDb\LocalDbApi.windows.cs">
+      <Link>Microsoft\Data\SqlClient\LocalDb\LocalDbApi.windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDb\LocalDbConfigurationSection.netfx.cs">
       <Link>Microsoft\Data\SqlClient\LocalDb\LocalDbConfigurationSection.netfx.cs</Link>
@@ -726,11 +726,11 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.windows.cs">
+      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.windows.cs">
+      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs</Link>
@@ -939,8 +939,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParser.cs">
       <Link>Microsoft\Data\SqlClient\TdsParser.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserSafeHandles.windows.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObject.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStateObject.cs</Link>
@@ -948,11 +948,11 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObject.Multiplexer.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStateObject.Multiplexer.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectFactory.windows.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserStateObjectFactory.windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectNative.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserStateObjectNative.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectNative.windows.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserStateObjectNative.windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStaticMethods.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStaticMethods.cs</Link>
@@ -990,8 +990,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlDbTypeExtensions.cs">
       <Link>Microsoft\Data\SqlDbTypeExtensions.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
-      <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.windows.cs">
+      <Link>Microsoft\Data\SqlTypes\SqlFileStream.windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlJson.cs">
       <Link>Microsoft\Data\SqlTypes\SqlJson.cs</Link>
