@@ -11,7 +11,7 @@ parameters:
 
 # The target frameworks to build and run tests for on Windows.
 #
-# This is _not_ the target frameworks to build the driver packages for.
+# These are _not_ the target frameworks to build the driver packages for.
 #
 - name: targetFrameworks
   displayName: 'Target Frameworks on Windows'
@@ -20,7 +20,7 @@ parameters:
 
 # The target frameworks to build and run tests for on Unix.
 #
-# This is _not_ the target frameworks to build the driver packages for.
+# These are _not_ the target frameworks to build the driver packages for.
 #
 - name: targetFrameworksUnix
   displayName: 'Target Frameworks on Unix'
