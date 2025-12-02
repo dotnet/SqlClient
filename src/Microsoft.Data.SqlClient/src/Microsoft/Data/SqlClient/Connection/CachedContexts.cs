@@ -66,42 +66,42 @@ namespace Microsoft.Data.SqlClient.Connection
         /// Removes and returns the cached ExecuteNonQueryAsync context.
         /// </summary>
         /// <returns>The previously cached context or null when empty.</returns>
-        internal SqlCommand.ExecuteNonQueryAsyncCallContext? ClearCommandExecuteNonQueryAsyncContext() =>
+        internal SqlCommand.ExecuteNonQueryAsyncCallContext? TakeCommandExecuteNonQueryAsyncContext() =>
             Interlocked.Exchange(ref _commandExecuteNonQueryAsyncContext, null);
 
         /// <summary>
         /// Removes and returns the cached ExecuteReaderAsync context.
         /// </summary>
         /// <returns>The previously cached context or null when empty.</returns>
-        internal SqlCommand.ExecuteReaderAsyncCallContext? ClearCommandExecuteReaderAsyncContext() =>
+        internal SqlCommand.ExecuteReaderAsyncCallContext? TakeCommandExecuteReaderAsyncContext() =>
             Interlocked.Exchange(ref _commandExecuteReaderAsyncContext, null);
 
         /// <summary>
         /// Removes and returns the cached ExecuteXmlReaderAsync context.
         /// </summary>
         /// <returns>The previously cached context or null when empty.</returns>
-        internal SqlCommand.ExecuteXmlReaderAsyncCallContext? ClearCommandExecuteXmlReaderAsyncContext() =>
+        internal SqlCommand.ExecuteXmlReaderAsyncCallContext? TakeCommandExecuteXmlReaderAsyncContext() =>
             Interlocked.Exchange(ref _commandExecuteXmlReaderAsyncContext, null);
 
         /// <summary>
         /// Removes and returns the cached ReadAsync context.
         /// </summary>
         /// <returns>The previously cached context or null when empty.</returns>
-        internal SqlDataReader.ReadAsyncCallContext? ClearDataReaderReadAsyncContext() =>
+        internal SqlDataReader.ReadAsyncCallContext? TakeDataReaderReadAsyncContext() =>
             Interlocked.Exchange(ref _dataReaderReadAsyncContext, null);
 
         /// <summary>
         /// Removes and returns the cached IsDBNullAsync context.
         /// </summary>
         /// <returns>The previously cached context or null when empty.</returns>
-        internal SqlDataReader.IsDBNullAsyncCallContext? ClearDataReaderIsDbNullContext() =>
+        internal SqlDataReader.IsDBNullAsyncCallContext? TakeDataReaderIsDbNullContext() =>
             Interlocked.Exchange(ref _dataReaderIsDbNullContext, null);
 
         /// <summary>
         /// Removes and returns the cached data reader snapshot.
         /// </summary>
         /// <returns>The previously cached snapshot or null when empty.</returns>
-        internal SqlDataReader.Snapshot? ClearDataReaderSnapshot() =>
+        internal SqlDataReader.Snapshot? TakeDataReaderSnapshot() =>
             Interlocked.Exchange(ref _dataReaderSnapshot, null);
 
         /// <summary>

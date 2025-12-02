@@ -5042,7 +5042,7 @@ namespace Microsoft.Data.SqlClient
                 ReadAsyncCallContext context = null;
                 if (_connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
                 {
-                    context = sqlInternalConnection.CachedContexts.ClearDataReaderReadAsyncContext();
+                    context = sqlInternalConnection.CachedContexts.TakeDataReaderReadAsyncContext();
                 }
                 if (context is null)
                 {
@@ -5211,7 +5211,7 @@ namespace Microsoft.Data.SqlClient
                     IsDBNullAsyncCallContext context = null;
                     if (_connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
                     {
-                        context = sqlInternalConnection.CachedContexts.ClearDataReaderIsDbNullContext();
+                        context = sqlInternalConnection.CachedContexts.TakeDataReaderIsDbNullContext();
                     }
                     if (context is null)
                     {
@@ -5797,7 +5797,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
                     {
-                        _snapshot = sqlInternalConnection.CachedContexts.ClearDataReaderSnapshot() ?? new Snapshot();
+                        _snapshot = sqlInternalConnection.CachedContexts.TakeDataReaderSnapshot() ?? new Snapshot();
                     }
                     else
                     {

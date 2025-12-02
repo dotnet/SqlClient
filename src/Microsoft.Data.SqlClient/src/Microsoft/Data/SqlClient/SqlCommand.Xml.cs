@@ -490,7 +490,7 @@ namespace Microsoft.Data.SqlClient
             ExecuteXmlReaderAsyncCallContext context = null;
             if (_activeConnection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
             {
-                context = sqlInternalConnection.CachedContexts.ClearCommandExecuteXmlReaderAsyncContext();
+                context = sqlInternalConnection.CachedContexts.TakeCommandExecuteXmlReaderAsyncContext();
             }
 
             context ??= new ExecuteXmlReaderAsyncCallContext();

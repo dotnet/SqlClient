@@ -983,7 +983,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (_activeConnection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
                 {
-                    context = sqlInternalConnection.CachedContexts.ClearCommandExecuteReaderAsyncContext();
+                    context = sqlInternalConnection.CachedContexts.TakeCommandExecuteReaderAsyncContext();
                 }
 
                 context ??= new ExecuteReaderAsyncCallContext();
