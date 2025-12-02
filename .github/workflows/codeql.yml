@@ -43,11 +43,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        # Disable scanning of Actions, since these always fail.
-        #- language: actions
-        #  build-mode: none
         - language: csharp
-          build-mode: none
+          build-mode: manual
         # CodeQL supports the following values keywords for 'language': 'actions', 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'rust', 'swift'
         # Use `c-cpp` to analyze code written in C, C++ or both
         # Use 'java-kotlin' to analyze code written in Java, Kotlin or both
@@ -60,11 +57,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # Add any setup steps before running the `github/codeql-action/init` action.
-    # This includes steps like installing compilers or runtimes (`actions/setup-node`
-    # or others). This is typically only required for manual builds.
-    # - name: Setup runtime (example)
-    #   uses: actions/setup-example@v1
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v5.0.1
+      with:
+        # TODO: Update this to .NET 10 once PR #3686 is complete.
+        # TODO: Replace this with global-json-file once PR #3797 is complete.
+        dotnet-version: 9.x
+        dotnet-quality: ga
+        #global-json-file: global.json
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
@@ -88,13 +88,7 @@ jobs:
     - name: Run manual build steps
       if: matrix.build-mode == 'manual'
       shell: bash
-      run: |
-        echo 'If you are using a "manual" build mode for one or more of the' \
-          'languages you are analyzing, replace this with the commands to build' \
-          'your code, for example:'
-        echo '  make bootstrap'
-        echo '  make release'
-        exit 1
+      run: dotnet build src/
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
