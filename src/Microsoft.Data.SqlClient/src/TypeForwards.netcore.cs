@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(System.Data.SqlDbType))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(System.Data.StatementCompletedEventArgs))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(System.Data.StatementCompletedEventHandler))]
@@ -26,3 +28,5 @@
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(System.Data.SqlTypes.SqlTruncateException))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(System.Data.SqlTypes.SqlTypeException))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(System.Data.SqlTypes.SqlXml))]
+
+#endif
