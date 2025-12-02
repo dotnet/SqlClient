@@ -2,7 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
+#if _TESTSET_2
+
 using System.Data;
 using System.Threading.Tasks;
 using Xunit;
@@ -136,3 +137,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
     }
 }
+
+#endif

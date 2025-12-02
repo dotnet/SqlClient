@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _TESTSET_2
+
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -12,7 +14,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
 using Xunit;
-
 using static Microsoft.Data.SqlClient.ManualTesting.Tests.DataTestUtility;
 using static Microsoft.Data.SqlClient.ManualTesting.Tests.DNSCachingTest;
 
@@ -132,3 +133,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
     }
 }
+
+#endif
