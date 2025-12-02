@@ -2,15 +2,17 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _TESTSET_3
+
 using System;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
+using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlTypes;
 using Xunit;
 using Xunit.Abstractions;
-using System.Text.Json;
-using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -507,3 +509,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
     }
 }
+
+#endif

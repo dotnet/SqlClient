@@ -1,4 +1,10 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+#if _TESTSET_3
+
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -7,8 +13,8 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using Xunit.Abstractions;
 using Xunit;
-using System.Collections;
 
+// @TODO: If these are bulk copy tests, it should probably go in bulk copy test folder and run with bulk copy tests (ie, set 2)
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
 {
     public class JsonBulkCopyTest
@@ -310,3 +316,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
         }
     }
 }
+
+#endif

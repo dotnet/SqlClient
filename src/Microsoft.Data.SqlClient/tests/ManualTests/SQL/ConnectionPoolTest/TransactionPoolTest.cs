@@ -1,4 +1,10 @@
-﻿using System.Transactions;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+#if NETFRAMEWORK && _TESTSET_3
+
+using System.Transactions;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -99,3 +105,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
     }
 }
+
+#endif

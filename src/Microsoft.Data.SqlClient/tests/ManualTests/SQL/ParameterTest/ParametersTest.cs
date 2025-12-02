@@ -2,21 +2,22 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _TESTSET_3
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
-using Xunit;
-using System.Globalization;
 using Microsoft.Data.SqlClient.Tests.Common;
-
+using Xunit;
 
 #if !NETFRAMEWORK
-using Microsoft.SqlServer.Types;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.SqlServer.Types;
 #endif
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -1028,3 +1029,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
     }
 }
+
+#endif

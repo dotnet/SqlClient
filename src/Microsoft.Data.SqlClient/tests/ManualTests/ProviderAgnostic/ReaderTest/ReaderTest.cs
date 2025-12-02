@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _TESTSET_3
+
 using System;
 using System.Data.Common;
 using System.IO;
@@ -9,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
+// @TODO: Move into reader tests
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class ReaderTest
@@ -466,3 +469,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 #endif
     }
 }
+
+#endif
