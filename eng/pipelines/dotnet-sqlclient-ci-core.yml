@@ -12,12 +12,12 @@ parameters:
 - name: targetFrameworks
   displayName: 'Target Frameworks on Windows'
   type: object
-  default: [net462, net8.0, net9.0, net10.0]
+  default: [net462, net8.0, net9.0]
 
 - name: targetFrameworksLinux
   displayName: 'Target Frameworks on Non-Windows'
   type: object
-  default: [net8.0, net9.0, net10.0]
+  default: [net8.0, net9.0]
 
 - name: netcoreVersionTestUtils
   displayName: 'Netcore Version for Test Utilities'

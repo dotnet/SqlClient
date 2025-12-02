@@ -10,7 +10,7 @@ parameters:
   
   - name: targetFramework
     type: string
-    default: net10.0
+    default: net9.0
 
 steps:
 - task: DotNetCoreCLI@2
