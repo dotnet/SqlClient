@@ -154,6 +154,6 @@
   -->
   <PropertyGroup>
     <!-- The newest .NET SDK we support is .NET 9.0, which uses C# 13 -->
-    <LangVersion>13</LangVersion>
+    <LangVersion>14</LangVersion>
   </PropertyGroup>
 </Project>
