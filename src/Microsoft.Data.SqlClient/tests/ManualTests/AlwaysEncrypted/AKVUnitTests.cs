@@ -2,15 +2,17 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
-using Xunit;
-using Azure.Security.KeyVault.Keys;
-using System.Reflection;
+#if _TESTSET_AE
+
 using System;
 using System.Collections.Generic;
-using System.Threading;
-using System.Diagnostics.Tracing;
 using System.Diagnostics;
+using System.Diagnostics.Tracing;
+using System.Reflection;
+using System.Threading;
+using Azure.Security.KeyVault.Keys;
+using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
@@ -307,3 +309,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
     }
 }
+
+#endif

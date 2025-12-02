@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.using System;
 
+#if _TESTSET_AE
+
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
@@ -17,3 +19,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public string GeneratedKeyUri { get; }
     }
 }
+
+#endif
