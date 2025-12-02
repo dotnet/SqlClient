@@ -12,6 +12,24 @@
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
+
+  <!-- OS Constants ==================================================== -->
+  <PropertyGroup>
+    <!-- @TODO: Since this is a "legacy" projects that will exist post-common project completion, these constants should be replaced with the logic from common project. -->
+    <TestTargetOS Condition="'$(TestTargetOS)' == ''">$(OS)</TestTargetOS>
+    <DefineConstants Condition="$(TestTargetOS.ToUpper().StartsWith('UNIX'))">$(DefineConstants),_UNIX</DefineConstants>
+    <DefineConstants Condition="$(TestTargetOS.ToUpper().StartsWith('WINDOWS'))">$(DefineConstants),_WINDOWS</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Test Set Constants ============================================== -->
+  <PropertyGroup>
+    <DefineConstants Condition="'$(TestSet)' == '' OR '$(TestSet)' == '1'">$(DefineConstants),_TESTSET_1</DefineConstants>
+    <DefineConstants Condition="'$(TestSet)' == '' OR '$(TestSet)' == '2'">$(DefineConstants),_TESTSET_2</DefineConstants>
+    <DefineConstants Condition="'$(TestSet)' == '' OR '$(TestSet)' == '3'">$(DefineConstants),_TESTSET_3</DefineConstants>
+    <DefineConstants Condition="'$(TestSet)' == '' OR '$(TestSet)' == 'AE'">$(DefineConstants),_TESTSET_AE</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Compiled Files ================================================== -->
   <ItemGroup Condition="'$(TestSet)' == '' or '$(TestSet)' == 'AE'">
     <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
     <Compile Include="AlwaysEncrypted\ExceptionsGenericError.cs" />
