@@ -65,7 +65,8 @@
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
   </ItemGroup>
   <!-- Common Target Framework Specific Dependencies -->
-  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="9.0.9" />
+  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">    
+    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="9.0.9" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.9" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.9" />
     <PackageVersion Include="System.Text.Json" Version="9.0.9" />
