@@ -43,6 +43,9 @@
 # Set the pipeline run name to the day-of-year and the daily run counter.
 name: $(DayOfYear)$(Rev:rr)
 
+# Do not trigger this pipeline for PRs.
+pr: none
+
 # Trigger this pipeline on commits to certain branches.
 trigger:
   
@@ -109,7 +112,7 @@ parameters:
   - name: codeCovTargetFrameworks
     displayName: Code Coverage Target Frameworks
     type: object
-    default: [net462, net8.0]
+    default: [net462, net8.0, net9.0]
 
   - name: debug
     displayName: Enable debug output

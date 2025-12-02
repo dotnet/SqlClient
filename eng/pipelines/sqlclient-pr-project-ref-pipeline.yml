@@ -46,6 +46,9 @@ pr:
     - build.proj
     - NuGet.config
 
+# Do not trigger commit or schedule runs for this pipeline.
+trigger: none
+
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
 
@@ -66,7 +69,7 @@ parameters:
   - name: codeCovTargetFrameworks
     displayName: Code Coverage Target Frameworks
     type: object
-    default: [net462, net8.0]
+    default: [net462, net8.0, net9.0]
 
   - name: debug
     displayName: Enable debug output

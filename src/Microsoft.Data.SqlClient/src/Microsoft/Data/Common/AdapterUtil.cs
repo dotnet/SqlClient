@@ -362,13 +362,6 @@ namespace Microsoft.Data.Common
             return e;
         }
 
-        internal static ArgumentOutOfRangeException ArgumentOutOfRange(string message, string parameterName, object value)
-        {
-            ArgumentOutOfRangeException e = new(parameterName, value, message);
-            TraceExceptionAsReturnValue(e);
-            return e;
-        }
-
         internal static AuthenticationException SSLCertificateAuthenticationException(string message)
         {
             AuthenticationException e = new(message);
@@ -457,9 +450,6 @@ namespace Microsoft.Data.Common
 #endif
             return InvalidEnumerationValue(typeof(Format), (int)value);
         }
-
-        internal static ArgumentOutOfRangeException NotSupportedUserDefinedTypeSerializationFormat(Format value, string method)
-            => NotSupportedEnumerationValue(typeof(Format), value.ToString(), method);
 
         internal static ArgumentException InvalidArgumentLength(string argumentName, int limit)
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidArgumentLength, argumentName, limit));
@@ -1084,9 +1074,6 @@ namespace Microsoft.Data.Common
         internal static bool CompareInsensitiveInvariant(string strvalue, string strconst)
             => 0 == CultureInfo.InvariantCulture.CompareInfo.Compare(strvalue, strconst, CompareOptions.IgnoreCase);
 
-        internal static int DstCompare(string strA, string strB) // this is null safe
-            => CultureInfo.CurrentCulture.CompareInfo.Compare(strA, strB, ADP.DefaultCompareOptions);
-
         internal static void SetCurrentTransaction(Transaction transaction) => Transaction.Current = transaction;
 
         internal static Exception NonSeqByteAccess(long badIndex, long currIndex, string method)
@@ -1241,11 +1228,6 @@ namespace Microsoft.Data.Common
 
         internal static Exception AmbiguousCollectionName(string collectionName)
             => Argument(StringsHelper.GetString(Strings.MDF_AmbiguousCollectionName, collectionName));
-
-        internal static Exception MissingDataSourceInformationColumn() => Argument(StringsHelper.GetString(Strings.MDF_MissingDataSourceInformationColumn));
-
-        internal static Exception IncorrectNumberOfDataSourceInformationRows()
-            => Argument(StringsHelper.GetString(Strings.MDF_IncorrectNumberOfDataSourceInformationRows));
 
         internal static Exception MissingRestrictionColumn() => Argument(StringsHelper.GetString(Strings.MDF_MissingRestrictionColumn));
 
@@ -1403,13 +1385,6 @@ namespace Microsoft.Data.Common
         internal static readonly IntPtr s_ptrZero = IntPtr.Zero;
 #if NETFRAMEWORK
 #region netfx project only
-        internal static Task<T> CreatedTaskWithException<T>(Exception ex)
-        {
-            TaskCompletionSource<T> completion = new();
-            completion.SetException(ex);
-            return completion.Task;
-        }
-
         //
         // Helper Functions
         //
@@ -1507,14 +1482,6 @@ namespace Microsoft.Data.Common
         }
 
         //
-        // DbDataReader
-        //
-        internal static Exception NumericToDecimalOverflow()
-        {
-            return InvalidCast(StringsHelper.GetString(Strings.ADP_NumericToDecimalOverflow));
-        }
-
-        //
         // DbDataAdapter
         //
         internal static InvalidOperationException ComputerNameEx(int lastError)
@@ -1531,78 +1498,11 @@ namespace Microsoft.Data.Common
         internal const float FailoverTimeoutStepForTnir = 0.125F; // Fraction of timeout to use in case of Transparent Network IP resolution.
         internal const int MinimumTimeoutForTnirMs = 500; // The first login attempt in  Transparent network IP Resolution 
 
-        internal static readonly int s_ptrSize = IntPtr.Size;
-        internal static readonly IntPtr s_invalidPtr = new(-1); // use for INVALID_HANDLE
-
         internal static readonly bool s_isWindowsNT = (PlatformID.Win32NT == Environment.OSVersion.Platform);
-        internal static readonly bool s_isPlatformNT5 = (ADP.s_isWindowsNT && (Environment.OSVersion.Version.Major >= 5));
-
-        [FileIOPermission(SecurityAction.Assert, AllFiles = FileIOPermissionAccess.PathDiscovery)]
-        [ResourceExposure(ResourceScope.Machine)]
-        [ResourceConsumption(ResourceScope.Machine)]
-        internal static string GetFullPath(string filename)
-        { // MDAC 77686
-            return Path.GetFullPath(filename);
-        }
-
-        // TODO: cache machine name and listen to longhorn event to reset it
-        internal static string GetComputerNameDnsFullyQualified()
-        {
-            const int ComputerNameDnsFullyQualified = 3; // winbase.h, enum COMPUTER_NAME_FORMAT
-            const int ERROR_MORE_DATA = 234; // winerror.h
-
-            string value;
-            if (s_isPlatformNT5)
-            {
-                int length = 0; // length parameter must be zero if buffer is null
-                                // query for the required length
-                                // VSTFDEVDIV 479551 - ensure that GetComputerNameEx does not fail with unexpected values and that the length is positive
-                int getComputerNameExError = 0;
-                if (0 == Kernel32Safe.GetComputerNameEx(ComputerNameDnsFullyQualified, null, ref length))
-                {
-                    getComputerNameExError = Marshal.GetLastWin32Error();
-                }
-                if ((getComputerNameExError != 0 && getComputerNameExError != ERROR_MORE_DATA) || length <= 0)
-                {
-                    throw ADP.ComputerNameEx(getComputerNameExError);
-                }
-
-                StringBuilder buffer = new(length);
-                length = buffer.Capacity;
-                if (0 == Kernel32Safe.GetComputerNameEx(ComputerNameDnsFullyQualified, buffer, ref length))
-                {
-                    throw ADP.ComputerNameEx(Marshal.GetLastWin32Error());
-                }
-
-                // Note: In Longhorn you'll be able to rename a machine without
-                // rebooting.  Therefore, don't cache this machine name.
-                value = buffer.ToString();
-            }
-            else
-            {
-                value = ADP.MachineName();
-            }
-            return value;
-        }
-
-        internal static IntPtr IntPtrOffset(IntPtr pbase, int offset)
-        {
-            if (4 == ADP.s_ptrSize)
-            {
-                return (IntPtr)checked(pbase.ToInt32() + offset);
-            }
-            Debug.Assert(8 == ADP.s_ptrSize, "8 != IntPtr.Size"); // MDAC 73747
-            return (IntPtr)checked(pbase.ToInt64() + offset);
-        }
 
 #endregion
 #else
 #region netcore project only
-
-        //
-        // COM+ exceptions
-        //
-        internal static PlatformNotSupportedException DbTypeNotSupported(string dbType) => new(StringsHelper.GetString(Strings.SQL_DbTypeNotSupportedOnThisPlatform, dbType));
 
         // IDbConnection.BeginTransaction, OleDbTransaction.Begin
         internal static ArgumentOutOfRangeException InvalidIsolationLevel(IsolationLevel value)
