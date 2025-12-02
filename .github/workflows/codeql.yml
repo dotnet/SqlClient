@@ -88,7 +88,9 @@ jobs:
     - name: Run manual build steps
       if: matrix.build-mode == 'manual'
       shell: bash
-      run: dotnet build src/
+      run: |
+        mkdir packages
+        dotnet build src/
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
