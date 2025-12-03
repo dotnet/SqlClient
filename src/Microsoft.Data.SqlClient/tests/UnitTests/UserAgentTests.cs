@@ -2,7 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Runtime.InteropServices;
+using System.Text;
 
 using Xunit;
 using Xunit.Abstractions;
@@ -98,6 +100,24 @@ public sealed class UserAgentTests
         // Runtime Info must be non-empty and 44 characters or less.
         Assert.True(parts[6] == "Unknown" || parts[6].Length > 0);
         Assert.True(parts[6].Length <= 44);
+    }
+
+    // Test the Ucs2Bytes property when actual runtime information is used.
+    [Fact]
+    public void Ucs2Bytes_Runtime_Parts()
+    {
+        var bytes = UserAgent.Ucs2Bytes;
+
+        _output.WriteLine(
+            $"UserAgent.Ucs2Bytes: 0x{Convert.ToHexString(bytes.Span)}");
+
+        // Check the basic properties of the byte array.
+        Assert.True(bytes.Length > 0);
+        Assert.True(bytes.Length <= 256 * 2); // USC2 uses 2 bytes per char.
+
+        // Ensure we can convert the bytes back to the original string.
+        string value = Encoding.Unicode.GetString(bytes.Span);
+        Assert.Equal(UserAgent.Value, value);
     }
 
     // Test the Build() function when it truncates the overall length.
