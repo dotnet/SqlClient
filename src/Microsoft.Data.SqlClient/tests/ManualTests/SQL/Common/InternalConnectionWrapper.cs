@@ -10,6 +10,8 @@ using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    // @TODO: Move dictionary extensions to separate file!
+
 #if NETFRAMEWORK
     internal static class DictionaryExtensions
     {
