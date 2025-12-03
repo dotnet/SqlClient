@@ -983,9 +983,6 @@ namespace Microsoft.Data.SqlClient
         internal const byte MAX_SUPPORTED_VECTOR_VERSION = 0x01;
         internal const int VECTOR_HEADER_SIZE = 8;
 
-        // User Agent constants
-        internal const byte SUPPORTED_USER_AGENT_VERSION = 0x01;
-
         // TCE Related constants
         internal const byte MAX_SUPPORTED_TCE_VERSION = 0x03; // max version
         internal const byte MIN_TCE_VERSION_WITH_ENCLAVE_SUPPORT = 0x02; // min version with enclave support

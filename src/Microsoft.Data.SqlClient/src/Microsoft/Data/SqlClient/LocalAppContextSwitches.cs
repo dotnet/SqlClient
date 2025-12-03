@@ -330,8 +330,11 @@ namespace Microsoft.Data.SqlClient
                 return s_ignoreServerProvidedFailoverPartner == Tristate.True;
             }
         }
+
         /// <summary>
-        /// When set to true, the user agent feature is enabled and the driver will send the user agent string to the server.
+        /// When set to true, the user agent feature is enabled and the driver
+        /// will send the user agent string to the server as a LOGIN7 feature
+        /// extension.
         /// </summary>
         public static bool EnableUserAgent
         {

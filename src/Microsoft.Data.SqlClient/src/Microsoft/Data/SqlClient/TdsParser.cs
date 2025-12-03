@@ -9172,29 +9172,30 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Writes the User Agent feature request to the physical state object.
-        /// The request includes the feature ID, feature data length, version number and encoded JSON payload.
+        ///   Writes the User Agent feature request to the physical state
+        ///   object.  The request includes the feature ID, feature data length,
+        ///   version number and encoded JSON payload.
         /// </summary>
-        /// <param name="userAgent"> UCS-2 UserAgent payload.</param>
+        /// <remarks>
+        ///   The feature request consists of:
+        ///     - 1 byte for the feature ID.
+        ///     - 4 bytes for the feature data length.
+        ///     - N bytes for the JSON payload
+        /// </remarks>
+        /// <param name="userAgent">
+        ///   UCS-2 little-endian encoded UserAgent payload.
+        /// </param>
         /// <param name="write">
-        /// If true, writes the feature request to the physical state object.
-        /// If false, just calculates the length.
+        ///   If true, writes the feature request to the physical state object.
+        ///   If false, just calculates the length.
         /// </param>
         /// <returns>The length of the feature request in bytes.</returns>
-        /// <remarks>
-        /// The feature request consists of:
-        /// - 1 byte for the feature ID.
-        /// - 4 bytes for the feature data length.
-        /// - 1 byte for the version number.
-        /// - N bytes for the JSON payload
-        /// </remarks>
         internal int WriteUserAgentFeatureRequest(ReadOnlyMemory<byte> userAgent,
                                                   bool write)
         {
-            // 1byte (Feature Version) + size of UTF-8 encoded JSON payload 
-            int dataLen = 1 + userAgent.Length;
-            // 1byte (Feature ID) + 4bytes (Feature Data Length) + 1byte (Version) + N(JSON payload size)
-            int totalLen = 1 + 4 + dataLen;
+            // 1 byte (Feature ID) + 4 bytes (Feature Data Length) + N bytes
+            // (JSON payload size)
+            int totalLen = 1 + 4 + userAgent.Length;
 
             if (write)
             {
@@ -9202,10 +9203,7 @@ namespace Microsoft.Data.SqlClient
                 _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_USERAGENT);
 
                 // Feature Data Length
-                WriteInt(dataLen, _physicalStateObj);
-
-                // Write Feature Version
-                _physicalStateObj.WriteByte(TdsEnums.SUPPORTED_USER_AGENT_VERSION);
+                WriteInt(userAgent.Length, _physicalStateObj);
 
                 // Write encoded JSON payload
                 _physicalStateObj.WriteByteSpan(userAgent.Span);

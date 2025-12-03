@@ -854,12 +854,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             bool loginFound = false;
 
             // Captured from LOGIN7 as parsed by the test server
-            byte observedVersion = 0;
             byte[] observedPayload = Array.Empty<byte>();
 
             bool firstFeatureIsUserAgent = false;
             bool tokenWasNotNull = false;
-            bool dataLengthAtLeast2 = false;
+            bool dataLengthAtLeast1 = false;
 
             // Inspect what the client sends in the LOGIN7 packet
             server.OnLogin7Validated = loginToken =>
@@ -873,16 +872,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 tokenWasNotNull = token is not null;
 
                 var data = token?.Data ?? Array.Empty<byte>();
-                dataLengthAtLeast2 = data.Length >= 2;
 
                 if (data.Length >= 1)
                 {
-                    observedVersion = data[0];
-                }
-
-                if (data.Length >= 2)
-                {
-                    observedPayload = data.AsSpan(1).ToArray();
+                    dataLengthAtLeast1 = true;
+                    observedPayload = data.AsSpan().ToArray();
                 }
 
                 loginFound = true;
@@ -905,9 +899,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True(loginFound, "Expected UserAgent extension in LOGIN7");
             Assert.True(firstFeatureIsUserAgent);
             Assert.True(tokenWasNotNull);
-            Assert.True(dataLengthAtLeast2);
-            Assert.Equal(0x1, observedVersion);
-
+            Assert.True(dataLengthAtLeast1);
             Assert.Equal(UserAgent.Ucs2Bytes, observedPayload);
 
             // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
