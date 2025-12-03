@@ -21,7 +21,6 @@
     <!-- References that only apply to net462 -->
     <Reference Include="System.Configuration" />
     <Reference Include="System.Transactions" />
-    <PackageReference Include="System.Data.Common" />
     <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="System.Threading.Channels" />
 	</ItemGroup>

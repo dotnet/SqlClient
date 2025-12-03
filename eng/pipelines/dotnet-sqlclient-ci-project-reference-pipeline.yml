@@ -128,19 +128,27 @@ parameters:
   #
   # These are _not_ the target frameworks to build the driver packages for.
   #
+  # Note: We are excluding .NET 10.0 here to avoid consuming too many resources
+  # during PR pipeline runs, and until we update our 1ES images to include
+  # Visual Studio 2026 (18.0) whose MSBuild SDK supports .NET 10.
+  #
   - name: targetFrameworks
     displayName: Target Frameworks on Windows
     type: object
-    default: [net462, net8.0, net9.0, net10.0]
+    default: [net462, net8.0, net9.0]
 
   # The target frameworks to build and run tests for on Unix.
   #
   # These are _not_ the target frameworks to build the driver packages for.
   #
+  # Note: We are excluding .NET 10.0 here to avoid consuming too many resources
+  # during PR pipeline runs, and until we update our 1ES images to include
+  # Visual Studio 2026 (18.0) whose MSBuild SDK supports .NET 10.
+  #
   - name: targetFrameworksUnix
     displayName: Target Frameworks on Unix
     type: object
-    default: [net8.0, net9.0, net10.0]
+    default: [net8.0, net9.0]
 
   - name: testSets
     displayName: Test Sets
