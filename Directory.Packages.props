@@ -31,7 +31,6 @@
     <PackageVersion Include="Microsoft.SqlServer.SqlManagementObjects" Version="172.76.0" />
     <PackageVersion Include="Microsoft.SqlServer.Types" Version="160.1000.6" />
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
-    <PackageVersion Include="Microsoft.Win32.Registry" Version="5.0.0" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageVersion Include="System.Data.Odbc" Version="9.0.9" />
     <PackageVersion Include="System.Security.Principal.Windows" Version="5.0.0" />
@@ -69,13 +68,11 @@
     <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="9.0.9" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.9" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.9" />
-    <PackageVersion Include="System.Text.Json" Version="9.0.9" />
   </ItemGroup>
   <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
     <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="8.0.0" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
-    <PackageVersion Include="System.Text.Json" Version="8.0.6" />
   </ItemGroup>
   <!-- .NET Dependencies -->
   <ItemGroup>
@@ -90,6 +87,7 @@
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
     <PackageVersion Include="System.Text.Encodings.Web" Version="8.0.0" />
+    <PackageVersion Include="System.Text.Json" Version="8.0.6" />
     <PackageVersion Include="System.ValueTuple" Version="4.6.1" />
     <PackageVersion Include="System.Threading.Channels" Version="8.0.0" />
   </ItemGroup>

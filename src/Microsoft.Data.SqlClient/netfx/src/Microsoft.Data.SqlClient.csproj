@@ -54,10 +54,6 @@
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <Utf8Output>True</Utf8Output>
     <ErrorReport>None</ErrorReport>
-
-    <!-- This code analysis ruleset only exists with the .NET Framework toolset. -->
-    <CodeAnalysisRuleSet Condition="$(MSBuildRuntimeType) == 'Full'">MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-
     <BuildProjectReferences>True</BuildProjectReferences>
     <GenerateAssemblyRefs>True</GenerateAssemblyRefs>
     <DefineConstants>$(DefineConstants);USEOFFSET;CODE_ANALYSIS_BASELINE;FEATURE_LEGACYSURFACEAREA;FEATURE_UTF32;FEATURE_UTF7;TRACE;</DefineConstants>

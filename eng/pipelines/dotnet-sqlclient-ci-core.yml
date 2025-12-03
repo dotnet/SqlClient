@@ -320,7 +320,7 @@ stages:
         windows_sql_22_named_instance:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Win22_Sql22_named_instance: ADO-MMS22-SQL22-WITH-NAMED-INSTANCE
+            Win22_Sql22_Named_Instance: ADO-MMS22-SQL22-WITH-NAMED-INSTANCE
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
@@ -344,7 +344,7 @@ stages:
           pool: ${{parameters.defaultPoolName }} 
           images: 
             Win22_Azure_Sql: ADO-MMS22-SQL19
-            win11_Azure_Sql: ADO-CI-Win11
+            Win11_Azure_Sql: ADO-CI-Win11
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
@@ -376,7 +376,7 @@ stages:
         windows_azure_arm64_sql:
           pool: ADO-CI-PUBLIC-ARM64-1ES-EUS-POOL
           images: 
-            Win22_Azure_ARM64_Sql: ADO-WIN11-ARM64
+            Win11_ARM64_Azure_Sql: ADO-WIN11-ARM64
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}

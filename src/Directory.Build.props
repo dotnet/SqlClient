@@ -99,7 +99,7 @@
       error.  This list should be used sparingly to avoid important warnings
       being ignored.
     -->
-    <WarningsNotAsErrors Condition="$(MSBuildRuntimeType) == 'Full'">NU1510</WarningsNotAsErrors>
+    <WarningsNotAsErrors></WarningsNotAsErrors>
 
     <!--
       If a build is failing due to vulnerable dependencies, you may temporarily
