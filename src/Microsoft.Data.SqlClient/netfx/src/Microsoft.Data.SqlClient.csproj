@@ -82,9 +82,6 @@
     <DebugType>Pdbonly</DebugType>
     <Optimize>True</Optimize>
   </PropertyGroup>
-  <PropertyGroup>
-    <DefineConstants>$(DefineConstants);NETFRAMEWORK;</DefineConstants>
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -99,7 +96,8 @@
 
   <!-- OS Constants ==================================================== -->
   <PropertyGroup>
-    <DefineConstants Condition="'$(OSGroup.ToUpper())'=='WINDOWS_NT'">$(DefineConstants),_WINDOWS</DefineConstants>
+    <!-- Netfx project only builds for Windows, so we always define _WINDOWS here -->
+    <DefineConstants>$(DefineConstants),_WINDOWS</DefineConstants>
   </PropertyGroup>
 
   <!-- Compiled Files ================================================== -->
