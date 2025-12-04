@@ -69,24 +69,27 @@ namespace Microsoft.Data.Common
         internal const int MaxBufferAccessTokenExpiry = 600;
 
         #region UDT
-#if NETFRAMEWORK
-        private static readonly MethodInfo s_method = typeof(InvalidUdtException).GetMethod("Create", BindingFlags.NonPublic | BindingFlags.Static);
-#endif
+
+        #if NETFRAMEWORK
+        private static readonly MethodInfo s_udtConstructor =
+            typeof(InvalidUdtException).GetMethod("Create", BindingFlags.NonPublic | BindingFlags.Static);
+        #endif
+
         /// <summary>
         /// Calls "InvalidUdtException.Create" method when an invalid UDT occurs.
         /// </summary>
         internal static InvalidUdtException CreateInvalidUdtException(Type udtType, string resourceReasonName)
         {
-            // @TODO: Can we adopt the netcore version?
-            InvalidUdtException e =
-#if NETFRAMEWORK
-                (InvalidUdtException)s_method.Invoke(null, new object[] { udtType, resourceReasonName });
-            ADP.TraceExceptionAsReturnValue(e);
-#else
-                InvalidUdtException.Create(udtType, resourceReasonName);
-#endif
+            #if NETFRAMEWORK
+            InvalidUdtException e = (InvalidUdtException)s_udtConstructor.Invoke(null, [udtType, resourceReasonName]);
+            #else
+            InvalidUdtException e = InvalidUdtException.Create(udtType, resourceReasonName);
+            #endif
+
+            TraceExceptionAsReturnValue(e);
             return e;
         }
+
         #endregion
 
         static private void TraceException(string trace, Exception e)
