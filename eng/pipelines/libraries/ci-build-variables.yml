@@ -11,8 +11,6 @@ variables:
   
   - name: buildNumber
     value: '$(Build.BuildNumber)'
-  - name: TFNetCore
-    value: 'net8.0'
   - name: SQLTarget
     value: 'localhost'
   - name: NugetPackageVersion

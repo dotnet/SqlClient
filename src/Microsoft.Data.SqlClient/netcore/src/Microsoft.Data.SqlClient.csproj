@@ -1089,9 +1089,6 @@
     <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
-
-    <!-- Transitive dependencies that would otherwise bring in older, vulnerable versions. -->
-    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->

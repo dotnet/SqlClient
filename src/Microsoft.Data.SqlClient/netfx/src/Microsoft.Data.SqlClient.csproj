@@ -55,10 +55,6 @@
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <Utf8Output>True</Utf8Output>
     <ErrorReport>None</ErrorReport>
-
-    <!-- This code analysis ruleset only exists with the .NET Framework toolset. -->
-    <CodeAnalysisRuleSet Condition="$(MSBuildRuntimeType) == 'Full'">MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-
     <BuildProjectReferences>True</BuildProjectReferences>
     <GenerateAssemblyRefs>True</GenerateAssemblyRefs>
     <DefineConstants>$(DefineConstants);USEOFFSET;CODE_ANALYSIS_BASELINE;FEATURE_LEGACYSURFACEAREA;FEATURE_UTF32;FEATURE_UTF7;TRACE;</DefineConstants>
@@ -1081,13 +1077,11 @@
     <PackageReference Include="System.Buffers" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" />
     <PackageReference Include="System.Memory" />
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
-    <PackageReference Include="System.Text.Encodings.Web" />
+    <PackageReference Include="System.Text.Json" />
     <PackageReference Include="System.Threading.Channels" />
     <PackageReference Include="System.ValueTuple" />
-
-    <!-- Transitive dependencies that would otherwise bring in older, vulnerable versions. -->
-    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->

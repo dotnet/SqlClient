@@ -29,6 +29,12 @@ steps:
   parameters:
     packageType: sdk
     usePreview: false
+    version: 10.0
+
+- template: ensure-dotnet-version.yml
+  parameters:
+    packageType: runtime
+    usePreview: false
     version: 9.0
 
 - template: ensure-dotnet-version.yml
