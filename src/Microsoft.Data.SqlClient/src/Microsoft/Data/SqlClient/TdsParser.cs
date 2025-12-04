@@ -9174,13 +9174,13 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         ///   Writes the User Agent feature request to the physical state
         ///   object.  The request includes the feature ID, feature data length,
-        ///   version number and encoded JSON payload.
+        ///   and UCS-2 little-endian encoded payload.
         /// </summary>
         /// <remarks>
         ///   The feature request consists of:
         ///     - 1 byte for the feature ID.
         ///     - 4 bytes for the feature data length.
-        ///     - N bytes for the JSON payload
+        ///     - N bytes for the UCS-2 payload
         /// </remarks>
         /// <param name="userAgent">
         ///   UCS-2 little-endian encoded UserAgent payload.
@@ -9194,7 +9194,7 @@ namespace Microsoft.Data.SqlClient
                                                   bool write)
         {
             // 1 byte (Feature ID) + 4 bytes (Feature Data Length) + N bytes
-            // (JSON payload size)
+            // (UCS-2 payload size)
             int totalLen = 1 + 4 + userAgent.Length;
 
             if (write)
@@ -9205,7 +9205,7 @@ namespace Microsoft.Data.SqlClient
                 // Feature Data Length
                 WriteInt(userAgent.Length, _physicalStateObj);
 
-                // Write encoded JSON payload
+                // Write encoded UCS-2 payload
                 _physicalStateObj.WriteByteSpan(userAgent.Span);
             }
 

@@ -13,12 +13,27 @@ namespace Microsoft.Data.SqlClient.Tests;
 
 public sealed class UserAgentTests
 {
+    #region Constants
+
+    // All permitted characters that may appear as values in the User Agent.
+    const string AllPermitted =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+        "abcdefghijklmnopqrstuvwxyz" +
+        "0123456789" +
+        " .+_-";
+
+    #endregion
+
     #region Test Setup
 
-    // Setup to test by saving the xUnit output helper.
+    /// <summary>
+    /// Setup to test by saving the xUnit output helper.
+    /// </summary>
+    /// <param name="output">The xUnit output helper.</param>
     public UserAgentTests(ITestOutputHelper output)
     {
-        // Use --logger option to see the output for successful test runs:
+        // Use the dotnet CLI --logger option to see the output for successful
+        // test runs:
         //
         //   dotnet test --logger "console;verbosity=detailed"
         //
@@ -31,15 +46,16 @@ public sealed class UserAgentTests
 
     #region Tests
 
-    // Test the Value property when actual runtime information is used.
-    //
-    // This test assumes that values returned by the runtime used to construct
-    // the Value property will all fit within the max length (currently 256
-    // characters).
-    //
-    // If this test fails, then either the max length has changed or the runtime
-    // values have changed in a meaningful way.
-    //
+    /// <summary>
+    /// Test the Value property when actual runtime information is used.
+    ///
+    /// This test assumes that values returned by the runtime used to construct
+    /// the Value property will all fit within the max length (currently 256
+    /// characters).
+    ///
+    /// If this test fails, then either the max length has changed or the
+    /// runtime values have changed in a meaningful way.
+    /// </summary>
     [Fact]
     public void Value_Runtime_Parts()
     {
@@ -50,7 +66,7 @@ public sealed class UserAgentTests
         // Check the basic properties of the value.
         Assert.NotNull(value);
         Assert.True(value.Length > 0);
-        Assert.True(value.Length <= 128);
+        Assert.True(value.Length <= 256);
 
         // Ensure we can split it into the expected parts.
         //
@@ -102,25 +118,42 @@ public sealed class UserAgentTests
         Assert.True(parts[6].Length <= 44);
     }
 
-    // Test the Ucs2Bytes property when actual runtime information is used.
+    /// <summary>
+    /// Test the Ucs2Bytes property when actual runtime information is used.
+    /// </summary>
     [Fact]
     public void Ucs2Bytes_Runtime_Parts()
     {
         var bytes = UserAgent.Ucs2Bytes;
 
-        _output.WriteLine(
-            $"UserAgent.Ucs2Bytes: 0x{Convert.ToHexString(bytes.Span)}");
+        #if NET
+        var hex = Convert.ToHexString(bytes.Span);
+        #else
+        var hex = BitConverter.ToString(bytes.ToArray()).Replace("-", string.Empty);
+        #endif
+
+        _output.WriteLine($"UserAgent.Ucs2Bytes: 0x{hex}");
 
         // Check the basic properties of the byte array.
         Assert.True(bytes.Length > 0);
-        Assert.True(bytes.Length <= 256 * 2); // USC2 uses 2 bytes per char.
+        Assert.True(bytes.Length <= 256 * 2); // UCS-2 uses 2 bytes per char.
 
         // Ensure we can convert the bytes back to the original string.
-        string value = Encoding.Unicode.GetString(bytes.Span);
+        string value =
+            #if NET
+            Encoding.Unicode.GetString(bytes.Span);
+            #else
+            Encoding.Unicode.GetString(bytes.ToArray());
+            #endif
+        
         Assert.Equal(UserAgent.Value, value);
     }
 
-    // Test the Build() function when it truncates the overall length.
+    /// <summary>
+    /// Test the Build() function when it truncates the overall length.
+    /// </summary>
+    /// <param name="maxLen">The expected max payload length.</param>
+    /// <param name="expected">The expected payload string.</param>
     [Theory]
     [InlineData(0, "")]
     [InlineData(1, "2")]
@@ -153,7 +186,9 @@ public sealed class UserAgentTests
                 runtimeInfo: "E"));
     }
 
-    // Test the Build() function when it truncates the payload version.
+    /// <summary>
+    /// Test the Build() function when it truncates the payload version.
+    /// </summary>
     [Fact]
     public void Build_Truncate_Payload_Version()
     {
@@ -170,7 +205,9 @@ public sealed class UserAgentTests
                 128, "1234", "A", "B", "C", Architecture.X64, "D", "E"));
     }
 
-    // Test the Build() function when it truncates the driver name.
+    /// <summary>
+    /// Test the Build() function when it truncates the driver name.
+    /// </summary>
     [Fact]
     public void Build_Truncate_Driver_Name()
     {
@@ -188,7 +225,9 @@ public sealed class UserAgentTests
                 "D", "E"));
     }
 
-    // Test the Build() function when it truncates the driver version.
+    /// <summary>
+    /// Test the Build() function when it truncates the driver version.
+    /// </summary>
     [Fact]
     public void Build_Truncate_Driver_Version()
     {
@@ -207,7 +246,9 @@ public sealed class UserAgentTests
                 Architecture.X64, "D", "E"));
     }
 
-    // Test the Build() function when it truncates the OS Type.
+    /// <summary>
+    /// Test the Build() function when it truncates the OS Type.
+    /// </summary>
     [Fact]
     public void Build_Truncate_OS_Type()
     {
@@ -225,7 +266,9 @@ public sealed class UserAgentTests
                 "E"));
     }
 
-    // Test the Build() function when it truncates the Architecture.
+    /// <summary>
+    /// Test the Build() function when it truncates the Architecture.
+    /// </summary>
     [Fact]
     public void Build_Truncate_Arch()
     {
@@ -247,7 +290,9 @@ public sealed class UserAgentTests
         #endif
     }
 
-    // Test the Build() function when it truncates the OS Info.
+    /// <summary>
+    /// Test the Build() function when it truncates the OS Info.
+    /// </summary>
     [Fact]
     public void Build_Truncate_OS_Info()
     {
@@ -266,7 +311,9 @@ public sealed class UserAgentTests
                 "E"));
     }
 
-    // Test the Build() function when it truncates the Runtime Info.
+    /// <summary>
+    /// Test the Build() function when it truncates the Runtime Info.
+    /// </summary>
     [Fact]
     public void Build_Truncate_Runtime_Info()
     {
@@ -285,8 +332,10 @@ public sealed class UserAgentTests
                 "01234567890123456789012345678901234567890123456789"));
     }
 
-    // Test the Build() function when most of the fields are truncated, and
-    // the overall length is still within the max.
+    /// <summary>
+    /// Test the Build() function when most of the fields are truncated, and the
+    /// overall length is still within the max.
+    /// </summary>
     [Fact]
     public void Build_Truncate_Most()
     {
@@ -320,9 +369,13 @@ public sealed class UserAgentTests
             name);
     }
 
+    // Only .NET has an Architecture enum value long enough to test truncation
+    // of that part.
     #if NET
-    // Test the Build() function when all the fields are truncated, and
-    // the overall length is still within the max.
+    /// <summary>
+    /// Test the Build() function when all the fields are truncated, and the
+    /// overall length is still within the max.
+    /// </summary>
     [Fact]
     public void Build_Truncate_All()
     {
@@ -354,38 +407,70 @@ public sealed class UserAgentTests
             "E0123456789012345678901234567890123456789012",
             name);
     }
-#endif // NET
+    #endif
 
-    // Test the Clean() function.
+    /// <summary>
+    /// Test the Clean() function for null input.
+    /// </summary>
     [Fact]
-    public void Clean()
+    public void Clean_Null()
     {
         // Null becomes "Unknown".
         Assert.Equal("Unknown", UserAgent.Clean(null));
+    }
 
+    /// <summary>
+    /// Test the Clean() function for empty input.
+    /// </summary>
+    [Fact]
+    public void Clean_Empty()
+    {
         // Empty string becomes "Unknown".
         Assert.Equal("Unknown", UserAgent.Clean(string.Empty));
+    }
 
+    /// <summary>
+    /// Test the Clean() function for whitespace input.
+    /// </summary>
+    [Fact]
+    public void Clean_Whitespace()
+    {
         // Whitespace string becomes "Unknown".
         Assert.Equal("Unknown", UserAgent.Clean(" "));
         Assert.Equal("Unknown", UserAgent.Clean("\t"));
         Assert.Equal("Unknown", UserAgent.Clean("\r"));
         Assert.Equal("Unknown", UserAgent.Clean("\n"));
         Assert.Equal("Unknown", UserAgent.Clean(" \t\r\n"));
+    }
 
+    /// <summary>
+    /// Test the Clean() function with leading and trailing whitespace.
+    /// </summary>
+    [Fact]
+    public void Clean_Leading_Trailing_Whitespace()
+    {
         // Leading and trailing whitespace are removed.
         Assert.Equal("A", UserAgent.Clean(" A"));
         Assert.Equal("A", UserAgent.Clean("A\t"));
         Assert.Equal("A", UserAgent.Clean("\rA\n"));
+    }
 
+    /// <summary>
+    /// Test the Clean() function with permitted characters.
+    /// </summary>
+    [Fact]
+    public void Clean_Permitted_Disallowed_Characters()
+    {
         // All permitted characters are preserved.
-        const string AllPermitted =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-            "abcdefghijklmnopqrstuvwxyz" +
-            "0123456789" +
-            " .+_-";
         Assert.Equal(AllPermitted, UserAgent.Clean(AllPermitted));
+    }
 
+    /// <summary>
+    /// Test the Clean() function with various disallowed characters.
+    /// </summary>
+    [Fact]
+    public void Clean_Disallowed_Characters()
+    {
         // Each disallowed character is replaced with underscore.
         Assert.Equal(
             "A_B_C_D_E_F_G_H_I_J_K_L_M_N_O_P",
@@ -393,7 +478,14 @@ public sealed class UserAgentTests
         Assert.Equal(
             "Q_R_S_T_U_V_W_X+Y-Z_a.b_c_d_e_f_g_h_i_j_k_l_m_n_o",
             UserAgent.Clean("Q^R_S`T~U(V)W*X+Y-Z_a.b,c/d:e<f>g'h\"i[j]k{l}m|n\\o"));
+    }
 
+    /// <summary>
+    /// Test the Clean() function with all Unicode characters.
+    /// </summary>
+    [Fact]
+    public void Clean_All_Unicode_Characters()
+    {
         // All disallowed characters are replaced with underscore.
         for (char c = (char)0u; /* see condition below */ ; ++c)
         {
@@ -405,12 +497,12 @@ public sealed class UserAgentTests
                 Assert.Equal("Unknown", clean);
             }
             else if (
-#if NET
+                #if NET
                 AllPermitted.Contains(c)
-#else
+                #else
                 AllPermitted.Contains(c.ToString())
-#endif          
-            )
+                #endif
+                )
             {
                 Assert.Equal(c.ToString(), clean);
             }
@@ -433,7 +525,9 @@ public sealed class UserAgentTests
         }
     }
 
-    // Test the Trunc() function.
+    /// <summary>
+    /// Test the Trunc() function.
+    /// </summary>
     [Fact]
     public void Trunc()
     {

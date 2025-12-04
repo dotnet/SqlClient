@@ -151,7 +151,7 @@ internal static class UserAgent
             RuntimeInformation.OSDescription,
             RuntimeInformation.FrameworkDescription);
         
-        // Convert it to USC-2 bytes.
+        // Convert it to UCS-2 bytes.
         //
         // The default Unicode instance doesn't throw if encoding fails, so
         // there is nothing to catch here.
