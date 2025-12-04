@@ -139,6 +139,12 @@ jobs:
         # GOTCHA: We always use global.json for SDK version except on ARM64,
         # where we have to specify it here.  This must be kept synchronized with
         # the SDK version in global.json.
+        version: 10.0
+
+    - template: ../../../steps/install-dotnet-arm64.yml@self
+      parameters:
+        debug: ${{ parameters.debug }}
+        installType: Runtime
         version: 9.0
 
     - template: ../../../steps/install-dotnet-arm64.yml@self
