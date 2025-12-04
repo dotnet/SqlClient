@@ -9,20 +9,28 @@ parameters:
   type: boolean
   default: false
 
+# The target frameworks to build and run tests for on Windows.
+#
+# These are _not_ the target frameworks to build the driver packages for.
+#
 - name: targetFrameworks
   displayName: 'Target Frameworks on Windows'
   type: object
-  default: [net462, net8.0, net9.0]
+  default: [net462, net8.0, net9.0, net10.0]
 
-- name: targetFrameworksLinux
-  displayName: 'Target Frameworks on Non-Windows'
+# The target frameworks to build and run tests for on Unix.
+#
+# These are _not_ the target frameworks to build the driver packages for.
+#
+- name: targetFrameworksUnix
+  displayName: 'Target Frameworks on Unix'
   type: object
-  default: [net8.0, net9.0]
+  default: [net8.0, net9.0, net10.0]
 
 - name: netcoreVersionTestUtils
   displayName: 'Netcore Version for Test Utilities'
   type: object
-  default: net9.0
+  default: net10.0
 
 - name: buildPlatforms
   displayName: 'Build Platforms on Windows'
@@ -53,10 +61,12 @@ parameters:
   type: string
   default: https://sqlclientdrivers.pkgs.visualstudio.com/ADO.Net/_packaging/SNIValidation/nuget/v3/index.json
 
+# Frameworks to expect code coverage information for, and to compile into
+# reports.
 - name: codeCovTargetFrameworks
   displayName: 'Code Coverage Target Frameworks'
   type: object
-  default: [net462, net8.0, net9.0]
+  default: [net462, net8.0, net9.0, net10.0]
 
 - name: buildType
   displayName: 'Build Type'
@@ -310,7 +320,7 @@ stages:
         windows_sql_22_named_instance:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Win22_Sql22_named_instance: ADO-MMS22-SQL22-WITH-NAMED-INSTANCE
+            Win22_Sql22_Named_Instance: ADO-MMS22-SQL22-WITH-NAMED-INSTANCE
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
@@ -334,7 +344,7 @@ stages:
           pool: ${{parameters.defaultPoolName }} 
           images: 
             Win22_Azure_Sql: ADO-MMS22-SQL19
-            win11_Azure_Sql: ADO-CI-Win11
+            Win11_Azure_Sql: ADO-CI-Win11
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
@@ -366,7 +376,7 @@ stages:
         windows_azure_arm64_sql:
           pool: ADO-CI-PUBLIC-ARM64-1ES-EUS-POOL
           images: 
-            Win22_Azure_ARM64_Sql: ADO-WIN11-ARM64
+            Win11_ARM64_Azure_Sql: ADO-WIN11-ARM64
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
@@ -431,7 +441,7 @@ stages:
           images:
             Ubuntu20_Sql22: ADO-UB20-SQL22 # drop testing against UB20 image post April 2025
             Ubuntu22_Sql22: ADO-UB22-SQL22
-          TargetFrameworks: ${{parameters.targetFrameworksLinux }}
+          TargetFrameworks: ${{parameters.targetFrameworksUnix }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}
@@ -456,7 +466,7 @@ stages:
           pool: ${{parameters.defaultPoolName }}
           images:
             Ubuntu22_Azure_Sql: ADO-UB22-SQL22
-          TargetFrameworks: ${{parameters.targetFrameworksLinux }}
+          TargetFrameworks: ${{parameters.targetFrameworksUnix }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}
@@ -488,7 +498,7 @@ stages:
             pool: ADO-CI-AE-1ES-Pool
             images:
               Ubuntu20_Enclave_Sql19: ADO-UB22-Sql22
-            TargetFrameworks: ${{parameters.targetFrameworksLinux }}
+            TargetFrameworks: ${{parameters.targetFrameworksUnix }}
             netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
             buildPlatforms: [AnyCPU]
             testSets: [AE]
@@ -518,7 +528,7 @@ stages:
           hostedPool: true
           images:
             MacOSLatest_Sql22: macos-latest
-          TargetFrameworks: ${{parameters.targetFrameworksLinux }}
+          TargetFrameworks: ${{parameters.targetFrameworksUnix }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}
