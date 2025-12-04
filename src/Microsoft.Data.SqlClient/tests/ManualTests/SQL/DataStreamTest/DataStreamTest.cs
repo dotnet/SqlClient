@@ -160,12 +160,8 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             return data;
         }
 
-<<<<<<< HEAD
-        private static void RunAllTestsForSingleServer(string connectionString, bool usingNamePipes = false)
-=======
         // @TODO: Split into separate tests!
         private void RunAllTestsForSingleServer(string connectionString, bool usingNamePipes = false)
->>>>>>> 71ef78101 (Fix xevent test failures, avoid orphaned sessions (#3775))
         {
             RowBuffer(connectionString);
             InvalidRead(connectionString);
