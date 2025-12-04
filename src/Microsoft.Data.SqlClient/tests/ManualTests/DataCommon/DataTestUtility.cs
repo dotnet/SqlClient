@@ -12,6 +12,7 @@ using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Principal;
@@ -1252,7 +1253,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         #nullable enable
 
-        public class XEventScope : IDisposable
+        public sealed class XEventScope : IDisposable
         {
             #region Private Fields
 

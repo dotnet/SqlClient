@@ -90,7 +90,7 @@ jobs:
       shell: bash
       run: |
         mkdir packages
-        dotnet build src/
+        dotnet build src/Microsoft.Data.SqlClient.sln
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
