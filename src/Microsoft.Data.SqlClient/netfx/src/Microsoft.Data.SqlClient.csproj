@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.Net.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <ProjectGuid>{407890AC-9876-4FEF-A6F1-F36A876BAADE}</ProjectGuid>
     <RootNamespace></RootNamespace>
@@ -12,9 +12,6 @@
     <DocumentationFile>$(OutputPath)\Microsoft.Data.SqlClient.xml</DocumentationFile>
     <IntermediateOutputPath>$(ObjPath)$(AssemblyName)\netfx\</IntermediateOutputPath>
     <Product>Framework $(BaseProduct)</Product>
-    <!-- ResolveComReferenceSilent suppresses warnings thrown due to the inclusion of mscoree.
-     We should remove ResolveComReferenceSilent as soon as we can remove the dependency on mscoree. -->
-    <ResolveComReferenceSilent>True</ResolveComReferenceSilent>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <DefineConstants>$(DefineConstants);NETFRAMEWORK;</DefineConstants>
   </PropertyGroup>
@@ -874,17 +871,6 @@
       <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <COMReference Include="mscoree">
-      <Guid>{5477469E-83B1-11D2-8B49-00A0C9B7C9C4}</Guid>
-      <VersionMajor>2</VersionMajor>
-      <VersionMinor>4</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>tlbimp</WrapperTool>
-      <Isolated>False</Isolated>
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </COMReference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftExtensionsCachingMemoryVersion)" />
