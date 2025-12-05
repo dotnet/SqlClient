@@ -61,10 +61,10 @@ jobs:
           displayName: '[Debug] Show Disk Usage'
 
       - task: UseDotNet@2
-        displayName: 'Use .NET SDK 8.0.x'
+        displayName: 'Install .NET SDK'
         inputs:
           packageType: sdk
-          version: 8.0.x
+          useGlobalJson: true
 
       - pwsh: |
           dotnet tool install --global dotnet-coverage
