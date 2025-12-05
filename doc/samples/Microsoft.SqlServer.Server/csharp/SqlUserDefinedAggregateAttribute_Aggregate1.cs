@@ -1,4 +1,6 @@
-﻿//-----------------------------------------------------------------------------
+﻿namespace SqlUserDefinedAggregateAttribute_Aggregate1;
+
+//-----------------------------------------------------------------------------
 //<Snippet2>
 using System;
 using System.Data.SqlTypes;

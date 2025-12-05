@@ -1,3 +1,5 @@
+namespace SqlParameter_SqlParameter6;
+
 using System;
 using System.Data;
 // <Snippet1>

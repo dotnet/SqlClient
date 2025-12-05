@@ -1,3 +1,5 @@
+namespace SqlBulkCopy_ColumnMappingDestinationColumn;
+
 using System;
 using System.Data;
 // <Snippet1>

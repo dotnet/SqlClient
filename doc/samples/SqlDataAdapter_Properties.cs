@@ -1,10 +1,11 @@
-﻿// <Snippet1>
+﻿namespace SqlDataAdapter_Properties;
+
+// <Snippet1>
 using System;
 using System.Data;
 using System.Data.Common;
 using Microsoft.Data.SqlClient;
 using System.Linq;
-using CSDataAdapterOperations.Properties;
 
 class Program
 {
@@ -189,18 +190,15 @@ class Program
     }
 }
 
-namespace CSDataAdapterOperations.Properties
+internal sealed partial class Settings : System.Configuration.ApplicationSettingsBase
 {
-    internal sealed partial class Settings : System.Configuration.ApplicationSettingsBase
-    {
-        private static readonly Settings defaultInstance =
-            ((Settings)(System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
+    private static readonly Settings defaultInstance =
+        ((Settings)(System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
 
-        public static Settings Default => defaultInstance;
+    public static Settings Default => defaultInstance;
 
-        [System.Configuration.ApplicationScopedSetting()]
-        [System.Configuration.DefaultSettingValue("Data Source=(local);Initial Catalog=MySchool;Integrated Security=True")]
-        public string MySchoolConnectionString => ((string)(this["MySchoolConnectionString"]));
-    }
+    [System.Configuration.ApplicationScopedSetting()]
+    [System.Configuration.DefaultSettingValue("Data Source=(local);Initial Catalog=MySchool;Integrated Security=True")]
+    public string MySchoolConnectionString => ((string)(this["MySchoolConnectionString"]));
 }
 // </Snippet1>

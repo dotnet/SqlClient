@@ -1,12 +1,14 @@
+namespace SqlUserDefinedTypeCS;
+
 using System;
 using System.Data;
 // <Snippet1>
-using Microsoft.Data.SqlClient.Server;
+using Microsoft.SqlServer.Server;
 using System.Data.SqlTypes;
 using System.Text;
 
 [Serializable]
-[Microsoft.Data.SqlClient.Server.SqlUserDefinedType(Format.Native,
+[SqlUserDefinedType(Format.Native,
      IsByteOrdered = true,
      Name = "Point", ValidationMethodName = "ValidatePoint")]
 public struct Point : INullable

@@ -1,8 +1,11 @@
-﻿// <Snippet1>
+﻿namespace SqlClientDiagnosticCounter;
+
+// <Snippet1>
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Linq;
+using Microsoft.Data.SqlClient;
 
 // This listener class will listen for events from the SqlClientEventSource class.
 // SqlClientEventSource is an implementation of the EventSource class which gives 
