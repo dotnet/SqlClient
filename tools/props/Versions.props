@@ -72,8 +72,8 @@
     <SystemSecurityPrincipalWindowsVersion>5.0.0</SystemSecurityPrincipalWindowsVersion>
     <SystemServiceProcessServiceControllerVersion>6.0.0</SystemServiceProcessServiceControllerVersion>
     <SystemTextEncodingCodePagesVersion>6.0.0</SystemTextEncodingCodePagesVersion>
-    <XunitVersion>2.9.3</XunitVersion>
-    <XunitrunnervisualstudioVersion>2.8.2</XunitrunnervisualstudioVersion>
+    <XunitVersion>2.6.3</XunitVersion>
+    <XunitrunnervisualstudioVersion>2.5.5</XunitrunnervisualstudioVersion>
   </PropertyGroup>
   <PropertyGroup>
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>
