@@ -239,10 +239,10 @@ jobs:
             $version = "${{parameters.targetFramework }}".Substring(3, "${{parameters.targetFramework }}".Length-3)
         }
         
-        // Install targetFramework specific .NET runtime (and sdk)
+        # Install targetFramework specific .NET runtime (and sdk)
         .\dotnet-install.ps1 -Channel $version -Architecture x86 -InstallDir "$(dotnetx86RootPath)"
         
-        // Install globally required .NET sdk
+        # Install globally required .NET sdk
         .\dotnet-install.ps1 -Architecture x86 -InstallDir "$(dotnetx86RootPath)" -JSonFile global.json
         
         $(dotnetx86RootPath)dotnet.exe --info
