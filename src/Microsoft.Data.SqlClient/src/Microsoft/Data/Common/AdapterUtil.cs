@@ -582,6 +582,13 @@ namespace Microsoft.Data.Common
 
         internal static long TimerCurrent() => DateTime.UtcNow.ToFileTimeUtc();
 
+        internal static long FastTimerCurrent() => Environment.TickCount;
+
+        internal static uint CalculateTickCountElapsed(long startTick, long endTick)
+        {
+            return (uint)(endTick - startTick);
+        }
+
         internal static long TimerFromSeconds(int seconds)
         {
             long result = checked((long)seconds * TimeSpan.TicksPerSecond);
