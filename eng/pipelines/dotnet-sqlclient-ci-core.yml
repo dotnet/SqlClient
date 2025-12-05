@@ -171,6 +171,14 @@ stages:
             image: ADO-MMS22-CodeCov
             pool: ${{ parameters.defaultPoolName }}
             targetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
+            # This is a Pipeline Variable defined in the Azure DevOps UI.  It
+            # must be defined with a true/false value for all pipelines that
+            # specify a build type of 'Project'.
+            #
+            # You can find Pipeline Variables by visiting the main page of the
+            # pipeline and choosing Edit -> Variables.
+            #
+            upload: ${{ eq(variables.ci_var_uploadTestResult, 'true') }}
 
 # test stages configurations
   # self hosted SQL Server on Windows
