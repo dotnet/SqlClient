@@ -46,12 +46,8 @@ jobs:
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
-  # Install whichever .NET SDKs are specified in our global.json.
-  - task: UseDotNet@2
-    displayName: Install .NET SDKs
-    inputs:
-      packageType: sdk
-      useGlobalJson: true
+  # Install the .NET SDK.
+  - template: /eng/pipelines/steps/install-dotnet.yml@self
 
   - template: ../steps/ci-project-build-step.yml@self
     parameters:

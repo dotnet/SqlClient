@@ -31,12 +31,8 @@ steps:
       secureFile: netfxKeypair.snk
       retryCount: 5
 
-  # Install whichever .NET SDKs are specified in our global.json.
-  - task: UseDotNet@2
-    displayName: Install .NET SDKs
-    inputs:
-      packageType: sdk
-      useGlobalJson: true
+  # Install the .NET SDK.
+  - template: /eng/pipelines/steps/install-dotnet.yml@self
 
   - ${{ if eq(parameters.product, 'MDS') }}:
     - task: MSBuild@1

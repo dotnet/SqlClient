@@ -4,26 +4,10 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 steps:
-  # Install whichever .NET SDKs are specified in our global.json.
-  - task: UseDotNet@2
-    displayName: Install .NET SDKs
-    inputs:
-      packageType: sdk
-      useGlobalJson: true
-
-  # Install the .NET 9.0 runtime to run tests that target it.
-  - task: UseDotNet@2
-    displayName: Install .NET 9.0 Runtime
-    inputs:
-      packageType: runtime
-      version: 9.x
-
-  # Install the .NET 8.0 runtime to run tests that target it.
-  - task: UseDotNet@2
-    displayName: Install .NET 8.0 Runtime
-    inputs:
-      packageType: runtime
-      version: 8.x
+  # Install the .NET SDK and Runtimes.
+  - template: /eng/pipelines/steps/install-dotnet.yml@self
+    parameters:
+      runtimes: ['8.0', '9.0']
 
   - script: SET
     displayName: 'Print Environment Variables'

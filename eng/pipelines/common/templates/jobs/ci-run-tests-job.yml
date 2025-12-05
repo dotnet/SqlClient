@@ -108,56 +108,13 @@ jobs:
 
   steps:
 
-  # Install .NET SDKs and runtimes.  These may be needed for the pre-build
-  # steps.
-  #
-  # We can use the standard UseDotNet@2 task for non-ARM64 jobs.
-  - ${{ if eq(parameters.isArm64, false) }}:
-    - task: UseDotNet@2
-      displayName: Install .NET SDKs
-      inputs:
-        packageType: sdk
-        useGlobalJson: true
-
-    - task: UseDotNet@2
-      displayName: Install .NET 9 Runtime
-      inputs:
-        packageType: runtime
-        version: 9.x
-
-    - task: UseDotNet@2
-      displayName: Install .NET 8 Runtime
-      inputs:
-        packageType: runtime
-        version: 8.x
-  
-  # For ARM64, we need to use our custom step to work around a bug in
-  # UseDotNet@2:
-  #
-  # [BUG]: UseDotNet task installs x86 build
-  # https://github.com/microsoft/azure-pipelines-tasks/issues/20300
-  #
-  - ${{ else }}:
-    - template: ../../../steps/install-dotnet-arm64.yml@self
-      parameters:
-        debug: ${{ parameters.debug }}
-        installType: SDK
-        # GOTCHA: We always use global.json for SDK version except on ARM64,
-        # where we have to specify it here.  This must be kept synchronized with
-        # the SDK version in global.json.
-        version: 10.0
-
-    - template: ../../../steps/install-dotnet-arm64.yml@self
-      parameters:
-        debug: ${{ parameters.debug }}
-        installType: Runtime
-        version: 9.0
-
-    - template: ../../../steps/install-dotnet-arm64.yml@self
-      parameters:
-        debug: ${{ parameters.debug }}
-        installType: Runtime
-        version: 8.0
+  # Install the .NET SDK and Runtimes.
+  - template: /eng/pipelines/steps/install-dotnet.yml@self
+    parameters:
+      ${{ if parameters.isArm64 }}:
+        architecture: arm64
+      debug: ${{ parameters.debug }}
+      runtimes: ['8.0', '9.0']
 
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
@@ -317,27 +274,13 @@ jobs:
     # @TODO: This setup is very confusing. Ideally we should just be utilizing the dotnet installation
     #    earlier in the job. There has to be a cleaner way of doing this.
     - ${{ if ne(variables['dotnetx86RootPath'], '') }}:
-      # Install whichever .NET SDKs are specified in our global.json.
-      - task: UseDotNet@2
-        displayName: Install .NET SDKs
-        inputs:
-          installationPath: $(dotnetx86RootPath)
-          packageType: sdk
-          useGlobalJson: true
-        env:
-          # Override the architecture to install for x86.
-          PROCESSOR_ARCHITECTURE: x86
-
-      # Install the .NET 8.0 runtime to run tests that target it.
-      - task: UseDotNet@2
-        displayName: Install .NET 8.0 Runtime
-        inputs:
-          installationPath: $(dotnetx86RootPath)
-          packageType: runtime
-          version: 8.x
-        env:
-          # Override the architecture to install for x86.
-          PROCESSOR_ARCHITECTURE: x86
+      # Install the .NET SDK and Runtimes for x86.
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+        parameters:
+          architecture: x86
+          debug: ${{ parameters.debug }}
+          installDir: $(dotnetx86RootPath)
+          runtimes: ['8.0', '9.0']
 
     - template: ../steps/run-all-tests-step.yml@self
       parameters:
