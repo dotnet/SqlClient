@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
+	<!-- General Properties ============================================== -->
+  <PropertyGroup>
     <Configurations>Debug;Release;</Configurations>
     <RootNamespace />
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -17,12 +17,21 @@
 
     <!-- NOTE: These constants are prefixed with _ to keep them separate from .NET 5+ precompiler -->
     <!--     flags. Those only apply to OS-specific target frameworks, and would interfere here. -->
-    <DefineConstants Condition="'$(TargetOs.ToUpper())' == 'UNIX'">$(DefineConstants),_UNIX</DefineConstants>
-    <DefineConstants Condition="'$(TargetOs.ToUpper())' == 'WINDOWS_NT'">$(DefineConstants),_WINDOWS</DefineConstants>
+    <DefineConstants Condition="'$(TargetOs.ToUpper())' == 'UNIX'">$(DefineConstants);_UNIX</DefineConstants>
+    <DefineConstants Condition="'$(TargetOs.ToUpper())' == 'WINDOWS_NT'">$(DefineConstants);_WINDOWS</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Target Frameworks =============================================== -->
+  <PropertyGroup>
+    <!-- net462 is only supported on Windows, so we will only add it if we're building for Windows -->
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks Condition="'$(TargetOs.ToUpper())' == 'WINDOWS_NT'">$(TargetFrameworks);net462</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Build Output ==================================================== -->
   <PropertyGroup>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>$(Artifacts)bin/$(Configuration)/$(AssemblyName)/$(TargetFramework)-$(TargetOs.ToLower())</OutputPath>
   </PropertyGroup>
 
