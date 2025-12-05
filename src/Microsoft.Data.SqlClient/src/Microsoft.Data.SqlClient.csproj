@@ -14,18 +14,21 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
-    <PackageReference Include="System.Buffers" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
-    <PackageReference Include="System.Memory" />
-    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
     <PackageReference Include="System.Security.Cryptography.Pkcs"  />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <!-- References that only apply to net462 -->
     <Reference Include="System.Configuration" />
     <Reference Include="System.Transactions" />
-    <PackageReference Include="System.Data.Common" />
     <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="System.Threading.Channels" />
+	</ItemGroup>
+
+  <!-- System.Buffers, System.Memory, and System.Runtime.InteropServices.RuntimeInformation are included in .NET 10+ BCL -->
+  <ItemGroup Condition="$([MSBuild]::VersionLessThan($([MSBuild]::GetTargetFrameworkVersion($(TargetFramework))), '10.0'))">
+    <PackageReference Include="System.Buffers" />
+    <PackageReference Include="System.Memory" />
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
   </ItemGroup>
 </Project>
