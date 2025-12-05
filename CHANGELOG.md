@@ -7,6 +7,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Preview Release 7.0.0-preview3] - 2025-12-05
+
+This update brings the following changes since the [7.0.0-preview2](release-notes/7.0/7.0.0-preview2.md) release:
+
+### Added
+
+- Added support for .NET 10
+  ([#3686](https://github.com/dotnet/SqlClient/pull/3686))
+
+- Enabled User Agent Extension
+  ([#3606](https://github.com/dotnet/SqlClient/pull/3606))
+
+### Fixed
+
+- Fixed an issue with extra connection deactivation in `PutObjectFromTransactedPool`
+  ([#3758](https://github.com/dotnet/SqlClient/pull/3758))
+
+### Changed
+
+- Enabled `SqlClientDiagnosticListener` in `SqlCommand` on .NET Framework
+  ([#3658](https://github.com/dotnet/SqlClient/pull/3658))
+
+- Performance improvements in `decimal.GetBits` usage and Always Encrypted primitives
+  ([#3732](https://github.com/dotnet/SqlClient/pull/3732), [#3660](https://github.com/dotnet/SqlClient/pull/3660))
+
+- Enabled NuGet audit on all builds
+  ([#3713](https://github.com/dotnet/SqlClient/pull/3713))
+
+- Code cleanup and refactoring
+  ([#3803](https://github.com/dotnet/SqlClient/pull/3803), [#3781](https://github.com/dotnet/SqlClient/pull/3781), [#3760](https://github.com/dotnet/SqlClient/pull/3760), [#3746](https://github.com/dotnet/SqlClient/pull/3746), [#3743](https://github.com/dotnet/SqlClient/pull/3743), [#3738](https://github.com/dotnet/SqlClient/pull/3738), [#3683](https://github.com/dotnet/SqlClient/pull/3683), [#3676](https://github.com/dotnet/SqlClient/pull/3676))
+
+- Test infrastructure updates
+  ([#3750](https://github.com/dotnet/SqlClient/pull/3750), [#3823](https://github.com/dotnet/SqlClient/pull/3823), [#3712](https://github.com/dotnet/SqlClient/pull/3712))
+
+- Updated version variables for release
+  ([#3825](https://github.com/dotnet/SqlClient/pull/3825))
+
 ## [Stable release 6.0.4] - 2025-11-15
 
 This update brings the below changes over the previous stable release:
