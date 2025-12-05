@@ -13,13 +13,15 @@ namespace Microsoft.Data.SqlClient.Tests
     /// </summary>
     public sealed class TickCountElapsedTest
     {
+        internal static uint CalculateTickCountElapsed(long startTick, long endTick) => (uint)(endTick - startTick);
+
         /// <summary>
         /// Verifies that normal elapsed time calculation works correctly.
         /// </summary>
         [Fact]
         public void CalculateTickCountElapsed_NormalCase_ReturnsCorrectElapsed()
         {
-            uint elapsed = ADP.CalculateTickCountElapsed(1000, 1500);
+            uint elapsed = CalculateTickCountElapsed(1000, 1500);
             Assert.Equal(500u, elapsed);
         }
 
@@ -29,7 +31,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void CalculateTickCountElapsed_MaxWraparound_ReturnsOne()
         {
-            uint elapsed = ADP.CalculateTickCountElapsed(int.MaxValue, int.MinValue);
+            uint elapsed = CalculateTickCountElapsed(int.MaxValue, int.MinValue);
             Assert.Equal(1u, elapsed);
         }
 
@@ -41,7 +43,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(2147483647, -2147483647, 2u)]
         public void CalculateTickCountElapsed_PartialWraparound_ReturnsCorrectElapsed(long start, long end, uint expected)
         {
-            uint elapsed = ADP.CalculateTickCountElapsed(start, end);
+            uint elapsed = CalculateTickCountElapsed(start, end);
             Assert.Equal(expected, elapsed);
         }
 
@@ -51,7 +53,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void CalculateTickCountElapsed_ZeroElapsed_ReturnsZero()
         {
-            uint elapsed = ADP.CalculateTickCountElapsed(1000, 1000);
+            uint elapsed = CalculateTickCountElapsed(1000, 1000);
             Assert.Equal(0u, elapsed);
         }
     }
