@@ -5,7 +5,7 @@
 using Microsoft.Data.Common;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.UnitTests;
+namespace Microsoft.Data.SqlClient.Tests;
 
 /// <summary>
 /// Tests for Environment.TickCount elapsed time calculation with wraparound handling.
