@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.Serialization;
 using System.Text;
+using Microsoft.Data.SqlClient.Connection;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -174,7 +175,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CreateException(
             SqlError error,
             string serverVersion,
-            SqlInternalConnectionTds internalConnection,
+            SqlConnectionInternal internalConnection,
             Exception innerException = null)
         {
             SqlErrorCollection errorCollection = new() { error };
@@ -200,7 +201,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CreateException(
             SqlErrorCollection errorCollection,
             string serverVersion,
-            SqlInternalConnectionTds internalConnection,
+            SqlConnectionInternal internalConnection,
             Exception innerException = null)
         {
             return CreateException(
@@ -214,7 +215,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CreateException(
             SqlErrorCollection errorCollection,
             string serverVersion,
-            SqlInternalConnectionTds internalConnection,
+            SqlConnectionInternal internalConnection,
             Exception innerException = null,
             SqlBatchCommand batchCommand = null)
         {

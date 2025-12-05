@@ -20,10 +20,11 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Identity.Client;
+using IsolationLevel = System.Data.IsolationLevel;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Connection
 {
-    internal class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
+    internal class SqlConnectionInternal : DbConnectionInternal, IDisposable
     {
         #region Constants
 
@@ -57,7 +58,14 @@ namespace Microsoft.Data.SqlClient
         /// same.
         /// </summary>
         // @TODO: Rename to match naming conventions (s_camelCase or PascalCase)
-        private static readonly TimeSpan _dbAuthenticationContextUnLockedRefreshTimeSpan = new TimeSpan(hours: 0, minutes: 10, seconds: 00);
+        private static readonly TimeSpan _dbAuthenticationContextUnLockedRefreshTimeSpan =
+            new TimeSpan(hours: 0, minutes: 10, seconds: 00);
+
+        /// <summary>
+        /// ID of the Azure SQL DB Transaction Manager (Non-MSDTC)
+        /// </summary>
+        // @TODO: Rename to a match naming conventions (s_camelCase or PascalCase)
+        private static readonly Guid s_globalTransactionTMID = new("1C742CAF-6680-40EA-9C26-6B6846079764");
 
         private static readonly HashSet<int> s_transientErrors =
         [
@@ -306,6 +314,12 @@ namespace Microsoft.Data.SqlClient
 
         private readonly SqlConnectionTimeoutErrorInternal _timeoutErrorInternal;
 
+        /// <summary>
+        /// Cache the whereabouts (DTC Address) for exporting.
+        /// </summary>
+        // @TODO: This name ... doesn't make a whole lot of sense.
+        private byte[] _whereAbouts;
+
         #endregion
 
         #region Constructors
@@ -318,7 +332,7 @@ namespace Microsoft.Data.SqlClient
         ///   has been expanded (see SqlConnectionString.Expand)
         /// </remarks>
         // @TODO: We really really need simplify what we pass into this. All these optional parameters need to go!
-        internal SqlInternalConnectionTds(
+        internal SqlConnectionInternal(
             DbConnectionPoolIdentity identity,
             SqlConnectionString connectionOptions,
             SqlCredential credential,
@@ -332,8 +346,12 @@ namespace Microsoft.Data.SqlClient
             string accessToken = null,
             IDbConnectionPool pool = null,
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null,
-            SspiContextProvider sspiContextProvider = null) : base(connectionOptions)
+            SspiContextProvider sspiContextProvider = null)
         {
+            Debug.Assert(connectionOptions is not null, "null connectionOptions");
+
+            ConnectionOptions = connectionOptions;
+
             #if DEBUG
             if (reconnectSessionData != null)
             {
@@ -487,16 +505,42 @@ namespace Microsoft.Data.SqlClient
             get => $"{_loginAck.majorVersion:00}.{(short)_loginAck.minorVersion:00}.{_loginAck.buildNum:0000}";
         }
 
-        internal override SqlInternalTransaction AvailableInternalTransaction
-        {
-            get => _parser._fResetConnection ? null : CurrentTransaction;
-        }
+        /// <summary>
+        /// Gets the collection of async call contexts that belong to this connection.
+        /// </summary>
+        internal CachedContexts CachedContexts { get; private set; } = new CachedContexts();
 
         // @TODO: Make auto-property
         internal Guid ClientConnectionId
         {
             get => _clientConnectionId;
         }
+
+        /// <summary>
+        /// A reference to the SqlConnection that owns this internal connection.
+        /// </summary>
+        internal SqlConnection Connection => (SqlConnection)Owner;
+
+        /// <summary>
+        /// The connection options to be used for this connection.
+        /// </summary>
+        internal SqlConnectionString ConnectionOptions { get; }
+
+        /// <summary>
+        /// The current database for this connection. Null if the connection is not open yet.
+        /// </summary>
+        internal string CurrentDatabase { get; private set; }
+
+        /// <summary>
+        /// The current data source for this connection.
+        /// </summary>
+        /// <remarks>
+        /// If connection is not open yet, CurrentDataSource is null
+        /// If connection is open:
+        /// * for regular connections, it is set to the Data Source value from connection string
+        /// * for failover connections, it is set to the FailoverPartner value from the connection string
+        /// </remarks>
+        internal string CurrentDataSource { get; set; }
 
         internal SessionData CurrentSessionData
         {
@@ -511,9 +555,35 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override SqlInternalTransaction CurrentTransaction
+        /// <summary>
+        /// The Transaction currently associated with this connection.
+        /// </summary>
+        internal SqlInternalTransaction CurrentTransaction
         {
             get => _parser.CurrentTransaction;
+        }
+
+        /// <summary>
+        /// The delegated (or promoted) transaction this connection is responsible for.
+        /// </summary>
+        internal SqlDelegatedTransaction DelegatedTransaction { get; set; }
+
+        /// <summary>
+        /// Whether this connection has a local (non-delegated) transaction.
+        /// </summary>
+        internal bool HasLocalTransaction
+        {
+            get => CurrentTransaction?.IsLocal == true;
+        }
+
+        /// <summary>
+        /// Whether this connection has a local transaction started from the API (i.e.,
+        /// SqlConnection.BeginTransaction) or had a TSQL transaction and later got wrapped by an
+        /// API transaction.
+        /// </summary>
+        internal bool HasLocalTransactionFromAPI
+        {
+            get => CurrentTransaction?.HasParentTransaction == true;
         }
 
         // @TODO: Make auto-property
@@ -537,7 +607,7 @@ namespace Microsoft.Data.SqlClient
             get => _instanceName;
         }
 
-        internal override bool Is2008OrNewer
+        internal bool Is2008OrNewer
         {
             get => _parser.Is2008OrNewer;
         }
@@ -553,7 +623,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Get or set if the control ring send redirect token and feature ext ack with true for DNSCaching
+        /// Get or set if the control ring send redirect token and feature ext ack with true for
+        /// DNSCaching.
         /// </summary>
         /// @TODO: Make auto-property
         internal bool IsDNSCachingBeforeRedirectSupported
@@ -562,7 +633,27 @@ namespace Microsoft.Data.SqlClient
             set => _dnsCachingBeforeRedirect = value;
         }
 
-        internal override bool IsLockedForBulkCopy
+        /// <summary>
+        /// Indicates whether the connection is currently enlisted in a transaction.
+        /// </summary>
+        internal bool IsEnlistedInTransaction { get; private set; }
+
+        /// <summary>
+        /// Whether this is a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
+        /// TODO: overlaps with IsGlobalTransactionsEnabledForServer, need to consolidate to avoid bugs
+        /// </summary>
+        internal bool IsGlobalTransaction { get; private set; }
+
+        /// <summary>
+        /// Whether Global Transactions are enabled. Only supported by Azure SQL. False if disabled
+        /// or connected to on-prem SQL Server.
+        /// </summary>
+        internal bool IsGlobalTransactionsEnabledForServer { get; private set; }
+
+        /// <summary>
+        /// Whether this connection is locked for bulk copy operations.
+        /// </summary>
+        internal bool IsLockedForBulkCopy
         {
             get => !_parser.MARSOn && _parser._physicalStateObj.BcpLock;
         }
@@ -587,6 +678,14 @@ namespace Microsoft.Data.SqlClient
             set => _SQLDNSRetryEnabled = value;
         }
 
+        /// <summary>
+        /// Whether this connection is the root of a delegated or promoted transaction.
+        /// </summary>
+        internal override bool IsTransactionRoot
+        {
+            get => DelegatedTransaction?.IsActive == true;
+        }
+
         // @TODO: Make auto-property
         internal Guid OriginalClientConnectionId
         {
@@ -605,7 +704,10 @@ namespace Microsoft.Data.SqlClient
             get => _parser;
         }
 
-        internal override SqlInternalTransaction PendingTransaction
+        /// <summary>
+        /// TODO: need to understand this property better
+        /// </summary>
+        internal SqlInternalTransaction PendingTransaction
         {
             get => _parser.PendingTransaction;
         }
@@ -615,6 +717,11 @@ namespace Microsoft.Data.SqlClient
         {
             get => _poolGroupProviderInfo;
         }
+
+        /// <summary>
+        /// A token returned by the server when we promote transaction.
+        /// </summary>
+        internal byte[] PromotedDtcToken { get; private set; }
 
         // @TODO: Make auto-property
         internal string RoutingDestination
@@ -697,9 +804,129 @@ namespace Microsoft.Data.SqlClient
                 : ConnectionOptions.ConnectTimeout;
         }
 
+        // SQLBU 415870
+        //  Get the internal transaction that should be hooked to a new outer transaction
+        //  during a BeginTransaction API call.  In some cases (i.e. connection is going to
+        //  be reset), CurrentTransaction should not be hooked up this way.
+        // TODO: (mdaigle) need to understand this property better
+        private SqlInternalTransaction AvailableInternalTransaction
+        {
+            get => _parser._fResetConnection ? null : CurrentTransaction;
+        }
+
+        /// <summary>
+        /// Whether this connection is to an Azure SQL Database.
+        /// </summary>
+        // @TODO: Make private field.
+        private bool IsAzureSqlConnection { get; set; }
+
         #endregion
 
         #region Public and Internal Methods
+
+        public override DbTransaction BeginTransaction(IsolationLevel iso) =>
+            BeginSqlTransaction(iso, transactionName: null, shouldReconnect: false);
+
+        public override void ChangeDatabase(string database)
+        {
+            if (string.IsNullOrEmpty(database))
+            {
+                throw ADP.EmptyDatabaseName();
+            }
+
+            ValidateConnectionForExecute(null);
+
+            // MDAC 73598 - add brackets around database
+            database = SqlConnection.FixupDatabaseTransactionName(database); // @TODO: Should go to a utility method
+            Task executeTask = _parser.TdsExecuteSQLBatch(
+                $@"USE {database}",
+                ConnectionOptions.ConnectTimeout,
+                notificationRequest: null,
+                _parser._physicalStateObj,
+                sync: true);
+
+            Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
+
+            _parser.Run(
+                RunBehavior.UntilDone,
+                cmdHandler: null,
+                dataStream: null,
+                bulkCopyHandler: null,
+                _parser._physicalStateObj);
+        }
+
+        public override void EnlistTransaction(Transaction transaction)
+        {
+            #if NETFRAMEWORK
+            SqlConnection.VerifyExecutePermission();
+            #endif
+
+            ValidateConnectionForExecute(null);
+
+            // If a connection has a local transaction outstanding, and you try to enlist in a DTC
+            // transaction, SQL Server will roll back the local transaction and then enlist (7.0 and
+            // 2000). So, if the user tries to do this, throw.
+            if (HasLocalTransaction)
+            {
+                throw ADP.LocalTransactionPresent();
+            }
+
+            if (transaction != null && transaction.Equals(EnlistedTransaction))
+            {
+                // No-op if this is the current transaction
+                return;
+            }
+
+            // If a connection is already enlisted in a DTC transaction, and you try to enlist in
+            // another one, in 7.0 the existing DTC transaction would roll back and then the
+            // connection would enlist in the new one. In SQL 2000 & 2005, when you enlist in a DTC
+            // transaction while the connection is already enlisted in a DTC transaction, the
+            // connection simply switches enlistments. Regardless, simply enlist in the user
+            // specified distributed transaction. This behavior matches OLEDB and ODBC.
+
+            Enlist(transaction);
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
+        }
+
+        internal SqlTransaction BeginSqlTransaction(
+            IsolationLevel iso,
+            string transactionName,
+            bool shouldReconnect)
+        {
+            SqlStatistics statistics = null;
+            try
+            {
+                statistics = SqlStatistics.StartTimer(Connection.Statistics);
+
+                #if NETFRAMEWORK
+                SqlConnection.ExecutePermission.Demand(); // MDAC 81476
+                #endif
+
+                ValidateConnectionForExecute(null);
+
+                if (HasLocalTransactionFromAPI)
+                {
+                    throw ADP.ParallelTransactionsNotSupported(Connection);
+                }
+
+                if (iso == IsolationLevel.Unspecified)
+                {
+                    // Default to ReadCommitted if unspecified.
+                    iso = IsolationLevel.ReadCommitted;
+                }
+
+                SqlTransaction transaction = new(this, Connection, iso, AvailableInternalTransaction);
+                transaction.InternalTransaction.RestoreBrokenConnection = shouldReconnect;
+                ExecuteTransaction(TransactionRequest.Begin, transactionName, iso, transaction.InternalTransaction, false);
+                transaction.InternalTransaction.RestoreBrokenConnection = false;
+                return transaction;
+            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            finally
+            {
+                SqlStatistics.StopTimer(statistics);
+            }
+        }
 
         internal void BreakConnection()
         {
@@ -774,10 +1001,10 @@ namespace Microsoft.Data.SqlClient
             Interlocked.Decrement(ref _asyncCommandCount);
         }
 
-        internal override void DisconnectTransaction(SqlInternalTransaction internalTransaction) =>
+        internal void DisconnectTransaction(SqlInternalTransaction internalTransaction) =>
             _parser?.DisconnectTransaction(internalTransaction);
 
-        // @TODO: Make internal by making the SqlInternalConnection implementation internal
+        // @TODO: Make internal by making the DbConnectionInternal implementation internal
         public override void Dispose()
         {
             SqlClientEventSource.Log.TryAdvancedTraceEvent(
@@ -805,10 +1032,45 @@ namespace Microsoft.Data.SqlClient
                 _fConnectionOpen = false;
             }
 
+            _whereAbouts = null;
+
             base.Dispose();
         }
 
-        internal override void ExecuteTransaction(
+        internal void EnlistNull()
+        {
+            SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                $"SqlInternalConnection.EnlistNull | ADV | " +
+                $"Object ID {ObjectID}, " +
+                $"unenlisting.");
+
+            // We were in a transaction, but now we are not - so send message to server with empty
+            // transaction - confirmed proper behavior from Sameet Agarwal.
+
+            // The connection pooler maintains separate pools for enlisted transactions. Only when
+            // that transaction is committed or rolled back will those connections be taken from
+            // that separate pool and returned to the general pool of connections that are not
+            // affiliated with any transactions.  When this occurs, we will have a new transaction
+            // of null, and we are required to send an empty transaction payload to the server.
+
+            PropagateTransactionCookie(null);
+
+            // Tell the base class about our enlistment
+            IsEnlistedInTransaction = false;
+            EnlistedTransaction = null;
+
+            SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                $"SqlInternalConnection.EnlistNull | ADV | " +
+                $"Object ID {ObjectID}, " +
+                $"unenlisted.");
+
+            // The EnlistTransaction above will return an TransactionEnded event, which causes the
+            // TdsParser to clear the current transaction. In either case, when we're working with
+            // a 2005 or newer server we better not have a current transaction at this point.
+            Debug.Assert(CurrentTransaction == null, "unenlisted transaction with non-null current transaction?");
+        }
+
+        internal void ExecuteTransaction(
             TransactionRequest transactionRequest,
             string name,
             System.Data.IsolationLevel iso,
@@ -840,6 +1102,17 @@ namespace Microsoft.Data.SqlClient
             string transactionName = name ?? string.Empty;
 
             ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
+        }
+
+        internal SqlDataReader FindLiveReader(SqlCommand command)
+        {
+            SqlDataReader reader = null;
+            SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
+            if (referenceCollection != null)
+            {
+                reader = referenceCollection.FindLiveReader(command);
+            }
+            return reader;
         }
 
         /// <summary>
@@ -1014,6 +1287,31 @@ namespace Microsoft.Data.SqlClient
                 default:
                     Debug.Fail("Missed token in EnvChange!");
                     break;
+            }
+        }
+
+        /// <summary>
+        /// If wrapCloseInAction is defined, then the action it defines will be run with the
+        /// connection close action passed in as a parameter. The close action also supports being
+        /// run asynchronously.
+        /// </summary>
+        internal void OnError(SqlException exception, bool breakConnection, Action<Action> wrapCloseInAction = null)
+        {
+            if (breakConnection)
+            {
+                DoomThisConnection();
+            }
+
+            SqlConnection connection = Connection;
+            if (connection != null)
+            {
+                connection.OnError(exception, breakConnection, wrapCloseInAction);
+            }
+            else if (exception.Class >= TdsEnums.MIN_ERROR_CLASS)
+            {
+                // It is an error, and should be thrown.  Class of TdsEnums.MIN_ERROR_CLASS
+                // or above is an error, below TdsEnums.MIN_ERROR_CLASS denotes an info message.
+                throw exception;
             }
         }
 
@@ -1201,8 +1499,8 @@ namespace Microsoft.Data.SqlClient
                             SqlClientEventSource.Log.TryTraceEvent(
                                 $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
                                 $"Object ID {ObjectID }, " +
-                                $"AddOrUpdate attempted on _dbConnectionPool.AuthenticationContexts, but it did not update the new value.",
-                                ObjectID);
+                                $"AddOrUpdate attempted on _dbConnectionPool.AuthenticationContexts, " +
+                                $"but it did not update the new value.");
                         }
                         #endif
                     }
@@ -1669,7 +1967,7 @@ namespace Microsoft.Data.SqlClient
             return TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
         }
 
-        internal override void ValidateConnectionForExecute(SqlCommand command)
+        internal void ValidateConnectionForExecute(SqlCommand command)
         {
             TdsParser parser = _parser;
             if (parser == null || parser.State is TdsParserState.Broken or TdsParserState.Closed)
@@ -1746,66 +2044,77 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // @TODO: Is this suppression still required
-        [SuppressMessage("Microsoft.Globalization", "CA1303:DoNotPassLiteralsAsLocalizedParameters")] // copied from Triaged.cs
-        protected override void ChangeDatabaseInternal(string database)
+        protected override void CleanupTransactionOnCompletion(Transaction transaction) =>
+            DelegatedTransaction?.TransactionEnded(transaction);
+
+        protected override DbReferenceCollection CreateReferenceCollection() =>
+            new SqlReferenceCollection();
+
+        /// <inheritdoc/>
+        protected override void Deactivate()
         {
-            // MDAC 73598 - add brackets around database
-            database = SqlConnection.FixupDatabaseTransactionName(database); // @TODO: Should go to a utility method
-            Task executeTask = _parser.TdsExecuteSQLBatch(
-                $@"USE {database}",
-                ConnectionOptions.ConnectTimeout,
-                notificationRequest: null,
-                _parser._physicalStateObj,
-                sync: true);
+            try
+            {
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    $"SqlInternalConnection.Deactivate | ADV | " +
+                    $"Object ID {ObjectID} deactivating, " +
+                    $"Client Connection Id {Connection?.ClientConnectionId}");
 
-            Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
+                SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
+                referenceCollection?.Deactivate();
 
-            _parser.Run(
-                RunBehavior.UntilDone,
-                cmdHandler: null,
-                dataStream: null,
-                bulkCopyHandler: null,
-                _parser._physicalStateObj);
+                // When we're deactivated, the user must have called End on all the async commands,
+                // or we don't know that we're in a state that we can recover from. We doom the
+                // connection in this case, to prevent odd cases when we go to the wire.
+                if (_asyncCommandCount != 0)
+                {
+                    DoomThisConnection();
+                }
+
+                // If we're deactivating with a delegated transaction, we should not be cleaning up
+                // the parser just yet, that will cause our transaction to be rolled back and the
+                // connection to be reset. We'll get called again once the delegated transaction is
+                // completed, and we can do it all then.
+                // TODO: I think this logic cares about pooling because the pool will handle deactivation of pool-associated trasaction roots?
+                if (!(IsTransactionRoot && Pool == null))
+                {
+                    Debug.Assert(_parser != null || IsConnectionDoomed, "Deactivating a disposed connection?");
+                    if (_parser != null)
+                    {
+                        _parser.Deactivate(IsConnectionDoomed);
+
+                        if (!IsConnectionDoomed)
+                        {
+                            ResetConnection();
+                        }
+                    }
+                }
+            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            catch (Exception e)
+            {
+                if (!ADP.IsCatchableExceptionType(e))
+                {
+                    throw;
+                }
+
+                // If an exception occurred, the inner connection will be marked as unusable and
+                // destroyed upon returning to the pool
+                DoomThisConnection();
+
+                #if NETFRAMEWORK
+                ADP.TraceExceptionWithoutRethrow(e);
+                #endif
+            }
         }
 
         // @TODO: Rename to match guidelines
-        protected override byte[] GetDTCAddress()
+        protected byte[] GetDTCAddress()
         {
             byte[] dtcAddress = _parser.GetDTCAddress(ConnectionOptions.ConnectTimeout, _parser.GetSession(this));
 
             Debug.Assert(dtcAddress != null, "null dtcAddress?");
             return dtcAddress;
-        }
-
-        protected override void InternalDeactivate()
-        {
-            // When we're deactivated, the user must have called End on all the async commands, or
-            // we don't know that we're in a state that we can recover from. We doom the connection
-            // in this case, to prevent odd cases when we go to the wire.
-            if (_asyncCommandCount != 0)
-            {
-                DoomThisConnection();
-            }
-
-            // If we're deactivating with a delegated transaction, we should not be cleaning up the
-            // parser just yet, that will cause our transaction to be rolled back and the
-            // connection to be reset.  We'll get called again once the delegated transaction is
-            // completed, and we can do it all then.
-            // TODO: I think this logic cares about pooling because the pool will handle deactivation of pool-associated trasaction roots?
-            if (!(IsTransactionRoot && Pool == null))
-            {
-                Debug.Assert(_parser != null || IsConnectionDoomed, "Deactivating a disposed connection?");
-                if (_parser != null)
-                {
-                    _parser.Deactivate(IsConnectionDoomed);
-
-                    if (!IsConnectionDoomed)
-                    {
-                        ResetConnection();
-                    }
-                }
-            }
         }
 
         protected override bool ObtainAdditionalLocksForClose()
@@ -1824,7 +2133,7 @@ namespace Microsoft.Data.SqlClient
             return obtainParserLock;
         }
 
-        protected override void PropagateTransactionCookie(byte[] cookie)
+        protected void PropagateTransactionCookie(byte[] cookie)
         {
             _parser.PropagateDistributedTransaction(
                 cookie,
@@ -1844,6 +2153,13 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Private Methods
+
+        private static byte[] GetTransactionCookie(Transaction transaction, byte[] whereAbouts)
+        {
+            return transaction is not null
+                ? TransactionInterop.GetExportCookie(transaction, whereAbouts)
+                : null;
+        }
 
         /// <summary>
         /// Common code path for making one attempt to establish a connection and log in to server.
@@ -2013,6 +2329,213 @@ namespace Microsoft.Data.SqlClient
             }
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
+        }
+
+        private void Enlist(Transaction transaction)
+        {
+            // This method should not be called while the connection has a reference to an active
+            // delegated transaction. Manual enlistment via SqlConnection.EnlistTransaction should
+            // catch this case and throw an exception.
+
+            // Automatic enlistment isn't possible because Sys.Tx keeps the connection alive until
+            // the transaction is completed.
+            // @TODO: What does the above mean? Is it still valid in a post-SDS world?
+
+            // TODO: why do we assert pooling status? shouldn't we just be checking whether the connection is the root of the transaction?
+            // @TODO: potential race condition, but it's an assert
+            Debug.Assert(!(IsTransactionRoot && Pool == null), "cannot defect an active delegated transaction!");
+
+            if (transaction is null)
+            {
+                if (IsEnlistedInTransaction)
+                {
+                    EnlistNull();
+                }
+                else
+                {
+                    // When IsEnlistedInTransaction is false, it means we are in one of two states:
+                    // 1. EnlistTransaction is null, so the connection is truly not enlisted in a
+                    //    transaction
+                    // 2. Connection is enlisted in a SqlDelegatedTransaction.
+                    //
+                    // For #2, we have to consider whether the delegated transaction is active. If
+                    // it is not active, we allow the enlistment in the NULL transaction. If it is
+                    // active, technically this is an error.
+                    //
+                    // However, no exception is thrown as this was the precedent (and this case is
+                    // silently ignored, no error, but no enlistment either). There are two
+                    // mitigations for this:
+                    // 1. SqlConnection.EnlistTransaction checks that the enlisted transaction has
+                    //    completed before allowing a different enlistment.
+                    // 2. For debug builds, the assertion at the beginning of this method checks
+                    //    for an enlistment in an active delegated transaction.
+                    Transaction enlistedTransaction = EnlistedTransaction;
+                    if (enlistedTransaction != null && enlistedTransaction.TransactionInformation.Status != TransactionStatus.Active)
+                    {
+                        EnlistNull();
+                    }
+                }
+            }
+            else if (!transaction.Equals(EnlistedTransaction))
+            {
+                // Only enlist if it's different...
+                EnlistNonNull(transaction);
+            }
+        }
+
+        private void EnlistNonNull(Transaction transaction)
+        {
+            Debug.Assert(transaction != null, "null transaction?");
+
+            SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                $"SqlInternalConnection.EnlistNonNull | ADV | " +
+                $"Object ID {ObjectID}, " +
+                $"Transaction Id {transaction?.TransactionInformation?.LocalIdentifier}, " +
+                $"attempting to delegate.");
+
+            bool hasDelegatedTransaction = false;
+            SqlDelegatedTransaction delegatedTransaction = new(this, transaction);
+
+            try
+            {
+                // NOTE: System.Transactions claims to resolve all potential race conditions
+                // between multiple delegate requests of the same transaction to different
+                // connections in their code, such that only one attempt to delegate will succeed.
+
+                // NOTE: PromotableSinglePhaseEnlist will eventually make a round trip to the
+                // server; doing this inside a lock is not the best choice. We presume that you
+                // aren't trying to enlist concurrently on two threads and leave it at that. We
+                // don't claim any thread safety with regard to multiple concurrent requests to
+                // enlist the same connection in different transactions, which is good, because we
+                // don't have it anyway.
+
+                // PromotableSinglePhaseEnlist may not actually promote the transaction when it is
+                // already delegated (this is the way they resolve the race condition when two
+                // threads attempt to delegate the same Lightweight Transaction). In that case, we
+                // can safely ignore our delegated transaction, and proceed to enlist in the
+                // promoted one.
+
+                // NOTE: Global Transactions is an Azure SQL DB only feature where the Transaction
+                // Manager (TM) is not MS-DTC. Sys.Tx added APIs to support Non MS-DTC promoter
+                // types/TM in .NET 4.6.2. Following directions from .NETFX shiproom, to avoid a
+                // "hard-dependency" (compile time) on Sys.Tx, we use reflection to invoke the new
+                // APIs. Further, the IsGlobalTransaction flag indicates that this is an Azure SQL
+                // DB Transaction that could be promoted to a Global Transaction (it's always false
+                // for on-prem SQL Server). The Promote() call in SqlDelegatedTransaction makes
+                // sure that the right Sys.Tx.dll is loaded and that Global Transactions are
+                // actually allowed for this Azure SQL DB.
+                // @TODO: Revisit these comments and see if they are still necessary/desirable.
+
+                if (IsGlobalTransaction)
+                {
+                    if (SysTxForGlobalTransactions.EnlistPromotableSinglePhase == null)
+                    {
+                        // This could be a local Azure SQL DB transaction.
+                        hasDelegatedTransaction = transaction.EnlistPromotableSinglePhase(delegatedTransaction);
+                    }
+                    else
+                    {
+                        hasDelegatedTransaction = (bool)SysTxForGlobalTransactions.EnlistPromotableSinglePhase.Invoke(
+                            obj: transaction,
+                            parameters: [delegatedTransaction, s_globalTransactionTMID]);
+                    }
+                }
+                else
+                {
+                    // This is an MS-DTC distributed transaction
+                    hasDelegatedTransaction = transaction.EnlistPromotableSinglePhase(delegatedTransaction);
+                }
+
+                if (hasDelegatedTransaction)
+                {
+                    DelegatedTransaction = delegatedTransaction;
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnection.EnlistNonNull | ADV | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Client Connection Id {Connection?.ClientConnectionId} " +
+                        $"delegated to transaction {delegatedTransaction?.ObjectID} " +
+                        $"with transactionId {delegatedTransaction?.Transaction?.TransactionInformation?.LocalIdentifier}");
+                }
+            }
+            catch (SqlException e)
+            {
+                // we do not want to eat the error if it is a fatal one
+                if (e.Class >= TdsEnums.FATAL_ERROR_CLASS)
+                {
+                    throw;
+                }
+
+                if (Parser?.State is not TdsParserState.OpenLoggedIn)
+                {
+                    // If the parser is null or its state is not openloggedin, the connection is no
+                    // longer good.
+                    throw;
+                }
+
+                #if NETFRAMEWORK
+                ADP.TraceExceptionWithoutRethrow(e);
+                #endif
+
+                // In this case, SqlDelegatedTransaction.Initialize failed, and we don't
+                // necessarily want to reject things - there may have been a legitimate reason for
+                // the failure.
+            }
+
+            if (!hasDelegatedTransaction)
+            {
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    $"SqlInternalConnection.EnlistNonNull | ADV | " +
+                    $"Object ID {ObjectID}, " +
+                    $"delegation not possible, enlisting.");
+
+                byte[] cookie = null;
+
+                if (IsGlobalTransaction)
+                {
+                    if (SysTxForGlobalTransactions.GetPromotedToken == null)
+                    {
+                        throw SQL.UnsupportedSysTxForGlobalTransactions();
+                    }
+
+                    cookie = (byte[])SysTxForGlobalTransactions.GetPromotedToken.Invoke(transaction, null);
+                }
+                else
+                {
+                    if (_whereAbouts == null)
+                    {
+                        byte[] dtcAddress = GetDTCAddress();
+                        _whereAbouts = dtcAddress ?? throw SQL.CannotGetDTCAddress();
+                    }
+
+                    cookie = GetTransactionCookie(transaction, _whereAbouts);
+                }
+
+                // send cookie to server to finish enlistment
+                PropagateTransactionCookie(cookie);
+
+                IsEnlistedInTransaction = true;
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    $"SqlInternalConnection.EnlistNonNull | ADV | " +
+                    $"Object ID {ObjectID}, " +
+                    $"Client Connection Id {Connection?.ClientConnectionId}, " +
+                    $"Enlisted in transaction with transactionId {transaction?.TransactionInformation?.LocalIdentifier}");
+            }
+
+            // Tell the base class about our enlistment
+            EnlistedTransaction = transaction;
+
+            // If we're on a 2005 or newer server, and we delegate the transaction successfully, we
+            // will have begun a transaction, which produces a transaction ID that we should
+            // execute all requests on. The TdsParser will store this information as the current
+            // transaction.
+
+            // Likewise, propagating a transaction to a 2005 or newer server will produce a
+            // transaction id that The TdsParser will store as the current transaction.
+
+            // In either case, when we're working with a 2005 or newer server we better have a
+            // current transaction by now.
+
+            Debug.Assert(CurrentTransaction != null, "delegated/enlisted transaction with null current transaction?");
         }
 
         // @TODO: Rename to ExecuteTransactionInternal ... we don't have multiple server version implementations of this
