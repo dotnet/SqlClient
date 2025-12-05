@@ -178,7 +178,7 @@ stages:
             # You can find Pipeline Variables by visiting the main page of the
             # pipeline and choosing Edit -> Variables.
             #
-            upload: $(ci_var_uploadTestResult)
+            upload: ${{ eq(variables.ci_var_uploadTestResult, 'true') }}
 
 # test stages configurations
   # self hosted SQL Server on Windows
