@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _WINDOWS
+
 namespace Interop.Windows.NtDll
 {
     /// <summary>
@@ -39,3 +41,5 @@ namespace Interop.Windows.NtDll
         SecurityDelegation = 3,
     }
 }
+
+#endif

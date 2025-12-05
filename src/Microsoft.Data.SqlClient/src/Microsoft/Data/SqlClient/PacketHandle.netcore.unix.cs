@@ -2,20 +2,23 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET
+// @TODO: Introduce polymorphism to remove need for this level of indirection
+// @TODO: Also, why do we have any other type besides managed defined here?
+#if NET && _UNIX
 
 namespace Microsoft.Data.SqlClient
 {
-    // This structure is used for transporting packet handle references between the
-    // TdsParserStateObject base class and Managed or Native implementations. 
-    // It prevents the native IntPtr type from being boxed and prevents the need to cast from
-    // object which loses compile time type safety.
-    // It carries type information so that assertions about the type of handle can be made in the
-    // implemented abstract methods. 
-    // It is a ref struct so that it can only be used to transport the handles and not store them
-
-    // N.B. If you change this type you must also change the version for the other platform
-
+    /// <summary>
+    /// This structure is used for transporting packet handle references between the
+    /// TdsParserStateObject base class and Managed or Native implementations. It prevents the
+    /// native IntPtr type from being boxed and prevents the need to cast from object which loses
+    /// compile time type safety. It carries type information so that assertions about the type of
+    /// handle can be made in the implemented abstract methods.
+    /// </summary>
+    /// <remarks>
+    /// It is a ref struct so that it can only be used to transport the handles and not store them.
+    /// If you change this type you must also change the version for the other platform.
+    /// </remarks>
     internal readonly ref struct PacketHandle
     {
         /// <summary>
@@ -36,6 +39,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         public const int ManagedPacketType = 3;
 
+        // @TODO: To auto-properties
         public readonly ManagedSni.SniPacket ManagedPacket;
         public readonly int Type;
 

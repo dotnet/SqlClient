@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _WINDOWS
+
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -14,8 +16,6 @@ using Interop.Windows.Sni;
 #if NETFRAMEWORK
 using System.Collections.Generic;
 using System.Configuration;
-using System.Runtime.CompilerServices;
-using System.Threading;
 #endif
 
 namespace Microsoft.Data.SqlClient.LocalDb
@@ -421,3 +421,5 @@ namespace Microsoft.Data.SqlClient.LocalDb
         #endif
     }
 }
+
+#endif
