@@ -60,7 +60,7 @@ internal static class UserAgent
     ///     </list>
     ///   </para>
     ///   <para>
-    ///     The <c>{OS Info}</c> part will be sourced from the the
+    ///     The <c>{OS Info}</c> part will be sourced from the
     ///     <see cref="RuntimeInformation.OSDescription">
     ///       OSDescription
     ///     </see> 

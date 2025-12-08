@@ -459,7 +459,7 @@ public sealed class UserAgentTests
     /// Test the Clean() function with permitted characters.
     /// </summary>
     [Fact]
-    public void Clean_Permitted_Disallowed_Characters()
+    public void Clean_Permitted_Characters()
     {
         // All permitted characters are preserved.
         Assert.Equal(AllPermitted, UserAgent.Clean(AllPermitted));
