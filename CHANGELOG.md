@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
-## [Preview Release 7.0.0-preview3] - 2025-12-08
+## [Preview Release 7.0.0-preview3.25342.7] - 2025-12-08
 
 This update brings the below changes over the previous preview release:
 
@@ -17,16 +17,16 @@ This update brings the below changes over the previous preview release:
 
 *What Changed:*
 
-- Added support for .NET 10.
+- Updated pipelines and test suites to compile the driver using the .NET 10 SDK. Cleaned up unnecessary dependency references. 
   ([#3686](https://github.com/dotnet/SqlClient/pull/3686))
 
 *Who Benefits:*
 
-- Developers targeting the latest .NET platform.
+- Developers targeting .NET 10.
 
 *Impact:*
 
-- Users can now build and run applications using Microsoft.Data.SqlClient on .NET 10.
+- Addressed .NET 10 warnings regarding unused/unnecessary dependencies.
 
 #### Enable SqlClientDiagnosticListener in SqlCommand on .NET Framework
 
@@ -56,7 +56,7 @@ This update brings the below changes over the previous preview release:
 
 *Impact:*
 
-- Enhanced user agent information for better tracking and diagnostics.
+- When the `Switch.Microsoft.Data.SqlClient.EnableUserAgent` app context switch is enabled, the driver sends more detailed user agent strings. This switch is disabled by default. This change will assist with troubleshooting and quantifying driver usage by version and operating system.
 
 ### Fixed
 
