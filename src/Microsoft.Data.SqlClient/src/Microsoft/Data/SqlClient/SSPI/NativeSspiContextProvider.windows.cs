@@ -1,4 +1,10 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+#if _WINDOWS
+
+using System;
 using System.Buffers;
 using System.Diagnostics;
 
@@ -14,7 +20,7 @@ namespace Microsoft.Data.SqlClient
         private static bool s_fSSPILoaded;
 
         // variable to hold max SSPI data size, keep for token from server
-        private volatile static uint s_maxSSPILength;
+        private static volatile uint s_maxSSPILength;
 
         private protected override void Initialize()
         {
@@ -53,9 +59,10 @@ namespace Microsoft.Data.SqlClient
 
         protected override bool GenerateContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams)
         {
-#if NET
+            #if NET
             Debug.Assert(_physicalStateObj.SessionHandle.Type == SessionHandle.NativeHandleType);
-#endif
+            #endif
+
             SNIHandle handle = _physicalStateObj.SessionHandle.NativeHandle;
 
             // This must start as the length of the input, but will be updated by the call to SNISecGenClientContext to the written length
@@ -79,3 +86,4 @@ namespace Microsoft.Data.SqlClient
     }
 }
 
+#endif

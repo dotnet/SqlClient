@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _WINDOWS
+
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -102,6 +104,7 @@ namespace Microsoft.Data.SqlTypes
             FileOptions options,
             long allocationSize)
         {
+            // @TODO: Adopt netcore style format
             #if NETFRAMEWORK
             const string scopeFormat = "<sc.SqlFileStream.ctor|API> {0} access={1} options={2} path='{3}'";
             #else
@@ -960,3 +963,5 @@ namespace Microsoft.Data.SqlTypes
         #endregion
     }
 }
+
+#endif

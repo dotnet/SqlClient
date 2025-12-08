@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _UNIX
+
 using System;
 
 namespace Microsoft.Data.SqlClient.LocalDb
@@ -15,3 +17,5 @@ namespace Microsoft.Data.SqlClient.LocalDb
             throw new PlatformNotSupportedException(Strings.LocalDBNotSupported); // LocalDB is not available for Unix and hence it cannot be supported.
     }
 }
+
+#endif
