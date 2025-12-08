@@ -12,11 +12,11 @@
     <PackageVersion Include="Microsoft.Identity.Client" Version="4.78.0" />
   </ItemGroup>
   <!-- Published - Target Framework Specific Dependencies -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
     <!-- MDS and AKV -->
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.9" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' != 'net9.0'">
+  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">   
     <!-- MDS and AKV -->
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
   </ItemGroup>
@@ -31,7 +31,6 @@
     <PackageVersion Include="Microsoft.SqlServer.SqlManagementObjects" Version="172.76.0" />
     <PackageVersion Include="Microsoft.SqlServer.Types" Version="160.1000.6" />
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
-    <PackageVersion Include="Microsoft.Win32.Registry" Version="5.0.0" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageVersion Include="System.Data.Odbc" Version="9.0.9" />
     <PackageVersion Include="System.Security.Principal.Windows" Version="5.0.0" />
@@ -42,11 +41,11 @@
     <PackageVersion Include="xunit.runner.console" Version="2.9.3" />
   </ItemGroup>
   <!-- Internal - Target Framework Specific Dependencies -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
     <!-- MDS and AKV Tests -->
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' != 'net9.0'">
+  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
     <!-- MDS and AKV Tests -->
     <!--
       We can't use a newer major version of this package because it pulls in
@@ -62,20 +61,17 @@
     <PackageVersion Include="Azure.Identity" Version="1.16.0" />
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.14.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.14.0" />
-    <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
   </ItemGroup>
   <!-- Common Target Framework Specific Dependencies -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">    
     <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="9.0.9" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.9" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.9" />
-    <PackageVersion Include="System.Text.Json" Version="9.0.9" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' != 'net9.0'">
+  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
     <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="8.0.0" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
-    <PackageVersion Include="System.Text.Json" Version="8.0.6" />
   </ItemGroup>
   <!-- .NET Dependencies -->
   <ItemGroup>
@@ -86,10 +82,10 @@
   <ItemGroup>
     <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="6.0.2" />
     <PackageVersion Include="System.Buffers" Version="4.6.1" />
-    <PackageVersion Include="System.Data.Common" Version="4.3.0" />
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
-    <PackageVersion Include="System.Text.Encodings.Web" Version="8.0.0" />
+    <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
+    <PackageVersion Include="System.Text.Json" Version="8.0.6" />
     <PackageVersion Include="System.ValueTuple" Version="4.6.1" />
     <PackageVersion Include="System.Threading.Channels" Version="8.0.0" />
   </ItemGroup>

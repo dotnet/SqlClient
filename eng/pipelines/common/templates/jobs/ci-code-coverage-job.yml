@@ -33,7 +33,6 @@ parameters:
   # True to upload code coverage results to CodeCov.
   - name: upload
     type: boolean
-    default: true
 
 jobs:
   - job: CodeCoverage
@@ -63,6 +62,11 @@ jobs:
       - template: ../steps/ensure-dotnet-version.yml@self
         parameters:
             packageType: sdk
+            version: '10.0'
+
+      - template: ../steps/ensure-dotnet-version.yml@self
+        parameters:
+            packageType: runtime
             version: '9.0'
 
       - pwsh: |
