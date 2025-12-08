@@ -81,16 +81,6 @@ This update brings the below changes over the previous preview release:
    [#3683](https://github.com/dotnet/SqlClient/pull/3683),
    [#3676](https://github.com/dotnet/SqlClient/pull/3676))
 
-- Test improvements:
-  ([#3823](https://github.com/dotnet/SqlClient/pull/3823),
-   [#3750](https://github.com/dotnet/SqlClient/pull/3750),
-   [#3712](https://github.com/dotnet/SqlClient/pull/3712))
-
-- Engineering and infrastructure improvements:
-  ([#3828](https://github.com/dotnet/SqlClient/pull/3828),
-   [#3825](https://github.com/dotnet/SqlClient/pull/3825),
-   [#3713](https://github.com/dotnet/SqlClient/pull/3713))
-
 ## [Stable release 6.0.4] - 2025-11-15
 
 This update brings the below changes over the previous stable release:
