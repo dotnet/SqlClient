@@ -10,7 +10,7 @@
 
 - [Detailed description of what changed, including deprecation/obsolete notices and PR reference]
 
-*Who benefits:*
+*Who Benefits:*
 
 - [Description of who benefits and why this change is being made]
 
@@ -37,7 +37,7 @@
   - Updated `PackageName` to vX.Y.Z
   - Updated `PackageName` to vX.Y.Z (target framework if applicable)
 
-### Bug Fixes
+### Fixed
 
 - [Description of bug fix]
   ([#PRNUM](https://github.com/dotnet/SqlClient/pull/PRNUM))

@@ -16,13 +16,13 @@ Steps:
     - Review the title and body of each PR.
     - Categorize them into: `Added`, `Fixed`, `Changed`, `Removed`.
     - Identify the contributors for the "Contributors" section.
-4. Create Release Notes File
+3. Create Release Notes File
     - Determine the correct path: `release-notes/<Major.Minor>/<Version>.md`.
     - Create the file with the template contents from `release-notes/template/release-notes-template.md`.
     - Fill in the template, following the instructions present in each section.
-5. Update CHANGELOG.md
+4. Update CHANGELOG.md
     - Add a new entry at the top of the list (under the Note).
     - Include all the text from the Added, Fixed, Changed, Removed, etc. sections from the release notes.
-6. Update Release Directory README
+5. Update Release Directory README
     - Update `release-notes/<Major.Minor>/README.md`.
     - Add the new release to the table: `| <Date> | <Version> | [Release Notes](<Version>.md) |`.
