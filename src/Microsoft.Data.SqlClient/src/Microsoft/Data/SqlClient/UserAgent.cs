@@ -33,12 +33,21 @@ internal static class UserAgent
     ///   <para> 
     ///     The format is pipe ('|') delimited into 7 parts:
     ///
-    ///     <code>1|MS-MDS|{Driver Version}|{OS Type}|{Arch}|{OS Info}|{Runtime Info}</code>
+    ///     <code>1|MS-MDS|{Driver Version}|{Arch}|{OS Type}|{OS Info}|{Runtime Info}</code>
     ///   </para>
     ///   <para>
     ///     The <c>{Driver Version}</c> part is the version of the driver,
     ///     sourced from the MDS NuGet package version in SemVer 2.0 format.
     ///     Maximum length is 24 characters.
+    ///   </para>
+    ///   <para>
+    ///     The <c>{Arch}</c> part will be the process architecture, either
+    ///     the bare metal hardware architecture or the virtualized
+    ///     architecture.  See
+    ///     <see cref="RuntimeInformation.ProcessArchitecture">
+    ///       ProcessArchitecture
+    ///     </see>
+    ///     for possible values.  Maximum length is 10 characters.
     ///   </para>
     ///   <para>
     ///     The <c>{OS Type}</c> part will be one of the following strings:
@@ -49,15 +58,6 @@ internal static class UserAgent
     ///       <item><description>FreeBSD</description></item>
     ///       <item><description>Unknown</description></item>
     ///     </list>
-    ///   </para>
-    ///   <para> 
-    ///     The <c>{Arch}</c> part will be the process architecture, either
-    ///     the bare metal hardware architecture or the virtualized
-    ///     architecture.  See
-    ///     <see cref="RuntimeInformation.ProcessArchitecture">
-    ///       ProcessArchitecture
-    ///     </see>
-    ///     for possible values.  Maximum length is 10 characters.
     ///   </para>
     ///   <para>
     ///     The <c>{OS Info}</c> part will be sourced from the the
@@ -90,7 +90,7 @@ internal static class UserAgent
     ///       <item><description>Hyphen ('-')</description></item>
     ///     </list>
     ///   </para>
-    ///   <para> 
+    ///   <para>
     ///     All known exceptions are caught and handled by injecting the
     ///     fallback value of "Unknown".  However, no effort is made to
     ///     catch all exceptions, for example process-fatal memory
@@ -146,8 +146,8 @@ internal static class UserAgent
             PayloadVersion,
             DriverName,
             System.ThisAssembly.NuGetPackageVersion,
-            osType,
             RuntimeInformation.ProcessArchitecture,
+            osType,
             RuntimeInformation.OSDescription,
             RuntimeInformation.FrameworkDescription);
         
@@ -178,11 +178,11 @@ internal static class UserAgent
     /// <param name="driverVersion">
     ///   The value of the driver version part. 
     /// </param>
-    /// <param name="osType">
-    ///   The value of the OS Type part. 
-    /// </param>
     /// <param name="arch">
     ///   The value of the Architecture part.
+    /// </param>
+    /// <param name="osType">
+    ///   The value of the OS Type part. 
     /// </param>
     /// <param name="osInfo">
     ///   The value of the OS Info part. 
@@ -199,8 +199,8 @@ internal static class UserAgent
         string payloadVersion,
         string driverName,
         string driverVersion,
-        string osType,
         Architecture arch,
+        string osType,
         string osInfo,
         string runtimeInfo)
     {
@@ -231,12 +231,12 @@ internal static class UserAgent
             name.Append(Truncate(Clean(driverVersion), MaxLenDriverVersion));
             name.Append('|');
 
-            // Add the OS Type, truncating to its max length.
-            name.Append(Truncate(Clean(osType), MaxLenOsType));
-            name.Append('|');
-
             // Add the Architecture, truncating to its max length.
             name.Append(Truncate(Clean(arch.ToString()), MaxLenArch));
+            name.Append('|');
+
+            // Add the OS Type, truncating to its max length.
+            name.Append(Truncate(Clean(osType), MaxLenOsType));
             name.Append('|');
             
             // Add the OS Info, truncating to its max length.
@@ -411,8 +411,8 @@ internal static class UserAgent
     private const ushort MaxLenPayloadVersion = 2;
     private const ushort MaxLenDriverName = 12;
     private const ushort MaxLenDriverVersion = 24;
-    private const ushort MaxLenOsType = 10;
     private const ushort MaxLenArch = 10;
+    private const ushort MaxLenOsType = 10;
     private const ushort MaxLenOsInfo = 44;
     private const ushort MaxLenRuntimeInfo = 44;
 

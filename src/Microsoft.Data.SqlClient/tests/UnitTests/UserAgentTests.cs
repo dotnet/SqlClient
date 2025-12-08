@@ -72,16 +72,20 @@ public sealed class UserAgentTests
         //
         // The format should be:
         //
-        // 1|MS-MDS|{Driver Version}|{OS Type}|{Arch}|{OS Info}|{Runtime Info}
+        // 1|MS-MDS|{Driver Version}|{Arch}|{OS Type}|{OS Info}|{Runtime Info}
         //
         var parts = value.Split('|');
         Assert.Equal(7, parts.Length);
         Assert.Equal("1", parts[0]);
         Assert.Equal("MS-MDS", parts[1]);
         Assert.Equal(System.ThisAssembly.NuGetPackageVersion, parts[2]);
+
+        // Architecture must be non-empty and 10 characters or less.
+        Assert.True(parts[3] == "Unknown" || parts[3].Length > 0);
+        Assert.True(parts[3].Length <= 10);
         
         // Check the OS Type against the guaranteed values.
-        var osType = parts[3];
+        var osType = parts[4];
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             Assert.Equal("Windows", osType);
@@ -104,10 +108,6 @@ public sealed class UserAgentTests
         {
             Assert.Equal("Unknown", osType);
         }
-
-        // Architecture must be non-empty and 10 characters or less.
-        Assert.True(parts[4] == "Unknown" || parts[4].Length > 0);
-        Assert.True(parts[4].Length <= 10);
 
         // OS Info must be non-empty and 44 characters or less.
         Assert.True(parts[5] == "Unknown" || parts[5].Length > 0);
@@ -162,15 +162,15 @@ public sealed class UserAgentTests
     [InlineData(4, "2|A|")]
     [InlineData(5, "2|A|B")]
     [InlineData(6, "2|A|B|")]
-    [InlineData(7, "2|A|B|C")]
-    [InlineData(8, "2|A|B|C|")]
-    [InlineData(9, "2|A|B|C|X")]
-    [InlineData(10, "2|A|B|C|X6")]
-    [InlineData(11, "2|A|B|C|X64")]
-    [InlineData(12, "2|A|B|C|X64|")]
-    [InlineData(13, "2|A|B|C|X64|D")]
-    [InlineData(14, "2|A|B|C|X64|D|")]
-    [InlineData(15, "2|A|B|C|X64|D|E")]
+    [InlineData(7, "2|A|B|X")]
+    [InlineData(8, "2|A|B|X6")]
+    [InlineData(9, "2|A|B|X64")]
+    [InlineData(10, "2|A|B|X64|")]
+    [InlineData(11, "2|A|B|X64|C")]
+    [InlineData(12, "2|A|B|X64|C|")]
+    [InlineData(13, "2|A|B|X64|C|D")]
+    [InlineData(14, "2|A|B|X64|C|D|")]
+    [InlineData(15, "2|A|B|X64|C|D|E")]
     public void Build_Truncate_Overall(ushort maxLen, string expected)
     {
         Assert.Equal(
@@ -180,8 +180,8 @@ public sealed class UserAgentTests
                 payloadVersion: "2",
                 driverName: "A",
                 driverVersion: "B",
-                osType: "C",
                 Architecture.X64,
+                osType: "C",
                 osInfo: "D",
                 runtimeInfo: "E"));
     }
@@ -196,13 +196,13 @@ public sealed class UserAgentTests
         Assert.Equal(
             "P",
             UserAgent.Build(
-                1, "PV", "A", "B", "C", Architecture.X64, "D", "E"));
+                1, "PV", "A", "B", Architecture.X64, "C", "D", "E"));
         
         // The payload version is longer than its per-field max length of 2.
         Assert.Equal(
-            "12|A|B|C|X64|D|E",
+            "12|A|B|X64|C|D|E",
             UserAgent.Build(
-                128, "1234", "A", "B", "C", Architecture.X64, "D", "E"));
+                128, "1234", "A", "B", Architecture.X64, "C", "D", "E"));
     }
 
     /// <summary>
@@ -215,13 +215,13 @@ public sealed class UserAgentTests
         Assert.Equal(
             "2|DriverNa",
             UserAgent.Build(
-                10, "2", "DriverName", "B", "C", Architecture.X64, "D", "E"));
+                10, "2", "DriverName", "B", Architecture.X64, "C", "D", "E"));
         
         // The driver name is longer than its per-field max length of 12.
         Assert.Equal(
-            "2|LongDriverNa|B|C|X64|D|E",
+            "2|LongDriverNa|B|X64|C|D|E",
             UserAgent.Build(
-                128, "2", "LongDriverName", "B", "C", Architecture.X64,
+                128, "2", "LongDriverName", "B", Architecture.X64, "C",
                 "D", "E"));
     }
 
@@ -235,35 +235,15 @@ public sealed class UserAgentTests
         Assert.Equal(
             "2|A|DriverVe",
             UserAgent.Build(
-                12, "2", "A", "DriverVersion", "C", Architecture.X64, "D",
+                12, "2", "A", "DriverVersion", Architecture.X64, "C", "D",
                 "E"));
         
         // The driver version is longer than its per-field max length of 24.
         Assert.Equal(
-            "2|A|ReallyLongDriverVersionS|C|X64|D|E",
+            "2|A|ReallyLongDriverVersionS|X64|C|D|E",
             UserAgent.Build(
-                128, "2", "A", "ReallyLongDriverVersionString", "C",
-                Architecture.X64, "D", "E"));
-    }
-
-    /// <summary>
-    /// Test the Build() function when it truncates the OS Type.
-    /// </summary>
-    [Fact]
-    public void Build_Truncate_OS_Type()
-    {
-        // The OS Type puts the overall length over the max.
-        Assert.Equal(
-            "2|A|B|LongOs",
-            UserAgent.Build(
-                12, "2", "A", "B", "LongOsName", Architecture.X64, "D", "E"));
-        
-        // The OS Type is longer than its per-field max length of 10.
-        Assert.Equal(
-            "2|A|B|VeryLongOs|X64|D|E",
-            UserAgent.Build(
-                128, "2", "A", "B", "VeryLongOsName", Architecture.X64, "D",
-                "E"));
+                128, "2", "A", "ReallyLongDriverVersionString",
+                Architecture.X64, "C", "D", "E"));
     }
 
     /// <summary>
@@ -274,9 +254,9 @@ public sealed class UserAgentTests
     {
         // The Architecture puts the overall length over the max.
         Assert.Equal(
-            "2|A|B|C|Arm6",
+            "2|A|B|Arm6",
             UserAgent.Build(
-                12, "2", "A", "B", "C", Architecture.Arm64, "D", "E"));
+                10, "2", "A", "B", Architecture.Arm64, "C", "D", "E"));
 
         // There are no Architecture enum values defined in .NET Framework
         // with a length longer than 10, so we can only check truncation
@@ -284,10 +264,30 @@ public sealed class UserAgentTests
         #if NET
         // The Architecture is longer than its per-field max length of 10.
         Assert.Equal(
-            "2|A|B|C|LoongArch6|D|E",
+            "2|A|B|LoongArch6|C|D|E",
             UserAgent.Build(
-                128, "2", "A", "B", "C", Architecture.LoongArch64, "D", "E"));
+                128, "2", "A", "B", Architecture.LoongArch64, "C", "D", "E"));
         #endif
+    }
+
+    /// <summary>
+    /// Test the Build() function when it truncates the OS Type.
+    /// </summary>
+    [Fact]
+    public void Build_Truncate_OS_Type()
+    {
+        // The OS Type puts the overall length over the max.
+        Assert.Equal(
+            "2|A|B|X64|LongOs",
+            UserAgent.Build(
+                16, "2", "A", "B", Architecture.X64, "LongOsName", "D", "E"));
+        
+        // The OS Type is longer than its per-field max length of 10.
+        Assert.Equal(
+            "2|A|B|X64|VeryLongOs|D|E",
+            UserAgent.Build(
+                128, "2", "A", "B", Architecture.X64, "VeryLongOsName", "D",
+                "E"));
     }
 
     /// <summary>
@@ -298,15 +298,15 @@ public sealed class UserAgentTests
     {
         // The OS Info puts the overall length over the max.
         Assert.Equal(
-            "2|A|B|C|X64|LongOsI",
+            "2|A|B|X64|C|LongOsI",
             UserAgent.Build(
-                19, "2", "A", "B", "C", Architecture.X64, "LongOsInfo", "E"));
+                19, "2", "A", "B", Architecture.X64, "C", "LongOsInfo", "E"));
         
         // The OS Type is longer than its per-field max length of 44.
         Assert.Equal(
-            "2|A|B|C|X64|01234567890123456789012345678901234567890123|E",
+            "2|A|B|X64|C|01234567890123456789012345678901234567890123|E",
             UserAgent.Build(
-                128, "2", "A", "B", "C", Architecture.X64,
+                128, "2", "A", "B", Architecture.X64, "C",
                 "01234567890123456789012345678901234567890123456789",
                 "E"));
     }
@@ -319,16 +319,16 @@ public sealed class UserAgentTests
     {
         // The Runtime Info puts the overall length over the max.
         Assert.Equal(
-            "2|A|B|C|X64|D|LongRunt",
+            "2|A|B|X64|C|D|LongRunt",
             UserAgent.Build(
-                22, "2", "A", "B", "C", Architecture.X64, "D",
+                22, "2", "A", "B", Architecture.X64, "C", "D",
                 "LongRuntimeInfo"));
         
         // The Runtime Type is longer than its per-field max length of 44.
         Assert.Equal(
-            "2|A|B|C|X64|D|01234567890123456789012345678901234567890123",
+            "2|A|B|X64|C|D|01234567890123456789012345678901234567890123",
             UserAgent.Build(
-                128, "2", "A", "B", "C", Architecture.X64, "D",
+                128, "2", "A", "B", Architecture.X64, "C", "D",
                 "01234567890123456789012345678901234567890123456789"));
     }
 
@@ -348,11 +348,11 @@ public sealed class UserAgentTests
                 "A01234567890123456789",
                 // Driver version > 24 chars.
                 "B012345678901234567890123456789",
-                // OS Type > 10 chars.
-                "C01234567890123456789",
                 // Architecture isn't truncated (because .NET Framework
                 // doesn't have any enum values long enough).
                 Architecture.X64,
+                // OS Type > 10 chars.
+                "C01234567890123456789",
                 // OS Info > 44 chars.
                 "D01234567890123456789012345678901234567890123456789",
                 // Runtime Info > 44 chars.
@@ -362,8 +362,8 @@ public sealed class UserAgentTests
             "12|" +
             "A01234567890|" +
             "B01234567890123456789012|" +
-            "C012345678|" +
             "X64|" +
+            "C012345678|" +
             "D0123456789012345678901234567890123456789012|" +
             "E0123456789012345678901234567890123456789012",
             name);
@@ -388,10 +388,10 @@ public sealed class UserAgentTests
                 "A01234567890123456789",
                 // Driver version > 24 chars.
                 "B012345678901234567890123456789",
-                // OS Type > 10 chars.
-                "C01234567890123456789",
                 // Architecture > 10 chars.
                 Architecture.LoongArch64,
+                // OS Type > 10 chars.
+                "C01234567890123456789",
                 // OS Info > 44 chars.
                 "D01234567890123456789012345678901234567890123456789",
                 // Runtime Info > 44 chars.
@@ -401,8 +401,8 @@ public sealed class UserAgentTests
             "12|" +
             "A01234567890|" +
             "B01234567890123456789012|" +
-            "C012345678|" +
             "LoongArch6|" +
+            "C012345678|" +
             "D0123456789012345678901234567890123456789012|" +
             "E0123456789012345678901234567890123456789012",
             name);
