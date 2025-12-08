@@ -72,16 +72,20 @@
   ([#PRNUM](https://github.com/dotnet/SqlClient/pull/PRNUM))
 
 ## Contributors
+(Only list public contributors. Do not list core team or bot contributors.)
+
 
 We thank the following public contributors. Their efforts toward this project are very much appreciated.
 
 - [username](https://github.com/username)
 
 ## Target Platform Support
+(Look at target frameworks in the netcore and netfx project files.)
 
 - [Target Framework Version] ([Supported Operating Systems])
 
 ### Dependencies
+(Use the dependencies listed at tools\specs\Microsoft.Data.SqlClient.nuspec)
 
 #### [Target Framework Version]
 

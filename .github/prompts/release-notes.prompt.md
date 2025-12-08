@@ -22,8 +22,7 @@ Steps:
     - Fill in the template, following the instructions present in each section.
 5. Update CHANGELOG.md
     - Add a new entry at the top of the list (under the Note).
-    - Format: `## [<Release Type> Release <Version>] - <Date>`.
-    - Include the "Changes Since..." text and the categorized items (Added, Fixed, Changed, Removed).
+    - Include all the text from the Added, Fixed, Changed, Removed, etc. sections from the release notes.
 6. Update Release Directory README
     - Update `release-notes/<Major.Minor>/README.md`.
     - Add the new release to the table: `| <Date> | <Version> | [Release Notes](<Version>.md) |`.
