@@ -152,15 +152,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Synapse: WAITFOR not supported + ';' not supported.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        public static void TimeoutCancel()
+        public static void TimeoutCancelTcp()
         {
             TimeoutCancel(tcp_connStr);
         }
 
-        [ActiveIssue("12167")]
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3755")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void TimeoutCancelNP()
+        public static void TimeoutCancelNamedPipe()
         {
             TimeoutCancel(np_connStr);
         }
@@ -178,17 +178,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             CancelAndDisposePreparedCommand(np_connStr);
         }
 
-        [ActiveIssue("5541")]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void TimeOutDuringRead()
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotNamedInstance))]
+        public static void TimeOutDuringReadTcp()
         {
             TimeOutDuringRead(tcp_connStr);
         }
 
-        [ActiveIssue("5541")]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotNamedInstance))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void TimeOutDuringReadNP()
+        public static void TimeOutDuringReadNamedPipe()
         {
             TimeOutDuringRead(np_connStr);
         }
@@ -348,26 +346,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void TimeoutCancel(string constr)
         {
-            using (SqlConnection con = new SqlConnection(constr))
-            {
-                con.Open();
-                using (SqlCommand cmd = con.CreateCommand())
-                {
-                    cmd.CommandTimeout = 1;
-                    cmd.CommandText = "WAITFOR DELAY '00:00:20';select * from Customers";
+            // Arrange
+            using SqlConnection connection = new SqlConnection(constr);
+            connection.Open();
 
-                    string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
-                    DataTestUtility.ExpectFailure<SqlException>(() => ExecuteReaderOnCmd(cmd), new string[] { errorMessage });
+            using SqlCommand command = new SqlCommand();
+            command.CommandTimeout = 1;
+            command.CommandText = @"WAITFOR DELAY '00:01:00';" +
+                                  @"SELECT * FROM customers";
+            command.CommandType = CommandType.Text;
+            command.Connection = connection;
 
-                    VerifyConnection(cmd);
-                }
-            }
-        }
+            // Act
+            Action action = () => { using SqlDataReader reader = command.ExecuteReader(); };
 
-        private static void ExecuteReaderOnCmd(SqlCommand cmd)
-        {
-            using (SqlDataReader reader = cmd.ExecuteReader())
-            { }
+            // Assert
+            // - Action throws timeout exception with timeout message
+            Exception e = Assert.Throws<SqlException>(action);
+            Assert.Contains(SystemDataResourceManager.Instance.SQL_Timeout_Execution, e.Message);
+
+            // - Connection has not faulted
+            VerifyConnection(command);
         }
 
         //InvalidOperationException from connection.Dispose if that connection has prepared command cancelled during reading of data

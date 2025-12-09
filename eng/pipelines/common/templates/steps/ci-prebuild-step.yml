@@ -11,9 +11,14 @@ parameters:
   - name: artifactName
     type: string
     default: Artifacts
+
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
   
   - name: buildType
-    displayName: 'Build Type'
     default: Project
     values:
       - Project
@@ -23,6 +28,12 @@ steps:
 - template: ensure-dotnet-version.yml
   parameters:
     packageType: sdk
+    usePreview: false
+    version: 10.0
+
+- template: ensure-dotnet-version.yml
+  parameters:
+    packageType: runtime
     usePreview: false
     version: 9.0
 
@@ -55,3 +66,4 @@ steps:
   - template: ci-project-build-step.yml@self
     parameters:
       build: allNoDocs
+      buildConfiguration: ${{ parameters.buildConfiguration }}

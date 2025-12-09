@@ -10,7 +10,7 @@ using System.Threading;
 
 namespace Microsoft.Data
 {
-    internal partial class StringsHelper : Strings
+    internal sealed class StringsHelper : Strings
     {
         private static StringsHelper s_loader = null;
         private readonly ResourceManager _resources;

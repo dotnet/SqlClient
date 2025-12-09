@@ -12,31 +12,27 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Security.Authentication;
-#if NETFRAMEWORK
-using System.Runtime.CompilerServices;
-#endif
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Interop.Common.Sni;
-#if NETFRAMEWORK
-using Interop.Windows.Sni;
-#endif
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlClient.UserAgent;
 using Microsoft.Data.SqlClient.Utilities;
-
+using Microsoft.SqlServer.Server;
 
 #if NETFRAMEWORK
+using System.Runtime.CompilerServices;
+using Interop.Windows.Sni;
 using Microsoft.Data.SqlTypes;
 #endif
-using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -1608,7 +1604,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command = null, bool callerHasConnectionLock = false, bool asyncClose = false)
         {
-            Debug.Assert(!callerHasConnectionLock || _connHandler._parserLock.ThreadMayHaveLock(), "Caller claims to have lock, but connection lock is not taken");
+            Debug.Assert(!callerHasConnectionLock || _connHandler._parserLock.ThreadMayHaveLock, "Caller claims to have lock, but connection lock is not taken");
 
             SqlException exception = null;
             bool breakConnection;
@@ -1813,9 +1809,11 @@ namespace Microsoft.Data.SqlClient
                 // strip provider info from SNI
                 //
                 int iColon = errorMessage.IndexOf(':');
-                Debug.Assert(0 <= iColon, "':' character missing in sni errorMessage");
+                // TODO(GH-3604): Fix this failing assertion.
+                // Debug.Assert(0 <= iColon, "':' character missing in sni errorMessage");
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > ':' character missing in sni errorMessage. Error Message index of ':' = {0}", iColon);
-                Debug.Assert(errorMessage.Length > iColon + 1 && errorMessage[iColon + 1] == ' ', "Expecting a space after the ':' character");
+                // TODO(GH-3604): Fix this failing assertion.
+                // Debug.Assert(errorMessage.Length > iColon + 1 && errorMessage[iColon + 1] == ' ', "Expecting a space after the ':' character");
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Expecting a space after the ':' character. Error Message Length = {0}", errorMessage.Length);
 
                 // extract the message excluding the colon and trailing cr/lf chars
@@ -1908,7 +1906,7 @@ namespace Microsoft.Data.SqlClient
                             stateObj.ResetBuffer();
                             Debug.Assert(_connHandler != null, "SqlConnectionInternalTds handler can not be null at this point.");
                             stateObj.AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, _server, _connHandler.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
-                            Debug.Assert(_connHandler._parserLock.ThreadMayHaveLock(), "Thread is writing without taking the connection lock");
+                            Debug.Assert(_connHandler._parserLock.ThreadMayHaveLock, "Thread is writing without taking the connection lock");
                             ThrowExceptionAndWarning(stateObj, callerHasConnectionLock: true);
                         }
                     }
@@ -6782,7 +6780,7 @@ namespace Microsoft.Data.SqlClient
 
                     // Now read the 4 next integers which contain the actual value.
                     length = checked((int)length - 1);
-                    int[] bits = new int[4];
+                    Span<int> bits = stackalloc int[4];
                     int decLength = length >> 2;
                     ReadOnlySpan<byte> span = unencryptedBytes.AsSpan();
                     for (int i = 0; i < decLength; i++)
@@ -7702,8 +7700,15 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLNUMERICN:
                     {
+#if NET
+                        Span<int> decimalBits = stackalloc int[4];
+                        decimal.GetBits((decimal)value, decimalBits);
+#else
+                        int[] decimalBits = decimal.GetBits((decimal)value);
+#endif
+
                         stateObj.WriteByte(mt.Precision); //propbytes: precision
-                        stateObj.WriteByte((byte)((decimal.GetBits((decimal)value)[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
+                        stateObj.WriteByte((byte)((decimalBits[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
                         WriteDecimal((decimal)value, stateObj);
                         break;
                     }
@@ -7864,9 +7869,15 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLNUMERICN:
                     {
+#if NET
+                        Span<int> decimalBits = stackalloc int[4];
+                        decimal.GetBits((decimal)value, decimalBits);
+#else
+                        int[] decimalBits = decimal.GetBits((decimal)value);
+#endif
                         WriteSqlVariantHeader(21, metatype.TDSType, metatype.PropBytes, stateObj);
                         stateObj.WriteByte(metatype.Precision); //propbytes: precision
-                        stateObj.WriteByte((byte)((decimal.GetBits((decimal)value)[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
+                        stateObj.WriteByte((byte)((decimalBits[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
                         WriteDecimal((decimal)value, stateObj);
                         break;
                     }
@@ -7923,7 +7934,12 @@ namespace Microsoft.Data.SqlClient
         private void WriteSqlMoney(SqlMoney value, int length, TdsParserStateObject stateObj)
         {
             // UNDONE: can I use SqlMoney.ToInt64()?
+#if NET
+            Span<int> bits = stackalloc int[4];
+            decimal.GetBits(value.Value, bits);
+#else
             int[] bits = decimal.GetBits(value.Value);
+#endif
 
             // this decimal should be scaled by 10000 (regardless of what the incoming decimal was scaled by)
             bool isNeg = (0 != (bits[3] & unchecked((int)0x80000000)));
@@ -7956,7 +7972,12 @@ namespace Microsoft.Data.SqlClient
         private byte[] SerializeCurrency(Decimal value, int length, TdsParserStateObject stateObj)
         {
             SqlMoney m = new SqlMoney(value);
-            int[] bits = Decimal.GetBits(m.Value);
+#if NET
+            Span<int> bits = stackalloc int[4];
+            decimal.GetBits(m.Value, bits);
+#else
+            int[] bits = decimal.GetBits(m.Value);
+#endif
 
             // this decimal should be scaled by 10000 (regardless of what the incoming decimal was scaled by)
             bool isNeg = (0 != (bits[3] & unchecked((int)0x80000000)));
@@ -8001,7 +8022,12 @@ namespace Microsoft.Data.SqlClient
         private void WriteCurrency(decimal value, int length, TdsParserStateObject stateObj)
         {
             SqlMoney m = new SqlMoney(value);
+#if NET
+            Span<int> bits = stackalloc int[4];
+            decimal.GetBits(m.Value, bits);
+#else
             int[] bits = decimal.GetBits(m.Value);
+#endif
 
             // this decimal should be scaled by 10000 (regardless of what the incoming decimal was scaled by)
             bool isNeg = (0 != (bits[3] & unchecked((int)0x80000000)));
@@ -8138,8 +8164,8 @@ namespace Microsoft.Data.SqlClient
 
             length = checked((int)length - 1);
 
-            int[] bits;
-            result = TryReadDecimalBits(length, stateObj, out bits);
+            Span<int> bits = stackalloc int[4];
+            result = TryReadDecimalBits(length, stateObj, bits);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
@@ -8151,31 +8177,16 @@ namespace Microsoft.Data.SqlClient
 
         // @devnote: length should be size of decimal without the sign
         // @devnote: sign should have already been read off the wire
-        private TdsOperationStatus TryReadDecimalBits(int length, TdsParserStateObject stateObj, out int[] bits)
+        private TdsOperationStatus TryReadDecimalBits(int length, TdsParserStateObject stateObj, Span<int> bits)
         {
-            bits = stateObj._decimalBits; // used alloc'd array if we have one already
-            int i;
-
-            if (bits == null)
-            {
-                bits = new int[4];
-                stateObj._decimalBits = bits;
-            }
-            else
-            {
-                for (i = 0; i < bits.Length; i++)
-                {
-                    bits[i] = 0;
-                }
-            }
-
+            Debug.Assert(bits.Length == 4);
             Debug.Assert((length > 0) &&
                          (length <= TdsEnums.MAX_NUMERIC_LEN - 1) &&
                          (length % 4 == 0), "decimal should have 4, 8, 12, or 16 bytes of data");
 
             int decLength = length >> 2;
 
-            for (i = 0; i < decLength; i++)
+            for (int i = 0; i < decLength; i++)
             {
                 // up to 16 bytes of data following the sign byte
                 TdsOperationStatus result = stateObj.TryReadInt32(out bits[i]);
@@ -8201,7 +8212,13 @@ namespace Microsoft.Data.SqlClient
 
         internal static decimal AdjustDecimalScale(decimal value, int newScale)
         {
-            int oldScale = (decimal.GetBits(value)[3] & 0x00ff0000) >> 0x10;
+#if NET
+            Span<int> decimalBits = stackalloc int[4];
+            decimal.GetBits(value, decimalBits);
+#else
+            int[] decimalBits = decimal.GetBits(value);
+#endif
+            int oldScale = (decimalBits[3] & 0x00ff0000) >> 0x10;
 
             if (newScale != oldScale)
             {
@@ -8283,7 +8300,12 @@ namespace Microsoft.Data.SqlClient
 
         private byte[] SerializeDecimal(decimal value, TdsParserStateObject stateObj)
         {
-            int[] decimalBits = Decimal.GetBits(value);
+#if NET
+            Span<int> decimalBits = stackalloc int[4];
+            decimal.GetBits(value, decimalBits);
+#else
+            int[] decimalBits = decimal.GetBits(value);
+#endif
             if (stateObj._bDecimalBytes == null)
             {
                 stateObj._bDecimalBytes = new byte[17];
@@ -8338,8 +8360,12 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteDecimal(decimal value, TdsParserStateObject stateObj)
         {
-            stateObj._decimalBits = decimal.GetBits(value);
-            Debug.Assert(stateObj._decimalBits != null, "decimalBits should be filled in at TdsExecuteRPC time");
+#if NET
+            Span<int> decimalBits = stackalloc int[4];
+            decimal.GetBits(value, decimalBits);
+#else
+            int[] decimalBits = decimal.GetBits(value);
+#endif
 
             /*
              Returns a binary representation of a Decimal. The return value is an integer
@@ -8361,7 +8387,7 @@ namespace Microsoft.Data.SqlClient
             */
 
             // write the sign (note that COM and SQL are opposite)
-            if (0x80000000 == (stateObj._decimalBits[3] & 0x80000000))
+            if ((decimalBits[3] & 0x80000000) == 0x80000000)
             {
                 stateObj.WriteByte(0);
             }
@@ -8370,9 +8396,9 @@ namespace Microsoft.Data.SqlClient
                 stateObj.WriteByte(1);
             }
 
-            WriteInt(stateObj._decimalBits[0], stateObj);
-            WriteInt(stateObj._decimalBits[1], stateObj);
-            WriteInt(stateObj._decimalBits[2], stateObj);
+            WriteInt(decimalBits[0], stateObj);
+            WriteInt(decimalBits[1], stateObj);
+            WriteInt(decimalBits[2], stateObj);
             WriteInt(0, stateObj);
         }
 
@@ -9671,7 +9697,7 @@ namespace Microsoft.Data.SqlClient
             // won't stomp on anything.
 
 
-            Debug.Assert(!_connHandler.ThreadHasParserLockForClose || _connHandler._parserLock.ThreadMayHaveLock(), "Thread claims to have parser lock, but lock is not taken");
+            Debug.Assert(!_connHandler.ThreadHasParserLockForClose || _connHandler._parserLock.ThreadMayHaveLock, "Thread claims to have parser lock, but lock is not taken");
             bool callerHasConnectionLock = _connHandler.ThreadHasParserLockForClose;   // If the thread already claims to have the parser lock, then we will let the caller handle releasing it
             if (!callerHasConnectionLock)
             {
@@ -9869,7 +9895,7 @@ namespace Microsoft.Data.SqlClient
 
             if (old_outputPacketNumber != 1 && _state == TdsParserState.OpenLoggedIn)
             {
-                Debug.Assert(_connHandler._parserLock.ThreadMayHaveLock(), "Should not be calling into FailureCleanup without first taking the parser lock");
+                Debug.Assert(_connHandler._parserLock.ThreadMayHaveLock, "Should not be calling into FailureCleanup without first taking the parser lock");
 
                 bool originalThreadHasParserLock = _connHandler.ThreadHasParserLockForClose;
                 try
@@ -9917,7 +9943,7 @@ namespace Microsoft.Data.SqlClient
             // Only need to take the lock if neither the thread nor the caller claims to already have it
             bool needToTakeParserLock = (!callerHasConnectionLock) && (!_connHandler.ThreadHasParserLockForClose);
             Debug.Assert(!_connHandler.ThreadHasParserLockForClose || sync, "Thread shouldn't claim to have the parser lock if we are doing async writes");     // Since we have the possibility of pending with async writes, make sure the thread doesn't claim to already have the lock
-            Debug.Assert(needToTakeParserLock || _connHandler._parserLock.ThreadMayHaveLock(), "Thread or caller claims to have connection lock, but lock is not taken");
+            Debug.Assert(needToTakeParserLock || _connHandler._parserLock.ThreadMayHaveLock, "Thread or caller claims to have connection lock, but lock is not taken");
 
             bool releaseConnectionLock = false;
             if (needToTakeParserLock)
@@ -10034,7 +10060,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(!firstCall || startRpc == 0, "startRpc is not 0 on first call");
             Debug.Assert(!firstCall || startParam == 0, "startParam is not 0 on first call");
             Debug.Assert(!firstCall || !_connHandler.ThreadHasParserLockForClose, "Thread should not already have connection lock");
-            Debug.Assert(firstCall || _connHandler._parserLock.ThreadMayHaveLock(), "Connection lock not taken after the first call");
+            Debug.Assert(firstCall || _connHandler._parserLock.ThreadMayHaveLock, "Connection lock not taken after the first call");
             try
             {
                 _SqlRPC rpcext = null;

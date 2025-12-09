@@ -1352,7 +1352,7 @@ namespace Microsoft.Data.SqlClient
         }
 #endif
 
-        internal void SetToDecimal(byte precision, byte scale, bool positive, int[] bits)
+        internal void SetToDecimal(byte precision, byte scale, bool positive, ReadOnlySpan<int> bits)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
             _value._numericInfo._precision = precision;
