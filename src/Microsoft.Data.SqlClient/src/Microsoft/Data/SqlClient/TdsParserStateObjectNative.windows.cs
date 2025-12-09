@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _WINDOWS
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -209,12 +211,10 @@ namespace Microsoft.Data.SqlClient
                     _pendingWritePackets.Remove(pointer);
                     _writePacketCache.Add(recoveredPacket);
                 }
-#if DEBUG
                 else
                 {
                     Debug.Fail("Removing a packet from the pending list that was never added to it");
                 }
-#endif
             }
         }
 
@@ -281,9 +281,10 @@ namespace Microsoft.Data.SqlClient
 
         internal override PacketHandle ReadAsync(SessionHandle handle, out uint error)
         {
-#if NET
+            #if NET
             Debug.Assert(handle.Type == SessionHandle.NativeHandleType, "unexpected handle type when requiring NativePointer");
-#endif
+            #endif
+
             IntPtr readPacketPtr = IntPtr.Zero;
             error = SniNativeWrapper.SniReadAsync(handle.NativeHandle, ref readPacketPtr);
             return PacketHandle.FromNativePointer(readPacketPtr);
@@ -505,3 +506,5 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
+
+#endif

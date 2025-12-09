@@ -335,9 +335,6 @@
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Win32.Registry" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />

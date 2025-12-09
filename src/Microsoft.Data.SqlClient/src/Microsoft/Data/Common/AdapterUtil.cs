@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
@@ -11,27 +12,26 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
-
 using System.Security;
-using System.Security.Permissions;
+using System.Security.Authentication;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
-using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Identity.Client;
 using Microsoft.SqlServer.Server;
-using System.Security.Authentication;
-using System.Collections.Generic;
+using IsolationLevel = System.Data.IsolationLevel;
 
 #if NETFRAMEWORK
 using System.Reflection;
-using System.Runtime.ConstrainedExecution;
-using System.Runtime.InteropServices;
+using System.Security.Permissions;
+#endif
+
+#if _WINDOWS
 using System.Runtime.Versioning;
-using Interop.Windows.Kernel32;
+using Microsoft.Win32;
 #endif
 
 namespace Microsoft.Data.Common
@@ -45,6 +45,7 @@ namespace Microsoft.Data.Common
     /// This class is used so that there will be compile time checking of error messages.
     /// The resource Framework.txt will ensure proper string text based on the appropriate locale.
     /// </summary>
+    // @TODO: This file needs to be broken up
     internal static partial class ADP
     {
         // NOTE: Initializing a Task in SQL CLR requires the "UNSAFE" permission set (http://msdn.microsoft.com/en-us/library/ms172338.aspx)
@@ -76,6 +77,7 @@ namespace Microsoft.Data.Common
         /// </summary>
         internal static InvalidUdtException CreateInvalidUdtException(Type udtType, string resourceReasonName)
         {
+            // @TODO: Can we adopt the netcore version?
             InvalidUdtException e =
 #if NETFRAMEWORK
                 (InvalidUdtException)s_method.Invoke(null, new object[] { udtType, resourceReasonName });
@@ -426,6 +428,46 @@ namespace Microsoft.Data.Common
 
             return InvalidEnumerationValue(typeof(CommandBehavior), (int)value);
         }
+
+
+        #if _UNIX
+        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
+        {
+            // No registry in non-Windows environments
+            return null;
+        }
+        #endif
+        #if _WINDOWS
+        [ResourceExposure(ResourceScope.Machine)]
+        [ResourceConsumption(ResourceScope.Machine)]
+        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
+        {
+            #if NETFRAMEWORK
+            new RegistryPermission(RegistryPermissionAccess.Read, $@"HKEY_LOCAL_MACHINE\{subkey}").Assert();
+            #endif
+
+            try
+            {
+                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(subkey, false))
+                {
+                    return key?.GetValue(queryvalue);
+                }
+            }
+            catch (SecurityException e)
+            {
+                // Even though we assert permission - it's possible there are
+                // ACL's on registry that cause SecurityException to be thrown.
+                ADP.TraceExceptionWithoutRethrow(e);
+                return null;
+            }
+            #if NETFRAMEWORK
+            finally
+            {
+                CodeAccessPermission.RevertAssert();
+            }
+            #endif
+        }
+        #endif
 
         internal static void ValidateCommandBehavior(CommandBehavior value)
         {
@@ -944,6 +986,27 @@ namespace Microsoft.Data.Common
             };
         }
 
+        internal static ArgumentOutOfRangeException InvalidIsolationLevel(IsolationLevel value)
+        {
+            // @TODO: Use single line debug assert?
+            #if DEBUG
+            switch (value)
+            {
+                case IsolationLevel.Unspecified:
+                case IsolationLevel.Chaos:
+                case IsolationLevel.ReadUncommitted:
+                case IsolationLevel.ReadCommitted:
+                case IsolationLevel.RepeatableRead:
+                case IsolationLevel.Serializable:
+                case IsolationLevel.Snapshot:
+                    Debug.Fail("valid IsolationLevel " + value.ToString());
+                    break;
+            }
+            #endif
+
+            return InvalidEnumerationValue(typeof(IsolationLevel), (int)value);
+        }
+
         internal static InvalidOperationException NoConnectionString()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_NoConnectionString));
 
@@ -1278,6 +1341,24 @@ namespace Microsoft.Data.Common
         internal static ArgumentException InvalidOffsetValue(int value)
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidOffsetValue, value.ToString(CultureInfo.InvariantCulture)));
 
+        internal static ArgumentOutOfRangeException InvalidParameterDirection(ParameterDirection value)
+        {
+            // @TODO: Use single line debug assert?
+            #if DEBUG
+            switch (value)
+            {
+                case ParameterDirection.Input:
+                case ParameterDirection.Output:
+                case ParameterDirection.InputOutput:
+                case ParameterDirection.ReturnValue:
+                    Debug.Fail("valid ParameterDirection " + value.ToString());
+                    break;
+            }
+            #endif
+
+            return InvalidEnumerationValue(typeof(ParameterDirection), (int)value);
+        }
+
         internal static ArgumentException InvalidSizeValue(int value)
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidSizeValue, value.ToString(CultureInfo.InvariantCulture)));
 
@@ -1378,167 +1459,5 @@ namespace Microsoft.Data.Common
         #endregion
 
         internal static readonly IntPtr s_ptrZero = IntPtr.Zero;
-#if NETFRAMEWORK
-#region netfx project only
-        //
-        // Helper Functions
-        //
-        internal static void CheckArgumentLength(string value, string parameterName)
-        {
-            CheckArgumentNull(value, parameterName);
-            if (0 == value.Length)
-            {
-                throw Argument(StringsHelper.GetString(Strings.ADP_EmptyString, parameterName)); // MDAC 94859
-            }
-        }
-
-        // IDbConnection.BeginTransaction, OleDbTransaction.Begin
-        internal static ArgumentOutOfRangeException InvalidIsolationLevel(IsolationLevel value)
-        {
-#if DEBUG
-            switch (value)
-            {
-                case IsolationLevel.Unspecified:
-                case IsolationLevel.Chaos:
-                case IsolationLevel.ReadUncommitted:
-                case IsolationLevel.ReadCommitted:
-                case IsolationLevel.RepeatableRead:
-                case IsolationLevel.Serializable:
-                case IsolationLevel.Snapshot:
-                    Debug.Assert(false, "valid IsolationLevel " + value.ToString());
-                    break;
-            }
-#endif
-            return InvalidEnumerationValue(typeof(IsolationLevel), (int)value);
-        }
-
-        // DBDataPermissionAttribute.KeyRestrictionBehavior
-        internal static ArgumentOutOfRangeException InvalidKeyRestrictionBehavior(KeyRestrictionBehavior value)
-        {
-#if DEBUG
-            switch (value)
-            {
-                case KeyRestrictionBehavior.PreventUsage:
-                case KeyRestrictionBehavior.AllowOnly:
-                    Debug.Assert(false, "valid KeyRestrictionBehavior " + value.ToString());
-                    break;
-            }
-#endif
-            return InvalidEnumerationValue(typeof(KeyRestrictionBehavior), (int)value);
-        }
-
-        // IDataParameter.Direction
-        internal static ArgumentOutOfRangeException InvalidParameterDirection(ParameterDirection value)
-        {
-#if DEBUG
-            switch (value)
-            {
-                case ParameterDirection.Input:
-                case ParameterDirection.Output:
-                case ParameterDirection.InputOutput:
-                case ParameterDirection.ReturnValue:
-                    Debug.Assert(false, "valid ParameterDirection " + value.ToString());
-                    break;
-            }
-#endif
-            return InvalidEnumerationValue(typeof(ParameterDirection), (int)value);
-        }
-
-        //
-        // DbConnectionOptions, DataAccess
-        //
-        internal static ArgumentException InvalidKeyname(string parameterName)
-        {
-            return Argument(StringsHelper.GetString(Strings.ADP_InvalidKey), parameterName);
-        }
-        internal static ArgumentException InvalidValue(string parameterName)
-        {
-            return Argument(StringsHelper.GetString(Strings.ADP_InvalidValue), parameterName);
-        }
-        internal static Exception InvalidMixedUsageOfAccessTokenAndCredential()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndCredential));
-        }
-
-        //
-        // DBDataPermission, DataAccess, Odbc
-        //
-        internal static Exception InvalidXMLBadVersion()
-        {
-            return Argument(StringsHelper.GetString(Strings.ADP_InvalidXMLBadVersion));
-        }
-        internal static Exception NotAPermissionElement()
-        {
-            return Argument(StringsHelper.GetString(Strings.ADP_NotAPermissionElement));
-        }
-        internal static Exception PermissionTypeMismatch()
-        {
-            return Argument(StringsHelper.GetString(Strings.ADP_PermissionTypeMismatch));
-        }
-
-        //
-        // DbDataAdapter
-        //
-        internal static InvalidOperationException ComputerNameEx(int lastError)
-        {
-            return InvalidOperation(StringsHelper.GetString(Strings.ADP_ComputerNameEx, lastError));
-        }
-
-        //
-        // SNI
-        //
-        internal static PlatformNotSupportedException SNIPlatformNotSupported(string platform) => new(StringsHelper.GetString(Strings.SNI_PlatformNotSupportedNetFx, platform));
-
-        // global constant strings
-        internal const float FailoverTimeoutStepForTnir = 0.125F; // Fraction of timeout to use in case of Transparent Network IP resolution.
-        internal const int MinimumTimeoutForTnirMs = 500; // The first login attempt in  Transparent network IP Resolution 
-
-        internal static readonly bool s_isWindowsNT = (PlatformID.Win32NT == Environment.OSVersion.Platform);
-
-#endregion
-#else
-#region netcore project only
-
-        // IDbConnection.BeginTransaction, OleDbTransaction.Begin
-        internal static ArgumentOutOfRangeException InvalidIsolationLevel(IsolationLevel value)
-        {
-#if DEBUG
-            switch (value)
-            {
-                case IsolationLevel.Unspecified:
-                case IsolationLevel.Chaos:
-                case IsolationLevel.ReadUncommitted:
-                case IsolationLevel.ReadCommitted:
-                case IsolationLevel.RepeatableRead:
-                case IsolationLevel.Serializable:
-                case IsolationLevel.Snapshot:
-                    Debug.Fail("valid IsolationLevel " + value.ToString());
-                    break;
-            }
-#endif
-            return InvalidEnumerationValue(typeof(IsolationLevel), (int)value);
-        }
-
-        // ConnectionUtil
-        internal static Exception IncorrectPhysicalConnectionType() => new ArgumentException(StringsHelper.GetString(StringsHelper.SNI_IncorrectPhysicalConnectionType));
-
-        // IDataParameter.Direction
-        internal static ArgumentOutOfRangeException InvalidParameterDirection(ParameterDirection value)
-        {
-#if DEBUG
-            switch (value)
-            {
-                case ParameterDirection.Input:
-                case ParameterDirection.Output:
-                case ParameterDirection.InputOutput:
-                case ParameterDirection.ReturnValue:
-                    Debug.Fail("valid ParameterDirection " + value.ToString());
-                    break;
-            }
-#endif
-            return InvalidEnumerationValue(typeof(ParameterDirection), (int)value);
-        }
-#endregion
-#endif
     }
 }

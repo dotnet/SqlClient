@@ -32,9 +32,15 @@ steps:
     retryCount: 5
 
 - task: UseDotNet@2
-  displayName: 'Use .NET 9.x sdk'
+  displayName: 'Use .NET 10.x sdk'
   inputs:
     packageType: sdk
+    version: '10.x'
+
+- task: UseDotNet@2
+  displayName: 'Use .NET 9.x runtime'
+  inputs:
+    packageType: runtime
     version: '9.x'
 
 - task: UseDotNet@2
