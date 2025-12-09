@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _WINDOWS
+
 namespace Interop.Windows.Kernel32
 {
     /// <summary>
@@ -35,3 +37,5 @@ namespace Interop.Windows.Kernel32
         METHOD_NEITHER
     }
 }
+
+#endif
