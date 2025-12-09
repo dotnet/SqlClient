@@ -174,7 +174,7 @@ namespace Microsoft.Data.ProviderBase
             return null;
         }
 
-        public void Notify(int message)
+        public void Deactivate()
         {
             bool lockObtained = false;
             try
@@ -186,14 +186,14 @@ namespace Microsoft.Data.ProviderBase
                     {
                         _isNotifying = true;
 
-                        // Loop through each live item and notify it
+                        // Loop through each live item and notify it of its parent's deactivation
                         if (_estimatedCount > 0)
                         {
                             for (int index = 0; index <= _lastItemIndex; ++index)
                             {
                                 if (_items[index].TryGetTarget(out object value))
                                 {
-                                    NotifyItem(message, _items[index].RefInfo, value);
+                                    NotifyItem(_items[index].RefInfo, value);
                                     _items[index].RemoveTarget();
                                 }
                                 Debug.Assert(!_items[index].TryGetTarget(out _), "Unexpected target after notifying");
@@ -220,7 +220,7 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        abstract protected void NotifyItem(int message, int refInfo, object value);
+        abstract protected void NotifyItem(int refInfo, object value);
 
         abstract public void Remove(object value);
 

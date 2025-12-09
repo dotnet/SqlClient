@@ -43,6 +43,9 @@
 # Set the pipeline run name to the day-of-year and the daily run counter.
 name: $(DayOfYear)$(Rev:rr)
 
+# Do not trigger this pipeline for PRs.
+pr: none
+
 # Trigger this pipeline on commits to certain branches.
 trigger:
   
@@ -109,7 +112,7 @@ parameters:
   - name: codeCovTargetFrameworks
     displayName: Code Coverage Target Frameworks
     type: object
-    default: [net462, net8.0]
+    default: [net462, net8.0, net9.0]
 
   - name: debug
     displayName: Enable debug output
@@ -121,13 +124,29 @@ parameters:
     type: boolean
     default: false
 
+  # The target frameworks to build and run tests for on Windows.
+  #
+  # These are _not_ the target frameworks to build the driver packages for.
+  #
+  # Note: We are excluding .NET 10.0 here to avoid consuming too many resources
+  # during PR pipeline runs, and until we update our 1ES images to include
+  # Visual Studio 2026 (18.0) whose MSBuild SDK supports .NET 10.
+  #
   - name: targetFrameworks
     displayName: Target Frameworks on Windows
     type: object
     default: [net462, net8.0, net9.0]
 
-  - name: targetFrameworksLinux
-    displayName: Target Frameworks on Non-Windows
+  # The target frameworks to build and run tests for on Unix.
+  #
+  # These are _not_ the target frameworks to build the driver packages for.
+  #
+  # Note: We are excluding .NET 10.0 here to avoid consuming too many resources
+  # during PR pipeline runs, and until we update our 1ES images to include
+  # Visual Studio 2026 (18.0) whose MSBuild SDK supports .NET 10.
+  #
+  - name: targetFrameworksUnix
+    displayName: Target Frameworks on Unix
     type: object
     default: [net8.0, net9.0]
 
@@ -159,7 +178,7 @@ extends:
     debug: ${{ parameters.debug }}
     enableStressTests: ${{ parameters.enableStressTests }}
     targetFrameworks: ${{ parameters.targetFrameworks }}
-    targetFrameworksLinux: ${{ parameters.targetFrameworksLinux }}
+    targetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
     testSets: ${{ parameters.testSets }}
     # Populate the actual test job timeout numeric values if Default was
     # specified.  We choose different values depending on the build
