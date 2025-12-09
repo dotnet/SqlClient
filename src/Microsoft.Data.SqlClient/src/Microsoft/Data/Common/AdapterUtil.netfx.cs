@@ -9,7 +9,6 @@ using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Security.Permissions;
 using System.Text;
 using System.Threading.Tasks;
