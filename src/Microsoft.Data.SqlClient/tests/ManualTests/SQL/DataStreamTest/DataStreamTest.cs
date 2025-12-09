@@ -13,13 +13,21 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public static class DataStreamTest
+    public class DataStreamTest
     {
+        private readonly string _testName;
+
+        public DataStreamTest(ITestOutputHelper outputHelper)
+        {
+            _testName = DataTestUtility.CurrentTestName(outputHelper);
+        }
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        public static void RunAllTestsForSingleServer_NP()
+        public void RunAllTestsForSingleServer_NP()
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -33,7 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ActiveIssue("5540")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void RunAllTestsForSingleServer_TCP()
+        public void RunAllTestsForSingleServer_TCP()
         {
             RunAllTestsForSingleServer(DataTestUtility.TCPConnectionString);
         }
@@ -152,7 +160,8 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             return data;
         }
 
-        private static void RunAllTestsForSingleServer(string connectionString, bool usingNamePipes = false)
+        // @TODO: Split into separate tests!
+        private void RunAllTestsForSingleServer(string connectionString, bool usingNamePipes = false)
         {
             RowBuffer(connectionString);
             InvalidRead(connectionString);
@@ -1911,55 +1920,60 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             }
         }
 
-        private static void TestXEventsStreaming(string connectionString)
+        #nullable enable
+
+        private void TestXEventsStreaming(string connectionString)
         {
             // Create XEvent
-            using (SqlConnection xEventManagementConnection = new SqlConnection(connectionString))
-            using (DataTestUtility.XEventScope xEventScope = new DataTestUtility.XEventScope(xEventManagementConnection,
-                "ADD EVENT sqlserver.user_event(ACTION(package0.event_sequence))",
-                "ADD TARGET package0.ring_buffer"))
+            using SqlConnection xEventManagementConnection = new SqlConnection(connectionString);
+            xEventManagementConnection.Open();
+
+            using DataTestUtility.XEventScope xEventScope =
+                new DataTestUtility.XEventScope(
+                    _testName,
+                    xEventManagementConnection,
+                    "ADD EVENT sqlserver.user_event(ACTION(package0.event_sequence))",
+                    "ADD TARGET package0.ring_buffer");
+
+            string sessionName = xEventScope.SessionName;
+
+            Task.Factory.StartNew(() =>
             {
-                string sessionName = xEventScope.SessionName;
+                // Read XEvents
+                int streamXeventCount = 3;
+                using SqlConnection xEventsReadConnection = new SqlConnection(connectionString);
+                xEventsReadConnection.Open();
 
-                Task.Factory.StartNew(() =>
+                string xEventDataStreamCommand = "USE master; " + @"select [type], [data] from sys.fn_MSxe_read_event_stream ('" + sessionName + "',0)";
+                using SqlCommand cmd = new SqlCommand(xEventDataStreamCommand, xEventsReadConnection);
+                using SqlDataReader reader = cmd.ExecuteReader(System.Data.CommandBehavior.SequentialAccess);
+
+                for (int i = 0; i < streamXeventCount && reader.Read(); i++)
                 {
-                    // Read XEvents
-                    int streamXeventCount = 3;
-                    using (SqlConnection xEventsReadConnection = new SqlConnection(connectionString))
+                    int colType = reader.GetInt32(0);
+                    int cb = (int)reader.GetBytes(1, 0, null, 0, 0);
+
+                    byte[] bytes = new byte[cb];
+                    long read = reader.GetBytes(1, 0, bytes, 0, cb);
+
+                    // Don't send data on the first read because there is already data in the buffer. 
+                    // Don't send data on the last iteration. We will not be reading that data.
+                    if (i == 0 || i == streamXeventCount - 1)
                     {
-                        xEventsReadConnection.Open();
-                        string xEventDataStreamCommand = "USE master; " + @"select [type], [data] from sys.fn_MSxe_read_event_stream ('" + sessionName + "',0)";
-                        using (SqlCommand cmd = new SqlCommand(xEventDataStreamCommand, xEventsReadConnection))
-                        {
-                            SqlDataReader reader = cmd.ExecuteReader(System.Data.CommandBehavior.SequentialAccess);
-                            for (int i = 0; i < streamXeventCount && reader.Read(); i++)
-                            {
-                                int colType = reader.GetInt32(0);
-                                int cb = (int)reader.GetBytes(1, 0, null, 0, 0);
-
-                                byte[] bytes = new byte[cb];
-                                long read = reader.GetBytes(1, 0, bytes, 0, cb);
-
-                                // Don't send data on the first read because there is already data in the buffer. 
-                                // Don't send data on the last iteration. We will not be reading that data.
-                                if (i == 0 || i == streamXeventCount - 1)
-                                    continue;
-
-                                using (SqlConnection xEventWriteConnection = new SqlConnection(connectionString))
-                                {
-                                    xEventWriteConnection.Open();
-                                    string xEventWriteCommandText = @"exec sp_trace_generateevent 90, N'Test2'";
-                                    using (SqlCommand xEventWriteCommand = new SqlCommand(xEventWriteCommandText, xEventWriteConnection))
-                                    {
-                                        xEventWriteCommand.ExecuteNonQuery();
-                                    }
-                                }
-                            }
-                        }
+                        continue;
                     }
-                }).Wait(10000);
-            }
+
+                    using SqlConnection xEventWriteConnection = new SqlConnection(connectionString);
+                    xEventWriteConnection.Open();
+
+                    string xEventWriteCommandText = @"exec sp_trace_generateevent 90, N'Test2'";
+                    using SqlCommand xEventWriteCommand = new SqlCommand(xEventWriteCommandText, xEventWriteConnection);
+                    xEventWriteCommand.ExecuteNonQuery();
+                }
+            }).Wait(10000);
         }
+
+        #nullable disable
 
         private static void TimeoutDuringReadAsyncWithClosedReaderTest(string connectionString)
         {
