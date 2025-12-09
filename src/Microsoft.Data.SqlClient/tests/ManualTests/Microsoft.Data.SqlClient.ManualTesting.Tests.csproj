@@ -13,20 +13,9 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup Condition="'$(TestSet)' == '' or '$(TestSet)' == 'AE'">
-    <Compile Include="AlwaysEncrypted\CoreCryptoTests.cs" />
     <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
     <Compile Include="AlwaysEncrypted\ExceptionsGenericError.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoVector.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoNativeBaselineReader.cs" />
     <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
-    <Content Include="AlwaysEncrypted\TestFixtures\Setup\TCECryptoNativeBaseline.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TCECryptoNativeBaseline.txt</Link>
-    </Content>
-    <Content Include="AlwaysEncrypted\TestFixtures\Setup\TCECryptoNativeBaselineRsa.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TCECryptoNativeBaselineRsa.txt</Link>
-    </Content>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetsWindows)' == 'true' AND ('$(TestSet)' == '' OR '$(TestSet)' == 'AE')">
     <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
@@ -192,7 +181,7 @@
     <Compile Include="SQL\KerberosTests\KerberosTest.cs" />
     <Compile Include="SQL\KerberosTests\KerberosTicketManager\KerberosTicketManager.cs" />
     <Compile Include="SQL\LocalDBTest\LocalDBTest.cs" />
-    <Compile Include="SQL\MARSSessionPoolingTest\MARSSessionPoolingTest.cs" />
+    <Compile Include="SQL\MARSSessionPoolingTest\MarsSessionPoolingTest.cs" />
     <Compile Include="SQL\MARSTest\MARSTest.cs" />
     <Compile Include="SQL\MirroringTest\ConnectionOnMirroringTest.cs" />
     <Compile Include="SQL\ParallelTransactionsTest\ParallelTransactionsTest.cs" />
@@ -341,9 +330,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Win32.Registry" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />

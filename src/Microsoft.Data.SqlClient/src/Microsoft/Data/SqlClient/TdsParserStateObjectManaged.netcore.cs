@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
+#if NET
 
 using System;
 using System.Diagnostics;
@@ -13,6 +13,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+
+#nullable enable
 
 // @TODO: If this is in the manages SNI namespace, it should be in the managed SNI folder
 namespace Microsoft.Data.SqlClient.ManagedSni
@@ -424,3 +426,5 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             => new NegotiateSspiContextProvider();
     }
 }
+
+#endif

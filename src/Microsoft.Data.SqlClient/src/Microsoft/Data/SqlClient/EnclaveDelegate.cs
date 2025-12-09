@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// A delegate for communicating with secure enclave
     /// </summary>
+    // @TODO: This isn't a delegate... it's a utility class
     internal sealed partial class EnclaveDelegate
     {
         private static readonly SqlAeadAes256CbcHmac256Factory s_sqlAeadAes256CbcHmac256Factory = new SqlAeadAes256CbcHmac256Factory();

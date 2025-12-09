@@ -3,7 +3,7 @@ using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
 
-private static void CreateXMLReader(string queryString,
+static void CreateXMLReader(string queryString,
     string connectionString)
 {
     using (SqlConnection connection = new SqlConnection(

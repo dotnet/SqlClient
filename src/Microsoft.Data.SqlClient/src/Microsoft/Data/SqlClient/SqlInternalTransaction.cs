@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient
             bool processFinallyBlock = true;
             try
             {
-                innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.IfRollback, null, IsolationLevel.Unspecified, null, false);
+                innerConnection.ExecuteTransaction(TransactionRequest.IfRollback, null, IsolationLevel.Unspecified, null, false);
             }
             catch (Exception e)
             {
@@ -230,7 +230,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // COMMIT ignores transaction names, and so there is no reason to pass it anything.  COMMIT
                     // simply commits the transaction from the most recent BEGIN, nested or otherwise.
-                    _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, IsolationLevel.Unspecified, null, false);
+                    _innerConnection.ExecuteTransaction(TransactionRequest.Commit, null, IsolationLevel.Unspecified, null, false);
                     ZombieParent();
                 }
                 catch (Exception e)
@@ -334,7 +334,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // If no arg is given to ROLLBACK it will rollback to the outermost begin - rolling back
                     // all nested transactions as well as the outermost transaction.
-                    _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.IfRollback, null, IsolationLevel.Unspecified, null, false);
+                    _innerConnection.ExecuteTransaction(TransactionRequest.IfRollback, null, IsolationLevel.Unspecified, null, false);
 
                     // Since Rollback will rollback to outermost begin, no need to check
                     // server transaction level.  This transaction has been completed.
@@ -382,7 +382,7 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Rollback, transactionName, IsolationLevel.Unspecified, null, false);
+                    _innerConnection.ExecuteTransaction(TransactionRequest.Rollback, transactionName, IsolationLevel.Unspecified, null, false);
                 }
                 catch (Exception e)
                 {
@@ -414,7 +414,7 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Save, savePointName, IsolationLevel.Unspecified, null, false);
+                    _innerConnection.ExecuteTransaction(TransactionRequest.Save, savePointName, IsolationLevel.Unspecified, null, false);
                 }
                 catch (Exception e)
                 {
