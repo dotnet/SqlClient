@@ -477,7 +477,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             Task taskToContinue = Task.CompletedTask;
             TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             const int state1 = 123;
-            const int state2 = 234
+            const int state2 = 234;
 
             // - mockOnSuccess handler throws
             Mock<Action<int, int>> mockOnSuccess = new();
