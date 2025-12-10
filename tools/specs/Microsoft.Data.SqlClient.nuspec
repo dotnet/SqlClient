@@ -39,8 +39,6 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.35.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.35.0" />
         <dependency id="System.Buffers" version="4.5.1" />
-        <dependency id="System.Text.Encodings.Web" version="6.0.1" />
-        <dependency id="System.Text.Json" version="6.0.11" />
       </group>
       <group targetFramework="net6.0">
         <!--
@@ -55,12 +53,10 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.35.0" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
         <dependency id="System.Configuration.ConfigurationManager" version="6.0.1" exclude="Compile" />
-        <dependency id="System.Diagnostics.DiagnosticSource" version="6.0.1" exclude="Compile" />
         <dependency id="System.Runtime.Caching" version="6.0.0" exclude="Compile" />
         <dependency id="System.Security.Permissions" version="6.0.0" />
         <dependency id="System.Security.Principal.Windows" version="5.0.0" exclude="Compile" />
         <dependency id="System.Text.Encoding.CodePages" version="6.0.0" exclude="Compile" />
-        <dependency id="System.Text.Encodings.Web" version="6.0.1" />
       </group>
       <group targetFramework="netstandard2.0">
         <!--
@@ -83,7 +79,6 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="System.Security.Permissions" version="6.0.0" />
         <dependency id="System.Security.Principal.Windows" version="5.0.0" exclude="Compile" />
         <dependency id="System.Text.Encoding.CodePages" version="6.0.0" exclude="Compile" />
-        <dependency id="System.Text.Encodings.Web" version="6.0.1" />
       </group>
       <group targetFramework="netstandard2.1">
         <!--
@@ -105,7 +100,6 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="System.Security.Permissions" version="6.0.0" />
         <dependency id="System.Security.Principal.Windows" version="5.0.0" exclude="Compile" />
         <dependency id="System.Text.Encoding.CodePages" version="6.0.0" exclude="Compile" />
-        <dependency id="System.Text.Encodings.Web" version="6.0.1" />
       </group>
     </dependencies>
     <frameworkAssemblies>
