@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
@@ -27,54 +26,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [InlineData(true)]
         [InlineData(false)]
-        public void CancelAsyncConnections(bool useMars)
+        public async Task CancelAsyncConnections(bool useMars)
         {
             // Arrange
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             builder.MultipleActiveResultSets = useMars;
 
             // Act
-            RunCancelAsyncConnections(builder);
+            await RunCancelAsyncConnections(builder);
         }
 
-        private void RunCancelAsyncConnections(SqlConnectionStringBuilder connectionStringBuilder)
+        private async Task RunCancelAsyncConnections(SqlConnectionStringBuilder connectionStringBuilder)
         {
             SqlConnection.ClearAllPools();
-            
-            ParallelLoopResult results = new ParallelLoopResult();
-            ConcurrentDictionary<int, bool> tracker = new ConcurrentDictionary<int, bool>();
+
+            var tracker = new ConcurrentDictionary<int, bool>();
 
             _random = new Random(4); // chosen via fair dice roll.
             _watch = Stopwatch.StartNew();
 
-            try
+            using (new Timer(TimerCallback, state: null, dueTime: TimeSpan.FromSeconds(5), period: TimeSpan.FromSeconds(5)))
             {
-                // Setup a timer so that we can see what is going on while our tasks run
-                using (new Timer(TimerCallback, state: null, dueTime: TimeSpan.FromSeconds(5), period: TimeSpan.FromSeconds(5)))
+                Task[] tasks = new Task[NumberOfTasks];
+                for (int i = 0; i < tasks.Length; i++)
                 {
-                    results = Parallel.For(
-                        fromInclusive: 0,
-                        toExclusive: NumberOfTasks,
-                        (int i) => DoManyAsync(i, tracker, connectionStringBuilder).GetAwaiter().GetResult());
+                    tasks[i] = DoManyAsync(i, tracker, connectionStringBuilder);
                 }
-            }
-            catch (Exception ex)
-            {
-                _output.WriteLine(ex.ToString());
-            }
 
-            while (!results.IsCompleted)
-            {
-                Thread.Sleep(50);
+                await Task.WhenAll(tasks);
             }
 
             DisplaySummary();
-            foreach (var detail in _exceptionDetails)
-            {
-                _output.WriteLine(detail);
-            }
-
-            Assert.Empty(_exceptionDetails);
         }
 
         // Display one row every 5'ish seconds
@@ -88,12 +70,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void DisplaySummary()
         {
-            int count;
-            lock (_exceptionDetails)
-            {
-                count = _exceptionDetails.Count;
-            }
-            _output.WriteLine($"{_watch.Elapsed} {_continue} Started:{_start} Done:{_done} InFlight:{_inFlight} RowsRead:{_rowsRead} ResultRead:{_resultRead} PoisonedEnded:{_poisonedEnded} nonPoisonedExceptions:{_nonPoisonedExceptions} PoisonedCleanupExceptions:{_poisonCleanUpExceptions} Count:{count} Found:{_found}");
+            _output.WriteLine($"{_watch.Elapsed} {_continue} Started:{_start} Done:{_done} InFlight:{_inFlight} RowsRead:{_rowsRead} ResultRead:{_resultRead} PoisonedEnded:{_poisonedEnded} nonPoisonedExceptions:{_nonPoisonedExceptions} PoisonedCleanupExceptions:{_poisonCleanUpExceptions} Found:{_found}");
         }
 
         // This is the the main body that our Tasks run
@@ -155,36 +132,46 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
             }
+            catch (Exception ex) when (poison && IsExpectedCancellation(ex))
+            {
+                // Expected cancellation from the time bomb when poisoning.
+            }
             catch (Exception ex)
             {
                 if (!poison)
                 {
                     Interlocked.Increment(ref _nonPoisonedExceptions);
-
-                    string details = ex.ToString();
-                    details = details.Substring(0, Math.Min(200, details.Length));
-                    lock (_exceptionDetails)
-                    {
-                        _exceptionDetails.Add(details);
-                    }
                 }
 
                 if (ex.Message.Contains("The MARS TDS header contained errors."))
                 {
                     _continue = false;
-                    if (_found == 0) // This check is not really safe we may list more than one.
+                    lock (_lockObject)
                     {
-                        lock (_lockObject)
-                        {
-                            // You will notice that poison will be likely be false here, it is the normal commands that suffer
-                            // Once we have successfully poisoned the connection pool, we may start to see some other request to poison fail just like the normal requests
-                            _output.WriteLine($"{poison} {DateTime.UtcNow.ToString("O")}");
-                            _output.WriteLine(ex.ToString());
-                        }
+                        _output.WriteLine($"{poison} {DateTime.UtcNow.ToString("O")}");
+                        _output.WriteLine(ex.ToString());
                     }
                     Interlocked.Increment(ref _found);
                 }
+
+                throw;
             }
+        }
+
+        private static bool IsExpectedCancellation(Exception ex)
+        {
+            if (ex is OperationCanceledException)
+            {
+                return true;
+            }
+
+            if (ex is SqlException sqlEx)
+            {
+                return sqlEx.Message.IndexOf("operation cancelled", StringComparison.OrdinalIgnoreCase) >= 0
+                    || sqlEx.Message.IndexOf("operation canceled", StringComparison.OrdinalIgnoreCase) >= 0;
+            }
+
+            return false;
         }
 
         private async Task RunCommand(SqlConnection connection, string commandText, bool poison, int parent)
@@ -238,10 +225,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 }
 
                                 throw;
-                            }
-                            catch (Exception ex)
-                            {
-                                Assert.Fail("unexpected exception: " + ex.GetType().Name + " " +ex.Message);
                             }
                         }
                     }
@@ -298,7 +281,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private int _found;
         private Random _random;
         private object _lockObject = new object();
-
-        private HashSet<string> _exceptionDetails = new HashSet<string>();
     }
 }
