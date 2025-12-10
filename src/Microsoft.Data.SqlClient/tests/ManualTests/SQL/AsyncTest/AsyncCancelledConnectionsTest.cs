@@ -24,13 +24,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Disabled on Azure since this test fails on concurrent runs on same database.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        public void CancelAsyncConnections()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CancelAsyncConnections(bool useMars)
         {
+            // Arrange
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
-            builder.MultipleActiveResultSets = false;
-            RunCancelAsyncConnections(builder);
-            builder.MultipleActiveResultSets = true;
+            builder.MultipleActiveResultSets = useMars;
+
+            // Act
             RunCancelAsyncConnections(builder);
         }
 
@@ -59,15 +62,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 _output.WriteLine(ex.ToString());
             }
+
             while (!results.IsCompleted)
             {
                 Thread.Sleep(50);
             }
+
             DisplaySummary();
             foreach (var detail in _exceptionDetails)
             {
                 _output.WriteLine(detail);
             }
+
             Assert.Empty(_exceptionDetails);
         }
 
