@@ -7,6 +7,14 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
     <PackageReference Include="Microsoft.SqlServer.SqlManagementObjects" Version="$(MicrosoftSqlServerSqlManagementObjectsVersion)" />
+    <!--
+      Explicitly reference the latest published MDS 5.1.x version here to avoid
+      an older version (5.1.5) being included transitively by
+      SqlManagementObjects.  The older version brings in a vulnerable version of
+      System.Formats.Asn1
+    -->
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.8" />
+    
     <ProjectReference Include="../Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
   </ItemGroup>
 </Project>
