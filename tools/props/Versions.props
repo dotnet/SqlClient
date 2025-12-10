@@ -74,11 +74,10 @@
 
   <!-- Test project dependencies -->
   <PropertyGroup>
-    <MicrosoftNETTestSdkVersion>17.14.0</MicrosoftNETTestSdkVersion>
+    <MicrosoftNETTestSdkVersion>17.12.0</MicrosoftNETTestSdkVersion>
     <NewtonsoftJsonVersion>13.0.4</NewtonsoftJsonVersion>
     <SystemDataOdbcVersion>6.0.2</SystemDataOdbcVersion>
     <SystemFormatsAsn1Version>6.0.1</SystemFormatsAsn1Version>
-    <SystemSecurityCryptographyCngVersion>5.0.0</SystemSecurityCryptographyCngVersion>
     <XunitVersion>2.9.3</XunitVersion>
     <xunitrunnervisualstudioVersion>2.8.2</xunitrunnervisualstudioVersion>
     <MicrosoftDotNetRemoteExecutorVersion>8.0.0-beta.25555.2</MicrosoftDotNetRemoteExecutorVersion>

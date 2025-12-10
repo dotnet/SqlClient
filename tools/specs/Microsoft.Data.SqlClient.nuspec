@@ -38,7 +38,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="Microsoft.Identity.Client" version="4.76.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.35.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.35.0" />
-        <dependency id="System.Buffers" version="4.5.1" />
+        <dependency id="System.Buffers" version="4.6.1" />
       </group>
       <group targetFramework="net6.0">
         <!--
@@ -71,7 +71,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.35.0" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
         <dependency id="Microsoft.Win32.Registry" version="5.0.0" />
-        <dependency id="System.Buffers" version="4.5.1" />
+        <dependency id="System.Buffers" version="4.6.1" />
         <dependency id="System.Configuration.ConfigurationManager" version="6.0.1" exclude="Compile" />
         <dependency id="System.Runtime.Caching" version="6.0.0" exclude="Compile" />
         <dependency id="System.Runtime.Loader" version="4.3.0" />
