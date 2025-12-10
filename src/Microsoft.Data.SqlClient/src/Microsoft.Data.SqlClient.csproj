@@ -47,7 +47,7 @@
     <!-- This file does not support pre-processor directives, so it must be conditionally         -->
     <!-- included into the build.                                                                 -->
     <EmbeddedResource Include="Resources/ILLink.Substitutions.xml"
-                      Condition="'$(TargetOs.ToUpper())' == 'WINDOWS_NT' AND '$(TargetFramework)' == 'net462'" />
+                      Condition="'$(TargetOs.ToUpper())' == 'WINDOWS_NT' AND '$(TargetFramework)' != 'net462'" />
   </ItemGroup>
 
   <!-- References ====================================================== -->

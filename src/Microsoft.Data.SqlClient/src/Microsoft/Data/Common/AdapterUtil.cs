@@ -71,7 +71,7 @@ namespace Microsoft.Data.Common
         #region UDT
 
         #if NETFRAMEWORK
-        private static readonly MethodInfo s_udtConstructor =
+        private static readonly MethodInfo s_udtFactory =
             typeof(InvalidUdtException).GetMethod("Create", BindingFlags.NonPublic | BindingFlags.Static);
         #endif
 
@@ -81,7 +81,7 @@ namespace Microsoft.Data.Common
         internal static InvalidUdtException CreateInvalidUdtException(Type udtType, string resourceReasonName)
         {
             #if NETFRAMEWORK
-            InvalidUdtException e = (InvalidUdtException)s_udtConstructor.Invoke(null, [udtType, resourceReasonName]);
+            InvalidUdtException e = (InvalidUdtException)s_udtFactory.Invoke(null, [udtType, resourceReasonName]);
             #else
             InvalidUdtException e = InvalidUdtException.Create(udtType, resourceReasonName);
             #endif

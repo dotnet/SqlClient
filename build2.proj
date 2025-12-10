@@ -44,7 +44,7 @@
 			<DotnetCommand>
 				$(DotnetPath)dotnet build $(MdsProjectPath)
 				  -p:Configuration=$(Configuration)
-				  -p:TargetOs=Unix
+				  -p:TargetOs=Windows
 			</DotnetCommand>
 			<DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s{2,}", " "))</DotnetCommand>
 		</PropertyGroup>
