@@ -1129,9 +1129,6 @@ namespace Microsoft.Data.Common
         internal static Exception InvalidDataLength(long length)
             => IndexOutOfRange(StringsHelper.GetString(Strings.SQL_InvalidDataLength, length.ToString(CultureInfo.InvariantCulture)));
 
-        internal static bool CompareInsensitiveInvariant(string strvalue, string strconst)
-            => 0 == CultureInfo.InvariantCulture.CompareInfo.Compare(strvalue, strconst, CompareOptions.IgnoreCase);
-
         internal static void SetCurrentTransaction(Transaction transaction) => Transaction.Current = transaction;
 
         internal static Exception NonSeqByteAccess(long badIndex, long currIndex, string method)
@@ -1141,9 +1138,6 @@ namespace Microsoft.Data.Common
                                                         method));
 
         internal static Exception NegativeParameter(string parameterName) => InvalidOperation(StringsHelper.GetString(Strings.ADP_NegativeParameter, parameterName));
-
-        internal static Exception InvalidXmlMissingColumn(string collectionName, string columnName)
-            => Argument(StringsHelper.GetString(Strings.MDF_InvalidXmlMissingColumn, collectionName, columnName));
 
         internal static InvalidOperationException AsyncOperationPending() => InvalidOperation(StringsHelper.GetString(Strings.ADP_PendingAsyncOperation));
 #endregion
@@ -1231,7 +1225,7 @@ namespace Microsoft.Data.Common
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidCommandTimeout, value.ToString(CultureInfo.InvariantCulture)), property);
 #endregion
 
-#region DbMetaDataFactory
+#region SqlMetaDataFactory
         internal static Exception DataTableDoesNotExist(string collectionName)
             => Argument(StringsHelper.GetString(Strings.MDF_DataTableDoesNotExist, collectionName));
 
@@ -1268,8 +1262,6 @@ namespace Microsoft.Data.Common
         internal static Exception OpenReaderExists(Exception e, bool marsOn)
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_OpenReaderExists, marsOn ? ADP.Command : ADP.Connection), e);
 
-        internal static Exception InvalidXml() => Argument(StringsHelper.GetString(Strings.MDF_InvalidXml));
-
         internal static Exception InvalidXmlInvalidValue(string collectionName, string columnName)
             => Argument(StringsHelper.GetString(Strings.MDF_InvalidXmlInvalidValue, collectionName, columnName));
 
@@ -1286,8 +1278,6 @@ namespace Microsoft.Data.Common
 
         internal static Exception AmbiguousCollectionName(string collectionName)
             => Argument(StringsHelper.GetString(Strings.MDF_AmbiguousCollectionName, collectionName));
-
-        internal static Exception MissingRestrictionColumn() => Argument(StringsHelper.GetString(Strings.MDF_MissingRestrictionColumn));
 
         internal static Exception MissingRestrictionRow() => Argument(StringsHelper.GetString(Strings.MDF_MissingRestrictionRow));
 

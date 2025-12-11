@@ -209,9 +209,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionInternal.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionInternal.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbMetaDataFactory.cs">
-      <Link>Microsoft\Data\ProviderBase\DbMetaDataFactory.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbReferenceCollection.cs">
       <Link>Microsoft\Data\ProviderBase\DbReferenceCollection.cs</Link>
     </Compile>
