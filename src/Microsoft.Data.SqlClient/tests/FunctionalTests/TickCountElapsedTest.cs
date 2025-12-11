@@ -13,7 +13,16 @@ namespace Microsoft.Data.SqlClient.Tests
     /// </summary>
     public sealed class TickCountElapsedTest
     {
-        internal static uint CalculateTickCountElapsed(long startTick, long endTick) => (uint)(endTick - startTick);
+        /// <summary>
+        /// Invokes the internal CalculateTickCountElapsed method to compute elapsed time between two tick counts.
+        /// </summary>
+        /// <param name="startTick"></param>
+        /// <param name="endTick"></param>
+        /// <returns></returns>
+        internal static uint CalculateTickCountElapsed(long startTick, long endTick) {
+            var adpType = mds.GetType("Microsoft.Data.SqlClient.AdapterUtils");
+            return (uint) adpType.GetMethod("CalculateTickCountElapsed", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).Invoke(null, new object[] {startTick, endTick});
+        }
 
         /// <summary>
         /// Verifies that normal elapsed time calculation works correctly.
