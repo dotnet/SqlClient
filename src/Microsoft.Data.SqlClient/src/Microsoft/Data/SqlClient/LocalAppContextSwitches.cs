@@ -27,16 +27,16 @@ namespace Microsoft.Data.SqlClient
         private const string TruncateScaledDecimalString = @"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal";
         private const string IgnoreServerProvidedFailoverPartnerString = @"Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner";
         private const string EnableUserAgentString = @"Switch.Microsoft.Data.SqlClient.EnableUserAgent";
-        private const string EnableMSFByDefaultString = @"Switch.Microsoft.Data.SqlClient.EnableMSFByDefaultInConnString";
+        private const string EnableMultiSubnetFailoverByDefaultString = @"Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault";
 
-#if NET
+        #if NET
         private const string GlobalizationInvariantModeString = @"System.Globalization.Invariant";
         private const string GlobalizationInvariantModeEnvironmentVariable = "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT";
 
-#if _WINDOWS
+        #if _WINDOWS
         private const string UseManagedNetworkingOnWindowsString = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
-#endif
-#else
+        #endif
+        #else
         private const string DisableTnirByDefaultString = @"Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString";
         #endif
 
@@ -527,7 +527,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (s_multiSubnetFailoverByDefault == Tristate.NotInitialized)
                 {
-                    if (AppContext.TryGetSwitch(EnableMSFByDefaultString, out bool returnedValue) && returnedValue)
+                    if (AppContext.TryGetSwitch(EnableMultiSubnetFailoverByDefaultString, out bool returnedValue) && returnedValue)
                     {
                         s_multiSubnetFailoverByDefault = Tristate.True;
                     }
