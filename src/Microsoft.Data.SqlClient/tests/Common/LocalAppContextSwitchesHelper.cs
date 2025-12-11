@@ -33,8 +33,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly PropertyInfo _truncateScaledDecimalProperty;
     private readonly PropertyInfo _ignoreServerProvidedFailoverPartner;
     private readonly PropertyInfo _enableUserAgent;
-
-    #if NET
+    private readonly PropertyInfo _enableMultiSubnetFailoverByDefaultProperty;
+#if NET
     private readonly PropertyInfo _globalizationInvariantModeProperty;
     #endif
     
@@ -69,8 +69,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly Tristate _ignoreServerProvidedFailoverPartnerOriginal;
     private readonly FieldInfo _enableUserAgentField;
     private readonly Tristate _enableUserAgentOriginal;
-
-    #if NET
+    private readonly FieldInfo _multiSubnetFailoverByDefaultField;
+    private readonly Tristate _multiSubnetFailoverByDefaultOriginal;
+#if NET
     private readonly FieldInfo _globalizationInvariantModeField;
     private readonly Tristate _globalizationInvariantModeOriginal;
     #endif
@@ -181,7 +182,11 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             "EnableUserAgent",
             out _enableUserAgent);
 
-        #if NET
+        InitProperty(
+            "EnableMultiSubnetFailoverByDefault",
+            out _enableMultiSubnetFailoverByDefaultProperty);
+
+#if NET
         InitProperty(
             "GlobalizationInvariantMode",
             out _globalizationInvariantModeProperty);
@@ -269,7 +274,12 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             out _enableUserAgentField,
             out _enableUserAgentOriginal);
 
-        #if NET
+        InitField(
+            "s_multiSubnetFailoverByDefault",
+            out _multiSubnetFailoverByDefaultField,
+            out _multiSubnetFailoverByDefaultOriginal);
+
+#if NET
         InitField(
             "s_globalizationInvariantMode",
             out _globalizationInvariantModeField,
@@ -281,8 +291,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             "s_useManagedNetworking",
             out _useManagedNetworkingField,
             out _useManagedNetworkingOriginal);
-        #endif
-        
+#endif
+
         #if NETFRAMEWORK
         InitField(
             "s_disableTnirByDefault",
@@ -358,6 +368,10 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         RestoreField(
             _enableUserAgentField,
             _enableUserAgentOriginal);
+
+        RestoreField(
+            _multiSubnetFailoverByDefaultField,
+            _multiSubnetFailoverByDefaultOriginal);
 
         #if NET
         RestoreField(
@@ -472,6 +486,11 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     public bool EnableUserAgent
     {
         get => (bool)_enableUserAgent.GetValue(null);
+    }
+
+    public bool EnableMultiSubnetFailoverByDefault
+    {
+        get => (bool) _enableMultiSubnetFailoverByDefaultProperty.GetValue(null);
     }
 
     #if NET
@@ -608,7 +627,13 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         set => SetValue(_enableUserAgentField, value);
     }
 
-    #if NET
+    public Tristate EnableMultiSubnetFailoverByDefaultField
+    {
+        get => GetValue(_multiSubnetFailoverByDefaultField);
+        set => SetValue(_multiSubnetFailoverByDefaultField, value);
+    }
+
+#if NET
     /// <summary>
     /// Get or set the LocalAppContextSwitches.GlobalizationInvariantMode switch value.
     /// </summary>

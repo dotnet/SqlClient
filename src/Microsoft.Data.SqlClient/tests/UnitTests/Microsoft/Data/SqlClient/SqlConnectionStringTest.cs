@@ -58,6 +58,80 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             Assert.Equal(expectedValue, connectionString.TransparentNetworkIPResolution);
         }
 #endif
+        /// <summary>
+        /// Test MSF values when set through connection string and through app context switch.
+        /// </summary>
+        [Theory]
+        [InlineData(true, Tristate.True, true)]
+        [InlineData(false, Tristate.True, false)]
+        [InlineData(null, Tristate.True, true)]
+        [InlineData(true, Tristate.False, true)]
+        [InlineData(false, Tristate.False, false)]
+        [InlineData(null, Tristate.False, false)]
+        [InlineData(null, Tristate.NotInitialized, false)]
+        public void TestDefaultMultiSubnetFailover(bool? msfInConnString, Tristate msfEnabledAppContext, bool expectedValue)
+        {
+            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefaultField = msfEnabledAppContext;
+
+            SqlConnectionStringBuilder builder = new();
+            if (msfInConnString.HasValue)
+            {
+                builder.MultiSubnetFailover = msfInConnString.Value;
+            }
+            SqlConnectionString connectionString = new(builder.ConnectionString);
+
+            Assert.Equal(expectedValue, connectionString.MultiSubnetFailover);
+        }
+
+        /// <summary>
+        /// Tests that MultiSubnetFailover=true cannot be used with FailoverPartner.
+        /// </summary>
+        [Fact]
+        public void TestMultiSubnetFailoverWithFailoverPartnerThrows()
+        {
+            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefaultField = Tristate.True;
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "server",
+                FailoverPartner = "partner",
+                InitialCatalog = "database"
+            };
+
+            Assert.Throws<ArgumentException>(() => new SqlConnectionString(builder.ConnectionString));
+        }
+
+        /// <summary>
+        /// Tests that when MSF is enabled by default via switch, explicitly setting it to false works.
+        /// </summary>
+        [Fact]
+        public void TestExplicitlyDisableMultiSubnetFailoverOverridesSwitch()
+        {
+            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefaultField = Tristate.True;
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "server",
+                MultiSubnetFailover = false
+            };
+            SqlConnectionString connectionString = new(builder.ConnectionString);
+
+            Assert.False(connectionString.MultiSubnetFailover);
+        }
+
+        /// <summary>
+        /// Tests SqlConnectionStringBuilder default value reflects the app context switch.
+        /// </summary>
+        [Theory]
+        [InlineData(Tristate.True, true)]
+        [InlineData(Tristate.False, false)]
+        [InlineData(Tristate.NotInitialized, false)]
+        public void TestSqlConnectionStringBuilderDefaultMultiSubnetFailover(Tristate msfEnabledAppContext, bool expectedDefault)
+        {
+            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefaultField = msfEnabledAppContext;
+            SqlConnectionStringBuilder builder = new();
+            Assert.Equal(expectedDefault, builder.MultiSubnetFailover);
+        }
 
         public void Dispose()
         {
