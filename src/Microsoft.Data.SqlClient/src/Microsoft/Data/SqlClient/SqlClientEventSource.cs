@@ -331,6 +331,7 @@ namespace Microsoft.Data.SqlClient
 
         #region Traces without if statements
 
+        [NonEvent]
         internal void TraceEvent(string message)
         {
             Trace(message);
