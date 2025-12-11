@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Reflection;
 using Microsoft.Data.Common;
 using Xunit;
 
@@ -20,8 +21,8 @@ namespace Microsoft.Data.SqlClient.Tests
         /// <param name="endTick"></param>
         /// <returns></returns>
         internal static uint CalculateTickCountElapsed(long startTick, long endTick) {
-            var adpType = Assembly.GetAssembly(typeof(SqlConnection)).GetType("Microsoft.Data.Common.ADP", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
-            return (uint) adpType.GetMethod("CalculateTickCountElapsed", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).Invoke(null, new object[] {startTick, endTick});
+            var adpType = Assembly.GetAssembly(typeof(SqlConnection)).GetType("Microsoft.Data.Common.ADP");
+            return (uint) adpType.GetMethod("CalculateTickCountElapsed", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] {startTick, endTick});
         }
 
         /// <summary>
