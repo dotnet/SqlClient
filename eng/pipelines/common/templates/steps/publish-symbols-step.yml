@@ -67,6 +67,12 @@ parameters:
     type: string
     default: "Symbols publishing Workload Identity federation service-ADO.Net"
 
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
 steps:
   - powershell: 'Write-Host "##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{parameters.SymAccount}}"'
     displayName: "Update Symbol.AccountName with ${{parameters.SymAccount}}"
@@ -78,8 +84,8 @@ steps:
         inputs:
           SymbolsFolder: '$(Build.SourcesDirectory)\artifacts\${{parameters.referenceType }}\bin'
           SearchPattern: |
-            Windows_NT/$(Configuration).AnyCPU/**/Microsoft.Data.SqlClient.pdb
-            Unix/$(Configuration).AnyCPU/**/Microsoft.Data.SqlClient.pdb
+            Windows_NT/${{ parameters.buildConfiguration }}.AnyCPU/**/Microsoft.Data.SqlClient.pdb
+            Unix/${{ parameters.buildConfiguration }}.AnyCPU/**/Microsoft.Data.SqlClient.pdb
           IndexSources: false
           SymbolServerType: TeamServices
           SymbolsMaximumWaitTime: 60

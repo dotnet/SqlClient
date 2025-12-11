@@ -2,12 +2,11 @@
 //<Snippet1>
 using System.Collections.Generic;
 using System.Security.Cryptography;
-using System.Threading.Tasks;
 using Azure.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 
-namespace AKVEnclaveExample
+namespace AKVEnclaveExample_2_0
 {
     class Program
     {

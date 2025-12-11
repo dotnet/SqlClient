@@ -129,9 +129,9 @@ namespace Microsoft.Data.SqlClient.Server
                 {
                     return _size;
                 }
-                foreach (FieldInfoEx field in _fieldsToNormalize)
+                foreach (FieldInfoEx fieldInfo in _fieldsToNormalize)
                 {
-                    _size += field.Normalizer.Size;
+                    _size += fieldInfo.Normalizer.Size;
                 }
                 return _size;
             }

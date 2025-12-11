@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
 
 #if NET
@@ -264,28 +265,15 @@ namespace Microsoft.Data.SqlClient
             return connectionPoolGroup;
         }
 
-        internal DbMetaDataFactory GetMetaDataFactory(
+        internal SqlMetaDataFactory GetMetaDataFactory(
             DbConnectionPoolGroup poolGroup,
             DbConnectionInternal internalConnection)
         {
             Debug.Assert(poolGroup is not null, "connectionPoolGroup may not be null.");
 
-            // Get the matadatafactory from the pool entry. If it does not already have one
+            // Get the metadata factory from the pool entry. If it does not already have one
             // create one and save it on the pool entry
-            DbMetaDataFactory metaDataFactory = poolGroup.MetaDataFactory;
-
-            // CONSIDER: serializing this so we don't construct multiple metadata factories
-            // if two threads happen to hit this at the same time. One will be GC'd
-            if (metaDataFactory is null)
-            {
-                metaDataFactory = CreateMetaDataFactory(internalConnection, out bool allowCache);
-                if (allowCache)
-                {
-                    poolGroup.MetaDataFactory = metaDataFactory;
-                }
-            }
-            
-            return metaDataFactory;
+            return poolGroup.MetaDataFactory ??= CreateMetaDataFactory(internalConnection);
         }
         
         internal void QueuePoolForRelease(IDbConnectionPool pool, bool clearing)
@@ -755,19 +743,14 @@ namespace Microsoft.Data.SqlClient
             return poolingOptions;
         }
 
-        private static DbMetaDataFactory CreateMetaDataFactory(
-            DbConnectionInternal internalConnection,
-            out bool cacheMetaDataFactory)
+        private static SqlMetaDataFactory CreateMetaDataFactory(DbConnectionInternal internalConnection)
         {
             Debug.Assert(internalConnection is not null, "internalConnection may not be null.");
 
             Stream xmlStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Microsoft.Data.SqlClient.SqlMetaData.xml");
             Debug.Assert(xmlStream is not null, $"{nameof(xmlStream)} may not be null.");
             
-            cacheMetaDataFactory = true;
-            return new SqlMetaDataFactory(xmlStream,
-                internalConnection.ServerVersion,
-                internalConnection.ServerVersion);
+            return new SqlMetaDataFactory(xmlStream, internalConnection.ServerVersion);
         }
         
         private Task<DbConnectionInternal> CreateReplaceConnectionContinuation(

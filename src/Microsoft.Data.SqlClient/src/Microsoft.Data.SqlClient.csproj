@@ -4,7 +4,28 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<RootNamespace />
 	</PropertyGroup>
-  
+
+  <!-- OS Constants ==================================================== -->
+  <PropertyGroup>
+    <!-- If a target OS was not specified, use the current OS as the target OS. -->
+    <TargetOs Condition="'$(TargetOs)' == ''">$(OS)</TargetOs>
+
+    <!-- Uncomment the following line to override the OS you are developing for -->
+    <!--<TargetOs>Unix</TargetOs>-->
+    <!--<TargetOs>Windows_NT</TargetOs>-->
+
+    <!-- NOTE: These constants are prefixed with _ to keep them separate from .NET 5+ precompiler -->
+    <!--     flags. Those only apply to OS-specific target frameworks, and would interfere here. -->
+    <DefineConstants Condition="'$(TargetOs.ToUpper())' == 'UNIX'">$(DefineConstants),_UNIX</DefineConstants>
+    <DefineConstants Condition="'$(TargetOs.ToUpper())' == 'WINDOWS_NT'">$(DefineConstants),_WINDOWS</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Embedded resources ============================================== -->
+  <ItemGroup>
+    <EmbeddedResource Include="Resources/ILLink.Substitutions.xml"
+                      Condition="'$(TargetOs.ToUpper())' == 'WINDOWS_NT'" />
+  </ItemGroup>
+
   <!-- References ====================================================== -->
   <ItemGroup>
     <!-- References that apply to all target frameworks -->
@@ -14,18 +35,21 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
-    <PackageReference Include="System.Buffers" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
-    <PackageReference Include="System.Memory" />
-    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
     <PackageReference Include="System.Security.Cryptography.Pkcs"  />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <!-- References that only apply to net462 -->
     <Reference Include="System.Configuration" />
     <Reference Include="System.Transactions" />
-    <PackageReference Include="System.Data.Common" />
     <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="System.Threading.Channels" />
+	</ItemGroup>
+
+  <!-- System.Buffers, System.Memory, and System.Runtime.InteropServices.RuntimeInformation are included in .NET 10+ BCL -->
+  <ItemGroup Condition="$([MSBuild]::VersionLessThan($([MSBuild]::GetTargetFrameworkVersion($(TargetFramework))), '10.0'))">
+    <PackageReference Include="System.Buffers" />
+    <PackageReference Include="System.Memory" />
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
   </ItemGroup>
 </Project>

@@ -43,6 +43,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             {
                 // Mock implementation - do nothing
             }
+
+            internal override void ResetConnection()
+            {
+                // Mock implementation - do nothing
+            }
         }
 
         [Fact]
