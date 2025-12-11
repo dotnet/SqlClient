@@ -26,7 +26,7 @@ parameters:
   - name: internalFeedSource
     type: string
 
-  # Public NuGet source URL for publishing packages to public feed 
+  # Public NuGet source URL for publishing packages to public feed
   - name: publicNuGetSource
     type: string
 
@@ -34,7 +34,7 @@ parameters:
   - name: publishSymbols
     type: boolean
     default: false
-    
+
   # Boolean value to indicate if the build is a preview release build
   - name: isPreview
     type: boolean
@@ -42,30 +42,29 @@ parameters:
   # Product name associated with the packages
   - name: product
     type: string
-  
+
   # NuGet package version to be published
   - name: nugetPackageVersion
     type: string
-    
+
   # Name of the folder containing the packages to be published
   - name: packageFolderName
     type: string
 
 stages:
-- stage: releaseMDS
-  displayName: 'Release (Manual)'
-  condition: and(succeeded(), eq(variables['Build.Reason'],'Manual'), eq(${{ parameters.runRelease }}, true))
-  jobs:
-  - template: ../jobs/publish-packages-job.yml
-    parameters:
-      approvalAliases: ${{ parameters.approvalAliases }}
-      publishDestination: ${{ parameters.publishDestination }}
-      dryRun: ${{ parameters.dryRun }}
-      isPreview: ${{ parameters.isPreview }}
-      internalFeedSource: ${{ parameters.internalFeedSource }}
-      publicNuGetSource: ${{ parameters.publicNuGetSource }}
-      publishSymbols: ${{ parameters.publishSymbols }}
-      packageFolderName: ${{ parameters.packageFolderName }}
-      nugetPackageVersion: ${{ parameters.nugetPackageVersion }}
-      product: ${{ parameters.product }}
-      
+  - stage: Release ${{ parameters.product }}
+    displayName: "Release (Manual)"
+    condition: and(succeeded(), eq(variables['Build.Reason'],'Manual'), eq(${{ parameters.runRelease }}, true))
+    jobs:
+      - template: ../jobs/publish-packages-job.yml
+        parameters:
+          approvalAliases: ${{ parameters.approvalAliases }}
+          publishDestination: ${{ parameters.publishDestination }}
+          dryRun: ${{ parameters.dryRun }}
+          isPreview: ${{ parameters.isPreview }}
+          internalFeedSource: ${{ parameters.internalFeedSource }}
+          publicNuGetSource: ${{ parameters.publicNuGetSource }}
+          publishSymbols: ${{ parameters.publishSymbols }}
+          packageFolderName: ${{ parameters.packageFolderName }}
+          nugetPackageVersion: ${{ parameters.nugetPackageVersion }}
+          product: ${{ parameters.product }}

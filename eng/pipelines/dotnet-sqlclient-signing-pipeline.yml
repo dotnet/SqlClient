@@ -8,114 +8,115 @@ name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 trigger:
   branches:
     include:
-    - internal/main
+      - internal/main
   paths:
     include:
-    - src
-    - eng
-    - tools
-    - .config
-    - build.proj
-    - Nuget.config
-    - '*.cmd'
-    - '*.sh'
+      - src
+      - eng
+      - tools
+      - .config
+      - build.proj
+      - Nuget.config
+      - "*.cmd"
+      - "*.sh"
 
 schedules:
-- cron: '30 4 * * Mon'
-  displayName: Weekly Sunday 9:30 PM (UTC - 7) Build
-  branches:
-    include:
-    - internal/main
-  always: true
+  - cron: "30 4 * * Mon"
+    displayName: Weekly Sunday 9:30 PM (UTC - 7) Build
+    branches:
+      include:
+        - internal/main
+    always: true
 
-- cron: '30 3 * * Mon-Fri'
-  displayName: Mon-Fri 8:30 PM (UTC - 7) Build
-  branches:
-    include:
-    - internal/main
+  - cron: "30 3 * * Mon-Fri"
+    displayName: Mon-Fri 8:30 PM (UTC - 7) Build
+    branches:
+      include:
+        - internal/main
 
-parameters: # parameters are shown up in ADO UI in a build queue time
-# Enable debug output for this build
-- name: 'debug'
-  displayName: 'Enable debug output'
-  type: boolean
-  default: false
+# These parameters are shown up in ADO UI in a build queue time
+parameters:
+  # Enable debug output for this build
+  - name: "debug"
+    displayName: "Enable debug output"
+    type: boolean
+    default: false
 
-# Boolean value to indicate whether to publish symbols
-- name: publishSymbols
-  displayName: 'Publish symbols'
-  type: boolean
-  default: false
+  # Boolean value to indicate whether to publish symbols
+  - name: publishSymbols
+    displayName: "Publish symbols"
+    type: boolean
+    default: false
 
-# Lowest supported .NET Framework version for this build (for MDS validation)
-- name: CurrentNetFxVersion
-  displayName: 'Lowest supported .NET Framework version (MDS validation)'
-  type: string
-  default: 'net462'
+  # Lowest supported .NET Framework version for this build (for MDS validation)
+  - name: CurrentNetFxVersion
+    displayName: "Lowest supported .NET Framework version (MDS validation)"
+    type: string
+    default: "net462"
 
-# OneBranch template type: Official or NonOfficial
-- name: oneBranchType
-  displayName: 'Select OneBranch template'
-  default: Official
-  values:
-  - NonOfficial
-  - Official
+  # OneBranch template type: Official or NonOfficial
+  - name: oneBranchType
+    displayName: "Select OneBranch template"
+    default: Official
+    values:
+      - NonOfficial
+      - Official
 
-# Is this a preview build?
-- name: isPreview
-  displayName: 'Is this a preview build?'
-  type: boolean
-  default: false
+  # Is this a preview build?
+  - name: isPreview
+    displayName: "Is this a preview build?"
+    type: boolean
+    default: false
 
-# The timeout, in minutes, for each test job.
-- name: testsTimeout
-  displayName: 'Tests timeout (in minutes)'
-  type: string
-  default: 90
+  # The timeout, in minutes, for each test job.
+  - name: testsTimeout
+    displayName: "Tests timeout (in minutes)"
+    type: string
+    default: 90
 
-# Manual Release Parameters
-# Release stage runs ONLY when build is manually queued AND runRelease = true.
-- name: runRelease
-  displayName: 'Run manual release stage'
-  type: boolean
-  default: false
+  # Manual Release Parameters
+  # Release stage runs ONLY when build is manually queued AND runRelease = true.
+  - name: runRelease
+    displayName: "Run manual release stage"
+    type: boolean
+    default: false
 
-# Publish destination: Internal or Public
-- name: publishDestination
-  displayName: 'Publish destination'
-  type: string
-  default: Internal
-  values:
-  - Internal
-  - Public
+  # Publish destination: Internal or Public
+  - name: publishDestination
+    displayName: "Publish destination"
+    type: string
+    default: Internal
+    values:
+      - Internal
+      - Public
 
-# Boolean value to indicate whether to perform a dry run or actual publish of NuGet Packages
-- name: dryRun
-  displayName: 'Dry run (no publish)'
-  type: boolean
-  default: true
+  # Boolean value to indicate whether to perform a dry run or actual publish of NuGet Packages
+  - name: dryRun
+    displayName: "Dry run (no publish)"
+    type: boolean
+    default: true
 
-# Internal feed source URL for publishing packages to Azure DevOps Feed
-- name: internalFeedSource
-  displayName: 'Internal feed source URL'
-  type: string
-  default: ''
+  # Internal feed source URL for publishing packages to Azure DevOps Feed
+  - name: internalFeedSource
+    displayName: "Internal feed source URL"
+    type: string
+    default: ""
 
-# Public NuGet source URL for publishing packages to public feed
-- name: publicNuGetSource
-  displayName: 'Public NuGet source URL'
-  type: string
-  default: 'https://api.nuget.org/v3/index.json'
+  # Public NuGet source URL for publishing packages to public feed
+  - name: publicNuGetSource
+    displayName: "Public NuGet source URL"
+    type: string
+    default: "https://api.nuget.org/v3/index.json"
 
-# Product name associated with the packages
-- name: product
-  displayName: 'Product code (MDS|MSS|AKV)'
-  type: string
-  default: 'MDS'
-  values:
-  - MDS
-  - MSS
-  - AKV
+  # Product name associated with the packages
+  - name: product
+    displayName: "Product code (MDS|MSS|AKV)"
+    type: string
+    default: "MDS"
+    values:
+      - MDS
+      - MSS
+      - AKV
 
 variables:
   - template: /eng/pipelines/libraries/variables.yml@self
@@ -127,7 +128,7 @@ variables:
     value: ${{ parameters['CurrentNetFxVersion'] }}
 
 resources:
-  repositories: 
+  repositories:
     - repository: templates
       type: git
       name: OneBranch.Pipelines/GovernedTemplates
@@ -169,7 +170,7 @@ extends:
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'
         exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
       asyncSdl:
-        enabled: false        
+        enabled: false
         credscan:
           enabled: ${{ not(parameters['isPreview']) }}
           suppressionsFile: $(REPOROOT)/.config/CredScanSuppressions.json
@@ -188,53 +189,53 @@ extends:
         tsaOptionsPath: $(REPOROOT)\.config\tsaoptions.json
         disableLegacyManifest: true
     stages:
-    # TODO: Build other products as well based on parameters['product']
-    # This pipeline currently only builds MDS product.
-    - ${{ if eq(parameters['product'], 'MDS') }}:
-      - stage: buildMDS
-        displayName: 'Build MDS'
-        jobs:
-        - template: eng/pipelines/common/templates/jobs/build-signed-package-job.yml@self
-          parameters:
-            symbolsFolder: $(symbolsFolder)
-            softwareFolder: $(softwareFolder)
-            publishSymbols: ${{ parameters['publishSymbols'] }}
-            isPreview: ${{ parameters['isPreview'] }}
-      - stage: mds_package_validation
-        displayName: 'MDS Package Validation'
-        dependsOn: buildMDS
-        jobs:
-        - template: eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self
-          parameters:
-            packageFolderName: $(packageFolderName)
-            isPreview: ${{ parameters['isPreview'] }}
-            downloadPackageStep:
-              download: current
-              artifact: $(packageFolderName)
-              patterns: '**/*.*nupkg'
-              displayName: 'Download NuGet Package'
-  # Disabling as of 10/15/2025 due to OneBranch apparently disallowing MSBuild tasks in validation stages.
-  #      - template: eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
-  #        parameters:
-  #          packageFolderName: $(packageFolderName)
-  #          isPreview: ${{ parameters['isPreview'] }}
-  #          timeout: ${{ parameters.testsTimeout }}
-  #          downloadPackageStep:
-  #            download: current
-  #            artifact: $(packageFolderName)
-  #            patterns: '**/*.nupkg'
-  #            displayName: 'Download NuGet Package'
-    # Manual Release Stage (templated)
-    - template: eng/pipelines/common/templates/stages/release-stage.yml@self
-      parameters:
-        runRelease: ${{ parameters.runRelease }}
-        publishDestination: ${{ parameters.publishDestination }}
-        dryRun: ${{ parameters.dryRun }}
-        approvalAliases: '[ADO.Net]\\SqlClient Admins'
-        internalFeedSource: ${{ parameters.internalFeedSource }}
-        publicNuGetSource: ${{ parameters.publicNuGetSource }}
-        publishSymbols: ${{ parameters.publishSymbols }}
-        isPreview: ${{ parameters.isPreview }}
-        packageFolderName: $(packageFolderName)
-        nugetPackageVersion: $(NugetPackageVersion)
-        product: ${{ parameters.product }}
+      # TODO: Build other products as well based on parameters['product']
+      # This pipeline currently only builds MDS product.
+      - ${{ if eq(parameters['product'], 'MDS') }}:
+          - stage: buildMDS
+            displayName: "Build MDS"
+            jobs:
+              - template: eng/pipelines/common/templates/jobs/build-signed-package-job.yml@self
+                parameters:
+                  symbolsFolder: $(symbolsFolder)
+                  softwareFolder: $(softwareFolder)
+                  publishSymbols: ${{ parameters['publishSymbols'] }}
+                  isPreview: ${{ parameters['isPreview'] }}
+          - stage: mds_package_validation
+            displayName: "MDS Package Validation"
+            dependsOn: buildMDS
+            jobs:
+              - template: eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self
+                parameters:
+                  packageFolderName: $(packageFolderName)
+                  isPreview: ${{ parameters['isPreview'] }}
+                  downloadPackageStep:
+                    download: current
+                    artifact: $(packageFolderName)
+                    patterns: "**/*.*nupkg"
+                    displayName: "Download NuGet Package"
+      # Disabling as of 10/15/2025 due to OneBranch apparently disallowing MSBuild tasks in validation stages.
+      #      - template: eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
+      #        parameters:
+      #          packageFolderName: $(packageFolderName)
+      #          isPreview: ${{ parameters['isPreview'] }}
+      #          timeout: ${{ parameters.testsTimeout }}
+      #          downloadPackageStep:
+      #            download: current
+      #            artifact: $(packageFolderName)
+      #            patterns: '**/*.nupkg'
+      #            displayName: 'Download NuGet Package'
+      # Manual Release Stage (templated)
+      - template: eng/pipelines/common/templates/stages/release-stage.yml@self
+        parameters:
+          runRelease: ${{ parameters.runRelease }}
+          publishDestination: ${{ parameters.publishDestination }}
+          dryRun: ${{ parameters.dryRun }}
+          approvalAliases: '[ADO.Net]\\SqlClient Admins'
+          internalFeedSource: ${{ parameters.internalFeedSource }}
+          publicNuGetSource: ${{ parameters.publicNuGetSource }}
+          publishSymbols: ${{ parameters.publishSymbols }}
+          isPreview: ${{ parameters.isPreview }}
+          packageFolderName: $(packageFolderName)
+          nugetPackageVersion: $(NugetPackageVersion)
+          product: ${{ parameters.product }}

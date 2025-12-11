@@ -20,7 +20,11 @@ Function PublishToInternalFeed() {
         exit 1
     }
     
-    Write-Host "[DRY RUN] Listing packages targeted for push to: $internalFeedSource" -ForegroundColor Cyan
+    if ($dryRun) {
+        Write-Host "[DRY RUN] Listing packages targeted for push to: $internalFeedSource" -ForegroundColor Cyan
+    } else {
+        Write-Host "Listing packages targeted for push to: $internalFeedSource" -ForegroundColor Cyan
+    }
     Write-Host "Using glob pattern: $packagesGlob" -ForegroundColor Cyan
 
     # Parse the glob pattern to extract directory and filename pattern
@@ -58,14 +62,22 @@ Function PublishToInternalFeed() {
             if (-not $dryRun) {
                 Write-Host "`nPushing packages to feed..." -ForegroundColor Cyan
                 foreach ($package in $packages) {
+                    Write-Host "`nPushing packages to feed..." -ForegroundColor Cyan
+                $anyPushFailed = $false
+                foreach ($package in $packages) {
                     Write-Host "Pushing package: $($package.FullName)" -ForegroundColor Yellow
                     dotnet nuget push $package.FullName --source $SRC --api-key az
                     
                     if ($LASTEXITCODE -ne 0) {
                         Write-Host "Failed to push package: $($package.FullName)" -ForegroundColor Red
+                        $anyPushFailed = $true
                     } else {
                         Write-Host "Successfully pushed: $($package.Name)" -ForegroundColor Green
                     }
+                }
+                if ($anyPushFailed) {
+                    Write-Host "`nOne or more packages failed to push." -ForegroundColor Red
+                    exit 1
                 }
             } else {
                 Write-Host "`n[DRY RUN] No packages were pushed. Set -dryRun `$false to push." -ForegroundColor Yellow
