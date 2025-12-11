@@ -84,13 +84,6 @@ jobs:
       echo "NuGet Package Version: ${{ parameters.nugetPackageVersion }}"
       echo "Downloaded signed packages to: ${{ variables.targetDownloadPath }}"
     displayName: 'Echo NuGet Package Version'
-    # Push to Internal Feed if publishDestination is not 'Public'
-  - ${{ if ne(parameters.publishDestination, 'Public') }}:
-    - template: ../steps/publish-internal-feed-step.yml
-      parameters:
-        dryRun: ${{ parameters.dryRun }}
-        internalFeedSource: ${{ parameters.internalFeedSource }}
-        packagesGlob: ${{ variables.targetDownloadPath }}/*.nupkg
   # Push to Public NuGet Feed if publishDestination is 'Public'
   - ${{ if eq(parameters.publishDestination, 'Public') }}:
     - template: ../steps/publish-public-nuget-step.yml
@@ -98,8 +91,15 @@ jobs:
         dryRun: ${{ parameters.dryRun }}
         publicNuGetSource: ${{ parameters.publicNuGetSource }}
         packagesGlob: ${{ variables.targetDownloadPath }}/*.nupkg
+    # Else Push to Internal Feed
+  - ${{ else }}:
+    - template: ../steps/publish-internal-feed-step.yml
+      parameters:
+        dryRun: ${{ parameters.dryRun }}
+        internalFeedSource: ${{ parameters.internalFeedSource }}
+        packagesGlob: ${{ variables.targetDownloadPath }}/*.nupkg
   # Publish Symbols if publishSymbols is true and is not a dry run
-  - ${{ if and(parameters.publishSymbols, ne(parameters.dryRun, true)) }}:
+  - ${{ if and(parameters.publishSymbols, eq(parameters.dryRun, false)) }}:
     - template: ../steps/publish-symbols-step.yml
       parameters:
         publishSymbols: ${{ parameters.publishSymbols }}
