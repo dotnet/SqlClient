@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.Tests
         /// <param name="endTick"></param>
         /// <returns></returns>
         internal static uint CalculateTickCountElapsed(long startTick, long endTick) {
-            var adpType = mds.GetType("Microsoft.Data.SqlClient.AdapterUtils");
+            var adpType = Assembly.GetAssembly(typeof(SqlConnection)).GetType("Microsoft.Data.Common.ADP", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
             return (uint) adpType.GetMethod("CalculateTickCountElapsed", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).Invoke(null, new object[] {startTick, endTick});
         }
 
