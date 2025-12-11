@@ -292,51 +292,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #nullable enable
 
         /// <summary>
-        /// Returns the current test name as:
-        /// 
-        ///   ClassName.MethodName
-        /// 
-        /// xUnit v2 doesn't provide access to a test context, so we use
-        /// reflection into the ITestOutputHelper to get the test name.
+        /// Returns the current test name as: ClassName.MethodName
+        /// xUnit v2 doesn't provide access to a test context, so we use reflection into the
+        /// ITestOutputHelper to get the test name.
         /// </summary>
-        /// 
-        /// <param name="outputHelper">
-        ///   The output helper instance for the currently running test.
-        /// </param>
-        /// 
-        /// <returns>The current test name.</returns>
+        /// <exception cref="Exception">
+        /// Thrown if any intermediate step of getting to the test name fails or is inaccessible.
+        /// </exception>
+        /// <param name="outputHelper">Output helper instance for the currently running test</param>
+        /// <returns>Current test name</returns>
         public static string CurrentTestName(ITestOutputHelper outputHelper)
         {
-            // Reflect our way to the ITest instance.
-            var type = outputHelper.GetType();
-            Assert.NotNull(type);
-            var testMember = type.GetField("test", BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.NotNull(testMember);
-            var test = testMember.GetValue(outputHelper) as ITest;
-            Assert.NotNull(test);
+            // Reflect our way to the ITestMethod.
+            Type type = outputHelper.GetType();
 
-            // The DisplayName is in the format:
-            // 
-            //   Namespace.ClassName.MethodName(args)
-            //
-            // We only want the ClassName.MethodName portion.
-            //
-            Match match = TestNameRegex.Match(test.DisplayName);
-            Assert.True(match.Success);
-            // There should be 2 groups: the overall match, and the capture
-            // group.
-            Assert.Equal(2, match.Groups.Count);
-            
-            // The portion we want is in the capture group.
-            return match.Groups[1].Value;
+            FieldInfo testField = type.GetField("test", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?? throw new Exception("Could not find field 'test' on ITestOutputHelper");
+
+            ITest test = testField.GetValue(outputHelper) as ITest
+                ?? throw new Exception("Field 'test' on outputHelper is null or not an ITest object.");
+
+            ITestMethod testMethod = test.TestCase.TestMethod;
+
+            // Class name will be fully-qualified. We only want the class name, so take the last part.
+            string[] testClassNameParts = testMethod.TestClass.Class.Name.Split('.');
+            string testClassName = testClassNameParts[testClassNameParts.Length - 1];
+
+            string testMethodName = testMethod.Method.Name;
+
+            // Reconstitute the test name as classname.methodname
+            return $"{testClassName}.{testMethodName}";
         }
 
-        private static readonly Regex TestNameRegex = new(
-            // Capture the ClassName.MethodName portion, which may terminate
-            // the name, or have (args...) appended.
-            @"\.((?:[^.]+)\.(?:[^.\(]+))(?:\(.*\))?$",
-            RegexOptions.Compiled);
-        
         /// <summary>
         /// SQL Server properties we can query.
         ///
