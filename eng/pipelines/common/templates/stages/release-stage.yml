@@ -54,7 +54,7 @@ parameters:
 stages:
   - stage: Release ${{ parameters.product }}
     displayName: "Release (Manual)"
-    condition: and(succeeded(), eq(variables['Build.Reason'],'Manual'), eq(${{ parameters.runRelease }}, true))
+    condition: and(succeeded(), eq('${{ variables.Build.Reason }}', 'Manual'), eq(${{ parameters.runRelease }}, true))
     jobs:
       - template: ../jobs/publish-packages-job.yml
         parameters:
