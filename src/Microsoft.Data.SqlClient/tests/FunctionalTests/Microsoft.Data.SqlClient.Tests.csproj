@@ -62,6 +62,7 @@
     <Compile Include="SqlConnectionStringBuilderTest.cs" />
     <Compile Include="SerializeSqlTypesTest.cs" />
     <Compile Include="TestTdsServer.cs" />
+    <Compile Include="TickCountElapsedTest.cs" />
     <Compile Include="SqlHelperTest.cs" />
     <Compile Include="..\..\src\Microsoft\Data\Common\MultipartIdentifier.cs" />
     <Compile Include="AssertExtensions.cs" />
