@@ -35,21 +35,25 @@ schedules:
     - internal/main
 
 parameters: # parameters are shown up in ADO UI in a build queue time
+# Enable debug output for this build
 - name: 'debug'
   displayName: 'Enable debug output'
   type: boolean
   default: false
 
+# Boolean value to indicate whether to publish symbols
 - name: publishSymbols
   displayName: 'Publish symbols'
   type: boolean
   default: false
 
+# Lowest supported .NET Framework version for this build (for MDS validation)
 - name: CurrentNetFxVersion
   displayName: 'Lowest supported .NET Framework version (MDS validation)'
   type: string
   default: 'net462'
 
+# OneBranch template type: Official or NonOfficial
 - name: oneBranchType
   displayName: 'Select OneBranch template'
   default: Official
@@ -57,6 +61,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   - NonOfficial
   - Official
 
+# Is this a preview build?
 - name: isPreview
   displayName: 'Is this a preview build?'
   type: boolean
@@ -75,6 +80,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: boolean
   default: false
 
+# Publish destination: Internal or Public
 - name: publishDestination
   displayName: 'Publish destination'
   type: string
@@ -83,21 +89,25 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   - Internal
   - Public
 
+# Boolean value to indicate whether to perform a dry run or actual publish of NuGet Packages
 - name: dryRun
   displayName: 'Dry run (no publish)'
   type: boolean
-  default: false
+  default: true
 
+# Internal feed source URL for publishing packages to Azure DevOps Feed
 - name: internalFeedSource
   displayName: 'Internal feed source URL'
   type: string
   default: ''
 
+# Public NuGet source URL for publishing packages to public feed
 - name: publicNuGetSource
   displayName: 'Public NuGet source URL'
   type: string
   default: 'https://api.nuget.org/v3/index.json'
 
+# Product name associated with the packages
 - name: product
   displayName: 'Product code (MDS|MSS|AKV)'
   type: string

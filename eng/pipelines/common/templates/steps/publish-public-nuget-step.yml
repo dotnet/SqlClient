@@ -6,6 +6,7 @@
 parameters:
   - name: dryRun
     type: boolean
+    default: true
 
   - name: publicNuGetSource
     type: string
@@ -16,8 +17,7 @@ parameters:
     
   - name: packagesGlob
     type: string
-    default: '$(System.DefaultWorkingDirectory)/_dotnet-sqlclient-Official/drop_buildMDS_build_signed_package/*.nupkg'
-
+    
 steps:
 - task: NuGetToolInstaller@1
   displayName: 'Install Latest Nuget'

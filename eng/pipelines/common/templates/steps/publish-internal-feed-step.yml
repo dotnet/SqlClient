@@ -13,7 +13,6 @@ parameters:
     
   - name: packagesGlob
     type: string
-    default: '$(System.DefaultWorkingDirectory)/_dotnet-sqlclient-Official/drop_buildMDS_build_signed_package/*.nupkg'
 
 steps:
 - script: |

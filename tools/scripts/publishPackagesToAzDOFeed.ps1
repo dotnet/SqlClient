@@ -2,7 +2,7 @@
 # The .NET Foundation licenses this file to you under the MIT license.
 # See the LICENSE file in the project root for more information.
 
-# Script: publishPackagesToFeed.ps1
+# Script: publishPackagesToAzDOFeed.ps1
 # Date:   10-12-2025
 # Comments: This script publishes packages to an internal Azure DevOps Feed.
 

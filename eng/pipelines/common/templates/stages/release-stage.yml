@@ -4,39 +4,50 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  # Boolean value to indicate whether to run the release stage
   - name: runRelease
     type: boolean
     default: false
 
+  # Where to publish the packages: 'Internal' or 'Public' feed
   - name: publishDestination
     type: string
 
+  # Boolean value to indicate whether to perform a dry run or actual publish
   - name: dryRun
     type: boolean
-    default: false
+    default: true
 
+  # Approval aliases for manual validation before publishing packages
   - name: approvalAliases
     type: string
 
+  # Internal feed source URL for publishing packages to Azure DevOps Feed
   - name: internalFeedSource
     type: string
 
+  # Public NuGet source URL for publishing packages to public feed 
   - name: publicNuGetSource
     type: string
 
+  # Boolean value to indicate whether to publish symbols
   - name: publishSymbols
     type: boolean
     default: false
     
+  # Boolean value to indicate if the build is a preview release build
   - name: isPreview
     type: boolean
 
+  # Product name associated with the packages
   - name: product
     type: string
-
+  
+  # NuGet package version to be published
   - name: nugetPackageVersion
     type: string
     
+  # Name of the folder containing the packages to be published
   - name: packageFolderName
     type: string
 
@@ -45,22 +56,16 @@ stages:
   displayName: 'Release (Manual)'
   condition: and(succeeded(), eq(variables['Build.Reason'],'Manual'), eq(${{ parameters.runRelease }}, true))
   jobs:
-  - template: ../jobs/approval-job.yml
+  - template: ../jobs/publish-packages-job.yml
     parameters:
       approvalAliases: ${{ parameters.approvalAliases }}
       publishDestination: ${{ parameters.publishDestination }}
       dryRun: ${{ parameters.dryRun }}
       isPreview: ${{ parameters.isPreview }}
-      publishSymbols: ${{ parameters.publishSymbols }}
-      nugetPackageVersion: ${{ parameters.nugetPackageVersion }}
-      product: ${{ parameters.product }}
-  - template: ../jobs/publish-packages-job.yml
-    parameters:
-      publishDestination: ${{ parameters.publishDestination }}
-      dryRun: ${{ parameters.dryRun }}
       internalFeedSource: ${{ parameters.internalFeedSource }}
       publicNuGetSource: ${{ parameters.publicNuGetSource }}
       publishSymbols: ${{ parameters.publishSymbols }}
       packageFolderName: ${{ parameters.packageFolderName }}
       nugetPackageVersion: ${{ parameters.nugetPackageVersion }}
       product: ${{ parameters.product }}
+      
