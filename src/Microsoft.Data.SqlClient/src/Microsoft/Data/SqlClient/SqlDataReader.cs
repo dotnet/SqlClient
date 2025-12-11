@@ -5875,7 +5875,7 @@ namespace Microsoft.Data.SqlClient
             stateObj._permitReplayStackTraceToDiffer = false;
 #endif
 
-            if (_connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
+            if (_snapshot is not null && _connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
             {
                 sqlInternalConnection.CachedContexts.TrySetDataReaderSnapshot(_snapshot);
             }
