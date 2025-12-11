@@ -490,7 +490,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
 
     public bool EnableMultiSubnetFailoverByDefault
     {
-        get => (bool) _enableMultiSubnetFailoverByDefaultProperty.GetValue(null);
+        get => (bool)_enableMultiSubnetFailoverByDefaultProperty.GetValue(null);
     }
 
     #if NET
