@@ -52,7 +52,7 @@ parameters:
   # Product name associated with the symbols
   # Symbols publishing Step is currently only configured for the MDS driver, as they are required to be published to 3 locations:
   #   1. Azure DevOps Org,
-  #.  2. MS Internal Symbols server
+  #   2. MS Internal Symbols server
   #   3. MS Public symbol server
   # For other products: Symbols are uploaded to NuGet.org symbol server via snuget package push during package publishing.
   - name: product
