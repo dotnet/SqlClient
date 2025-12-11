@@ -233,6 +233,7 @@
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
         --filter "category!=failing%26category!=flaky"
+        --blame-hang-timeout 5m
         --logger:"trx;LogFilePrefix=Unit-Windows$(TargetGroup)-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -254,6 +255,7 @@
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
         --filter "category!=failing%26category!=flaky"
+        --blame-hang-timeout 5m
         --logger:"trx;LogFilePrefix=Unit-Unixnetcoreapp-$(TestSet)"
     </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -280,6 +282,7 @@
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
         --filter "category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests"
+        --blame-hang-timeout 5m
         --logger:"trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -303,6 +306,7 @@
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
         --filter "category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests"
+        --blame-hang-timeout 5m
         --logger:"trx;LogFilePrefix=Functional-Unixnetcoreapp-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -329,6 +333,7 @@
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
         --filter "category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests"
+        --blame-hang-timeout 5m
         --logger:"trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -352,6 +357,7 @@
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
         --filter "category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests"
+        --blame-hang-timeout 5m
         --logger:"trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
