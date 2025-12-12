@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if _WINDOWS
-
 using System;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -11,7 +9,7 @@ using System.Text;
 using Microsoft.Data.Common;
 using Microsoft.Win32.SafeHandles;
 
-#if !NETFRAMEWORK
+#if !NETFRAMEWORK && _WINDOWS
 using Interop.Windows.Handles;
 #endif
 
@@ -22,7 +20,7 @@ namespace Interop.Windows.Kernel32
         internal const ushort FILE_DEVICE_FILE_SYSTEM = 0x0009;
         internal const uint SEM_FAILCRITICALERRORS = 1;
 
-        #if !NETFRAMEWORK
+        #if _WINDOWS && !NETFRAMEWORK
         internal const int LOAD_LIBRARY_AS_DATAFILE = 0x00000002;
         internal const int LOAD_LIBRARY_SEARCH_SYSTEM32 = 0x00000800;
         #endif
@@ -57,7 +55,7 @@ namespace Interop.Windows.Kernel32
             out uint cbBytesReturned,
             IntPtr overlapped);
 
-        #if NET
+        #if NET && _WINDOWS
         [DllImport(DllName, ExactSpelling = true, SetLastError = true)]
         public static extern bool FreeLibrary([In] IntPtr hModule);
         #endif
@@ -75,17 +73,13 @@ namespace Interop.Windows.Kernel32
             IntPtr lpFilePartOrNull);
         #endif
 
-        #if NET
+        #if NET && _WINDOWS
         [DllImport(DllName, CharSet = CharSet.Ansi, BestFitMapping = false)]
         public static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
-        #endif
 
-        #if NET
         [DllImport(DllName, CharSet = CharSet.Ansi, BestFitMapping = false)]
         public static extern IntPtr GetProcAddress(SafeLibraryHandle hModule, string lpProcName);
-        #endif
 
-        #if NET
         [DllImport(DllName, ExactSpelling = true, CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern SafeLibraryHandle LoadLibraryExW([In] string lpwLibFileName, [In] IntPtr hFile, [In] uint dwFlags);
         #endif
@@ -94,5 +88,3 @@ namespace Interop.Windows.Kernel32
         internal static extern bool SetThreadErrorMode(uint dwNewMode, out uint lpOldMode);
     }
 }
-
-#endif
