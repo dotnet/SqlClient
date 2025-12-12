@@ -2,7 +2,6 @@
 # The .NET Foundation licenses this file to you under the MIT license.
 # See the LICENSE file in the project root for more information.
 # Script: downloadLatestNuget.ps1
-# Author: Keerat Singh
 # Date:   07-Dec-2018
 # Comments: This script downloads the latest NuGet Binary.
 #
