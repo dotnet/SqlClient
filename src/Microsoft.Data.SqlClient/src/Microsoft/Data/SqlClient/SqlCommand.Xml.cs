@@ -9,6 +9,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Server;
 
 #if NETFRAMEWORK
@@ -486,11 +488,9 @@ namespace Microsoft.Data.SqlClient
 
             // @TODO: This can be cleaned up to lines if InnerConnection is always SqlInternalConnection 
             ExecuteXmlReaderAsyncCallContext context = null;
-            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            if (_activeConnection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
             {
-                context = Interlocked.Exchange(
-                    ref sqlInternalConnection.CachedCommandExecuteXmlReaderAsyncContext,
-                    null);
+                context = sqlInternalConnection.CachedContexts.TakeCommandExecuteXmlReaderAsyncContext();
             }
 
             context ??= new ExecuteXmlReaderAsyncCallContext();
@@ -546,18 +546,6 @@ namespace Microsoft.Data.SqlClient
                 sender: this,
                 () => InternalExecuteXmlReaderAsync(cancellationToken),
                 cancellationToken);
-
-        private void SetCachedCommandExecuteXmlReaderContext(ExecuteXmlReaderAsyncCallContext instance)
-        {
-            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
-            {
-                // @TODO: Move this compare exchange into the SqlInternalConnection class (or better yet, do away with this context)
-                Interlocked.CompareExchange(
-                    ref sqlInternalConnection.CachedCommandExecuteXmlReaderAsyncContext,
-                    instance,
-                    comparand: null);
-            }
-        }
         
         #endregion
 
@@ -582,7 +570,11 @@ namespace Microsoft.Data.SqlClient
 
             protected override void AfterCleared(SqlCommand owner)
             {
-                owner?.SetCachedCommandExecuteXmlReaderContext(this);
+                DbConnectionInternal internalConnection = owner?._activeConnection?.InnerConnection;
+                if (internalConnection is SqlConnectionInternal sqlInternalConnection)
+                {
+                    sqlInternalConnection.CachedContexts.TrySetCommandExecuteXmlReaderAsyncContext(this);
+                }
             }
 
             protected override void Clear()
