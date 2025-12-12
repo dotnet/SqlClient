@@ -42,7 +42,6 @@
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
     <PackageReference Include="System.Buffers" />
-    <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.Text.Json" />
   </ItemGroup>
   <Import Project="$(ToolsDir)targets\TrimDocsForIntelliSense.targets" />

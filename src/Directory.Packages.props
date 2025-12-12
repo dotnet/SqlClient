@@ -45,7 +45,7 @@
     <PackageVersion Include="xunit.runner.console" Version="2.9.3" />
   </ItemGroup>
 
-  <!-- Target framework specific dependencies -->
+  <!-- .NET 9.0 Dependencies -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
     <!-- Driver dependencies -->
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.11" />
@@ -56,14 +56,19 @@
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.11" />
     <PackageVersion Include="System.Data.Odbc" Version="9.0.11" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' != 'net9.0'">
+  <!-- .NET Framework, .NET Standard 2.0, and .NET 8.0 Dependencies -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net8.0'">
     <!-- Driver dependencies -->
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
-    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
 
     <!-- Test dependencies -->
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
     <PackageVersion Include="System.Data.Odbc" Version="8.0.1" />
+  </ItemGroup>
+  <!-- .NET Standard 2.0, and .NET 8.0 Dependencies -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net8.0'">
+    <!-- Driver dependencies -->
+    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
   </ItemGroup>
 </Project>
