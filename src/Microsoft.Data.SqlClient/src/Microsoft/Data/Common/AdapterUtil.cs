@@ -69,8 +69,10 @@ namespace Microsoft.Data.Common
         /// </summary>
         /// <remarks>
         /// This is a const on .NET Framework, and a property on .NET Core, because of differing API availability and JIT requirements.
-        /// .NET Framework will perform basic dead branch elimination when a const value is encountered, while .NET Core can trim Windows-specific code
-        /// when published to non-Windows platforms.
+        /// .NET Framework will perform basic dead branch elimination when a const value is encountered, while .NET Core can trim Windows-specific
+        /// code when published to non-Windows platforms.
+        /// .NET Core's trimming is very limited though, so this must be used inline within methods to throw PlatformNotSupportedException,
+        /// rather than in a throw helper.
         /// </remarks>
 #if NETFRAMEWORK
         public const bool IsWindows = true;
@@ -384,26 +386,6 @@ namespace Microsoft.Data.Common
         #region Helper Functions
         internal static ArgumentOutOfRangeException NotSupportedEnumerationValue(Type type, string value, string method)
             => ArgumentOutOfRange(StringsHelper.GetString(Strings.ADP_NotSupportedEnumerationValue, type.Name, value, method), type.Name);
-
-        // Throws PlatformNotSupportedException if not running on Windows. Only included when compiling for .NET, since .NET Framework
-        // only runs on Windows.
-        [Conditional("NET")]
-        internal static void ThrowOnNonWindowsPlatform()
-        {
-            if (!IsWindows)
-            {
-                throw new PlatformNotSupportedException();
-            }
-        }
-
-        [Conditional("NET")]
-        internal static void ThrowOnNonWindowsPlatform(string message)
-        {
-            if (!IsWindows)
-            {
-                throw new PlatformNotSupportedException(message);
-            }
-        }
 
         internal static void CheckArgumentNull(object value, string parameterName)
         {

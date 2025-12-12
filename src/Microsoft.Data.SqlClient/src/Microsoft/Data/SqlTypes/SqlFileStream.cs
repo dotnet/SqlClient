@@ -102,7 +102,10 @@ namespace Microsoft.Data.SqlTypes
             FileOptions options,
             long allocationSize)
         {
-            ADP.ThrowOnNonWindowsPlatform(Strings.SqlFileStream_NotSupported);
+            if (!ADP.IsWindows)
+            {
+                throw new PlatformNotSupportedException(Strings.SqlFileStream_NotSupported);
+            }
 
             // @TODO: Adopt netcore style format
             #if NETFRAMEWORK
