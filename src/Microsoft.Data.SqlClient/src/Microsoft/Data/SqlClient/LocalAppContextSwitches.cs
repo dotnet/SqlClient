@@ -27,6 +27,7 @@ namespace Microsoft.Data.SqlClient
         private const string TruncateScaledDecimalString = @"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal";
         private const string IgnoreServerProvidedFailoverPartnerString = @"Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner";
         private const string EnableUserAgentString = @"Switch.Microsoft.Data.SqlClient.EnableUserAgent";
+        private const string EnableMultiSubnetFailoverByDefaultString = @"Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault";
 
         #if NET
         private const string GlobalizationInvariantModeString = @"System.Globalization.Invariant";
@@ -52,6 +53,7 @@ namespace Microsoft.Data.SqlClient
         private static Tristate s_truncateScaledDecimal;
         private static Tristate s_ignoreServerProvidedFailoverPartner;
         private static Tristate s_enableUserAgent;
+        private static Tristate s_multiSubnetFailoverByDefault;
 
         #if NET
         private static Tristate s_globalizationInvariantMode;
@@ -511,6 +513,31 @@ namespace Microsoft.Data.SqlClient
                 return s_disableTnirByDefault == Tristate.True;
             }
         }
-        #endif
+#endif
+
+        /// <summary>
+        /// When set to true, the default value for MultiSubnetFailover connection string property
+        /// will be true instead of false. This enables parallel IP connection attempts for 
+        /// improved connection times in multi-subnet environments.
+        /// This app context switch defaults to 'false'.
+        /// </summary>
+        public static bool EnableMultiSubnetFailoverByDefault
+        {
+            get
+            {
+                if (s_multiSubnetFailoverByDefault == Tristate.NotInitialized)
+                {
+                    if (AppContext.TryGetSwitch(EnableMultiSubnetFailoverByDefaultString, out bool returnedValue) && returnedValue)
+                    {
+                        s_multiSubnetFailoverByDefault = Tristate.True;
+                    }
+                    else
+                    {
+                        s_multiSubnetFailoverByDefault = Tristate.False;
+                    }
+                }
+                return s_multiSubnetFailoverByDefault == Tristate.True;
+            }
+        }
     }
 }
