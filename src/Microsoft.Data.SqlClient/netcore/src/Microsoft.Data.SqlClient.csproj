@@ -722,11 +722,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.netcore.unix.cs">
-      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.netcore.unix.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.windows.cs">
-      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.netcore.unix.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.netcore.unix.cs</Link>
