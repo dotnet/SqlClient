@@ -16,12 +16,12 @@
     <PackageVersion Include="Azure.Identity" Version="1.17.0" />
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="7.7.1" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="7.7.1" />
-    <PackageVersion Include="Microsoft.SqlServer.Server" Version="1.0.0" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
   </ItemGroup>
   <!-- NetCore project dependencies -->
   <ItemGroup>
     <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="6.0.2" />
+    <PackageVersion Include="Microsoft.SqlServer.Server" Version="1.0.0" />
   </ItemGroup>
   <!-- AKV Provider project dependencies -->
   <ItemGroup>

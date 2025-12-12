@@ -1,17 +1,6 @@
 <Project>
   <Import Project="..\..\Directory.Packages.props" />
 
-  <!-- Test Project Dependencies for all targets. -->
-  <ItemGroup>
-    <!--
-      Explicitly reference the latest published MDS 5.1.x version here to avoid
-      an older version (5.1.5) being included transitively by
-      SqlManagementObjects.  The older version brings in a vulnerable version of
-      System.Formats.Asn1
-    -->
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="5.1.8" />
-  </ItemGroup>
-
   <!-- Test Project Dependencies for NetFx only. -->
   <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
@@ -21,4 +10,23 @@
   <ItemGroup Condition="$(ReferenceType) == 'Package'">
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
   </ItemGroup>
+
+  <!-- Explicit Dependencies to avoid Transitive Vulnerabilities -->
+  <ItemGroup>
+    <!--
+      Explicitly reference the latest published MDS 5.1.x version here to avoid
+      an older version (5.1.5) being included transitively by
+      SqlManagementObjects.  The older version brings in a vulnerable version of
+      System.Formats.Asn1.
+
+      Only do this when building in Project reference mode.  For Package
+      reference builds, the MDS package included above will be used instead, and
+      shouldn't suffer from this vulnerability.
+    -->
+    <PackageVersion
+      Condition="$(ReferenceType) == 'Project'"
+      Include="Microsoft.Data.SqlClient"
+      Version="5.1.8" />
+  </ItemGroup>
+
 </Project>
