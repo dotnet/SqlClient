@@ -28,8 +28,8 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Runtime.Caching" />
-    <Reference Include="System.EnterpriseServices" />
     <Reference Include="System.Transactions" />
+    <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Core" />
@@ -41,8 +41,8 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Buffers" />
-    <PackageReference Include="System.Data.Common" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.Text.Json" />
   </ItemGroup>

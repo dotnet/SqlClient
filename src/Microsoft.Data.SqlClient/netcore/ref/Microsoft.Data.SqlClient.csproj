@@ -42,6 +42,14 @@
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
+
+  <!--
+    Explicitly include some packages for .NET Standard 2.0 that are part of
+    the other .NET target base class libraries.
+  -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
    
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS' AND '$(TargetGroup)' != 'netcoreapp'" />
   <Import Project="$(ToolsDir)targets\NotSupported.targets" Condition="'$(OSGroup)' == 'AnyOS' AND '$(TargetGroup)' != 'netcoreapp'" />

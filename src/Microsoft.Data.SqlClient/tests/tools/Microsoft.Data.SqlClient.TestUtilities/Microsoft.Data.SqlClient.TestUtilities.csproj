@@ -14,8 +14,6 @@
     <None Update="config.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <PackageReference Include="Azure.Identity" />
-    <PackageReference Include="Azure.Security.KeyVault.Keys" />
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
