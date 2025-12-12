@@ -18,6 +18,5 @@
     <PackageReference Include="Azure.Security.KeyVault.Keys" />
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
-    <PackageReference Include="Microsoft.Bcl.Cryptography" />
   </ItemGroup>
 </Project>

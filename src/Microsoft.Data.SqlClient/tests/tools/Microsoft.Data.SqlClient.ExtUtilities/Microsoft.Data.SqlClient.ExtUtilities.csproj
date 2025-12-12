@@ -6,12 +6,13 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.SqlServer.SqlManagementObjects" />
-
     <!--
-      Transitive dependencies with vulnerabilities, so we explicitly ask for
-      non-vulnerable versions.
+      Explicitly reference the latest published MDS 5.1.x version here to avoid
+      an older version (5.1.5) being included transitively by
+      SqlManagementObjects.  The older version brings in a vulnerable version of
+      System.Formats.Asn1
     -->
-    <PackageReference Include="System.Formats.Asn1" />
+    <PackageReference Include="Microsoft.Data.SqlClient" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />

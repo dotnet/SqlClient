@@ -349,7 +349,6 @@
     <ProjectReference Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
