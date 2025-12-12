@@ -103,10 +103,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 $"  MEMORY_PARTITION_MODE=NONE, " +
                 $"  TRACK_CAUSALITY=ON, " +
                 $"  STARTUP_STATE=OFF " +
-                $") " +
+                $"); " +
                 $"ALTER EVENT SESSION [{SessionName}] ON {sessionLocation} STATE = START ";
 
-            using SqlCommand createXEventSession = new SqlCommand(xEventCreateAndStartCommandText, _connection);
+            using SqlCommand createXEventSession = new(xEventCreateAndStartCommandText, _connection);
             createXEventSession.ExecuteNonQuery();
         }
 
@@ -176,12 +176,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ? $"SELECT xet.target_data " +
                   $"FROM sys.dm_xe_database_session_targets AS xet " +
                   $"  INNER JOIN sys.dm_xe_database_sessions AS xe" +
-                  $"    ON (xe.address = xet.event_session_address)" +
+                  $"    ON (xe.address = xet.event_session_address) " +
                   $"WHERE xe.name = '{SessionName}'"
                 : $"SELECT xet.target_data " +
                   $"FROM sys.dm_xe_session_targets AS xet " +
                   $"  INNER JOIN sys.dm_xe_sessions AS xe " +
-                  $"    ON (xe.address = xet.event_session_address)" +
+                  $"    ON (xe.address = xet.event_session_address) " +
                   $"WHERE xe.name = '{SessionName}'";
 
             using SqlCommand command = new SqlCommand(xEventQuery, _connection);
