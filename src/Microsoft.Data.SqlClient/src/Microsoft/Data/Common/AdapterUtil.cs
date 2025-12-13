@@ -22,16 +22,12 @@ using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
 using Microsoft.Identity.Client;
 using Microsoft.SqlServer.Server;
+using Microsoft.Win32;
 using IsolationLevel = System.Data.IsolationLevel;
 
 #if NETFRAMEWORK
 using System.Reflection;
 using System.Security.Permissions;
-#endif
-
-#if _WINDOWS
-using System.Runtime.Versioning;
-using Microsoft.Win32;
 #endif
 
 namespace Microsoft.Data.Common
@@ -67,6 +63,22 @@ namespace Microsoft.Data.Common
         /// Max duration for buffer in seconds
         /// </summary>
         internal const int MaxBufferAccessTokenExpiry = 600;
+
+        /// <summary>
+        /// This member returns true if the current OS platform is Windows.
+        /// </summary>
+        /// <remarks>
+        /// This is a const on .NET Framework, and a property on .NET Core, because of differing API availability and JIT requirements.
+        /// .NET Framework will perform basic dead branch elimination when a const value is encountered, while .NET Core can trim Windows-specific
+        /// code when published to non-Windows platforms.
+        /// .NET Core's trimming is very limited though, so this must be used inline within methods to throw PlatformNotSupportedException,
+        /// rather than in a throw helper.
+        /// </remarks>
+#if NETFRAMEWORK
+        public const bool IsWindows = true;
+#else
+        public static bool IsWindows => OperatingSystem.IsWindows();
+#endif
 
         #region UDT
 #if NETFRAMEWORK
@@ -429,22 +441,19 @@ namespace Microsoft.Data.Common
             return InvalidEnumerationValue(typeof(CommandBehavior), (int)value);
         }
 
+        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
+        {
+#if NET
+            if (!IsWindows)
+            {
+                // No registry in non-Windows environments
+                return null;
+            }
+#endif
 
-        #if _UNIX
-        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
-        {
-            // No registry in non-Windows environments
-            return null;
-        }
-        #endif
-        #if _WINDOWS
-        [ResourceExposure(ResourceScope.Machine)]
-        [ResourceConsumption(ResourceScope.Machine)]
-        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
-        {
-            #if NETFRAMEWORK
+#if NETFRAMEWORK
             new RegistryPermission(RegistryPermissionAccess.Read, $@"HKEY_LOCAL_MACHINE\{subkey}").Assert();
-            #endif
+#endif
 
             try
             {
@@ -460,14 +469,13 @@ namespace Microsoft.Data.Common
                 ADP.TraceExceptionWithoutRethrow(e);
                 return null;
             }
-            #if NETFRAMEWORK
+#if NETFRAMEWORK
             finally
             {
                 CodeAccessPermission.RevertAssert();
             }
-            #endif
+#endif
         }
-        #endif
 
         internal static void ValidateCommandBehavior(CommandBehavior value)
         {
@@ -989,7 +997,7 @@ namespace Microsoft.Data.Common
         internal static ArgumentOutOfRangeException InvalidIsolationLevel(IsolationLevel value)
         {
             // @TODO: Use single line debug assert?
-            #if DEBUG
+#if DEBUG
             switch (value)
             {
                 case IsolationLevel.Unspecified:
@@ -1002,7 +1010,7 @@ namespace Microsoft.Data.Common
                     Debug.Fail("valid IsolationLevel " + value.ToString());
                     break;
             }
-            #endif
+#endif
 
             return InvalidEnumerationValue(typeof(IsolationLevel), (int)value);
         }
@@ -1334,7 +1342,7 @@ namespace Microsoft.Data.Common
         internal static ArgumentOutOfRangeException InvalidParameterDirection(ParameterDirection value)
         {
             // @TODO: Use single line debug assert?
-            #if DEBUG
+#if DEBUG
             switch (value)
             {
                 case ParameterDirection.Input:
@@ -1344,7 +1352,7 @@ namespace Microsoft.Data.Common
                     Debug.Fail("valid ParameterDirection " + value.ToString());
                     break;
             }
-            #endif
+#endif
 
             return InvalidEnumerationValue(typeof(ParameterDirection), (int)value);
         }
