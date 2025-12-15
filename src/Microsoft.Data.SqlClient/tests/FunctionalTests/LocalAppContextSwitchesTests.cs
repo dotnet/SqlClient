@@ -14,6 +14,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("LegacyRowVersionNullBehavior", false)]
         [InlineData("MakeReadAsyncBlocking", false)]
         [InlineData("UseMinimumLoginTimeout", true)]
+        [InlineData("EnableMultiSubnetFailoverByDefault", false)]
         public void DefaultSwitchValue(string property, bool expectedDefaultValue)
         {
             var switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");

@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient
             internal const bool MARS = DbConnectionStringDefaults.MultipleActiveResultSets;
             internal const int Max_Pool_Size = DbConnectionStringDefaults.MaxPoolSize;
             internal const int Min_Pool_Size = DbConnectionStringDefaults.MinPoolSize;
-            internal const bool MultiSubnetFailover = DbConnectionStringDefaults.MultiSubnetFailover;
+            internal static readonly bool MultiSubnetFailover = DbConnectionStringDefaults.MultiSubnetFailover;
             internal const int Packet_Size = DbConnectionStringDefaults.PacketSize;
             internal const string Password = DbConnectionStringDefaults.Password;
             internal const bool Persist_Security_Info = DbConnectionStringDefaults.PersistSecurityInfo;
