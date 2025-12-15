@@ -266,6 +266,7 @@
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.Debug.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AlwaysEncrypted\SqlDataAdapterBatchUpdateTests.cs" />
     <Compile Include="DataCommon\AADUtility.cs" />
     <Compile Include="DataCommon\AssemblyResourceManager.cs" />
     <Compile Include="DataCommon\DataSourceBuilder.cs" />
@@ -357,5 +358,8 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>xunit.runner.json</TargetPath>
     </ContentWithTargetPath>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="microsoft.data.sqlclient\tests\manualtests\alwaysencrypted\" />
   </ItemGroup>
 </Project>
