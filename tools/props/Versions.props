@@ -77,14 +77,13 @@
     <MicrosoftNETTestSdkVersion>17.12.0</MicrosoftNETTestSdkVersion>
     <NewtonsoftJsonVersion>13.0.4</NewtonsoftJsonVersion>
     <SystemDataOdbcVersion>6.0.2</SystemDataOdbcVersion>
-    <SystemFormatsAsn1Version>6.0.1</SystemFormatsAsn1Version>
     <XunitVersion>2.9.3</XunitVersion>
     <xunitrunnervisualstudioVersion>2.8.2</xunitrunnervisualstudioVersion>
     <MicrosoftDotNetRemoteExecutorVersion>8.0.0-beta.25555.2</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftDotNetXunitExtensionsVersion>11.0.0-beta.25476.3</MicrosoftDotNetXunitExtensionsVersion>
     <MicrosoftSqlServerSqlManagementObjectsVersion>172.52.0</MicrosoftSqlServerSqlManagementObjectsVersion>
     <MicrosoftSqlServerTypesVersion>10.50.1600.1</MicrosoftSqlServerTypesVersion>
-    <BenchmarkDotNetVersion>0.13.2</BenchmarkDotNetVersion>
+    <BenchmarkDotNetVersion>0.14.0</BenchmarkDotNetVersion>
     <SystemServiceProcessServiceControllerVersion>6.0.0</SystemServiceProcessServiceControllerVersion>
     <MicrosoftExtensionsHostingVersion>8.0.1</MicrosoftExtensionsHostingVersion>
     <MicrosoftNetFrameworkReferenceAssembliesVersion>1.0.3</MicrosoftNetFrameworkReferenceAssembliesVersion>
