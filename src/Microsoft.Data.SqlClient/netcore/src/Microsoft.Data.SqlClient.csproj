@@ -408,8 +408,8 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlInternalTransaction.cs">
       <Link>Microsoft\Data\SqlClient\SqlInternalTransaction.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlMetadataFactory.cs">
-      <Link>Microsoft\Data\SqlClient\SqlMetadataFactory.cs</Link>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlMetaDataFactory.cs">
+      <Link>Microsoft\Data\SqlClient\SqlMetaDataFactory.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs">
       <Link>Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs</Link>
