@@ -1385,14 +1385,14 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Never)]
         System.Data.IDataReader System.Data.IDataRecord.GetData(int i) { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SQLDebugging.xml' path='docs/members[@name="SQLDebugging"]/SQLDebugging/*'/>
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDebugging.xml' path='docs/members[@name="SqlDebugging"]/SqlDebugging/*'/>
     [System.Runtime.InteropServices.ClassInterfaceAttribute(System.Runtime.InteropServices.ClassInterfaceType.None)]
     [System.Runtime.InteropServices.ComVisibleAttribute(true)]
     [System.Runtime.InteropServices.GuidAttribute("afef65ad-4577-447a-a148-83acadd3d4b9")]
     [System.Security.Permissions.PermissionSetAttribute(System.Security.Permissions.SecurityAction.LinkDemand, Name = "FullTrust")]
     public sealed partial class SQLDebugging
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SQLDebugging.xml' path='docs/members[@name="SQLDebugging"]/ctor/*'/>
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDebugging.xml' path='docs/members[@name="SqlDebugging"]/ctor/*'/>
         public SQLDebugging() { }
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/SqlDependency/*'/>

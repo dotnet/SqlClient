@@ -2998,7 +2998,7 @@ namespace Microsoft.Data.SqlClient
     // You must not change the guid for this coclass
     // or the iid for the ISQLDebug interface
     //
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDebugging.xml' path='docs/members[@name="SQLDebugging"]/SQLDebugging/*'/>
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDebugging.xml' path='docs/members[@name="SqlDebugging"]/SqlDebugging/*'/>
     [
     ComVisible(true),
     ClassInterface(ClassInterfaceType.None),
