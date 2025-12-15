@@ -74,11 +74,11 @@ namespace Microsoft.Data.Common
         /// .NET Core's trimming is very limited though, so this must be used inline within methods to throw PlatformNotSupportedException,
         /// rather than in a throw helper.
         /// </remarks>
-#if NETFRAMEWORK
+        #if NETFRAMEWORK
         public const bool IsWindows = true;
-#else
+        #else
         public static bool IsWindows => OperatingSystem.IsWindows();
-#endif
+        #endif
 
         #region UDT
 #if NETFRAMEWORK
@@ -443,17 +443,17 @@ namespace Microsoft.Data.Common
 
         internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
         {
-#if NET
+            #if NET
             if (!IsWindows)
             {
                 // No registry in non-Windows environments
                 return null;
             }
-#endif
+            #endif
 
-#if NETFRAMEWORK
+            #if NETFRAMEWORK
             new RegistryPermission(RegistryPermissionAccess.Read, $@"HKEY_LOCAL_MACHINE\{subkey}").Assert();
-#endif
+            #endif
 
             try
             {
@@ -469,12 +469,12 @@ namespace Microsoft.Data.Common
                 ADP.TraceExceptionWithoutRethrow(e);
                 return null;
             }
-#if NETFRAMEWORK
+            #if NETFRAMEWORK
             finally
             {
                 CodeAccessPermission.RevertAssert();
             }
-#endif
+            #endif
         }
 
         internal static void ValidateCommandBehavior(CommandBehavior value)
@@ -997,7 +997,7 @@ namespace Microsoft.Data.Common
         internal static ArgumentOutOfRangeException InvalidIsolationLevel(IsolationLevel value)
         {
             // @TODO: Use single line debug assert?
-#if DEBUG
+            #if DEBUG
             switch (value)
             {
                 case IsolationLevel.Unspecified:
@@ -1010,7 +1010,7 @@ namespace Microsoft.Data.Common
                     Debug.Fail("valid IsolationLevel " + value.ToString());
                     break;
             }
-#endif
+            #endif
 
             return InvalidEnumerationValue(typeof(IsolationLevel), (int)value);
         }
@@ -1342,7 +1342,7 @@ namespace Microsoft.Data.Common
         internal static ArgumentOutOfRangeException InvalidParameterDirection(ParameterDirection value)
         {
             // @TODO: Use single line debug assert?
-#if DEBUG
+            #if DEBUG
             switch (value)
             {
                 case ParameterDirection.Input:
@@ -1352,7 +1352,7 @@ namespace Microsoft.Data.Common
                     Debug.Fail("valid ParameterDirection " + value.ToString());
                     break;
             }
-#endif
+            #endif
 
             return InvalidEnumerationValue(typeof(ParameterDirection), (int)value);
         }
