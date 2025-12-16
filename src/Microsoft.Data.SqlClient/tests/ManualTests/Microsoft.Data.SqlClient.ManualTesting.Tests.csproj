@@ -387,7 +387,4 @@
       <TargetPath>xunit.runner.json</TargetPath>
     </ContentWithTargetPath>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="microsoft.data.sqlclient\tests\manualtests\alwaysencrypted\" />
-  </ItemGroup>
 </Project>
