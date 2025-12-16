@@ -37,7 +37,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             // Arrange
             // Ensure baseline rows exist
-            EnsureBuyerSellerObjectsExist(connectionString);
             TruncateTables("BuyerSeller", connectionString);
             PopulateTable("BuyerSeller", new (int id, string s1, string s2)[] {
                 (1, "123-45-6789", "987-65-4321"),
@@ -69,7 +68,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public async Task AdapterUpdate_BatchSizeOne_Succeeds(string connectionString)
         {
             // Arrange
-            EnsureBuyerSellerObjectsExist(connectionString);
             TruncateTables("BuyerSeller", connectionString);
             PopulateTable("BuyerSeller", new (int id, string s1, string s2)[] {
                 (1, "123-45-6789", "987-65-4321"),
