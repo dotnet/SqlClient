@@ -20,6 +20,7 @@ namespace Microsoft.Data.SqlClient.Tests
         #if NETFRAMEWORK
         [InlineData("DisableTnirByDefault", false)]
         #endif
+        [InlineData("EnableMultiSubnetFailoverByDefault", false)]
         public void DefaultSwitchValue(string property, bool expectedDefaultValue)
         {
             var switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");

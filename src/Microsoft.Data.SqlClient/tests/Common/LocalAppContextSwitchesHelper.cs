@@ -32,6 +32,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     #if NETFRAMEWORK
     private readonly PropertyInfo _disableTnirByDefaultProperty;
     #endif
+    private readonly PropertyInfo _enableMultiSubnetFailoverByDefaultProperty;
 
     // These fields are used to capture the original switch values.
     private readonly FieldInfo _legacyRowVersionNullBehaviorField;
@@ -48,10 +49,13 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly Tristate _useConnectionPoolV2Original;
     private readonly FieldInfo _ignoreServerProvidedFailoverPartnerField;
     private readonly Tristate _ignoreServerProvidedFailoverPartnerOriginal;
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     private readonly FieldInfo _disableTnirByDefaultField;
     private readonly Tristate _disableTnirByDefaultOriginal;
-#endif
+    #endif
+    private readonly FieldInfo _multiSubnetFailoverByDefaultField;
+    private readonly Tristate _multiSubnetFailoverByDefaultOriginal;
+
 
     #endregion
 
@@ -139,6 +143,10 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             out _disableTnirByDefaultProperty);
         #endif
 
+        InitProperty(
+            "EnableMultiSubnetFailoverByDefault",
+            out _enableMultiSubnetFailoverByDefaultProperty);
+
         // A local helper to capture the original value of a switch.
         void InitField(string name, out FieldInfo field, out Tristate value)
         {
@@ -195,6 +203,11 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             out _disableTnirByDefaultField,
             out _disableTnirByDefaultOriginal);
         #endif
+
+        InitField(
+            "s_multiSubnetFailoverByDefault",
+            out _multiSubnetFailoverByDefaultField,
+            out _multiSubnetFailoverByDefaultOriginal);
     }
 
     /// <summary>
@@ -254,6 +267,10 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             _disableTnirByDefaultField,
             _disableTnirByDefaultOriginal);
         #endif
+
+        RestoreField(
+            _multiSubnetFailoverByDefaultField,
+            _multiSubnetFailoverByDefaultOriginal);
 
         if (failedFields.Count > 0)
         {
@@ -326,6 +343,11 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         get => (bool)_disableTnirByDefaultProperty.GetValue(null);
     }
     #endif
+
+    public bool EnableMultiSubnetFailoverByDefault
+    {
+        get => (bool)_enableMultiSubnetFailoverByDefaultProperty.GetValue(null);
+    }
 
     // These properties get or set the like-named underlying switch field value.
     //
@@ -407,6 +429,12 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         set => SetValue(_disableTnirByDefaultField, value);
     }
     #endif
+
+    public Tristate EnableMultiSubnetFailoverByDefaultField
+    {
+        get => GetValue(_multiSubnetFailoverByDefaultField);
+        set => SetValue(_multiSubnetFailoverByDefaultField, value);
+    }
 
 #endregion
 

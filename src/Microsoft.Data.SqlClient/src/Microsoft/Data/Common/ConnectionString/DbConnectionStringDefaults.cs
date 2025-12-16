@@ -39,7 +39,7 @@ namespace Microsoft.Data.Common.ConnectionString
         internal const int MaxPoolSize = 100;
         internal const int MinPoolSize = 0;
         internal const bool MultipleActiveResultSets = false;
-        internal const bool MultiSubnetFailover = false;
+        internal static bool MultiSubnetFailover => LocalAppContextSwitches.EnableMultiSubnetFailoverByDefault;
         internal const int PacketSize = 8000;
         internal const string Password = "";
         internal const bool PersistSecurityInfo = false;
