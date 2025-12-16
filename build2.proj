@@ -33,9 +33,11 @@
 				  -p:Configuration=$(Configuration)
 				  -p:TargetOs=Unix
 			</DotnetCommand>
+			<!-- convert &gt;1 space to 1 space -->
 			<DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s{2,}", " "))</DotnetCommand>
 		</PropertyGroup>
-		<Exec ConsoleToMsBuild="true" Command="$(DotNetCommand)" />
+		<Message Text=">>> Building MDS for Unix via command: $(DotnetCommand)"/>
+		<Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
 	</Target>
 
 	<!-- BuildMdsWindows: Builds all windows-specific MDS binaries -->
@@ -46,8 +48,10 @@
 				  -p:Configuration=$(Configuration)
 				  -p:TargetOs=Windows_NT
 			</DotnetCommand>
+			<!-- convert &gt;1 space to 1 space --> 
 			<DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s{2,}", " "))</DotnetCommand>
 		</PropertyGroup>
-		<Exec ConsoleToMsBuild="true" Command="$(DotNetCommand)" />
+		<Message Text=">>> Building MDS for Windows via command: $(DotnetCommand)"/>
+		<Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
 	</Target>
 </Project>
