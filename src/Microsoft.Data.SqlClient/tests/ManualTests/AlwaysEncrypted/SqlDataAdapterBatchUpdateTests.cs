@@ -37,6 +37,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             // Arrange
             // Ensure baseline rows exist
+            EnsureBuyerSellerObjectsExist(connectionString);
             TruncateTables("BuyerSeller", connectionString);
             PopulateTable("BuyerSeller", new (int id, string s1, string s2)[] {
                 (1, "123-45-6789", "987-65-4321"),
@@ -68,6 +69,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public async Task AdapterUpdate_BatchSizeOne_Succeeds(string connectionString)
         {
             // Arrange
+            EnsureBuyerSellerObjectsExist(connectionString);
             TruncateTables("BuyerSeller", connectionString);
             PopulateTable("BuyerSeller", new (int id, string s1, string s2)[] {
                 (1, "123-45-6789", "987-65-4321"),
@@ -171,7 +173,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             using var connection = new SqlConnection(GetOpenConnectionString(connectionString, encryptionEnabled: true));
             connection.Open();
-            SilentRunCommand($@"TRUNCATE TABLE [dbo].[{tableNames[tableName]}]", connection);
+            try
+            {
+                SilentRunCommand($@"TRUNCATE TABLE [dbo].[{tableNames[tableName]}]", connection);
+            }
+            catch
+            {
+                // Fallback to DELETE if TRUNCATE fails (e.g., due to FK constraints)
+                SilentRunCommand($@"DELETE FROM [dbo].[{tableNames[tableName]}]", connection);
+            }
         }
 
         internal void ExecuteQuery(SqlConnection connection, string commandText)
@@ -250,6 +260,45 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 connection.Open();
                 SilentRunCommand($"DELETE FROM [dbo].[{tableNames["BuyerSeller"]}]", connection);
             }
+        }
+        private void EnsureBuyerSellerObjectsExist(string connectionString)
+        {
+            using var connection = new SqlConnection(GetOpenConnectionString(connectionString, encryptionEnabled: true));
+            connection.Open();
+
+            // Create table if not exists
+            SilentRunCommand(@"
+        IF OBJECT_ID('dbo.BuyerSeller', 'U') IS NULL
+        CREATE TABLE [dbo].[BuyerSeller] (
+            [BuyerSellerID] INT PRIMARY KEY,
+            [SSN1] VARCHAR(255),
+            [SSN2] VARCHAR(255)
+        )", connection);
+
+            // Create Insert proc if not exists
+            SilentRunCommand(@"
+        IF OBJECT_ID('dbo.InsertBuyerSeller', 'P') IS NULL
+        EXEC('CREATE PROCEDURE [dbo].[InsertBuyerSeller]
+            @BuyerSellerID INT,
+            @SSN1 VARCHAR(255),
+            @SSN2 VARCHAR(255)
+        AS
+        INSERT INTO [dbo].[BuyerSeller] (BuyerSellerID, SSN1, SSN2)
+        VALUES (@BuyerSellerID, @SSN1, @SSN2)')
+    ", connection);
+
+            // Create Update proc if not exists
+            SilentRunCommand(@"
+        IF OBJECT_ID('dbo.UpdateBuyerSeller', 'P') IS NULL
+        EXEC('CREATE PROCEDURE [dbo].[UpdateBuyerSeller]
+            @BuyerSellerID INT,
+            @SSN1 VARCHAR(255),
+            @SSN2 VARCHAR(255)
+        AS
+        UPDATE [dbo].[BuyerSeller]
+        SET SSN1 = @SSN1, SSN2 = @SSN2
+        WHERE BuyerSellerID = @BuyerSellerID')
+    ", connection);
         }
     }
 }
