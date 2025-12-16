@@ -49,7 +49,7 @@
     <!-- This file does not support pre-processor directives, so it must be conditionally         -->
     <!-- included into the build.                                                                 -->
     <EmbeddedResource Include="Resources/ILLink.Substitutions.xml"
-                      Condition="'$(NormalizedTargetOs)' == 'windows_nt' AND '$(TargetFramework)' == 'net462'" />
+                      Condition="'$(NormalizedTargetOs)' == 'windows_nt' AND '$(TargetFramework)' != 'net462'" />
   </ItemGroup>
 
   <!-- References ====================================================== -->
