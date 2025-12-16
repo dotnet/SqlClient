@@ -37,6 +37,7 @@
     <Compile Include="AlwaysEncrypted\SqlDataAdapterBatchUpdateTests.cs" />
   </ItemGroup>  
   <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == 'AE'">
+    <Compile Include="AlwaysEncrypted\SqlDataAdapterBatchUpdateTests.cs" />
     <Compile Include="AlwaysEncrypted\AKVTests.cs" />
     <Compile Include="AlwaysEncrypted\AKVUnitTests.cs" />
     <Compile Include="AlwaysEncrypted\EnclaveAzureDatabaseTests.cs" />

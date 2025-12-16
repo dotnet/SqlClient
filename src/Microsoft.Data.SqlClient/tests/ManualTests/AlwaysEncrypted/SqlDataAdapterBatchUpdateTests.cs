@@ -159,7 +159,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private void MutateForUpdate(DataTable dt)
         {
             int i = 0;
-            var fixedTime = new DateTime(2023, 01, 01, 12, 34, 56); // Use any fixed value
+            var fixedTime = new DateTime(2000, 01, 01, 12, 34, 56);
             string timeStr = fixedTime.ToString("HHmm");
             foreach (DataRow row in dt.Rows)
             {
@@ -173,15 +173,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             using var connection = new SqlConnection(GetOpenConnectionString(connectionString, encryptionEnabled: true));
             connection.Open();
-            try
-            {
-                SilentRunCommand($@"TRUNCATE TABLE [dbo].[{tableNames[tableName]}]", connection);
-            }
-            catch
-            {
-                // Fallback to DELETE if TRUNCATE fails (e.g., due to FK constraints)
-                SilentRunCommand($@"DELETE FROM [dbo].[{tableNames[tableName]}]", connection);
-            }
+            SilentRunCommand($@"TRUNCATE TABLE [dbo].[{tableNames[tableName]}]", connection);
         }
 
         internal void ExecuteQuery(SqlConnection connection, string commandText)
@@ -299,6 +291,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         SET SSN1 = @SSN1, SSN2 = @SSN2
         WHERE BuyerSellerID = @BuyerSellerID')
     ", connection);
+
         }
     }
 }
