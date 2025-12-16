@@ -173,7 +173,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             using var connection = new SqlConnection(GetOpenConnectionString(connectionString, encryptionEnabled: true));
             connection.Open();
-            SilentRunCommand($@"TRUNCATE TABLE [dbo].[{tableNames[tableName]}]", connection);
+            try
+            {
+                SilentRunCommand($@"TRUNCATE TABLE [dbo].[{tableNames[tableName]}]", connection);
+            }
+            catch
+            {
+                // Fallback to DELETE if TRUNCATE fails (e.g., due to FK constraints)
+                SilentRunCommand($@"DELETE FROM [dbo].[{tableNames[tableName]}]", connection);
+            }
         }
 
         internal void ExecuteQuery(SqlConnection connection, string commandText)
