@@ -74,7 +74,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// <summary>
         /// Connection itself
         /// </summary>
-        protected TcpClient Connection { get; set; }
+        public TcpClient Connection { get; set; }
 
         /// <summary>
         /// The flag indicates whether server is being stopped
