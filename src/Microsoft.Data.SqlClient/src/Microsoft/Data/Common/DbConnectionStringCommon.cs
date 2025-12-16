@@ -973,7 +973,7 @@ namespace Microsoft.Data.Common
         internal const bool IntegratedSecurity = false;
         internal const int LoadBalanceTimeout = 0; // default of 0 means don't use
         internal const bool MultipleActiveResultSets = false;
-        internal const bool MultiSubnetFailover = false;
+        internal static readonly bool MultiSubnetFailover = LocalAppContextSwitches.EnableMultiSubnetFailoverByDefault;
         internal const int MaxPoolSize = 100;
         internal const int MinPoolSize = 0;
         internal const int PacketSize = 8000;

@@ -21,6 +21,7 @@ namespace Microsoft.Data.SqlClient
         internal const string UseMinimumLoginTimeoutString = @"Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin";
         internal const string LegacyVarTimeZeroScaleBehaviourString = @"Switch.Microsoft.Data.SqlClient.LegacyVarTimeZeroScaleBehaviour";
         private const string IgnoreServerProvidedFailoverPartnerString = @"Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner";
+        private const string EnableMultiSubnetFailoverByDefaultString = @"Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault";
 
         // this field is accessed through reflection in tests and should not be renamed or have the type changed without refactoring NullRow related tests
         private static Tristate s_legacyRowVersionNullBehavior;
@@ -30,6 +31,7 @@ namespace Microsoft.Data.SqlClient
         // this field is accessed through reflection in Microsoft.Data.SqlClient.Tests.SqlParameterTests and should not be renamed or have the type changed without refactoring related tests
         private static Tristate s_legacyVarTimeZeroScaleBehaviour;
         private static Tristate s_ignoreServerProvidedFailoverPartner;
+        private static Tristate s_multiSubnetFailoverByDefault;
 
 #if NET
         static LocalAppContextSwitches()
@@ -234,6 +236,31 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
                 return s_ignoreServerProvidedFailoverPartner == Tristate.True;
+            }
+        }
+
+        /// <summary>
+        /// When set to true, the default value for MultiSubnetFailover connection string property
+        /// will be true instead of false. This enables parallel IP connection attempts for 
+        /// improved connection times in multi-subnet environments.
+        /// This app context switch defaults to 'false'.
+        /// </summary>
+        public static bool EnableMultiSubnetFailoverByDefault
+        {
+            get
+            {
+                if (s_multiSubnetFailoverByDefault == Tristate.NotInitialized)
+                {
+                    if (AppContext.TryGetSwitch(EnableMultiSubnetFailoverByDefaultString, out bool returnedValue) && returnedValue)
+                    {
+                        s_multiSubnetFailoverByDefault = Tristate.True;
+                    }
+                    else
+                    {
+                        s_multiSubnetFailoverByDefault = Tristate.False;
+                    }
+                }
+                return s_multiSubnetFailoverByDefault == Tristate.True;
             }
         }
     }
