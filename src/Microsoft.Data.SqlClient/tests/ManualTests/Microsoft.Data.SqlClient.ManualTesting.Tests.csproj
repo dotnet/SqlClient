@@ -33,9 +33,6 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspProviderColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCspProvider.cs" />
   </ItemGroup>
-    <ItemGroup Condition="'$(TestSet)' == 'AE'">
-    <Compile Include="AlwaysEncrypted\SqlDataAdapterBatchUpdateTests.cs" />
-  </ItemGroup>  
   <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == 'AE'">
     <Compile Include="AlwaysEncrypted\SqlDataAdapterBatchUpdateTests.cs" />
     <Compile Include="AlwaysEncrypted\AKVTests.cs" />
@@ -391,8 +388,5 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>xunit.runner.json</TargetPath>
     </ContentWithTargetPath>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="microsoft.data.sqlclient\tests\manualtests\alwaysencrypted\" />
   </ItemGroup>
 </Project>
