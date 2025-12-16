@@ -13,6 +13,7 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup Condition="'$(TestSet)' == '' or '$(TestSet)' == 'AE'">
+    <Compile Include="AlwaysEncrypted\SqlDataAdapterBatchUpdateTests.cs" />
     <Compile Include="AlwaysEncrypted\CoreCryptoTests.cs" />
     <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
     <Compile Include="AlwaysEncrypted\ExceptionsGenericError.cs" />

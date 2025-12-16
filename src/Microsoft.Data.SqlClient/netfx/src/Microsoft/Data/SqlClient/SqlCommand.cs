@@ -4562,7 +4562,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // In _batchRPCMode, the actual T-SQL query is in the first parameter and not present as the rpcName, as is the case with non-_batchRPCMode.
                     // So input parameters start at parameters[1]. parameters[0] is the actual T-SQL Statement. rpcName is sp_executesql.
-                    if (_RPCList[i].systemParams.Length > 1)
+                    if (_RPCList[i].systemParams != null && _RPCList[i].systemParams.Length > 1)
                     {
                         _RPCList[i].needsFetchParameterEncryptionMetadata = true;
 
