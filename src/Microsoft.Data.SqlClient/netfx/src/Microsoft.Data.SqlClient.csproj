@@ -962,10 +962,32 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+    <PackageReference Include="Microsoft.Identity.Client" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
     <PackageReference Include="System.Buffers" />
+    <!--
+      We must reference System.Data.Common explicitly because we use its
+      IDbColumnSchemaGenerator type that isn't included in .NET Framework
+      4.6.2 or 4.7.  This avoids downstream apps from having to include it
+      themselves if they happen to target those older .NET Framework versions.
+    -->
+    <PackageReference Include="System.Data.Common" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" />    
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
+    <PackageReference Include="System.Memory" />
+    <!--
+      Although System.Security.Cryptography.Pkcs is included in all .NET
+      Framework versions we target, the latest implementations of the types we
+      use are found in the NuGet package, so we reference it explicitly.
+    -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.Text.Json" />
+    <!--
+      We must reference System.Text.RegularExpressions to avoid a transitive
+      vulnerability from System.Data.Common 4.3.0.
+    -->
+    <PackageReference Include="System.Text.RegularExpressions" />
   </ItemGroup>
   <Import Project="$(CommonSourceRoot)tools\targets\GenerateResourceStringsSource.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateThisAssemblyCs.targets" />

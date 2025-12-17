@@ -12,13 +12,13 @@
   </PropertyGroup>
 
   <!-- .NET Framework Packages -->
-  <ItemGroup>
+  <ItemGroup Condition="$(TargetGroup) == 'netfx'">
     <!-- For compilation targeting .NET Framework using .NET SDKs. -->
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Condition="$(TargetGroup) == 'netfx'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Condition="$(TargetGroup) == 'netfx'" Include="System.Runtime.InteropServices.RuntimeInformation" />
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
   </ItemGroup>
 
   <!-- xUnit and Testing Packages -->
