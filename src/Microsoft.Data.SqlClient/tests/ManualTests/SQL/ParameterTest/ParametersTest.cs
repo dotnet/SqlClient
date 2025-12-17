@@ -589,7 +589,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 using (SqlCommand cmd = connection.CreateCommand())
                 {
-                    appContextSwitchesHelper.TruncateScaledDecimalField = truncateScaledDecimal ? LocalAppContextSwitchesHelper.Tristate.True : LocalAppContextSwitchesHelper.Tristate.False;
+                    appContextSwitchesHelper.TruncateScaledDecimalValue = truncateScaledDecimal;
 
                     var p = new SqlParameter("@Value", null)
                     {
@@ -636,7 +636,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
 
                     bulkCopy.DestinationTableName = tableName;
-                    appContextSwitchesHelper.TruncateScaledDecimalField = truncateScaledDecimal ? LocalAppContextSwitchesHelper.Tristate.True : LocalAppContextSwitchesHelper.Tristate.False;
+                    appContextSwitchesHelper.TruncateScaledDecimalValue = truncateScaledDecimal;
                     bulkCopy.WriteToServer(table);
                 }
                 Assert.True(ValidateInsertedValues(connection, tableName, truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
@@ -681,7 +681,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         table.Rows.Add(newRow);
                     }
                     p.Value = table;
-                    appContextSwitchesHelper.TruncateScaledDecimalField = truncateScaledDecimal ? LocalAppContextSwitchesHelper.Tristate.True : LocalAppContextSwitchesHelper.Tristate.False;
+                    appContextSwitchesHelper.TruncateScaledDecimalValue = truncateScaledDecimal;
                     cmd.ExecuteNonQuery();
                 }
                 // TVP always rounds data without attention to the configuration.

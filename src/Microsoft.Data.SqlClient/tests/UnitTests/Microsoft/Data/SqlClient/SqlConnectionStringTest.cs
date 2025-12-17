@@ -16,25 +16,25 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
 
 #if NETFRAMEWORK
         [Theory]
-        [InlineData("test.database.windows.net", true, Tristate.True, true)]
-        [InlineData("test.database.windows.net", false, Tristate.True, false)]
-        [InlineData("test.database.windows.net", null, Tristate.True, false)]
-        [InlineData("test.database.windows.net", true, Tristate.False, true)]
-        [InlineData("test.database.windows.net", false, Tristate.False, false)]
-        [InlineData("test.database.windows.net", null, Tristate.False, true)]
-        [InlineData("test.database.windows.net", true, Tristate.NotInitialized, true)]
-        [InlineData("test.database.windows.net", false, Tristate.NotInitialized, false)]
-        [InlineData("test.database.windows.net", null, Tristate.NotInitialized, true)]
-        [InlineData("my.test.server", true, Tristate.True, true)]
-        [InlineData("my.test.server", false, Tristate.True, false)]
-        [InlineData("my.test.server", null, Tristate.True, false)]
-        [InlineData("my.test.server", true, Tristate.False, true)]
-        [InlineData("my.test.server", false, Tristate.False, false)]
-        [InlineData("my.test.server", null, Tristate.False, true)]
-        [InlineData("my.test.server", true, Tristate.NotInitialized, true)]
-        [InlineData("my.test.server", false, Tristate.NotInitialized, false)]
-        [InlineData("my.test.server", null, Tristate.NotInitialized, true)]
-        public void TestDefaultTnir(string dataSource, bool? tnirEnabledInConnString, Tristate tnirDisabledAppContext, bool expectedValue)
+        [InlineData("test.database.windows.net", true, true, true)]
+        [InlineData("test.database.windows.net", false, true, false)]
+        [InlineData("test.database.windows.net", null, true, false)]
+        [InlineData("test.database.windows.net", true, false, true)]
+        [InlineData("test.database.windows.net", false, false, false)]
+        [InlineData("test.database.windows.net", null, false, true)]
+        [InlineData("test.database.windows.net", true, null, true)]
+        [InlineData("test.database.windows.net", false, null, false)]
+        [InlineData("test.database.windows.net", null, null, true)]
+        [InlineData("my.test.server", true, true, true)]
+        [InlineData("my.test.server", false, true, false)]
+        [InlineData("my.test.server", null, true, false)]
+        [InlineData("my.test.server", true, false, true)]
+        [InlineData("my.test.server", false, false, false)]
+        [InlineData("my.test.server", null, false, true)]
+        [InlineData("my.test.server", true, null, true)]
+        [InlineData("my.test.server", false, null, false)]
+        [InlineData("my.test.server", null, null, true)]
+        public void TestDefaultTnir(string dataSource, bool? tnirEnabledInConnString, bool? tnirDisabledAppContext, bool expectedValue)
         {
             // Note: TNIR is only supported on .NET Framework.
             // Note: TNIR is disabled by default for Azure SQL Database servers (i.e. *.database.windows.net)
@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             // the value of TransparentNetworkIPResolution property in SqlConnectionString.
 
             // Arrange
-            _appContextSwitchHelper.DisableTnirByDefaultField = tnirDisabledAppContext;
+            _appContextSwitchHelper.DisableTnirByDefaultValue = tnirDisabledAppContext;
 
             // Act
             SqlConnectionStringBuilder builder = new();
@@ -62,16 +62,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         /// Test MSF values when set through connection string and through app context switch.
         /// </summary>
         [Theory]
-        [InlineData(true, Tristate.True, true)]
-        [InlineData(false, Tristate.True, false)]
-        [InlineData(null, Tristate.True, true)]
-        [InlineData(true, Tristate.False, true)]
-        [InlineData(false, Tristate.False, false)]
-        [InlineData(null, Tristate.False, false)]
-        [InlineData(null, Tristate.NotInitialized, false)]
-        public void TestDefaultMultiSubnetFailover(bool? msfInConnString, Tristate msfEnabledAppContext, bool expectedValue)
+        [InlineData(true, true, true)]
+        [InlineData(false, true, false)]
+        [InlineData(null, true, true)]
+        [InlineData(true, false, true)]
+        [InlineData(false, false, false)]
+        [InlineData(null, false, false)]
+        [InlineData(null, null, false)]
+        public void TestDefaultMultiSubnetFailover(bool? msfInConnString, bool? msfEnabledAppContext, bool expectedValue)
         {
-            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefaultField = msfEnabledAppContext;
+            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefaultValue = msfEnabledAppContext;
 
             SqlConnectionStringBuilder builder = new();
             if (msfInConnString.HasValue)
@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         [Fact]
         public void TestMultiSubnetFailoverWithFailoverPartnerThrows()
         {
-            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefaultField = Tristate.True;
+            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefaultValue = true;
 
             SqlConnectionStringBuilder builder = new()
             {

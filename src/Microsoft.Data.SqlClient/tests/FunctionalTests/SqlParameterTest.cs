@@ -1952,10 +1952,8 @@ namespace Microsoft.Data.SqlClient.Tests
             lock (_parameterLegacyScaleLock)
             {
                 using SwitchesHelper switches = new SwitchesHelper();
-                switches.LegacyVarTimeZeroScaleBehaviourField =
-                    legacyVarTimeZeroScaleSwitchValue
-                    ? SwitchesHelper.Tristate.True
-                    : SwitchesHelper.Tristate.False;
+                switches.LegacyVarTimeZeroScaleBehaviourValue =
+                    legacyVarTimeZeroScaleSwitchValue;
 
                 var parameter = new SqlParameter
                 {
