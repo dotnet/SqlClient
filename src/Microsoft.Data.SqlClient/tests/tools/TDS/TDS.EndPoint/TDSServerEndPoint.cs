@@ -203,6 +203,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                                 // Register a new connection
                                 Connections.Add(connection);
                             }
+
+                            Log($"New connection accepted: {connection.RemoteEndPoint} Total connections: {Connections.Count} ");
                         }
                         catch (Exception ex)
                         {
@@ -233,8 +235,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         private void _OnConnectionClosed(object sender, EventArgs e)
         {
             T clientConnection = sender as T;
-            var remoteEndPoint = clientConnection.Connection.Client.RemoteEndPoint;
-
             bool removed = false;
 
             // Synchronize access to connection collection
@@ -246,11 +246,11 @@ namespace Microsoft.SqlServer.TDS.EndPoint
 
             if (removed)
             {
-                Log($"Connection closed and removed: {remoteEndPoint}");
+                Log($"Connection closed and removed: {clientConnection.RemoteEndPoint}");
             }
             else
             {
-                Log($"Connection closed but NOT removed (not found): {remoteEndPoint}");
+                Log($"Connection closed but NOT removed (not found): {clientConnection.RemoteEndPoint}");
             }
         }
 
