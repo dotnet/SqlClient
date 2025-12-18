@@ -33,11 +33,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             // Arrange
             TruncateTable(connectionString);
+            int idBase = GetUniqueIdBase();
             PopulateTable(new (int id, string s1, string s2)[] {
-                (10, "123-45-6789", "987-65-4321"),
-                (20, "234-56-7890", "876-54-3210"),
-                (30, "345-67-8901", "765-43-2109"),
-                (40, "456-78-9012", "654-32-1098"),
+                (idBase + 10, "123-45-6789", "987-65-4321"),
+                (idBase + 20, "234-56-7890", "876-54-3210"),
+                (idBase + 30, "345-67-8901", "765-43-2109"),
+                (idBase + 40, "456-78-9012", "654-32-1098"),
             }, connectionString);
 
             using var conn = new SqlConnection(GetConnectionString(connectionString, encryptionEnabled: true));
@@ -62,11 +63,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             // Arrange
             TruncateTable(connectionString);
+            int idBase = GetUniqueIdBase();
             PopulateTable(new (int id, string s1, string s2)[] {
-                (100, "123-45-6789", "987-65-4321"),
-                (200, "234-56-7890", "876-54-3210"),
-                (300, "345-67-8901", "765-43-2109"),
-                (400, "456-78-9012", "654-32-1098"),
+                (idBase + 100, "123-45-6789", "987-65-4321"),
+                (idBase + 200, "234-56-7890", "876-54-3210"),
+                (idBase + 300, "345-67-8901", "765-43-2109"),
+                (idBase + 400, "456-78-9012", "654-32-1098"),
             }, connectionString);
 
             using var conn = new SqlConnection(GetConnectionString(connectionString, encryptionEnabled: true));
@@ -86,6 +88,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         // ---------- HELPERS ----------
+
+        private int GetUniqueIdBase() => Math.Abs(Guid.NewGuid().GetHashCode()) % 1000000;
 
         private SqlDataAdapter CreateAdapter(SqlConnection connection, int updateBatchSize)
         {
@@ -161,7 +165,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             using var connection = new SqlConnection(GetConnectionString(connectionString, encryptionEnabled: true));
             connection.Open();
-            SilentRunCommand($"DELETE FROM [dbo].[{_tableName}]", connection); 
+            ExecuteQuery(connection, $"DELETE FROM [dbo].[{_tableName}]");
         }
 
         private void ExecuteQuery(SqlConnection connection, string commandText)
@@ -236,7 +240,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 using var connection = new SqlConnection(GetConnectionString(connectionString, encryptionEnabled: true));
                 connection.Open();
-                SilentRunCommand($"DELETE FROM [dbo].[{_tableName}]", connection);
+                ExecuteQuery(connection, $"DELETE FROM [dbo].[{_tableName}]");
             }
         }
     }
