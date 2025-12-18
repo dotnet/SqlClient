@@ -34,10 +34,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             // Arrange
             TruncateTable(connectionString);
             PopulateTable(new (int id, string s1, string s2)[] {
-                (1, "123-45-6789", "987-65-4321"),
-                (2, "234-56-7890", "876-54-3210"),
-                (3, "345-67-8901", "765-43-2109"),
-                (4, "456-78-9012", "654-32-1098"),
+                (10, "123-45-6789", "987-65-4321"),
+                (20, "234-56-7890", "876-54-3210"),
+                (30, "345-67-8901", "765-43-2109"),
+                (40, "456-78-9012", "654-32-1098"),
             }, connectionString);
 
             using var conn = new SqlConnection(GetConnectionString(connectionString, encryptionEnabled: true));
@@ -63,10 +63,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             // Arrange
             TruncateTable(connectionString);
             PopulateTable(new (int id, string s1, string s2)[] {
-                (1, "123-45-6789", "987-65-4321"),
-                (2, "234-56-7890", "876-54-3210"),
-                (3, "345-67-8901", "765-43-2109"),
-                (4, "456-78-9012", "654-32-1098"),
+                (100, "123-45-6789", "987-65-4321"),
+                (200, "234-56-7890", "876-54-3210"),
+                (300, "345-67-8901", "765-43-2109"),
+                (400, "456-78-9012", "654-32-1098"),
             }, connectionString);
 
             using var conn = new SqlConnection(GetConnectionString(connectionString, encryptionEnabled: true));
