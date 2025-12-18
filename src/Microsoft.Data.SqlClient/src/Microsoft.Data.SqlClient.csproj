@@ -7,14 +7,14 @@
 	</PropertyGroup>
 
   <!-- Strong name signing ============================================= -->
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(CDP_BUILD_TYPE)' == 'Official'">
     <SignAssembly>true</SignAssembly>
     <KeyFile>$(SigningKeyPath)</KeyFile>
-    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(CDP_BUILD_TYPE)' != 'Official'">
-    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
+
   
   <!-- OS Constants ==================================================== -->
   <PropertyGroup>

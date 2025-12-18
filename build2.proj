@@ -33,8 +33,8 @@
 				  -p:Configuration=$(Configuration)
 				  -p:TargetOs=Unix
 			</DotnetCommand>
-			<!-- convert &gt;1 space to 1 space -->
-			<DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s{2,}", " "))</DotnetCommand>
+			<!-- Convert more than one whitespace character into one space --> 
+			<DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
 		</PropertyGroup>
 		<Message Text=">>> Building MDS for Unix via command: $(DotnetCommand)"/>
 		<Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
@@ -48,8 +48,8 @@
 				  -p:Configuration=$(Configuration)
 				  -p:TargetOs=Windows_NT
 			</DotnetCommand>
-			<!-- convert &gt;1 space to 1 space --> 
-			<DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s{2,}", " "))</DotnetCommand>
+			<!-- Convert more than one whitespace character into one space --> 
+			<DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
 		</PropertyGroup>
 		<Message Text=">>> Building MDS for Windows via command: $(DotnetCommand)"/>
 		<Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
