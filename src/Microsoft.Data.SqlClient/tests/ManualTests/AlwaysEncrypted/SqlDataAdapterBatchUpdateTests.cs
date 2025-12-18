@@ -161,7 +161,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             using var connection = new SqlConnection(GetConnectionString(connectionString, encryptionEnabled: true));
             connection.Open();
-            SilentRunCommand($"TRUNCATE TABLE [dbo].[{_tableName}]", connection);
+            SilentRunCommand($"DELETE FROM [dbo].[{_tableName}]", connection); 
         }
 
         private void ExecuteQuery(SqlConnection connection, string commandText)
