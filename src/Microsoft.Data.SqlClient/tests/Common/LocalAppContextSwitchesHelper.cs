@@ -35,30 +35,27 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// <summary>
     /// These fields are used to capture the original switch values.
     /// </summary>
-    private readonly bool? _legacyRowVersionNullBehaviorOriginal;
-    private readonly bool? _suppressInsecureTlsWarningOriginal;
-    private readonly bool? _makeReadAsyncBlockingOriginal;
-    private readonly bool? _useMinimumLoginTimeoutOriginal;
-    private readonly bool? _legacyVarTimeZeroScaleBehaviourOriginal;
-    private readonly bool? _useCompatibilityProcessSniOriginal;
-    private readonly bool? _useCompatibilityAsyncBehaviourOriginal;
-    private readonly bool? _useConnectionPoolV2Original;
-    private readonly bool? _truncateScaledDecimalOriginal;
-    private readonly bool? _ignoreServerProvidedFailoverPartnerOriginal;
-    private readonly bool? _enableUserAgentOriginal;
-    private readonly bool? _multiSubnetFailoverByDefaultOriginal;
-    
-    #if NET
-    private readonly bool? _globalizationInvariantModeOriginal;
-    #endif
-    
-    #if NET && _WINDOWS
-    private readonly bool? _useManagedNetworkingOriginal;
-    #endif    
-
     #if NETFRAMEWORK
     private readonly bool? _disableTnirByDefaultOriginal;
     #endif
+    private readonly bool? _enableMultiSubnetFailoverByDefaultOriginal;
+    private readonly bool? _enableUserAgentOriginal;
+    #if NET
+    private readonly bool? _globalizationInvariantModeOriginal;
+    #endif
+    private readonly bool? _ignoreServerProvidedFailoverPartnerOriginal;
+    private readonly bool? _legacyRowVersionNullBehaviorOriginal;
+    private readonly bool? _legacyVarTimeZeroScaleBehaviourOriginal;
+    private readonly bool? _makeReadAsyncBlockingOriginal;
+    private readonly bool? _suppressInsecureTlsWarningOriginal;
+    private readonly bool? _truncateScaledDecimalOriginal;
+    private readonly bool? _useCompatibilityAsyncBehaviourOriginal;
+    private readonly bool? _useCompatibilityProcessSniOriginal;
+    private readonly bool? _useConnectionPoolV2Original;
+    #if NET && _WINDOWS
+    private readonly bool? _useManagedNetworkingOriginal;
+    #endif    
+    private readonly bool? _useMinimumLoginTimeoutOriginal;
 
     #endregion
 
@@ -85,42 +82,42 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
 
         try
         {
-            _legacyRowVersionNullBehaviorOriginal =
-                GetSwitchValue("s_legacyRowVersionNullBehavior");
-            _suppressInsecureTlsWarningOriginal =
-                GetSwitchValue("s_suppressInsecureTlsWarning");
-            _makeReadAsyncBlockingOriginal =
-                GetSwitchValue("s_makeReadAsyncBlocking");
-            _useMinimumLoginTimeoutOriginal =
-                GetSwitchValue("s_useMinimumLoginTimeout");
-            _legacyVarTimeZeroScaleBehaviourOriginal =
-                GetSwitchValue("s_legacyVarTimeZeroScaleBehaviour");
-            _useCompatibilityProcessSniOriginal =
-                GetSwitchValue("s_useCompatibilityProcessSni");
-            _useCompatibilityAsyncBehaviourOriginal =
-                GetSwitchValue("s_useCompatibilityAsyncBehaviour");
-            _useConnectionPoolV2Original =
-                GetSwitchValue("s_useConnectionPoolV2");
-            _truncateScaledDecimalOriginal =
-                GetSwitchValue("s_truncateScaledDecimal");
-            _ignoreServerProvidedFailoverPartnerOriginal =
-                GetSwitchValue("s_ignoreServerProvidedFailoverPartner");
-            _enableUserAgentOriginal =
-                GetSwitchValue("s_enableUserAgent");
-            _multiSubnetFailoverByDefaultOriginal =
-                GetSwitchValue("s_multiSubnetFailoverByDefault");
-            #if NET
-            _globalizationInvariantModeOriginal =
-                GetSwitchValue("s_globalizationInvariantMode");
-            #endif
-            #if NET && _WINDOWS
-            _useManagedNetworkingOriginal =
-                GetSwitchValue("s_useManagedNetworking");
-            #endif
             #if NETFRAMEWORK
             _disableTnirByDefaultOriginal =
                 GetSwitchValue("s_disableTnirByDefault");
             #endif
+            _enableMultiSubnetFailoverByDefaultOriginal =
+                GetSwitchValue("s_enableMultiSubnetFailoverByDefault");
+            _enableUserAgentOriginal =
+                GetSwitchValue("s_enableUserAgent");
+            #if NET
+            _globalizationInvariantModeOriginal =
+                GetSwitchValue("s_globalizationInvariantMode");
+            #endif
+            _ignoreServerProvidedFailoverPartnerOriginal =
+                GetSwitchValue("s_ignoreServerProvidedFailoverPartner");
+            _legacyRowVersionNullBehaviorOriginal =
+                GetSwitchValue("s_legacyRowVersionNullBehavior");
+            _legacyVarTimeZeroScaleBehaviourOriginal =
+                GetSwitchValue("s_legacyVarTimeZeroScaleBehaviour");
+            _makeReadAsyncBlockingOriginal =
+                GetSwitchValue("s_makeReadAsyncBlocking");
+            _suppressInsecureTlsWarningOriginal =
+                GetSwitchValue("s_suppressInsecureTlsWarning");
+            _truncateScaledDecimalOriginal =
+                GetSwitchValue("s_truncateScaledDecimal");
+            _useCompatibilityAsyncBehaviourOriginal =
+                GetSwitchValue("s_useCompatibilityAsyncBehaviour");
+            _useCompatibilityProcessSniOriginal =
+                GetSwitchValue("s_useCompatibilityProcessSni");
+            _useConnectionPoolV2Original =
+                GetSwitchValue("s_useConnectionPoolV2");
+            #if NET && _WINDOWS
+            _useManagedNetworkingOriginal =
+                GetSwitchValue("s_useManagedNetworking");
+            #endif
+            _useMinimumLoginTimeoutOriginal =
+                GetSwitchValue("s_useMinimumLoginTimeout");
         }
         catch
         {
@@ -138,57 +135,57 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         try
         {
-            SetSwitchValue(
-                "s_legacyRowVersionNullBehavior", 
-                _legacyRowVersionNullBehaviorOriginal);
-            SetSwitchValue(
-                "s_suppressInsecureTlsWarning",
-                _suppressInsecureTlsWarningOriginal);
-            SetSwitchValue(
-                "s_makeReadAsyncBlocking",
-                _makeReadAsyncBlockingOriginal);
-            SetSwitchValue(
-                "s_useMinimumLoginTimeout",
-                _useMinimumLoginTimeoutOriginal);
-            SetSwitchValue(
-                "s_legacyVarTimeZeroScaleBehaviour",
-                _legacyVarTimeZeroScaleBehaviourOriginal);
-            SetSwitchValue(
-                "s_useCompatibilityProcessSni",
-                _useCompatibilityProcessSniOriginal);
-            SetSwitchValue(
-                "s_useCompatibilityAsyncBehaviour",
-                _useCompatibilityAsyncBehaviourOriginal);
-            SetSwitchValue(
-                "s_useConnectionPoolV2",
-                _useConnectionPoolV2Original);
-            SetSwitchValue(
-                "s_truncateScaledDecimal",
-                _truncateScaledDecimalOriginal);
-            SetSwitchValue(
-                "s_ignoreServerProvidedFailoverPartner",
-                _ignoreServerProvidedFailoverPartnerOriginal);
-            SetSwitchValue(
-                "s_enableUserAgent",
-                _enableUserAgentOriginal);
-            SetSwitchValue(
-                "s_multiSubnetFailoverByDefault",
-                _multiSubnetFailoverByDefaultOriginal);
-            #if NET
-            SetSwitchValue(
-                "s_globalizationInvariantMode",
-                _globalizationInvariantModeOriginal);
-            #endif
-            #if NET && _WINDOWS
-            SetSwitchValue(
-                "s_useManagedNetworking",
-                _useManagedNetworkingOriginal);
-            #endif
             #if NETFRAMEWORK
             SetSwitchValue(
                 "s_disableTnirByDefault",
                 _disableTnirByDefaultOriginal);
             #endif
+            SetSwitchValue(
+                "s_enableMultiSubnetFailoverByDefault",
+                _enableMultiSubnetFailoverByDefaultOriginal);
+            SetSwitchValue(
+                "s_enableUserAgent",
+                _enableUserAgentOriginal);
+            #if NET
+            SetSwitchValue(
+                "s_globalizationInvariantMode",
+                _globalizationInvariantModeOriginal);
+            #endif
+            SetSwitchValue(
+                "s_ignoreServerProvidedFailoverPartner",
+                _ignoreServerProvidedFailoverPartnerOriginal);
+            SetSwitchValue(
+                "s_legacyRowVersionNullBehavior", 
+                _legacyRowVersionNullBehaviorOriginal);
+            SetSwitchValue(
+                "s_legacyVarTimeZeroScaleBehaviour",
+                _legacyVarTimeZeroScaleBehaviourOriginal);
+            SetSwitchValue(
+                "s_makeReadAsyncBlocking",
+                _makeReadAsyncBlockingOriginal);
+            SetSwitchValue(
+                "s_suppressInsecureTlsWarning",
+                _suppressInsecureTlsWarningOriginal);
+            SetSwitchValue(
+                "s_truncateScaledDecimal",
+                _truncateScaledDecimalOriginal);
+            SetSwitchValue(
+                "s_useCompatibilityAsyncBehaviour",
+                _useCompatibilityAsyncBehaviourOriginal);
+            SetSwitchValue(
+                "s_useCompatibilityProcessSni",
+                _useCompatibilityProcessSniOriginal);
+            SetSwitchValue(
+                "s_useConnectionPoolV2",
+                _useConnectionPoolV2Original);
+            #if NET && _WINDOWS
+            SetSwitchValue(
+                "s_useManagedNetworking",
+                _useManagedNetworkingOriginal);
+            #endif
+            SetSwitchValue(
+                "s_useMinimumLoginTimeout",
+                _useMinimumLoginTimeoutOriginal);
         }
         finally
         {
@@ -205,115 +202,38 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     //
     // They all throw if the value cannot be retrieved or set.
 
+    #if NETFRAMEWORK
     /// <summary>
-    /// Get or set the LocalAppContextSwitches.LegacyRowVersionNullBehavior
-    /// switch value.
+    /// Get or set the DisableTnirByDefault switch value.
     /// </summary>
-    public bool? LegacyRowVersionNullBehavior
+    public bool? DisableTnirByDefault
     {
-        get => GetSwitchValue("s_legacyRowVersionNullBehavior");
-        set => SetSwitchValue("s_legacyRowVersionNullBehavior", value);
+        get => GetSwitchValue("s_disableTnirByDefault");
+        set => SetSwitchValue("s_disableTnirByDefault", value);
     }
+    #endif
 
     /// <summary>
-    /// Get or set the LocalAppContextSwitches.SuppressInsecureTlsWarning
-    /// switch value.
+    /// Get or set the EnableMultiSubnetFailoverByDefault switch value.
     /// </summary>
-    public bool? SuppressInsecureTlsWarning
+    public bool? EnableMultiSubnetFailoverByDefault
     {
-        get => GetSwitchValue("s_suppressInsecureTlsWarning");
-        set => SetSwitchValue("s_suppressInsecureTlsWarning", value);
-    }
-
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.MakeReadAsyncBlocking switch
-    /// value.
-    /// </summary>
-    public bool? MakeReadAsyncBlocking
-    {
-        get => GetSwitchValue("s_makeReadAsyncBlocking");
-        set => SetSwitchValue("s_makeReadAsyncBlocking", value);
+        get => GetSwitchValue("s_enableMultiSubnetFailoverByDefault");
+        set => SetSwitchValue("s_enableMultiSubnetFailoverByDefault", value);
     }
 
     /// <summary>
-    /// Get or set the LocalAppContextSwitches.UseMinimumLoginTimeout switch
-    /// value.
+    /// Get or set the EnableUserAgent switch value.
     /// </summary>
-    public bool? UseMinimumLoginTimeout
-    {
-        get => GetSwitchValue("s_useMinimumLoginTimeout");
-        set => SetSwitchValue("s_useMinimumLoginTimeout", value);
-    }
-
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour
-    /// switch value.
-    /// </summary>
-    public bool? LegacyVarTimeZeroScaleBehaviour
-    {
-        get => GetSwitchValue("s_legacyVarTimeZeroScaleBehaviour");
-        set => SetSwitchValue("s_legacyVarTimeZeroScaleBehaviour", value);
-    }
-
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.UseCompatibilityProcessSni switch
-    /// value.
-    /// </summary>
-    public bool? UseCompatibilityProcessSni
-    {
-        get => GetSwitchValue("s_useCompatibilityProcessSni");
-        set => SetSwitchValue("s_useCompatibilityProcessSni", value);
-    }
-
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.UseCompatibilityAsyncBehaviour
-    /// switch value.
-    /// </summary>
-    public bool? UseCompatibilityAsyncBehaviour
-    {
-        get => GetSwitchValue("s_useCompatibilityAsyncBehaviour");
-        set => SetSwitchValue("s_useCompatibilityAsyncBehaviour", value);
-    }
-
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.UseConnectionPoolV2 switch value.
-    /// </summary>
-    public bool? UseConnectionPoolV2
-    {
-        get => GetSwitchValue("s_useConnectionPoolV2");
-        set => SetSwitchValue("s_useConnectionPoolV2", value);
-    }
-
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.TruncateScaledDecimal switch value.
-    /// </summary>
-    public bool? TruncateScaledDecimal
-    {
-        get => GetSwitchValue("s_truncateScaledDecimal");
-        set => SetSwitchValue("s_truncateScaledDecimal", value);
-    }
-
-    public bool? IgnoreServerProvidedFailoverPartner
-    {
-        get => GetSwitchValue("s_ignoreServerProvidedFailoverPartner");
-        set => SetSwitchValue("s_ignoreServerProvidedFailoverPartner", value);
-    }
-
     public bool? EnableUserAgent
     {
         get => GetSwitchValue("s_enableUserAgent");
         set => SetSwitchValue("s_enableUserAgent", value);
     }
 
-    public bool? EnableMultiSubnetFailoverByDefault
-    {
-        get => GetSwitchValue("s_multiSubnetFailoverByDefault");
-        set => SetSwitchValue("s_multiSubnetFailoverByDefault", value);
-    }
-
-#if NET
+    #if NET
     /// <summary>
-    /// Get or set the LocalAppContextSwitches.GlobalizationInvariantMode switch value.
+    /// Get or set the GlobalizationInvariantMode switch value.
     /// </summary>
     public bool? GlobalizationInvariantMode
     {
@@ -322,9 +242,90 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     }
     #endif
 
+    /// <summary>
+    /// Get or set the IgnoreServerProvidedFailoverPartner switch value.
+    /// </summary>
+    public bool? IgnoreServerProvidedFailoverPartner
+    {
+        get => GetSwitchValue("s_ignoreServerProvidedFailoverPartner");
+        set => SetSwitchValue("s_ignoreServerProvidedFailoverPartner", value);
+    }
+
+    /// <summary>
+    /// Get or set the LegacyRowVersionNullBehavior switch value.
+    /// </summary>
+    public bool? LegacyRowVersionNullBehavior
+    {
+        get => GetSwitchValue("s_legacyRowVersionNullBehavior");
+        set => SetSwitchValue("s_legacyRowVersionNullBehavior", value);
+    }
+
+    /// <summary>
+    /// Get or set the LegacyVarTimeZeroScaleBehaviour switch value.
+    /// </summary>
+    public bool? LegacyVarTimeZeroScaleBehaviour
+    {
+        get => GetSwitchValue("s_legacyVarTimeZeroScaleBehaviour");
+        set => SetSwitchValue("s_legacyVarTimeZeroScaleBehaviour", value);
+    }
+
+    /// <summary>
+    /// Get or set the MakeReadAsyncBlocking switch value.
+    /// </summary>
+    public bool? MakeReadAsyncBlocking
+    {
+        get => GetSwitchValue("s_makeReadAsyncBlocking");
+        set => SetSwitchValue("s_makeReadAsyncBlocking", value);
+    }
+
+    /// <summary>
+    /// Get or set the SuppressInsecureTlsWarning switch value.
+    /// </summary>
+    public bool? SuppressInsecureTlsWarning
+    {
+        get => GetSwitchValue("s_suppressInsecureTlsWarning");
+        set => SetSwitchValue("s_suppressInsecureTlsWarning", value);
+    }
+
+    /// <summary>
+    /// Get or set the TruncateScaledDecimal switch value.
+    /// </summary>
+    public bool? TruncateScaledDecimal
+    {
+        get => GetSwitchValue("s_truncateScaledDecimal");
+        set => SetSwitchValue("s_truncateScaledDecimal", value);
+    }
+
+    /// <summary>
+    /// Get or set the UseCompatibilityAsyncBehaviour switch value.
+    /// </summary>
+    public bool? UseCompatibilityAsyncBehaviour
+    {
+        get => GetSwitchValue("s_useCompatibilityAsyncBehaviour");
+        set => SetSwitchValue("s_useCompatibilityAsyncBehaviour", value);
+    }
+
+    /// <summary>
+    /// Get or set the UseCompatibilityProcessSni switch value.
+    /// </summary>
+    public bool? UseCompatibilityProcessSni
+    {
+        get => GetSwitchValue("s_useCompatibilityProcessSni");
+        set => SetSwitchValue("s_useCompatibilityProcessSni", value);
+    }
+
+    /// <summary>
+    /// Get or set the UseConnectionPoolV2 switch value.
+    /// </summary>
+    public bool? UseConnectionPoolV2
+    {
+        get => GetSwitchValue("s_useConnectionPoolV2");
+        set => SetSwitchValue("s_useConnectionPoolV2", value);
+    }
+
     #if NET && _WINDOWS
     /// <summary>
-    /// Get or set the LocalAppContextSwitches.UseManagedNetworking switch value.
+    /// Get or set the UseManagedNetworking switch value.
     /// </summary>
     public bool? UseManagedNetworking
     {
@@ -332,18 +333,15 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         set => SetSwitchValue("s_useManagedNetworking", value);
     }
     #endif
-    
-    #if NETFRAMEWORK
+
     /// <summary>
-    /// Get or set the LocalAppContextSwitches.DisableTnirByDefault switch
-    /// value.
+    /// Get or set the UseMinimumLoginTimeout switch value.
     /// </summary>
-    public bool? DisableTnirByDefault
+    public bool? UseMinimumLoginTimeout
     {
-        get => GetSwitchValue("s_disableTnirByDefault");
-        set => SetSwitchValue("s_disableTnirByDefault", value);
+        get => GetSwitchValue("s_useMinimumLoginTimeout");
+        set => SetSwitchValue("s_useMinimumLoginTimeout", value);
     }
-    #endif
 
     #endregion
 

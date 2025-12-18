@@ -12,30 +12,29 @@ internal static class LocalAppContextSwitches
 {
     #region Switch Names
 
-    private const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
-    private const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
-    private const string SuppressInsecureTlsWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
-    private const string UseMinimumLoginTimeoutString = @"Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin";
-    private const string LegacyVarTimeZeroScaleBehaviourString = @"Switch.Microsoft.Data.SqlClient.LegacyVarTimeZeroScaleBehaviour";
-    private const string UseCompatibilityProcessSniString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni";
-    private const string UseCompatibilityAsyncBehaviourString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour";
-    private const string UseConnectionPoolV2String = @"Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
-    private const string TruncateScaledDecimalString = @"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal";
-    private const string IgnoreServerProvidedFailoverPartnerString = @"Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner";
-    private const string EnableUserAgentString = @"Switch.Microsoft.Data.SqlClient.EnableUserAgent";
+    #if NETFRAMEWORK
+    private const string DisableTnirByDefaultString = @"Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString";
+    #endif
     private const string EnableMultiSubnetFailoverByDefaultString = @"Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault";
-
+    private const string EnableUserAgentString = @"Switch.Microsoft.Data.SqlClient.EnableUserAgent";
     #if NET
     private const string GlobalizationInvariantModeString = @"System.Globalization.Invariant";
     private const string GlobalizationInvariantModeEnvironmentVariable = "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT";
-
-    #if _WINDOWS
+    #endif
+    private const string IgnoreServerProvidedFailoverPartnerString = @"Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner";
+    private const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
+    private const string LegacyVarTimeZeroScaleBehaviourString = @"Switch.Microsoft.Data.SqlClient.LegacyVarTimeZeroScaleBehaviour";
+    private const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
+    private const string SuppressInsecureTlsWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
+    private const string TruncateScaledDecimalString = @"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal";
+    private const string UseCompatibilityAsyncBehaviourString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour";
+    private const string UseCompatibilityProcessSniString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni";
+    private const string UseConnectionPoolV2String = @"Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
+    #if NET && _WINDOWS
     private const string UseManagedNetworkingOnWindowsString = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
     #endif
-    #else
-    private const string DisableTnirByDefaultString = @"Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString";
-    #endif
-
+    private const string UseMinimumLoginTimeoutString = @"Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin";
+    
     #endregion
 
     #region Switch Values
@@ -53,28 +52,31 @@ internal static class LocalAppContextSwitches
         False = 2
     }
 
-    internal static SwitchValue s_legacyRowVersionNullBehavior = SwitchValue.None;
-    internal static SwitchValue s_suppressInsecureTlsWarning = SwitchValue.None;
-    internal static SwitchValue s_makeReadAsyncBlocking = SwitchValue.None;
-    internal static SwitchValue s_useMinimumLoginTimeout = SwitchValue.None;
-    internal static SwitchValue s_legacyVarTimeZeroScaleBehaviour = SwitchValue.None;
-    internal static SwitchValue s_useCompatibilityProcessSni = SwitchValue.None;
-    internal static SwitchValue s_useCompatibilityAsyncBehaviour = SwitchValue.None;
-    internal static SwitchValue s_useConnectionPoolV2 = SwitchValue.None;
-    internal static SwitchValue s_truncateScaledDecimal = SwitchValue.None;
-    internal static SwitchValue s_ignoreServerProvidedFailoverPartner = SwitchValue.None;
-    internal static SwitchValue s_enableUserAgent = SwitchValue.None;
-    internal static SwitchValue s_multiSubnetFailoverByDefault = SwitchValue.None;
-
-    #if NET
-    internal static SwitchValue s_globalizationInvariantMode = SwitchValue.None;
-    #endif
-    #if NET && _WINDOWS
-    internal static SwitchValue s_useManagedNetworking; = SwitchValue.None;
-    #endif
+    // GOTCHA: These fields are accessed via reflection by the
+    // LocalAppContextSwitchesHelper test helper class.  If you rename them, be
+    // sure to update the test helper as well.
+    
     #if NETFRAMEWORK
     internal static SwitchValue s_disableTnirByDefault = SwitchValue.None;
     #endif
+    internal static SwitchValue s_enableMultiSubnetFailoverByDefault = SwitchValue.None;
+    internal static SwitchValue s_enableUserAgent = SwitchValue.None;
+    #if NET
+    internal static SwitchValue s_globalizationInvariantMode = SwitchValue.None;
+    #endif
+    internal static SwitchValue s_ignoreServerProvidedFailoverPartner = SwitchValue.None;
+    internal static SwitchValue s_legacyRowVersionNullBehavior = SwitchValue.None;
+    internal static SwitchValue s_legacyVarTimeZeroScaleBehaviour = SwitchValue.None;
+    internal static SwitchValue s_makeReadAsyncBlocking = SwitchValue.None;
+    internal static SwitchValue s_suppressInsecureTlsWarning = SwitchValue.None;
+    internal static SwitchValue s_truncateScaledDecimal = SwitchValue.None;
+    internal static SwitchValue s_useCompatibilityAsyncBehaviour = SwitchValue.None;
+    internal static SwitchValue s_useCompatibilityProcessSni = SwitchValue.None;
+    internal static SwitchValue s_useConnectionPoolV2 = SwitchValue.None;
+    #if NET && _WINDOWS
+    internal static SwitchValue s_useManagedNetworking = SwitchValue.None;
+    #endif
+    internal static SwitchValue s_useMinimumLoginTimeout = SwitchValue.None;
 
     #endregion
 
@@ -102,140 +104,40 @@ internal static class LocalAppContextSwitches
 
     #region Switch Properties
 
-    // @TODO: Sort by name
-
+    #if NETFRAMEWORK
     /// <summary>
-    /// In TdsParser, the ProcessSni function changed significantly when the packet
-    /// multiplexing code needed for high speed multi-packet column values was added.
-    /// When this switch is set to true (the default), the old ProcessSni design is used.
-    /// When this switch is set to false, the new experimental ProcessSni behavior using
-    /// the packet multiplexer is enabled.
-    /// </summary>
-    public static bool UseCompatibilityProcessSni =>
-        AcquireAndReturn(
-            UseCompatibilityProcessSniString,
-            defaultValue: true,
-            ref s_useCompatibilityProcessSni);
-
-    /// <summary>
-    /// In TdsParser, the async multi-packet column value fetch behavior can use a continue snapshot state
-    /// for improved efficiency. When this switch is enabled (the default), the driver preserves the legacy
-    /// compatibility behavior, which does not use the continue snapshot state. When disabled, the new behavior
-    /// using the continue snapshot state is enabled. This switch will always return true if
-    /// <see cref="UseCompatibilityProcessSni"/> is enabled, because the continue state is not stable without
-    /// the multiplexer.
-    /// </summary>
-    public static bool UseCompatibilityAsyncBehaviour
-    {
-        get
-        {
-            if (UseCompatibilityProcessSni)
-            {
-                // If ProcessSni compatibility mode has been enabled then the packet
-                // multiplexer has been disabled. The new async behaviour using continue
-                // point capture is only stable if the multiplexer is enabled so we must
-                // return true to enable compatibility async behaviour using only restarts.
-                return true;
-            }
-
-            return AcquireAndReturn(
-                UseCompatibilityAsyncBehaviourString,
-                defaultValue: true,
-                ref s_useCompatibilityAsyncBehaviour);
-        }
-    }
-
-    /// <summary>
-    /// When using Encrypt=false in the connection string, a security warning is output to the console if the TLS version is 1.2 or lower.
-    /// This warning can be suppressed by enabling this AppContext switch.
+    /// Transparent Network IP Resolution (TNIR) is a revision of the existing MultiSubnetFailover feature.
+    /// TNIR affects the connection sequence of the driver in the case where the first resolved IP of the hostname
+    /// doesn't respond and there are multiple IPs associated with the hostname.
+    ///
+    /// TNIR interacts with MultiSubnetFailover to provide the following three connection sequences:
+    /// 0: One IP is attempted, followed by all IPs in parallel
+    /// 1: All IPs are attempted in parallel
+    /// 2: All IPs are attempted one after another
+    ///
+    /// TransparentNetworkIPResolution is enabled by default. MultiSubnetFailover is disabled by default.
+    /// To disable TNIR, you can enable the app context switch.
+    ///
     /// This app context switch defaults to 'false'.
     /// </summary>
-    public static bool SuppressInsecureTlsWarning =>
+    public static bool DisableTnirByDefault =>
         AcquireAndReturn(
-            SuppressInsecureTlsWarningString,
+            DisableTnirByDefaultString,
             defaultValue: false,
-            ref s_suppressInsecureTlsWarning);
+            ref s_disableTnirByDefault);
+    #endif
 
     /// <summary>
-    /// In System.Data.SqlClient and Microsoft.Data.SqlClient prior to 3.0.0 a field with type Timestamp/RowVersion
-    /// would return an empty byte array. This switch controls whether to preserve that behaviour on newer versions
-    /// of Microsoft.Data.SqlClient, if this switch returns false an appropriate null value will be returned.
+    /// When set to true, the default value for MultiSubnetFailover connection string property
+    /// will be true instead of false. This enables parallel IP connection attempts for 
+    /// improved connection times in multi-subnet environments.
     /// This app context switch defaults to 'false'.
     /// </summary>
-    public static bool LegacyRowVersionNullBehavior =>
+    public static bool EnableMultiSubnetFailoverByDefault =>
         AcquireAndReturn(
-            LegacyRowVersionNullString,
+            EnableMultiSubnetFailoverByDefaultString,
             defaultValue: false,
-            ref s_legacyRowVersionNullBehavior);
-
-    /// <summary>
-    /// When enabled, ReadAsync runs asynchronously and does not block the calling thread.
-    /// This app context switch defaults to 'false'.
-    /// </summary>
-    public static bool MakeReadAsyncBlocking =>
-        AcquireAndReturn(
-            MakeReadAsyncBlockingString,
-            defaultValue: false,
-            ref s_makeReadAsyncBlocking);
-
-    /// <summary>
-    /// Specifies minimum login timeout to be set to 1 second instead of 0 seconds,
-    /// to prevent a login attempt from waiting indefinitely.
-    /// This app context switch defaults to 'true'.
-    /// </summary>
-    public static bool UseMinimumLoginTimeout =>
-        AcquireAndReturn(
-            UseMinimumLoginTimeoutString,
-            defaultValue: true,
-            ref s_useMinimumLoginTimeout);
-
-    /// <summary>
-    /// When set to 'true' this will output a scale value of 7 (DEFAULT_VARTIME_SCALE) when the scale 
-    /// is explicitly set to zero for VarTime data types ('datetime2', 'datetimeoffset' and 'time')
-    /// If no scale is set explicitly it will continue to output scale of 7 (DEFAULT_VARTIME_SCALE)
-    /// regardless of switch value.
-    /// This app context switch defaults to 'true'.
-    /// </summary>
-    public static bool LegacyVarTimeZeroScaleBehaviour =>
-        AcquireAndReturn(
-            LegacyVarTimeZeroScaleBehaviourString,
-            defaultValue: true,
-            ref s_legacyVarTimeZeroScaleBehaviour);
-
-    /// <summary>
-    /// When set to true, the connection pool will use the new V2 connection pool implementation.
-    /// When set to false, the connection pool will use the legacy V1 implementation.
-    /// This app context switch defaults to 'false'.
-    /// </summary>
-    public static bool UseConnectionPoolV2 =>
-        AcquireAndReturn(
-            UseConnectionPoolV2String,
-            defaultValue: false,
-            ref s_useConnectionPoolV2);
-
-    /// <summary>
-    /// When set to true, TdsParser will truncate (rather than round) decimal and SqlDecimal values when scaling them.
-    /// </summary>
-    public static bool TruncateScaledDecimal =>
-        AcquireAndReturn(
-            TruncateScaledDecimalString,
-            defaultValue: false,
-            ref s_truncateScaledDecimal);
-
-    /// <summary>
-    /// When set to true, the failover partner provided by the server during connection
-    /// will be ignored. This is useful in scenarios where the application wants to
-    /// control the failover behavior explicitly (e.g. using a custom port). The application 
-    /// must be kept up to date with the failover configuration of the server. 
-    /// The application will not automatically discover a newly configured failover partner.
-    /// 
-    /// This app context switch defaults to 'false'.
-    /// </summary>
-    public static bool IgnoreServerProvidedFailoverPartner =>
-        AcquireAndReturn(
-            IgnoreServerProvidedFailoverPartnerString,
-            defaultValue: false,
-            ref s_ignoreServerProvidedFailoverPartner);
+            ref s_enableMultiSubnetFailoverByDefault);
 
     /// <summary>
     /// When set to true, the user agent feature is enabled and the driver will send the user agent string to the server.
@@ -313,9 +215,129 @@ internal static class LocalAppContextSwitches
     public static bool GlobalizationInvariantMode => false;
     #endif
 
-    #if NET
+    /// <summary>
+    /// When set to true, the failover partner provided by the server during connection
+    /// will be ignored. This is useful in scenarios where the application wants to
+    /// control the failover behavior explicitly (e.g. using a custom port). The application 
+    /// must be kept up to date with the failover configuration of the server. 
+    /// The application will not automatically discover a newly configured failover partner.
+    /// 
+    /// This app context switch defaults to 'false'.
+    /// </summary>
+    public static bool IgnoreServerProvidedFailoverPartner =>
+        AcquireAndReturn(
+            IgnoreServerProvidedFailoverPartnerString,
+            defaultValue: false,
+            ref s_ignoreServerProvidedFailoverPartner);
 
-    #if _WINDOWS
+    /// <summary>
+    /// In System.Data.SqlClient and Microsoft.Data.SqlClient prior to 3.0.0 a field with type Timestamp/RowVersion
+    /// would return an empty byte array. This switch controls whether to preserve that behaviour on newer versions
+    /// of Microsoft.Data.SqlClient, if this switch returns false an appropriate null value will be returned.
+    /// This app context switch defaults to 'false'.
+    /// </summary>
+    public static bool LegacyRowVersionNullBehavior =>
+        AcquireAndReturn(
+            LegacyRowVersionNullString,
+            defaultValue: false,
+            ref s_legacyRowVersionNullBehavior);
+
+    /// <summary>
+    /// When set to 'true' this will output a scale value of 7 (DEFAULT_VARTIME_SCALE) when the scale 
+    /// is explicitly set to zero for VarTime data types ('datetime2', 'datetimeoffset' and 'time')
+    /// If no scale is set explicitly it will continue to output scale of 7 (DEFAULT_VARTIME_SCALE)
+    /// regardless of switch value.
+    /// This app context switch defaults to 'true'.
+    /// </summary>
+    public static bool LegacyVarTimeZeroScaleBehaviour =>
+        AcquireAndReturn(
+            LegacyVarTimeZeroScaleBehaviourString,
+            defaultValue: true,
+            ref s_legacyVarTimeZeroScaleBehaviour);
+
+    /// <summary>
+    /// When enabled, ReadAsync runs asynchronously and does not block the calling thread.
+    /// This app context switch defaults to 'false'.
+    /// </summary>
+    public static bool MakeReadAsyncBlocking =>
+        AcquireAndReturn(
+            MakeReadAsyncBlockingString,
+            defaultValue: false,
+            ref s_makeReadAsyncBlocking);
+
+    /// <summary>
+    /// When using Encrypt=false in the connection string, a security warning is output to the console if the TLS version is 1.2 or lower.
+    /// This warning can be suppressed by enabling this AppContext switch.
+    /// This app context switch defaults to 'false'.
+    /// </summary>
+    public static bool SuppressInsecureTlsWarning =>
+        AcquireAndReturn(
+            SuppressInsecureTlsWarningString,
+            defaultValue: false,
+            ref s_suppressInsecureTlsWarning);
+
+    /// <summary>
+    /// When set to true, TdsParser will truncate (rather than round) decimal and SqlDecimal values when scaling them.
+    /// </summary>
+    public static bool TruncateScaledDecimal =>
+        AcquireAndReturn(
+            TruncateScaledDecimalString,
+            defaultValue: false,
+            ref s_truncateScaledDecimal);
+
+    /// <summary>
+    /// In TdsParser, the async multi-packet column value fetch behavior can use a continue snapshot state
+    /// for improved efficiency. When this switch is enabled (the default), the driver preserves the legacy
+    /// compatibility behavior, which does not use the continue snapshot state. When disabled, the new behavior
+    /// using the continue snapshot state is enabled. This switch will always return true if
+    /// <see cref="UseCompatibilityProcessSni"/> is enabled, because the continue state is not stable without
+    /// the multiplexer.
+    /// </summary>
+    public static bool UseCompatibilityAsyncBehaviour
+    {
+        get
+        {
+            if (UseCompatibilityProcessSni)
+            {
+                // If ProcessSni compatibility mode has been enabled then the packet
+                // multiplexer has been disabled. The new async behaviour using continue
+                // point capture is only stable if the multiplexer is enabled so we must
+                // return true to enable compatibility async behaviour using only restarts.
+                return true;
+            }
+
+            return AcquireAndReturn(
+                UseCompatibilityAsyncBehaviourString,
+                defaultValue: true,
+                ref s_useCompatibilityAsyncBehaviour);
+        }
+    }
+
+    /// <summary>
+    /// In TdsParser, the ProcessSni function changed significantly when the packet
+    /// multiplexing code needed for high speed multi-packet column values was added.
+    /// When this switch is set to true (the default), the old ProcessSni design is used.
+    /// When this switch is set to false, the new experimental ProcessSni behavior using
+    /// the packet multiplexer is enabled.
+    /// </summary>
+    public static bool UseCompatibilityProcessSni =>
+        AcquireAndReturn(
+            UseCompatibilityProcessSniString,
+            defaultValue: true,
+            ref s_useCompatibilityProcessSni);
+
+    /// <summary>
+    /// When set to true, the connection pool will use the new V2 connection pool implementation.
+    /// When set to false, the connection pool will use the legacy V1 implementation.
+    /// This app context switch defaults to 'false'.
+    /// </summary>
+    public static bool UseConnectionPoolV2 =>
+        AcquireAndReturn(
+            UseConnectionPoolV2String,
+            defaultValue: false,
+            ref s_useConnectionPoolV2);
+
+    #if NET && _WINDOWS
     /// <summary>
     /// When set to true, .NET Core will use the managed SNI implementation instead of the native SNI implementation.
     /// </summary>
@@ -355,13 +377,11 @@ internal static class LocalAppContextSwitches
             return false;
         }
     }
-    #else
+    #elif NET
     /// <summary>
     /// .NET Core on Unix does not support the native SNI, so this will always be true.
     /// </summary>
     public static bool UseManagedNetworking => true;
-    #endif
-
     #else
     /// <summary>
     /// .NET Framework does not support the managed SNI, so this will always be false.
@@ -369,40 +389,16 @@ internal static class LocalAppContextSwitches
     public static bool UseManagedNetworking => false;
     #endif
 
-    #if NETFRAMEWORK
     /// <summary>
-    /// Transparent Network IP Resolution (TNIR) is a revision of the existing MultiSubnetFailover feature.
-    /// TNIR affects the connection sequence of the driver in the case where the first resolved IP of the hostname
-    /// doesn't respond and there are multiple IPs associated with the hostname.
-    ///
-    /// TNIR interacts with MultiSubnetFailover to provide the following three connection sequences:
-    /// 0: One IP is attempted, followed by all IPs in parallel
-    /// 1: All IPs are attempted in parallel
-    /// 2: All IPs are attempted one after another
-    ///
-    /// TransparentNetworkIPResolution is enabled by default. MultiSubnetFailover is disabled by default.
-    /// To disable TNIR, you can enable the app context switch.
-    ///
-    /// This app context switch defaults to 'false'.
+    /// Specifies minimum login timeout to be set to 1 second instead of 0 seconds,
+    /// to prevent a login attempt from waiting indefinitely.
+    /// This app context switch defaults to 'true'.
     /// </summary>
-    public static bool DisableTnirByDefault =>
+    public static bool UseMinimumLoginTimeout =>
         AcquireAndReturn(
-            DisableTnirByDefaultString,
-            defaultValue: false,
-            ref s_disableTnirByDefault);
-    #endif
-
-    /// <summary>
-    /// When set to true, the default value for MultiSubnetFailover connection string property
-    /// will be true instead of false. This enables parallel IP connection attempts for 
-    /// improved connection times in multi-subnet environments.
-    /// This app context switch defaults to 'false'.
-    /// </summary>
-    public static bool EnableMultiSubnetFailoverByDefault =>
-        AcquireAndReturn(
-            EnableMultiSubnetFailoverByDefaultString,
-            defaultValue: false,
-            ref s_multiSubnetFailoverByDefault);
+            UseMinimumLoginTimeoutString,
+            defaultValue: true,
+            ref s_useMinimumLoginTimeout);
 
     #endregion
 
