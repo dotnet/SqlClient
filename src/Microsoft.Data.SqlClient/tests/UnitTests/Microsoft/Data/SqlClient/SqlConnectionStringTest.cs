@@ -8,7 +8,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
     {
         // Ensure we restore the original app context switch values after each
         // test.
-        private LocalAppContextSwitchesHelper _appContextSwitchHelper = new();
+        private readonly LocalAppContextSwitchesHelper _appContextSwitchHelper = new();
 
         public void Dispose()
         {

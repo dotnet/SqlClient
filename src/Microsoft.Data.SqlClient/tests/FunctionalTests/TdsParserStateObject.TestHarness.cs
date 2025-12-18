@@ -163,13 +163,13 @@ namespace Microsoft.Data.SqlClient
 
         private class SwitchesHelper : IDisposable
         {
-            private LocalAppContextSwitchesHelper _helper = new();
+            private readonly LocalAppContextSwitchesHelper _helper = new();
 
             public void Dispose()
             {
                 _helper.Dispose();
             }
-            
+
             public bool UseCompatibilityProcessSni
             {
                 get
@@ -179,7 +179,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
-        private SwitchesHelper LocalAppContextSwitches = new SwitchesHelper();
+        private readonly SwitchesHelper LocalAppContextSwitches = new SwitchesHelper();
 
 #if NETFRAMEWORK
         private SniNativeWrapperImpl _native;

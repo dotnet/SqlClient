@@ -67,13 +67,13 @@ internal static class LocalAppContextSwitches
     internal static SwitchValue s_multiSubnetFailoverByDefault = SwitchValue.None;
 
     #if NET
-    internal static SwitchValue s_globalizationInvariantMode;
+    internal static SwitchValue s_globalizationInvariantMode = SwitchValue.None;
     #endif
     #if NET && _WINDOWS
-    internal static SwitchValue s_useManagedNetworking;
+    internal static SwitchValue s_useManagedNetworking; = SwitchValue.None;
     #endif
     #if NETFRAMEWORK
-    internal static SwitchValue s_disableTnirByDefault;
+    internal static SwitchValue s_disableTnirByDefault = SwitchValue.None;
     #endif
 
     #endregion
@@ -111,27 +111,11 @@ internal static class LocalAppContextSwitches
     /// When this switch is set to false, the new experimental ProcessSni behavior using
     /// the packet multiplexer is enabled.
     /// </summary>
-    public static bool UseCompatibilityProcessSni
-    {
-        get
-        {
-            if (s_useCompatibilityProcessSni == SwitchValue.None)
-
-            {
-                // Check if the switch has been set by the AppContext switch directly
-                // If it has not been set, we default to true.
-                if (!AppContext.TryGetSwitch(UseCompatibilityProcessSniString, out bool returnedValue) || returnedValue)
-                {
-                    s_useCompatibilityProcessSni = SwitchValue.True;
-                }
-                else
-                {
-                    s_useCompatibilityProcessSni = SwitchValue.False;
-                }
-            }
-            return s_useCompatibilityProcessSni == SwitchValue.True;
-        }
-    }
+    public static bool UseCompatibilityProcessSni =>
+        AcquireAndReturn(
+            UseCompatibilityProcessSniString,
+            defaultValue: true,
+            ref s_useCompatibilityProcessSni);
 
     /// <summary>
     /// In TdsParser, the async multi-packet column value fetch behavior can use a continue snapshot state
@@ -154,18 +138,10 @@ internal static class LocalAppContextSwitches
                 return true;
             }
 
-            if (s_useCompatibilityAsyncBehaviour == SwitchValue.None)
-            {
-                if (!AppContext.TryGetSwitch(UseCompatibilityAsyncBehaviourString, out bool returnedValue) || returnedValue)
-                {
-                    s_useCompatibilityAsyncBehaviour = SwitchValue.True;
-                }
-                else
-                {
-                    s_useCompatibilityAsyncBehaviour = SwitchValue.False;
-                }
-            }
-            return s_useCompatibilityAsyncBehaviour == SwitchValue.True;
+            return AcquireAndReturn(
+                UseCompatibilityAsyncBehaviourString,
+                defaultValue: true,
+                ref s_useCompatibilityAsyncBehaviour);
         }
     }
 
@@ -174,24 +150,11 @@ internal static class LocalAppContextSwitches
     /// This warning can be suppressed by enabling this AppContext switch.
     /// This app context switch defaults to 'false'.
     /// </summary>
-    public static bool SuppressInsecureTlsWarning
-    {
-        get
-        {
-            if (s_suppressInsecureTlsWarning == SwitchValue.None)
-            {
-                if (AppContext.TryGetSwitch(SuppressInsecureTlsWarningString, out bool returnedValue) && returnedValue)
-                {
-                    s_suppressInsecureTlsWarning = SwitchValue.True;
-                }
-                else
-                {
-                    s_suppressInsecureTlsWarning = SwitchValue.False;
-                }
-            }
-            return s_suppressInsecureTlsWarning == SwitchValue.True;
-        }
-    }
+    public static bool SuppressInsecureTlsWarning =>
+        AcquireAndReturn(
+            SuppressInsecureTlsWarningString,
+            defaultValue: false,
+            ref s_suppressInsecureTlsWarning);
 
     /// <summary>
     /// In System.Data.SqlClient and Microsoft.Data.SqlClient prior to 3.0.0 a field with type Timestamp/RowVersion
@@ -199,72 +162,32 @@ internal static class LocalAppContextSwitches
     /// of Microsoft.Data.SqlClient, if this switch returns false an appropriate null value will be returned.
     /// This app context switch defaults to 'false'.
     /// </summary>
-    public static bool LegacyRowVersionNullBehavior
-    {
-        get
-        {
-            if (s_legacyRowVersionNullBehavior == SwitchValue.None)
-            {
-                if (AppContext.TryGetSwitch(LegacyRowVersionNullString, out bool returnedValue) && returnedValue)
-                {
-                    s_legacyRowVersionNullBehavior = SwitchValue.True;
-                }
-                else
-                {
-                    s_legacyRowVersionNullBehavior = SwitchValue.False;
-                }
-            }
-            return s_legacyRowVersionNullBehavior == SwitchValue.True;
-        }
-    }
+    public static bool LegacyRowVersionNullBehavior =>
+        AcquireAndReturn(
+            LegacyRowVersionNullString,
+            defaultValue: false,
+            ref s_legacyRowVersionNullBehavior);
 
     /// <summary>
     /// When enabled, ReadAsync runs asynchronously and does not block the calling thread.
     /// This app context switch defaults to 'false'.
     /// </summary>
-    public static bool MakeReadAsyncBlocking
-    {
-        get
-        {
-            if (s_makeReadAsyncBlocking == SwitchValue.None)
-            {
-                if (AppContext.TryGetSwitch(MakeReadAsyncBlockingString, out bool returnedValue) && returnedValue)
-                {
-                    s_makeReadAsyncBlocking = SwitchValue.True;
-                }
-                else
-                {
-                    s_makeReadAsyncBlocking = SwitchValue.False;
-                }
-            }
-            return s_makeReadAsyncBlocking == SwitchValue.True;
-        }
-    }
+    public static bool MakeReadAsyncBlocking =>
+        AcquireAndReturn(
+            MakeReadAsyncBlockingString,
+            defaultValue: false,
+            ref s_makeReadAsyncBlocking);
 
     /// <summary>
     /// Specifies minimum login timeout to be set to 1 second instead of 0 seconds,
     /// to prevent a login attempt from waiting indefinitely.
     /// This app context switch defaults to 'true'.
     /// </summary>
-    public static bool UseMinimumLoginTimeout
-    {
-        get
-        {
-            if (s_useMinimumLoginTimeout == SwitchValue.None)
-            {
-                if (!AppContext.TryGetSwitch(UseMinimumLoginTimeoutString, out bool returnedValue) || returnedValue)
-                {
-                    s_useMinimumLoginTimeout = SwitchValue.True;
-                }
-                else
-                {
-                    s_useMinimumLoginTimeout = SwitchValue.False;
-                }
-            }
-            return s_useMinimumLoginTimeout == SwitchValue.True;
-        }
-    }
-
+    public static bool UseMinimumLoginTimeout =>
+        AcquireAndReturn(
+            UseMinimumLoginTimeoutString,
+            defaultValue: true,
+            ref s_useMinimumLoginTimeout);
 
     /// <summary>
     /// When set to 'true' this will output a scale value of 7 (DEFAULT_VARTIME_SCALE) when the scale 
@@ -273,70 +196,31 @@ internal static class LocalAppContextSwitches
     /// regardless of switch value.
     /// This app context switch defaults to 'true'.
     /// </summary>
-    public static bool LegacyVarTimeZeroScaleBehaviour
-    {
-        get
-        {
-            if (s_legacyVarTimeZeroScaleBehaviour == SwitchValue.None)
-            {
-                if (!AppContext.TryGetSwitch(LegacyVarTimeZeroScaleBehaviourString, out bool returnedValue))
-                {
-                    s_legacyVarTimeZeroScaleBehaviour = SwitchValue.True;
-                }
-                else
-                {
-                    s_legacyVarTimeZeroScaleBehaviour = returnedValue ? SwitchValue.True : SwitchValue.False;
-                }
-            }
-            return s_legacyVarTimeZeroScaleBehaviour == SwitchValue.True;
-        }
-    }
+    public static bool LegacyVarTimeZeroScaleBehaviour =>
+        AcquireAndReturn(
+            LegacyVarTimeZeroScaleBehaviourString,
+            defaultValue: true,
+            ref s_legacyVarTimeZeroScaleBehaviour);
 
     /// <summary>
     /// When set to true, the connection pool will use the new V2 connection pool implementation.
     /// When set to false, the connection pool will use the legacy V1 implementation.
     /// This app context switch defaults to 'false'.
     /// </summary>
-    public static bool UseConnectionPoolV2
-    {
-        get
-        {
-            if (s_useConnectionPoolV2 == SwitchValue.None)
-            {
-                if (AppContext.TryGetSwitch(UseConnectionPoolV2String, out bool returnedValue) && returnedValue)
-                {
-                    s_useConnectionPoolV2 = SwitchValue.True;
-                }
-                else
-                {
-                    s_useConnectionPoolV2 = SwitchValue.False;
-                }
-            }
-            return s_useConnectionPoolV2 == SwitchValue.True;
-        }
-    }
+    public static bool UseConnectionPoolV2 =>
+        AcquireAndReturn(
+            UseConnectionPoolV2String,
+            defaultValue: false,
+            ref s_useConnectionPoolV2);
 
     /// <summary>
     /// When set to true, TdsParser will truncate (rather than round) decimal and SqlDecimal values when scaling them.
     /// </summary>
-    public static bool TruncateScaledDecimal
-    {
-        get
-        {
-            if (s_truncateScaledDecimal == SwitchValue.None)
-            {
-                if (AppContext.TryGetSwitch(TruncateScaledDecimalString, out bool returnedValue) && returnedValue)
-                {
-                    s_truncateScaledDecimal = SwitchValue.True;
-                }
-                else
-                {
-                    s_truncateScaledDecimal = SwitchValue.False;
-                }
-            }
-            return s_truncateScaledDecimal == SwitchValue.True;
-        }
-    }
+    public static bool TruncateScaledDecimal =>
+        AcquireAndReturn(
+            TruncateScaledDecimalString,
+            defaultValue: false,
+            ref s_truncateScaledDecimal);
 
     /// <summary>
     /// When set to true, the failover partner provided by the server during connection
@@ -347,45 +231,20 @@ internal static class LocalAppContextSwitches
     /// 
     /// This app context switch defaults to 'false'.
     /// </summary>
-    public static bool IgnoreServerProvidedFailoverPartner
-    {
-        get
-        {
-            if (s_ignoreServerProvidedFailoverPartner == SwitchValue.None)
-            {
-                if (AppContext.TryGetSwitch(IgnoreServerProvidedFailoverPartnerString, out bool returnedValue) && returnedValue)
-                {
-                    s_ignoreServerProvidedFailoverPartner = SwitchValue.True;
-                }
-                else
-                {
-                    s_ignoreServerProvidedFailoverPartner = SwitchValue.False;
-                }
-            }
-            return s_ignoreServerProvidedFailoverPartner == SwitchValue.True;
-        }
-    }
+    public static bool IgnoreServerProvidedFailoverPartner =>
+        AcquireAndReturn(
+            IgnoreServerProvidedFailoverPartnerString,
+            defaultValue: false,
+            ref s_ignoreServerProvidedFailoverPartner);
+
     /// <summary>
     /// When set to true, the user agent feature is enabled and the driver will send the user agent string to the server.
     /// </summary>
-    public static bool EnableUserAgent
-    {
-        get
-        {
-            if (s_enableUserAgent == SwitchValue.None)
-            {
-                if (AppContext.TryGetSwitch(EnableUserAgentString, out bool returnedValue) && returnedValue)
-                {
-                    s_enableUserAgent = SwitchValue.True;
-                }
-                else
-                {
-                    s_enableUserAgent = SwitchValue.False;
-                }
-            }
-            return s_enableUserAgent == SwitchValue.True;
-        }
-    }
+    public static bool EnableUserAgent =>
+        AcquireAndReturn(
+            EnableUserAgentString,
+            defaultValue: false,
+            ref s_enableUserAgent);
 
     #if NET
     /// <summary>
@@ -406,6 +265,17 @@ internal static class LocalAppContextSwitches
                 }
                 else
                 {
+                    // TODO(https://github.com/dotnet/SqlClient/pull/3853):
+                    // 
+                    // The comment's intention doesn't match the code.
+                    //
+                    // The comment claims to fallback to the environment
+                    // variable if the switch is not set.  However, it actually
+                    // falls-back if the switch is not set _OR_ it is set to
+                    // false.
+                    //
+                    // Should we update the comment or fix the code to match?
+
                     // If the switch is not set, we check the environment variable as the first fallback
                     string? envValue = Environment.GetEnvironmentVariable(GlobalizationInvariantModeEnvironmentVariable);
 
@@ -440,10 +310,7 @@ internal static class LocalAppContextSwitches
     /// <summary>
     /// .NET Framework does not support Globalization Invariant mode, so this will always be false.
     /// </summary>
-    public static bool GlobalizationInvariantMode
-    {
-        get => false;
-    }
+    public static bool GlobalizationInvariantMode => false;
     #endif
 
     #if NET
@@ -467,22 +334,25 @@ internal static class LocalAppContextSwitches
     {
         get
         {
-            if (s_useManagedNetworking == SwitchValue.None)
+            if (s_useManagedNetworking != SwitchValue.None)
             {
-                if (!OperatingSystem.IsWindows())
-                {
-                    s_useManagedNetworking = SwitchValue.True;
-                }
-                else if (AppContext.TryGetSwitch(UseManagedNetworkingOnWindowsString, out bool returnedValue) && returnedValue)
-                {
-                    s_useManagedNetworking = SwitchValue.True;
-                }
-                else
-                {
-                    s_useManagedNetworking = SwitchValue.False;
-                }
+                return s_useManagedNetworking == SwitchValue.True;
             }
-            return s_useManagedNetworking == SwitchValue.True;
+
+            if (!OperatingSystem.IsWindows())
+            {
+                s_useManagedNetworking = SwitchValue.True;
+                return true;
+            }
+
+            if (AppContext.TryGetSwitch(UseManagedNetworkingOnWindowsString, out bool returnedValue) && returnedValue)
+            {
+                s_useManagedNetworking = SwitchValue.True;
+                return true;
+            }
+
+            s_useManagedNetworking = SwitchValue.False;
+            return false;
         }
     }
     #else
@@ -515,25 +385,12 @@ internal static class LocalAppContextSwitches
     ///
     /// This app context switch defaults to 'false'.
     /// </summary>
-    public static bool DisableTnirByDefault
-    {
-        get
-        {
-            if (s_disableTnirByDefault == SwitchValue.None)
-            {
-                if (AppContext.TryGetSwitch(DisableTnirByDefaultString, out bool returnedValue) && returnedValue)
-                {
-                    s_disableTnirByDefault = SwitchValue.True;
-                }
-                else
-                {
-                    s_disableTnirByDefault = SwitchValue.False;
-                }
-            }
-            return s_disableTnirByDefault == SwitchValue.True;
-        }
-    }
-#endif
+    public static bool DisableTnirByDefault =>
+        AcquireAndReturn(
+            DisableTnirByDefaultString,
+            defaultValue: false,
+            ref s_disableTnirByDefault);
+    #endif
 
     /// <summary>
     /// When set to true, the default value for MultiSubnetFailover connection string property
@@ -541,24 +398,56 @@ internal static class LocalAppContextSwitches
     /// improved connection times in multi-subnet environments.
     /// This app context switch defaults to 'false'.
     /// </summary>
-    public static bool EnableMultiSubnetFailoverByDefault
-    {
-        get
-        {
-            if (s_multiSubnetFailoverByDefault == SwitchValue.None)
-            {
-                if (AppContext.TryGetSwitch(EnableMultiSubnetFailoverByDefaultString, out bool returnedValue) && returnedValue)
-                {
-                    s_multiSubnetFailoverByDefault = SwitchValue.True;
-                }
-                else
-                {
-                    s_multiSubnetFailoverByDefault = SwitchValue.False;
-                }
-            }
-            return s_multiSubnetFailoverByDefault == SwitchValue.True;
-        }
-    }
+    public static bool EnableMultiSubnetFailoverByDefault =>
+        AcquireAndReturn(
+            EnableMultiSubnetFailoverByDefaultString,
+            defaultValue: false,
+            ref s_multiSubnetFailoverByDefault);
 
+    #endregion
+
+    #region Helpers
+
+    /// <summary>
+    /// Acquires the value of the specified app context switch and stores it
+    /// in the given reference.  Applies the default value if the switch isn't
+    /// set.
+    /// 
+    /// If the cached value is already set, it is returned immediately without
+    /// attempting to re-acquire it.
+    /// 
+    /// No attempt is made to prevent multiple threads from acquiring the same
+    /// switch value simultaneously.  The worst that can happen is that the
+    /// switch is acquired more than once, and the last acquired value wins.
+    /// </summary>
+    /// <param name="switchName">The name of the app context switch.</param>
+    /// <param name="defaultValue">The default value to use if the switch is not set.</param>
+    /// <param name="switchValue">A reference to variable to store the switch value in.</param>
+    /// <returns>Returns the acquired value as a bool.</returns>
+    private static bool AcquireAndReturn(
+        string switchName,
+        bool defaultValue,
+        ref SwitchValue switchValue)
+    {
+        // Refuse to re-acquire a switch value.  Simply return whatever value
+        // was previously acquired.
+        if (switchValue != SwitchValue.None)
+        {
+            return switchValue == SwitchValue.True;
+        }
+
+        // Attempt to acquire the switch value from AppContext.
+        if (! AppContext.TryGetSwitch(switchName, out bool acquiredValue))
+        {
+            // The switch has no value, so use the given default.
+            switchValue = defaultValue ? SwitchValue.True : SwitchValue.False;
+            return defaultValue;
+        }
+
+        // Assign the appropriate SwitchValue based on the acquired value.
+        switchValue = acquiredValue ? SwitchValue.True : SwitchValue.False;
+        return acquiredValue;
+    }
+    
     #endregion
 }
