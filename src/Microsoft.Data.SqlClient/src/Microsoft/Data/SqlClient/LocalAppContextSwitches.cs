@@ -10,6 +10,8 @@ namespace Microsoft.Data.SqlClient;
 
 internal static class LocalAppContextSwitches
 {
+    #region Switch Names
+
     private const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
     private const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
     private const string SuppressInsecureTlsWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
@@ -34,30 +36,49 @@ internal static class LocalAppContextSwitches
     private const string DisableTnirByDefaultString = @"Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString";
     #endif
 
-    // this field is accessed through reflection in tests and should not be renamed or have the type changed without refactoring NullRow related tests
-    internal static bool? s_legacyRowVersionNullBehavior;
-    internal static bool? s_suppressInsecureTlsWarning;
-    internal static bool? s_makeReadAsyncBlocking;
-    internal static bool? s_useMinimumLoginTimeout;
-    // this field is accessed through reflection in Microsoft.Data.SqlClient.Tests.SqlParameterTests and should not be renamed or have the type changed without refactoring related tests
-    internal static bool? s_legacyVarTimeZeroScaleBehaviour;
-    internal static bool? s_useCompatibilityProcessSni;
-    internal static bool? s_useCompatibilityAsyncBehaviour;
-    internal static bool? s_useConnectionPoolV2;
-    internal static bool? s_truncateScaledDecimal;
-    internal static bool? s_ignoreServerProvidedFailoverPartner;
-    internal static bool? s_enableUserAgent;
-    internal static bool? s_multiSubnetFailoverByDefault;
+    #endregion
+
+    #region Switch Values
+
+    // We use a byte-based enum to track the value of each switch.  This plays
+    // nicely with threaded access.  A nullable bool would seem to be the
+    // obvious choice, but the way nullable bools are implemented in the CLR
+    // makes them not thread-safe without using locks (the HasValue and Value
+    // properties can get out of sync if one thread is writing while another is
+    // reading).
+    internal enum SwitchValue : byte
+    {
+        None = 0,
+        True = 1,
+        False = 2
+    }
+
+    internal static SwitchValue s_legacyRowVersionNullBehavior = SwitchValue.None;
+    internal static SwitchValue s_suppressInsecureTlsWarning = SwitchValue.None;
+    internal static SwitchValue s_makeReadAsyncBlocking = SwitchValue.None;
+    internal static SwitchValue s_useMinimumLoginTimeout = SwitchValue.None;
+    internal static SwitchValue s_legacyVarTimeZeroScaleBehaviour = SwitchValue.None;
+    internal static SwitchValue s_useCompatibilityProcessSni = SwitchValue.None;
+    internal static SwitchValue s_useCompatibilityAsyncBehaviour = SwitchValue.None;
+    internal static SwitchValue s_useConnectionPoolV2 = SwitchValue.None;
+    internal static SwitchValue s_truncateScaledDecimal = SwitchValue.None;
+    internal static SwitchValue s_ignoreServerProvidedFailoverPartner = SwitchValue.None;
+    internal static SwitchValue s_enableUserAgent = SwitchValue.None;
+    internal static SwitchValue s_multiSubnetFailoverByDefault = SwitchValue.None;
 
     #if NET
-    internal static bool? s_globalizationInvariantMode;
+    internal static SwitchValue s_globalizationInvariantMode;
     #endif
     #if NET && _WINDOWS
-    internal static bool? s_useManagedNetworking;
+    internal static TriState s_useManagedNetworking;
     #endif
     #if NETFRAMEWORK
-    internal static bool? s_disableTnirByDefault;
+    internal static SwitchValue s_disableTnirByDefault;
     #endif
+
+    #endregion
+
+    #region Static Initialization
 
     #if NET
     static LocalAppContextSwitches()
@@ -77,6 +98,10 @@ internal static class LocalAppContextSwitches
     }
     #endif
 
+    #endregion
+
+    #region Switch Properties
+
     // @TODO: Sort by name
 
     /// <summary>
@@ -90,21 +115,21 @@ internal static class LocalAppContextSwitches
     {
         get
         {
-            if (!s_useCompatibilityProcessSni.HasValue)
+            if (s_useCompatibilityProcessSni == SwitchValue.None)
 
             {
                 // Check if the switch has been set by the AppContext switch directly
                 // If it has not been set, we default to true.
                 if (!AppContext.TryGetSwitch(UseCompatibilityProcessSniString, out bool returnedValue) || returnedValue)
                 {
-                    s_useCompatibilityProcessSni = true;
+                    s_useCompatibilityProcessSni = SwitchValue.True;
                 }
                 else
                 {
-                    s_useCompatibilityProcessSni = false;
+                    s_useCompatibilityProcessSni = SwitchValue.False;
                 }
             }
-            return s_useCompatibilityProcessSni.Value;
+            return s_useCompatibilityProcessSni == SwitchValue.True;
         }
     }
 
@@ -129,18 +154,18 @@ internal static class LocalAppContextSwitches
                 return true;
             }
 
-            if (!s_useCompatibilityAsyncBehaviour.HasValue)
+            if (s_useCompatibilityAsyncBehaviour == SwitchValue.None)
             {
                 if (!AppContext.TryGetSwitch(UseCompatibilityAsyncBehaviourString, out bool returnedValue) || returnedValue)
                 {
-                    s_useCompatibilityAsyncBehaviour = true;
+                    s_useCompatibilityAsyncBehaviour = SwitchValue.True;
                 }
                 else
                 {
-                    s_useCompatibilityAsyncBehaviour = false;
+                    s_useCompatibilityAsyncBehaviour = SwitchValue.False;
                 }
             }
-            return s_useCompatibilityAsyncBehaviour.Value;
+            return s_useCompatibilityAsyncBehaviour == SwitchValue.True;
         }
     }
 
@@ -153,18 +178,18 @@ internal static class LocalAppContextSwitches
     {
         get
         {
-            if (!s_suppressInsecureTlsWarning.HasValue)
+            if (s_suppressInsecureTlsWarning == SwitchValue.None)
             {
                 if (AppContext.TryGetSwitch(SuppressInsecureTlsWarningString, out bool returnedValue) && returnedValue)
                 {
-                    s_suppressInsecureTlsWarning = true;
+                    s_suppressInsecureTlsWarning = SwitchValue.True;
                 }
                 else
                 {
-                    s_suppressInsecureTlsWarning = false;
+                    s_suppressInsecureTlsWarning = SwitchValue.False;
                 }
             }
-            return s_suppressInsecureTlsWarning.Value;
+            return s_suppressInsecureTlsWarning == SwitchValue.True;
         }
     }
 
@@ -178,18 +203,18 @@ internal static class LocalAppContextSwitches
     {
         get
         {
-            if (!s_legacyRowVersionNullBehavior.HasValue)
+            if (s_legacyRowVersionNullBehavior == SwitchValue.None)
             {
                 if (AppContext.TryGetSwitch(LegacyRowVersionNullString, out bool returnedValue) && returnedValue)
                 {
-                    s_legacyRowVersionNullBehavior = true;
+                    s_legacyRowVersionNullBehavior = SwitchValue.True;
                 }
                 else
                 {
-                    s_legacyRowVersionNullBehavior = false;
+                    s_legacyRowVersionNullBehavior = SwitchValue.False;
                 }
             }
-            return s_legacyRowVersionNullBehavior.Value;
+            return s_legacyRowVersionNullBehavior == SwitchValue.True;
         }
     }
 
@@ -201,18 +226,18 @@ internal static class LocalAppContextSwitches
     {
         get
         {
-            if (!s_makeReadAsyncBlocking.HasValue)
+            if (s_makeReadAsyncBlocking == SwitchValue.None)
             {
                 if (AppContext.TryGetSwitch(MakeReadAsyncBlockingString, out bool returnedValue) && returnedValue)
                 {
-                    s_makeReadAsyncBlocking = true;
+                    s_makeReadAsyncBlocking = SwitchValue.True;
                 }
                 else
                 {
-                    s_makeReadAsyncBlocking = false;
+                    s_makeReadAsyncBlocking = SwitchValue.False;
                 }
             }
-            return s_makeReadAsyncBlocking.Value;
+            return s_makeReadAsyncBlocking == SwitchValue.True;
         }
     }
 
@@ -225,18 +250,18 @@ internal static class LocalAppContextSwitches
     {
         get
         {
-            if (!s_useMinimumLoginTimeout.HasValue)
+            if (s_useMinimumLoginTimeout == SwitchValue.None)
             {
                 if (!AppContext.TryGetSwitch(UseMinimumLoginTimeoutString, out bool returnedValue) || returnedValue)
                 {
-                    s_useMinimumLoginTimeout = true;
+                    s_useMinimumLoginTimeout = SwitchValue.True;
                 }
                 else
                 {
-                    s_useMinimumLoginTimeout = false;
+                    s_useMinimumLoginTimeout = SwitchValue.False;
                 }
             }
-            return s_useMinimumLoginTimeout.Value;
+            return s_useMinimumLoginTimeout == SwitchValue.True;
         }
     }
 
@@ -252,18 +277,18 @@ internal static class LocalAppContextSwitches
     {
         get
         {
-            if (!s_legacyVarTimeZeroScaleBehaviour.HasValue)
+            if (s_legacyVarTimeZeroScaleBehaviour == SwitchValue.None)
             {
                 if (!AppContext.TryGetSwitch(LegacyVarTimeZeroScaleBehaviourString, out bool returnedValue))
                 {
-                    s_legacyVarTimeZeroScaleBehaviour = true;
+                    s_legacyVarTimeZeroScaleBehaviour = SwitchValue.True;
                 }
                 else
                 {
-                    s_legacyVarTimeZeroScaleBehaviour = returnedValue ? true : false;
+                    s_legacyVarTimeZeroScaleBehaviour = returnedValue ? SwitchValue.True : SwitchValue.False;
                 }
             }
-            return s_legacyVarTimeZeroScaleBehaviour.Value;
+            return s_legacyVarTimeZeroScaleBehaviour == SwitchValue.True;
         }
     }
 
@@ -276,18 +301,18 @@ internal static class LocalAppContextSwitches
     {
         get
         {
-            if (!s_useConnectionPoolV2.HasValue)
+            if (s_useConnectionPoolV2 == SwitchValue.None)
             {
                 if (AppContext.TryGetSwitch(UseConnectionPoolV2String, out bool returnedValue) && returnedValue)
                 {
-                    s_useConnectionPoolV2 = true;
+                    s_useConnectionPoolV2 = SwitchValue.True;
                 }
                 else
                 {
-                    s_useConnectionPoolV2 = false;
+                    s_useConnectionPoolV2 = SwitchValue.False;
                 }
             }
-            return s_useConnectionPoolV2.Value;
+            return s_useConnectionPoolV2 == SwitchValue.True;
         }
     }
 
@@ -298,18 +323,18 @@ internal static class LocalAppContextSwitches
     {
         get
         {
-            if (!s_truncateScaledDecimal.HasValue)
+            if (s_truncateScaledDecimal == SwitchValue.None)
             {
                 if (AppContext.TryGetSwitch(TruncateScaledDecimalString, out bool returnedValue) && returnedValue)
                 {
-                    s_truncateScaledDecimal = true;
+                    s_truncateScaledDecimal = SwitchValue.True;
                 }
                 else
                 {
-                    s_truncateScaledDecimal = false;
+                    s_truncateScaledDecimal = SwitchValue.False;
                 }
             }
-            return s_truncateScaledDecimal.Value;
+            return s_truncateScaledDecimal == SwitchValue.True;
         }
     }
 
@@ -326,18 +351,18 @@ internal static class LocalAppContextSwitches
     {
         get
         {
-            if (!s_ignoreServerProvidedFailoverPartner.HasValue)
+            if (s_ignoreServerProvidedFailoverPartner == SwitchValue.None)
             {
                 if (AppContext.TryGetSwitch(IgnoreServerProvidedFailoverPartnerString, out bool returnedValue) && returnedValue)
                 {
-                    s_ignoreServerProvidedFailoverPartner = true;
+                    s_ignoreServerProvidedFailoverPartner = SwitchValue.True;
                 }
                 else
                 {
-                    s_ignoreServerProvidedFailoverPartner = false;
+                    s_ignoreServerProvidedFailoverPartner = SwitchValue.False;
                 }
             }
-            return s_ignoreServerProvidedFailoverPartner.Value;
+            return s_ignoreServerProvidedFailoverPartner == SwitchValue.True;
         }
     }
     /// <summary>
@@ -347,18 +372,18 @@ internal static class LocalAppContextSwitches
     {
         get
         {
-            if (!s_enableUserAgent.HasValue)
+            if (s_enableUserAgent == SwitchValue.None)
             {
                 if (AppContext.TryGetSwitch(EnableUserAgentString, out bool returnedValue) && returnedValue)
                 {
-                    s_enableUserAgent = true;
+                    s_enableUserAgent = SwitchValue.True;
                 }
                 else
                 {
-                    s_enableUserAgent = false;
+                    s_enableUserAgent = SwitchValue.False;
                 }
             }
-            return s_enableUserAgent.Value;
+            return s_enableUserAgent == SwitchValue.True;
         }
     }
 
@@ -372,12 +397,12 @@ internal static class LocalAppContextSwitches
     {
         get
         {
-            if (!s_globalizationInvariantMode.HasValue)
+            if (s_globalizationInvariantMode == SwitchValue.None)
             {
                 // Check if invariant mode has been set by the AppContext switch directly
                 if (AppContext.TryGetSwitch(GlobalizationInvariantModeString, out bool returnedValue) && returnedValue)
                 {
-                    s_globalizationInvariantMode = true;
+                    s_globalizationInvariantMode = SwitchValue.True;
                 }
                 else
                 {
@@ -386,7 +411,7 @@ internal static class LocalAppContextSwitches
 
                     if (string.Equals(envValue, bool.TrueString, StringComparison.OrdinalIgnoreCase) || string.Equals(envValue, "1", StringComparison.OrdinalIgnoreCase))
                     {
-                        s_globalizationInvariantMode = true;
+                        s_globalizationInvariantMode = SwitchValue.True;
                     }
                     else
                     {
@@ -397,18 +422,18 @@ internal static class LocalAppContextSwitches
                         try
                         {
                             s_globalizationInvariantMode = System.Globalization.CultureInfo.GetCultureInfo("en-US").EnglishName.Contains("Invariant")
-                                ? true
-                                : false;
+                                ? SwitchValue.True
+                                : SwitchValue.False;
                         }
                         catch (System.Globalization.CultureNotFoundException)
                         {
                             // If the culture is not found, it means we are in invariant mode
-                            s_globalizationInvariantMode = true;
+                            s_globalizationInvariantMode = SwitchValue.True;
                         }
                     }
                 }
             }
-            return s_globalizationInvariantMode.Value;
+            return s_globalizationInvariantMode == SwitchValue.True;
         }
     }
     #else
@@ -442,22 +467,22 @@ internal static class LocalAppContextSwitches
     {
         get
         {
-            if (!s_useManagedNetworking.HasValue)
+            if (s_useManagedNetworking == TriState.None)
             {
                 if (!OperatingSystem.IsWindows())
                 {
-                    s_useManagedNetworking = true;
+                    s_useManagedNetworking = TriState.True;
                 }
                 else if (AppContext.TryGetSwitch(UseManagedNetworkingOnWindowsString, out bool returnedValue) && returnedValue)
                 {
-                    s_useManagedNetworking = true;
+                    s_useManagedNetworking = TriState.True;
                 }
                 else
                 {
-                    s_useManagedNetworking = false;
+                    s_useManagedNetworking = TriState.False;
                 }
             }
-            return s_useManagedNetworking.Value;
+            return s_useManagedNetworking == TriState.True;
         }
     }
     #else
@@ -494,18 +519,18 @@ internal static class LocalAppContextSwitches
     {
         get
         {
-            if (!s_disableTnirByDefault.HasValue)
+            if (s_disableTnirByDefault == SwitchValue.None)
             {
                 if (AppContext.TryGetSwitch(DisableTnirByDefaultString, out bool returnedValue) && returnedValue)
                 {
-                    s_disableTnirByDefault = true;
+                    s_disableTnirByDefault = SwitchValue.True;
                 }
                 else
                 {
-                    s_disableTnirByDefault = false;
+                    s_disableTnirByDefault = SwitchValue.False;
                 }
             }
-            return s_disableTnirByDefault.Value;
+            return s_disableTnirByDefault == SwitchValue.True;
         }
     }
 #endif
@@ -520,18 +545,20 @@ internal static class LocalAppContextSwitches
     {
         get
         {
-            if (!s_multiSubnetFailoverByDefault.HasValue)
+            if (s_multiSubnetFailoverByDefault == SwitchValue.None)
             {
                 if (AppContext.TryGetSwitch(EnableMultiSubnetFailoverByDefaultString, out bool returnedValue) && returnedValue)
                 {
-                    s_multiSubnetFailoverByDefault = true;
+                    s_multiSubnetFailoverByDefault = SwitchValue.True;
                 }
                 else
                 {
-                    s_multiSubnetFailoverByDefault = false;
+                    s_multiSubnetFailoverByDefault = SwitchValue.False;
                 }
             }
-            return s_multiSubnetFailoverByDefault.Value;
+            return s_multiSubnetFailoverByDefault == SwitchValue.True;
         }
     }
+
+    #endregion
 }
