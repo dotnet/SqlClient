@@ -66,7 +66,7 @@ public sealed class ColumnEncryptionCertificateFixture : CertificateFixtureBase
             IsAdmin &&
             _localMachineCertificate is not null)
         {
-            return _localMachineCertificate!;
+            return _localMachineCertificate;
         }
 
         throw new InvalidOperationException("Attempted to retrieve the certificate added to the local machine store; this requires administrator rights.");

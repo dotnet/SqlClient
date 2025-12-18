@@ -378,7 +378,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         }
 
         var value = field.GetValue(null);
-        if (value is byte switchValue)
+        if (value is not null)
         {
             // GOTCHA: This assumes that switch values map to bytes as:
             //
@@ -388,7 +388,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             //
             // See the LocalAppContextSwitches.SwitchValue enum definition.
             //
-            return switchValue == 0 ? null : switchValue == 1;
+            byte underlyingValue = (byte)value;
+            return underlyingValue == 0 ? null : underlyingValue == 1;
         }
 
         throw new InvalidOperationException(
@@ -423,21 +424,18 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 $"Field '{fieldName}' not found in LocalAppContextSwitches");
         }
 
-        field.SetValue(
-            null,
-            // GOTCHA: This assumes that switch values map to bytes as:
-            //
-            //   None = 0
-            //   True = 1
-            //   False = 2
-            //
-            // See the LocalAppContextSwitches.SwitchValue enum definition.
-            //
-            !value.HasValue
-                ? (byte)0
-                : value.Value
-                    ? (byte)1
-                    : (byte)2);
+        // GOTCHA: This assumes that switch values map to bytes as:
+        //
+        //   None = 0
+        //   True = 1
+        //   False = 2
+        //
+        // See the LocalAppContextSwitches.SwitchValue enum definition.
+        //
+        byte byteValue =
+            (byte)(!value.HasValue ? 0 : value.Value ? 1 : 2);
+
+        field.SetValue(null, Enum.ToObject(field.FieldType, byteValue));
     }
 
     #endregion
