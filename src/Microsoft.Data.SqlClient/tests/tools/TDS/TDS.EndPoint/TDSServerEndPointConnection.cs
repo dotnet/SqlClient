@@ -79,10 +79,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// <summary>
         /// We copy the remote endpoint so it can be used _after_ the connection
         /// is closed.
-        /// </summary> <summary>
-        ///
         /// </summary>
-        /// <value></value>
         public System.Net.EndPoint RemoteEndPoint { get; }
 
         /// <summary>
