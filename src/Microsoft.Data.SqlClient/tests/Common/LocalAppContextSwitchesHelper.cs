@@ -1,31 +1,40 @@
 using System;
+using System.Reflection;
 using System.Threading;
 
 namespace Microsoft.Data.SqlClient.Tests.Common;
 
 /// <summary>
-/// This class provides read/write access to LocalAppContextSwitches values
-/// for the duration of a test.  It is intended to be constructed at the start
-/// of a test and disposed of at the end.  It captures the original values of
-/// the switches and restores them when disposed.
+/// This class provides read/write access to LocalAppContextSwitches values for
+/// the duration of a test.  It is intended to be constructed at the start of a
+/// test and disposed of at the end.  It captures the original values of the
+/// switches and restores them when disposed.
 ///
 /// This follows the RAII pattern to ensure that the switches are always
 /// restored, which is important for global state like LocalAppContextSwitches.
 ///
 /// https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization
-/// 
-/// Only one instance can exist at a time. Overlapping constructor calls will
-/// wait until the previous instance is disposed.
+///
+/// As with all global state, care must be taken when using this class in tests
+/// that may run in parallel.  This class enforces a single instance policy
+/// using a semaphore.  Overlapping constructor calls will wait up to 5 seconds
+/// for the previous instance to be disposed.  Any tests that use this class
+/// should not keep an instance alive for longer than 5 seconds, or they risk
+/// causing failures in other tests.
 /// </summary>
 public sealed class LocalAppContextSwitchesHelper : IDisposable
 {
     #region Private Fields
 
-    // This semaphore ensures that only one instance of this class may exist at
-    // a time.
+    /// <summary>
+    /// This semaphore ensures that only one instance of this class may exist at
+    /// a time.
+    /// </summary>
     private static readonly SemaphoreSlim s_instanceLock = new(1, 1);
 
-    // These fields are used to capture the original switch values.
+    /// <summary>
+    /// These fields are used to capture the original switch values.
+    /// </summary>
     private readonly bool? _legacyRowVersionNullBehaviorOriginal;
     private readonly bool? _suppressInsecureTlsWarningOriginal;
     private readonly bool? _makeReadAsyncBlockingOriginal;
@@ -74,42 +83,52 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 "instance to be disposed.");
         }
 
-        _legacyRowVersionNullBehaviorOriginal =
-            Convert(LocalAppContextSwitches.s_legacyRowVersionNullBehavior);
-        _suppressInsecureTlsWarningOriginal =
-            Convert(LocalAppContextSwitches.s_suppressInsecureTlsWarning);
-        _makeReadAsyncBlockingOriginal =
-            Convert(LocalAppContextSwitches.s_makeReadAsyncBlocking);
-        _useMinimumLoginTimeoutOriginal =
-            Convert(LocalAppContextSwitches.s_useMinimumLoginTimeout);
-        _legacyVarTimeZeroScaleBehaviourOriginal =
-            Convert(LocalAppContextSwitches.s_legacyVarTimeZeroScaleBehaviour);
-        _useCompatibilityProcessSniOriginal =
-            Convert(LocalAppContextSwitches.s_useCompatibilityProcessSni);
-        _useCompatibilityAsyncBehaviourOriginal =
-            Convert(LocalAppContextSwitches.s_useCompatibilityAsyncBehaviour);
-        _useConnectionPoolV2Original =
-            Convert(LocalAppContextSwitches.s_useConnectionPoolV2);
-        _truncateScaledDecimalOriginal =
-            Convert(LocalAppContextSwitches.s_truncateScaledDecimal);
-        _ignoreServerProvidedFailoverPartnerOriginal =
-            Convert(LocalAppContextSwitches.s_ignoreServerProvidedFailoverPartner);
-        _enableUserAgentOriginal =
-            Convert(LocalAppContextSwitches.s_enableUserAgent);
-        _multiSubnetFailoverByDefaultOriginal =
-            Convert(LocalAppContextSwitches.s_multiSubnetFailoverByDefault);
-        #if NET
-        _globalizationInvariantModeOriginal =
-            Convert(LocalAppContextSwitches.s_globalizationInvariantMode);
-        #endif
-        #if NET && _WINDOWS
-        _useManagedNetworkingOriginal =
-            Convert(LocalAppContextSwitches.s_useManagedNetworking);
-        #endif
-        #if NETFRAMEWORK
-        _disableTnirByDefaultOriginal =
-            Convert(LocalAppContextSwitches.s_disableTnirByDefault);
-        #endif
+        try
+        {
+            _legacyRowVersionNullBehaviorOriginal =
+                GetSwitchValue("s_legacyRowVersionNullBehavior");
+            _suppressInsecureTlsWarningOriginal =
+                GetSwitchValue("s_suppressInsecureTlsWarning");
+            _makeReadAsyncBlockingOriginal =
+                GetSwitchValue("s_makeReadAsyncBlocking");
+            _useMinimumLoginTimeoutOriginal =
+                GetSwitchValue("s_useMinimumLoginTimeout");
+            _legacyVarTimeZeroScaleBehaviourOriginal =
+                GetSwitchValue("s_legacyVarTimeZeroScaleBehaviour");
+            _useCompatibilityProcessSniOriginal =
+                GetSwitchValue("s_useCompatibilityProcessSni");
+            _useCompatibilityAsyncBehaviourOriginal =
+                GetSwitchValue("s_useCompatibilityAsyncBehaviour");
+            _useConnectionPoolV2Original =
+                GetSwitchValue("s_useConnectionPoolV2");
+            _truncateScaledDecimalOriginal =
+                GetSwitchValue("s_truncateScaledDecimal");
+            _ignoreServerProvidedFailoverPartnerOriginal =
+                GetSwitchValue("s_ignoreServerProvidedFailoverPartner");
+            _enableUserAgentOriginal =
+                GetSwitchValue("s_enableUserAgent");
+            _multiSubnetFailoverByDefaultOriginal =
+                GetSwitchValue("s_multiSubnetFailoverByDefault");
+            #if NET
+            _globalizationInvariantModeOriginal =
+                GetSwitchValue("s_globalizationInvariantMode");
+            #endif
+            #if NET && _WINDOWS
+            _useManagedNetworkingOriginal =
+                GetSwitchValue("s_useManagedNetworking");
+            #endif
+            #if NETFRAMEWORK
+            _disableTnirByDefaultOriginal =
+                GetSwitchValue("s_disableTnirByDefault");
+            #endif
+        }
+        catch
+        {
+            // If we fail to capture the original values, release the lock
+            // immediately to avoid deadlocks.
+            s_instanceLock.Release();
+            throw;
+        }
     }
 
     /// <summary>
@@ -117,289 +136,189 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public void Dispose()
     {
-        LocalAppContextSwitches.s_legacyRowVersionNullBehavior =
-            Convert(_legacyRowVersionNullBehaviorOriginal);
-        LocalAppContextSwitches.s_suppressInsecureTlsWarning =
-            Convert(_suppressInsecureTlsWarningOriginal);
-        LocalAppContextSwitches.s_makeReadAsyncBlocking =
-            Convert(_makeReadAsyncBlockingOriginal);
-        LocalAppContextSwitches.s_useMinimumLoginTimeout =
-            Convert(_useMinimumLoginTimeoutOriginal);
-        LocalAppContextSwitches.s_legacyVarTimeZeroScaleBehaviour =
-            Convert(_legacyVarTimeZeroScaleBehaviourOriginal);
-        LocalAppContextSwitches.s_useCompatibilityProcessSni =
-            Convert(_useCompatibilityProcessSniOriginal);
-        LocalAppContextSwitches.s_useCompatibilityAsyncBehaviour =
-            Convert(_useCompatibilityAsyncBehaviourOriginal);
-        LocalAppContextSwitches.s_useConnectionPoolV2 =
-            Convert(_useConnectionPoolV2Original);
-        LocalAppContextSwitches.s_truncateScaledDecimal =
-            Convert(_truncateScaledDecimalOriginal);
-        LocalAppContextSwitches.s_ignoreServerProvidedFailoverPartner =
-            Convert(_ignoreServerProvidedFailoverPartnerOriginal);
-        LocalAppContextSwitches.s_enableUserAgent =
-            Convert(_enableUserAgentOriginal);
-        LocalAppContextSwitches.s_multiSubnetFailoverByDefault =
-            Convert(_multiSubnetFailoverByDefaultOriginal);
-        #if NET
-        LocalAppContextSwitches.s_globalizationInvariantMode =
-            Convert(_globalizationInvariantModeOriginal);
-        #endif
-        #if NET && _WINDOWS
-        LocalAppContextSwitches.s_useManagedNetworking =
-            Convert(_useManagedNetworkingOriginal);
-        #endif
-        #if NETFRAMEWORK
-        LocalAppContextSwitches.s_disableTnirByDefault =
-            Convert(_disableTnirByDefaultOriginal);
-        #endif
-
-        // Release the lock to allow another instance to be created.
-        s_instanceLock.Release();
+        try
+        {
+            SetSwitchValue(
+                "s_legacyRowVersionNullBehavior", 
+                _legacyRowVersionNullBehaviorOriginal);
+            SetSwitchValue(
+                "s_suppressInsecureTlsWarning",
+                _suppressInsecureTlsWarningOriginal);
+            SetSwitchValue(
+                "s_makeReadAsyncBlocking",
+                _makeReadAsyncBlockingOriginal);
+            SetSwitchValue(
+                "s_useMinimumLoginTimeout",
+                _useMinimumLoginTimeoutOriginal);
+            SetSwitchValue(
+                "s_legacyVarTimeZeroScaleBehaviour",
+                _legacyVarTimeZeroScaleBehaviourOriginal);
+            SetSwitchValue(
+                "s_useCompatibilityProcessSni",
+                _useCompatibilityProcessSniOriginal);
+            SetSwitchValue(
+                "s_useCompatibilityAsyncBehaviour",
+                _useCompatibilityAsyncBehaviourOriginal);
+            SetSwitchValue(
+                "s_useConnectionPoolV2",
+                _useConnectionPoolV2Original);
+            SetSwitchValue(
+                "s_truncateScaledDecimal",
+                _truncateScaledDecimalOriginal);
+            SetSwitchValue(
+                "s_ignoreServerProvidedFailoverPartner",
+                _ignoreServerProvidedFailoverPartnerOriginal);
+            SetSwitchValue(
+                "s_enableUserAgent",
+                _enableUserAgentOriginal);
+            SetSwitchValue(
+                "s_multiSubnetFailoverByDefault",
+                _multiSubnetFailoverByDefaultOriginal);
+            #if NET
+            SetSwitchValue(
+                "s_globalizationInvariantMode",
+                _globalizationInvariantModeOriginal);
+            #endif
+            #if NET && _WINDOWS
+            SetSwitchValue(
+                "s_useManagedNetworking",
+                _useManagedNetworkingOriginal);
+            #endif
+            #if NETFRAMEWORK
+            SetSwitchValue(
+                "s_disableTnirByDefault",
+                _disableTnirByDefaultOriginal);
+            #endif
+        }
+        finally
+        {
+            // Release the lock to allow another instance to be created.
+            s_instanceLock.Release();
+        }
     }
 
     #endregion
 
-    #region Public Properties
-
-    /// <summary>
-    /// Access the LocalAppContextSwitches.LegacyRowVersionNullBehavior
-    /// property.
-    /// </summary>
-    public bool LegacyRowVersionNullBehavior
-    {
-        get => LocalAppContextSwitches.LegacyRowVersionNullBehavior;
-    }
-
-    /// <summary>
-    /// Access the LocalAppContextSwitches.SuppressInsecureTlsWarning property.
-    /// </summary>
-    public bool SuppressInsecureTlsWarning
-    {
-        get => LocalAppContextSwitches.SuppressInsecureTlsWarning;
-    }
-
-    /// <summary>
-    /// Access the LocalAppContextSwitches.MakeReadAsyncBlocking property.
-    /// </summary>
-    public bool MakeReadAsyncBlocking
-    {
-        get => LocalAppContextSwitches.MakeReadAsyncBlocking;
-    }
-
-    /// <summary>
-    /// Access the LocalAppContextSwitches.UseMinimumLoginTimeout property.
-    /// </summary>
-    public bool UseMinimumLoginTimeout
-    {
-        get => LocalAppContextSwitches.UseMinimumLoginTimeout;
-    }
-
-    /// <summary>
-    /// Access the LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour
-    /// property.
-    /// </summary>
-    public bool LegacyVarTimeZeroScaleBehaviour
-    {
-        get => LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour;
-    }
-
-    /// <summary>
-    /// Access the LocalAppContextSwitches.UseCompatibilityProcessSni property.
-    /// </summary>
-    public bool UseCompatibilityProcessSni
-    {
-        get => LocalAppContextSwitches.UseCompatibilityProcessSni;
-    }
-
-    /// <summary>
-    /// Access the LocalAppContextSwitches.UseCompatibilityAsyncBehaviour
-    /// property.
-    /// </summary>
-    public bool UseCompatibilityAsyncBehaviour
-    {
-        get => LocalAppContextSwitches.UseCompatibilityAsyncBehaviour;
-    }
-
-    /// <summary>
-    /// Access the LocalAppContextSwitches.UseConnectionPoolV2 property.
-    /// </summary>
-    public bool UseConnectionPoolV2
-    {
-        get => LocalAppContextSwitches.UseConnectionPoolV2;
-    }
-
-    /// <summary>
-    /// Access the LocalAppContextSwitches.TruncateScaledDecimal property.
-    /// </summary>
-    public bool TruncateScaledDecimal
-    {
-        get => LocalAppContextSwitches.TruncateScaledDecimal;
-    }
-
-    public bool IgnoreServerProvidedFailoverPartner
-    {
-        get => LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner;
-    }
-
-    public bool EnableUserAgent
-    {
-        get => LocalAppContextSwitches.EnableUserAgent;
-    }
-
-    public bool EnableMultiSubnetFailoverByDefault
-    {
-        get => LocalAppContextSwitches.EnableMultiSubnetFailoverByDefault;
-    }
-
-    #if NET
-    /// <summary>
-    /// Access the LocalAppContextSwitches.GlobalizationInvariantMode property.
-    /// </summary>
-    public bool GlobalizationInvariantMode
-    {
-        get => LocalAppContextSwitches.GlobalizationInvariantMode;
-    }
-    #endif
-
-    #if NET && _WINDOWS
-    /// <summary>
-    /// Access the LocalAppContextSwitches.UseManagedNetworking property.
-    /// </summary>
-    public bool UseManagedNetworking
-    {
-        get => LocalAppContextSwitches.UseManagedNetworking;
-    }
-    #endif
-    
-    #if NETFRAMEWORK
-    /// <summary>
-    /// Access the LocalAppContextSwitches.DisableTnirByDefault property.
-    /// </summary>
-    public bool DisableTnirByDefault
-    {
-        get => LocalAppContextSwitches.DisableTnirByDefault;
-    }
-    #endif
+    #region Switch Value Getters and Setters
 
     // These properties get or set the like-named underlying switch field value.
     //
-    // They all fail the test if the value cannot be retrieved or set.
+    // They all throw if the value cannot be retrieved or set.
 
     /// <summary>
     /// Get or set the LocalAppContextSwitches.LegacyRowVersionNullBehavior
     /// switch value.
     /// </summary>
-    public bool? LegacyRowVersionNullBehaviorValue
+    public bool? LegacyRowVersionNullBehavior
     {
-        get => Convert(LocalAppContextSwitches.s_legacyRowVersionNullBehavior);
-        set => LocalAppContextSwitches.s_legacyRowVersionNullBehavior = Convert(value);
+        get => GetSwitchValue("s_legacyRowVersionNullBehavior");
+        set => SetSwitchValue("s_legacyRowVersionNullBehavior", value);
     }
 
     /// <summary>
     /// Get or set the LocalAppContextSwitches.SuppressInsecureTlsWarning
     /// switch value.
     /// </summary>
-    public bool? SuppressInsecureTlsWarningValue
+    public bool? SuppressInsecureTlsWarning
     {
-        get => Convert(LocalAppContextSwitches.s_suppressInsecureTlsWarning);
-        set => LocalAppContextSwitches.s_suppressInsecureTlsWarning = Convert(value);
+        get => GetSwitchValue("s_suppressInsecureTlsWarning");
+        set => SetSwitchValue("s_suppressInsecureTlsWarning", value);
     }
 
     /// <summary>
     /// Get or set the LocalAppContextSwitches.MakeReadAsyncBlocking switch
     /// value.
     /// </summary>
-    public bool? MakeReadAsyncBlockingValue
+    public bool? MakeReadAsyncBlocking
     {
-        get => Convert(LocalAppContextSwitches.s_makeReadAsyncBlocking);
-        set => LocalAppContextSwitches.s_makeReadAsyncBlocking = Convert(value);
+        get => GetSwitchValue("s_makeReadAsyncBlocking");
+        set => SetSwitchValue("s_makeReadAsyncBlocking", value);
     }
 
     /// <summary>
     /// Get or set the LocalAppContextSwitches.UseMinimumLoginTimeout switch
     /// value.
     /// </summary>
-    public bool? UseMinimumLoginTimeoutValue
+    public bool? UseMinimumLoginTimeout
     {
-        get => Convert(LocalAppContextSwitches.s_useMinimumLoginTimeout);
-        set => LocalAppContextSwitches.s_useMinimumLoginTimeout = Convert(value);
+        get => GetSwitchValue("s_useMinimumLoginTimeout");
+        set => SetSwitchValue("s_useMinimumLoginTimeout", value);
     }
 
     /// <summary>
     /// Get or set the LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour
     /// switch value.
     /// </summary>
-    public bool? LegacyVarTimeZeroScaleBehaviourValue
+    public bool? LegacyVarTimeZeroScaleBehaviour
     {
-        get => Convert(LocalAppContextSwitches.s_legacyVarTimeZeroScaleBehaviour);
-        set => LocalAppContextSwitches.s_legacyVarTimeZeroScaleBehaviour = Convert(value);
+        get => GetSwitchValue("s_legacyVarTimeZeroScaleBehaviour");
+        set => SetSwitchValue("s_legacyVarTimeZeroScaleBehaviour", value);
     }
 
     /// <summary>
     /// Get or set the LocalAppContextSwitches.UseCompatibilityProcessSni switch
     /// value.
     /// </summary>
-    public bool? UseCompatibilityProcessSniValue
+    public bool? UseCompatibilityProcessSni
     {
-        get => Convert(LocalAppContextSwitches.s_useCompatibilityProcessSni);
-        set => LocalAppContextSwitches.s_useCompatibilityProcessSni = Convert(value);
+        get => GetSwitchValue("s_useCompatibilityProcessSni");
+        set => SetSwitchValue("s_useCompatibilityProcessSni", value);
     }
 
     /// <summary>
     /// Get or set the LocalAppContextSwitches.UseCompatibilityAsyncBehaviour
     /// switch value.
     /// </summary>
-    public bool? UseCompatibilityAsyncBehaviourValue
+    public bool? UseCompatibilityAsyncBehaviour
     {
-        get => Convert(LocalAppContextSwitches.s_useCompatibilityAsyncBehaviour);
-        set => LocalAppContextSwitches.s_useCompatibilityAsyncBehaviour = Convert(value);
+        get => GetSwitchValue("s_useCompatibilityAsyncBehaviour");
+        set => SetSwitchValue("s_useCompatibilityAsyncBehaviour", value);
     }
 
     /// <summary>
     /// Get or set the LocalAppContextSwitches.UseConnectionPoolV2 switch value.
     /// </summary>
-    public bool? UseConnectionPoolV2Value
+    public bool? UseConnectionPoolV2
     {
-        get => Convert(LocalAppContextSwitches.s_useConnectionPoolV2);
-        set => LocalAppContextSwitches.s_useConnectionPoolV2 = Convert(value);
+        get => GetSwitchValue("s_useConnectionPoolV2");
+        set => SetSwitchValue("s_useConnectionPoolV2", value);
     }
 
     /// <summary>
     /// Get or set the LocalAppContextSwitches.TruncateScaledDecimal switch value.
     /// </summary>
-    public bool? TruncateScaledDecimalValue
+    public bool? TruncateScaledDecimal
     {
-        get => Convert(LocalAppContextSwitches.s_truncateScaledDecimal);
-        set => LocalAppContextSwitches.s_truncateScaledDecimal = Convert(value);
+        get => GetSwitchValue("s_truncateScaledDecimal");
+        set => SetSwitchValue("s_truncateScaledDecimal", value);
     }
 
-    public bool? IgnoreServerProvidedFailoverPartnerValue
+    public bool? IgnoreServerProvidedFailoverPartner
     {
-        get => Convert(LocalAppContextSwitches.s_ignoreServerProvidedFailoverPartner);
-        set => LocalAppContextSwitches.s_ignoreServerProvidedFailoverPartner = Convert(value);
+        get => GetSwitchValue("s_ignoreServerProvidedFailoverPartner");
+        set => SetSwitchValue("s_ignoreServerProvidedFailoverPartner", value);
     }
 
-    public bool? EnableUserAgentValue
+    public bool? EnableUserAgent
     {
-        get => Convert(LocalAppContextSwitches.s_enableUserAgent);
-        set => LocalAppContextSwitches.s_enableUserAgent = Convert(value);
+        get => GetSwitchValue("s_enableUserAgent");
+        set => SetSwitchValue("s_enableUserAgent", value);
     }
 
-    public bool? EnableMultiSubnetFailoverByDefaultValue
+    public bool? EnableMultiSubnetFailoverByDefault
     {
-        get => Convert(LocalAppContextSwitches.s_multiSubnetFailoverByDefault);
-        set => LocalAppContextSwitches.s_multiSubnetFailoverByDefault = Convert(value);
+        get => GetSwitchValue("s_multiSubnetFailoverByDefault");
+        set => SetSwitchValue("s_multiSubnetFailoverByDefault", value);
     }
 
 #if NET
     /// <summary>
     /// Get or set the LocalAppContextSwitches.GlobalizationInvariantMode switch value.
     /// </summary>
-    public bool? GlobalizationInvariantModeValue
+    public bool? GlobalizationInvariantMode
     {
-        get => Convert(LocalAppContextSwitches.s_globalizationInvariantMode);
-        set => LocalAppContextSwitches.s_globalizationInvariantMode = Convert(value);
+        get => GetSwitchValue("s_globalizationInvariantMode");
+        set => SetSwitchValue("s_globalizationInvariantMode", value);
     }
     #endif
 
@@ -407,10 +326,10 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// <summary>
     /// Get or set the LocalAppContextSwitches.UseManagedNetworking switch value.
     /// </summary>
-    public bool? UseManagedNetworkingValue
+    public bool? UseManagedNetworking
     {
-        get => Convert(LocalAppContextSwitches.s_useManagedNetworking);
-        set => LocalAppContextSwitches.s_useManagedNetworking = Convert(value);
+        get => GetSwitchValue("s_useManagedNetworking");
+        set => SetSwitchValue("s_useManagedNetworking", value);
     }
     #endif
     
@@ -419,10 +338,10 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// Get or set the LocalAppContextSwitches.DisableTnirByDefault switch
     /// value.
     /// </summary>
-    public bool? DisableTnirByDefaultValue
+    public bool? DisableTnirByDefault
     {
-        get => Convert(LocalAppContextSwitches.s_disableTnirByDefault);
-        set => LocalAppContextSwitches.s_disableTnirByDefault = Convert(value);
+        get => GetSwitchValue("s_disableTnirByDefault");
+        set => SetSwitchValue("s_disableTnirByDefault", value);
     }
     #endif
 
@@ -430,20 +349,95 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
 
     #region Helpers
 
-    private static bool? Convert(LocalAppContextSwitches.SwitchValue value)
+    /// <summary>
+    /// Use reflection to get a switch field value from LocalAppContextSwitches.
+    /// </summary>
+    private static bool? GetSwitchValue(string fieldName)
     {
-        return value == LocalAppContextSwitches.SwitchValue.None
-            ? null
-            : value == LocalAppContextSwitches.SwitchValue.True;
+        var assembly = Assembly.GetAssembly(typeof(SqlConnection));
+        if (assembly is null)
+        {
+            throw new InvalidOperationException(
+                "Could not get assembly for Microsoft.Data.SqlClient");
+        }
+        
+        var type = assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+        if (type is null)
+        {
+            throw new InvalidOperationException(
+                "Could not get type LocalAppContextSwitches");
+        }
+
+        var field = type.GetField(
+            fieldName,
+            BindingFlags.Static | BindingFlags.NonPublic);
+        if (field == null)
+        {
+            throw new InvalidOperationException(
+                $"Field '{fieldName}' not found in LocalAppContextSwitches");
+        }
+
+        var value = field.GetValue(null);
+        if (value is byte switchValue)
+        {
+            // GOTCHA: This assumes that switch values map to bytes as:
+            //
+            //   None = 0
+            //   True = 1
+            //   False = 2
+            //
+            // See the LocalAppContextSwitches.SwitchValue enum definition.
+            //
+            return switchValue == 0 ? null : switchValue == 1;
+        }
+
+        throw new InvalidOperationException(
+            $"Field '{fieldName}' is not of type byte");
     }
 
-    private static LocalAppContextSwitches.SwitchValue Convert(bool? value)
+    /// <summary>
+    /// Use reflection to set a switch field value in LocalAppContextSwitches.
+    /// </summary>
+    private static void SetSwitchValue(string fieldName, bool? value)
     {
-        return !value.HasValue
-            ? LocalAppContextSwitches.SwitchValue.None
-            : value.Value
-                ? LocalAppContextSwitches.SwitchValue.True
-                : LocalAppContextSwitches.SwitchValue.False;
+        var assembly = Assembly.GetAssembly(typeof(SqlConnection));
+        if (assembly is null)
+        {
+            throw new InvalidOperationException(
+                "Could not get assembly for Microsoft.Data.SqlClient");
+        }
+        
+        var type = assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+        if (type is null)
+        {
+            throw new InvalidOperationException(
+                "Could not get type LocalAppContextSwitches");
+        }
+
+        var field = type.GetField(
+            fieldName,
+            BindingFlags.Static | BindingFlags.NonPublic);
+        if (field == null)
+        {
+            throw new InvalidOperationException(
+                $"Field '{fieldName}' not found in LocalAppContextSwitches");
+        }
+
+        field.SetValue(
+            null,
+            // GOTCHA: This assumes that switch values map to bytes as:
+            //
+            //   None = 0
+            //   True = 1
+            //   False = 2
+            //
+            // See the LocalAppContextSwitches.SwitchValue enum definition.
+            //
+            !value.HasValue
+                ? (byte)0
+                : value.Value
+                    ? (byte)1
+                    : (byte)2);
     }
 
     #endregion

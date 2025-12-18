@@ -32,7 +32,6 @@
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFramework)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
   <ItemGroup Condition="$(CDP_BUILD_TYPE)!=Official">
-    <InternalsVisibleTo Include="Common" />
     <InternalsVisibleTo Include="UnitTests" />
   </ItemGroup>
   <ItemGroup>

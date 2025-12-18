@@ -70,7 +70,7 @@ internal static class LocalAppContextSwitches
     internal static SwitchValue s_globalizationInvariantMode;
     #endif
     #if NET && _WINDOWS
-    internal static TriState s_useManagedNetworking;
+    internal static SwitchValue s_useManagedNetworking;
     #endif
     #if NETFRAMEWORK
     internal static SwitchValue s_disableTnirByDefault;
@@ -467,22 +467,22 @@ internal static class LocalAppContextSwitches
     {
         get
         {
-            if (s_useManagedNetworking == TriState.None)
+            if (s_useManagedNetworking == SwitchValue.None)
             {
                 if (!OperatingSystem.IsWindows())
                 {
-                    s_useManagedNetworking = TriState.True;
+                    s_useManagedNetworking = SwitchValue.True;
                 }
                 else if (AppContext.TryGetSwitch(UseManagedNetworkingOnWindowsString, out bool returnedValue) && returnedValue)
                 {
-                    s_useManagedNetworking = TriState.True;
+                    s_useManagedNetworking = SwitchValue.True;
                 }
                 else
                 {
-                    s_useManagedNetworking = TriState.False;
+                    s_useManagedNetworking = SwitchValue.False;
                 }
             }
-            return s_useManagedNetworking == TriState.True;
+            return s_useManagedNetworking == SwitchValue.True;
         }
     }
     #else

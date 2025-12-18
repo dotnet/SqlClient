@@ -529,7 +529,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         {
             // Arrange
             using LocalAppContextSwitchesHelper switchesHelper = new();
-            switchesHelper.IgnoreServerProvidedFailoverPartnerValue = true;
+            switchesHelper.IgnoreServerProvidedFailoverPartner = true;
 
             using TdsServer failoverServer = new(
                 new TdsServerArguments

@@ -1,17 +1,18 @@
 ﻿using System;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
-using static Microsoft.Data.SqlClient.Tests.Common.LocalAppContextSwitchesHelper;
 
 namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
 {
     public class SqlConnectionStringTest : IDisposable
     {
-        private LocalAppContextSwitchesHelper _appContextSwitchHelper;
-        public SqlConnectionStringTest()
+        // Ensure we restore the original app context switch values after each
+        // test.
+        private LocalAppContextSwitchesHelper _appContextSwitchHelper = new();
+
+        public void Dispose()
         {
-            // Ensure that the app context switch is set to the default value
-            _appContextSwitchHelper = new LocalAppContextSwitchesHelper();
+            _appContextSwitchHelper.Dispose();
         }
 
 #if NETFRAMEWORK
@@ -43,7 +44,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             // the value of TransparentNetworkIPResolution property in SqlConnectionString.
 
             // Arrange
-            _appContextSwitchHelper.DisableTnirByDefaultValue = tnirDisabledAppContext;
+            _appContextSwitchHelper.DisableTnirByDefault = tnirDisabledAppContext;
 
             // Act
             SqlConnectionStringBuilder builder = new();
@@ -71,7 +72,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         [InlineData(null, null, false)]
         public void TestDefaultMultiSubnetFailover(bool? msfInConnString, bool? msfEnabledAppContext, bool expectedValue)
         {
-            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefaultValue = msfEnabledAppContext;
+            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefault = msfEnabledAppContext;
 
             SqlConnectionStringBuilder builder = new();
             if (msfInConnString.HasValue)
@@ -89,7 +90,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         [Fact]
         public void TestMultiSubnetFailoverWithFailoverPartnerThrows()
         {
-            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefaultValue = true;
+            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefault = true;
 
             SqlConnectionStringBuilder builder = new()
             {
@@ -99,12 +100,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             };
 
             Assert.Throws<ArgumentException>(() => new SqlConnectionString(builder.ConnectionString));
-        }
-
-        public void Dispose()
-        {
-            // Clean up any resources if necessary
-            _appContextSwitchHelper.Dispose();
         }
     }
 }
