@@ -744,26 +744,6 @@
       <IsUnsigned>false</IsUnsigned>
     </DataTypes>
     <DataTypes>
-      <TypeName>varbinary</TypeName>
-      <ProviderDbType>21</ProviderDbType>
-      <ColumnSize>8000</ColumnSize>
-      <CreateFormat>varbinary({0})</CreateFormat>
-      <CreateParameters>max length</CreateParameters>
-      <DataType>System.Byte[]</DataType>
-      <IsAutoIncrementable>false</IsAutoIncrementable>
-      <IsBestMatch>true</IsBestMatch>
-      <IsCaseSensitive>false</IsCaseSensitive>
-      <IsConcurrencyType>false</IsConcurrencyType>
-      <IsFixedLength>false</IsFixedLength>
-      <IsFixedPrecisionScale>false</IsFixedPrecisionScale>
-      <IsLong>false</IsLong>
-      <IsNullable>true</IsNullable>
-      <IsSearchable>true</IsSearchable>
-      <IsSearchableWithLike>false</IsSearchableWithLike>
-      <MaximumVersion>08.99.999.9</MaximumVersion>
-      <LiteralPrefix>0x</LiteralPrefix>
-    </DataTypes>
-    <DataTypes>
       <TypeName>timestamp</TypeName>
       <ProviderDbType>19</ProviderDbType>
       <ColumnSize>8</ColumnSize>
@@ -819,27 +799,6 @@
       <LiteralPrefix>0x</LiteralPrefix>
     </DataTypes>
     <DataTypes>
-      <TypeName>char</TypeName>
-      <ProviderDbType>3</ProviderDbType>
-      <ColumnSize>8000</ColumnSize>
-      <CreateFormat>char</CreateFormat>
-      <CreateParameters>length</CreateParameters>
-      <DataType>System.String</DataType>
-      <IsAutoIncrementable>false</IsAutoIncrementable>
-      <IsBestMatch>true</IsBestMatch>
-      <IsCaseSensitive>false</IsCaseSensitive>
-      <IsConcurrencyType>false</IsConcurrencyType>
-      <IsFixedLength>true</IsFixedLength>
-      <IsFixedPrecisionScale>false</IsFixedPrecisionScale>
-      <IsLong>false</IsLong>
-      <IsNullable>true</IsNullable>
-      <IsSearchable>true</IsSearchable>
-      <IsSearchableWithLike>true</IsSearchableWithLike>
-      <MaximumVersion>08.99.999.9</MaximumVersion>
-      <LiteralPrefix>'</LiteralPrefix>
-      <LiteralSuffix>'</LiteralSuffix>
-    </DataTypes>
-    <DataTypes>
       <TypeName>text</TypeName>
       <ProviderDbType>18</ProviderDbType>
       <ColumnSize>2147483647</ColumnSize>
@@ -859,48 +818,6 @@
       <LiteralSuffix>'</LiteralSuffix>
     </DataTypes>
     <DataTypes>
-      <TypeName>varchar</TypeName>
-      <ProviderDbType>22</ProviderDbType>
-      <ColumnSize>8000</ColumnSize>
-      <CreateFormat>varchar({0})</CreateFormat>
-      <CreateParameters>max length</CreateParameters>
-      <DataType>System.String</DataType>
-      <IsAutoIncrementable>false</IsAutoIncrementable>
-      <IsBestMatch>true</IsBestMatch>
-      <IsCaseSensitive>false</IsCaseSensitive>
-      <IsConcurrencyType>false</IsConcurrencyType>
-      <IsFixedLength>false</IsFixedLength>
-      <IsFixedPrecisionScale>false</IsFixedPrecisionScale>
-      <IsLong>false</IsLong>
-      <IsNullable>true</IsNullable>
-      <IsSearchable>true</IsSearchable>
-      <IsSearchableWithLike>true</IsSearchableWithLike>
-      <MaximumVersion>08.99.999.9</MaximumVersion>
-      <LiteralPrefix>'</LiteralPrefix>
-      <LiteralSuffix>'</LiteralSuffix>
-    </DataTypes>
-    <DataTypes>
-      <TypeName>nchar</TypeName>
-      <ProviderDbType>10</ProviderDbType>
-      <ColumnSize>4000</ColumnSize>
-      <CreateFormat>nchar({0})</CreateFormat>
-      <CreateParameters>length</CreateParameters>
-      <DataType>System.String</DataType>
-      <IsAutoIncrementable>false</IsAutoIncrementable>
-      <IsBestMatch>true</IsBestMatch>
-      <IsCaseSensitive>false</IsCaseSensitive>
-      <IsConcurrencyType>false</IsConcurrencyType>
-      <IsFixedLength>true</IsFixedLength>
-      <IsFixedPrecisionScale>false</IsFixedPrecisionScale>
-      <IsLong>false</IsLong>
-      <IsNullable>true</IsNullable>
-      <IsSearchable>true</IsSearchable>
-      <IsSearchableWithLike>true</IsSearchableWithLike>
-      <MaximumVersion>08.99.999.9</MaximumVersion>
-      <LiteralPrefix>N'</LiteralPrefix>
-      <LiteralSuffix>'</LiteralSuffix>
-    </DataTypes>
-    <DataTypes>
       <TypeName>ntext</TypeName>
       <ProviderDbType>11</ProviderDbType>
       <ColumnSize>1073741823</ColumnSize>
@@ -916,27 +833,6 @@
       <IsNullable>true</IsNullable>
       <IsSearchable>false</IsSearchable>
       <IsSearchableWithLike>true</IsSearchableWithLike>
-      <LiteralPrefix>N'</LiteralPrefix>
-      <LiteralSuffix>'</LiteralSuffix>
-    </DataTypes>
-    <DataTypes>
-      <TypeName>nvarchar</TypeName>
-      <ProviderDbType>12</ProviderDbType>
-      <ColumnSize>4000</ColumnSize>
-      <CreateFormat>nvarchar({0})</CreateFormat>
-      <CreateParameters>max length</CreateParameters>
-      <DataType>System.String</DataType>
-      <IsAutoIncrementable>false</IsAutoIncrementable>
-      <IsBestMatch>true</IsBestMatch>
-      <IsCaseSensitive>false</IsCaseSensitive>
-      <IsConcurrencyType>false</IsConcurrencyType>
-      <IsFixedLength>false</IsFixedLength>
-      <IsFixedPrecisionScale>false</IsFixedPrecisionScale>
-      <IsLong>false</IsLong>
-      <IsNullable>true</IsNullable>
-      <IsSearchable>true</IsSearchable>
-      <IsSearchableWithLike>true</IsSearchableWithLike>
-      <MaximumVersion>08.99.999.9</MaximumVersion>
       <LiteralPrefix>N'</LiteralPrefix>
       <LiteralSuffix>'</LiteralSuffix>
     </DataTypes>
@@ -1053,7 +949,6 @@
       <IsNullable>true</IsNullable>
       <IsSearchable>false</IsSearchable>
       <IsSearchableWithLike>false</IsSearchableWithLike>
-      <MinimumVersion>09.00.000.0</MinimumVersion>
       <IsLiteralSupported>false</IsLiteralSupported>
     </DataTypes>
     <DataTypes>
@@ -1073,7 +968,6 @@
       <IsNullable>true</IsNullable>
       <IsSearchable>true</IsSearchable>
       <IsSearchableWithLike>true</IsSearchableWithLike>
-      <MinimumVersion>09.00.000.0</MinimumVersion>
       <LiteralPrefix>'</LiteralPrefix>
       <LiteralSuffix>'</LiteralSuffix>
     </DataTypes>
@@ -1094,7 +988,6 @@
       <IsNullable>true</IsNullable>
       <IsSearchable>true</IsSearchable>
       <IsSearchableWithLike>true</IsSearchableWithLike>
-      <MinimumVersion>09.00.000.0</MinimumVersion>
       <LiteralPrefix>'</LiteralPrefix>
       <LiteralSuffix>'</LiteralSuffix>
     </DataTypes>
@@ -1115,7 +1008,6 @@
       <IsNullable>true</IsNullable>
       <IsSearchable>true</IsSearchable>
       <IsSearchableWithLike>true</IsSearchableWithLike>
-      <MinimumVersion>09.00.000.0</MinimumVersion>
       <LiteralPrefix>N'</LiteralPrefix>
       <LiteralSuffix>'</LiteralSuffix>
     </DataTypes>
@@ -1136,7 +1028,6 @@
       <IsNullable>true</IsNullable>
       <IsSearchable>true</IsSearchable>
       <IsSearchableWithLike>true</IsSearchableWithLike>
-      <MinimumVersion>09.00.000.0</MinimumVersion>
       <LiteralPrefix>N'</LiteralPrefix>
       <LiteralSuffix>'</LiteralSuffix>
     </DataTypes>
@@ -1157,7 +1048,6 @@
       <IsNullable>true</IsNullable>
       <IsSearchable>true</IsSearchable>
       <IsSearchableWithLike>false</IsSearchableWithLike>
-      <MinimumVersion>09.00.000.0</MinimumVersion>
       <LiteralPrefix>0x</LiteralPrefix>
     </DataTypes>
     <DataTypes>
