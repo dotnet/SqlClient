@@ -15,7 +15,13 @@
     <KeyFile>$(SigningKeyPath)</KeyFile>
   </PropertyGroup>
 
-  
+  <!-- Internals visible to ============================================ -->
+  <ItemGroup Condition="'$(CDP_BUILD_TYPE)' != 'Official'">
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>UnitTests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
   <!-- OS Constants ==================================================== -->
   <PropertyGroup>
     <!-- @TODO: Move to directory.build.props? -->
