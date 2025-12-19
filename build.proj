@@ -223,8 +223,8 @@
   <!-- Run all unit tests applicable to Windows. -->
   <Target Name="RunUnitTestsWindows" Condition="'$(IsEnabledWindows)' == 'true' AND $(ReferenceType.Contains('Project'))">
     <PropertyGroup>
-      <FilterStatement>"$(Filter)"</FilterStatement>    
-      <FilterStatement Condition="'$(FilterStatement)' == ''">"category!=failing&amp;category!=flaky"</FilterStatement>
+      <FilterStatement>$(Filter)</FilterStatement>    
+      <FilterStatement Condition="'$(FilterStatement)' == ''">category!=failing&amp;category!=flaky</FilterStatement>
       <TestCommand>
         $(DotnetPath)dotnet test "@(UnitTestsProj)"
         --no-build
@@ -234,7 +234,7 @@
         -p:TestTargetOS=Windows$(TargetGroup)
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
-        --filter $(FilterStatement)
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Unit-Windows$(TargetGroup)-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -246,8 +246,8 @@
   <!-- Run all unit tests applicable to Unix. -->
   <Target Name="RunUnitTestsUnix" Condition="'$(IsEnabledWindows)' != 'true' AND $(ReferenceType.Contains('Project'))">
     <PropertyGroup>
-      <FilterStatement>"$(Filter)"</FilterStatement>    
-      <FilterStatement Condition="'$(FilterStatement)' == ''">"category!=failing&amp;category!=flaky"</FilterStatement>
+      <FilterStatement>$(Filter)</FilterStatement>    
+      <FilterStatement Condition="'$(FilterStatement)' == ''">category!=failing&amp;category!=flaky</FilterStatement>
       <TestCommand>
         $(DotnetPath)dotnet test "@(UnitTestsProj)"
         --no-build
@@ -257,7 +257,7 @@
         -p:TestTargetOS=Unixnetcoreapp
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
-        --filter $(FilterStatement)
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Unit-Unixnetcoreapp-$(TestSet)"
     </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -272,8 +272,8 @@
   <!-- Run all Functional tests applicable to Windows. -->
   <Target Name="RunFunctionalTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
     <PropertyGroup>
-      <FilterStatement>"$(Filter)"</FilterStatement>    
-      <FilterStatement Condition="'$(FilterStatement)' == ''">"category!=failing&amp;category!=flaky"</FilterStatement>
+      <FilterStatement>$(Filter)</FilterStatement>    
+      <FilterStatement Condition="'$(FilterStatement)' == ''">category!=failing&amp;category!=flaky</FilterStatement>
       <TestCommand>
         $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
         --no-build
@@ -285,7 +285,7 @@
         -p:TestTargetOS=Windows$(TargetGroup)
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
-        --filter $(FilterStatement)
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -297,8 +297,8 @@
   <!-- Run all Functional tests applicable to Unix. -->
   <Target Name="RunFunctionalTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
       <PropertyGroup>
-      <FilterStatement>"$(Filter)"</FilterStatement>    
-      <FilterStatement Condition="'$(FilterStatement)' == ''">"category!=failing&amp;category!=flaky"</FilterStatement>
+      <FilterStatement>$(Filter)</FilterStatement>    
+      <FilterStatement Condition="'$(FilterStatement)' == ''">category!=failing&amp;category!=flaky</FilterStatement>
       <TestCommand>
         $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
         --no-build
@@ -310,7 +310,7 @@
         -p:TestTargetOS=Unixnetcoreapp
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
-        --filter $(FilterStatement)
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Functional-Unixnetcoreapp-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -325,8 +325,8 @@
   <!-- Run all Manual tests applicable to Windows. -->
   <Target Name="RunManualTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
     <PropertyGroup>
-      <FilterStatement>"$(Filter)"</FilterStatement>    
-      <FilterStatement Condition="'$(FilterStatement)' == ''">"category!=failing&amp;category!=flaky"</FilterStatement>
+      <FilterStatement>$(Filter)</FilterStatement>    
+      <FilterStatement Condition="'$(FilterStatement)' == ''">category!=failing&amp;category!=flaky</FilterStatement>
       <TestCommand>
         $(DotnetPath)dotnet test "@(ManualTestsProj)"
         --no-build
@@ -338,7 +338,7 @@
         -p:TestTargetOS=Windows$(TargetGroup)
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
-        --filter $(FilterStatement)
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -350,8 +350,8 @@
   <!-- Run all Manual tests applicable to Unix. -->
   <Target Name="RunManualTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
     <PropertyGroup>
-      <FilterStatement>"$(Filter)"</FilterStatement>    
-      <FilterStatement Condition="'$(FilterStatement)' == ''">"category!=failing&amp;category!=flaky"</FilterStatement>
+      <FilterStatement>$(Filter)</FilterStatement>    
+      <FilterStatement Condition="'$(FilterStatement)' == ''">category!=failing&amp;category!=flaky</FilterStatement>
       <TestCommand>
         $(DotnetPath)dotnet test "@(ManualTestsProj)"
         --no-build
@@ -363,7 +363,7 @@
         -p:TestTargetOS=Unixnetcoreapp
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
-        --filter $(FilterStatement)
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
