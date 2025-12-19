@@ -223,7 +223,7 @@
   <!-- Run all unit tests applicable to Windows. -->
   <Target Name="RunUnitTestsWindows" Condition="'$(IsEnabledWindows)' == 'true' AND $(ReferenceType.Contains('Project'))">
     <PropertyGroup>
-      <FilterStatement>$(Filter)</FilterStatement>    
+      <FilterStatement>"$(Filter)"</FilterStatement>    
       <FilterStatement Condition="'$(FilterStatement)' == ''">"category!=failing&amp;category!=flaky"</FilterStatement>
       <TestCommand>
         $(DotnetPath)dotnet test "@(UnitTestsProj)"
@@ -246,7 +246,7 @@
   <!-- Run all unit tests applicable to Unix. -->
   <Target Name="RunUnitTestsUnix" Condition="'$(IsEnabledWindows)' != 'true' AND $(ReferenceType.Contains('Project'))">
     <PropertyGroup>
-      <FilterStatement>$(Filter)</FilterStatement>    
+      <FilterStatement>"$(Filter)"</FilterStatement>    
       <FilterStatement Condition="'$(FilterStatement)' == ''">"category!=failing&amp;category!=flaky"</FilterStatement>
       <TestCommand>
         $(DotnetPath)dotnet test "@(UnitTestsProj)"
@@ -272,7 +272,7 @@
   <!-- Run all Functional tests applicable to Windows. -->
   <Target Name="RunFunctionalTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
     <PropertyGroup>
-      <FilterStatement>$(Filter)</FilterStatement>    
+      <FilterStatement>"$(Filter)"</FilterStatement>    
       <FilterStatement Condition="'$(FilterStatement)' == ''">"category!=failing&amp;category!=flaky"</FilterStatement>
       <TestCommand>
         $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
@@ -297,7 +297,7 @@
   <!-- Run all Functional tests applicable to Unix. -->
   <Target Name="RunFunctionalTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
       <PropertyGroup>
-      <FilterStatement>$(Filter)</FilterStatement>    
+      <FilterStatement>"$(Filter)"</FilterStatement>    
       <FilterStatement Condition="'$(FilterStatement)' == ''">"category!=failing&amp;category!=flaky"</FilterStatement>
       <TestCommand>
         $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
@@ -325,7 +325,7 @@
   <!-- Run all Manual tests applicable to Windows. -->
   <Target Name="RunManualTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
     <PropertyGroup>
-      <FilterStatement>$(Filter)</FilterStatement>    
+      <FilterStatement>"$(Filter)"</FilterStatement>    
       <FilterStatement Condition="'$(FilterStatement)' == ''">"category!=failing&amp;category!=flaky"</FilterStatement>
       <TestCommand>
         $(DotnetPath)dotnet test "@(ManualTestsProj)"
@@ -350,7 +350,7 @@
   <!-- Run all Manual tests applicable to Unix. -->
   <Target Name="RunManualTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
     <PropertyGroup>
-      <FilterStatement>$(Filter)</FilterStatement>    
+      <FilterStatement>"$(Filter)"</FilterStatement>    
       <FilterStatement Condition="'$(FilterStatement)' == ''">"category!=failing&amp;category!=flaky"</FilterStatement>
       <TestCommand>
         $(DotnetPath)dotnet test "@(ManualTestsProj)"

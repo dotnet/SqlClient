@@ -72,12 +72,29 @@ steps:
   inputs:
     command: test
     projects: 'src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.FunctionalTests.csproj'
-    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetFxVersion=${{parameters.TargetNetFxVersion }} -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.buildConfiguration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter "category!=flaky" --collect "Code Coverage"'
+    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetFxVersion=${{parameters.TargetNetFxVersion }} -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.buildConfiguration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter "category!=failing&category!=flaky" --collect "Code Coverage"'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Run Flaky Functional Tests for ${{parameters.TargetNetFxVersion }}'
+  inputs:
+    command: test
+    projects: 'src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.FunctionalTests.csproj'
+    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetFxVersion=${{parameters.TargetNetFxVersion }} -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.buildConfiguration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter "category=flaky" --collect "Code Coverage"'
+  continueOnError: true
 
 - task: DotNetCoreCLI@2
   displayName: 'Run Manual Tests for ${{parameters.TargetNetFxVersion }}'
   inputs:
     command: test
     projects: 'src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj'
-    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetFxVersion=${{parameters.TargetNetFxVersion }} -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.buildConfiguration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter "category!=flaky" --collect "Code Coverage"'
+    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetFxVersion=${{parameters.TargetNetFxVersion }} -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.buildConfiguration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter "category!=failing&category!=flaky" --collect "Code Coverage"'
   retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
+
+- task: DotNetCoreCLI@2
+  displayName: 'Run Flaky Manual Tests for ${{parameters.TargetNetFxVersion }}'
+  inputs:
+    command: test
+    projects: 'src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj'
+    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetFxVersion=${{parameters.TargetNetFxVersion }} -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.buildConfiguration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter "category=flaky" --collect "Code Coverage"'
+  retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
+  continueOnError: true
