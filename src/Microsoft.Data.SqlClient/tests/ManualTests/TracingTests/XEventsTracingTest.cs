@@ -22,6 +22,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _testName = DataTestUtility.CurrentTestName(outputHelper);
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         [InlineData("SELECT @@VERSION", System.Data.CommandType.Text, "sql_statement_starting")]
         [InlineData("sp_help", System.Data.CommandType.StoredProcedure, "rpc_starting")]
