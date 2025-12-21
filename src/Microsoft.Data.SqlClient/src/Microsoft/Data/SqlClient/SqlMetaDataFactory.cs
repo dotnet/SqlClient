@@ -689,6 +689,9 @@ namespace Microsoft.Data.SqlClient
             {
                 Locale = CultureInfo.InvariantCulture
             };
+
+            LoadDataTypesDataTables(metaDataCollectionsDataSet);
+
             XmlReaderSettings settings = new()
             {
                 XmlResolver = null,
@@ -737,9 +740,6 @@ namespace Microsoft.Data.SqlClient
                     case "DataSourceInformationTable":
                         dataTable = CreateDataSourceInformationDataTable();
                         rowFixup = FixUpDataSourceInformationRow;
-                        break;
-                    case "DataTypesTable":
-                        dataTable = CreateDataTypesDataTable();
                         break;
                     case "ReservedWordsTable":
                         dataTable = CreateReservedWordsDataTable();
