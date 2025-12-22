@@ -24,7 +24,7 @@ internal sealed partial class SqlMetaDataFactory
         // 2. Variable-precision numeric types: float and decimal / numeric.
         // 3. Fixed-precision date/time types: datetime, smalldatetime, date.
         // 4. Variable-precision date/time types: time, datetime2, datetimeoffset.
-        // 5. Long types: xml, text, ntext, image.
+        // 5. Long types: xml, json, text, ntext, image.
         // 6. Fixed-length string and binary types: char, nchar, binary.
         // 7. Variable-length string and binary types: varchar, nvarchar, varbinary.
         // 8. Miscellaneous fixed-length types: uniqueidentifier, sql_variant, timestamp
