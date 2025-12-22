@@ -93,6 +93,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //SQL Server EngineEdition
         private static string s_sqlServerEngineEdition;
 
+        // SQL Server capabilities
+        private static bool? s_isJsonSupported;
+
         // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
         public static bool IsAzureSynapse
@@ -141,6 +144,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return s_isTDS8Supported;
             }
         }
+
+        /// <summary>
+        /// Determines whether the SQL Server supports the 'json' data type.
+        /// </summary>
+        /// <remarks>
+        /// This method attempts to connect to the SQL Server and check for the existence of the
+        /// 'json' data type.
+        /// </remarks>
+        public static bool IsJsonSupported =>
+            s_isJsonSupported ??= IsTCPConnStringSetup() &&
+                IsTypePresent("json");
 
         static DataTestUtility()
         {
@@ -400,6 +414,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             }
             return isTDS8Supported;
+        }
+
+        public static bool IsTypePresent(string typeName)
+        {
+            using SqlConnection connection = new(TCPConnectionString);
+            using SqlCommand command = new("SELECT COUNT(1) FROM SYS.TYPES WHERE [name] = @name", connection);
+
+            connection.Open();
+            command.Parameters.AddWithValue("@name", typeName);
+
+            return (int)command.ExecuteScalar() > 0;
         }
 
         public static bool IsNotX86Architecture => RuntimeInformation.ProcessArchitecture != Architecture.X86;

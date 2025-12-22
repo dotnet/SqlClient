@@ -58,6 +58,8 @@ internal sealed partial class SqlMetaDataFactory
             minimumVersion: "10.00.000.0");
 
         AddLongStringOrBinaryType(SqlDbType.Xml);
+        AddLongStringOrBinaryType(SqlDbTypeExtensions.Json, literalPrefix: "'", literalSuffix: "'",
+            minimumVersion: "17.00.000.0");
         AddLongStringOrBinaryType(SqlDbType.Text, literalPrefix: "'", literalSuffix: "'");
         AddLongStringOrBinaryType(SqlDbType.NText, literalPrefix: "N'", literalSuffix: "'");
         AddLongStringOrBinaryType(SqlDbType.Image, literalPrefix: "0x");
@@ -241,7 +243,8 @@ internal sealed partial class SqlMetaDataFactory
         }
 
         void AddLongStringOrBinaryType(SqlDbType longDbType,
-            string? literalPrefix = null, string? literalSuffix = null) =>
+            string? literalPrefix = null, string? literalSuffix = null,
+            string? minimumVersion = null) =>
             AddStringOrBinaryType(longDbType,
                 // The column size is measured in elements, not bytes. For ntext, each element is a 2 byte Unicode character.
                 columnSize: longDbType is SqlDbType.NText ? int.MaxValue / ADP.CharSize : int.MaxValue,
@@ -311,7 +314,7 @@ internal sealed partial class SqlMetaDataFactory
             // The DataType for XML is string, which is not the best match for an XML type.
             // Similarly, although timestamp/rowversion is represented as a byte array, it's not best
             // represented as such.
-            typeRow[DbMetaDataColumnNames.IsBestMatch] = sqlDbType is not SqlDbType.Xml and not SqlDbType.Timestamp;
+            typeRow[DbMetaDataColumnNames.IsBestMatch] = sqlDbType is not SqlDbType.Xml and not SqlDbType.Timestamp and not SqlDbTypeExtensions.Json;
             typeRow[DbMetaDataColumnNames.IsCaseSensitive] = false;
             typeRow[DbMetaDataColumnNames.IsConcurrencyType] = sqlDbType is SqlDbType.Timestamp;
             typeRow[DbMetaDataColumnNames.IsFixedLength] = isFixedLength;

@@ -189,6 +189,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Every expected type should be present. There will often be additional types present - user-defined table types
             // and CLR types (such as geography and geometry.)
             Assert.All(expectedTypes, type => Assert.Contains(type, actualTypes));
+
+            // The "json" type should only be present when running against a SQL Server version which supports it.
+            Assert.Equal(DataTestUtility.IsJsonSupported, actualTypes.Contains("json"));
         }
     }
 }
