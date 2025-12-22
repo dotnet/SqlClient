@@ -64,8 +64,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// <summary>
     /// Construct to capture all existing switch values.
     ///
-    /// This call will block, waiting for any previous instance to be disposed
-    /// before completing construction.
+    /// This call will block for at most 5 seconds, waiting for any previous
+    /// instance to be disposed before completing construction.  Failure to
+    /// acquire the lock in that time will result in an exception being thrown.
     /// </summary>
     public LocalAppContextSwitchesHelper()
     {
@@ -129,7 +130,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     }
 
     /// <summary>
-    /// Disposal restores all original switch values and releases the instance lock.
+    /// Disposal restores all original switch values and releases the instance
+    /// lock.
     /// </summary>
     public void Dispose()
     {
