@@ -286,23 +286,17 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             if (e != null)
             {
                 SniLoadHandle.LastError = new SniError(SniProviders.TCP_PROV, SniCommon.InternalExceptionError, e);
-#if DEBUG
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.ERR, "Connection Id {0}, Internal Exception occurred while reading data: {1}", args0: packet._owner?.ConnectionId, args1: e?.Message);
-#endif
                 error = true;
             }
             else
             {
                 packet._dataLength = task.Result;
-#if DEBUG
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _dataLength {2} read from stream.", args0: packet._owner?.ConnectionId, args1: packet._id, args2: packet._dataLength);
-#endif
                 if (packet._dataLength == 0)
                 {
                     SniLoadHandle.LastError = new SniError(SniProviders.TCP_PROV, 0, SniCommon.ConnTerminatedError, Strings.SNI_ERROR_2);
-#if DEBUG
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.ERR, "Connection Id {0}, No data read from stream, connection was terminated.", args0: packet._owner?.ConnectionId);
-#endif
                     error = true;
                 }
             }
