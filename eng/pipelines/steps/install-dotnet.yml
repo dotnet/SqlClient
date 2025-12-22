@@ -83,15 +83,17 @@ steps:
     # Use the install script for ARM64.
     - task: PowerShell@2
       displayName: Install .NET SDK and Runtimes for ARM64
-      pwsh: true
-      filePath: $(Build.SourcesDirectory)/eng/pipelines/steps/install-dotnet-arm64.ps1
-      # Each runtime must be quoted to avoid PowerShell interpreting them as
-      # decimal numbers and truncating the fractional part.
-      arguments: >
-        -Debug:${{ parameters.debug }}
-        -GlobalJson "$(Build.SourcesDirectory)/global.json"
-        -InstallDir "${{ parameters.installDir }}"
-        -Runtimes "${{ join(parameters.runtimes, '", "') }}"
+      inputs:
+        targetType: filePath
+        pwsh: true
+        filePath: $(Build.SourcesDirectory)/eng/pipelines/steps/install-dotnet-arm64.ps1
+        # Each runtime must be quoted to avoid PowerShell interpreting them as
+        # decimal numbers and truncating the fractional part.
+        arguments: >
+          -Debug:${{ parameters.debug }}
+          -GlobalJson "$(Build.SourcesDirectory)/global.json"
+          -InstallDir "${{ parameters.installDir }}"
+          -Runtimes "${{ join(parameters.runtimes, '", "') }}"
 
   # Report what was installed.
   - pwsh: dotnet --info
