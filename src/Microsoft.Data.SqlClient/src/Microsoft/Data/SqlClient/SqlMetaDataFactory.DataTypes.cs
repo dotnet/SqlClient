@@ -250,7 +250,8 @@ internal sealed partial class SqlMetaDataFactory
                 columnSize: longDbType is SqlDbType.NText ? int.MaxValue / ADP.CharSize : int.MaxValue,
                 isLong: true, isFixedLength: false,
                 isSearchable: false,
-                literalPrefix: literalPrefix, literalSuffix: literalSuffix);
+                literalPrefix: literalPrefix, literalSuffix: literalSuffix,
+                minimumVersion: minimumVersion);
 
         void AddFixedLengthStringOrBinaryType(SqlDbType fixedLengthDbType,
             string? literalPrefix = null, string? literalSuffix = null) =>
@@ -286,7 +287,8 @@ internal sealed partial class SqlMetaDataFactory
 
         void AddStringOrBinaryType(SqlDbType sqlDbType, int columnSize, bool isLong,
             bool isFixedLength, bool isSearchable,
-            string? literalPrefix = null, string? literalSuffix = null)
+            string? literalPrefix = null, string? literalSuffix = null,
+            string? minimumVersion = null)
         {
             MetaType metaType = MetaType.GetMetaTypeFromSqlDbType(sqlDbType, isMultiValued: false);
             DataRow typeRow = dataTypesDataTable.NewRow();
@@ -341,6 +343,11 @@ internal sealed partial class SqlMetaDataFactory
                 {
                     typeRow[DbMetaDataColumnNames.LiteralSuffix] = literalSuffix;
                 }
+            }
+
+            if (minimumVersion is not null)
+            {
+                typeRow[MinimumVersionKey] = minimumVersion;
             }
 
             dataTypesDataTable.Rows.Add(typeRow);

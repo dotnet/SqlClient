@@ -191,7 +191,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.All(expectedTypes, type => Assert.Contains(type, actualTypes));
 
             // The "json" type should only be present when running against a SQL Server version which supports it.
-            Assert.Equal(DataTestUtility.IsJsonSupported, actualTypes.Contains("json"));
+            // SQL Azure reports a version of 12.x but supports JSON, so SqlClient doesn't include it in the list of types.
+            Assert.Equal(DataTestUtility.IsJsonSupported && DataTestUtility.IsNotAzureServer(), actualTypes.Contains("json"));
         }
     }
 }
