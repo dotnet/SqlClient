@@ -87,10 +87,35 @@ steps:
         targetType: filePath
         pwsh: true
         filePath: $(Build.SourcesDirectory)/eng/pipelines/steps/install-dotnet-arm64.ps1
-        # Each runtime must be quoted to avoid PowerShell interpreting them as
-        # decimal numbers and truncating the fractional part.
+        # Arguments:
+        #
+        # -Debug:
+        #    This must be a PowerShell $true/$false value.  The first '$' is not
+        #    expanded.  The ${{ }} evaluates to the string "true" or "false",
+        #    and the whole value then becomes either $true or $false.
+        #
+        # -GlobalJson:
+        #    The path to the global.json file to read the SDK version from.
+        #    Double-quoted in case there are spaces in the path.
+        #
+        # -InstallDir:
+        #    The directory to install to.  Double-quoted in case there are
+        #    spaces in the path.
+        #
+        # -Runtimes:
+        #    The list of runtimes to install.  This must be a single string with
+        #    each runtime quoted and separated by commas.  If the runtimes are
+        #    8.0 and 9.0, the ${{ join() }} function will result in:
+        #
+        #      8.0", "9.0
+        #
+        #    We enclose the join() in double-quotes to get the exact string we
+        #    want:
+        #
+        #      "8.0", "9.0"
+        #
         arguments: >
-          -Debug:${{ parameters.debug }}
+          -Debug:$${{ parameters.debug }}
           -GlobalJson "$(Build.SourcesDirectory)/global.json"
           -InstallDir "${{ parameters.installDir }}"
           -Runtimes "${{ join(parameters.runtimes, '", "') }}"
