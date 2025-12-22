@@ -13,12 +13,7 @@ namespace Microsoft.Data.SqlClient
     [Serializable, ListBindable(false)]
     public sealed class SqlErrorCollection : ICollection
     {
-        // Ideally this would be typed as List<SqlError>, but that would make the non-generic
-        // CopyTo behave differently than the full framework (which uses ArrayList), throwing
-        // ArgumentException instead of the expected InvalidCastException for incompatible types.
-        // Instead, we use List<object>, which makes the non-generic CopyTo behave like
-        // ArrayList.CopyTo.
-        private readonly List<object> _errors = new List<object>();
+        private readonly List<SqlError> _errors = [];
 
         internal SqlErrorCollection() { }
 
