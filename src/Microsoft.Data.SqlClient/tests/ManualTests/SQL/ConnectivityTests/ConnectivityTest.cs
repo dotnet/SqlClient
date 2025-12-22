@@ -84,6 +84,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // Confirm Server Process Id stays the same after query execution
                 Assert.Equal(sessionSpid, sqlConnection.ServerProcessId);
             }
+            
+            // @TODO: Test that *returns* to indicate success is all kinds of messed up.
             Assert.Fail("No non-empty hostname found for the application");
         }
 
@@ -426,17 +428,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 DataSource = DataTestUtility.AliasName
             };
+
             using SqlConnection sqlConnection = new(builder.ConnectionString);
+            
+            // @TODO: This should be tested in connection string builder tests
             Assert.Equal(DataTestUtility.AliasName, builder.DataSource);
-            try
-            {
-                sqlConnection.Open();
-                Assert.Equal(ConnectionState.Open, sqlConnection.State);
-            }
-            catch (SqlException ex)
-            {
-                Assert.Fail(ex.Message);
-            }
+
+            sqlConnection.Open();
+            Assert.Equal(ConnectionState.Open, sqlConnection.State);
         }
 
         private static bool CanUseDacConnection()

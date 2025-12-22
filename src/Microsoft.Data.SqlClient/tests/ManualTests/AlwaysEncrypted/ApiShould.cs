@@ -3027,7 +3027,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             catch (Exception e)
             {
                 testAsyncCallBackStateObject.Completion.SetException(e);
-                Assert.Fail($"{e.Message}");
+                throw;
             }
         }
 
@@ -3183,9 +3183,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         Console.WriteLine($"Cancellation produced non-SqlException: {ex}");
                     }
                 }
+                
                 if (unexpected)
                 {
-                    Assert.Fail("Unexpected exceptions encountered; see console for details.");
+                    throw;
                 }
             }
 
@@ -3242,9 +3243,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 // actual and expected strings when outputting a failure.
                 if (!_cancellationExceptionMessages.Contains(ex.Message))
                 {
-                    Assert.Fail(
-                        $"Exception message \"{ex.Message}\" not found in: [\"" +
-                        string.Join("\", \"", _cancellationExceptionMessages) + "\"]");
+                    string joinedExceptionList = string.Join("\", \"", _cancellationExceptionMessages);
+                    Assert.Fail($"Exception message \"{ex.Message}\" not found in: [\"{joinedExceptionList}\"]");
                 }
             }
             finally
@@ -3274,9 +3274,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 // actual and expected strings when outputting a failure.
                 if (!_cancellationExceptionMessages.Contains(ex.Message))
                 {
-                    Assert.Fail(
-                        $"Exception message \"{ex.Message}\" not found in: [\"" +
-                        string.Join("\", \"", _cancellationExceptionMessages) + "\"]");
+                    string joinedExceptions = string.Join("\", \"", _cancellationExceptionMessages);
+                    Assert.Fail($"Exception message \"{ex.Message}\" not found in: [\"{joinedExceptions}\"]");
                 }
             }
             finally

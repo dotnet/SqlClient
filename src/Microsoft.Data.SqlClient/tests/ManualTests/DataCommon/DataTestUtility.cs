@@ -999,27 +999,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return ex;
         }
 
-        public static TException ExpectFailure<TException>(Action actionThatFails, string[] exceptionMessages, bool innerExceptionMustBeNull = false, Func<TException, bool> customExceptionVerifier = null) where TException : Exception
-        {
-            try
-            {
-                actionThatFails();
-                Assert.Fail("ERROR: Did not get expected exception");
-                return null;
-            }
-            catch (Exception ex)
-            {
-                foreach (string exceptionMessage in exceptionMessages)
-                {
-                    if ((CheckException<TException>(ex, exceptionMessage, innerExceptionMustBeNull)) && ((customExceptionVerifier == null) || (customExceptionVerifier(ex as TException))))
-                    {
-                        return (ex as TException);
-                    }
-                }
-                throw;
-            }
-        }
-
         public static string GenerateObjectName()
         {
             return string.Format("TEST_{0}{1}{2}", Environment.GetEnvironmentVariable("ComputerName"), Environment.TickCount, Guid.NewGuid()).Replace('-', '_');

@@ -424,20 +424,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string errorMessage = SystemDataResourceManager.Instance.SQL_OperationCancelled;
             string errorMessageSevereFailure = SystemDataResourceManager.Instance.SQL_SevereError;
 
-            DataTestUtility.ExpectFailure<SqlException>(() =>
+            Action action = () =>
             {
                 threadsReady.SignalAndWait();
-                using (SqlDataReader r = command.ExecuteReader())
-                {
-                    do
-                    {
-                        while (r.Read())
-                        {
-                        }
-                    } while (r.NextResult());
-                }
-            }, new string[] { errorMessage, errorMessageSevereFailure });
 
+                using SqlDataReader r = command.ExecuteReader();
+                do
+                {
+                    while (r.Read())
+                    {
+                    }
+                } while (r.NextResult());
+            };
+            
+            SqlException exception = Assert.Throws<SqlException>(action);
+            Assert.Contains(exception.Message, new[] { errorMessage, errorMessageSevereFailure });
         }
 
         private static void CancelSharedCommand(object state)
