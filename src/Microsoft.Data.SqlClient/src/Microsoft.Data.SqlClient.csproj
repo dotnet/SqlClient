@@ -1,12 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
+	<!-- General Properties ============================================== -->
+  <PropertyGroup>
+    <Configurations>Debug;Release;</Configurations>
+    <RootNamespace />
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<RootNamespace />
 	</PropertyGroup>
 
+  <!-- Strong name signing ============================================= -->
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(CDP_BUILD_TYPE)' == 'Official'">
+    <SignAssembly>true</SignAssembly>
+    <KeyFile>$(SigningKeyPath)</KeyFile>
+  </PropertyGroup>
+
+  
   <!-- OS Constants ==================================================== -->
   <PropertyGroup>
+    <!-- @TODO: Move to directory.build.props? -->
     <!-- If a target OS was not specified, use the current OS as the target OS. -->
     <TargetOs Condition="'$(TargetOs)' == ''">$(OS)</TargetOs>
 
@@ -14,42 +26,83 @@
     <!--<TargetOs>Unix</TargetOs>-->
     <!--<TargetOs>Windows_NT</TargetOs>-->
 
+    <NormalizedTargetOs>$(TargetOs.ToLower())</NormalizedTargetOs>
+    
     <!-- NOTE: These constants are prefixed with _ to keep them separate from .NET 5+ precompiler -->
-    <!--     flags. Those only apply to OS-specific target frameworks, and would interfere here. -->
-    <DefineConstants Condition="'$(TargetOs.ToUpper())' == 'UNIX'">$(DefineConstants),_UNIX</DefineConstants>
-    <DefineConstants Condition="'$(TargetOs.ToUpper())' == 'WINDOWS_NT'">$(DefineConstants),_WINDOWS</DefineConstants>
+    <!--     flags. Those only apply to OS-specific target frameworks, and would interfere here.  -->
+    <DefineConstants Condition="'$(NormalizedTargetOs)' == 'unix'">$(DefineConstants);_UNIX</DefineConstants>
+    <DefineConstants Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(DefineConstants);_WINDOWS</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Target Frameworks =============================================== -->
+  <PropertyGroup>
+    <!-- net462 is only supported on Windows, so we will only add it if we're building for Windows -->
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(TargetFrameworks);net462</TargetFrameworks>
+  </PropertyGroup>
+
+  <!-- Build Output ==================================================== -->
+  <PropertyGroup>
+    <!-- @TODO: Move to directory.build.props? -->
+    <ArtifactPath>$(RepoRoot)artifacts/</ArtifactPath>
+
+    <!-- MSBuild will add the target framework to the end of this path by default. Telling it not -->
+    <!-- to is possible but requires also specifying the IntermediateOutputPath. So while it      -->
+    <!-- would be nice to have a flat directory structure, it's more hassle than its worth.       -->
+    <OutputPath>$(ArtifactPath)$(AssemblyName)/$(Configuration)/$(NormalizedTargetOs)/</OutputPath>
   </PropertyGroup>
 
   <!-- Embedded resources ============================================== -->
   <ItemGroup>
+    <!-- Linker directives to replace UseManagedNetworking with a constant if consumer specifies  -->
+    <!-- the app context switch in their csproj. This file only applies to netcore on windows.    -->
+    <!-- This file does not support pre-processor directives, so it must be conditionally         -->
+    <!-- included into the build.                                                                 -->
     <EmbeddedResource Include="Resources/ILLink.Substitutions.xml"
-                      Condition="'$(TargetOs.ToUpper())' == 'WINDOWS_NT'" />
+                      Condition="'$(NormalizedTargetOs)' == 'windows_nt' AND '$(TargetFramework)' != 'net462'" />
   </ItemGroup>
 
   <!-- References ====================================================== -->
-  <ItemGroup>
-    <!-- References that apply to all target frameworks -->
+  <!-- References for netframework -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.Transactions" />
+    
     <PackageReference Include="Azure.Core" />
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI">
+      <PrivateAssets>All</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" />
-    <PackageReference Include="System.Security.Cryptography.Pkcs"  />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-    <!-- References that only apply to net462 -->
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Transactions" />
-    <PackageReference Include="System.ValueTuple" />
-    <PackageReference Include="System.Threading.Channels" />
-	</ItemGroup>
-
-  <!-- System.Buffers, System.Memory, and System.Runtime.InteropServices.RuntimeInformation are included in .NET 10+ BCL -->
-  <ItemGroup Condition="$([MSBuild]::VersionLessThan($([MSBuild]::GetTargetFrameworkVersion($(TargetFramework))), '10.0'))">
     <PackageReference Include="System.Buffers" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" />
     <PackageReference Include="System.Memory" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+    <PackageReference Include="System.Text.Json" />
+    <PackageReference Include="System.Threading.Channels" />
+    <PackageReference Include="System.ValueTuple" />
+	</ItemGroup>
+
+  <!-- References for netcore -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <PackageReference Include="Azure.Core" />
+    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Microsoft.Bcl.Cryptography" />
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
+
+  <!-- CodeGen Targets ================================================= -->
+  <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
 </Project>
