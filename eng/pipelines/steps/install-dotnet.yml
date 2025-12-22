@@ -84,7 +84,7 @@ steps:
     - task: PowerShell@2
       displayName: Install .NET SDK and Runtimes for ARM64
       pwsh: true
-      filePath: install-dotnet-arm64.ps1
+      filePath: $(Build.SourcesDirectory)/eng/pipelines/steps/install-dotnet-arm64.ps1
       # Each runtime must be quoted to avoid PowerShell interpreting them as
       # decimal numbers and truncating the fractional part.
       arguments: >

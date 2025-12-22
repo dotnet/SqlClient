@@ -385,7 +385,7 @@ stages:
           pool: ADO-CI-PUBLIC-ARM64-1ES-EUS-POOL
           images: 
             Win11_ARM64_Azure_Sql: ADO-WIN11-ARM64
-          isArm64: true,
+          isArm64: true
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}

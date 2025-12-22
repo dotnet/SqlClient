@@ -65,7 +65,7 @@ if ($Debug)
 }
 
 #------------------------------------------------------------------------------
-# Download the dotnet-install.ps1 script if it isn't already present.
+# Download the dotnet-install.ps1 script if not already present.
 
 if (-not (Test-Path -Path "$InstallDir/dotnet-install.ps1" -PathType Leaf))
 {
@@ -115,7 +115,7 @@ if ($Debug)
   Write-Host ($installParams | ConvertTo-Json -Depth 1)
 }
 
-& ./dotnet-install.ps1 -Verbose:$Debug -DryRun:$DryRun @installParams
+& "$InstallDir/dotnet-install.ps1" -Verbose:$Debug -DryRun:$DryRun @installParams
 
 #------------------------------------------------------------------------------
 # Install the Runtimes, if any.
@@ -139,7 +139,7 @@ foreach ($channel in $Runtimes)
     Write-Host ($installParams | ConvertTo-Json -Depth 1)
   }
 
-  & ./dotnet-install.ps1 -Verbose:$Debug -DryRun:$DryRun @installParams
+  & "$InstallDir/dotnet-install.ps1" -Verbose:$Debug -DryRun:$DryRun @installParams
 }
 
 #------------------------------------------------------------------------------
