@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 using Microsoft.Data.SqlClient;
 
-namespace CustomAuthenticationProviderExamples
+namespace CustomDeviceCodeFlowAuthProviderExample
 {
     public class Program
     {

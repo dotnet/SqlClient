@@ -14,6 +14,7 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     internal sealed class SqlAuthenticationProviderManager
     {
+        [Obsolete("ActiveDirectoryPassword is deprecated, use a more secure authentication method. See https://aka.ms/SqlClientEntraIDAuthentication for more details.")]
         private const string ActiveDirectoryPassword = "active directory password";
         private const string ActiveDirectoryIntegrated = "active directory integrated";
         private const string ActiveDirectoryInteractive = "active directory interactive";
@@ -58,7 +59,9 @@ namespace Microsoft.Data.SqlClient
             {
                 var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider(instance._applicationClientId);
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
+                #pragma warning disable 0618 // Type or member is obsolete
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
+                #pragma warning restore 0618 // Type or member is obsolete
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, activeDirectoryAuthProvider);
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, activeDirectoryAuthProvider);
@@ -186,7 +189,7 @@ namespace Microsoft.Data.SqlClient
                     if (candidateMethod == authenticationMethod)
                     {
                         _sqlAuthLogger.LogError(nameof(SqlAuthenticationProviderManager), methodName, $"Failed to add provider {GetProviderType(provider)} because a user-defined provider with type {GetProviderType(_providers[authenticationMethod])} already existed for authentication {authenticationMethod}.");
-                        break;
+                        return false; // return here to avoid replacing user-defined provider
                     }
                 }
             }
@@ -206,9 +209,18 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
+        /// <summary>
+        /// Fetches provided configuration section from app.config file.
+        /// Does not support reading from appsettings.json yet.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="name"></param>
+        /// <returns></returns>
         private static T FetchConfigurationSection<T>(string name)
         {
             Type t = typeof(T);
+
+            // TODO: Support reading configuration from appsettings.json for .NET runtime applications.
             object section = ConfigurationManager.GetSection(name);
             if (section != null)
             {
@@ -230,8 +242,10 @@ namespace Microsoft.Data.SqlClient
             {
                 case ActiveDirectoryIntegrated:
                     return SqlAuthenticationMethod.ActiveDirectoryIntegrated;
+                #pragma warning disable 0618 // Type or member is obsolete
                 case ActiveDirectoryPassword:
                     return SqlAuthenticationMethod.ActiveDirectoryPassword;
+                #pragma warning restore 0618 // Type or member is obsolete
                 case ActiveDirectoryInteractive:
                     return SqlAuthenticationMethod.ActiveDirectoryInteractive;
                 case ActiveDirectoryServicePrincipal:

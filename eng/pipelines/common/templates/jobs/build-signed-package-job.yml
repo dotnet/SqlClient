@@ -39,6 +39,8 @@ jobs:
     name: GetBuildType
   
   - template: ../steps/build-all-configurations-signed-dlls-step.yml@self
+    parameters:
+      buildConfiguration: Release
   
   - template: ../steps/code-analyze-step.yml@self
     parameters:
@@ -50,7 +52,9 @@ jobs:
   
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:
+      buildConfiguration: Release
       OutputDirectory: $(artifactDirectory)
+      installNuget: false
   
   - template: ../steps/esrp-code-signing-step.yml@self
     parameters:
@@ -58,10 +62,12 @@ jobs:
   
   - template: ../steps/copy-dlls-for-test-step.yml@self
     parameters:
+      buildConfiguration: Release
       product: MDS
 
   # Publish symbols to servers
   - template: ../steps/publish-symbols-step.yml@self
     parameters:
+      buildConfiguration: Release
       publishSymbols: ${{ parameters['PublishSymbols'] }}
       symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(NuGetPackageVersion)_$(System.TimelineId)

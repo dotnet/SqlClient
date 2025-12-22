@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics.Tracing;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -18,6 +17,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Principal;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
@@ -25,6 +25,7 @@ using Azure.Identity;
 using Microsoft.Data.SqlClient.TestUtilities;
 using Microsoft.Identity.Client;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -100,7 +101,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (!string.IsNullOrEmpty(TCPConnectionString))
                 {
-                    s_sqlServerEngineEdition ??= GetSqlServerProperty(TCPConnectionString, "EngineEdition");
+                    s_sqlServerEngineEdition ??= GetSqlServerProperty(TCPConnectionString, ServerProperty.EngineEdition);
                 }
                 _ = int.TryParse(s_sqlServerEngineEdition, out int engineEditon);
                 return engineEditon == 6;
@@ -122,7 +123,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (!string.IsNullOrEmpty(TCPConnectionString))
                 {
-                    s_sQLServerVersion ??= GetSqlServerProperty(TCPConnectionString, "ProductMajorVersion");
+                    s_sQLServerVersion ??= GetSqlServerProperty(TCPConnectionString, ServerProperty.ProductMajorVersion);
                 }
                 return s_sQLServerVersion;
             }
@@ -235,7 +236,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 yield return TCPConnectionString;
             }
             // Named Pipes are not supported on Unix platform and for Azure DB
-            if (Environment.OSVersion.Platform != PlatformID.Unix && IsNotAzureServer() && !string.IsNullOrEmpty(NPConnectionString))
+            if (Environment.OSVersion.Platform != PlatformID.Unix &&
+                IsNotAzureServer() &&
+                !string.IsNullOrEmpty(NPConnectionString))
             {
                 yield return NPConnectionString;
             }
@@ -286,28 +289,98 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsKerberosTest => !string.IsNullOrEmpty(KerberosDomainUser) && !string.IsNullOrEmpty(KerberosDomainPassword);
 
-        public static string GetSqlServerProperty(string connectionString, string propertyName)
+        #nullable enable
+
+        /// <summary>
+        /// Returns the current test name as:
+        /// 
+        ///   ClassName.MethodName
+        /// 
+        /// xUnit v2 doesn't provide access to a test context, so we use
+        /// reflection into the ITestOutputHelper to get the test name.
+        /// </summary>
+        /// 
+        /// <param name="outputHelper">
+        ///   The output helper instance for the currently running test.
+        /// </param>
+        /// 
+        /// <returns>The current test name.</returns>
+        public static string CurrentTestName(ITestOutputHelper outputHelper)
         {
-            string propertyValue = string.Empty;
+            // Reflect our way to the ITest instance.
+            var type = outputHelper.GetType();
+            Assert.NotNull(type);
+            var testMember = type.GetField("test", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(testMember);
+            var test = testMember.GetValue(outputHelper) as ITest;
+            Assert.NotNull(test);
+
+            // The DisplayName is in the format:
+            // 
+            //   Namespace.ClassName.MethodName(args)
+            //
+            // We only want the ClassName.MethodName portion.
+            //
+            Match match = TestNameRegex.Match(test.DisplayName);
+            Assert.True(match.Success);
+            // There should be 2 groups: the overall match, and the capture
+            // group.
+            Assert.Equal(2, match.Groups.Count);
+            
+            // The portion we want is in the capture group.
+            return match.Groups[1].Value;
+        }
+
+        private static readonly Regex TestNameRegex = new(
+            // Capture the ClassName.MethodName portion, which may terminate
+            // the name, or have (args...) appended.
+            @"\.((?:[^.]+)\.(?:[^.\(]+))(?:\(.*\))?$",
+            RegexOptions.Compiled);
+        
+        /// <summary>
+        /// SQL Server properties we can query.
+        ///
+        /// GOTCHA: The enum member names must match the property names
+        /// queryable via T-SQL SERVERPROPERTY().  See:
+        ///
+        /// https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql
+        /// </summary>
+        public enum ServerProperty
+        {
+            ProductMajorVersion,
+            EngineEdition
+        }
+        
+        public static string GetSqlServerProperty(string connectionString, ServerProperty property)
+        {
             using SqlConnection conn = new(connectionString);
             conn.Open();
-            SqlCommand command = conn.CreateCommand();
-            command.CommandText = $"SELECT SERVERProperty('{propertyName}')";
-            SqlDataReader reader = command.ExecuteReader();
-            if (reader.Read())
-            {
-                switch (propertyName)
-                {
-                    case "EngineEdition":
-                        propertyValue = reader.GetInt32(0).ToString();
-                        break;
-                    case "ProductMajorVersion":
-                        propertyValue = reader.GetString(0);
-                        break;
-                }
-            }
-            return propertyValue;
+            return GetSqlServerProperty(conn, property);
         }
+
+        public static string GetSqlServerProperty(SqlConnection connection, ServerProperty property)
+        {
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = $"SELECT SERVERProperty('{property}')";
+            using SqlDataReader reader = command.ExecuteReader();
+
+            Assert.True(reader.Read());
+
+            switch (property)
+            {
+                case ServerProperty.EngineEdition:
+                    // EngineEdition is returned as an int.
+                    return reader.GetInt32(0).ToString();
+                case ServerProperty.ProductMajorVersion:
+                default:
+                    // ProductMajorVersion is returned as a string.
+                    //
+                    // Assume any unknown property is also a string.
+                    return reader.GetString(0);
+            }
+        }
+
+        #nullable disable
 
         public static bool GetSQLServerStatusOnTDS8(string connectionString)
         {
@@ -398,6 +471,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         public static bool IsNotAzureSynapse() => !IsAzureSynapse;
+
+        public static bool IsNotManagedInstance() => !IsManagedInstance;
 
         // Synapse: UDT Test Database not compatible with Azure Synapse.
         public static bool IsUdtTestDatabasePresent() => IsDatabasePresent(UdtTestDbName) && IsNotAzureSynapse();
@@ -1218,31 +1293,164 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        #nullable enable
+
         public readonly ref struct XEventScope : IDisposable
         {
-            private const int MaxXEventsLatencyS = 5;
+            #region Private Fields
 
+            // Maximum dispatch latency for XEvents, in seconds.
+            private const int MaxDispatchLatencySeconds = 5;
+
+            // The connection to use for all operations.
             private readonly SqlConnection _connection;
-            private readonly bool _useDatabaseSession;
 
+            // True if connected to an Azure SQL instance.
+            private readonly bool _isAzureSql;
+
+            // True if connected to a non-Azure SQL Server 2025 (version 17) or
+            // higher.
+            private readonly bool _isVersion17OrHigher;
+
+            // Duration for the XEvent session, in minutes.
+            private readonly ushort _durationInMinutes;
+
+            #endregion
+
+            #region Properties
+
+            /// <summary>
+            /// The name of the XEvent session, derived from the session name
+            /// provided at construction time, with a unique suffix appended.
+            /// </summary>
             public string SessionName { get; }
 
-            public XEventScope(SqlConnection connection, string eventSpecification, string targetSpecification)
-            {
-                SessionName = GenerateRandomCharacters("Session");
-                _connection = connection;
-                // SQL Azure only supports database-scoped XEvent sessions
-                _useDatabaseSession = GetSqlServerProperty(connection.ConnectionString, "EngineEdition") == "5";
+            #endregion
 
-                SetupXEvent(eventSpecification, targetSpecification);
+            #region Construction
+
+            /// <summary>
+            /// Construct with the specified parameters.
+            /// 
+            /// This will use the connection to query the server properties and
+            /// setup and start the XEvent session.
+            /// </summary>
+            /// <param name="sessionName">The base name of the session.</param>
+            /// <param name="connection">The SQL connection to use. (Must already be open.)</param>
+            /// <param name="eventSpecification">The event specification T-SQL string.</param>
+            /// <param name="targetSpecification">The target specification T-SQL string.</param>
+            /// <param name="durationInMinutes">The duration of the session in minutes.</param>
+            public XEventScope(
+                string sessionName,
+                // The connection must already be open.
+                SqlConnection connection,
+                string eventSpecification,
+                string targetSpecification,
+                ushort durationInMinutes = 5)
+            {
+                SessionName = GenerateRandomCharacters(sessionName);
+                
+                _connection = connection;
+                Assert.Equal(ConnectionState.Open, _connection.State);
+
+                _durationInMinutes = durationInMinutes;
+
+                // EngineEdition 5 indicates Azure SQL.
+                _isAzureSql = GetSqlServerProperty(connection, ServerProperty.EngineEdition) == "5";
+
+                // Determine if we're connected to a SQL Server instance version
+                // 17 or higher.
+                if (!_isAzureSql)
+                {
+                    int majorVersion;
+                    Assert.True(
+                        int.TryParse(
+                            GetSqlServerProperty(connection, ServerProperty.ProductMajorVersion),
+                            out majorVersion));
+                    _isVersion17OrHigher = majorVersion >= 17;
+                }
+
+                // Setup and start the XEvent session.
+                string sessionLocation = _isAzureSql ? "DATABASE" : "SERVER";
+                
+                // Both Azure SQL and SQL Server 2025+ support setting a maximum
+                // duration for the XEvent session.
+                string duration =
+                    _isAzureSql || _isVersion17OrHigher
+                    ? $"MAX_DURATION={_durationInMinutes} MINUTES,"
+                    : string.Empty;
+
+                string xEventCreateAndStartCommandText =
+                    $@"CREATE EVENT SESSION [{SessionName}] ON {sessionLocation}
+                        {eventSpecification}
+                        {targetSpecification}
+                        WITH (
+                            {duration}
+                            MAX_MEMORY=16 MB,
+                            EVENT_RETENTION_MODE=ALLOW_SINGLE_EVENT_LOSS,
+                            MAX_DISPATCH_LATENCY={MaxDispatchLatencySeconds} SECONDS,
+                            MAX_EVENT_SIZE=0 KB,
+                            MEMORY_PARTITION_MODE=NONE,
+                            TRACK_CAUSALITY=ON,
+                            STARTUP_STATE=OFF)
+                            
+                        ALTER EVENT SESSION [{SessionName}] ON {sessionLocation} STATE = START ";
+
+                using SqlCommand createXEventSession = new SqlCommand(xEventCreateAndStartCommandText, _connection);
+                createXEventSession.ExecuteNonQuery();
             }
 
+            /// <summary>
+            /// Disposal stops and drops the XEvent session.
+            /// </summary>
+            /// <remarks>
+            /// Disposal isn't perfect - tests can abort without cleaning up the
+            /// events they have created.  For Azure SQL targets that outlive the
+            /// test pipelines, it is beneficial to periodically log into the
+            /// database and drop old XEvent sessions using T-SQL similar to
+            /// this:
+            ///
+            /// DECLARE @sql NVARCHAR(MAX) = N'';
+            ///
+            /// -- Identify inactive (stopped) event sessions and generate DROP commands
+            /// SELECT @sql += N'DROP EVENT SESSION [' + name + N'] ON SERVER;' + CHAR(13) + CHAR(10)
+            /// FROM sys.server_event_sessions
+            /// WHERE running = 0; -- Filter for sessions that are not running (inactive)
+            ///
+            /// -- Print the generated commands for review (optional, but recommended)
+            /// PRINT @sql;
+            ///
+            /// -- Execute the generated commands
+            /// EXEC sys.sp_executesql @sql;
+            /// </remarks>
             public void Dispose()
-                => DropXEvent();
+            {
+                string dropXEventSessionCommand = _isAzureSql
+                    // We choose the sys.(database|server)_event_sessions views
+                    // here to ensure we find sessions that may not be running.
+                    ? $"IF EXISTS (select * from sys.database_event_sessions where name ='{SessionName}')" +
+                        $" DROP EVENT SESSION [{SessionName}] ON DATABASE"
+                    : $"IF EXISTS (select * from sys.server_event_sessions where name ='{SessionName}')" +
+                        $" DROP EVENT SESSION [{SessionName}] ON SERVER";
 
+                using SqlCommand command = new SqlCommand(dropXEventSessionCommand, _connection);
+                command.ExecuteNonQuery();
+            }
+
+            #endregion
+
+            #region Public Methods
+
+            /// <summary>
+            /// Query the XEvent session for its collected events, returning
+            /// them as an XML document.
+            ///
+            /// This always blocks the thread for MaxDispatchLatencySeconds to
+            /// ensure that all events have been flushed into the ring buffer.
+            /// </summary>
             public System.Xml.XmlDocument GetEvents()
             {
-                string xEventQuery = _useDatabaseSession
+                string xEventQuery = _isAzureSql
                     ? $@"SELECT xet.target_data
                         FROM sys.dm_xe_database_session_targets AS xet
                         INNER JOIN sys.dm_xe_database_sessions AS xe
@@ -1254,64 +1462,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                            ON (xe.address = xet.event_session_address)
                         WHERE xe.name = '{SessionName}'";
 
-                using (SqlCommand command = new SqlCommand(xEventQuery, _connection))
-                {
-                    Thread.Sleep(MaxXEventsLatencyS * 1000);
+                using SqlCommand command = new SqlCommand(xEventQuery, _connection);
 
-                    if (_connection.State == ConnectionState.Closed)
-                    {
-                        _connection.Open();
-                    }
+                // Wait for maximum dispatch latency to ensure all events
+                // have been flushed to the ring buffer.
+                Thread.Sleep(MaxDispatchLatencySeconds * 1000);
 
-                    string targetData = command.ExecuteScalar() as string;
-                    System.Xml.XmlDocument xmlDocument = new System.Xml.XmlDocument();
+                string? targetData = command.ExecuteScalar() as string;
+                Assert.NotNull(targetData);
 
-                    xmlDocument.LoadXml(targetData);
-                    return xmlDocument;
-                }
+                System.Xml.XmlDocument xmlDocument = new System.Xml.XmlDocument();
+
+                xmlDocument.LoadXml(targetData);
+                return xmlDocument;
             }
 
-            private void SetupXEvent(string eventSpecification, string targetSpecification)
-            {
-                string sessionLocation = _useDatabaseSession ? "DATABASE" : "SERVER";
-                string xEventCreateAndStartCommandText = $@"CREATE EVENT SESSION [{SessionName}] ON {sessionLocation}
-                        {eventSpecification}
-                        {targetSpecification}
-                        WITH (
-                            MAX_MEMORY=16 MB,
-                            EVENT_RETENTION_MODE=ALLOW_SINGLE_EVENT_LOSS,
-                            MAX_DISPATCH_LATENCY={MaxXEventsLatencyS} SECONDS,
-                            MAX_EVENT_SIZE=0 KB,
-                            MEMORY_PARTITION_MODE=NONE,
-                            TRACK_CAUSALITY=ON,
-                            STARTUP_STATE=OFF)
-                            
-                        ALTER EVENT SESSION [{SessionName}] ON {sessionLocation} STATE = START ";
-
-                using (SqlCommand createXEventSession = new SqlCommand(xEventCreateAndStartCommandText, _connection))
-                {
-                    if (_connection.State == ConnectionState.Closed)
-                    {
-                        _connection.Open();
-                    }
-
-                    createXEventSession.ExecuteNonQuery();
-                }
-            }
-
-            private void DropXEvent()
-            {
-                string dropXEventSessionCommand = _useDatabaseSession
-                    ? $"IF EXISTS (select * from sys.dm_xe_database_sessions where name ='{SessionName}')" +
-                        $" DROP EVENT SESSION [{SessionName}] ON DATABASE"
-                    : $"IF EXISTS (select * from sys.dm_xe_sessions where name ='{SessionName}')" +
-                        $" DROP EVENT SESSION [{SessionName}] ON SERVER";
-
-                using (SqlCommand command = new SqlCommand(dropXEventSessionCommand, _connection))
-                {
-                    command.ExecuteNonQuery();
-                }
-            }
+            #endregion
         }
 
         /// <summary>
@@ -1340,4 +1506,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return fqdn.ToString();
         }
     }
+
+    #nullable disable
 }

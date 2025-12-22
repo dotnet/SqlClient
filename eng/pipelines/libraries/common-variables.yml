@@ -13,8 +13,6 @@ variables:
     # AuthAKVName
     # AuthSignCertName
 
-  - name: Configuration
-    value: Release
   - name: CommitHead
     value: '' # the value will be extracted from the repo's head  
   - name: REPOROOT
@@ -38,7 +36,7 @@ variables:
   - name: Preview
     value: '-preview'
   - name: Revision
-    value: '1'
+    value: '3'
 
   - name: NugetPackageVersion
     value: $(Major).$(Minor).$(Patch)

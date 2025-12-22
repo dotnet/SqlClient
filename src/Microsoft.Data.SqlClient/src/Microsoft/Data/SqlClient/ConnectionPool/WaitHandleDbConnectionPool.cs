@@ -59,22 +59,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         // This class is a way to stash our cloned Tx key for later disposal when it's no longer needed.
         // We can't get at the key in the dictionary without enumerating entries, so we stash an extra
         // copy as part of the value.
-        private sealed class TransactedConnectionList : List<DbConnectionInternal>
-        {
-            private Transaction _transaction;
-            internal TransactedConnectionList(int initialAllocation, Transaction tx) : base(initialAllocation)
-            {
-                _transaction = tx;
-            }
-
-            internal void Dispose()
-            {
-                if (_transaction != null)
-                {
-                    _transaction.Dispose();
-                }
-            }
-        }
 
         private sealed class PendingGetConnection
         {
@@ -89,250 +73,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             public DbConnection Owner { get; private set; }
             public TaskCompletionSource<DbConnectionInternal> Completion { get; private set; }
             public DbConnectionOptions UserOptions { get; private set; }
-        }
-
-        private sealed class TransactedConnectionPool
-        {
-            Dictionary<Transaction, TransactedConnectionList> _transactedCxns;
-
-            IDbConnectionPool _pool;
-
-            private static int _objectTypeCount; // EventSource Counter
-            internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
-
-            internal TransactedConnectionPool(IDbConnectionPool pool)
-            {
-                Debug.Assert(pool != null, "null pool?");
-
-                _pool = pool;
-                _transactedCxns = new Dictionary<Transaction, TransactedConnectionList>();
-                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactedConnectionPool|RES|CPOOL> {0}, Constructed for connection pool {1}", ObjectID, _pool.Id);
-            }
-
-            internal int ObjectID
-            {
-                get
-                {
-                    return _objectID;
-                }
-            }
-
-            internal IDbConnectionPool Pool
-            {
-                get
-                {
-                    return _pool;
-                }
-            }
-
-            internal DbConnectionInternal GetTransactedObject(Transaction transaction)
-            {
-                Debug.Assert(transaction != null, "null transaction?");
-
-                DbConnectionInternal transactedObject = null;
-
-                TransactedConnectionList connections;
-                bool txnFound = false;
-
-                lock (_transactedCxns)
-                {
-                    txnFound = _transactedCxns.TryGetValue(transaction, out connections);
-                }
-
-                // NOTE: GetTransactedObject is only used when AutoEnlist = True and the ambient transaction 
-                //   (Sys.Txns.Txn.Current) is still valid/non-null. This, in turn, means that we don't need 
-                //   to worry about a pending asynchronous TransactionCompletedEvent to trigger processing in
-                //   TransactionEnded below and potentially wipe out the connections list underneath us. It
-                //   is similarly alright if a pending addition to the connections list in PutTransactedObject
-                //   below is not completed prior to the lock on the connections object here...getting a new
-                //   connection is probably better than unnecessarily locking
-                if (txnFound)
-                {
-                    Debug.Assert(connections != null);
-
-                    // synchronize multi-threaded access with PutTransactedObject (TransactionEnded should
-                    //   not be a concern, see comments above)
-                    lock (connections)
-                    {
-                        int i = connections.Count - 1;
-                        if (0 <= i)
-                        {
-                            transactedObject = connections[i];
-                            connections.RemoveAt(i);
-                        }
-                    }
-                }
-
-                if (transactedObject != null)
-                {
-                    SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.GetTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Popped.", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
-                }
-                return transactedObject;
-            }
-
-            internal void PutTransactedObject(Transaction transaction, DbConnectionInternal transactedObject)
-            {
-                Debug.Assert(transaction != null, "null transaction?");
-                Debug.Assert(transactedObject != null, "null transactedObject?");
-
-                TransactedConnectionList connections;
-                bool txnFound = false;
-
-                // NOTE: because TransactionEnded is an asynchronous notification, there's no guarantee
-                //   around the order in which PutTransactionObject and TransactionEnded are called. 
-
-                lock (_transactedCxns)
-                {
-                    // Check if a transacted pool has been created for this transaction
-                    if (txnFound = _transactedCxns.TryGetValue(transaction, out connections))
-                    {
-                        Debug.Assert(connections != null);
-
-                        // synchronize multi-threaded access with GetTransactedObject
-                        lock (connections)
-                        {
-                            Debug.Assert(0 > connections.IndexOf(transactedObject), "adding to pool a second time?");
-                            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Pushing.", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
-                            connections.Add(transactedObject);
-                        }
-                    }
-                }
-
-                // CONSIDER: the following code is more complicated than it needs to be to avoid cloning the 
-                //   transaction and allocating memory within a lock. Is that complexity really necessary?
-                if (!txnFound)
-                {
-                    // create the transacted pool, making sure to clone the associated transaction
-                    //   for use as a key in our internal dictionary of transactions and connections
-                    Transaction transactionClone = null;
-                    TransactedConnectionList newConnections = null;
-
-                    try
-                    {
-                        transactionClone = transaction.Clone();
-                        newConnections = new TransactedConnectionList(2, transactionClone); // start with only two connections in the list; most times we won't need that many.
-
-                        lock (_transactedCxns)
-                        {
-                            // NOTE: in the interim between the locks on the transacted pool (this) during 
-                            //   execution of this method, another thread (threadB) may have attempted to 
-                            //   add a different connection to the transacted pool under the same 
-                            //   transaction. As a result, threadB may have completed creating the
-                            //   transacted pool while threadA was processing the above instructions.
-                            if (txnFound = _transactedCxns.TryGetValue(transaction, out connections))
-                            {
-                                Debug.Assert(connections != null);
-
-                                // synchronize multi-threaded access with GetTransactedObject
-                                lock (connections)
-                                {
-                                    Debug.Assert(0 > connections.IndexOf(transactedObject), "adding to pool a second time?");
-                                    SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Pushing.", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
-                                    connections.Add(transactedObject);
-                                }
-                            }
-                            else
-                            {
-                                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Adding List to transacted pool.", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
-
-                                // add the connection/transacted object to the list
-                                newConnections.Add(transactedObject);
-
-                                _transactedCxns.Add(transactionClone, newConnections);
-                                transactionClone = null; // we've used it -- don't throw it or the TransactedConnectionList that references it away.                                
-                            }
-                        }
-                    }
-                    finally
-                    {
-                        if (transactionClone != null)
-                        {
-                            if (newConnections != null)
-                            {
-                                // another thread created the transaction pool and thus the new 
-                                //   TransactedConnectionList was not used, so dispose of it and
-                                //   the transaction clone that it incorporates.
-                                newConnections.Dispose();
-                            }
-                            else
-                            {
-                                // memory allocation for newConnections failed...clean up unused transactionClone
-                                transactionClone.Dispose();
-                            }
-                        }
-                    }
-                    SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Added.", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
-                }
-
-                SqlClientEventSource.Metrics.EnterFreeConnection();
-            }
-
-            internal void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
-            {
-                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transaction Completed", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
-                TransactedConnectionList connections;
-                int entry = -1;
-
-                // NOTE: because TransactionEnded is an asynchronous notification, there's no guarantee
-                //   around the order in which PutTransactionObject and TransactionEnded are called. As
-                //   such, it is possible that the transaction does not yet have a pool created.
-
-                // TODO: is this a plausible and/or likely scenario? Do we need to have a mechanism to ensure
-                // TODO:   that the pending creation of a transacted pool for this transaction is aborted when
-                // TODO:   PutTransactedObject finally gets some CPU time?
-
-                lock (_transactedCxns)
-                {
-                    if (_transactedCxns.TryGetValue(transaction, out connections))
-                    {
-                        Debug.Assert(connections != null);
-
-                        bool shouldDisposeConnections = false;
-
-                        // Lock connections to avoid conflict with GetTransactionObject
-                        lock (connections)
-                        {
-                            entry = connections.IndexOf(transactedObject);
-
-                            if (entry >= 0)
-                            {
-                                connections.RemoveAt(entry);
-                            }
-
-                            // Once we've completed all the ended notifications, we can
-                            // safely remove the list from the transacted pool.
-                            if (0 >= connections.Count)
-                            {
-                                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Removing List from transacted pool.", ObjectID, transaction.GetHashCode());
-                                _transactedCxns.Remove(transaction);
-
-                                // we really need to dispose our connection list; it may have 
-                                // native resources via the tx and GC may not happen soon enough.
-                                shouldDisposeConnections = true;
-                            }
-                        }
-
-                        if (shouldDisposeConnections)
-                        {
-                            connections.Dispose();
-                        }
-                    }
-                    else
-                    {
-                        SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transacted pool not yet created prior to transaction completing. Connection may be leaked.", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
-                    }
-                }
-
-                // If (and only if) we found the connection in the list of
-                // connections, we'll put it back...
-                if (0 <= entry)
-                {
-
-                    SqlClientEventSource.Metrics.ExitFreeConnection();
-                    Pool.PutObjectFromTransactedPool(transactedObject);
-                }
-            }
-
         }
 
         private sealed class PoolWaitHandles
@@ -380,6 +120,41 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             internal WaitHandle[] GetHandles(bool withCreate)
             {
                 return withCreate ? _handlesWithCreate : _handlesWithoutCreate;
+            }
+        }
+
+        /// <summary>
+        /// Helper class to obtain and release a semaphore.
+        /// </summary>
+        internal class SemaphoreHolder : IDisposable
+        {
+            private readonly Semaphore _semaphore;
+
+            /// <summary>
+            /// Whether the semaphore was successfully obtained within the timeout.
+            /// </summary>
+            internal bool Obtained { get; private set; }
+
+            /// <summary>
+            /// Obtains the semaphore, waiting up to the specified timeout.
+            /// </summary>
+            /// <param name="semaphore"></param>
+            /// <param name="timeout"></param>
+            internal SemaphoreHolder(Semaphore semaphore, int timeout)
+            {
+                _semaphore = semaphore;
+                Obtained = _semaphore.WaitOne(timeout);
+            }
+
+            /// <summary>
+            /// Releases the semaphore if it was successfully obtained.
+            /// </summary>
+            public void Dispose()
+            {
+                if (Obtained)
+                {
+                    _semaphore.Release(1);
+                }
             }
         }
 
@@ -450,8 +225,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 throw ADP.InternalError(ADP.InternalErrorCode.AttemptingToPoolOnRestrictedToken);
             }
-
-            State = Initializing;
 
             lock (s_random)
             {
@@ -758,17 +531,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     owningObject,
                     this,
                     _connectionPoolGroup.PoolKey,
-                    _connectionPoolGroup.ConnectionOptions,
+                    _connectionPoolGroup.ConnectionOptions, 
                     userOptions);
-                if (newObj == null)
-                {
-                    throw ADP.InternalError(ADP.InternalErrorCode.CreateObjectReturnedNull);    // CreateObject succeeded, but null object
-                }
-                if (!newObj.CanBePooled)
-                {
-                    throw ADP.InternalError(ADP.InternalErrorCode.NewObjectCannotBePooled);        // CreateObject succeeded, but non-poolable object
-                }
-                newObj.PrePush(null);
 
                 lock (_objectList)
                 {
@@ -858,10 +622,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             else
             {
-                // NOTE: constructor should ensure that current state cannot be State.Initializing, so it can only
-                //   be State.Running or State.ShuttingDown
-                Debug.Assert(State is Running or ShuttingDown);
-
                 lock (obj)
                 {
                     // A connection with a delegated transaction cannot currently
@@ -892,7 +652,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     }
                     else
                     {
-                        if (obj.IsNonPoolableTransactionRoot)
+                        // TODO: how did we get here if the pool is null?
+                        if (obj.IsTransactionRoot && obj.Pool == null)
                         {
                             obj.SetInStasis();
                             rootTxn = true;
@@ -1281,17 +1042,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                                     if (onlyOneCheckConnection)
                                     {
-                                        if (_waitHandles.CreationSemaphore.WaitOne(unchecked((int)waitForMultipleObjectsTimeout)))
+                                        using SemaphoreHolder semaphoreHolder = new(_waitHandles.CreationSemaphore, unchecked((int)waitForMultipleObjectsTimeout));
+                                        if (semaphoreHolder.Obtained)
                                         {
-                                            try
-                                            {
-                                                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Creating new connection.", Id);
-                                                obj = UserCreateRequest(owningObject, userOptions);
-                                            }
-                                            finally
-                                            {
-                                                _waitHandles.CreationSemaphore.Release(1);
-                                            }
+                                            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Creating new connection.", Id);
+                                            obj = UserCreateRequest(owningObject, userOptions);
                                         }
                                         else
                                         {
@@ -1510,14 +1265,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             {
                                 return;
                             }
-                            int waitResult = BOGUS_HANDLE;
-                            
+
                             try
                             {
                                 // Obtain creation mutex so we're the only one creating objects
-                                // and we must have the wait result
-                                waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(withCreate: true), CreationTimeout);
-                                if (CREATION_HANDLE == waitResult)
+                                using SemaphoreHolder semaphoreHolder = new(_waitHandles.CreationSemaphore, CreationTimeout);
+
+                                if (semaphoreHolder.Obtained)
                                 {
                                     DbConnectionInternal newObj;
 
@@ -1552,16 +1306,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                         }
                                     }
                                 }
-                                else if (WaitHandle.WaitTimeout == waitResult)
+                                else
                                 {
                                     // do not wait forever and potential block this worker thread
                                     // instead wait for a period of time and just requeue to try again
                                     QueuePoolCreateRequest();
-                                }
-                                else
-                                {
-                                    // trace waitResult and ignore the failure
-                                    SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PoolCreateRequest|RES|CPOOL> {0}, PoolCreateRequest called WaitForSingleObject failed {1}", Id, waitResult);
                                 }
                             }
                             catch (Exception e)
@@ -1575,14 +1324,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 // There is no further action we can take beyond tracing.  The error will be 
                                 // thrown to the user the next time they request a connection.
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PoolCreateRequest|RES|CPOOL> {0}, PoolCreateRequest called CreateConnection which threw an exception: {1}", Id, e);
-                            }
-                            finally
-                            {
-                                if (CREATION_HANDLE == waitResult)
-                                {
-                                    // reuse waitResult and ignore its value
-                                    _waitHandles.CreationSemaphore.Release(1);
-                                }
                             }
                         }
                     }
@@ -1607,7 +1348,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         }
 
-        public void ReturnInternalConnection(DbConnectionInternal obj, object owningObject)
+        public void ReturnInternalConnection(DbConnectionInternal obj, DbConnection owningObject)
         {
             Debug.Assert(obj != null, "null obj?");
 
@@ -1638,8 +1379,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             Debug.Assert(obj != null, "null pooledObject?");
             Debug.Assert(obj.EnlistedTransaction == null, "pooledObject is still enlisted?");
 
-            obj.DeactivateConnection();
-
             // called by the transacted connection pool , once it's removed the
             // connection from it's list.  We put the connection back in general
             // circulation.
@@ -1652,6 +1391,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             if (State is Running && obj.CanBePooled)
             {
+                obj.ResetConnection();
                 PutNewObject(obj);
             }
             else

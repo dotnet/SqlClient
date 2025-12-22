@@ -166,20 +166,57 @@ namespace Microsoft.Data.SqlClient
 
 
         // NOTE: do not combine the overloads below using an optional parameter
-        //  they must remain ditinct because external projects use private reflection
+        //  they must remain distinct because external projects use private reflection
         //  to find and invoke the functions, changing the signatures will break many
         //  things elsewhere
+        // @TODO: Don't be ridiculous, no external project should take a dependency on internal/private methods. Otherwise they would've been made public APIs.
 
-        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion) 
-            => CreateException(errorCollection, serverVersion, Guid.Empty, innerException: null, batchCommand: null);
+        internal static SqlException CreateException(
+            SqlError error,
+            string serverVersion,
+            SqlInternalConnectionTds internalConnection,
+            Exception innerException = null)
+        {
+            SqlErrorCollection errorCollection = new() { error };
+            return CreateException(errorCollection, serverVersion, internalConnection, innerException);
+        }
 
-        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, SqlBatchCommand batchCommand) 
-            => CreateException(errorCollection, serverVersion, Guid.Empty, innerException: null, batchCommand: batchCommand);
+        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion) =>
+            CreateException(errorCollection, serverVersion, Guid.Empty, innerException: null, batchCommand: null);
 
-        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, SqlInternalConnectionTds internalConnection, Exception innerException = null)
-            => CreateException(errorCollection, serverVersion, internalConnection, innerException: innerException, batchCommand: null);
+        internal static SqlException CreateException(
+            SqlErrorCollection errorCollection,
+            string serverVersion,
+            SqlBatchCommand batchCommand)
+        {
+            return CreateException(
+                errorCollection,
+                serverVersion,
+                Guid.Empty,
+                innerException: null,
+                batchCommand: batchCommand);
+        }
 
-        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, SqlInternalConnectionTds internalConnection, Exception innerException = null, SqlBatchCommand batchCommand = null)
+        internal static SqlException CreateException(
+            SqlErrorCollection errorCollection,
+            string serverVersion,
+            SqlInternalConnectionTds internalConnection,
+            Exception innerException = null)
+        {
+            return CreateException(
+                errorCollection,
+                serverVersion,
+                internalConnection,
+                innerException: innerException,
+                batchCommand: null);
+        }
+
+        internal static SqlException CreateException(
+            SqlErrorCollection errorCollection,
+            string serverVersion,
+            SqlInternalConnectionTds internalConnection,
+            Exception innerException = null,
+            SqlBatchCommand batchCommand = null)
         {
             Guid connectionId = (internalConnection == null) ? Guid.Empty : internalConnection._clientConnectionId;
             SqlException exception = CreateException(errorCollection, serverVersion, connectionId, innerException, batchCommand);
@@ -200,10 +237,21 @@ namespace Microsoft.Data.SqlClient
             return exception;
         }
 
-        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, Guid conId, Exception innerException = null)
-            => CreateException(errorCollection, serverVersion, conId, innerException, batchCommand: null);
+        internal static SqlException CreateException(
+            SqlErrorCollection errorCollection,
+            string serverVersion,
+            Guid conId,
+            Exception innerException = null)
+        {
+            return CreateException(errorCollection, serverVersion, conId, innerException, batchCommand: null);
+        }
 
-        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, Guid conId, Exception innerException = null, SqlBatchCommand batchCommand = null)
+        internal static SqlException CreateException(
+            SqlErrorCollection errorCollection,
+            string serverVersion,
+            Guid conId,
+            Exception innerException = null,
+            SqlBatchCommand batchCommand = null)
         {
             Debug.Assert(errorCollection != null && errorCollection.Count > 0, "no errorCollection?");
 

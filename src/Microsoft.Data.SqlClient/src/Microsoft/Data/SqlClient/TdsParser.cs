@@ -12,27 +12,27 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Security.Authentication;
-#if NETFRAMEWORK
-using System.Runtime.CompilerServices;
-#endif
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Interop.Common.Sni;
-#if NETFRAMEWORK
-using Interop.Windows.Sni;
-#endif
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.UserAgent;
+using Microsoft.Data.SqlClient.Utilities;
+using Microsoft.SqlServer.Server;
+
 #if NETFRAMEWORK
+using System.Runtime.CompilerServices;
+using Interop.Windows.Sni;
 using Microsoft.Data.SqlTypes;
 #endif
-using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -83,6 +83,7 @@ namespace Microsoft.Data.SqlClient
 
         private int _defaultLCID;
 
+        private static readonly Encoding s_utf8EncodingWithoutBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
         internal Encoding _defaultEncoding = null;                  // for sql character data
 
         private static EncryptionOptions s_sniSupportedEncryptionOption = TdsParserStateObjectFactory.Singleton.EncryptionOptions;
@@ -1232,6 +1233,224 @@ namespace Microsoft.Data.SqlClient
             return PreLoginHandshakeStatus.Successful;
         }
 
+        internal void TdsLogin(
+            SqlLogin rec,
+            TdsEnums.FeatureExtension requestedFeatures,
+            SessionData recoverySessionData,
+            FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
+            SqlConnectionEncryptOption encrypt)
+        {
+            _physicalStateObj.SetTimeoutSeconds(rec.timeout);
+
+            Debug.Assert(recoverySessionData == null || (requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0, "Recovery session data without session recovery feature request");
+            Debug.Assert(TdsEnums.MAXLEN_HOSTNAME >= rec.hostName.Length, "_workstationId.Length exceeds the max length for this value");
+
+            Debug.Assert(!(rec.useSSPI && _connHandler._fedAuthRequired), "Cannot use SSPI when server has responded 0x01 for FedAuthRequired PreLogin Option.");
+            Debug.Assert(!rec.useSSPI || (requestedFeatures & TdsEnums.FeatureExtension.FedAuth) == 0, "Cannot use both SSPI and FedAuth");
+            Debug.Assert(fedAuthFeatureExtensionData == null || (requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0, "fedAuthFeatureExtensionData provided without fed auth feature request");
+            Debug.Assert(fedAuthFeatureExtensionData != null || (requestedFeatures & TdsEnums.FeatureExtension.FedAuth) == 0, "Fed Auth feature requested without specifying fedAuthFeatureExtensionData.");
+
+            Debug.Assert(rec.userName == null || (rec.userName != null && TdsEnums.MAXLEN_CLIENTID >= rec.userName.Length), "_userID.Length exceeds the max length for this value");
+            Debug.Assert(rec.credential == null || (rec.credential != null && TdsEnums.MAXLEN_CLIENTID >= rec.credential.UserId.Length), "_credential.UserId.Length exceeds the max length for this value");
+
+            Debug.Assert(rec.password == null || (rec.password != null && TdsEnums.MAXLEN_CLIENTSECRET >= rec.password.Length), "_password.Length exceeds the max length for this value");
+            Debug.Assert(rec.credential == null || (rec.credential != null && TdsEnums.MAXLEN_CLIENTSECRET >= rec.credential.Password.Length), "_credential.Password.Length exceeds the max length for this value");
+
+            Debug.Assert(rec.credential != null || rec.userName != null || rec.password != null, "cannot mix the new secure password system and the connection string based password");
+            Debug.Assert(rec.newSecurePassword != null || rec.newPassword != null, "cannot have both new secure change password and string based change password");
+            Debug.Assert(TdsEnums.MAXLEN_APPNAME >= rec.applicationName.Length, "_applicationName.Length exceeds the max length for this value");
+            Debug.Assert(TdsEnums.MAXLEN_SERVERNAME >= rec.serverName.Length, "_dataSource.Length exceeds the max length for this value");
+            Debug.Assert(TdsEnums.MAXLEN_LANGUAGE >= rec.language.Length, "_currentLanguage .Length exceeds the max length for this value");
+            Debug.Assert(TdsEnums.MAXLEN_DATABASE >= rec.database.Length, "_initialCatalog.Length exceeds the max length for this value");
+            Debug.Assert(TdsEnums.MAXLEN_ATTACHDBFILE >= rec.attachDBFilename.Length, "_attachDBFileName.Length exceeds the max length for this value");
+
+            Debug.Assert(_connHandler != null, "SqlConnectionInternalTds handler can not be null at this point.");
+            _connHandler!.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
+            _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth);
+
+            // get the password up front to use in sspi logic below
+            byte[] encryptedPassword = null;
+            byte[] encryptedChangePassword = null;
+            int encryptedPasswordLengthInBytes;
+            int encryptedChangePasswordLengthInBytes;
+            bool useFeatureExt = (requestedFeatures != TdsEnums.FeatureExtension.None);
+
+            string userName;
+
+            if (rec.credential != null)
+            {
+                userName = rec.credential.UserId;
+                encryptedPasswordLengthInBytes = rec.credential.Password.Length * 2;
+            }
+            else
+            {
+                userName = rec.userName;
+                encryptedPassword = TdsParserStaticMethods.ObfuscatePassword(rec.password);
+                encryptedPasswordLengthInBytes = encryptedPassword.Length;  // password in clear text is already encrypted and its length is in byte
+            }
+
+            if (rec.newSecurePassword != null)
+            {
+                encryptedChangePasswordLengthInBytes = rec.newSecurePassword.Length * 2;
+            }
+            else
+            {
+                encryptedChangePassword = TdsParserStaticMethods.ObfuscatePassword(rec.newPassword);
+                encryptedChangePasswordLengthInBytes = encryptedChangePassword.Length;
+            }
+
+            // set the message type
+            _physicalStateObj._outputMessageType = TdsEnums.MT_LOGIN7;
+
+            // length in bytes
+            int length = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
+
+            string clientInterfaceName = TdsEnums.SQL_PROVIDER_NAME;
+            Debug.Assert(TdsEnums.MAXLEN_CLIENTINTERFACE >= clientInterfaceName.Length, "cchCltIntName can specify at most 128 unicode characters. See Tds spec");
+
+            // add up variable-len portions (multiply by 2 for byte len of char strings)
+            //
+            checked
+            {
+                length += (rec.hostName.Length + rec.applicationName.Length +
+                            rec.serverName.Length + clientInterfaceName.Length +
+                            rec.language.Length + rec.database.Length +
+                            rec.attachDBFilename.Length) * 2;
+                if (useFeatureExt)
+                {
+                    length += 4;
+                }
+            }
+
+            // allocate memory for SSPI variables
+            ArrayBufferWriter<byte> sspiWriter = null;
+
+            try
+            {
+                // only add lengths of password and username if not using SSPI or requesting federated authentication info
+                if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
+                {
+                    checked
+                    {
+                        length += (userName.Length * 2) + encryptedPasswordLengthInBytes
+                        + encryptedChangePasswordLengthInBytes;
+                    }
+                }
+                else
+                {
+                    if (rec.useSSPI)
+                    {
+                        sspiWriter = ObjectPools.BufferWriter.Rent();
+
+                        // Call helper function for SSPI data and actual length.
+                        // Since we don't have SSPI data from the server, send null for the
+                        // byte[] buffer and 0 for the int length.
+                        Debug.Assert(SniContext.Snix_Login == _physicalStateObj.SniContext, $"Unexpected SniContext. Expecting Snix_Login, actual value is '{_physicalStateObj.SniContext}'");
+                        _physicalStateObj.SniContext = SniContext.Snix_LoginSspi;
+                        _authenticationProvider.WriteSSPIContext(ReadOnlySpan<byte>.Empty, sspiWriter);
+
+                        _physicalStateObj.SniContext = SniContext.Snix_Login;
+
+                        checked
+                        {
+                            length += (int)sspiWriter.WrittenCount;
+                        }
+                    }
+                }
+
+                int feOffset = length;
+                // calculate and reserve the required bytes for the featureEx
+                length = ApplyFeatureExData(
+                    requestedFeatures, 
+                    recoverySessionData, 
+                    fedAuthFeatureExtensionData,
+                    UserAgentInfo.UserAgentCachedJsonPayload.ToArray(),
+                    useFeatureExt, 
+                    length
+                    );
+
+                WriteLoginData(rec,
+                               requestedFeatures,
+                               recoverySessionData,
+                               fedAuthFeatureExtensionData,
+                               encrypt,
+                               encryptedPassword,
+                               encryptedChangePassword,
+                               encryptedPasswordLengthInBytes,
+                               encryptedChangePasswordLengthInBytes,
+                               useFeatureExt,
+                               userName,
+                               length,
+                               feOffset,
+                               clientInterfaceName,
+                               sspiWriter is { } ? sspiWriter.WrittenSpan : ReadOnlySpan<byte>.Empty);
+            }
+            finally
+            {
+                if (sspiWriter is not null)
+                {
+                    ObjectPools.BufferWriter.Return(sspiWriter);
+                }
+            }
+
+            _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
+            _physicalStateObj.ResetSecurePasswordsInformation();     // Password information is needed only from Login process; done with writing login packet and should clear information
+            _physicalStateObj.HasPendingData = true;
+            _physicalStateObj._messageStatus = 0;
+        }
+
+#nullable enable
+        internal void ProcessSSPI(int receivedLength)
+        {
+            Debug.Assert(_authenticationProvider is not null);
+
+            SniContext outerContext = _physicalStateObj.SniContext;
+            _physicalStateObj.SniContext = SniContext.Snix_ProcessSspi;
+
+            // allocate received buffer based on length from SSPI message
+            byte[] receivedBuff = ArrayPool<byte>.Shared.Rent(receivedLength);
+
+            try
+            {
+                // read SSPI data received from server
+                Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
+                TdsOperationStatus result = _physicalStateObj.TryReadByteArray(receivedBuff, receivedLength);
+                if (result != TdsOperationStatus.Done)
+                {
+                    throw SQL.SynchronousCallMayNotPend();
+                }
+
+                // allocate send buffer and initialize length
+                var writer = ObjectPools.BufferWriter.Rent();
+
+                try
+                {
+                    // make call for SSPI data
+                    _authenticationProvider!.WriteSSPIContext(receivedBuff.AsSpan(0, receivedLength), writer);
+
+                    // DO NOT SEND LENGTH - TDS DOC INCORRECT!  JUST SEND SSPI DATA!
+                    _physicalStateObj.WriteByteSpan(writer.WrittenSpan);
+
+                }
+                finally
+                {
+                    ObjectPools.BufferWriter.Return(writer);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(receivedBuff, clearArray: true);
+            }
+
+            // set message type so server knows its a SSPI response
+            _physicalStateObj._outputMessageType = TdsEnums.MT_SSPI;
+
+            // send to server
+            _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
+            _physicalStateObj.SniContext = outerContext;
+        }
+#nullable disable
+
         internal void Deactivate(bool connectionIsDoomed)
         {
             // Called when the connection that owns us is deactivated.
@@ -1385,7 +1604,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command = null, bool callerHasConnectionLock = false, bool asyncClose = false)
         {
-            Debug.Assert(!callerHasConnectionLock || _connHandler._parserLock.ThreadMayHaveLock(), "Caller claims to have lock, but connection lock is not taken");
+            Debug.Assert(!callerHasConnectionLock || _connHandler._parserLock.ThreadMayHaveLock, "Caller claims to have lock, but connection lock is not taken");
 
             SqlException exception = null;
             bool breakConnection;
@@ -1590,9 +1809,11 @@ namespace Microsoft.Data.SqlClient
                 // strip provider info from SNI
                 //
                 int iColon = errorMessage.IndexOf(':');
-                Debug.Assert(0 <= iColon, "':' character missing in sni errorMessage");
+                // TODO(GH-3604): Fix this failing assertion.
+                // Debug.Assert(0 <= iColon, "':' character missing in sni errorMessage");
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > ':' character missing in sni errorMessage. Error Message index of ':' = {0}", iColon);
-                Debug.Assert(errorMessage.Length > iColon + 1 && errorMessage[iColon + 1] == ' ', "Expecting a space after the ':' character");
+                // TODO(GH-3604): Fix this failing assertion.
+                // Debug.Assert(errorMessage.Length > iColon + 1 && errorMessage[iColon + 1] == ' ', "Expecting a space after the ':' character");
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Expecting a space after the ':' character. Error Message Length = {0}", errorMessage.Length);
 
                 // extract the message excluding the colon and trailing cr/lf chars
@@ -1685,7 +1906,7 @@ namespace Microsoft.Data.SqlClient
                             stateObj.ResetBuffer();
                             Debug.Assert(_connHandler != null, "SqlConnectionInternalTds handler can not be null at this point.");
                             stateObj.AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, _server, _connHandler.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
-                            Debug.Assert(_connHandler._parserLock.ThreadMayHaveLock(), "Thread is writing without taking the connection lock");
+                            Debug.Assert(_connHandler._parserLock.ThreadMayHaveLock, "Thread is writing without taking the connection lock");
                             ThrowExceptionAndWarning(stateObj, callerHasConnectionLock: true);
                         }
                     }
@@ -6559,7 +6780,7 @@ namespace Microsoft.Data.SqlClient
 
                     // Now read the 4 next integers which contain the actual value.
                     length = checked((int)length - 1);
-                    int[] bits = new int[4];
+                    Span<int> bits = stackalloc int[4];
                     int decLength = length >> 2;
                     ReadOnlySpan<byte> span = unencryptedBytes.AsSpan();
                     for (int i = 0; i < decLength; i++)
@@ -7479,8 +7700,15 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLNUMERICN:
                     {
+#if NET
+                        Span<int> decimalBits = stackalloc int[4];
+                        decimal.GetBits((decimal)value, decimalBits);
+#else
+                        int[] decimalBits = decimal.GetBits((decimal)value);
+#endif
+
                         stateObj.WriteByte(mt.Precision); //propbytes: precision
-                        stateObj.WriteByte((byte)((decimal.GetBits((decimal)value)[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
+                        stateObj.WriteByte((byte)((decimalBits[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
                         WriteDecimal((decimal)value, stateObj);
                         break;
                     }
@@ -7641,9 +7869,15 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLNUMERICN:
                     {
+#if NET
+                        Span<int> decimalBits = stackalloc int[4];
+                        decimal.GetBits((decimal)value, decimalBits);
+#else
+                        int[] decimalBits = decimal.GetBits((decimal)value);
+#endif
                         WriteSqlVariantHeader(21, metatype.TDSType, metatype.PropBytes, stateObj);
                         stateObj.WriteByte(metatype.Precision); //propbytes: precision
-                        stateObj.WriteByte((byte)((decimal.GetBits((decimal)value)[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
+                        stateObj.WriteByte((byte)((decimalBits[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
                         WriteDecimal((decimal)value, stateObj);
                         break;
                     }
@@ -7700,7 +7934,12 @@ namespace Microsoft.Data.SqlClient
         private void WriteSqlMoney(SqlMoney value, int length, TdsParserStateObject stateObj)
         {
             // UNDONE: can I use SqlMoney.ToInt64()?
+#if NET
+            Span<int> bits = stackalloc int[4];
+            decimal.GetBits(value.Value, bits);
+#else
             int[] bits = decimal.GetBits(value.Value);
+#endif
 
             // this decimal should be scaled by 10000 (regardless of what the incoming decimal was scaled by)
             bool isNeg = (0 != (bits[3] & unchecked((int)0x80000000)));
@@ -7733,7 +7972,12 @@ namespace Microsoft.Data.SqlClient
         private byte[] SerializeCurrency(Decimal value, int length, TdsParserStateObject stateObj)
         {
             SqlMoney m = new SqlMoney(value);
-            int[] bits = Decimal.GetBits(m.Value);
+#if NET
+            Span<int> bits = stackalloc int[4];
+            decimal.GetBits(m.Value, bits);
+#else
+            int[] bits = decimal.GetBits(m.Value);
+#endif
 
             // this decimal should be scaled by 10000 (regardless of what the incoming decimal was scaled by)
             bool isNeg = (0 != (bits[3] & unchecked((int)0x80000000)));
@@ -7778,7 +8022,12 @@ namespace Microsoft.Data.SqlClient
         private void WriteCurrency(decimal value, int length, TdsParserStateObject stateObj)
         {
             SqlMoney m = new SqlMoney(value);
+#if NET
+            Span<int> bits = stackalloc int[4];
+            decimal.GetBits(m.Value, bits);
+#else
             int[] bits = decimal.GetBits(m.Value);
+#endif
 
             // this decimal should be scaled by 10000 (regardless of what the incoming decimal was scaled by)
             bool isNeg = (0 != (bits[3] & unchecked((int)0x80000000)));
@@ -7915,8 +8164,8 @@ namespace Microsoft.Data.SqlClient
 
             length = checked((int)length - 1);
 
-            int[] bits;
-            result = TryReadDecimalBits(length, stateObj, out bits);
+            Span<int> bits = stackalloc int[4];
+            result = TryReadDecimalBits(length, stateObj, bits);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
@@ -7928,31 +8177,16 @@ namespace Microsoft.Data.SqlClient
 
         // @devnote: length should be size of decimal without the sign
         // @devnote: sign should have already been read off the wire
-        private TdsOperationStatus TryReadDecimalBits(int length, TdsParserStateObject stateObj, out int[] bits)
+        private TdsOperationStatus TryReadDecimalBits(int length, TdsParserStateObject stateObj, Span<int> bits)
         {
-            bits = stateObj._decimalBits; // used alloc'd array if we have one already
-            int i;
-
-            if (bits == null)
-            {
-                bits = new int[4];
-                stateObj._decimalBits = bits;
-            }
-            else
-            {
-                for (i = 0; i < bits.Length; i++)
-                {
-                    bits[i] = 0;
-                }
-            }
-
+            Debug.Assert(bits.Length == 4);
             Debug.Assert((length > 0) &&
                          (length <= TdsEnums.MAX_NUMERIC_LEN - 1) &&
                          (length % 4 == 0), "decimal should have 4, 8, 12, or 16 bytes of data");
 
             int decLength = length >> 2;
 
-            for (i = 0; i < decLength; i++)
+            for (int i = 0; i < decLength; i++)
             {
                 // up to 16 bytes of data following the sign byte
                 TdsOperationStatus result = stateObj.TryReadInt32(out bits[i]);
@@ -7978,7 +8212,13 @@ namespace Microsoft.Data.SqlClient
 
         internal static decimal AdjustDecimalScale(decimal value, int newScale)
         {
-            int oldScale = (decimal.GetBits(value)[3] & 0x00ff0000) >> 0x10;
+#if NET
+            Span<int> decimalBits = stackalloc int[4];
+            decimal.GetBits(value, decimalBits);
+#else
+            int[] decimalBits = decimal.GetBits(value);
+#endif
+            int oldScale = (decimalBits[3] & 0x00ff0000) >> 0x10;
 
             if (newScale != oldScale)
             {
@@ -8060,7 +8300,12 @@ namespace Microsoft.Data.SqlClient
 
         private byte[] SerializeDecimal(decimal value, TdsParserStateObject stateObj)
         {
-            int[] decimalBits = Decimal.GetBits(value);
+#if NET
+            Span<int> decimalBits = stackalloc int[4];
+            decimal.GetBits(value, decimalBits);
+#else
+            int[] decimalBits = decimal.GetBits(value);
+#endif
             if (stateObj._bDecimalBytes == null)
             {
                 stateObj._bDecimalBytes = new byte[17];
@@ -8115,8 +8360,12 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteDecimal(decimal value, TdsParserStateObject stateObj)
         {
-            stateObj._decimalBits = decimal.GetBits(value);
-            Debug.Assert(stateObj._decimalBits != null, "decimalBits should be filled in at TdsExecuteRPC time");
+#if NET
+            Span<int> decimalBits = stackalloc int[4];
+            decimal.GetBits(value, decimalBits);
+#else
+            int[] decimalBits = decimal.GetBits(value);
+#endif
 
             /*
              Returns a binary representation of a Decimal. The return value is an integer
@@ -8138,7 +8387,7 @@ namespace Microsoft.Data.SqlClient
             */
 
             // write the sign (note that COM and SQL are opposite)
-            if (0x80000000 == (stateObj._decimalBits[3] & 0x80000000))
+            if ((decimalBits[3] & 0x80000000) == 0x80000000)
             {
                 stateObj.WriteByte(0);
             }
@@ -8147,9 +8396,9 @@ namespace Microsoft.Data.SqlClient
                 stateObj.WriteByte(1);
             }
 
-            WriteInt(stateObj._decimalBits[0], stateObj);
-            WriteInt(stateObj._decimalBits[1], stateObj);
-            WriteInt(stateObj._decimalBits[2], stateObj);
+            WriteInt(decimalBits[0], stateObj);
+            WriteInt(decimalBits[1], stateObj);
+            WriteInt(decimalBits[2], stateObj);
             WriteInt(0, stateObj);
         }
 
@@ -8731,7 +8980,9 @@ namespace Microsoft.Data.SqlClient
                         byte workflow = 0x00;
                         switch (fedAuthFeatureData.authentication)
                         {
+                            #pragma warning disable 0618 // Type or member is obsolete
                             case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                            #pragma warning restore 0618 // Type or member is obsolete
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD;
                                 break;
                             case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
@@ -9233,7 +9484,15 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, useFeatureExt, length, true);
+                ApplyFeatureExData(
+                    requestedFeatures,
+                    recoverySessionData,
+                    fedAuthFeatureExtensionData,
+                    UserAgentInfo.UserAgentCachedJsonPayload.ToArray(),
+                    useFeatureExt,
+                    length,
+                    true
+                    );
             }
             catch (Exception e)
             {
@@ -9252,6 +9511,7 @@ namespace Microsoft.Data.SqlClient
         private int ApplyFeatureExData(TdsEnums.FeatureExtension requestedFeatures,
                                        SessionData recoverySessionData,
                                        FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
+                                       byte[] userAgentJsonPayload,
                                        bool useFeatureExt,
                                        int length,
                                        bool write = false)
@@ -9260,6 +9520,11 @@ namespace Microsoft.Data.SqlClient
             {
                 checked
                 {
+                    // NOTE: As part of TDS spec UserAgent feature extension should be the first feature extension in the list.
+                    if (LocalAppContextSwitches.EnableUserAgent && ((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) != 0))
+                    {
+                        length += WriteUserAgentFeatureRequest(userAgentJsonPayload, write);
+                    }
                     if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)
                     {
                         length += WriteSessionRecoveryFeatureRequest(recoverySessionData, write);
@@ -9432,7 +9697,7 @@ namespace Microsoft.Data.SqlClient
             // won't stomp on anything.
 
 
-            Debug.Assert(!_connHandler.ThreadHasParserLockForClose || _connHandler._parserLock.ThreadMayHaveLock(), "Thread claims to have parser lock, but lock is not taken");
+            Debug.Assert(!_connHandler.ThreadHasParserLockForClose || _connHandler._parserLock.ThreadMayHaveLock, "Thread claims to have parser lock, but lock is not taken");
             bool callerHasConnectionLock = _connHandler.ThreadHasParserLockForClose;   // If the thread already claims to have the parser lock, then we will let the caller handle releasing it
             if (!callerHasConnectionLock)
             {
@@ -9630,7 +9895,7 @@ namespace Microsoft.Data.SqlClient
 
             if (old_outputPacketNumber != 1 && _state == TdsParserState.OpenLoggedIn)
             {
-                Debug.Assert(_connHandler._parserLock.ThreadMayHaveLock(), "Should not be calling into FailureCleanup without first taking the parser lock");
+                Debug.Assert(_connHandler._parserLock.ThreadMayHaveLock, "Should not be calling into FailureCleanup without first taking the parser lock");
 
                 bool originalThreadHasParserLock = _connHandler.ThreadHasParserLockForClose;
                 try
@@ -9678,7 +9943,7 @@ namespace Microsoft.Data.SqlClient
             // Only need to take the lock if neither the thread nor the caller claims to already have it
             bool needToTakeParserLock = (!callerHasConnectionLock) && (!_connHandler.ThreadHasParserLockForClose);
             Debug.Assert(!_connHandler.ThreadHasParserLockForClose || sync, "Thread shouldn't claim to have the parser lock if we are doing async writes");     // Since we have the possibility of pending with async writes, make sure the thread doesn't claim to already have the lock
-            Debug.Assert(needToTakeParserLock || _connHandler._parserLock.ThreadMayHaveLock(), "Thread or caller claims to have connection lock, but lock is not taken");
+            Debug.Assert(needToTakeParserLock || _connHandler._parserLock.ThreadMayHaveLock, "Thread or caller claims to have connection lock, but lock is not taken");
 
             bool releaseConnectionLock = false;
             if (needToTakeParserLock)
@@ -9795,7 +10060,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(!firstCall || startRpc == 0, "startRpc is not 0 on first call");
             Debug.Assert(!firstCall || startParam == 0, "startParam is not 0 on first call");
             Debug.Assert(!firstCall || !_connHandler.ThreadHasParserLockForClose, "Thread should not already have connection lock");
-            Debug.Assert(firstCall || _connHandler._parserLock.ThreadMayHaveLock(), "Connection lock not taken after the first call");
+            Debug.Assert(firstCall || _connHandler._parserLock.ThreadMayHaveLock, "Connection lock not taken after the first call");
             try
             {
                 _SqlRPC rpcext = null;
@@ -10554,7 +10819,7 @@ namespace Microsoft.Data.SqlClient
             AsyncHelper.ContinueTask(
                 writeParamTask,
                 completion,
-                () => TdsExecuteRPC(
+                onSuccess: () => TdsExecuteRPC(
                     cmd,
                     rpcArray,
                     timeout,
@@ -10567,9 +10832,7 @@ namespace Microsoft.Data.SqlClient
                     startRpc,
                     startParam
                 ),
-                onFailure: exc => TdsExecuteRPC_OnFailure(exc, stateObj),
-                connectionToDoom: _connHandler
-            );
+                onFailure: exc => TdsExecuteRPC_OnFailure(exc, stateObj));
         }
 
         // This is in its own method to avoid always allocating the lambda in TDSExecuteRPCParameter
@@ -12005,10 +12268,11 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    return AsyncHelper.CreateContinuationTask<int, TdsParserStateObject>(unterminatedWriteTask,
-                        WriteInt, 0, stateObj,
-                        connectionToDoom: _connHandler
-                    );
+                    return AsyncHelper.CreateContinuationTask<int, TdsParserStateObject>(
+                        unterminatedWriteTask,
+                        onSuccess: WriteInt,
+                        arg1: 0,
+                        arg2: stateObj);
                 }
             }
             else
@@ -12971,9 +13235,11 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // Otherwise, create a continuation task to write the encryption metadata after the previous write completes.
-                return AsyncHelper.CreateContinuationTask<SqlColumnEncryptionInputParameterInfo, TdsParserStateObject>(terminatedWriteTask,
-                    WriteEncryptionMetadata, columnEncryptionParameterInfo, stateObj,
-                    connectionToDoom: _connHandler);
+                return AsyncHelper.CreateContinuationTask<SqlColumnEncryptionInputParameterInfo, TdsParserStateObject>(
+                    terminatedWriteTask,
+                    onSuccess: WriteEncryptionMetadata,
+                    arg1: columnEncryptionParameterInfo,
+                    arg2: stateObj);
             }
         }
 

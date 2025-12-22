@@ -1,10 +1,21 @@
-//<Snippet1>
+/**
+ * TODO: This sample file should be deleted as the AKV Provider Ctor API is no longer supported with supported versions of AKV provider and MDS.
+ * Depends on: Delete documentation and sample reference in MS Docs first: https://learn.microsoft.com/en-us/sql/connect/ado-net/sql/azure-key-vault-example?view=sql-server-ver17#legacy-callback-implementation-design-example-with-v20
+ *
+
+//< Snippet1>
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Net.Http;
 using System.Security.Cryptography;
-using Azure.Identity;
-using Microsoft.Data.SqlClient;
+using System.Threading;
+using System.Threading.Tasks;
+using Azure.Core;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Data.SqlClient.Samples
 {
@@ -366,3 +377,4 @@ namespace Microsoft.Data.SqlClient.Samples
     }
 }
 //</Snippet1>
+*/

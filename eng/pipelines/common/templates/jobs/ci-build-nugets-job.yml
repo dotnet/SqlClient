@@ -20,9 +20,11 @@ parameters:
     type: string
     default: $(Platform)
   
-  - name: configuration
+  - name: buildConfiguration
     type: string
-    default: $(Configuration)
+    values:
+      - Debug
+      - Release
 
   - name: prebuildSteps
     type: stepList
@@ -47,14 +49,14 @@ jobs:
   - template: ../steps/ci-project-build-step.yml@self
     parameters:
       platform: ${{ parameters.platform }}
-      configuration: ${{ parameters.configuration }}
+      buildConfiguration: ${{ parameters.buildConfiguration }}
       operatingSystem: Windows
       build: all
 
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:
       NugetPackageVersion: $(NugetPackageVersion)
-      configuration: $(Configuration)
+      buildConfiguration: ${{ parameters.buildConfiguration }}
       nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
       OutputDirectory: $(packagePath)
       generateSymbolsPackage: false
@@ -63,7 +65,7 @@ jobs:
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:
       NugetPackageVersion: $(NugetPackageVersion)
-      configuration: $(Configuration)
+      buildConfiguration: ${{ parameters.buildConfiguration }}
       nuspecPath: 'tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
       OutputDirectory: $(packagePath)
       generateSymbolsPackage: false

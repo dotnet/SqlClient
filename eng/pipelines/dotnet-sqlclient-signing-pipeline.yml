@@ -63,9 +63,9 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   default: false
 
 # The timeout, in minutes, for each test job.
-- name: testsTimeout
-  displayName: 'Tests timeout (in minutes)'
-  type: string
+- name: testJobTimeout
+  displayName: 'Test job timeout (in minutes)'
+  type: number
   default: 90
 
 variables:
@@ -163,13 +163,14 @@ extends:
             patterns: '**/*.*nupkg'
             displayName: 'Download NuGet Package'
 
-      - template: eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
-        parameters:
-          packageFolderName: $(packageFolderName)
-          isPreview: ${{ parameters['isPreview'] }}
-          timeout: ${{ parameters.testsTimeout }}
-          downloadPackageStep:
-            download: current
-            artifact: $(packageFolderName)
-            patterns: '**/*.nupkg'
-            displayName: 'Download NuGet Package'
+# Disabling as of 10/15/2025 due to OneBranch apparently disallowing MSBuild tasks in validation stages.
+#      - template: eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
+#        parameters:
+#          packageFolderName: $(packageFolderName)
+#          isPreview: ${{ parameters['isPreview'] }}
+#          timeout: ${{ parameters.testJobTimeout }}
+#          downloadPackageStep:
+#            download: current
+#            artifact: $(packageFolderName)
+#            patterns: '**/*.nupkg'
+#            displayName: 'Download NuGet Package'

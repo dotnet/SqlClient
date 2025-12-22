@@ -12,6 +12,7 @@ using System.Reflection;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.FeatureExtAck;
 using Microsoft.SqlServer.TDS.Login7;
@@ -828,6 +829,153 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 Assert.Throws<InvalidOperationException>(() => connection.Open());
             }
+        }
+
+        // Test to verify that the client sends a UserAgent version
+        // and driver behaves correctly even if server sent an Ack
+        [Theory]
+        [InlineData(false)] // We do not force test server to send an Ack
+        [InlineData(true)] // Server is forced to send an Ack
+        public void TestConnWithUserAgentFeatureExtension(bool forceAck)
+        {
+            // Make sure needed switch is enabled
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.EnableUserAgentField = LocalAppContextSwitchesHelper.Tristate.True;
+
+            using var server = new TdsServer();
+            server.Start();
+
+            // Configure the server to support UserAgent version 0x01
+            server.ServerSupportedUserAgentFeatureExtVersion = 0x01;
+
+            // Opt in to forced ACK for UserAgentSupport (no negotiation)
+            server.EnableUserAgentFeatureExt = forceAck;
+
+            bool loginFound = false;
+
+            // Captured from LOGIN7 as parsed by the test server
+            byte observedVersion = 0;
+            byte[] observedJsonBytes = Array.Empty<byte>();
+
+            bool firstFeatureIsUserAgent = false;
+            bool tokenWasNotNull = false;
+            bool dataLengthAtLeast2 = false;
+
+            // Inspect what the client sends in the LOGIN7 packet
+            server.OnLogin7Validated = loginToken =>
+            {
+                var tdsFeatureExt = loginToken.FeatureExt
+                                      .OfType<TDSLogin7GenericOptionToken>().ToArray();
+                var token = tdsFeatureExt?.FirstOrDefault(t => t.FeatureID == TDSFeatureID.UserAgentSupport);
+
+                // Capture conditions instead of asserting here
+                firstFeatureIsUserAgent = tdsFeatureExt?.Length > 0 && tdsFeatureExt[0].FeatureID == TDSFeatureID.UserAgentSupport;
+                tokenWasNotNull = token is not null;
+
+                var data = token?.Data ?? Array.Empty<byte>();
+                dataLengthAtLeast2 = data.Length >= 2;
+
+                if (data.Length >= 1)
+                {
+                    observedVersion = data[0];
+                }
+
+                if (data.Length >= 2)
+                {
+                    observedJsonBytes = data.AsSpan(1).ToArray();
+                }
+
+                loginFound = true;
+            };
+
+            // Connect to the test TDS server.
+            var connStr = new SqlConnectionStringBuilder
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+            }.ConnectionString;
+
+            // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
+            using var connection = new SqlConnection(connStr);
+            connection.Open();
+
+            // Verify the connection itself succeeded
+            Assert.Equal(ConnectionState.Open, connection.State);
+
+            // Verify client did offer UserAgent and captured conditions hold
+            Assert.True(loginFound, "Expected UserAgent extension in LOGIN7");
+            Assert.True(firstFeatureIsUserAgent);
+            Assert.True(tokenWasNotNull);
+            Assert.True(dataLengthAtLeast2);
+            Assert.Equal(0x1, observedVersion);
+
+            // Note: Accessing UserAgentInfo via Reflection.
+            // We cannot use InternalsVisibleTo here because making internals visible to FunctionalTests
+            // causes the *.TestHarness.cs stubs to clash with the real internal types in SqlClient.
+            var asm = typeof(SqlConnection).Assembly;
+            var userAgentInfoType =
+                asm.GetTypes().FirstOrDefault(t => string.Equals(t.Name, "UserAgentInfo", StringComparison.Ordinal)) ??
+                asm.GetTypes().FirstOrDefault(t => t.FullName?.EndsWith(".UserAgentInfo", StringComparison.Ordinal) == true);
+
+            Assert.NotNull(userAgentInfoType);
+
+            // Try to get the property
+            var prop = userAgentInfoType.GetProperty("UserAgentCachedJsonPayload",
+                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            Assert.NotNull(prop);
+
+            ReadOnlyMemory<byte> cachedPayload = (ReadOnlyMemory<byte>)prop.GetValue(null)!;
+            Assert.Equal(cachedPayload.ToArray(), observedJsonBytes.ToArray());
+        }
+
+        /// <summary>
+        /// Test to verify no UserAgent relevant information is sent when EnableUserAgentField switch is disabled.
+        /// </summary>
+        [Fact]
+        public void TestConnWithoutUserAgentFeatureExtension()
+        {
+            // Disable the client-side UserAgent field entirely
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.EnableUserAgentField = LocalAppContextSwitchesHelper.Tristate.False;
+
+            using var server = new TdsServer();
+            server.Start();
+
+            // Do not advertise or force the UserAgent feature on the server
+            server.ServerSupportedUserAgentFeatureExtVersion = 0x00; // no support
+            server.EnableUserAgentFeatureExt = false;                // no forced ACK
+
+            bool loginValidated = false;
+            bool userAgentFeatureSeen = false;
+
+            // Inspect the LOGIN7 packet captured by the test server
+            server.OnLogin7Validated = loginToken =>
+            {
+                var featureExtTokens = loginToken.FeatureExt
+                    .OfType<TDSLogin7GenericOptionToken>()
+                    .ToArray();
+
+                // Ensure there is no UserAgentSupport token at all
+                var uaToken = featureExtTokens.FirstOrDefault(t => t.FeatureID == TDSFeatureID.UserAgentSupport);
+                userAgentFeatureSeen = uaToken is not null;
+
+                loginValidated = true;
+            };
+
+            // Connect to the test TDS server with a basic connection string
+            var connStr = new SqlConnectionStringBuilder
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+            }.ConnectionString;
+
+            using var connection = new SqlConnection(connStr);
+            connection.Open();
+
+            // Verify that the connection succeeded and no UserAgent data was sent
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.True(loginValidated, "Expected LOGIN7 to be validated by the test server");
+            Assert.False(userAgentFeatureSeen, "Did not expect a UserAgentSupport feature token in LOGIN7");
         }
     }
 }
