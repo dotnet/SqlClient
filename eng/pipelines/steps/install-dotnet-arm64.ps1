@@ -69,6 +69,13 @@ if ($Debug)
 
 if (-not (Test-Path -Path "$InstallDir/dotnet-install.ps1" -PathType Leaf))
 {
+  if (-not (Test-Path -PathType Container -Path "$InstallDir"))
+  {
+    Write-Host "Creating install dir: $InstallDir ..."
+
+    New-Item -ItemType Directory -Force -Path "$InstallDir"
+  }
+
   Write-Host "Downloading dotnet-install.ps1..."
   
   $params =
