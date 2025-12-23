@@ -21,7 +21,7 @@ variables:
   - name: LocalMdsMinor
     value: 1
   - name: LocalMdsPatch
-    value: 8
+    value: 9
   - name: Packaging.EnableSBOMSigning
     value: true
   
