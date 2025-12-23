@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <!-- Test .NET Framework Dependencies -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
     <PackageVersion Include="System.Data.Odbc" Version="8.0.1" />
