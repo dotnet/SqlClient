@@ -61,7 +61,7 @@ steps:
   displayName: 'MSBuild Build Tests for ${{parameters.TargetNetFxVersion }}'
   inputs:
     solution: build.proj
-    msbuildArguments: ' -t:BuildTestsNetFx -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} -p:TargetNetFxVersion=${{parameters.TargetNetFxVersion }} -p:Configuration=${{parameters.configuration }} -p:Platform=${{parameters.platform }}'
+    msbuildArguments: ' -t:BuildTestsNetFx -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} -p:TF=${{parameters.TargetNetFxVersion }} -p:Configuration=${{parameters.configuration }} -p:Platform=${{parameters.platform }}'
     
 # Don't run unit tests using package reference. Unit tests are only run using project reference.
 

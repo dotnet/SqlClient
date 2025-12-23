@@ -1,22 +1,69 @@
 <Project>
   <Import Project="..\..\Directory.Packages.props" />
 
-  <!-- Test Project Dependencies for all targets. -->
+  <!-- Test Common Dependencies -->
   <ItemGroup>
-    <!--
-      Transitive dependencies with vulnerabilities, so we explicitly ask for
-      non-vulnerable versions.
-    -->
-    <PackageVersion Include="System.Formats.Asn1" Version="6.0.1" />
+    <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
+    <PackageVersion Include="Microsoft.DotNet.RemoteExecutor" Version="10.0.0-beta.25164.6" />
+    <PackageVersion Include="Microsoft.DotNet.XUnitExtensions" Version="10.0.0-beta.25164.6" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="Microsoft.SqlServer.SqlManagementObjects" Version="172.76.0" />
+    <PackageVersion Include="Microsoft.SqlServer.Types" Version="170.1000.7" />
+    <PackageVersion Include="Microsoft.Win32.Registry" Version="5.0.0" />
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageVersion Include="System.Security.Principal.Windows" Version="5.0.0" />
+    <PackageVersion Include="System.ServiceProcess.ServiceController" Version="8.0.1" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageVersion Include="xunit.runner.console" Version="2.9.3" />
   </ItemGroup>
 
-  <!-- Test Project Dependencies for NetFx only. -->
+  <!-- Test .NET Framework Dependencies -->
   <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
+    <PackageVersion Include="System.Data.Odbc" Version="8.0.1" />
+  </ItemGroup>
+  
+  <!-- Test .NET Standard 2.0 Dependencies -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageVersion Include="System.Data.Odbc" Version="8.0.1" />
+  </ItemGroup>
+
+  <!-- Test .NET 8.0 Dependencies -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageVersion Include="System.Data.Odbc" Version="8.0.1" />
+  </ItemGroup>
+
+  <!-- Test .NET 9.0 Dependencies -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.11" />
+    <PackageVersion Include="System.Data.Odbc" Version="9.0.11" />
   </ItemGroup>
 
   <!-- MDS Package Dependency -->
   <ItemGroup Condition="$(ReferenceType) == 'Package'">
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
   </ItemGroup>
+
+  <!-- Explicit Dependencies to avoid Transitive Vulnerabilities -->
+  <ItemGroup>
+    <!--
+      Explicitly reference the latest published MDS 5.1.x version here to avoid
+      an older version (5.1.5) being included transitively by
+      SqlManagementObjects.  The older version brings in a vulnerable version of
+      System.Formats.Asn1.
+
+      Only do this when building in Project reference mode.  For Package
+      reference builds, the MDS package included above will be used instead, and
+      shouldn't suffer from this vulnerability.
+    -->
+    <PackageVersion
+      Condition="$(ReferenceType) == 'Project'"
+      Include="Microsoft.Data.SqlClient"
+      Version="5.1.8" />
+  </ItemGroup>
+
 </Project>

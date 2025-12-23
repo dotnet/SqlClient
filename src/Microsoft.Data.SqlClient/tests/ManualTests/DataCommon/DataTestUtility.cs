@@ -280,7 +280,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SecureString securePassword = new SecureString();
 
             securePassword.MakeReadOnly();
+            #pragma warning disable CS0618 // Type or member is obsolete
             result = app.AcquireTokenByUsernamePassword(scopes, userID, password).ExecuteAsync().Result;
+            #pragma warning restore CS0618 // Type or member is obsolete
 
             return result.AccessToken;
         });

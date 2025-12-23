@@ -34,16 +34,23 @@
   <ItemGroup>
     <PackageReference Include="Azure.Core" />
     <PackageReference Include="Azure.Identity" />
-    <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+    <PackageReference Include="Microsoft.Identity.Client" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
     <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" />    
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
+  </ItemGroup>
 
-    <!-- Transitive dependencies that would otherwise bring in older, vulnerable versions. -->
+  <!--
+    Explicitly include some packages for .NET Standard 2.0 that are part of
+    the other .NET target base class libraries.
+  -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="System.Text.Json" />
   </ItemGroup>
    
