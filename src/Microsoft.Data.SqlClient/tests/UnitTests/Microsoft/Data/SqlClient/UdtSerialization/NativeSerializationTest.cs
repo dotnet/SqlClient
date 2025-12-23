@@ -384,7 +384,9 @@ public sealed class NativeSerializationTest : IDisposable
     /// <param name="primitive">Primitive to serialize and to compare against.</param>
     /// <param name="expectedValue">Expected byte output.</param>
     [Theory]
-    [MemberData(nameof(SerializedNonNullPrimitiveTypeValues))]
+    [MemberData(
+        nameof(SerializedNonNullPrimitiveTypeValues),
+        DisableDiscoveryEnumeration = true)]
     public void Serialize_PrimitiveType_Roundtrips(object primitive, byte[] expectedValue) =>
         RoundtripType(primitive, expectedValue);
 
@@ -395,7 +397,9 @@ public sealed class NativeSerializationTest : IDisposable
     /// <param name="primitive">Primitive to serialize and to compare against.</param>
     /// <param name="expectedValue">Expected byte output.</param>
     [Theory]
-    [MemberData(nameof(SerializedNestedNonNullPrimitiveTypeValues))]
+    [MemberData(
+        nameof(SerializedNestedNonNullPrimitiveTypeValues),
+        DisableDiscoveryEnumeration = true)]
     public void Serialize_NestedPrimitiveType_Roundtrips(object primitive, byte[] expectedValue) =>
         RoundtripType(primitive, expectedValue);
 
@@ -406,7 +410,9 @@ public sealed class NativeSerializationTest : IDisposable
     /// <param name="primitive">Primitive to serialize and to compare against.</param>
     /// <param name="expectedValue">Expected byte output.</param>
     [Theory]
-    [MemberData(nameof(SerializedNullPrimitiveTypeValues))]
+    [MemberData(
+        nameof(SerializedNullPrimitiveTypeValues),
+        DisableDiscoveryEnumeration = true)]
     public void Serialize_NullPrimitiveType_Roundtrips(object primitive, byte[] expectedValue) =>
         RoundtripType(primitive, expectedValue);
 
