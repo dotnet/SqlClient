@@ -1,3 +1,5 @@
+namespace SqlConnectionStringBuilder_MultipleActiveResultSets;
+
 using System;
 using System.Data;
 // <Snippet1>

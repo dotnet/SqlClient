@@ -1,3 +1,5 @@
+namespace SqlBulkCopy_DataTable;
+
 using System;
 using System.Data;
 // <Snippet1>

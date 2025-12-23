@@ -1,3 +1,5 @@
+namespace SqlDataAdapter_SqlDataAdapter;
+
 using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
