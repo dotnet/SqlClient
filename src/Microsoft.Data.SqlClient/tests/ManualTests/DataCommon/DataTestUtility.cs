@@ -88,10 +88,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // SQL server Version
         private static string s_sQLServerVersion = string.Empty;
-        private static bool s_isTDS8Supported;
 
         //SQL Server EngineEdition
         private static string s_sqlServerEngineEdition;
+
+        // SQL Server capabilities
+        private static bool? s_isDataClassificationSupported;
+        private static bool? s_isVectorSupported;
 
         // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
@@ -130,17 +133,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Is TDS8 supported
-        public static bool IsTDS8Supported
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(TCPConnectionString))
-                {
-                    s_isTDS8Supported = GetSQLServerStatusOnTDS8(TCPConnectionString);
-                }
-                return s_isTDS8Supported;
-            }
-        }
+        public static bool IsTDS8Supported =>
+            IsTCPConnStringSetup() &&
+                GetSQLServerStatusOnTDS8(TCPConnectionString);
+
+        /// <summary>
+        /// Checks if object SYS.SENSITIVITY_CLASSIFICATIONS exists in SQL Server
+        /// </summary>
+        /// <returns>True, if target SQL Server supports Data Classification</returns>
+        public static bool IsDataClassificationSupported =>
+            s_isDataClassificationSupported ??= IsTCPConnStringSetup() &&
+                IsObjectPresent("SYS.SENSITIVITY_CLASSIFICATIONS");
+
+        /// <summary>
+        /// Determines whether the SQL Server supports the 'vector' data type.
+        /// </summary>
+        /// <remarks>This method attempts to connect to the SQL Server and check for the existence of the
+        /// 'vector' data type. If a connection cannot be established or an error occurs during the query, the method
+        /// returns <see langword="false"/>.</remarks>
+        /// <returns><see langword="true"/> if the 'vector' data type is supported; otherwise, <see langword="false"/>.</returns>
+        public static bool IsSqlVectorSupported =>
+            s_isVectorSupported ??= IsTCPConnStringSetup() &&
+                IsTypePresent("vector");
 
         static DataTestUtility()
         {
@@ -369,7 +383,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         #nullable disable
 
-        public static bool GetSQLServerStatusOnTDS8(string connectionString)
+        private static bool GetSQLServerStatusOnTDS8(string connectionString)
         {
             bool isTDS8Supported = false;
             SqlConnectionStringBuilder builder = new(connectionString)
@@ -411,6 +425,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return present;
         }
 
+        public static bool IsObjectPresent(string objectName)
+        {
+            using SqlConnection connection = new(TCPConnectionString);
+            using SqlCommand command = new("SELECT OBJECT_ID(@name)", connection);
+
+            connection.Open();
+            command.Parameters.AddWithValue("@name", objectName);
+
+            return command.ExecuteScalar() is not DBNull;
+        }
+
+        public static bool IsTypePresent(string typeName)
+        {
+            using SqlConnection connection = new(TCPConnectionString);
+            using SqlCommand command = new("SELECT COUNT(1) FROM SYS.TYPES WHERE [name] = @name", connection);
+
+            connection.Open();
+            command.Parameters.AddWithValue("@name", typeName);
+
+            return (int)command.ExecuteScalar() > 0;
+        }
+
         public static bool IsAdmin
         {
             get
@@ -420,32 +456,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 #endif
                 return new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
             }
-        }
-
-        /// <summary>
-        /// Checks if object SYS.SENSITIVITY_CLASSIFICATIONS exists in SQL Server
-        /// </summary>
-        /// <returns>True, if target SQL Server supports Data Classification</returns>
-        public static bool IsSupportedDataClassification()
-        {
-            try
-            {
-                using (var connection = new SqlConnection(TCPConnectionString))
-                using (var command = new SqlCommand("SELECT * FROM SYS.SENSITIVITY_CLASSIFICATIONS", connection))
-                {
-                    connection.Open();
-                    command.ExecuteNonQuery();
-                }
-            }
-            catch (SqlException e)
-            {
-                // Check for Error 208: Invalid Object Name
-                if (e.Errors != null && e.Errors[0].Number == 208)
-                {
-                    return false;
-                }
-            }
-            return true;
         }
 
         public static bool IsDNSCachingSetup() => !string.IsNullOrEmpty(DNSCachingConnString);
