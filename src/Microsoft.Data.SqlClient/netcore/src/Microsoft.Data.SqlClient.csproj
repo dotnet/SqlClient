@@ -209,9 +209,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionInternal.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionInternal.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbMetaDataFactory.cs">
-      <Link>Microsoft\Data\ProviderBase\DbMetaDataFactory.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbReferenceCollection.cs">
       <Link>Microsoft\Data\ProviderBase\DbReferenceCollection.cs</Link>
     </Compile>
@@ -821,11 +818,11 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDependencyUtils.cs">
       <Link>Microsoft\Data\SqlClient\SqlDependencyUtils.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDependencyUtils.AppDomain.cs">
-      <Link>Microsoft\Data\SqlClient\SqlDependencyUtils.AppDomain.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDependencyUtils.AppDomain.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\SqlDependencyUtils.AppDomain.netcore.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDependencyUtils.AssemblyLoadContext.cs">
-      <Link>Microsoft\Data\SqlClient\SqlDependencyUtils.AssemblyLoadContext.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDependencyUtils.AssemblyLoadContext.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\SqlDependencyUtils.AssemblyLoadContext.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.Crypto.cs">
       <Link>Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.Crypto.cs</Link>

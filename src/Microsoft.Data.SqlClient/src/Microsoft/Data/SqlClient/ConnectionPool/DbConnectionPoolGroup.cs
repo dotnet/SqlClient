@@ -40,7 +40,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private int _state;          // see PoolGroupState* below
 
         private DbConnectionPoolGroupProviderInfo _providerInfo;
-        private DbMetaDataFactory _metaDataFactory;
 
         private static int s_objectTypeCount; // EventSource counter
 
@@ -95,18 +94,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         internal DbConnectionPoolGroupOptions PoolGroupOptions => _poolGroupOptions;
 
-        internal DbMetaDataFactory MetaDataFactory
-        {
-            get
-            {
-                return _metaDataFactory;
-            }
-
-            set
-            {
-                _metaDataFactory = value;
-            }
-        }
+        internal SqlMetaDataFactory MetaDataFactory { get; set; }
 
         internal int Clear()
         {

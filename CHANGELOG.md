@@ -7,6 +7,81 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Preview Release 7.0.0-preview3.25342.7] - 2025-12-08
+
+This update brings the following changes over the previous preview release:
+
+### Added
+
+#### Support for .NET 10
+
+*What Changed:*
+
+- Updated pipelines and test suites to compile the driver using the .NET 10 SDK. Cleaned up unnecessary dependency references. 
+  ([#3686](https://github.com/dotnet/SqlClient/pull/3686))
+
+*Who Benefits:*
+
+- Developers targeting .NET 10.
+
+*Impact:*
+
+- Addressed .NET 10 warnings regarding unused/unnecessary dependencies.
+
+#### Enable SqlClientDiagnosticListener in SqlCommand on .NET Framework
+
+*What Changed:*
+
+- Enabled SqlClientDiagnosticListener functionality on SqlCommand for .NET Framework.
+  ([#3658](https://github.com/dotnet/SqlClient/pull/3658))
+
+*Who Benefits:*
+
+- Developers requiring diagnostic information on .NET Framework.
+
+*Impact:*
+
+- Improved observability and diagnostics for SqlCommand on .NET Framework.
+
+#### Enable User Agent Extension
+
+*What Changed:*
+
+- Enabled User Agent Feature Extension.
+  ([#3606](https://github.com/dotnet/SqlClient/pull/3606))
+
+*Who Benefits:*
+
+- Telemetry and diagnostics consumers.
+
+*Impact:*
+
+- When the `Switch.Microsoft.Data.SqlClient.EnableUserAgent` app context switch is enabled, the driver sends more detailed user agent strings. This switch is disabled by default. This change will assist with troubleshooting and quantifying driver usage by version and operating system.
+
+### Fixed
+
+- Fixed an issue where extra connection deactivation was occurring.
+  ([#3758](https://github.com/dotnet/SqlClient/pull/3758))
+
+### Changed
+
+#### Other changes
+
+- Performance improvements:
+  ([#3732](https://github.com/dotnet/SqlClient/pull/3732),
+   [#3660](https://github.com/dotnet/SqlClient/pull/3660))
+
+- Codebase merge and cleanup:
+  ([#3803](https://github.com/dotnet/SqlClient/pull/3803),
+   [#3781](https://github.com/dotnet/SqlClient/pull/3781),
+   [#3760](https://github.com/dotnet/SqlClient/pull/3760),
+   [#3746](https://github.com/dotnet/SqlClient/pull/3746),
+   [#3743](https://github.com/dotnet/SqlClient/pull/3743),
+   [#3738](https://github.com/dotnet/SqlClient/pull/3738),
+   [#3683](https://github.com/dotnet/SqlClient/pull/3683),
+   [#3676](https://github.com/dotnet/SqlClient/pull/3676),
+   [#3768](https://github.com/dotnet/SqlClient/pull/3768))
+
 ## [Stable release 6.0.4] - 2025-11-15
 
 This update brings the below changes over the previous stable release:
