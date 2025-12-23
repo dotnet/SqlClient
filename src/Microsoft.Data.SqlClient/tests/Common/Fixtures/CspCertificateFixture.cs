@@ -32,17 +32,17 @@ public class CspCertificateFixture : CertificateFixtureBase
 
     public string CspCertificatePath { get; }
 
-    public string CspKeyPath { get; }
+    public string? CspKeyPath { get; }
 
-    private string GetCspPathFromCertificate()
+    private string? GetCspPathFromCertificate()
     {
-        RSA privateKey = CspCertificate.GetRSAPrivateKey();
+        RSA? privateKey = CspCertificate.GetRSAPrivateKey();
 
         if (privateKey is RSACryptoServiceProvider csp)
         {
             return string.Concat(csp.CspKeyContainerInfo.ProviderName, @"/", csp.CspKeyContainerInfo.KeyContainerName);
         }
-        else if (privateKey is RSACng cng)
+        else if (privateKey is RSACng cng && cng.Key.Provider is not null)
         {
             return string.Concat(cng.Key.Provider.Provider, @"/", cng.Key.KeyName);
         }

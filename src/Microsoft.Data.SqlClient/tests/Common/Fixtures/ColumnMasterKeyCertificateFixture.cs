@@ -21,7 +21,7 @@ public class ColumnMasterKeyCertificateFixture : CertificateFixtureBase
     {
     }
 
-    public X509Certificate2 ColumnMasterKeyCertificate { get; }
+    public X509Certificate2? ColumnMasterKeyCertificate { get; }
 
     protected ColumnMasterKeyCertificateFixture(bool createCertificate)
     {
