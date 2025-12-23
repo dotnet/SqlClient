@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -288,6 +289,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        // @TODO: Verify this test is doing what we expect it to do.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task UnobservedTaskExceptionTest()
         {
@@ -308,15 +310,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     try
                     {
-                        using (var reader = await command.ExecuteReaderAsync())
-                        {
-                            do
-                            {
-                                while (await reader.ReadAsync())
-                                {
-                                }
-                            } while (await reader.NextResultAsync());
-                        }
+                        using SqlDataReader reader = await command.ExecuteReaderAsync();
+                        await reader.FlushAllResultsAsync();
                     }
                     catch (SqlException ex)
                     {

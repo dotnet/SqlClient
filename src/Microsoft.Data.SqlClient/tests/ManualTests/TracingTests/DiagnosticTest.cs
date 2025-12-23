@@ -143,10 +143,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         conn.Open();
                         SqlDataReader reader = cmd.ExecuteReader();
-                        while (reader.Read())
-                        {
-                            // Read until end.
-                        }
+                        reader.FlushResultSet();
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
@@ -190,10 +187,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         conn.Open();
                         SqlDataReader reader = cmd.ExecuteReader(CommandBehavior.Default);
-                        while (reader.Read())
-                        {
-                            // Read to end
-                        }
+                        reader.FlushResultSet();
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
@@ -217,10 +211,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         conn.Open();
                         XmlReader reader = cmd.ExecuteXmlReader();
-                        while (reader.Read())
-                        {
-                            // Read to end
-                        }
+                        reader.FlushResultSet();
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
@@ -373,10 +364,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         conn.Open();
                         SqlDataReader reader = await cmd.ExecuteReaderAsync();
-                        while (reader.Read())
-                        {
-                            // Read to end
-                        }
+                        reader.FlushResultSet();
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
@@ -432,10 +420,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         conn.Open();
                         XmlReader reader = await cmd.ExecuteXmlReaderAsync();
-                        while (reader.Read())
-                        {
-                            // Read to end
-                        }
+                        reader.FlushResultSet();
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;

@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Data.SqlClient.TestUtilities;
 using Xunit;
 using Xunit.Abstractions;
@@ -1215,25 +1216,18 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void CloseConnection(string connectionString)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using SqlConnection conn = new SqlConnection(connectionString);
+            conn.Open();
+
+            using SqlCommand cmd = new SqlCommand("select * from orders where orderid < 10253", conn);
+            using (SqlDataReader reader = cmd.ExecuteReader(CommandBehavior.CloseConnection))
             {
-                conn.Open();
-                using (SqlCommand cmd = new SqlCommand("select * from orders where orderid < 10253", conn))
-                using (SqlDataReader reader = cmd.ExecuteReader(CommandBehavior.CloseConnection))
-                {
-                    DataTestUtility.AssertEqualsWithDescription(ConnectionState.Open, conn.State, "FAILED: Connection should be in open state");
+                DataTestUtility.AssertEqualsWithDescription(ConnectionState.Open, conn.State, "FAILED: Connection should be in open state");
 
-                    while (reader.Read())
-                    {
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            reader.GetValue(i);
-                        }
-                    }
-                }
-
-                DataTestUtility.AssertEqualsWithDescription(ConnectionState.Closed, conn.State, "FAILED: Connection should be in closed state after reader close");
+                reader.FlushResultSet();
             }
+
+            DataTestUtility.AssertEqualsWithDescription(ConnectionState.Closed, conn.State, "FAILED: Connection should be in closed state after reader close");
         }
 
         private static void OpenConnection(string connectionString)

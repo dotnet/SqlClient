@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Xml;
 using System.Xml.XPath;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -51,10 +52,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 using SqlCommand command = new(query, activityConnection) { CommandType = commandType };
                 using SqlDataReader reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    // Flush data
-                }
+                reader.FlushResultSet();
 
                 ids = TraceListener.ActivityIDs;
             }
