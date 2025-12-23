@@ -9,11 +9,6 @@ using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 
-#if NETFRAMEWORK
-using System.Runtime.CompilerServices;
-using System.Runtime.ConstrainedExecution;
-#endif
-
 namespace Microsoft.Data.SqlClient
 {
     internal abstract class SqlInternalConnection : DbConnectionInternal

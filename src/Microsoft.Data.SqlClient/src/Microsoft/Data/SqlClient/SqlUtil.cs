@@ -16,12 +16,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Interop.Common.Sni;
 using Microsoft.Data.Common;
-
-#if NETFRAMEWORK
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
-using Interop.Windows.Kernel32;
-#else
+#if NET
 using System.Net.Sockets;
 #endif
 

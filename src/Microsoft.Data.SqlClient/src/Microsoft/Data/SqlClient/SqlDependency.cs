@@ -18,7 +18,6 @@ using Microsoft.Data.SqlClient.ConnectionPool;
 using System.IO;
 using System.Runtime.Remoting;
 using System.Runtime.Serialization;
-using System.Runtime.Versioning;
 using System.Security.Permissions;
 using Interop.Windows.Sni;
 using Microsoft.Data.SqlClient.LocalDb;
@@ -453,10 +452,6 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
         // Method to obtain AppDomain reference and then obtain the reference to the process wide dispatcher for
         // Start() and Stop() method calls on the individual SqlDependency instances.
-        // SxS: this method retrieves the primary AppDomain stored in native library. Since each System.Data.dll has its own copy of native
-        // library, this call is safe in SxS
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
         private static void ObtainProcessDispatcher()
         {
             byte[] nativeStorage = SqlDependencyProcessDispatcherStorage.NativeGetData();
