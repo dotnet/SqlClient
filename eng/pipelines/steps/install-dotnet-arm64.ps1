@@ -71,10 +71,13 @@ if (-not (Test-Path -Path "$InstallDir/dotnet-install.ps1" -PathType Leaf))
 {
   Write-Host "Downloading dotnet-install.ps1..."
   
-  Invoke-WebRequest `
-    -Uri "https://builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.ps1" `
-    -OutFile "$InstallDir/dotnet-install.ps1" `
-    -Verbose:$Debug
+  $params =
+  @{
+    Uri = "https://builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.ps1"
+    OutFile = "$InstallDir/dotnet-install.ps1"
+  }
+
+  Invoke-WebRequest @params -Verbose:$Debug
 
   if ($Debug)
   {
