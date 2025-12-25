@@ -86,6 +86,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         DbConnectionPoolState State { get; }
 
         /// <summary>
+        /// Holds connections that are currently enlisted in a transaction.
+        /// </summary>
+        TransactedConnectionPool TransactedConnectionPool { get; }
+
+        /// <summary>
         /// Indicates whether the connection pool is using load balancing.
         /// </summary>
         bool UseLoadBalancing { get; }
@@ -106,7 +111,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="userOptions">The user options to use if a new connection must be opened.</param>
         /// <param name="connection">The retrieved connection will be passed out via this parameter.</param>
         /// <returns>True if a connection was set in the out parameter, otherwise returns false.</returns>
-        bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal? connection);
+        bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal>? taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal? connection);
 
         /// <summary>
         /// Replaces the internal connection currently associated with owningObject with a new internal connection from the pool.
