@@ -20,6 +20,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Identity.Client;
 using Microsoft.SqlServer.Server;
 using IsolationLevel = System.Data.IsolationLevel;
@@ -500,7 +501,11 @@ namespace Microsoft.Data.Common
 
         internal static ArgumentException MustBeReadOnly(string argumentName) => Argument(StringsHelper.GetString(Strings.ADP_MustBeReadOnly, argumentName));
 
-        internal static Exception CreateSqlException(MsalException msalException, SqlConnectionString connectionOptions, SqlInternalConnectionTds sender, string username)
+        internal static Exception CreateSqlException(
+            MsalException msalException,
+            SqlConnectionString connectionOptions,
+            SqlConnectionInternal sender,
+            string username)
         {
             // Error[0]
             SqlErrorCollection sqlErs = new();
