@@ -416,25 +416,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             {
                 DestinationTableName = s_tableName,
             };
-
-            try
+            
+            switch (bulkCopySourceMode)
             {
-                switch (bulkCopySourceMode)
-                {
-                    case 1:
-                        bulkCopy.WriteToServer(reader);
-                        break;
-                    case 2:
-                        bulkCopy.WriteToServer(table);
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(bulkCopySourceMode), $"Unsupported bulk copy source mode: {bulkCopySourceMode}");
-                }
-            }
-            catch (Exception ex)
-            {
-                // If bulk copy fails, fail the test with the exception message
-                Assert.Fail($"Bulk copy failed: {ex.Message}");
+                case 1:
+                    bulkCopy.WriteToServer(reader);
+                    break;
+                case 2:
+                    bulkCopy.WriteToServer(table);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(bulkCopySourceMode), $"Unsupported bulk copy source mode: {bulkCopySourceMode}");
             }
 
             // Verify that the 2 rows from the source table have been copied into the destination table.
@@ -514,25 +506,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             {
                 DestinationTableName = s_tableName,
             };
-
-            try
-            {   // Perform bulkcopy
-                switch (bulkCopySourceMode)
-                {
-                    case 1:
-                        await bulkCopy.WriteToServerAsync(reader);
-                        break;
-                    case 2:
-                        await bulkCopy.WriteToServerAsync(table);
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(bulkCopySourceMode), $"Unsupported bulk copy source mode: {bulkCopySourceMode}");
-                }
-            }
-            catch (Exception ex)
+        
+            // Perform bulkcopy
+            switch (bulkCopySourceMode)
             {
-                // If bulk copy fails, fail the test with the exception message
-                Assert.Fail($"Bulk copy failed: {ex.Message}");
+                case 1:
+                    await bulkCopy.WriteToServerAsync(reader);
+                    break;
+                case 2:
+                    await bulkCopy.WriteToServerAsync(table);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(bulkCopySourceMode), $"Unsupported bulk copy source mode: {bulkCopySourceMode}");
             }
 
             // Verify that the 2 rows from the source table have been copied into the destination table.

@@ -488,17 +488,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             {
                 DestinationTableName = s_tableName,
             };
-
-            try
-            {
-                // Perform bulk copy from source to destination table
-                bulkCopy.WriteToServer(reader);
-            }
-            catch (Exception ex)
-            {
-                // If bulk copy fails, fail the test with the exception message
-                Assert.Fail($"Bulk copy failed: {ex.Message}");
-            }
+            
+            // Perform bulk copy from source to destination table
+            bulkCopy.WriteToServer(reader);
 
             // Verify that the 2 rows from the source table have been copied into the destination table.
             Assert.Equal(2, Convert.ToInt16(countCommand.ExecuteScalar()));
@@ -553,17 +545,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             {
                 DestinationTableName = s_tableName,
             };
-
-            try
-            {
-                // Perform bulk copy from source to destination table
-                await bulkCopy.WriteToServerAsync(reader);
-            }
-            catch (Exception ex)
-            {
-                // If bulk copy fails, fail the test with the exception message
-                Assert.Fail($"Bulk copy failed: {ex.Message}");
-            }
+            
+            // Perform bulk copy from source to destination table
+            await bulkCopy.WriteToServerAsync(reader);
 
             // Verify that the 2 rows from the source table have been copied into the destination table.
             Assert.Equal(2, Convert.ToInt16(await countCommand.ExecuteScalarAsync()));

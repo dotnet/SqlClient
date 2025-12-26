@@ -166,39 +166,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     case AsyncAPI.ExecuteXmlReaderAsync:
                         using (XmlReader reader = await cmd.ExecuteXmlReaderAsync().ConfigureAwait(false))
                         {
-                            try
-                            {
-                                Assert.True(reader.Settings.Async);
-                                reader.ReadToDescendant("Id");
-                                result = reader.ReadElementContentAsInt();
-                            }
-                            catch (Exception ex)
-                            {
-                                Assert.Fail("Exception occurred: " + ex.Message);
-                            }
+                            Assert.NotNull(reader.Settings);
+                            Assert.True(reader.Settings.Async);
+                            
+                            reader.ReadToDescendant("Id");
+                            result = reader.ReadElementContentAsInt();
                         }
                         break;
                 }
 
-                if (result != index)
-                {
-                    throw new Exception("High Alert! Wrong data received for index: " + index);
-                }
-                else
-                {
-                    Assert.True(!timeoutExExpected && result == index);
-                }
+                Assert.False(timeoutExExpected);
+                Assert.Equal(index, result);
             }
             catch (SqlException e)
             {
-                if (!timeoutExExpected)
-                {
-                    throw new Exception("Index " + index + " failed with: " + e.Message);
-                }
-                else
-                {
-                    Assert.True(timeoutExExpected && e.Class == 11 && e.Number == -2);
-                }
+                Assert.True(timeoutExExpected);
+                Assert.Equal(11, e.Class);
+                Assert.Equal(-2, e.Number);
             }
             finally
             {
