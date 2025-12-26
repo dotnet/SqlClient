@@ -23,6 +23,7 @@ using Xunit;
 using System.Runtime.CompilerServices;
 using System;
 using System.Data;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.DotNet.RemoteExecutor;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -211,7 +212,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         conn.Open();
                         XmlReader reader = cmd.ExecuteXmlReader();
-                        reader.FlushResultSet();
+                        while (reader.Read())
+                        {
+                            // Flush results
+                        }
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
@@ -420,7 +424,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         conn.Open();
                         XmlReader reader = await cmd.ExecuteXmlReaderAsync();
-                        reader.FlushResultSet();
+                        while (reader.Read())
+                        {
+                            // Flush results
+                        }
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;

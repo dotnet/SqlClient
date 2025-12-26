@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         {
             // Arrange
             DataContractSerializer serializer = new(typeof(SqlError));
-            MemoryStream stream = new();
+            using MemoryStream stream = new();
             
             // - Create the test error
             SqlError originalError = new(

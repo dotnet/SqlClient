@@ -1021,7 +1021,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             object id2Value = cm.Parameters["@id2"].Value;
             if (id2Value is not null)
             {
-                // Null values are allowed, but must if it is not null, the expected guid must be set.
+                // Null values are allowed, but if it is not null, the expected guid must be set.
                 Assert.Equal(expectedGuid, (Guid)id2Value);
             }
         }

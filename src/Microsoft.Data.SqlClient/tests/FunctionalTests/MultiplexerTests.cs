@@ -270,7 +270,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 if (stateObject._inBytesRead > 0)
                 {
                     // At least the header must be read
-                    Assert.True(stateObject._inBytesRead < TdsEnums.HEADER_LEN);
+                    Assert.False(stateObject._inBytesRead < TdsEnums.HEADER_LEN);
                     
                     // The full packet must be read, too
                     Span<byte> header = stateObject._inBuff.AsSpan(0, TdsEnums.HEADER_LEN);
