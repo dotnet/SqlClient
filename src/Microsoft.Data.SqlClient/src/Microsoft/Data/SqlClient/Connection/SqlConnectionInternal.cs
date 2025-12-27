@@ -200,12 +200,6 @@ namespace Microsoft.Data.SqlClient.Connection
         internal bool _federatedAuthenticationRequested;
 
         /// <summary>
-        /// Flag indicating whether JSON objects are supported by the server.
-        /// </summary>
-        // @TODO: Should be private and accessed via internal property
-        internal bool IsJsonSupportEnabled = false;
-
-        /// <summary>
         /// Flag indicating whether vector objects are supported by the server.
         /// </summary>
         // @TODO: Should be private and accessed via internal property
@@ -1658,37 +1652,6 @@ namespace Microsoft.Data.SqlClient.Connection
                     // get IPv4 + IPv6 + Port number
                     // not put them in the DNS cache at this point but need to store them somewhere
                     // generate pendingSQLDNSObject and turn on IsSQLDNSRetryEnabled flag
-                    break;
-                }
-                case TdsEnums.FEATUREEXT_JSONSUPPORT:
-                {
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
-                        $"Object ID {ObjectID}, " +
-                        $"Received feature extension acknowledgement for JSONSUPPORT");
-
-                    if (data.Length != 1)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
-                            $"Object ID {ObjectID}, " +
-                            $"Unknown token for JSONSUPPORT");
-                        
-                        throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
-                    }
-
-                    byte jsonSupportVersion = data[0];
-                    if (jsonSupportVersion == 0 || jsonSupportVersion > TdsEnums.MAX_SUPPORTED_JSON_VERSION)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
-                            $"Object ID {ObjectID}, " +
-                            $"Invalid version number for JSONSUPPORT");
-
-                        throw SQL.ParsingError();
-                    }
-
-                    IsJsonSupportEnabled = true;
                     break;
                 }
                 case TdsEnums.FEATUREEXT_VECTORSUPPORT:

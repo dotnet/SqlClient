@@ -297,10 +297,35 @@ internal sealed class ConnectionCapabilities
                 break;
 
             case TdsEnums.FEATUREEXT_JSONSUPPORT:
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ADV | " +
+                    $"Object ID {_objectId}, " +
+                    $"Received feature extension acknowledgement for JSONSUPPORT");
+
+                if (featureData.Length != 1)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ERR | " +
+                        $"Object ID {_objectId}, " +
+                        $"Unknown token for JSONSUPPORT");
+
+                    throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                }
+
                 // Feature data is comprised of a single byte which specifies the version of the JSON
                 // type which is available.
-                JsonType = !featureData.IsEmpty && featureData[0] != 0x00
+                JsonType = featureData[0] != 0x00
                     && featureData[0] <= TdsEnums.MAX_SUPPORTED_JSON_VERSION;
+
+                if (!JsonType)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ERR | " +
+                        $"Object ID {_objectId}, " +
+                        $"Invalid version number for JSONSUPPORT");
+
+                    throw SQL.ParsingError();
+                }
                 break;
         }
     }
