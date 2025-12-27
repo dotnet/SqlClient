@@ -112,8 +112,6 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsParserSessionPool _sessionPool = null;  // initialized only when we're a MARS parser.
 
-        // Version variables
-
         private bool _is2008 = false;
 
         private bool _is2012 = false;
@@ -153,6 +151,9 @@ namespace Microsoft.Data.SqlClient
 
         // NOTE: You must take the internal connection's _parserLock before modifying this
         internal bool _asyncWrite = false;
+
+        // Capability records
+        internal ConnectionCapabilities Capabilities { get; }
 
         /// <summary>
         /// Get or set if column encryption is supported by the server.
@@ -204,6 +205,8 @@ namespace Microsoft.Data.SqlClient
         internal TdsParser(bool MARS, bool fAsynchronous)
         {
             _fMARS = MARS; // may change during Connect to pre 2005 servers
+
+            Capabilities = new(ObjectID);
 
             _physicalStateObj = TdsParserStateObjectFactory.Singleton.CreateTdsParserStateObject(this);
             DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
@@ -1552,6 +1555,8 @@ namespace Microsoft.Data.SqlClient
 
             _defaultEncoding = null;
             _defaultCollation = null;
+
+            Capabilities.Reset();
         }
 
         // Fires a single InfoMessageEvent
@@ -2763,6 +2768,7 @@ namespace Microsoft.Data.SqlClient
                                 return result;
                             }
 
+                            Capabilities.ProcessLoginAck(ack);
                             _connHandler.OnLoginAck(ack);
                             break;
                         }

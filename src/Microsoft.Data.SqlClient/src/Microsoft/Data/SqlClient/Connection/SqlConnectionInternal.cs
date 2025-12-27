@@ -266,8 +266,6 @@ namespace Microsoft.Data.SqlClient.Connection
 
         private string _instanceName = string.Empty;
 
-        private SqlLoginAck _loginAck;
-
         /// <summary>
         /// This is used to preserve the authentication context object if we decide to cache it for
         /// subsequent connections in the same pool. This will finally end up in
@@ -500,10 +498,8 @@ namespace Microsoft.Data.SqlClient.Connection
         #region Properties
 
         // @TODO: Make internal
-        public override string ServerVersion
-        {
-            get => $"{_loginAck.majorVersion:00}.{(short)_loginAck.minorVersion:00}.{_loginAck.buildNum:0000}";
-        }
+        public override string ServerVersion =>
+            _parser.Capabilities.ServerVersion;
 
         /// <summary>
         /// Gets the collection of async call contexts that belong to this connection.
@@ -1025,8 +1021,6 @@ namespace Microsoft.Data.SqlClient.Connection
             finally
             {
                 // Close will always close, even if exception is thrown.
-                // Remember to null out any object references.
-                _loginAck = null;
 
                 // Mark internal connection as closed
                 _fConnectionOpen = false;
@@ -1943,7 +1937,6 @@ namespace Microsoft.Data.SqlClient.Connection
 
         internal void OnLoginAck(SqlLoginAck rec)
         {
-            _loginAck = rec;
             if (_recoverySessionData != null)
             {
                 if (_recoverySessionData._tdsVersion != rec.tdsVersion)
