@@ -1620,24 +1620,6 @@ namespace Microsoft.Data.SqlClient.Connection
                     break;
                 }
 
-                case TdsEnums.FEATUREEXT_UTF8SUPPORT:
-                {
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
-                        $"Object ID {ObjectID}, " +
-                        $"Received feature extension acknowledgement for UTF8 support");
-
-                    if (data.Length < 1)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
-                            $"Object ID {ObjectID}, " +
-                            $"Unknown value for UTF8 support", ObjectID);
-
-                        throw SQL.ParsingError();
-                    }
-                    break;
-                }
                 case TdsEnums.FEATUREEXT_SQLDNSCACHING:
                 {
                     SqlClientEventSource.Log.TryAdvancedTraceEvent(

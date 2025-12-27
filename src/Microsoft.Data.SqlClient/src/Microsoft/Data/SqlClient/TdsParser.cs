@@ -3725,6 +3725,7 @@ namespace Microsoft.Data.SqlClient
                             return result;
                         }
                     }
+                    Capabilities.ProcessFeatureExtAck(featureId, data);
                     _connHandler.OnFeatureExtAck(featureId, data);
                 }
             } while (featureId != TdsEnums.FEATUREEXT_TERMINATOR);

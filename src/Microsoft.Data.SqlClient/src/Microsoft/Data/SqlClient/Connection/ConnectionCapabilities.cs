@@ -237,9 +237,24 @@ internal sealed class ConnectionCapabilities
         switch (featureId)
         {
             case TdsEnums.FEATUREEXT_UTF8SUPPORT:
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ADV | " +
+                    $"Object ID {_objectId}, " +
+                    $"Received feature extension acknowledgement for UTF8 support");
+
+                if (featureData.Length < 1)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ERR | " +
+                        $"Object ID {_objectId}, " +
+                        $"Unknown value for UTF8 support");
+
+                    throw SQL.ParsingError();
+                }
+
                 // The server can send and receive UTF8-encoded data if bit 0 of the
                 // feature data is set.
-                Utf8 = !featureData.IsEmpty && (featureData[0] & 0x01) == 0x01;
+                Utf8 = (featureData[0] & 0x01) == 0x01;
                 break;
 
             case TdsEnums.FEATUREEXT_SQLDNSCACHING:
@@ -287,9 +302,6 @@ internal sealed class ConnectionCapabilities
                 JsonType = !featureData.IsEmpty && featureData[0] != 0x00
                     && featureData[0] <= TdsEnums.MAX_SUPPORTED_JSON_VERSION;
                 break;
-
-            default:
-                throw SQL.ParsingError(ParsingErrorState.UnrequestedFeatureAckReceived);
         }
     }
 }
