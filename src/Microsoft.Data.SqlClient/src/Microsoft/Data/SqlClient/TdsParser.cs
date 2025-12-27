@@ -112,12 +112,6 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsParserSessionPool _sessionPool = null;  // initialized only when we're a MARS parser.
 
-        private bool _is2008 = false;
-
-        private bool _is2012 = false;
-
-        private bool _is2022 = false;
-
         // SqlStatistics
         private SqlStatistics _statistics = null;
 
@@ -2756,7 +2750,6 @@ namespace Microsoft.Data.SqlClient
                                 return result;
                             }
 
-                            Capabilities.ProcessLoginAck(ack);
                             _connHandler.OnLoginAck(ack);
                             break;
                         }
@@ -4195,49 +4188,6 @@ namespace Microsoft.Data.SqlClient
                 return result;
             }
             a.tdsVersion = BinaryPrimitives.ReadUInt32BigEndian(b);
-            uint majorMinor = a.tdsVersion & 0xff00ffff;
-            uint increment = (a.tdsVersion >> 16) & 0xff;
-
-            // Server responds:
-            // 0x07000000 -> 7.0         // Notice server response format is different for bwd compat
-            // 0x07010000 -> 2000 RTM     // Notice server response format is different for bwd compat
-            // 0x71000001 -> 2000 SP1
-            // 0x72xx0002 -> 2005 RTM
-            // information provided by S. Ashwin
-            switch (majorMinor)
-            {
-                case TdsEnums.SQL2005_MAJOR << 24 | TdsEnums.SQL2005_RTM_MINOR:     // 2005
-                    if (increment != TdsEnums.SQL2005_INCREMENT)
-                    {
-                        throw SQL.InvalidTDSVersion();
-                    }
-                    break;
-                case TdsEnums.SQL2008_MAJOR << 24 | TdsEnums.SQL2008_MINOR:
-                    if (increment != TdsEnums.SQL2008_INCREMENT)
-                    {
-                        throw SQL.InvalidTDSVersion();
-                    }
-                    _is2008 = true;
-                    break;
-                case TdsEnums.SQL2012_MAJOR << 24 | TdsEnums.SQL2012_MINOR:
-                    if (increment != TdsEnums.SQL2012_INCREMENT)
-                    {
-                        throw SQL.InvalidTDSVersion();
-                    }
-                    _is2012 = true;
-                    break;
-                case TdsEnums.TDS8_MAJOR << 24 | TdsEnums.TDS8_MINOR:
-                    if (increment != TdsEnums.TDS8_INCREMENT)
-                    {
-                        throw SQL.InvalidTDSVersion();
-                    }
-                    _is2022 = true;
-                    break;
-                default:
-                    throw SQL.InvalidTDSVersion();
-            }
-            _is2012 |= _is2022;
-            _is2008 |= _is2012;
 
             stateObj._outBytesUsed = stateObj._outputHeaderLen;
             byte len;
@@ -4275,6 +4225,8 @@ namespace Microsoft.Data.SqlClient
             }
 
             a.buildNum = (short)((buildNumHi << 8) + buildNumLo);
+
+            Capabilities.ProcessLoginAck(a);
 
             Debug.Assert(_state == TdsParserState.OpenNotLoggedIn, "ProcessLoginAck called with state not TdsParserState.OpenNotLoggedIn");
             _state = TdsParserState.OpenLoggedIn;
