@@ -290,10 +290,36 @@ internal sealed class ConnectionCapabilities
                 break;
 
             case TdsEnums.FEATUREEXT_VECTORSUPPORT:
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ADV | " +
+                    $"Object ID {_objectId}, " +
+                    $"Received feature extension acknowledgement for VECTORSUPPORT");
+
+                if (featureData.Length != 1)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ERR | " +
+                        $"Object ID {_objectId}, " +
+                        $"Unknown token for VECTORSUPPORT");
+
+                    throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                }
+
                 // Feature data is comprised of a single byte which specifies the version of the vector
                 // type which is available.
-                Float32VectorType = !featureData.IsEmpty && featureData[0] != 0x00
+                Float32VectorType = featureData[0] != 0x00
                     && featureData[0] <= TdsEnums.MAX_SUPPORTED_VECTOR_VERSION;
+
+                if (!Float32VectorType)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ERR | " +
+                        $"Object ID {_objectId}, " +
+                        $"Invalid version number {featureData[0]} for VECTORSUPPORT, " +
+                        $"Max supported version is {TdsEnums.MAX_SUPPORTED_VECTOR_VERSION}");
+
+                    throw SQL.ParsingError();
+                }
                 break;
 
             case TdsEnums.FEATUREEXT_JSONSUPPORT:

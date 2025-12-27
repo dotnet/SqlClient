@@ -199,12 +199,6 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: Should be private and accessed via internal property
         internal bool _federatedAuthenticationRequested;
 
-        /// <summary>
-        /// Flag indicating whether vector objects are supported by the server.
-        /// </summary>
-        // @TODO: Should be private and accessed via internal property
-        internal bool IsVectorSupportEnabled = false;
-
         // @TODO: This should be private
         internal readonly SyncAsyncLock _parserLock = new SyncAsyncLock();
 
@@ -1652,39 +1646,6 @@ namespace Microsoft.Data.SqlClient.Connection
                     // get IPv4 + IPv6 + Port number
                     // not put them in the DNS cache at this point but need to store them somewhere
                     // generate pendingSQLDNSObject and turn on IsSQLDNSRetryEnabled flag
-                    break;
-                }
-                case TdsEnums.FEATUREEXT_VECTORSUPPORT:
-                {
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
-                        $"Object ID {ObjectID}, " +
-                        $"Received feature extension acknowledgement for VECTORSUPPORT");
-
-                    if (data.Length != 1)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
-                            $"Object ID {ObjectID}, " +
-                            $"Unknown token for VECTORSUPPORT");
-
-                        throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
-                    }
-
-                    byte vectorSupportVersion = data[0];
-                    if (vectorSupportVersion == 0 || vectorSupportVersion > TdsEnums.MAX_SUPPORTED_VECTOR_VERSION)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
-                            $"Object ID {ObjectID}, " +
-                            $"Invalid version number {vectorSupportVersion} for VECTORSUPPORT, " +
-                            $"Max supported version is {TdsEnums.MAX_SUPPORTED_VECTOR_VERSION}");
-
-                        throw SQL.ParsingError();
-                    }
-
-                    IsVectorSupportEnabled = true;
-
                     break;
                 }
                 case TdsEnums.FEATUREEXT_USERAGENT:
