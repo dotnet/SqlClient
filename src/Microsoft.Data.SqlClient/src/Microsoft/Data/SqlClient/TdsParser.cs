@@ -265,13 +265,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool Is2008OrNewer
-        {
-            get
-            {
-                return _is2008;
-            }
-        }
+        internal bool Is2008OrNewer => Capabilities.Is2008R2OrNewer;
 
         internal bool MARSOn
         {
@@ -326,13 +320,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool IncludeTraceHeader
-        {
-            get
-            {
-                return (_is2012 && SqlClientEventSource.Log.IsEnabled());
-            }
-        }
+        private bool IncludeTraceHeader => Capabilities.Is2012OrNewer && SqlClientEventSource.Log.IsEnabled();
 
         internal int IncrementNonTransactedOpenResultCount()
         {
@@ -10205,7 +10193,7 @@ namespace Microsoft.Data.SqlClient
                                 continue;
                             }
 
-                            if (!_is2008 && !mt.Is90Supported)
+                            if (!Is2008OrNewer && !mt.Is90Supported)
                             {
                                 throw ADP.VersionDoesNotSupportDataType(mt.TypeName);
                             }
@@ -10959,7 +10947,7 @@ namespace Microsoft.Data.SqlClient
             ParameterPeekAheadValue peekAhead;
             SmiParameterMetaData metaData = param.MetaDataForSmi(out peekAhead);
 
-            if (!_is2008)
+            if (!Is2008OrNewer)
             {
                 MetaType mt = MetaType.GetMetaTypeFromSqlDbType(metaData.SqlDbType, metaData.IsMultiValued);
                 throw ADP.VersionDoesNotSupportDataType(mt.TypeName);
