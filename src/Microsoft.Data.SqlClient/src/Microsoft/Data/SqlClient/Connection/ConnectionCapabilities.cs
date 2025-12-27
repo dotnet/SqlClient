@@ -285,11 +285,26 @@ internal sealed class ConnectionCapabilities
                 break;
 
             case TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS:
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ADV | " +
+                    $"Object ID {_objectId}, " +
+                    $"Received feature extension acknowledgement for GlobalTransactions");
+
+                if (featureData.Length < 1)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ERR | " +
+                        $"Object ID {_objectId}, " +
+                        $"Unknown version number for GlobalTransactions");
+
+                    throw SQL.ParsingError();
+                }
+
                 // Feature data is comprised of a single byte which indicates whether
                 // global transactions are available.
                 GlobalTransactionsAvailable = true;
 
-                GlobalTransactionsSupported = !featureData.IsEmpty && featureData[0] == 0x01;
+                GlobalTransactionsSupported = featureData[0] == 0x01;
                 break;
 
             case TdsEnums.FEATUREEXT_AZURESQLSUPPORT:

@@ -623,16 +623,15 @@ namespace Microsoft.Data.SqlClient.Connection
         internal bool IsEnlistedInTransaction { get; private set; }
 
         /// <summary>
-        /// Whether this is a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
-        /// TODO: overlaps with IsGlobalTransactionsEnabledForServer, need to consolidate to avoid bugs
+        /// Whether the server is capable of supporting a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
         /// </summary>
-        internal bool IsGlobalTransaction { get; private set; }
+        internal bool IsGlobalTransaction => _parser.Capabilities.GlobalTransactionsAvailable;
 
         /// <summary>
         /// Whether Global Transactions are enabled. Only supported by Azure SQL. False if disabled
         /// or connected to on-prem SQL Server.
         /// </summary>
-        internal bool IsGlobalTransactionsEnabledForServer { get; private set; }
+        internal bool IsGlobalTransactionsEnabledForServer => _parser.Capabilities.GlobalTransactionsSupported;
 
         /// <summary>
         /// Whether this connection is locked for bulk copy operations.
@@ -1356,32 +1355,6 @@ namespace Microsoft.Data.SqlClient.Connection
                             };
                             _currentSessionData._deltaDirty = true;
                         }
-                    }
-
-                    break;
-                }
-
-                case TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS:
-                {
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
-                        $"Object ID {ObjectID}, " +
-                        $"Received feature extension acknowledgement for GlobalTransactions");
-
-                    if (data.Length < 1)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
-                            $"Object ID {ObjectID}, " +
-                            $"Unknown version number for GlobalTransactions");
-
-                        throw SQL.ParsingError();
-                    }
-
-                    IsGlobalTransaction = true;
-                    if (data[0] == 0x01)
-                    {
-                        IsGlobalTransactionsEnabledForServer = true;
                     }
 
                     break;
