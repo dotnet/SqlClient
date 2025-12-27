@@ -1500,54 +1500,6 @@ namespace Microsoft.Data.SqlClient.Connection
                     }
                     break;
                 }
-                case TdsEnums.FEATUREEXT_DATACLASSIFICATION:
-                {
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
-                        $"Object ID {ObjectID}, " +
-                        $"Received feature extension acknowledgement for DATACLASSIFICATION");
-
-                    if (data.Length < 1)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
-                            $"Object ID {ObjectID}, " +
-                            $"Unknown token for DATACLASSIFICATION");
-
-                        throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
-                    }
-
-                    byte supportedDataClassificationVersion = data[0];
-                    if (supportedDataClassificationVersion == 0 ||
-                        supportedDataClassificationVersion > TdsEnums.DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
-                            $"Object ID {ObjectID}, " +
-                            $"Invalid version number for DATACLASSIFICATION");
-
-                        throw SQL.ParsingErrorValue(
-                            ParsingErrorState.DataClassificationInvalidVersion,
-                            supportedDataClassificationVersion);
-                    }
-
-                    if (data.Length != 2)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
-                            $"Object ID {ObjectID}, " +
-                            $"Unknown token for DATACLASSIFICATION");
-
-                        throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
-                    }
-
-                    byte enabled = data[1];
-                    _parser.DataClassificationVersion = enabled == 0
-                        ? TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED
-                        : supportedDataClassificationVersion;
-
-                    break;
-                }
 
                 case TdsEnums.FEATUREEXT_SQLDNSCACHING:
                 {

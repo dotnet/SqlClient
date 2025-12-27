@@ -181,7 +181,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Get or set data classification version.  A value of 0 means that sensitivity classification is not enabled.
         /// </summary>
-        internal int DataClassificationVersion { get; set; }
+        internal int DataClassificationVersion => Capabilities.DataClassificationVersion;
 
         private SqlCollation _cachedCollation;
 

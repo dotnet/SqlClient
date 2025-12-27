@@ -272,16 +272,42 @@ internal sealed class ConnectionCapabilities
                 break;
 
             case TdsEnums.FEATUREEXT_DATACLASSIFICATION:
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ADV | " +
+                    $"Object ID {_objectId}, " +
+                    $"Received feature extension acknowledgement for DATACLASSIFICATION");
+
+                if (featureData.Length != 2)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ERR | " +
+                        $"Object ID {_objectId}, " +
+                        $"Unknown token for DATACLASSIFICATION");
+
+                    throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                }
+
+                byte dcVersion = featureData[0];
+
+                if (dcVersion == 0x00 ||
+                    dcVersion > TdsEnums.DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ERR | " +
+                        $"Object ID {_objectId}, " +
+                        $"Invalid version number for DATACLASSIFICATION");
+
+                    throw SQL.ParsingErrorValue(
+                        ParsingErrorState.DataClassificationInvalidVersion,
+                        dcVersion);
+                }
+
                 // The feature data is comprised of a single byte containing the version,
                 // followed by another byte indicating whether or not data classification is
                 // enabled.
-                DataClassificationVersion =
-                    featureData.Length == 2
-                        && featureData[1] == 0x00
-                        && featureData[0] > 0x00
-                        && featureData[0] <= TdsEnums.DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED
-                    ? featureData[0]
-                    : TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
+                DataClassificationVersion = featureData[1] == 0x00
+                    ? TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED
+                    : dcVersion;
                 break;
 
             case TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS:
