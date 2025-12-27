@@ -4194,7 +4194,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
-            a.tdsVersion = (uint)((((((b[0] << 8) | b[1]) << 8) | b[2]) << 8) | b[3]); // bytes are in motorola order (high byte first)
+            a.tdsVersion = BinaryPrimitives.ReadUInt32BigEndian(b);
             uint majorMinor = a.tdsVersion & 0xff00ffff;
             uint increment = (a.tdsVersion >> 16) & 0xff;
 
