@@ -149,11 +149,18 @@ internal sealed class ConnectionCapabilities
     public byte DataClassificationVersion { get; private set; }
 
     /// <summary>
+    /// Indicates that Global Transactions are available (even if not currently enabled.)
+    /// Global Transactions are only supported by Azure SQL, and are only available if a
+    /// FEATUREEXTACK token of value <c>0x05</c> is received.
+    /// </summary>
+    public bool GlobalTransactionsAvailable { get; private set; }
+
+    /// <summary>
     /// Indicates support for Global Transactions. This is only supported by
     /// Azure SQL, and is only available if a FEATUREEXTACK token of value
     /// <c>0x05</c> is received.
     /// </summary>
-    public bool GlobalTransactions { get; private set; }
+    public bool GlobalTransactionsSupported { get; private set; }
 
     /// <summary>
     /// Indicates support for Enhanced Routing. This is only supported by
@@ -205,7 +212,8 @@ internal sealed class ConnectionCapabilities
         Utf8 = false;
         DnsCaching = false;
         DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
-        GlobalTransactions = false;
+        GlobalTransactionsAvailable = false;
+        GlobalTransactionsSupported = false;
         EnhancedRouting = false;
         ReadOnlyFailoverPartnerConnection = false;
         Float32VectorType = false;
@@ -279,7 +287,9 @@ internal sealed class ConnectionCapabilities
             case TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS:
                 // Feature data is comprised of a single byte which indicates whether
                 // global transactions are available.
-                GlobalTransactions = !featureData.IsEmpty && featureData[0] == 0x01;
+                GlobalTransactionsAvailable = true;
+
+                GlobalTransactionsSupported = !featureData.IsEmpty && featureData[0] == 0x01;
                 break;
 
             case TdsEnums.FEATUREEXT_AZURESQLSUPPORT:
