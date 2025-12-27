@@ -798,12 +798,6 @@ namespace Microsoft.Data.SqlClient.Connection
             get => _parser._fResetConnection ? null : CurrentTransaction;
         }
 
-        /// <summary>
-        /// Whether this connection is to an Azure SQL Database.
-        /// </summary>
-        // @TODO: Make private field.
-        private bool IsAzureSqlConnection { get; set; }
-
         #endregion
 
         #region Public and Internal Methods
@@ -1531,32 +1525,6 @@ namespace Microsoft.Data.SqlClient.Connection
                         // Extract the type of enclave being used by the server.
                         _parser.EnclaveType = Encoding.Unicode.GetString(data, 2, data.Length - 2);
                     }
-                    break;
-                }
-                case TdsEnums.FEATUREEXT_AZURESQLSUPPORT:
-                {
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
-                        $"Object ID {ObjectID}, " +
-                        $"Received feature extension acknowledgement for AzureSQLSupport");
-
-                    if (data.Length < 1)
-                    {
-                        throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
-                    }
-
-                    IsAzureSqlConnection = true;
-
-                    // Bit 0 for RO/FP support
-                    // @TODO: Add a constant somewhere for that
-                    if ((data[0] & 1) == 1 && SqlClientEventSource.Log.IsTraceEnabled())
-                    {
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                            $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
-                            $"Object ID {ObjectID}, " +
-                            $"FailoverPartner enabled with Readonly intent for AzureSQL DB");
-                    }
-
                     break;
                 }
                 case TdsEnums.FEATUREEXT_DATACLASSIFICATION:
@@ -3773,7 +3741,7 @@ namespace Microsoft.Data.SqlClient.Connection
                         timeout);
                 }
 
-                if (!IsAzureSqlConnection)
+                if (!_parser.Capabilities.IsAzureSql)
                 {
                     // If not a connection to Azure SQL, Readonly with FailoverPartner is not supported
                     if (ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly)

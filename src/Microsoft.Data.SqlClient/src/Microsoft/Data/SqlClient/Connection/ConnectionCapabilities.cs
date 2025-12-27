@@ -283,10 +283,28 @@ internal sealed class ConnectionCapabilities
                 break;
 
             case TdsEnums.FEATUREEXT_AZURESQLSUPPORT:
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ADV | " +
+                    $"Object ID {_objectId}, " +
+                    $"Received feature extension acknowledgement for AzureSQLSupport");
+
+                if (featureData.Length < 1)
+                {
+                    throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                }
+
                 IsAzureSql = true;
                 // Clients can connect to the failover partner with a read-only AppIntent if bit 0
                 // of the only byte in the feature data is set.
-                ReadOnlyFailoverPartnerConnection = !featureData.IsEmpty && (featureData[0] & 0x01) == 0x01;
+                ReadOnlyFailoverPartnerConnection = (featureData[0] & 0x01) == 0x01;
+
+                if (ReadOnlyFailoverPartnerConnection && SqlClientEventSource.Log.IsTraceEnabled())
+                {
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ADV | " +
+                        $"Object ID {_objectId}, " +
+                        $"FailoverPartner enabled with Readonly intent for AzureSQL DB");
+                }
                 break;
 
             case TdsEnums.FEATUREEXT_VECTORSUPPORT:
