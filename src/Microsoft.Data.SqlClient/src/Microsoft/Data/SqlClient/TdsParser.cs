@@ -4187,6 +4187,14 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
+            // When connecting to SQL Server 2000, the TDS version sent
+            // by the client would be a completely different value to the
+            // TDS version received by the server.
+            // From SQL Server 2000 SP1, the TDS version is identical. As
+            // an artifact of this historical difference, the client sends
+            // its TDS version to the server in a little-endian layout, and
+            // receives the server's TDS version in a big-endian layout.
+            // Reference: MS-TDS, 2.2.7.14, footnote on TDSVersion field.
             a.tdsVersion = BinaryPrimitives.ReadUInt32BigEndian(b);
 
             stateObj._outBytesUsed = stateObj._outputHeaderLen;
@@ -9187,11 +9195,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (encrypt == SqlConnectionEncryptOption.Strict)
                     {
-                        WriteInt((TdsEnums.TDS8_MAJOR << 24) | (TdsEnums.TDS8_INCREMENT << 16) | TdsEnums.TDS8_MINOR, _physicalStateObj);
+                        WriteUnsignedInt(TdsEnums.TDS80_VERSION, _physicalStateObj);
                     }
                     else
                     {
-                        WriteInt((TdsEnums.SQL2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR, _physicalStateObj);
+                        WriteUnsignedInt(TdsEnums.TDS7X_VERSION, _physicalStateObj);
                     }
                 }
                 else

@@ -314,61 +314,10 @@ namespace Microsoft.Data.SqlClient
         public const int TEXT_TIME_STAMP_LEN = 8;
         public const int COLLATION_INFO_LEN = 4;
 
-        /*
-                public const byte INT4_LSB_HI   = 0;     // lsb is low byte (e.g. 68000)
-                //    public const byte INT4_LSB_LO   = 1;     // lsb is low byte (e.g. VAX)
-                public const byte INT2_LSB_HI   = 2;     // lsb is low byte (e.g. 68000)
-                //    public const byte INT2_LSB_LO   = 3;     // lsb is low byte (e.g. VAX)
-                public const byte FLT_IEEE_HI   = 4;     // lsb is low byte (e.g. 68000)
-                public const byte CHAR_ASCII    = 6;     // ASCII character set
-                public const byte TWO_I4_LSB_HI = 8;     // lsb is low byte (e.g. 68000
-                //    public const byte TWO_I4_LSB_LO = 9;     // lsb is low byte (e.g. VAX)
-                //    public const byte FLT_IEEE_LO   = 10;    // lsb is low byte (e.g. MSDOS)
-                public const byte FLT4_IEEE_HI  = 12;    // IEEE 4-byte floating point -lsb is high byte
-                //    public const byte FLT4_IEEE_LO  = 13;    // IEEE 4-byte floating point -lsb is low byte
-                public const byte TWO_I2_LSB_HI = 16;    // lsb is high byte
-                //    public const byte TWO_I2_LSB_LO = 17;    // lsb is low byte
-
-                public const byte LDEFSQL     = 0;    // server sends its default
-                public const byte LDEFUSER    = 0;    // regular old user
-                public const byte LINTEGRATED = 8;    // integrated security login
-        */
-
-        /* Versioning scheme table:
-
-            Client sends:
-            0x70000000 -> 7.0
-            0x71000000 -> 2000 RTM
-            0x71000001 -> 2000 SP1
-            0x72xx0002 -> 2005 RTM
-
-            Server responds:
-            0x07000000 -> 7.0     // Notice server response format is different for bwd compat
-            0x07010000 -> 2000 RTM // Notice server response format is different for bwd compat
-            0x71000001 -> 2000 SP1
-            0x72xx0002 -> 2005 RTM
-        */
-
-        // Majors:
-        // For 2000 SP1 and later the versioning schema changed and
-        // the high-byte is sufficient to distinguish later versions
-        public const int SQL2005_MAJOR = 0x72;
-        public const int SQL2008_MAJOR = 0x73;
-        public const int SQL2012_MAJOR = 0x74;
-        public const int TDS8_MAJOR = 0x08;          // TDS8 version to be used at login7
+        // Versions to be used on login for TDS 7.x and TDS 8.0
+        public const uint TDS7X_VERSION = 0x74_00_0004;
+        public const uint TDS80_VERSION = 0x08_00_0000;
         public const string TDS8_Protocol = "tds/8.0"; //TDS8
-
-        // Increments:
-        public const int SQL2005_INCREMENT = 0x09;
-        public const int SQL2008_INCREMENT = 0x0b;
-        public const int SQL2012_INCREMENT = 0x00;
-        public const int TDS8_INCREMENT = 0x00;
-
-        // Minors:
-        public const int SQL2005_RTM_MINOR = 0x0002;
-        public const int SQL2008_MINOR = 0x0003;
-        public const int SQL2012_MINOR = 0x0004;
-        public const int TDS8_MINOR = 0x00;
 
         public const int ORDER_68000 = 1;
         public const int USE_DB_ON = 1;

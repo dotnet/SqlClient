@@ -24,12 +24,12 @@ internal sealed class ConnectionCapabilities
     /// the SQL Server instance is responding with the TDS 7.x
     /// protocol.
     /// </summary>
-    private const uint SqlServer2012TdsVersion = 0x74_00_0004;
+    private const uint SqlServer2012TdsVersion = TdsEnums.TDS7X_VERSION;
     /// <summary>
     /// This TDS version is used by SQL Server 2022 and onwards,
     /// when responding with the TDS 8.x protocol.
     /// </summary>
-    private const uint SqlServer2022TdsVersion = 0x08_00_0000;
+    private const uint SqlServer2022TdsVersion = TdsEnums.TDS80_VERSION;
 
     private readonly int _objectId;
 
