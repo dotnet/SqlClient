@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Text;
 
 #nullable enable
 
@@ -193,6 +194,26 @@ internal sealed class ConnectionCapabilities
     /// </summary>
     public bool JsonType { get; private set; }
 
+    /// <summary>
+    /// Indicates support for column encryption and specifies the version of column
+    /// encryption which is supported. This was introduced in SQL Server 2016, and is
+    /// only available if a FEATUREEXTACK token of value <c>0x04</c> is received.
+    /// </summary>
+    /// <remarks>
+    /// This should only be <c>1</c>, <c>2</c> or <c>3</c>. v1 is supported from SQL
+    /// Server 2016 upwards, v2 is supported from SQL Server 2019 upwards, v3 is supported
+    /// from SQL Server 2022 upwards.
+    /// </remarks>
+    public byte ColumnEncryptionVersion { get; private set; }
+
+    /// <summary>
+    /// If column encryption is enabled, the type of enclave reported by the server. This
+    /// was introduced in SQL Server 2019, and is only available if a FEATUREEXTACK token
+    /// of value <c>0x04</c> is received, and the resultant <see cref="ColumnEncryptionVersion"/>
+    /// is <c>2</c> or <c>3</c>.
+    /// </summary>
+    public string? ColumnEncryptionEnclaveType { get; private set; }
+
     public ConnectionCapabilities(int parentObjectId)
     {
         _objectId = parentObjectId;
@@ -218,6 +239,8 @@ internal sealed class ConnectionCapabilities
         ReadOnlyFailoverPartnerConnection = false;
         Float32VectorType = false;
         JsonType = false;
+        ColumnEncryptionVersion = TdsEnums.TCE_NOT_ENABLED;
+        ColumnEncryptionEnclaveType = null;
     }
 
     /// <summary>
@@ -436,6 +459,50 @@ internal sealed class ConnectionCapabilities
 
                     throw SQL.ParsingError();
                 }
+                break;
+
+            case TdsEnums.FEATUREEXT_TCE:
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ERR | " +
+                    $"Object ID {_objectId}, " +
+                    $"Received feature extension acknowledgement for TCE");
+
+                if (featureData.Length < 1)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ERR | " +
+                        $"Object ID {_objectId}, " +
+                        $"Unknown version number for TCE");
+
+                    throw SQL.ParsingError(ParsingErrorState.TceUnknownVersion);
+                }
+
+                // Feature data begins with one byte containing the column encryption version. If
+                // this version is 2 or 3, the version is followed by a B_NVARCHAR (i.e., a one-byte
+                // string length followed by a Unicode-encoded string containing the enclave type.)
+                // NB 1: the MS-TDS specification requires that a client must throw an exception if
+                // the column encryption version is 2 and no enclave type is specified. We do not do
+                // this.
+                // NB 2: although the length is specified, we assume that everything from position 2
+                // of the packet and forwards is a Unicode-encoded string.
+                ColumnEncryptionVersion = featureData[0];
+
+                if (featureData.Length > 1)
+                {
+                    ReadOnlySpan<byte> enclaveTypeSpan = featureData.Slice(2);
+#if NET
+                    ColumnEncryptionEnclaveType = Encoding.Unicode.GetString(enclaveTypeSpan);
+#else
+                    unsafe
+                    {
+                        fixed (byte* fDataPtr = enclaveTypeSpan)
+                        {
+                            ColumnEncryptionEnclaveType = Encoding.Unicode.GetString(fDataPtr, enclaveTypeSpan.Length);
+                        }
+                    }
+#endif
+                }
+
                 break;
         }
     }

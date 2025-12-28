@@ -152,22 +152,24 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Get or set if column encryption is supported by the server.
         /// </summary>
-        internal bool IsColumnEncryptionSupported { get; set; } = false;
+        internal bool IsColumnEncryptionSupported =>
+            TceVersionSupported != TdsEnums.TCE_NOT_ENABLED;
 
         /// <summary>
         /// TCE version supported by the server
         /// </summary>
-        internal byte TceVersionSupported { get; set; }
+        internal byte TceVersionSupported => Capabilities.ColumnEncryptionVersion;
 
         /// <summary>
         /// Server supports retrying when the enclave CEKs sent by the client do not match what is needed for the query to run.
         /// </summary>
-        internal bool AreEnclaveRetriesSupported { get; set; }
+        internal bool AreEnclaveRetriesSupported =>
+            TceVersionSupported >= TdsEnums.MIN_TCE_VERSION_WITH_ENCLAVE_RETRY_SUPPORT;
 
         /// <summary>
         /// Type of enclave being used by the server
         /// </summary>
-        internal string EnclaveType { get; set; }
+        internal string EnclaveType => Capabilities.ColumnEncryptionEnclaveType;
 
         internal bool isTcpProtocol { get; set; }
         internal string FQDNforDNSCache { get; set; }
@@ -203,7 +205,6 @@ namespace Microsoft.Data.SqlClient
             Capabilities = new(ObjectID);
 
             _physicalStateObj = TdsParserStateObjectFactory.Singleton.CreateTdsParserStateObject(this);
-            DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
         }
 
         internal SqlConnectionInternal Connection

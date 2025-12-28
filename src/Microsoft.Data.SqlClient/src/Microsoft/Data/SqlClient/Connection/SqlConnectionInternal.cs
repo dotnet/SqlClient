@@ -204,12 +204,6 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: Should be private and accessed via internal property
         internal readonly SspiContextProvider _sspiContextProvider;
 
-        /// <summary>
-        /// TCE flags supported by the server.
-        /// </summary>
-        // @TODO: Should be private and accessed via internal property
-        internal byte _tceVersionSupported;
-
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
 
         /// <summary>
@@ -1446,50 +1440,6 @@ namespace Microsoft.Data.SqlClient.Connection
                         #endif
                     }
 
-                    break;
-                }
-                case TdsEnums.FEATUREEXT_TCE:
-                {
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
-                        $"Object ID {ObjectID}, " +
-                        $"Received feature extension acknowledgement for TCE");
-
-                    if (data.Length < 1)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
-                            $"Object ID {ObjectID}, " +
-                            $"Unknown version number for TCE");
-
-                        throw SQL.ParsingError(ParsingErrorState.TceUnknownVersion);
-                    }
-
-                    byte supportedTceVersion = data[0];
-                    if (supportedTceVersion == 0 || supportedTceVersion > TdsEnums.MAX_SUPPORTED_TCE_VERSION)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
-                            $"Object ID {ObjectID}, " +
-                            $"Invalid version number for TCE");
-
-                        throw SQL.ParsingErrorValue(ParsingErrorState.TceInvalidVersion, supportedTceVersion);
-                    }
-
-                    _tceVersionSupported = supportedTceVersion;
-
-                    Debug.Assert(_tceVersionSupported <= TdsEnums.MAX_SUPPORTED_TCE_VERSION,
-                        "Client support TCE version 2");
-
-                    _parser.IsColumnEncryptionSupported = true;
-                    _parser.TceVersionSupported = _tceVersionSupported;
-                    _parser.AreEnclaveRetriesSupported = _tceVersionSupported == 3;
-
-                    if (data.Length > 1)
-                    {
-                        // Extract the type of enclave being used by the server.
-                        _parser.EnclaveType = Encoding.Unicode.GetString(data, 2, data.Length - 2);
-                    }
                     break;
                 }
 
