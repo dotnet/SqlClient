@@ -758,11 +758,12 @@ namespace Microsoft.Data.SqlClient
         private static SqlMetaDataFactory CreateMetaDataFactory(DbConnectionInternal internalConnection)
         {
             Debug.Assert(internalConnection is not null, "internalConnection may not be null.");
+            Debug.Assert(internalConnection as SqlConnectionInternal is not null, "innerConnection must be a SqlConnectionInternal.");
 
             Stream xmlStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Microsoft.Data.SqlClient.SqlMetaData.xml");
             Debug.Assert(xmlStream is not null, $"{nameof(xmlStream)} may not be null.");
-            
-            return new SqlMetaDataFactory(xmlStream, internalConnection.ServerVersion);
+
+            return new SqlMetaDataFactory(xmlStream, ((SqlConnectionInternal)internalConnection).Parser.Capabilities);
         }
         
         private Task<DbConnectionInternal> CreateReplaceConnectionContinuation(
