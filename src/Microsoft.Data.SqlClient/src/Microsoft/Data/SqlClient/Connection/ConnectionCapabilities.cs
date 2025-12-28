@@ -335,8 +335,8 @@ internal sealed class ConnectionCapabilities
 
                 byte dcVersion = featureData[0];
 
-                if (dcVersion == 0x00 ||
-                    dcVersion > TdsEnums.DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED)
+                if (dcVersion is TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED
+                    or > TdsEnums.DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED)
                 {
                     SqlClientEventSource.Log.TryTraceEvent(
                         $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ERR | " +
@@ -422,10 +422,8 @@ internal sealed class ConnectionCapabilities
 
                 // Feature data is comprised of a single byte which specifies the version of the vector
                 // type which is available.
-                Float32VectorType = featureData[0] != 0x00
-                    && featureData[0] <= TdsEnums.MAX_SUPPORTED_VECTOR_VERSION;
-
-                if (!Float32VectorType)
+                if (featureData[0] is 0x00
+                    or > TdsEnums.MAX_SUPPORTED_VECTOR_VERSION)
                 {
                     SqlClientEventSource.Log.TryTraceEvent(
                         $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ERR | " +
@@ -435,6 +433,8 @@ internal sealed class ConnectionCapabilities
 
                     throw SQL.ParsingError();
                 }
+
+                Float32VectorType = true;
                 break;
 
             case TdsEnums.FEATUREEXT_JSONSUPPORT:
@@ -455,10 +455,8 @@ internal sealed class ConnectionCapabilities
 
                 // Feature data is comprised of a single byte which specifies the version of the JSON
                 // type which is available.
-                JsonType = featureData[0] != 0x00
-                    && featureData[0] <= TdsEnums.MAX_SUPPORTED_JSON_VERSION;
-
-                if (!JsonType)
+                if (featureData[0] is 0x00
+                    or > TdsEnums.MAX_SUPPORTED_JSON_VERSION)
                 {
                     SqlClientEventSource.Log.TryTraceEvent(
                         $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ERR | " +
@@ -467,6 +465,8 @@ internal sealed class ConnectionCapabilities
 
                     throw SQL.ParsingError();
                 }
+
+                JsonType = true;
                 break;
 
             case TdsEnums.FEATUREEXT_TCE:
@@ -483,6 +483,17 @@ internal sealed class ConnectionCapabilities
                         $"Unknown version number for TCE");
 
                     throw SQL.ParsingError(ParsingErrorState.TceUnknownVersion);
+                }
+
+                if (featureData[0] is TdsEnums.TCE_NOT_ENABLED
+                    or > TdsEnums.MAX_SUPPORTED_TCE_VERSION)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ERR | " +
+                        $"Object ID {_objectId}, " +
+                        $"Invalid version number for TCE");
+
+                    throw SQL.ParsingErrorValue(ParsingErrorState.TceInvalidVersion, featureData[0]);
                 }
 
                 // Feature data begins with one byte containing the column encryption version. If
