@@ -3708,6 +3708,12 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (featureId != TdsEnums.FEATUREEXT_TERMINATOR)
                 {
+                    // Unknown feature ack
+                    if (!IsFeatureExtSupported(featureId))
+                    {
+                        throw SQL.ParsingError();
+                    }
+
                     uint dataLen;
                     result = stateObj.TryReadUInt32(out dataLen);
                     if (result != TdsOperationStatus.Done)
@@ -3723,6 +3729,7 @@ namespace Microsoft.Data.SqlClient
                             return result;
                         }
                     }
+
                     Capabilities.ProcessFeatureExtAck(featureId, data);
                     _connHandler.OnFeatureExtAck(featureId, data);
                 }
@@ -3791,6 +3798,13 @@ namespace Microsoft.Data.SqlClient
             }
 
             return TdsOperationStatus.Done;
+
+            static bool IsFeatureExtSupported(byte fId) =>
+                fId is TdsEnums.FEATUREEXT_SRECOVERY or TdsEnums.FEATUREEXT_FEDAUTH or TdsEnums.FEATUREEXT_TCE
+                    or TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS or TdsEnums.FEATUREEXT_AZURESQLSUPPORT
+                    or TdsEnums.FEATUREEXT_DATACLASSIFICATION or TdsEnums.FEATUREEXT_UTF8SUPPORT
+                    or TdsEnums.FEATUREEXT_SQLDNSCACHING or TdsEnums.FEATUREEXT_JSONSUPPORT
+                    or TdsEnums.FEATUREEXT_VECTORSUPPORT or TdsEnums.FEATUREEXT_USERAGENT;
         }
 
         private bool IsValidAttestationProtocol(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType)

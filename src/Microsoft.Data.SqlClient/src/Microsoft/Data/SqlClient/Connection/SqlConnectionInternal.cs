@@ -278,9 +278,6 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: Rename to match naming conventions
         private bool _SQLDNSRetryEnabled = false;
 
-        // @TODO: Rename to match naming conventions
-        private bool _serverSupportsDNSCaching = false;
-
         private bool _sessionRecoveryRequested;
 
         private int _threadIdOwningParserLock = -1;
@@ -1465,11 +1462,6 @@ namespace Microsoft.Data.SqlClient.Connection
                         $"Received feature extension acknowledgement for USERAGENTSUPPORT (ignored)");
 
                     break;
-                }
-                default:
-                {
-                    // Unknown feature ack
-                    throw SQL.ParsingError();
                 }
             }
         }
