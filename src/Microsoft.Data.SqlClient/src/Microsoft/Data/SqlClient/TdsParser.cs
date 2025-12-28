@@ -2741,8 +2741,7 @@ namespace Microsoft.Data.SqlClient
                     case TdsEnums.SQLLOGINACK:
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TryRun|SEC> Received login acknowledgement token");
-                            SqlLoginAck ack;
-                            result = TryProcessLoginAck(stateObj, out ack);
+                            result = TryProcessLoginAck(stateObj, out SqlLoginAck ack);
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
@@ -4186,9 +4185,7 @@ namespace Microsoft.Data.SqlClient
 
         private TdsOperationStatus TryProcessLoginAck(TdsParserStateObject stateObj, out SqlLoginAck sqlLoginAck)
         {
-            SqlLoginAck a = new SqlLoginAck();
-
-            sqlLoginAck = null;
+            sqlLoginAck = default;
 
             // read past interface type and version
             TdsOperationStatus result = stateObj.TrySkipBytes(1);
@@ -4211,7 +4208,7 @@ namespace Microsoft.Data.SqlClient
             // its TDS version to the server in a little-endian layout, and
             // receives the server's TDS version in a big-endian layout.
             // Reference: MS-TDS, 2.2.7.14, footnote on TDSVersion field.
-            a.tdsVersion = BinaryPrimitives.ReadUInt32BigEndian(b);
+            uint tdsVersion = BinaryPrimitives.ReadUInt32BigEndian(b);
 
             stateObj._outBytesUsed = stateObj._outputHeaderLen;
             byte len;
@@ -4226,31 +4223,32 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
-            result = stateObj.TryReadByte(out a.majorVersion);
+            result = stateObj.TryReadByte(out byte majorVersion);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
             }
-            result = stateObj.TryReadByte(out a.minorVersion);
+            result = stateObj.TryReadByte(out byte minorVersion);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
             }
-            byte buildNumHi, buildNumLo;
-            result = stateObj.TryReadByte(out buildNumHi);
+            result = stateObj.TryReadByte(out byte buildNumHi);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
             }
-            result = stateObj.TryReadByte(out buildNumLo);
+            result = stateObj.TryReadByte(out byte buildNumLo);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
             }
 
-            a.buildNum = (short)((buildNumHi << 8) + buildNumLo);
+            ushort buildNumber = (ushort)((buildNumHi << 8) | buildNumLo);
 
-            Capabilities.ProcessLoginAck(a);
+            sqlLoginAck = new SqlLoginAck(majorVersion, minorVersion, buildNumber, tdsVersion);
+
+            Capabilities.ProcessLoginAck(sqlLoginAck);
 
             Debug.Assert(_state == TdsParserState.OpenNotLoggedIn, "ProcessLoginAck called with state not TdsParserState.OpenNotLoggedIn");
             _state = TdsParserState.OpenLoggedIn;
@@ -4270,7 +4268,6 @@ namespace Microsoft.Data.SqlClient
                 ThrowExceptionAndWarning(stateObj);
             }
 
-            sqlLoginAck = a;
             return TdsOperationStatus.Done;
         }
 

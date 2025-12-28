@@ -1636,7 +1636,7 @@ namespace Microsoft.Data.SqlClient.Connection
         {
             if (_recoverySessionData != null)
             {
-                if (_recoverySessionData._tdsVersion != rec.tdsVersion)
+                if (_recoverySessionData._tdsVersion != rec.TdsVersion)
                 {
                     throw SQL.CR_TDSVersionNotPreserved(this);
                 }
@@ -1644,7 +1644,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
             if (_currentSessionData != null)
             {
-                _currentSessionData._tdsVersion = rec.tdsVersion;
+                _currentSessionData._tdsVersion = rec.TdsVersion;
             }
         }
 

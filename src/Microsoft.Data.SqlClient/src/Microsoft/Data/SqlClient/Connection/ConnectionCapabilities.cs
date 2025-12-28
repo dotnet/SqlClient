@@ -257,7 +257,7 @@ internal sealed class ConnectionCapabilities
     /// <param name="loginAck">The LOGINACK token stream sent by the server</param>
     public void ProcessLoginAck(SqlLoginAck loginAck)
     {
-        if (loginAck.tdsVersion is not SqlServer2005TdsVersion
+        if (loginAck.TdsVersion is not SqlServer2005TdsVersion
             and not SqlServer2008R2TdsVersion
             and not SqlServer2012TdsVersion
             and not SqlServer2022TdsVersion)
@@ -265,10 +265,10 @@ internal sealed class ConnectionCapabilities
             throw SQL.InvalidTDSVersion();
         }
 
-        TdsVersion = loginAck.tdsVersion;
-        ServerMajorVersion = loginAck.majorVersion;
-        ServerMinorVersion = loginAck.minorVersion;
-        ServerBuildNumber = (ushort)loginAck.buildNum;
+        TdsVersion = loginAck.TdsVersion;
+        ServerMajorVersion = loginAck.MajorVersion;
+        ServerMinorVersion = loginAck.MinorVersion;
+        ServerBuildNumber = loginAck.BuildNumber;
     }
 
     public void ProcessFeatureExtAck(byte featureId, ReadOnlySpan<byte> featureData)
