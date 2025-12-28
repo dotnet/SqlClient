@@ -3729,7 +3729,7 @@ namespace Microsoft.Data.SqlClient
 
             // Write to DNS Cache or clean up DNS Cache for TCP protocol
             bool ret = false;
-            if (_connHandler._cleanSQLDNSCaching)
+            if (!Capabilities.DnsCaching)
             {
                 ret = SQLFallbackDNSCache.Instance.DeleteDNSInfo(FQDNforDNSCache);
             }
