@@ -376,9 +376,6 @@ namespace Microsoft.Data.SqlClient
             _connHandler = connHandler;
             _loginWithFailover = withFailover;
 
-            // Clean up IsSQLDNSCachingSupported flag from previous status
-            _connHandler.IsSQLDNSCachingSupported = false;
-
             uint sniStatus = TdsParserStateObjectFactory.Singleton.SNIStatus;
 
             if (sniStatus != TdsEnums.SNI_SUCCESS)

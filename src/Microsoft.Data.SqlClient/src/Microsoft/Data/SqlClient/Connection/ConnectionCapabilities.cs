@@ -266,9 +266,24 @@ internal sealed class ConnectionCapabilities
                 break;
 
             case TdsEnums.FEATUREEXT_SQLDNSCACHING:
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ADV | " +
+                    $"Object ID {_objectId}, " +
+                    $"Received feature extension acknowledgement for SQLDNSCACHING");
+
+                if (featureData.Length < 1)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ERR | " +
+                        $"Object ID {_objectId}, " +
+                        $"Unknown token for SQLDNSCACHING");
+
+                    throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                }
+
                 // The client may cache DNS resolution responses if bit 0 of the feature
                 // data is set.
-                DnsCaching = !featureData.IsEmpty && (featureData[0] & 0x01) == 0x01;
+                DnsCaching = (featureData[0] & 0x01) == 0x01;
                 break;
 
             case TdsEnums.FEATUREEXT_DATACLASSIFICATION:

@@ -645,11 +645,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// Get or set if SQLDNSCaching is supported by the server.
         /// </summary>
         // @TODO: Make auto-property
-        internal bool IsSQLDNSCachingSupported
-        {
-            get => _serverSupportsDNSCaching;
-            set => _serverSupportsDNSCaching = value;
-        }
+        internal bool IsSQLDNSCachingSupported => _parser.Capabilities.DnsCaching;
 
         /// <summary>
         /// Get or set if we need retrying with IP received from FeatureExtAck.
@@ -1503,24 +1499,8 @@ namespace Microsoft.Data.SqlClient.Connection
 
                 case TdsEnums.FEATUREEXT_SQLDNSCACHING:
                 {
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
-                        $"Object ID {ObjectID}, " +
-                        $"Received feature extension acknowledgement for SQLDNSCACHING");
-
-                    if (data.Length < 1)
+                    if (IsSQLDNSCachingSupported)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
-                            $"Object ID {ObjectID}, " +
-                            $"Unknown token for SQLDNSCACHING");
-
-                        throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
-                    }
-
-                    if (data[0] == 1)
-                    {
-                        IsSQLDNSCachingSupported = true;
                         _cleanSQLDNSCaching = false;
 
                         if (RoutingInfo != null)
@@ -1531,7 +1511,6 @@ namespace Microsoft.Data.SqlClient.Connection
                     else
                     {
                         // we receive the IsSupported whose value is 0
-                        IsSQLDNSCachingSupported = false;
                         _cleanSQLDNSCaching = true;
                     }
 
