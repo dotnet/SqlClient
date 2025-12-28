@@ -16,9 +16,15 @@ namespace Microsoft.Data.SqlClient;
 internal sealed class ConnectionCapabilities
 {
     /// <summary>
+    /// This TDS version is used by SQL Server 2005.
+    /// </summary>
+    private const uint SqlServer2005TdsVersion = 0x72_09_0002;
+
+    /// <summary>
     /// This TDS version is used by SQL Server 2008 R2.
     /// </summary>
     private const uint SqlServer2008R2TdsVersion = 0x73_0B_0003;
+
     /// <summary>
     /// This TDS version is used by SQL Server 2012 and onwards.
     /// In SQL Server 2022 and SQL Server 2025, this is used when
@@ -26,6 +32,7 @@ internal sealed class ConnectionCapabilities
     /// protocol.
     /// </summary>
     private const uint SqlServer2012TdsVersion = TdsEnums.TDS7X_VERSION;
+
     /// <summary>
     /// This TDS version is used by SQL Server 2022 and onwards,
     /// when responding with the TDS 8.x protocol.
@@ -250,7 +257,8 @@ internal sealed class ConnectionCapabilities
     /// <param name="loginAck">The LOGINACK token stream sent by the server</param>
     public void ProcessLoginAck(SqlLoginAck loginAck)
     {
-        if (loginAck.tdsVersion is not SqlServer2008R2TdsVersion
+        if (loginAck.tdsVersion is not SqlServer2005TdsVersion
+            and not SqlServer2008R2TdsVersion
             and not SqlServer2012TdsVersion
             and not SqlServer2022TdsVersion)
         {
