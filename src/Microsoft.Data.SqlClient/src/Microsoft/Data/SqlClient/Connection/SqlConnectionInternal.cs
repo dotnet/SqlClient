@@ -1273,16 +1273,12 @@ namespace Microsoft.Data.SqlClient.Connection
             }
         }
 
-        // @TODO: This feature is *far* too big, and has the same issues as the above OnEnvChange
-        // @TODO: Consider individual callbacks for the supported features and perhaps an interface of feature callbacks. Or registering with the parser what features are handleable.
+        internal bool ShouldProcessFeatureExtAck(byte featureId) =>
+            RoutingInfo is null || featureId is TdsEnums.FEATUREEXT_SQLDNSCACHING;
+
         // @TODO: This class should not do low-level parsing of data from the server.
         internal void OnFeatureExtAck(int featureId, byte[] data)
         {
-            if (RoutingInfo != null && featureId != TdsEnums.FEATUREEXT_SQLDNSCACHING)
-            {
-                return;
-            }
-
             switch (featureId)
             {
                 case TdsEnums.FEATUREEXT_SRECOVERY:
@@ -1446,11 +1442,6 @@ namespace Microsoft.Data.SqlClient.Connection
                     {
                         IsDNSCachingBeforeRedirectSupported = true;
                     }
-
-                    // TODO: need to add more steps for phase 2
-                    // get IPv4 + IPv6 + Port number
-                    // not put them in the DNS cache at this point but need to store them somewhere
-                    // generate pendingSQLDNSObject and turn on IsSQLDNSRetryEnabled flag
                     break;
                 }
                 case TdsEnums.FEATUREEXT_USERAGENT:

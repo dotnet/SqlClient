@@ -3730,8 +3730,11 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
 
-                    Capabilities.ProcessFeatureExtAck(featureId, data);
-                    _connHandler.OnFeatureExtAck(featureId, data);
+                    if (_connHandler.ShouldProcessFeatureExtAck(featureId))
+                    {
+                        Capabilities.ProcessFeatureExtAck(featureId, data);
+                        _connHandler.OnFeatureExtAck(featureId, data);
+                    }
                 }
             } while (featureId != TdsEnums.FEATUREEXT_TERMINATOR);
 
@@ -3742,7 +3745,7 @@ namespace Microsoft.Data.SqlClient
                 ret = SQLFallbackDNSCache.Instance.DeleteDNSInfo(FQDNforDNSCache);
             }
 
-            if (_connHandler.IsSQLDNSCachingSupported && _connHandler.pendingSQLDNSObject != null
+            if (Capabilities.DnsCaching && _connHandler.pendingSQLDNSObject != null
                     && !SQLFallbackDNSCache.Instance.IsDuplicate(_connHandler.pendingSQLDNSObject))
             {
                 ret = SQLFallbackDNSCache.Instance.AddDNSInfo(_connHandler.pendingSQLDNSObject);
