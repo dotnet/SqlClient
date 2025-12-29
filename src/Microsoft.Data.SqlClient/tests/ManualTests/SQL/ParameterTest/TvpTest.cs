@@ -86,6 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
 
+            // @TODO: Split into two tests
             // Bad Scenario - exception expected.
             try
             {
@@ -123,7 +124,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 // Ignore this exception as it's deliberately introduced.
-                Assert.True(e.Message.Contains("Object reference not set to an instance of an object"), "Expected exception did not occur");
+                Assert.Contains("Object reference not set to an instance of an object", e.Message);
             }
 
             // Good Scenario - No failure expected.
