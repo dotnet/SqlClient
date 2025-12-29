@@ -11,6 +11,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
 {
     public class SqlErrorCollectionTests
     {
+        private const int ErrorsInTestCollection = 3;
+        
         [Fact]
         public void Constructor_PropertiesInitialized()
         {
@@ -45,89 +47,93 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             // Assert
             Assert.Equal(itemsToAdd, collection.Count);
         }
-        
-        [Fact]
-        public void CopyTo_ObjectArray_ZeroIndex()
+
+        [Theory]
+        [InlineData(ErrorsInTestCollection, 0)]      // Destination just right size
+        [InlineData(ErrorsInTestCollection + 10, 0)] // Null elements at end
+        [InlineData(ErrorsInTestCollection + 2, 2)]  // Null elements at beginning
+        [InlineData(ErrorsInTestCollection + 10, 1)] // Null elements at beginning and end
+        public void CopyTo_SqlErrorArray_WithinRange(int destinationSize, int offset)
         {
             // Arrange
             (SqlErrorCollection collection, SqlError[] errors) = GetTestErrorCollection();
-            object[] copyDestination = new object[errors.Length];
-
+            SqlError[] copyDestination = new SqlError[destinationSize];
+            
             // Act
-            collection.CopyTo(copyDestination, index: 0);
+            // - Uses SqlErrorCollection.CopyTo
+            collection.CopyTo(copyDestination, offset);
             
             // Assert
-            for (int i = 0; i < errors.Length; i++)
-            {
-                Assert.Same(errors[i], copyDestination[i]);
-            }
+            AssertCopiedCollection(errors, copyDestination, offset);
         }
-        
-        [Fact]
-        public void CopyTo_ObjectArray_NonZeroIndex()
+
+        [Theory]
+        [InlineData(ErrorsInTestCollection, -1)]    // Offset is negative
+        [InlineData(ErrorsInTestCollection - 1, 0)] // Destination is too small 
+        [InlineData(ErrorsInTestCollection, 1)]     // Destination is big enough, but offset pushes it over edge
+        public void CopyTo_SqlErrorArray_OutOfRange(int destinationSize, int offset)
+        {
+            // Arrange
+            (SqlErrorCollection collection, SqlError[] _) = GetTestErrorCollection();
+            SqlError[] copyDestination = new SqlError[destinationSize];
+            
+            // Act
+            // - Uses ICollection.CopyTo
+            Action action = () => collection.CopyTo(copyDestination, offset);
+            
+            // Assert
+            Assert.ThrowsAny<ArgumentException>(action);
+        }
+
+        [Theory]
+        [InlineData(ErrorsInTestCollection, 0)]      // Destination just right size
+        [InlineData(ErrorsInTestCollection + 10, 0)] // Null elements at end
+        [InlineData(ErrorsInTestCollection + 2, 2)]  // Null elements at beginning
+        [InlineData(ErrorsInTestCollection + 10, 1)] // Null elements at beginning and end
+        public void CopyTo_ObjectArray_WithinRange(int destinationSize, int offset)
         {
             // Arrange
             (SqlErrorCollection collection, SqlError[] errors) = GetTestErrorCollection();
-            object[] copyDestination = new object[errors.Length + 1];
-
+            object[] copyDestination = new object[destinationSize];
+            
             // Act
-            collection.CopyTo(copyDestination, index: 1);
+            // - Uses ICollection.CopyTo
+            collection.CopyTo(copyDestination, offset);
             
             // Assert
-            Assert.Null(copyDestination[0]);
-            for (int i = 0; i < errors.Length; i++)
-            {
-                Assert.Same(errors[i], copyDestination[i + 1]);
-            }
+            AssertCopiedCollection(errors, copyDestination, offset);
+        }
+
+        [Theory]
+        [InlineData(ErrorsInTestCollection, -1)]    // Offset is negative
+        [InlineData(ErrorsInTestCollection - 1, 0)] // Destination is too small 
+        [InlineData(ErrorsInTestCollection, 1)]     // Destination is big enough, but offset pushes it over edge
+        public void CopyTo_ObjectArray_OutOfRange(int destinationSize, int offset)
+        {
+            // Arrange
+            (SqlErrorCollection collection, SqlError[] _) = GetTestErrorCollection();
+            SqlError[] copyDestination = new SqlError[destinationSize];
+            
+            // Act
+            // - Uses ICollection.CopyTo
+            Action action = () => collection.CopyTo(copyDestination, offset);
+            
+            // Assert
+            Assert.ThrowsAny<ArgumentException>(action);
         }
 
         [Fact]
         public void CopyTo_ObjectArray_WrongType()
         {
             // Arrange
-            (SqlErrorCollection collection, _) = GetTestErrorCollection();
-            int[] copyDestination = new int[1];
-
-            // Act
-            Action action = () => collection.CopyTo(copyDestination, index: 0);
-
-            // Assert
-            Assert.Throws<ArgumentException>(action);
-        }
-
-        [Fact]
-        public void CopyTo_TypedArray_ZeroIndex()
-        {
-            // Arrange
             (SqlErrorCollection collection, SqlError[] errors) = GetTestErrorCollection();
-            SqlError[] copyDestination = new SqlError[errors.Length + 1];
-
+            int[] destination = new int[errors.Length];
+            
             // Act
-            collection.CopyTo(copyDestination, index: 0);
-
+            Action action = () => collection.CopyTo(destination, 0);
+            
             // Assert
-            for (int i = 0; i < errors.Length; i++)
-            {
-                Assert.Same(errors[i], copyDestination[i]);
-            }
-        }
-
-        [Fact]
-        public void CopyTo_TypedArray_NonZeroIndex()
-        {
-            // Arrange
-            (SqlErrorCollection collection, SqlError[] errors) = GetTestErrorCollection();
-            object[] copyDestination = new object[errors.Length + 1];
-
-            // Act
-            collection.CopyTo(copyDestination, index: 1);
-
-            // Assert
-            Assert.Null(copyDestination[0]);
-            for (int i = 0; i < errors.Length; i++)
-            {
-                Assert.Same(errors[i], copyDestination[i + 1]);
-            }
+            Assert.Throws<InvalidCastException>(action);
         }
 
         [Fact]
@@ -181,6 +187,28 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             Assert.Throws<ArgumentOutOfRangeException>(action);
         }
 
+        private static void AssertCopiedCollection(SqlError[] source, IReadOnlyList<object> destination, int offset)
+        {
+            for (int i = 0; i < destination.Count; i++)
+            {
+                if (i < offset)
+                {
+                    // - Elements before the offset should be null
+                    Assert.Null(destination[i]);
+                }
+                else if (i >= offset && i < source.Length + offset)
+                {
+                    // - Elements after the offset but within the range of original elements should match
+                    Assert.Same(source[i - offset], destination[i]);
+                }
+                else
+                {
+                    // - Elements after the offset and original elements should be null
+                    Assert.Null(destination[i]);
+                }
+            }
+        }
+        
         private static SqlError GetTestError()
         {
             return new SqlError(
@@ -198,19 +226,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         private static (SqlErrorCollection collection, SqlError[] errors) GetTestErrorCollection()
         {
             SqlErrorCollection collection = new();
-            SqlError[] errors = new SqlError[3];
+            SqlError[] errors = new SqlError[ErrorsInTestCollection];
 
-            SqlError error1 = GetTestError();
-            collection.Add(error1);
-            errors[0] = error1;
-
-            SqlError error2 = GetTestError();
-            collection.Add(error2);
-            errors[1] = error2;
-
-            SqlError error3 = GetTestError();
-            collection.Add(error3);
-            errors[2] = error3;
+            for (int i = 0; i < ErrorsInTestCollection; i++)
+            {
+                SqlError error = GetTestError();
+                errors[i] = error;
+                collection.Add(error);
+            }
 
             return (collection, errors);
         }
