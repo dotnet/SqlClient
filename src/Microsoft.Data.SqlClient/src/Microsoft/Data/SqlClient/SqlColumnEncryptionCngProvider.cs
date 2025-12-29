@@ -2,8 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if _WINDOWS
-
+using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.AlwaysEncrypted;
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -150,6 +149,11 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/DecryptColumnEncryptionKey/*' />
         public override byte[] DecryptColumnEncryptionKey(string? masterKeyPath, string? encryptionAlgorithm, byte[]? encryptedColumnEncryptionKey)
         {
+            if (!ADP.IsWindows)
+            {
+                throw new PlatformNotSupportedException();
+            }
+
             // Validate the input parameters
             ValidateNonEmptyKeyPath(masterKeyPath, isSystemOp: true);
 
@@ -176,6 +180,11 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/EncryptColumnEncryptionKey/*' />
         public override byte[] EncryptColumnEncryptionKey(string? masterKeyPath, string? encryptionAlgorithm, byte[]? columnEncryptionKey)
         {
+            if (!ADP.IsWindows)
+            {
+                throw new PlatformNotSupportedException();
+            }
+
             // Validate the input parameters
             ValidateNonEmptyKeyPath(masterKeyPath, isSystemOp: false);
 
@@ -202,15 +211,17 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/SignColumnMasterKeyMetadata/*' />
         public override byte[] SignColumnMasterKeyMetadata(string? masterKeyPath, bool allowEnclaveComputations)
         {
-            throw new NotSupportedException();
+            throw ADP.IsWindows
+                ? new NotSupportedException()
+                : new PlatformNotSupportedException();
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/VerifyColumnMasterKeyMetadata/*' />
         public override bool VerifyColumnMasterKeyMetadata(string? masterKeyPath, bool allowEnclaveComputations, byte[]? signature)
         {
-            throw new NotSupportedException();
+            throw ADP.IsWindows
+                ? new NotSupportedException()
+                : new PlatformNotSupportedException();
         }
     }
 }
-
-#endif
