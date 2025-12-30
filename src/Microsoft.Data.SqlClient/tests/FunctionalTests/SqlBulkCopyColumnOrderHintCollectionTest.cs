@@ -428,8 +428,8 @@ namespace Microsoft.Data.SqlClient.Tests
             collection.Remove(item2);
             Assert.Empty(collection);
 
-            AssertExtensions.Throws<ArgumentException>(() => collection.Remove(item2));
-            AssertExtensions.Throws<ArgumentException>(() => collection.Remove(new SqlBulkCopyColumnOrderHint("column3", SortOrder.Descending)));
+            Assert.Throws<ArgumentException>(() => collection.Remove(item2));
+            Assert.Throws<ArgumentException>(() => collection.Remove(new SqlBulkCopyColumnOrderHint("column3", SortOrder.Descending)));
 
             IList list = CreateCollection(item1, item2);
 
@@ -440,9 +440,9 @@ namespace Microsoft.Data.SqlClient.Tests
             list.Remove(item2);
             Assert.Empty(list);
 
-            AssertExtensions.Throws<ArgumentException>(null, () => list.Remove(item2));
-            AssertExtensions.Throws<ArgumentException>(null, () => list.Remove(new SqlBulkCopyColumnOrderHint("column4", SortOrder.Ascending)));
-            AssertExtensions.Throws<ArgumentException>(null, () => list.Remove("bogus"));
+            Assert.Throws<ArgumentException>(() => list.Remove(item2));
+            Assert.Throws<ArgumentException>(() => list.Remove(new SqlBulkCopyColumnOrderHint("column4", SortOrder.Ascending)));
+            Assert.Throws<ArgumentException>(() => list.Remove("bogus"));
         }
 
         [Fact]

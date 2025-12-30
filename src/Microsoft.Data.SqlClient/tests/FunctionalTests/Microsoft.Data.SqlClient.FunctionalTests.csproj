@@ -22,7 +22,6 @@
     <Compile Include="AlwaysEncryptedTests\SqlConnectionShould.cs" />
     <Compile Include="AlwaysEncryptedTests\TestFixtures.cs" />
     <Compile Include="AlwaysEncryptedTests\Utility.cs" />
-    <Compile Include="AssertExtensions.cs" />
     <Compile Include="DataCommon\AssemblyResourceManager.cs" />
     <Compile Include="DataCommon\DummySqlAuthenticationProvider.cs" />
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
