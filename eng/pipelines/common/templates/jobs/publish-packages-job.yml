@@ -1,0 +1,108 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  # Approval aliases for manual validation before publishing packages
+  - name: approvalAliases
+    type: string
+    default: '[ADO.Net]\\SqlClient Admins'
+
+  # Where to publish the packages: 'Internal' or 'Public' feed
+  - name: publishDestination
+    type: string
+
+  # Boolean value to indicate whether to perform a dry run or actual publish
+  - name: dryRun
+    type: boolean
+
+  # Boolean value to indicate if the build is a preview release build
+  - name: isPreview
+    type: boolean
+
+  # Internal feed source URL for publishing packages to Azure DevOps Feed
+  - name: internalFeedSource
+    type: string
+
+  # Public NuGet source URL for publishing packages to public feed
+  - name: publicNuGetSource
+    type: string
+
+  # Boolean value to indicate whether to publish symbols
+  - name: publishSymbols
+    type: boolean
+
+  # Name of the folder containing the packages to be published
+  - name: packageFolderName
+    type: string
+
+  # NuGet package version to be published
+  - name: nugetPackageVersion
+    type: string
+
+  # Product name associated with the packages
+  - name: product
+    type: string
+
+jobs:
+  - job: AwaitApproval
+    displayName: "Await Release Approval"
+    pool: server
+    steps:
+      - task: ManualValidation@0
+        displayName: "Manual Approval"
+        timeoutInMinutes: 4320 # 3 days
+        inputs:
+          notifyUsers: ${{ parameters.approvalAliases }}
+          instructions: |
+            Release Checklist:
+             * Destination: ${{ parameters.publishDestination }}
+             * Preview build: ${{ parameters.isPreview }}
+             * Dry run: ${{ parameters.dryRun }}
+             * Symbols: ${{ parameters.publishSymbols }}
+             * NuGet package version: ${{ parameters.nugetPackageVersion }}
+             * Product: ${{ parameters.product }}
+            Approve to continue or Reject to abort.
+
+  - job: PublishPackages
+    displayName: "Publish Packages"
+    variables:
+      - name: targetDownloadPath
+        value: "$(Pipeline.Workspace)/release/packages"
+    dependsOn: AwaitApproval
+    condition: succeeded()
+    pool:
+      vmImage: "ubuntu-latest"
+    steps:
+      - task: DownloadPipelineArtifact@2
+        displayName: "Download Signed Packages"
+        inputs:
+          buildType: current
+          artifactName: ${{ parameters.packageFolderName }}
+          targetPath: ${{ variables.targetDownloadPath }}
+      - script: |
+          echo "NuGet Package Version: ${{ parameters.nugetPackageVersion }}"
+          echo "Downloaded signed packages to: ${{ variables.targetDownloadPath }}"
+        displayName: "Echo NuGet Package Version"
+      # Push to Public NuGet Feed if publishDestination is 'Public'
+      - ${{ if eq(parameters.publishDestination, 'Public') }}:
+          - template: ../steps/publish-public-nuget-step.yml
+            parameters:
+              dryRun: ${{ parameters.dryRun }}
+              publicNuGetSource: ${{ parameters.publicNuGetSource }}
+              packagesGlob: ${{ variables.targetDownloadPath }}/*.nupkg
+        # Else Push to Internal Feed
+      - ${{ else }}:
+          - template: ../steps/publish-internal-feed-step.yml
+            parameters:
+              dryRun: ${{ parameters.dryRun }}
+              internalFeedSource: ${{ parameters.internalFeedSource }}
+              packagesGlob: ${{ variables.targetDownloadPath }}/*.nupkg
+      # Publish Symbols if publishSymbols is true and is not a dry run
+      - ${{ if and(parameters.publishSymbols, not(parameters.dryRun)) }}:
+          - template: ../steps/publish-symbols-step.yml
+            parameters:
+              publishSymbols: ${{ parameters.publishSymbols }}
+              symbolsArtifactName: ${{ parameters.product }}_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.nugetPackageVersion }}_$(System.TimelineId)
+              product: ${{ parameters.product }}
