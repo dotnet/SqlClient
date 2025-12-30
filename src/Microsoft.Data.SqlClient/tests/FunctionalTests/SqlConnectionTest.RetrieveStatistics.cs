@@ -10,6 +10,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
+    // @TODO: These are unit tests for StatisticsDictionary - they don't belong in SqlConnection tests.
     public partial class SqlConnectionTest
     {
         private static readonly string[] s_retrieveStatisticsKeys =
@@ -132,14 +133,21 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             IDictionary d = new SqlConnection().RetrieveStatistics();
             string key = s_retrieveStatisticsKeys[0];
-            AssertExtensions.Throws<ArgumentException>(null, () => d.Add(key, 100L));
+            Assert.Throws<ArgumentException>(() => d.Add(key, 100L));
         }
 
         [Fact]
         public void RetrieveStatistics_Add_NullKey_Throws()
         {
+            // Arrange
             IDictionary d = new SqlConnection().RetrieveStatistics();
-            AssertExtensions.Throws<ArgumentNullException>("key", () => d.Add(null, 100L));
+            
+            // Act
+            Action action = () => d.Add(null!, 100L);
+            
+            // Assert
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(action);
+            Assert.Equal("key", exception.ParamName);
         }
 
         [Theory]
@@ -170,7 +178,9 @@ namespace Microsoft.Data.SqlClient.Tests
         public void RetrieveStatistics_Setter_NullKey_Throws()
         {
             IDictionary d = new SqlConnection().RetrieveStatistics();
-            AssertExtensions.Throws<ArgumentNullException>("key", () => d[null] = 100L);
+            ArgumentNullException argumentNullException =
+                Assert.Throws<ArgumentNullException>(() => d[null!] = 123);
+            Assert.Equal("key", argumentNullException.ParamName);
         }
 
         [Fact]
@@ -237,15 +247,22 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void RetrieveStatistics_Remove_NullKey_Throws()
         {
+            // Arrange
             IDictionary d = new SqlConnection().RetrieveStatistics();
-            AssertExtensions.Throws<ArgumentNullException>("key", () => d.Remove(null));
+            
+            // Act
+            Action action = () => d.Remove(null!);
+            
+            // Assert
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(action);
+            Assert.Equal("key", exception.ParamName);
         }
 
         [Fact]
         public void RetrieveStatistics_Contains_NullKey_Throws()
         {
             IDictionary d = new SqlConnection().RetrieveStatistics();
-            AssertExtensions.Throws<ArgumentNullException>("key", () => d.Contains(null));
+            Assert.Throws<ArgumentNullException>("key", () => d.Contains(null!));
         }
 
         [Fact]
@@ -264,17 +281,25 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
+        // @TODO: Rewrite into separate tests
         [Fact]
         public void RetrieveStatistics_CopyTo_Throws()
         {
             IDictionary d = new SqlConnection().RetrieveStatistics();
+            
+            ArgumentNullException argumentNullException = Assert.Throws<ArgumentNullException>(() => d.CopyTo(null!, 0));
+            Assert.Equal("array",  argumentNullException.ParamName);
+            
+            argumentNullException = Assert.Throws<ArgumentNullException>("array", () => d.CopyTo(null!, -1));
+            Assert.Equal("array", argumentNullException.ParamName);
 
-            AssertExtensions.Throws<ArgumentNullException>("array", () => d.CopyTo(null, 0));
-            AssertExtensions.Throws<ArgumentNullException>("array", () => d.CopyTo(null, -1));
-            AssertExtensions.Throws<ArgumentOutOfRangeException>("arrayIndex", () => d.CopyTo(new DictionaryEntry[20], -1));
-            AssertExtensions.Throws<ArgumentException>(null, () => d.CopyTo(new DictionaryEntry[20], 18));
-            AssertExtensions.Throws<ArgumentException>(null, () => d.CopyTo(new DictionaryEntry[20], 1000));
-            AssertExtensions.Throws<ArgumentException>(null, () => d.CopyTo(new DictionaryEntry[4, 3], 0));
+            ArgumentOutOfRangeException outOfRangeException =
+                Assert.Throws<ArgumentOutOfRangeException>(() => d.CopyTo(new DictionaryEntry[20], -1));
+            Assert.Equal("arrayIndex", outOfRangeException.ParamName);
+            
+            Assert.Throws<ArgumentException>(() => d.CopyTo(new DictionaryEntry[20], 18));
+            Assert.Throws<ArgumentException>(() => d.CopyTo(new DictionaryEntry[20], 1000));
+            Assert.Throws<ArgumentException>(() => d.CopyTo(new DictionaryEntry[4, 3], 0));
             Assert.Throws<InvalidCastException>(() => d.CopyTo(new string[20], 0));
         }
 
@@ -428,18 +453,27 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(c.Cast<string>().ToArray(), destination);
         }
 
+        // @TODO: Break int oseparate tests
         [Fact]
         public void RetrieveStatistics_Keys_CopyTo_Throws()
         {
             IDictionary d = new SqlConnection().RetrieveStatistics();
             ICollection c = d.Keys;
 
-            AssertExtensions.Throws<ArgumentNullException>("array", () => c.CopyTo(null, 0));
-            AssertExtensions.Throws<ArgumentNullException>("array", () => c.CopyTo(null, -1));
-            AssertExtensions.Throws<ArgumentOutOfRangeException>("arrayIndex", () => c.CopyTo(new string[20], -1));
-            AssertExtensions.Throws<ArgumentException>(null, () => c.CopyTo(new string[20], 18));
-            AssertExtensions.Throws<ArgumentException>(null, () => c.CopyTo(new string[20], 1000));
-            AssertExtensions.Throws<ArgumentException>(null, () => c.CopyTo(new string[4, 3], 0));
+            ArgumentNullException argumentNullException =
+                Assert.Throws<ArgumentNullException>(() => c.CopyTo(null!, 0));
+            Assert.Equal("array", argumentNullException.ParamName);
+            
+            argumentNullException = Assert.Throws<ArgumentNullException>(() => c.CopyTo(null!, -1));
+            Assert.Equal("array", argumentNullException.ParamName);
+
+            ArgumentOutOfRangeException argumentOutOfRangeException =
+                Assert.Throws<ArgumentOutOfRangeException>(() => c.CopyTo(new string[20], -1));
+            Assert.Equal("arrayIndex",  argumentOutOfRangeException.ParamName);
+            
+            Assert.Throws<ArgumentException>(null, () => c.CopyTo(new string[20], 18));
+            Assert.Throws<ArgumentException>(null, () => c.CopyTo(new string[20], 1000));
+            Assert.Throws<ArgumentException>(null, () => c.CopyTo(new string[4, 3], 0));
             Assert.Throws<InvalidCastException>(() => c.CopyTo(new Version[20], 0));
         }
 
@@ -538,18 +572,28 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(c.Cast<long>().ToArray(), destination);
         }
 
+        // @TODO: Break these into separate tests
         [Fact]
         public void RetrieveStatistics_Values_CopyTo_Throws()
         {
             IDictionary d = new SqlConnection().RetrieveStatistics();
             ICollection c = d.Values;
 
-            AssertExtensions.Throws<ArgumentNullException>("array", () => c.CopyTo(null, 0));
-            AssertExtensions.Throws<ArgumentNullException>("array", () => c.CopyTo(null, -1));
-            AssertExtensions.Throws<ArgumentOutOfRangeException>("arrayIndex", () => c.CopyTo(new long[20], -1));
-            AssertExtensions.Throws<ArgumentException>(null, () => c.CopyTo(new long[20], 18));
-            AssertExtensions.Throws<ArgumentException>(null, () => c.CopyTo(new long[20], 1000));
-            AssertExtensions.Throws<ArgumentException>(null, () => c.CopyTo(new long[4, 3], 0));
+            ArgumentNullException argumentNullException =
+                Assert.Throws<ArgumentNullException>(() => c.CopyTo(null!, 0));
+            Assert.Equal("array", argumentNullException.ParamName);
+
+            argumentNullException =
+                Assert.Throws<ArgumentNullException>(() => c.CopyTo(null!, -1));
+            Assert.Equal("array", argumentNullException.ParamName);
+            
+            ArgumentOutOfRangeException argumentOutOfRangeException =
+                Assert.Throws<ArgumentOutOfRangeException>(() => c.CopyTo(new long[20], -1));
+            Assert.Equal("arrayIndex", argumentOutOfRangeException.ParamName);
+            
+            Assert.Throws<ArgumentException>(() => c.CopyTo(new long[20], 18));
+            Assert.Throws<ArgumentException>(() => c.CopyTo(new long[20], 1000));
+            Assert.Throws<ArgumentException>(() => c.CopyTo(new long[4, 3], 0));
             Assert.Throws<InvalidCastException>(() => c.CopyTo(new Version[20], 0));
         }
 
