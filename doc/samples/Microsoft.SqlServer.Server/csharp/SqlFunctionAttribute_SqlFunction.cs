@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿namespace SqlFunctionAttribute_SqlFunction;
+
+using System.Collections;
 //-----------------------------------------------------------------------------
 //<Snippet4>
 using System.Data.SqlTypes;
