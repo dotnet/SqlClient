@@ -52,6 +52,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         **/
         private static bool s_EnlistedTransactionPreservedWhilePooledCondition => DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsNotX86Architecture && DataTestUtility.IsNotManagedInstance();
 
+        [Trait("Category", "flaky")]
         [ConditionalFact(nameof(s_EnlistedTransactionPreservedWhilePooledCondition), Timeout = 10000)]
         public async Task Test_EnlistedTransactionPreservedWhilePooled()
         {

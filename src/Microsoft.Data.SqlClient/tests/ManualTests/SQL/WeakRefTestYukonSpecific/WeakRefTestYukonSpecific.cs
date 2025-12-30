@@ -18,6 +18,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // TODO Synapse: Remove dependency on Northwind database
         [ActiveIssue("6643", TestPlatforms.AnyUnix)]
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestReaderMars()
         {
