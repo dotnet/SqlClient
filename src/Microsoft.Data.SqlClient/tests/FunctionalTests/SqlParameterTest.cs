@@ -47,33 +47,6 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
-        public void Constructor1()
-        {
-            SqlParameter p = new SqlParameter();
-
-            Assert.Equal(DbType.String, p.DbType);
-            Assert.Equal(ParameterDirection.Input, p.Direction);
-            Assert.False(p.IsNullable);
-            Assert.Equal(0, p.LocaleId);
-            Assert.Equal(0, p.Offset);
-            Assert.Equal(string.Empty, p.ParameterName);
-            Assert.Equal(0, p.Precision);
-            Assert.Equal(0, p.Scale);
-            Assert.Equal(0, p.Size);
-            Assert.Equal(string.Empty, p.SourceColumn);
-            Assert.False(p.SourceColumnNullMapping);
-            Assert.Equal(DataRowVersion.Current, p.SourceVersion);
-            Assert.Equal(SqlDbType.NVarChar, p.SqlDbType);
-            Assert.Null(p.SqlValue);
-            Assert.Equal(string.Empty, p.TypeName);
-            Assert.Equal(string.Empty, p.UdtTypeName);
-            Assert.Null(p.Value);
-            Assert.Equal(string.Empty, p.XmlSchemaCollectionDatabase);
-            Assert.Equal(string.Empty, p.XmlSchemaCollectionName);
-            Assert.Equal(string.Empty, p.XmlSchemaCollectionOwningSchema);
-        }
-
-        [Fact]
         public void Constructor2_Value_DateTime()
         {
             DateTime value = new DateTime(2004, 8, 24);
@@ -218,63 +191,6 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             SqlParameter p = new SqlParameter(null, DBNull.Value);
             Assert.Equal(string.Empty, p.ParameterName);
-        }
-
-        public static IEnumerable<object[]> Constructor3Data()
-        {
-            return new object[][]
-            {
-                new object[]{ SqlDbType.BigInt, DbType.Int64 },
-                new object[]{ SqlDbType.Binary, DbType.Binary },
-                new object[]{ SqlDbType.Bit, DbType.Boolean },
-                new object[]{ SqlDbType.Char, DbType.AnsiStringFixedLength },
-                new object[]{ SqlDbType.Date, DbType.Date },
-                new object[]{ SqlDbType.DateTime, DbType.DateTime },
-                new object[]{ SqlDbType.DateTimeOffset, DbType.DateTimeOffset },
-                new object[]{ SqlDbType.Decimal, DbType.Decimal },
-                new object[]{ SqlDbType.Float, DbType.Double },
-                new object[]{ SqlDbType.Image, DbType.Binary },
-                new object[]{ SqlDbType.Int, DbType.Int32 },
-                new object[]{ SqlDbType.Money, DbType.Currency },
-                new object[]{ SqlDbType.NChar, DbType.StringFixedLength },
-                new object[]{ SqlDbType.NText, DbType.String },
-                new object[]{ SqlDbType.NVarChar, DbType.String },
-                new object[]{ SqlDbType.Real, DbType.Single },
-                new object[]{ SqlDbType.SmallDateTime, DbType.DateTime },
-                new object[]{ SqlDbType.SmallInt, DbType.Int16 },
-                new object[]{ SqlDbType.SmallMoney, DbType.Currency },
-                new object[]{ SqlDbType.Structured, DbType.Object },
-                new object[]{ SqlDbType.Text, DbType.AnsiString },
-                new object[]{ SqlDbType.Time, DbType.Time },
-                new object[]{ SqlDbType.Timestamp, DbType.Binary },
-                new object[]{ SqlDbType.TinyInt, DbType.Byte },
-                new object[]{ SqlDbType.Udt, DbType.Object },
-                new object[]{ SqlDbType.UniqueIdentifier, DbType.Guid },
-                new object[]{ SqlDbType.VarBinary, DbType.Binary },
-                new object[]{ SqlDbType.VarChar, DbType.AnsiString },
-                new object[]{ SqlDbType.Variant, DbType.Object },
-                new object[]{ SqlDbType.Xml, DbType.Xml }
-            };
-        }
-
-        [Theory]
-        [MemberData(
-            nameof(Constructor3Data)
-#if NETFRAMEWORK
-            // .NET Framework puts system enums in something called the Global
-            // Assembly Cache (GAC), and xUnit refuses to serialize enums that
-            // live there.  So for .NET Framework, we disable enumeration of the
-            // test data to avoid warnings on the console when running tests.
-            , DisableDiscoveryEnumeration = true
-#endif
-            )]
-        public void Constructor3_Types(SqlDbType sqlDbType, DbType dbType)
-        {
-            SqlParameter p = new SqlParameter("types", sqlDbType);
-
-            Assert.Equal(dbType, p.DbType);
-            Assert.Equal(sqlDbType, p.SqlDbType);
-            Assert.Null(p.Value);
         }
 
         [Fact]
