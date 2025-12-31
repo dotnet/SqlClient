@@ -25,7 +25,6 @@
     <Compile Include="DataCommon\AssemblyResourceManager.cs" />
     <Compile Include="DataCommon\DummySqlAuthenticationProvider.cs" />
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
-    <Compile Include="DataCommon\TestUtility.cs" />
     <Compile Include="LocalizationTest.cs" />
     <Compile Include="MultipartIdentifierTests.cs" />
     <Compile Include="MultiplexerTests.cs" />
