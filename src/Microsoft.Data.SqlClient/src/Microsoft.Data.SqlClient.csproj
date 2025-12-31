@@ -66,6 +66,26 @@
     <!-- included into the build.                                                                 -->
     <EmbeddedResource Include="Resources/ILLink.Substitutions.xml"
                       Condition="'$(NormalizedTargetOs)' == 'windows_nt' AND '$(TargetFramework)' != 'net462'" />
+
+    <!-- Base strings in English -->
+    <EmbeddedResource Update="Resources\Strings.resx">
+      <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+      <CustomToolNamespace>System</CustomToolNamespace>
+    </EmbeddedResource>
+
+    <!-- Include all strings that have been translated -->
+    <EmbeddedResource Update="Resources\Strings.*.resx">
+      <LogicalName>Microsoft.Data.SqlClient.Resources.%(Filename).resources</LogicalName>
+    </EmbeddedResource>
+
+    <!-- Strings designer that depends on the resx -->
+    <Compile Update="Resources\Strings.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Strings.resx</DependentUpon>
+    </Compile>
   </ItemGroup>
 
   <!-- References ====================================================== -->
