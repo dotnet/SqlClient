@@ -10,6 +10,7 @@
   <!-- Embedded resources and content files  =========================== -->
   <ItemGroup>
     <EmbeddedResource Update="Resources.resx">
+      <LogicalName>Microsoft.Data.SqlClient.UnitTests.Resources.resources</LogicalName>
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
@@ -22,14 +23,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>xunit.runner.json</TargetPath>
     </ContentWithTargetPath>
-
-    <!-- Ensure that the SNI binaries are copied into the output directory -->
-    <!-- @TODO: Can we find a way to eliminate this? -->
-    <ContentWithTargetPath Include="$(RepoRoot)artifacts/Microsoft.Data.SqlClient/$(Configuration)/windows_nt/$(TargetFramework)/*SNI*.dll"
-                           Condition="'$(TargetFramework)' == 'net462'">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>%(Filename)%(Extension)</TargetPath>
-    </ContentWithTargetPath>
   </ItemGroup>
 
   <!-- References ====================================================== -->
@@ -38,21 +31,26 @@
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
   </ItemGroup>
 
-  <!-- References for all platforms -->
-  <ItemGroup>
+  <!-- References for netframework -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <Reference Include="System.Transactions" />
+
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
+                      PrivateAssets="all" />
     <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.console">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="xunit.runner.visualstudio">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
+    <PackageReference Include="xunit.runner.console"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
+                      PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.visualstudio"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
+                      PrivateAssets="all" />
 
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
@@ -60,14 +58,24 @@
     <ProjectReference Include="$(TestsPath)Common\Common.csproj" />
   </ItemGroup>
 
-  <!-- References for netframework -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-    <Reference Include="System.Transactions" />
+  <!-- References for netcore -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.console"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
+                      PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.visualstudio"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
+                      PrivateAssets="all" />
 
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
+    <ProjectReference Include="$(TestsPath)Common\Common.csproj" />
   </ItemGroup>
 </Project>
