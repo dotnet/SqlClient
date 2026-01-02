@@ -19,7 +19,7 @@ public class WorkloadIdentityFederationTests
     public async void GetCredential()
     {
         AzurePipelinesCredential credential = new(
-            // The tenant ID if the managed identity associated to our workload
+            // The tenant ID of the managed identity associated to our workload
             // identity federation service connection.  See:
             //
             // https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/654fffd0-d02d-4894-b1b7-e2dfbc44a665/resourceGroups/aad-testlab-dl797892652000/providers/Microsoft.ManagedIdentity/userAssignedIdentities/dotnetMSI/properties
@@ -37,7 +37,7 @@ public class WorkloadIdentityFederationTests
             Config.UserManagedIdentityClientId,
 
             // The Azure Dev Ops service connection ID (resourceId found in the
-            // URL) of our workload identity federation setup.  See:
+            // URL) of our workload identity federation setup.
             //
             // Note that we need a service connection configured in each Azure
             // DevOps project (Public and ADO.Net).

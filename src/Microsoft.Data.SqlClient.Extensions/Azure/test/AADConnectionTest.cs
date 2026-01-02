@@ -31,7 +31,7 @@ public class AADConnectionTest
 
         Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStr));
 
-        // We cannot verify error message with certainity as driver may cache token from other tests for current user
+        // We cannot verify error message with certainty as driver may cache token from other tests for current user
         // and error message may change accordingly.
     }
 

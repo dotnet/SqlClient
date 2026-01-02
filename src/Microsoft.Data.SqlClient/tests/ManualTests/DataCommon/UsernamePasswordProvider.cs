@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests;
 
 internal class UsernamePasswordProvider : SqlAuthenticationProvider
 {
-    string _appClientId;
+    readonly string _appClientId;
     const string s_defaultScopeSuffix = "/.default";
 
     internal UsernamePasswordProvider(string appClientId)
@@ -31,18 +31,15 @@ internal class UsernamePasswordProvider : SqlAuthenticationProvider
                 ? parameters.Resource
                 : parameters.Resource + s_defaultScopeSuffix;
 
-            var cts = new CancellationTokenSource();
+            using CancellationTokenSource cts = new();
             cts.CancelAfter(parameters.ConnectionTimeout * 1000);
-
-            string[] scopes = new string[] { scope };
-            SecureString password = new SecureString();
 
             AuthenticationResult result =
                 #pragma warning disable CS0618 // Type or member is obsolete
                 await PublicClientApplicationBuilder.Create(_appClientId)
                 .WithAuthority(parameters.Authority)
                 .Build()
-                .AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
+                .AcquireTokenByUsernamePassword([scope], parameters.UserId, parameters.Password)
                 #pragma warning restore CS0618 // Type or member is obsolete
                 .WithCorrelationId(parameters.ConnectionId)
                 .ExecuteAsync(cancellationToken: cts.Token);
@@ -52,7 +49,7 @@ internal class UsernamePasswordProvider : SqlAuthenticationProvider
         catch (Exception ex)
         {
             throw new TokenException(
-                $"Failed to acquire token for ManagedIdentity " +
+                $"Failed to acquire token for username/password " +
                 $"userId ={parameters.UserId} error={ex.Message}", ex);
         }
     }

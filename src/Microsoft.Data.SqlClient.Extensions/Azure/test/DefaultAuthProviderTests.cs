@@ -10,9 +10,11 @@ public class DefaultAuthProviderTests
     // authentication methods, and not for any other methods.
     //
     // Note that this isn't testing anything in the Azure package.  It actually
-    // tests the static constructor of SqlAuthenticationProviderManager class in
-    // the MDS package and the static GetProvider() and SetProvider() methods of
-    // the SqlAuthenticationProvider class in the Abstractions package.
+    // tests the static constructor of the SqlAuthenticationProviderManager
+    // class in the MDS package and the static GetProvider() and SetProvider()
+    // methods of the SqlAuthenticationProvider class in the Abstractions
+    // package.  We're testing this here because this test project uses both of
+    // those packages, and this is a convenient place to put such a test.
     [Fact]
     public void AuthProviderInstalled()
     {

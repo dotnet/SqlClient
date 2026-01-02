@@ -83,8 +83,6 @@ public class SqlAuthenticationProviderTest
     /// <summary>
     /// A dummy provider that supports all authentication methods.
     /// </summary>
-
-    // A dummy provider that supports all authentication methods.
     private sealed class Provider : SqlAuthenticationProvider
     {
         /// <inheritDoc/>

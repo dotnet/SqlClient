@@ -1,5 +1,6 @@
 {
-  "_comment": "Options for v3+ are prefixed with '_v3_'",
+  "_comment1": "xUnit v2 doesn't allow proper JSON comments, so we put our comments in keys that are ignored.",
+  "_comment2": "Options for v3+ are prefixed with '_v3_'",
 
   "$schema": "https://xunit.net/schema/v2.8/xunit.runner.schema.json",
   "_v3_$schema": "https://xunit.net/schema/current/xunit.runner.schema.json",
