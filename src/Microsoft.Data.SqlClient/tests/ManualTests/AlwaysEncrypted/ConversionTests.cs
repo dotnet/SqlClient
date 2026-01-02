@@ -28,6 +28,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private const decimal SmallMoneyMaxValue = 214748.3647M;
         private const decimal SmallMoneyMinValue = -214748.3648M;
         private const int MaxLength = 10000;
+
+        private static readonly Type[] ExpectedExceptionTypes =
+        [
+            typeof(ArgumentException),
+            typeof(FormatException),
+            typeof(InvalidCastException),
+            typeof(OverflowException),
+            typeof(SqlException),
+            typeof(SqlTypeException),
+        ];
+        
         private int NumberOfRows = DataTestUtility.EnclaveEnabled ? 10 : 100;
         private ColumnEncryptionKey columnEncryptionKey;
         private SqlColumnEncryptionCertificateStoreProvider certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
@@ -554,21 +565,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         /// <summary>
-        /// Check if this exception is expected.
-        /// </summary>
-        /// <param name="e"></param>
-        /// <returns></returns>
-        private bool IsExpectedException(Exception e)
-        {
-            return e is OverflowException ||
-                e is InvalidCastException ||
-                e is SqlTypeException ||
-                e is ArgumentException ||
-                e is FormatException ||
-                e is SqlException;
-        }
-
-        /// <summary>
         /// Try to execute the command and check if there was an error if one was expected.
         /// </summary>
         /// <param name="sqlCmd"></param>
@@ -581,32 +577,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
             else
             {
-                try
-                {
-                    sqlCmd.ExecuteNonQuery();
-                    StringBuilder builder = new(
-                        "We should have gotten an error but passed instead; " +
-                        $"command: {sqlCmd.CommandText}; parameters: ");
-                    foreach (SqlParameter param in sqlCmd.Parameters)
-                    {
-                        builder.Append('(');
-                        builder.Append(param.ParameterName);
-                        builder.Append(' ');
-                        builder.Append(param.SqlDbType);
-                        builder.Append(' ');
-                        builder.Append(param.Value);
-                        builder.Append(") ");
-                    }
-                    Assert.Fail(builder.ToString());
-                }
-                catch (Exception e)
-                {
-                    Type exceptionType = e.GetType();
-                    if (!IsExpectedException(e))
-                    {
-                        throw;
-                    }
-                }
+                Action action = () => sqlCmd.ExecuteNonQuery();
+                Exception exception = Assert.ThrowsAny<Exception>(action);
+                Assert.Contains(exception.GetType(), ExpectedExceptionTypes);
             }
         }
 

@@ -1017,13 +1017,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 connection.Close();
             }
-            if (cm.Parameters["@id2"].Value == null)
+            
+            object id2Value = cm.Parameters["@id2"].Value;
+            if (id2Value is not null)
             {
-                return;
-            }
-            else if ((Guid)cm.Parameters["@id2"].Value != expectedGuid)
-            {
-                Assert.Fail("CRITICAL : Unexpected data found in SqlCommand parameters, this is a MAJOR issue.");
+                // Null values are allowed, but if it is not null, the expected guid must be set.
+                Assert.Equal(expectedGuid, (Guid)id2Value);
             }
         }
     }

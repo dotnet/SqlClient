@@ -733,16 +733,10 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                         if (await sqlReader.ReadAsync())
                         {
                             long id = sqlReader.GetInt64(0);
-                            if (id != 1)
-                            {
-                                Assert.Fail("Id not 1");
-                            }
+                            Assert.Equal(1, id);
 
                             var sliced = GetPooledChars(sqlReader, 1, input);
-                            if (!sliced.SequenceEqual(input.ToCharArray()))
-                            {
-                                Assert.Fail("sliced != input");
-                            }
+                            Assert.Equal(input.ToCharArray(), sliced);
                         }
                     }
                 }
