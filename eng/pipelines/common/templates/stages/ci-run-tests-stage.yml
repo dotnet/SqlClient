@@ -68,7 +68,7 @@ stages:
         - ${{ each platform in config.value.buildPlatforms }}:
           - ${{ each testSet in config.value.TestSets }}:
             - ${{ if contains(targetFramework, 'net4') }}: # .NET Framework
-              - template: ../jobs/ci-run-tests-job.yml@self
+              - template: /eng/pipelines/common/templates/jobs/ci-run-tests-job.yml@self
                 parameters:
                   debug: ${{ parameters.debug }}
                   buildConfiguration: ${{ parameters.buildConfiguration }}
@@ -101,7 +101,7 @@ stages:
                         enableX64Test: false
             - ${{ else }}: # .NET
               - ${{ each useManagedSNI in config.value.useManagedSNI }}:
-                - template: ../jobs/ci-run-tests-job.yml@self
+                - template: /eng/pipelines/common/templates/jobs/ci-run-tests-job.yml@self
                   parameters:
                     debug: ${{ parameters.debug }}
                     buildConfiguration: ${{ parameters.buildConfiguration }}

@@ -82,7 +82,7 @@ jobs:
           ob_outputDirectory: '$(ARTIFACT_PATH)'
 
       steps:
-          - template: ../steps/script-output-environment-variables-step.yml@self
+          - template: /eng/pipelines/steps/script-output-environment-variables-step.yml@self
 
           - powershell: |
                 $jsonParams = '${{ convertToJson(parameters) }}' -replace '\\', '\\'
@@ -91,13 +91,13 @@ jobs:
 
           # Perform analysis before building, since this step will clobber build
           # output.
-          - template: ../steps/roslyn-analyzers-akv-step.yml@self
+          - template: /eng/pipelines/steps/roslyn-analyzers-akv-step.yml@self
             parameters:
                 akvPackageVersion: '${{ parameters.akvPackageVersion }}'
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
 
-          - template: ../steps/compound-build-akv-step.yml@self
+          - template: /eng/pipelines/steps/compound-build-akv-step.yml@self
             parameters:
                 akvAssemblyFileVersion: '${{ parameters.akvAssemblyFileVersion }}'
                 akvPackageVersion: '${{ parameters.akvPackageVersion }}'
@@ -105,7 +105,7 @@ jobs:
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
                 
           - ${{ each targetFramework in parameters.targetFrameworks }}:  
-              - template: ../steps/compound-extract-akv-apiscan-files-step.yml
+              - template: /eng/pipelines/steps/compound-extract-akv-apiscan-files-step.yml@self
                 parameters:
                     buildConfiguration: '${{ parameters.buildConfiguration }}'
                     dllPath: '${{ parameters.apiScanDllPath }}'
@@ -113,7 +113,7 @@ jobs:
                     referenceType: Package
                     targetFramework: '${{ targetFramework }}'
 
-          - template: ../steps/compound-esrp-code-signing-step.yml@self
+          - template: /eng/pipelines/steps/compound-esrp-code-signing-step.yml@self
             parameters:
                 appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
                 appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
@@ -123,7 +123,7 @@ jobs:
                 esrpClientId: '${{ parameters.signingEsrpClientId }}'
                 esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
 
-          - template: ../steps/compound-nuget-pack-step.yml@self
+          - template: /eng/pipelines/steps/compound-nuget-pack-step.yml@self
             parameters:
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 generateSymbolsPackage: true    # Always generate symbols, even if they are not published
@@ -133,7 +133,7 @@ jobs:
                 referenceType: Package
                 properties: MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
-          - template: ../steps/compound-esrp-code-signing-step.yml@self
+          - template: /eng/pipelines/steps/compound-esrp-code-signing-step.yml@self
             parameters:
                 appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
                 appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
@@ -144,7 +144,7 @@ jobs:
                 esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
 
           - ${{ if parameters.publishSymbols }}:
-            - template: ../steps/compound-publish-symbols-step.yml@self
+            - template: /eng/pipelines/steps/compound-publish-symbols-step.yml@self
               parameters:
                   artifactName: 'akv_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.akvPackageVersion }}_$(System.TimelineId)'
                   azureSubscription: '${{ parameters.symbolsAzureSubscription }}'

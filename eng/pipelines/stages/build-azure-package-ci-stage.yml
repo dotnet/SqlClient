@@ -94,7 +94,7 @@ stages:
       # ------------------------------------------------------------------------
       # Build and test on Linux.
 
-      - template: ../jobs/test-azure-package-ci-job.yml@self
+      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
@@ -111,7 +111,7 @@ stages:
       # ------------------------------------------------------------------------
       # Build and test on Windows
 
-      - template: ../jobs/test-azure-package-ci-job.yml@self
+      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
@@ -128,7 +128,7 @@ stages:
       # ------------------------------------------------------------------------
       # Build and test on macOS.
 
-      - template: ../jobs/test-azure-package-ci-job.yml
+      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
@@ -145,7 +145,7 @@ stages:
       # ------------------------------------------------------------------------
       # Create and publish the NuGet package.
 
-      - template: ../jobs/pack-azure-package-ci-job.yml@self
+      - template: /eng/pipelines/jobs/pack-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}

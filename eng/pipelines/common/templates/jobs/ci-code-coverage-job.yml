@@ -59,12 +59,12 @@ jobs:
         - pwsh: 'Get-ChildItem env: | Sort-Object Name'
           displayName: '[Debug] List Environment Variables'
 
-      - template: ../steps/ensure-dotnet-version.yml@self
+      - template: /eng/pipelines/common/templates/steps/ensure-dotnet-version.yml@self
         parameters:
             packageType: sdk
             version: '10.0'
 
-      - template: ../steps/ensure-dotnet-version.yml@self
+      - template: /eng/pipelines/common/templates/steps/ensure-dotnet-version.yml@self
         parameters:
             packageType: runtime
             version: '9.0'

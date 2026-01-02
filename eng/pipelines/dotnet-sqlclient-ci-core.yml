@@ -104,7 +104,7 @@ parameters:
   default: true
 
 variables:
-  - template: libraries/ci-build-variables.yml@self
+  - template: /eng/pipelines/libraries/ci-build-variables.yml@self
   
   - name: abstractionsArtifactName
     value: Abstractions.Artifact
@@ -119,7 +119,7 @@ stages:
 
   # Build the Abstractions package, and publish it to the pipeline artifacts
   # under the given artifact name.
-  - template: stages/build-abstractions-package-ci-stage.yml@self
+  - template: /eng/pipelines/stages/build-abstractions-package-ci-stage.yml@self
     parameters:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       abstractionsPackageVersion: $(abstractionsPackageVersion)
@@ -140,7 +140,7 @@ stages:
       dependsOn: []
 
     jobs:
-    - template: common/templates/jobs/ci-build-nugets-job.yml@self
+    - template: /eng/pipelines/common/templates/jobs/ci-build-nugets-job.yml@self
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.referenceType }}
@@ -150,14 +150,14 @@ stages:
         mdsArtifactName: $(mdsArtifactName)
         ${{if ne(parameters.SNIVersion, '')}}:
           prebuildSteps:
-            - template: common/templates/steps/override-sni-version.yml@self
+            - template: /eng/pipelines/common/templates/steps/override-sni-version.yml@self
               parameters:
                 SNIVersion: ${{parameters.SNIVersion}}
                 SNIValidationFeed: ${{parameters.SNIValidationFeed}}
 
   # Build the Azure package, and publish it to the pipeline artifacts under the
   # given artifact name.
-  - template: stages/build-azure-package-ci-stage.yml@self
+  - template: /eng/pipelines/stages/build-azure-package-ci-stage.yml@self
     parameters:
       abstractionsArtifactName: $(abstractionsArtifactName)
       abstractionsPackageVersion: $(abstractionsPackageVersion)
@@ -175,7 +175,7 @@ stages:
 
   # Run the stress tests, if desired.
   - ${{ if eq(parameters.enableStressTests, true) }}:
-    - template: stages/stress-tests-ci-stage.yml@self
+    - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         dependsOn: [build_mds_akv_packages_stage]
@@ -185,7 +185,7 @@ stages:
           verbosity: 'detailed'
   
   # Run the MDS and AKV tests.
-  - template: common/templates/stages/ci-run-tests-stage.yml@self
+  - template: /eng/pipelines/common/templates/stages/ci-run-tests-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
       buildConfiguration: ${{ parameters.buildConfiguration }}
@@ -197,8 +197,6 @@ stages:
       mdsArtifactName: $(mdsArtifactName)
       mdsPackageVersion: $(mdsPackageVersion)
       testJobTimeout: ${{ parameters.testJobTimeout }}
-      ${{ if eq(parameters.buildType, 'Package') }}:
-        dependsOn: build_nugets
 
       # When testing MDS via packages, we must depend on the Abstractions,
       # Azure, and MDS packages.
@@ -210,21 +208,21 @@ stages:
 
       prebuildSteps: # steps to run prior to building and running tests on each job
         - ${{if ne(parameters.SNIVersion, '')}}:
-          - template: common/templates/steps/override-sni-version.yml@self
+          - template: /eng/pipelines/common/templates/steps/override-sni-version.yml@self
             parameters:
               SNIVersion: ${{parameters.SNIVersion}}
               SNIValidationFeed: ${{parameters.SNIValidationFeed}}
 
-        - template: common/templates/steps/ci-prebuild-step.yml@self
+        - template: /eng/pipelines/common/templates/steps/ci-prebuild-step.yml@self
           parameters:
             debug: ${{ parameters.debug }}
             referenceType: ${{ parameters.referenceType }}
 
       # Include the code coverage job if the build type is Project.
-      ${{ if eq(parameters.buildType, 'Project') }}:
+      ${{ if eq(parameters.referenceType, 'Project') }}:
          # Jobs to run as part of the tests stage, after the tests are done.
         postTestJobs:
-        - template: common/templates/jobs/ci-code-coverage-job.yml@self
+        - template: /eng/pipelines/common/templates/jobs/ci-code-coverage-job.yml@self
           parameters:
             debug: ${{ parameters.debug }}
             image: ADO-MMS22-CodeCov
@@ -528,7 +526,7 @@ stages:
           hostedPool: true
           images:
             MacOSLatest_Sql22: macos-latest
-          TargetFrameworks: ${{parameters.targetFrameworksLinux }}
+          TargetFrameworks: ${{parameters.targetFrameworksUnix }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}

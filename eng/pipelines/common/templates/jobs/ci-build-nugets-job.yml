@@ -62,7 +62,7 @@ jobs:
     - msbuild
 
   variables:
-    - template: ../../../libraries/ci-build-variables.yml@self
+    - template: /eng/pipelines/libraries/ci-build-variables.yml@self
 
   steps:
   - ${{ if ne(parameters.prebuildSteps, '') }}:
@@ -79,12 +79,12 @@ jobs:
         targetPath: $(packagePath)
     # Note that packages/ will have been created by the above step, which is a
     # pre-requisite for configuring NuGet.
-    - template: ../steps/ci-prebuild-step.yml@self
+    - template: /eng/pipelines/common/templates/steps/ci-prebuild-step.yml@self
       parameters:
         debug: ${{ parameters.debug }}
         referenceType: ${{ parameters.referenceType }}
 
-  - template: ../steps/ci-project-build-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:
       platform: ${{ parameters.platform }}
       buildConfiguration: ${{ parameters.buildConfiguration }}
@@ -93,7 +93,7 @@ jobs:
       build: MDS
       abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
 
-  - template: ../steps/generate-nuget-package-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
     parameters:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       displayName: 'Create MDS NuGet Package'
@@ -104,7 +104,7 @@ jobs:
       properties: 'AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}'
       referenceType: ${{ parameters.referenceType }}
 
-  - template: ../steps/ci-project-build-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:
       platform: ${{ parameters.platform }}
       buildConfiguration: ${{ parameters.buildConfiguration }}
@@ -113,7 +113,7 @@ jobs:
       build: AKV
       mdsPackageVersion: ${{parameters.mdsPackageVersion}}
 
-  - template: ../steps/generate-nuget-package-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
     parameters:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       displayName: 'Create AKV NuGet Package'
