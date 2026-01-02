@@ -55,6 +55,9 @@ param
   [string[]]$Runtimes = @()
 )
 
+# Stop on all errors.
+$ErrorActionPreference = 'Stop'
+
 #------------------------------------------------------------------------------
 # Emit our command-line arguments.
 
