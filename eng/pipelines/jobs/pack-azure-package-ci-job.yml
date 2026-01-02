@@ -141,13 +141,13 @@ jobs:
         # Use the local NuGet.config that references the packages/ directory.
         - pwsh: cp $(Build.SourcesDirectory)/NuGet.config.local $(Build.SourcesDirectory)/NuGet.config
           displayName: Use local NuGet.config
-      
-      # Install the .NET 9.0 SDK.
+
+      # Install the .NET 10.0 SDK.
       - task: UseDotNet@2
-        displayName: Install .NET 9.0 SDK
+        displayName: Install .NET 10.0 SDK
         inputs:
           packageType: sdk
-          version: 9.x
+          version: 10.x
 
       # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't
       # support all of our argument combinations for the different build steps.
