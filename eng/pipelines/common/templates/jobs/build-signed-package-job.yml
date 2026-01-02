@@ -73,7 +73,7 @@ jobs:
       # These variables are sourced from common-variables.yml.
       abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
       abstractionsPackageVersion: $(abstractionsPackageVersion)
-      configuration: $(Configuration)
+      buildConfiguration: $(Configuration)
       mdsAssemblyFileVersion: $(mdsAssemblyFileVersion)
       mdsPackageVersion: $(mdsPackageVersion)
       referenceType: Package

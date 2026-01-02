@@ -30,7 +30,7 @@
     <Compile Include="LocalizationTest.cs" />
     <Compile Include="MultipartIdentifierTests.cs" />
     <Compile Include="MultiplexerTests.cs" />
-    <Compile Include="SqlAuthenticationProviderTest.cs" />
+    <Compile Include="SqlAuthenticationProviderManagerTests.cs" />
     <Compile Include="SqlClientLoggerTest.cs" />
     <Compile Include="SqlConfigurableRetryLogicTest.cs" />
     <Compile Include="SqlCommandBuilderTest.cs" />
@@ -144,27 +144,22 @@
     <ProjectReference
       Condition="'$(TargetGroup)'=='netfx'"
       Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Include="../../../Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj" />
     <ProjectReference Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
   </ItemGroup>
 
   <!-- Conditional Package References -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
     <PackageReference Include="Microsoft.Data.SqlClient" />
-    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure" />
     <PackageReference Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider" />
   </ItemGroup>
 
+  <!-- Ensure SNI DLLs are made available for .NET Framework project reference builds. -->
+  <Import Project="$(ToolsDir)/targets/CopySniDllsForNetFxProjectReferenceBuilds.targets" />
+
   <ItemGroup>
-    <ContentWithTargetPath Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\$(TargetFramework)\*SNI*.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>%(Filename)%(Extension)</TargetPath>
-    </ContentWithTargetPath>
-  </ItemGroup>
-  <ItemGroup>
-    <ContentWithTargetPath Include="..\tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">
+    <Content Include="..\tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>xunit.runner.json</TargetPath>
-    </ContentWithTargetPath>
+    </Content>
   </ItemGroup>
 </Project>

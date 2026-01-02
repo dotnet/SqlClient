@@ -10,6 +10,13 @@
 # Reason for not using UseDotNet task:
 #   [BUG]: UseDotNet task installs x86 build on Windows arm64
 #   https://github.com/microsoft/azure-pipelines-tasks/issues/20300
+#
+# A possible workaround is discussed here:
+#
+#   https://github.com/microsoft/azure-pipelines-tasks/issues/16501
+#
+# TODO: See if we can eliminate this template and just use the above workaround
+# for the Windows x86 builds.
 
 parameters:
     - # Directory where dotnet binaries should be installed. If not specified, defaults to the
