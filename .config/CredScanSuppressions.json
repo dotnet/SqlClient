@@ -1,6 +1,7 @@
 {
   "tool": "Credential Scanner",
-  "suppressions": [
+  "suppressions":
+  [
     {
       "file": "src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.Servers/TDSServerArguments.cs",
       "justification": "Test projects should be skipped"
