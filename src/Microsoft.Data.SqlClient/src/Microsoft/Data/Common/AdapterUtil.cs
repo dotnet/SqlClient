@@ -500,15 +500,11 @@ namespace Microsoft.Data.Common
 
         internal static ArgumentException MustBeReadOnly(string argumentName) => Argument(StringsHelper.GetString(Strings.ADP_MustBeReadOnly, argumentName));
 
-<<<<<<< HEAD
         internal static Exception CreateSqlException(
-            MsalException msalException,
+            SqlAuthenticationProviderException authException,
             SqlConnectionString connectionOptions,
             SqlConnectionInternal sender,
             string username)
-=======
-        internal static Exception CreateSqlException(SqlAuthenticationProviderException authException, SqlConnectionString connectionOptions, SqlInternalConnectionTds sender, string username)
->>>>>>> 4e2c6b4a (Move AAD/Entra Authentication into new Azure package (#3680))
         {
             // Error[0]
             SqlErrorCollection sqlErs = new();
