@@ -11,6 +11,7 @@ using System.Globalization;
 using System.Runtime.Serialization;
 using System.Text;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.Common.ConnectionString;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -113,7 +114,7 @@ namespace Microsoft.Data.SqlClient
         public byte State => Errors.Count > 0 ? Errors[0].State : default;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Source/*' />
-        override public string Source => TdsEnums.SQL_PROVIDER_NAME;
+        override public string Source => DbConnectionStringDefaults.ApplicationName;
 
 
 #if NET

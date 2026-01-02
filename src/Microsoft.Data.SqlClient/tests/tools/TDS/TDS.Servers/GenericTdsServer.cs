@@ -348,6 +348,7 @@ namespace Microsoft.SqlServer.TDS.Servers
                 }
             }
 
+            // Pass the packet to our delegate if we have one.
             OnLogin7Validated?.Invoke(loginRequest);
 
             // Check if SSPI authentication is requested
