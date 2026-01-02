@@ -526,10 +526,10 @@ public sealed class UserAgentTests
     }
 
     /// <summary>
-    /// Test the Trunc() function.
+    /// Test the Truncate() function with various max lengths.
     /// </summary>
     [Fact]
-    public void Trunc()
+    public void Truncate()
     {
         // Max length of 0.
         Assert.Equal("", UserAgent.Truncate("", 0));
