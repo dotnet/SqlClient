@@ -607,26 +607,3 @@ stages:
               UserManagedIdentityClientId: $(UserManagedIdentityClientId)
               LocalDbAppName: $(LocalDbAppName)
               LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
-
-        # Self hosted SQL Server on Mac
-        mac_sql_22:
-          pool: Azure Pipelines
-          hostedPool: true
-          images:
-            MacOSLatest_Sql22: macos-latest
-          TargetFrameworks: ${{parameters.targetFrameworksUnix }}
-          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
-          buildPlatforms: [AnyCPU]
-          testSets: ${{parameters.testSets }}
-          useManagedSNI: [true]
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
-          configSqlFor: local
-          operatingSystem: Mac
-          configProperties:
-            # config.json properties
-            TCPConnectionString: $(SQL_TCP_CONN_STRING)
-            NPConnectionString: $(SQL_NP_CONN_STRING)
-            SupportsIntegratedSecurity: false
-            ManagedIdentitySupported: false
-            LocalDbAppName: $(LocalDbAppName)
-            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
