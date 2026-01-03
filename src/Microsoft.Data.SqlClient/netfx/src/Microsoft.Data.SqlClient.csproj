@@ -1002,6 +1002,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\UserAgent\UserAgentInfoDto.cs">
       <Link>Microsoft\Data\SqlClient\UserAgent\UserAgentInfoDto.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\UserAgent\UserAgentInfoDtoSerializerContext.cs">
+      <Link>Microsoft\Data\SqlClient\UserAgent\UserAgentInfoDtoSerializerContext.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Resources\ResCategoryAttribute.cs">
       <Link>Resources\ResCategoryAttribute.cs</Link>
     </Compile>
