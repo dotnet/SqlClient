@@ -20,6 +20,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Identity.Client;
 using Microsoft.SqlServer.Server;
 using IsolationLevel = System.Data.IsolationLevel;
@@ -69,24 +70,27 @@ namespace Microsoft.Data.Common
         internal const int MaxBufferAccessTokenExpiry = 600;
 
         #region UDT
-#if NETFRAMEWORK
-        private static readonly MethodInfo s_method = typeof(InvalidUdtException).GetMethod("Create", BindingFlags.NonPublic | BindingFlags.Static);
-#endif
+
+        #if NETFRAMEWORK
+        private static readonly MethodInfo s_udtFactory =
+            typeof(InvalidUdtException).GetMethod("Create", BindingFlags.NonPublic | BindingFlags.Static);
+        #endif
+
         /// <summary>
         /// Calls "InvalidUdtException.Create" method when an invalid UDT occurs.
         /// </summary>
         internal static InvalidUdtException CreateInvalidUdtException(Type udtType, string resourceReasonName)
         {
-            // @TODO: Can we adopt the netcore version?
-            InvalidUdtException e =
-#if NETFRAMEWORK
-                (InvalidUdtException)s_method.Invoke(null, new object[] { udtType, resourceReasonName });
-            ADP.TraceExceptionAsReturnValue(e);
-#else
-                InvalidUdtException.Create(udtType, resourceReasonName);
-#endif
+            #if NETFRAMEWORK
+            InvalidUdtException e = (InvalidUdtException)s_udtFactory.Invoke(null, [udtType, resourceReasonName]);
+            #else
+            InvalidUdtException e = InvalidUdtException.Create(udtType, resourceReasonName);
+            #endif
+
+            TraceExceptionAsReturnValue(e);
             return e;
         }
+
         #endregion
 
         static private void TraceException(string trace, Exception e)
@@ -497,7 +501,11 @@ namespace Microsoft.Data.Common
 
         internal static ArgumentException MustBeReadOnly(string argumentName) => Argument(StringsHelper.GetString(Strings.ADP_MustBeReadOnly, argumentName));
 
-        internal static Exception CreateSqlException(MsalException msalException, SqlConnectionString connectionOptions, SqlInternalConnectionTds sender, string username)
+        internal static Exception CreateSqlException(
+            MsalException msalException,
+            SqlConnectionString connectionOptions,
+            SqlConnectionInternal sender,
+            string username)
         {
             // Error[0]
             SqlErrorCollection sqlErs = new();

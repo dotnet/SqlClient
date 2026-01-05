@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using SqlConnection xEventManagementConnection = new(DataTestUtility.TCPConnectionString);
             xEventManagementConnection.Open();
             
-            using DataTestUtility.XEventScope xEventSession = new(
+            using XEventScope xEventSession = new(
                 _testName,
                 xEventManagementConnection,
                 $@"ADD EVENT SQL_STATEMENT_STARTING (ACTION (client_connection_id) WHERE (client_connection_id='{connectionId}')),
