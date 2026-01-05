@@ -122,7 +122,7 @@ stages:
       parameters:
         jobNameSuffix: linux
         displayNamePrefix: Linux
-        poolName: $(ci_var_defaultPoolName)
+        poolName: ADO-CI-1ES-Pool
         vmImage: ADO-UB20-SQL22
         sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml
         pipelineArtifactName: ${{ parameters.pipelineArtifactName }}
@@ -141,7 +141,7 @@ stages:
       parameters:
         jobNameSuffix: windows
         displayNamePrefix: Win
-        poolName: $(ci_var_defaultPoolName)
+        poolName: ADO-CI-1ES-Pool
         # The Windows images include a suitable .NET Framework runtime, so we
         # don't have to install one explicitly.
         vmImage: ADO-MMS22-SQL22

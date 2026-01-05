@@ -4,23 +4,22 @@
 # See the LICENSE file in the project root for more information.
 ################################################################################
 
-# This pipeline runs the stress test suite using the most recent artifacts from
-# the CI-SqlClient-Package pipeline.
+# This pipeline runs the stress test suite using the artifacts from the
+# triggering pipeline.
 #
 # It runs after every successful run of the following pipelines:
 #
 # Public project:
-#   - PR-SqlClient-Package
-#   - CI-SqlClient-Package
+#   - CI-SqlClient-Package (branch main only)
 #
-# ADO.net project:
-#   - MDS Main CI-Package
+# ADO.Net project:
+#   - MDS Main CI-Package (branch internal/main only)
 #
 # This pipeline definition is mapped to the Stress-SqlClient pipelines:
 #
 # Public project:
 #
-#   TODO
+#   https://dev.azure.com/SqlClientDrivers/public/_build?definitionId=2212
 #
 # ADO.net project:
 #
@@ -42,21 +41,22 @@ trigger: none
 #
 resources:
   pipelines:
-    # The PR-SqlClient-Package pipeline in the Public project.
-    - pipeline: Public-ADO-PR-SqlClient-Package
-      project: Public
-      source: /ADO/PR-SqlClient-Package
-      trigger: true
     # The CI-SqlClient-Package pipeline in the Public project.
     - pipeline: Public-ADO-CI-SqlClient-Package
       project: Public
       source: /ADO/CI-SqlClient-Package
-      trigger: true
-    # The MDS Main CI-Package pipeline in the ADO.net project.
+      trigger:
+        branches:
+          include:
+          - main
+    # The MDS Main CI-Package pipeline in the ADO.Net project.
     - pipeline: ADO-Net-Internal-CI-MDS-Main-CI-Package
       project: ADO.Net
       source: /Internal CI/MDS Main CI-Package
-      trigger: true
+      trigger:
+        branches:
+          include:
+          - internal/main
 
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
