@@ -22,49 +22,37 @@
 parameters:
   # The type of build to produce (Debug or Release)
   - name: buildConfiguration
-    displayName: Build Configuration
     type: string
-    default: Debug
     values:
       - Debug
       - Release
 
-  # The names of any stages this stage depends on, for example the stages
-  # that publish the MDS package artifacts we will test.
-  - name: dependsOn
-    displayName: Depends On Stages
-    type: object
-    default: []
-
   # The name of the pipeline artifact to download that contains the MDS package
   # to stress test.
   - name: pipelineArtifactName
-    displayName: Pipeline Artifact Name
     type: string
-    default: Artifacts
 
   # The MDS package version to stress test.  This version must be available in
   # one of the configured NuGet sources.
+  #
+  # If empty, the MDS version will be parsed from the NuGet package filename
+  # downloaded from the pipeline artifact.
   - name: mdsPackageVersion
-    displayName: MDS Package Version
     type: string
     default: ''
 
   # The list of .NET runtimes to test against.
   - name: netTestRuntimes
-    displayName: .NET Test Runtimes
     type: object
-    default: [net8.0, net9.0]
+    default: [net8.0, net9.0, net10.0]
 
   # The list of .NET Framework runtimes to test against.
   - name: netFrameworkTestRuntimes
-    displayName: .NET Framework Test Runtimes
     type: object
-    default: [net462, net47, net471, net472, net48, net481]
+    default: [net462]
 
   # The verbosity level for the dotnet CLI commands.
   - name: verbosity
-    displayName: Dotnet CLI verbosity
     type: string
     default: normal
     values:
@@ -77,11 +65,10 @@ parameters:
 stages:
   - stage: run_stress_tests_stage
     displayName: Run Stress Tests
-    dependsOn: ${{ parameters.dependsOn }}
 
     variables:
       # The directory where dotnet artifacts will be staged.  Not to be
-      # confused with pipeline artifact.
+      # confused with pipeline artifacts.
       - name: dotnetArtifactsDir
         value: $(Build.StagingDirectory)/dotnetArtifacts
 
@@ -98,7 +85,6 @@ stages:
         value: >-
           --verbosity ${{parameters.verbosity}}
           --artifacts-path $(dotnetArtifactsDir)
-          -p:MdsPackageVersion=${{parameters.mdsPackageVersion}}
 
       # dotnet CLI arguments for build/run commands.
       - name: buildArguments
@@ -109,7 +95,7 @@ stages:
       # The contents of the config file to use for all tests.  We will write
       # this to a JSON file for each test job, and then point to it via the
       # STRESS_CONFIG_FILE environment variable.
-      - name: ConfigContent
+      - name: configContent
         value: |
           [
             {
@@ -132,7 +118,7 @@ stages:
     # --------------------------------------------------------------------------
     # Build and test on Linux.
 
-    - template: ../jobs/stress-tests-ci-job.yml@self
+    - template: /eng/pipelines/jobs/stress-tests-ci-job.yml@self
       parameters:
         jobNameSuffix: linux
         displayNamePrefix: Linux
@@ -140,17 +126,18 @@ stages:
         vmImage: ADO-UB20-SQL22
         sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml
         pipelineArtifactName: ${{ parameters.pipelineArtifactName }}
+        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
         solution: $(solution)
         testProject: $(testProject)
         restoreArguments: $(commonArguments)
         buildArguments: $(buildArguments)
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
-        configContent: $(ConfigContent)
+        configContent: $(configContent)
 
     # --------------------------------------------------------------------------
     # Build and test on Windows
 
-    - template: ../jobs/stress-tests-ci-job.yml
+    - template: /eng/pipelines/jobs/stress-tests-ci-job.yml@self
       parameters:
         jobNameSuffix: windows
         displayNamePrefix: Win
@@ -160,6 +147,7 @@ stages:
         vmImage: ADO-MMS22-SQL22
         sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml
         pipelineArtifactName: ${{ parameters.pipelineArtifactName }}
+        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
         solution: $(solution)
         testProject: $(testProject)
         restoreArguments: $(commonArguments)
@@ -168,12 +156,12 @@ stages:
         # Note that we include the .NET Framework runtimes for test runs on
         # Windows.
         netFrameworkTestRuntimes: ${{ parameters.netFrameworkTestRuntimes }}
-        configContent: $(ConfigContent)
+        configContent: $(configContent)
 
     # --------------------------------------------------------------------------
     # Build and test on macOS.
 
-    - template: ../jobs/stress-tests-ci-job.yml
+    - template: /eng/pipelines/jobs/stress-tests-ci-job.yml@self
       parameters:
         jobNameSuffix: macos
         displayNamePrefix: macOS
@@ -183,9 +171,10 @@ stages:
         vmImage: macos-latest
         sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml
         pipelineArtifactName: ${{ parameters.pipelineArtifactName }}
+        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
         solution: $(solution)
         testProject: $(testProject)
         restoreArguments: $(commonArguments)
         buildArguments: $(buildArguments)
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
-        configContent: $(ConfigContent)
+        configContent: $(configContent)

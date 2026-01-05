@@ -18,7 +18,6 @@ parameters:
   # The suffix to append to the job name.
   - name: jobNameSuffix
     type: string
-    default: ''
 
   # The prefix to prepend to the job's display name:
   #
@@ -26,52 +25,53 @@ parameters:
   #
   - name: displayNamePrefix
     type: string
-    default: ''
 
   # The name of the Azure Pipelines pool to use.
   - name: poolName
     type: string
-    default: ''
 
   # The pool VM image to use.
   - name: vmImage
     type: string
-    default: ''
 
-  # The pipeline step to run to configure SQL Server.
+  # The filename (absolute path) of a template step to run to configure SQL
+  # Server.
   #
   # This step is expected to require no parameters.  It must configure a SQL
   # Server instance listening on localhost for SQL auth via the 'sa' user with
   # the pipeline variable $(Password) as the password.
   - name: sqlSetupStep
     type: string
-    default: ''
 
   # The name of the pipeline artifact to download that contains the MDS package
   # to stress test.
   - name: pipelineArtifactName
+    type: string
+
+  # The MDS package version to stress test.  This version must be available in
+  # one of the configured NuGet sources.
+  #
+  # If empty, the MDS version will be parsed from the NuGet package filename
+  # downloaded from the pipeline artifact.
+  - name: mdsPackageVersion
     type: string
     default: ''
 
   # The solution file to restore/build.
   - name: solution
     type: string
-    default: ''
 
   # The test project to run.
   - name: testProject
     type: string
-    default: ''
 
   # dotnet CLI arguments for the restore step.
   - name: restoreArguments
     type: string
-    default: ''
 
   # dotnet CLI arguments for the build and run steps.
   - name: buildArguments
     type: string
-    default: ''
 
   # The list of .NET runtimes to test against.
   - name: netTestRuntimes
@@ -89,7 +89,6 @@ parameters:
   # parameter, with user 'sa' and password of $(Password).
   - name: configContent
     type: string
-    default: ''
 
 jobs:
 - job: run_stress_tests_job_${{ parameters.jobNameSuffix }}
@@ -106,6 +105,13 @@ jobs:
     # Stress test command-line arguments.
     - name: testArguments
       value: -a SqlClient.Stress.Tests -console
+
+    # The MDS package version to use.
+    #
+    # We assign the parameter to a variable so we can update it later via a
+    # PowerShell script that parses the version from the package filename.
+    - name: mdsVersion
+      value: ${{ parameters.mdsPackageVersion }}
 
     # Explicitly unset the $PLATFORM environment variable that is set by the
     # 'ADO Build properties' Library in the ADO SqlClientDrivers public project.
@@ -131,84 +137,138 @@ jobs:
 
   steps:
 
-  # Install the .NET 9.0 SDK.
-  - task: UseDotNet@2
-    displayName: Install .NET 9.0 SDK
-    inputs:
-      packageType: sdk
-      version: 9.x
+    # Install the .NET 10.0 SDK.
+    - task: UseDotNet@2
+      displayName: Install .NET 10.0 SDK
+      inputs:
+        packageType: sdk
+        version: 10.x
 
-  # Install the .NET 8.0 runtime.
-  - task: UseDotNet@2
-    displayName: Install .NET 8.0 Runtime
-    inputs:
-      packageType: runtime
-      version: 8.x
+    # Install the .NET 9.0 Runtime.
+    - task: UseDotNet@2
+      displayName: Install .NET 9.0 Runtime
+      inputs:
+        packageType: runtime
+        version: 9.x
 
-  # Download the pipeline artifact that contains the MDS package to test.
-  - task: DownloadPipelineArtifact@2
-    displayName: Download Pipeline Artifact
-    inputs:
-      artifactName: ${{ parameters.pipelineArtifactName }}
-      # The stress tests solution has a NuGet.config file that configures
-      # sources to look in this packages/ directory.
-      targetPath: $(Build.SourcesDirectory)/packages
+    # Install the .NET 8.0 Runtime.
+    - task: UseDotNet@2
+      displayName: Install .NET 8.0 Runtime
+      inputs:
+        packageType: runtime
+        version: 8.x
 
-  # Setup the local SQL Server.
-  - template: ${{ parameters.sqlSetupStep }}@self
+    # Download the pipeline artifact that contains the MDS package to test.
+    # We download from the pipeline that triggered us.
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Pipeline Artifact
+      inputs:
+        buildType: specific
+        # Download the artifacts from the pipeline run that triggered us.
+        specificBuildWithTriggering: true
+        artifactName: ${{ parameters.pipelineArtifactName }}
+        # The stress tests solution has a NuGet.config file that configures
+        # sources to look in this packages/ directory.
+        targetPath: $(Build.SourcesDirectory)/packages
 
-  # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't support
-  # all of our argument combinations for the different build steps.
+    # Determine the MDS package version if not specified.
+    #
+    # This will clobber the $(mdsVersion) variable.
+    #
+    - ${{ if eq(parameters.mdsPackageVersion, '') }}:
+      - task: PowerShell@2
+        displayName: Determine MDS Package Version
+        inputs:
+          pwsh: true
+          targetType: inline
+          script: |
+            # Get the list of MDS package files in the packages directory.
+            $packageFiles = Get-ChildItem -Path "$(Build.SourcesDirectory)/packages" -Filter "Microsoft.Data.SqlClient.*.nupkg"
 
-  # Restore the solution.
-  - task: DotNetCoreCLI@2
-    displayName: Restore Solution
-    inputs:
-      command: custom
-      custom: restore
-      projects: ${{ parameters.solution }}
-      arguments: ${{ parameters.restoreArguments }}
+            if ($packageFiles.Count -eq 0)
+            {
+              throw "No Microsoft.Data.SqlClient NuGet package found in packages directory."
+            }
+            elseif ($packageFiles.Count -gt 1)
+            {
+              throw "Multiple Microsoft.Data.SqlClient NuGet packages found in packages directory."
+            }
+            else
+            {
+              # Extract the version from the package filename.
+              $packageFile = $packageFiles[0]
+              if ($packageFile.Name -match 'Microsoft\.Data\.SqlClient\.(?<version>.+)\.nupkg')
+              {
+                $version = $matches['version']
+                Write-Host "##vso[task.setvariable variable=mdsVersion]$version"
+                Write-Host "Determined MDS package version: $version"
+              }
+              else
+              {
+                throw "Failed to parse version from package filename: $($packageFile.Name)"
+              }
+            }
+    
+    # Emit the MDS version under test.
+    - pwsh: |
+        Write-Host "Testing MDS package version: $(mdsVersion)"
+      displayName: Emit MDS Version
+    
+    # Setup the local SQL Server.
+    - template: ${{ parameters.sqlSetupStep }}@self
 
-  # Build the solution.
-  - task: DotNetCoreCLI@2
-    displayName: Build Solution
-    inputs:
-      command: custom
-      custom: build
-      projects: ${{ parameters.solution }}
-      arguments: ${{ parameters.buildArguments }} --no-restore
+    # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't support
+    # all of our argument combinations for the different build steps.
 
-  # Write the config file.
-  - task: PowerShell@2
-    displayName: Write Config File
-    inputs:
-      pwsh: true
-      targetType: inline
-      script: |
-        # Capture the multi-line JSON content into a variable.
-        $content = @"
-        ${{ parameters.configContent }}
-        "@
-
-        # Write the JSON content to the config file.
-        $content | Out-File -FilePath "config.json"
-
-  # Run the stress tests for each .NET runtime.
-  - ${{ each runtime in parameters.netTestRuntimes }}:
+    # Restore the solution.
     - task: DotNetCoreCLI@2
-      displayName: Test [${{runtime}}]
+      displayName: Restore Solution
       inputs:
         command: custom
-        custom: run
-        projects: ${{ parameters.testProject }}
-        arguments: ${{ parameters.buildArguments }} --no-build -f ${{runtime}} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
+        custom: restore
+        projects: ${{ parameters.solution }}
+        arguments: ${{ parameters.restoreArguments }} -p:MdsPackageVersion=$(mdsVersion)
 
-  # Run the stress tests for each .NET Framework runtime.
-  - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
+    # Build the solution.
     - task: DotNetCoreCLI@2
-      displayName: Test [${{runtime}}]
+      displayName: Build Solution
       inputs:
         command: custom
-        custom: run
-        projects: ${{ parameters.testProject }}
-        arguments: ${{ parameters.buildArguments }} --no-build -f ${{runtime}} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
+        custom: build
+        projects: ${{ parameters.solution }}
+        arguments: ${{ parameters.buildArguments }} --no-restore -p:MdsPackageVersion=$(mdsVersion)
+
+    # Write the config file.
+    - task: PowerShell@2
+      displayName: Write Config File
+      inputs:
+        pwsh: true
+        targetType: inline
+        script: |
+          # Capture the multi-line JSON content into a variable.
+          $content = @"
+          ${{ parameters.configContent }}
+          "@
+
+          # Write the JSON content to the config file.
+          $content | Out-File -FilePath "config.json"
+
+    # Run the stress tests for each .NET runtime.
+    - ${{ each runtime in parameters.netTestRuntimes }}:
+      - task: DotNetCoreCLI@2
+        displayName: Test [${{runtime}}]
+        inputs:
+          command: custom
+          custom: run
+          projects: ${{ parameters.testProject }}
+          arguments: ${{ parameters.buildArguments }} --no-build -p:MdsPackageVersion=$(mdsVersion) -f ${{runtime}} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
+
+    # Run the stress tests for each .NET Framework runtime.
+    - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
+      - task: DotNetCoreCLI@2
+        displayName: Test [${{runtime}}]
+        inputs:
+          command: custom
+          custom: run
+          projects: ${{ parameters.testProject }}
+          arguments: ${{ parameters.buildArguments }} --no-build -p:MdsPackageVersion=$(mdsVersion) -f ${{runtime}} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)

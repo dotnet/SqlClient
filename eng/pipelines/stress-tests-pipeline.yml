@@ -1,8 +1,8 @@
-#################################################################################
-# Licensed to the .NET Foundation under one or more agreements.                 #
-# The .NET Foundation licenses this file to you under the MIT license.          #
-# See the LICENSE file in the project root for more information.                #
-#################################################################################
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.
+# The .NET Foundation licenses this file to you under the MIT license.
+# See the LICENSE file in the project root for more information.
+################################################################################
 
 # This pipeline runs the stress test suite using the most recent artifacts from
 # the CI-SqlClient-Package pipeline.
@@ -33,7 +33,14 @@ name: $(DayOfYear)$(Rev:rr)
 pr: none
 trigger: none
 
-# Trigger this pipeline after successful runs of each of the following pipelines.
+# Trigger this pipeline after successful runs of each of the following
+# pipelines.
+#
+# Note that the pipeline identifiers must be unique, but we never refer to them
+# by name, so we just number them 1, 2, 3.  The identifier of the particular
+# pipeline that triggered us is available via the predefined variable
+# $(Resources.TriggeringAlias).
+#
 resources:
   pipelines:
     # The PR-SqlClient-Package pipeline in the Public project.
@@ -70,11 +77,11 @@ parameters:
     default: false
 
 stages:
-- stage: Placeholder
-  displayName: Placeholder Stage
-  jobs:
-  - job: PlaceholderJob
-    displayName: Placeholder Job
-    steps:
-    - script: echo "This is a placeholder stage."
-      displayName: Placeholder Step
+  - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self
+    parameters:
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      # All of the pipelines that trigger us produce the same artifact name.
+      # (See dotnet-sqlclient-ci-core.yml.)
+      pipelineArtifactName: Artifacts
+      ${{ if eq(parameters.debug, 'true') }}:
+        verbosity: 'detailed'

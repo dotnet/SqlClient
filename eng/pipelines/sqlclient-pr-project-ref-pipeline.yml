@@ -76,11 +76,6 @@ parameters:
     type: boolean
     default: false
 
-  - name: enableStressTests
-    displayName: Enable Stress Tests
-    type: boolean
-    default: false
-
   # The target frameworks to build and run tests for on Windows.
   #
   # These are _not_ the target frameworks to build the driver packages for.
@@ -131,7 +126,6 @@ extends:
     buildType: Project
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
     debug: ${{ parameters.debug }}
-    enableStressTests: ${{ parameters.enableStressTests }}
     targetFrameworks: ${{ parameters.targetFrameworks }}
     targetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
     testSets: ${{ parameters.testSets }}
