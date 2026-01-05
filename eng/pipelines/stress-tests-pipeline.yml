@@ -37,17 +37,29 @@ trigger: none
 resources:
   pipelines:
     # The PR-SqlClient-Package pipeline in the Public project.
+<<<<<<< HEAD
     - pipeline: upstreamPipeline1
+=======
+    - pipeline: upstreamPipeline
+>>>>>>> 70270623 (Task 40503: Create stress test pipeline)
       project: Public
       source: /ADO/PR-SqlClient-Package
       trigger: true
     # The CI-SqlClient-Package pipeline in the Public project.
+<<<<<<< HEAD
     - pipeline: upstreamPipeline2
+=======
+    - pipeline: upstreamPipeline
+>>>>>>> 70270623 (Task 40503: Create stress test pipeline)
       project: Public
       source: /ADO/CI-SqlClient-Package
       trigger: true
     # The MDS Main CI-Package pipeline in the ADO.net project.
+<<<<<<< HEAD
     - pipeline: upstreamPipeline3
+=======
+    - pipeline: upstreamPipeline
+>>>>>>> 70270623 (Task 40503: Create stress test pipeline)
       project: ADO.net
       source: /Internal CI/MDS Main CI-Package
       trigger: true
