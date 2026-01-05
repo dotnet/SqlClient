@@ -153,7 +153,7 @@ where T : unmanaged
 
     private byte[] MakeTdsBytes(ReadOnlyMemory<T> values)
     {
-        Debug.Assert(Length <= TdsEnums.MAXSIZE);
+        Debug.Assert(Length <= ushort.MaxValue);
 
         //Refer to TDS section 2.2.5.5.7 for vector header format
         // +------------------------+-----------------+----------------------+------------------+----------------------------+--------------+
