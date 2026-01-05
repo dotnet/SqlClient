@@ -50,6 +50,10 @@ where T : unmanaged
 
         Length = length;
         _size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * Length);
+        if (_size > TdsEnums.MAXSIZE)
+        {
+            throw ADP.ArgumentOutOfRange(nameof(length), SQLResource.InvalidArraySizeMessage);
+        }
 
         _tdsBytes = Array.Empty<byte>();
         Memory = new();
@@ -67,6 +71,10 @@ where T : unmanaged
 
         Length = memory.Length;
         _size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * Length);
+        if (_size > TdsEnums.MAXSIZE)
+        {
+            throw ADP.ArgumentOutOfRange(nameof(memory), SQLResource.InvalidArraySizeMessage);
+        }
 
         _tdsBytes = MakeTdsBytes(memory);
         Memory = memory;
@@ -145,6 +153,8 @@ where T : unmanaged
 
     private byte[] MakeTdsBytes(ReadOnlyMemory<T> values)
     {
+        Debug.Assert(Length <= TdsEnums.MAXSIZE);
+
         //Refer to TDS section 2.2.5.5.7 for vector header format
         // +------------------------+-----------------+----------------------+------------------+----------------------------+--------------+
         // | Field                  | Size (bytes)    | Example Value         | Description                                                 |
