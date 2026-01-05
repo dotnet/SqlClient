@@ -1,0 +1,80 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This pipeline runs the stress test suite using the most recent artifacts from
+# the CI-SqlClient-Package pipeline.
+#
+# It runs after every successful run of the following pipelines:
+#
+# Public project:
+#   - PR-SqlClient-Package
+#   - CI-SqlClient-Package
+#
+# ADO.net project:
+#   - MDS Main CI-Package
+#
+# This pipeline definition is mapped to the Stress-SqlClient pipelines:
+#
+# Public project:
+#
+#   TODO
+#
+# ADO.net project:
+#
+#   TODO
+
+# Set the pipeline run name to the day-of-year and the daily run counter.
+name: $(DayOfYear)$(Rev:rr)
+
+# Do not trigger this pipeline for PRs, commits, or schedules.
+pr: none
+trigger: none
+
+# Trigger this pipeline after successful runs of each of the following pipelines.
+resources:
+  pipelines:
+    # The PR-SqlClient-Package pipeline in the Public project.
+    - pipeline: upstreamPipeline
+      project: Public
+      source: /ADO/PR-SqlClient-Package
+      trigger: true
+    # The CI-SqlClient-Package pipeline in the Public project.
+    - pipeline: upstreamPipeline
+      project: Public
+      source: /ADO/CI-SqlClient-Package
+      trigger: true
+    # The MDS Main CI-Package pipeline in the ADO.net project.
+    - pipeline: upstreamPipeline
+      project: ADO.net
+      source: /Internal CI/MDS Main CI-Package
+      trigger: true
+
+# Pipeline parameters, visible in the Azure DevOps UI.
+parameters:
+
+  # The build configuration to use; defaults to Release.
+  - name: buildConfiguration
+    displayName: Build Configuration
+    type: string
+    default: Release
+    values:
+      - Debug
+      - Release
+
+  - name: debug
+    displayName: Enable debug output
+    type: boolean
+    default: false
+
+stages:
+- stage: Placeholder
+  displayName: Placeholder Stage
+  jobs:
+  - job: PlaceholderJob
+    displayName: Placeholder Job
+    steps:
+    - script: echo "This is a placeholder stage. The real work is done in stages/stress-tests-ci-stage.yml"
+      displayName: Placeholder Step
