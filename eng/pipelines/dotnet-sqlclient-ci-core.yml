@@ -522,7 +522,7 @@ stages:
 
         # Self hosted SQL Server on Mac
         mac_sql_22:
-          pool: $(defaultHostedPoolName)
+          pool: Azure Pipelines
           hostedPool: true
           images:
             MacOSLatest_Sql22: macos-latest
