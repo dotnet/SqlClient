@@ -296,7 +296,7 @@
 
   <!-- Run all Functional tests applicable to Unix. -->
   <Target Name="RunFunctionalTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
-      <PropertyGroup>
+    <PropertyGroup>
       <FilterStatement>$(Filter)</FilterStatement>    
       <FilterStatement Condition="'$(FilterStatement)' == ''">category!=failing&amp;category!=flaky</FilterStatement>
       <TestCommand>
