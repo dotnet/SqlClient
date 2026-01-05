@@ -1,30 +1,19 @@
-#################################################################################
-# Licensed to the .NET Foundation under one or more agreements.                 #
-# The .NET Foundation licenses this file to you under the MIT license.          #
-# See the LICENSE file in the project root for more information.                #
-#################################################################################
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
 
-# This pipeline runs the stress test suite using the most recent artifacts from
-# the CI-SqlClient-Package pipeline.
-#
-# It runs after every successful run of the following pipelines:
+# This pipeline runs the stress test suite using artifacts from the triggering pipeline.
 #
 # Public project:
-#   - PR-SqlClient-Package
-#   - CI-SqlClient-Package
+#   Triggering pipelines: PR-SqlClient-Project, CI-SqlClient (branch main only)
+#   Pipeline name:        Stress-SqlClient
+#   Pipeline URL:         https://dev.azure.com/SqlClientDrivers/public/_build?definitionId=2212
 #
-# ADO.net project:
-#   - MDS Main CI-Package
-#
-# This pipeline definition is mapped to the Stress-SqlClient pipelines:
-#
-# Public project:
-#
-#   TODO
-#
-# ADO.net project:
-#
-#   TODO
+# ADO.Net project:
+#   Triggering pipeline: MDS Main CI (branch internal/main only)
+#   Pipeline name:       Stress-SqlClient
+#   Pipeline URL:        TODO
 
 # Set the pipeline run name to the day-of-year and the daily run counter.
 name: $(DayOfYear)$(Rev:rr)
@@ -33,24 +22,36 @@ name: $(DayOfYear)$(Rev:rr)
 pr: none
 trigger: none
 
-# Trigger this pipeline after successful runs of each of the following pipelines.
+# Trigger this pipeline after successful runs of the desired pipelines.
+#
+# The pipeline identifiers are displayed in the Azure DevOps UI, so it is helpful if they indicate
+# the project, folder, and pipeline name, hence the verbose values below.
+#
 resources:
   pipelines:
-    # The PR-SqlClient-Package pipeline in the Public project.
-    - pipeline: upstreamPipeline1
+
+    # The PR-SqlClient-Project pipeline in the Public project.
+    - pipeline: Public-ADO-PR-SqlClient-Project
       project: Public
-      source: /ADO/PR-SqlClient-Package
-      trigger: true
-    # The CI-SqlClient-Package pipeline in the Public project.
-    - pipeline: upstreamPipeline2
+      source: /ADO/PR-SqlClient-Project
+
+    # The CI-SqlClient pipeline in the Public project.
+    - pipeline: Public-ADO-CI-SqlClient
       project: Public
-      source: /ADO/CI-SqlClient-Package
-      trigger: true
-    # The MDS Main CI-Package pipeline in the ADO.net project.
-    - pipeline: upstreamPipeline3
-      project: ADO.net
-      source: /Internal CI/MDS Main CI-Package
-      trigger: true
+      source: /ADO/CI-SqlClient
+      trigger:
+        branches:
+          include:
+            - main
+
+    # The MDS Main CI pipeline in the ADO.Net project.
+    - pipeline: ADO-Net-Internal-CI-MDS-Main-CI
+      project: ADO.Net
+      source: /Internal CI/MDS Main CI
+      trigger:
+        branches:
+          include:
+            - internal/main
 
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
@@ -70,12 +71,22 @@ parameters:
     type: boolean
     default: false
 
+  # Dotnet CLI verbosity level.
+  - name: dotnetVerbosity
+    displayName: dotnet CLI Verbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
+# The stages to run.
 stages:
-- stage: Placeholder
-  displayName: Placeholder Stage
-  jobs:
-  - job: PlaceholderJob
-    displayName: Placeholder Job
-    steps:
-    - script: echo "This is a placeholder stage."
-      displayName: Placeholder Step
+  - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self
+    parameters:
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      debug: ${{ parameters.debug }}
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
