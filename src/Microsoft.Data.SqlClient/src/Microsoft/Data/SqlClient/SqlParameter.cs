@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient
 
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlParameter/*' />
     [TypeConverter(typeof(SqlParameter.SqlParameterConverter))]
-    public sealed partial class SqlParameter : DbParameter, IDbDataParameter, ICloneable
+    public sealed class SqlParameter : DbParameter, IDbDataParameter, ICloneable
     {
         internal sealed class SqlParameterConverter : ExpandableObjectConverter
         {

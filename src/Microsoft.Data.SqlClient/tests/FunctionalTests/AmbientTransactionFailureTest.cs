@@ -4,80 +4,41 @@
 
 using System;
 using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Transactions;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.Tests
+namespace Microsoft.Data.SqlClient.FunctionalTests
 {
     public class AmbientTransactionFailureTest
     {
-        private static readonly bool s_isNotArmProcess = TestUtility.IsNotArmProcess;
+        private static readonly bool s_isNotArmProcess = RuntimeInformation.ProcessArchitecture != Architecture.Arm;
+
         private static readonly string s_servername = Guid.NewGuid().ToString();
         private static readonly string s_connectionStringWithEnlistAsDefault = $"Data Source={s_servername}; Integrated Security=true; Connect Timeout=1;";
         private static readonly string s_connectionStringWithEnlistOff = $"Data Source={s_servername}; Integrated Security=true; Connect Timeout=1;Enlist=False";
 
-        private static Action<string> ConnectToServer = (connectionString) =>
+        private static readonly Action<string> ConnectToServer = (connectionString) =>
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-            }
+            using SqlConnection connection = new SqlConnection(connectionString);
+            connection.Open();
         };
 
-        private static Action<string> ConnectToServerTask = (connectionString) =>
+        private static readonly Action<string> ConnectToServerInTransactionScope = (connectionString) =>
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                connection.OpenAsync();
-            }
+            using TransactionScope scope = new TransactionScope();
+            ConnectToServer(connectionString);
         };
 
-        private static Func<string, Task> ConnectToServerInTransactionScopeTask = (connectionString) =>
+        public static readonly TheoryData<Action<string>, string> TestSqlException_Data = new()
         {
-            return Task.Run(() =>
-            {
-                using (TransactionScope scope = new TransactionScope())
-                {
-                    ConnectToServerTask(connectionString);
-                }
-            });
+            { ConnectToServerInTransactionScope, s_connectionStringWithEnlistOff },
+            { ConnectToServer, s_connectionStringWithEnlistAsDefault }
         };
 
-        private static Action<string> ConnectToServerInTransactionScope = (connectionString) =>
-        {
-            using (TransactionScope scope = new TransactionScope())
-            {
-                ConnectToServer(connectionString);
-            }
-        };
-
-        private static Action<string> EnlistConnectionInTransaction = (connectionString) =>
-        {
-            using (TransactionScope scope = new TransactionScope())
-            {
-                SqlConnection connection = new SqlConnection(connectionString);
-                connection.EnlistTransaction(Transaction.Current);
-            }
-        };
-
-        public static readonly object[][] ExceptionTestDataForSqlException =
-        {
-            new object[] { ConnectToServerInTransactionScope, s_connectionStringWithEnlistOff },
-            new object[] { ConnectToServer, s_connectionStringWithEnlistAsDefault }
-        };
-
-        public static readonly object[][] ExceptionTestDataForNotSupportedException =
-        {
-            new object[] { ConnectToServerInTransactionScope, s_connectionStringWithEnlistAsDefault },
-            new object[] { EnlistConnectionInTransaction, s_connectionStringWithEnlistAsDefault },
-            new object[] { EnlistConnectionInTransaction, s_connectionStringWithEnlistOff }
-        };
-
+        // @TODO: Verify that this test still will not run on ARM.
         [ConditionalTheory(nameof(s_isNotArmProcess))] // https://github.com/dotnet/corefx/issues/21598
         [MemberData(
-            nameof(ExceptionTestDataForSqlException),
+            nameof(TestSqlException_Data),
             // xUnit can't consistently serialize the data for this test, so we
             // disable enumeration of the test data to avoid warnings on the
             // console.
