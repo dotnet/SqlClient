@@ -421,43 +421,93 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         
         #endregion
         
-        #region Property Tests
+        #region Infer Type From Value
 
-        public static TheoryData<object, DbType, SqlDbType, object?> Value_InferType_Data =>
+        public static TheoryData<object, DbType, SqlDbType, object?> InferTypeFromValue_Valid_Data =>
             new TheoryData<object, DbType, SqlDbType, object?>
             {
+                // Boolean
+                { false,                                    DbType.Boolean,  SqlDbType.Bit,              null  },
+                { true,                                     DbType.Boolean,  SqlDbType.Bit,              null  },
+                
                 // Byte
-                { (byte)0x0a,                               DbType.Byte,     SqlDbType.TinyInt,   null  },
+                { (byte)0x0a,                               DbType.Byte,     SqlDbType.TinyInt,          null  },
 
                 // Byte[]
-                { new byte[] { 0x0a, 0x0d },                DbType.Binary,   SqlDbType.VarBinary, null  },
+                { new byte[] { 0x0a, 0x0d },                DbType.Binary,   SqlDbType.VarBinary,        null  },
 
                 // Char
-                { 'X',                                      DbType.String,   SqlDbType.NVarChar,  "X"   },
+                { 'X',                                      DbType.String,   SqlDbType.NVarChar,         "X"   },
 
                 // Char[]
-                { new char[] { 'f', 'o', 'o'},              DbType.String,   SqlDbType.NVarChar,  "foo" },
+                { new char[] { 'f', 'o', 'o'},              DbType.String,   SqlDbType.NVarChar,         "foo" },
 
                 // DateTime
-                { DateTime.Now,                             DbType.DateTime, SqlDbType.DateTime,  null  },
-                { new DateTime(1973, 8, 13),                DbType.DateTime, SqlDbType.DateTime,  null  },
+                { DateTime.Now,                             DbType.DateTime, SqlDbType.DateTime,         null  },
+                { new DateTime(1973, 8, 13),                DbType.DateTime, SqlDbType.DateTime,         null  },
 
+                // DateTimeOffset
+                { 
+                    new DateTimeOffset(new DateTime(23, 12, 23), new TimeSpan(1, 0, 0) ),
+                    DbType.DateTimeOffset,
+                    SqlDbType.DateTimeOffset,
+                    null
+                },
+                
                 // Decimal
-                { decimal.MinValue,                         DbType.Decimal,  SqlDbType.Decimal,   null  },
-                { decimal.Zero,                             DbType.Decimal,  SqlDbType.Decimal,   null  },
-                { 214748.364m,                              DbType.Decimal,  SqlDbType.Decimal,   null  },
-                { decimal.MaxValue,                         DbType.Decimal,  SqlDbType.Decimal,   null  },
+                { decimal.MinValue,                         DbType.Decimal,  SqlDbType.Decimal,          null  },
+                { decimal.Zero,                             DbType.Decimal,  SqlDbType.Decimal,          null  },
+                { 214748.364m,                              DbType.Decimal,  SqlDbType.Decimal,          null  },
+                { decimal.MaxValue,                         DbType.Decimal,  SqlDbType.Decimal,          null  },
 
                 // Double
-                { double.MinValue,                          DbType.Double,   SqlDbType.Float,     null  },
-                { 0d,                                       DbType.Double,   SqlDbType.Float,     null  },
-                { 1234.5678d,                               DbType.Double,   SqlDbType.Float,     null  },
-                { double.MaxValue,                          DbType.Double,   SqlDbType.Float,     null  },
+                { double.MinValue,                          DbType.Double,   SqlDbType.Float,            null  },
+                { 0d,                                       DbType.Double,   SqlDbType.Float,            null  },
+                { 1234.5678d,                               DbType.Double,   SqlDbType.Float,            null  },
+                { double.MaxValue,                          DbType.Double,   SqlDbType.Float,            null  },
                 // @TODO: NaN? Infinity?
 
+                // Enum
+                { ByteEnum.A,                               DbType.Byte,     SqlDbType.TinyInt,          null  },
+                { LongEnum.A,                               DbType.Int64,    SqlDbType.BigInt,           null  },
+                
+                // Guid
+                { Guid.NewGuid(),                           DbType.Guid,     SqlDbType.UniqueIdentifier, null  },
+                
+                // Int16
+                { short.MinValue,                           DbType.Int16,    SqlDbType.SmallInt,         null  },
+                { (short)0,                                 DbType.Int16,    SqlDbType.SmallInt,         null  },
+                { short.MaxValue,                           DbType.Int16,    SqlDbType.SmallInt,         null  },
+                
+                // Int32
+                { int.MinValue,                             DbType.Int32,    SqlDbType.Int,              null  },
+                { 0,                                        DbType.Int32,    SqlDbType.Int,              null  },
+                { int.MaxValue,                             DbType.Int32,    SqlDbType.Int,              null  },
+                
+                // Int64
+                { long.MinValue,                            DbType.Int64,    SqlDbType.BigInt,           null  },
+                { (long)0,                                  DbType.Int64,    SqlDbType.BigInt,           null  },
+                { long.MaxValue,                            DbType.Int64,    SqlDbType.BigInt,           null  },
+                
+                // Object
+                { new object(),                             DbType.Object,   SqlDbType.Variant,          null  },
+                
+                // Single
+                { float.MinValue,                           DbType.Single,   SqlDbType.Real,             null  },
+                { 0f,                                       DbType.Single,   SqlDbType.Real,             null  },
+                { 1234.5678f,                               DbType.Single,   SqlDbType.Real,             null  },
+                { float.MaxValue,                           DbType.Single,   SqlDbType.Real,             null  },
+                // @TODO: Nan? Infinity?
+                
+                // String
+                { "some text",                              DbType.String,   SqlDbType.NVarChar,         null  },
+                
+                // TimeSpan
+                { new TimeSpan(4, 6, 23),                   DbType.Time,     SqlDbType.Time,             null  },
+                
                 #if NET
-                { DateOnly.FromDateTime(DateTime.Now.Date), DbType.Date,     SqlDbType.Date,      null  },
-                { TimeOnly.FromDateTime(DateTime.Now),      DbType.Time,     SqlDbType.Time,      null  },
+                { DateOnly.FromDateTime(DateTime.Now.Date), DbType.Date,     SqlDbType.Date,             null  },
+                { TimeOnly.FromDateTime(DateTime.Now),      DbType.Time,     SqlDbType.Time,             null  },
                 #endif
             };
 
@@ -467,9 +517,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         // Thus, we disable enumeration of these to avoid a bunch of warnings in the console.
         [MemberData(nameof(Value_InferType_Data), DisableDiscoveryEnumeration = true)]
         #else
-        [MemberData(nameof(Value_InferType_Data))]
+        [MemberData(nameof(InferTypeFromValue_Valid_Data))]
         #endif
-        public void Value_InferType(
+        public void InferTypeFromValue_Valid(
             object value,
             DbType expectedDbType,
             SqlDbType expectedSqlDbType,
@@ -484,7 +534,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             p.Value = value;
 
             // Assert
-            // @TODO: Earlier versions of these tests sometimes tested the *order* or reading these properties.
+            // @TODO: Earlier versions of these tests sometimes tested the *order* of reading these properties.
             //    While theoretically worth checking, getters ideally shouldn't be modifying state. Verify the
             //    SqlParameter code is operating sensibly.
             Assert.Equal(expectedDbType, p.DbType);
@@ -495,6 +545,111 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             Assert.Equal(expectedValue, p.Value);
         }
 
+        public static TheoryData<object, SqlDbType, object?> InferTypeFromSqlValue_Valid_Data =>
+            new TheoryData<object, SqlDbType, object?>()
+            {
+                // SqlBinary
+                { new SqlBinary([0x0a, 0x0b]),           SqlDbType.VarBinary },
+                { SqlBinary.Null,                        SqlDbType.VarBinary },
+                
+                // SqlBoolean
+                { new SqlBoolean(false),                 SqlDbType.Bit },
+                { SqlBoolean.Null,                       SqlDbType.Bit },
+                
+                // SqlByte
+                { new SqlByte(0x0d),                     SqlDbType.TinyInt },
+                { SqlByte.Null,                          SqlDbType.TinyInt },
+                
+                // SqlBytes
+                { new SqlBytes([0x0a, 0x0b]),            SqlDbType.VarBinary },
+                { SqlBytes.Null,                         SqlDbType.VarBinary },
+                
+                // SqlChars
+                { new SqlChars(['F', 'o', 'o']),         SqlDbType.NVarChar },
+                { SqlChars.Null,                         SqlDbType.NVarChar },
+                
+                // SqlDateTime
+                { new SqlDateTime(DateTime.Now),         SqlDbType.DateTime },
+                { SqlDateTime.Null,                      SqlDbType.DateTime },
+                
+                // SqlDecimal
+                { new SqlDecimal(45m),                   SqlDbType.Decimal },
+                { SqlDecimal.Null,                       SqlDbType.Decimal },
+                
+                // SqlDouble
+                { new SqlDouble(4.50),                   SqlDbType.Float },
+                { SqlDouble.Null,                        SqlDbType.Float },
+
+                // SqlGuid
+                { new SqlGuid(Guid.NewGuid()),           SqlDbType.UniqueIdentifier },
+                { SqlGuid.Null,                          SqlDbType.UniqueIdentifier },
+
+                // SqlInt16
+                { new SqlInt16((short)5),                SqlDbType.SmallInt },
+                { SqlInt16.Null,                         SqlDbType.SmallInt },
+
+                // SqlInt32
+                { new SqlInt32(5),                       SqlDbType.Int },
+                { SqlInt32.Null,                         SqlDbType.Int },
+
+                // SqlInt64
+                { new SqlInt64(5L),                      SqlDbType.BigInt },
+                { SqlInt64.Null,                         SqlDbType.BigInt },
+
+                // SqlMoney
+                { new SqlMoney(45m),                     SqlDbType.Money, null },
+                { SqlMoney.Null,                         SqlDbType.Money, null },
+
+                // SqlSingle
+                { new SqlSingle(45f),                    SqlDbType.Real, null },
+                { SqlSingle.Null,                        SqlDbType.Real, null },
+
+                // SqlString
+                { new SqlString("foo"),                  SqlDbType.NVarChar, null },
+                { SqlString.Null,                        SqlDbType.NVarChar, null },
+            };
+        
+        [Theory]
+        #if NETFRAMEWORK
+        // netfx stores system enums in the GAC, and xUnit cannot serialize enums that live there.
+        // Thus, we disable enumeration of these to avoid a bunch of warnings in the console.
+        [MemberData(nameof(Value_InferType_Data), DisableDiscoveryEnumeration = true)]
+        #else
+        [MemberData(nameof(InferTypeFromSqlValue_Valid_Data))]
+        #endif
+        public void InferTypeFromSqlValue_Valid(object value, SqlDbType expectedSqlDbType, object? expectedValue)
+        {
+            // Arrange
+            SqlParameter p = new SqlParameter();
+            
+            // Act
+            p.SqlValue = value;
+            
+            // Assert
+            Assert.Equal(expectedSqlDbType, p.SqlDbType);
+            
+            // - If value is not expected to change, use the input value as the expected
+            expectedValue ?? = value;
+            Assert.Equal(expectedValue, p.Value);
+        }
+        
+        public void InferTypeFromValue_Invalid()
+        {
+            
+        }
+
         #endregion
+
+        private enum ByteEnum : byte
+        {
+            A = 0x0a,
+            B = 0x0d,
+        }
+
+        private enum LongEnum : long
+        {
+            A = long.MinValue,
+            B = long.MinValue,
+        }
     }
 }
