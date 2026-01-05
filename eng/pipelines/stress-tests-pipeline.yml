@@ -36,26 +36,25 @@ trigger: none
 # Trigger this pipeline after successful runs of each of the following
 # pipelines.
 #
-# Note that the pipeline identifiers must be unique, but we never refer to them
-# by name, so we just number them 1, 2, 3.  The identifier of the particular
-# pipeline that triggered us is available via the predefined variable
-# $(Resources.TriggeringAlias).
+# The pipeline identifiers are displayed in the Azure DevOps UI, so it is
+# helpful if they indicate the project and pipeline name, hence the strange
+# looking values below.
 #
 resources:
   pipelines:
     # The PR-SqlClient-Package pipeline in the Public project.
-    - pipeline: upstreamPipeline1
+    - pipeline: Public-ADO-PR-SqlClient-Package
       project: Public
       source: /ADO/PR-SqlClient-Package
       trigger: true
     # The CI-SqlClient-Package pipeline in the Public project.
-    - pipeline: upstreamPipeline2
+    - pipeline: Public-ADO-CI-SqlClient-Package
       project: Public
       source: /ADO/CI-SqlClient-Package
       trigger: true
     # The MDS Main CI-Package pipeline in the ADO.net project.
-    - pipeline: upstreamPipeline3
-      project: ADO.net
+    - pipeline: ADO-Net-Internal-CI-MDS-Main-CI-Package
+      project: ADO.Net
       source: /Internal CI/MDS Main CI-Package
       trigger: true
 
