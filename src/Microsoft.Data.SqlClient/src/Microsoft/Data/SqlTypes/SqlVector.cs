@@ -179,15 +179,28 @@ where T : unmanaged
         result[6] = 0x00;
         result[7] = 0x00;
 
-        if (typeof(T) == typeof(float))
+        // If .NET is running on a little-endian architecture, cast directly to a byte array and proceed.
+        // This optimisation relies upon the base type of the vector transporting values in a format and
+        // endianness which is identical to the client. This is true for all little-endian clients reading
+        // float32-based vectors.
+        if (BitConverter.IsLittleEndian)
         {
-            for (int i = 0, currPosition = TdsEnums.VECTOR_HEADER_SIZE; i < values.Length; i++, currPosition += _elementSize)
+            ReadOnlySpan<byte> valuesAsBytes = MemoryMarshal.AsBytes(valueSpan);
+
+            valuesAsBytes.CopyTo(result.AsSpan(TdsEnums.VECTOR_HEADER_SIZE));
+        }
+        else
+        {
+            if (typeof(T) == typeof(float))
             {
-#if NET
-                BinaryPrimitives.WriteSingleLittleEndian(result.AsSpan(currPosition), (float)(object)valueSpan[i]);
-#else
-                BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(currPosition), BitConverterCompatible.SingleToInt32Bits((float)(object)valueSpan[i]));
-#endif
+                for (int i = 0, currPosition = TdsEnums.VECTOR_HEADER_SIZE; i < values.Length; i++, currPosition += _elementSize)
+                {
+                    #if NET
+                    BinaryPrimitives.WriteSingleLittleEndian(result.AsSpan(currPosition), (float)(object)valueSpan[i]);
+                    #else
+                    BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(currPosition), BitConverterCompatible.SingleToInt32Bits((float)(object)valueSpan[i]));
+                    #endif
+                }
             }
         }
 
@@ -237,17 +250,28 @@ where T : unmanaged
         // Allocate array and copy bytes into it
         T[] result = new T[Length];
 
-        if (typeof(T) == typeof(float))
+        // See the comment in MakeTdsBytes for more information on this optimisation.
+        if (BitConverter.IsLittleEndian)
         {
-            for (int i = 0, currPosition = TdsEnums.VECTOR_HEADER_SIZE; i < Length; i++, currPosition += _elementSize)
+            Span<byte> valuesAsBytes = MemoryMarshal.AsBytes(result.AsSpan());
+
+            _tdsBytes.AsSpan(TdsEnums.VECTOR_HEADER_SIZE).CopyTo(valuesAsBytes);
+        }
+        else
+        {
+            if (typeof(T) == typeof(float))
             {
-#if NET
-                result[i] = (T)(object)BinaryPrimitives.ReadSingleLittleEndian(_tdsBytes.AsSpan(currPosition));
-#else
-                result[i] = (T)(object)BitConverterCompatible.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(_tdsBytes.AsSpan(currPosition)));
-#endif
+                for (int i = 0, currPosition = TdsEnums.VECTOR_HEADER_SIZE; i < Length; i++, currPosition += _elementSize)
+                {
+                    #if NET
+                    result[i] = (T)(object)BinaryPrimitives.ReadSingleLittleEndian(_tdsBytes.AsSpan(currPosition));
+                    #else
+                    result[i] = (T)(object)BitConverterCompatible.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(_tdsBytes.AsSpan(currPosition)));
+                    #endif
+                }
             }
         }
+
         return result;
     }
     
