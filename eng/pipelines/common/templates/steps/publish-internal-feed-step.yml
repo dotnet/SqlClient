@@ -22,10 +22,11 @@ parameters:
 
 steps:
   - task: PowerShell@2
-    displayName: Publish to Internal Feed
-    pwsh: true
-    filePath: /tools/scripts/publishPackagesToFeed.ps1
-    arguments: >
-      -dryRun ${{ parameters.dryRun }}
-      -internalFeedSource '${{ parameters.internalFeedSource }}'
-      -packagesGlob '${{ parameters.packagesGlob }}'
+    inputs:
+      displayName: Publish to Internal Feed
+      pwsh: true
+      filePath: /tools/scripts/publishPackagesToFeed.ps1
+      arguments: >
+        -dryRun ${{ parameters.dryRun }}
+        -internalFeedSource '${{ parameters.internalFeedSource }}'
+        -packagesGlob '${{ parameters.packagesGlob }}'
