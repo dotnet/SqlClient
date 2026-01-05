@@ -263,6 +263,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameValue/*' />
         public SqlParameter(string parameterName, object value) : this()
         {
+            // @TODO: Is this helping anyone?
             Debug.Assert(!(value is SqlDbType), "use SqlParameter(string, SqlDbType)");
 
             ParameterName = parameterName;
