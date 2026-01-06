@@ -21,7 +21,7 @@
 #
 #   https://dev.azure.com/SqlClientDrivers/public/_build?definitionId=2212
 #
-# ADO.net project:
+# ADO.Net project:
 #
 #   TODO
 
@@ -83,10 +83,9 @@ parameters:
     default: false
 
 variables:
-  # If we were triggered by an upstream pipeline, use the alias of that
-  # pipeline resource.  Otherwise, assume we were triggered manually via the
-  # Azure DevOps UI and arbitrarily choose use the Public
-  # CI-SqlClient-Package pipeline.
+  # If we were triggered by an upstream pipeline, use the alias of that pipeline
+  # resource.  Otherwise, assume we were triggered manually via the Azure DevOps
+  # UI and arbitrarily choose the Public CI-SqlClient-Package pipeline.
   #
   # TODO: Use CI-SqlClient-Package instead of PR-SqlClient-Package.
   - name: pipelineAlias

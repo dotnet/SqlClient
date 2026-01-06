@@ -129,6 +129,16 @@ jobs:
       - name: mdsVersion
         value: ${{ parameters.mdsPackageVersion }}
 
+      # Variables for the specific pipeline run to download artifacts from.  We
+      # must expand these values here; they don't expand properly if used
+      # directly in the download task step below.
+      - name: artifactProjectId
+        value: $[variables['resources.pipeline.${{ parameters.pipelineAlias }}.projectID']]
+      - name: artifactPipelineId
+        value: $[variables['resources.pipeline.${{ parameters.pipelineAlias }}.pipelineID']]
+      - name: artifactRunId
+        value: $[variables['resources.pipeline.${{ parameters.pipelineAlias }}.runID']]
+
     steps:
 
       # Install the .NET 10.0 SDK.
@@ -166,10 +176,10 @@ jobs:
           preferTriggeringPipeline: true
           # Otherwise, use the pipeline alias to explicitly choose the
           # artifacts.
-          project: $[variables['resources.pipeline.${{ parameters.pipelineAlias }}.projectID']]
-          pipeline: $[variables['resources.pipeline.${{ parameters.pipelineAlias }}.pipelineID']]
+          project: $(artifactProjectId)
+          pipeline: $(artifactPipelineId)
           runVersion: specific
-          runId: $[variables['resources.pipeline.${{ parameters.pipelineAlias }}.runID']]
+          runId: $(artifactRunId)
 
       # Determine the MDS package version if not specified.
       #
