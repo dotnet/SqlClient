@@ -43,6 +43,15 @@
     <NugetPackProperties Condition="'$(TF_BUILD)' == 'true'">$(NugetPackProperties);ContinuousIntegrationBuild=true;</NugetPackProperties>
   </PropertyGroup>
 
+  <!-- Test configuration properties -->
+  <PropertyGroup>
+      <FilterStatement>$(Filter)</FilterStatement>    
+      <FilterStatement Condition="'$(FilterStatement)' == ''">category!=failing&amp;category!=flaky</FilterStatement>
+      <!--Collect code coverage unless explicitly disabled-->
+      <CollectCodeCoverage Condition="'$(CollectCodeCoverage)' == ''">true</CollectCodeCoverage>
+      <CollectStatement Condition="'$(CollectCodeCoverage)' == 'true'">--collect "Code coverage"</CollectStatement>
+  </PropertyGroup>
+
   <!-- Release Build properties must be turned on for Release purposes, and turned off for Code Coverage calculations -->
   <PropertyGroup>
     <BuildForRelease Condition="$(BuildForRelease) == ''">true</BuildForRelease>
@@ -230,9 +239,9 @@
         -p:Configuration=$(Configuration)
         -p:Target$(TFGroup)Version=$(TF)
         -p:TestTargetOS=Windows$(TargetGroup)
-        --collect "Code coverage"
+        $(CollectStatement)
         --results-directory $(ResultsDirectory)
-        --filter "category!=failing%26category!=flaky"
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Unit-Windows$(TargetGroup)-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -251,11 +260,11 @@
         -p:Configuration=$(Configuration)
         -p:TargetNetCoreVersion=$(TF)
         -p:TestTargetOS=Unixnetcoreapp
-        --collect "Code coverage"
+        $(CollectStatement)
         --results-directory $(ResultsDirectory)
-        --filter "category!=failing%26category!=flaky"
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Unit-Unixnetcoreapp-$(TestSet)"
-    </TestCommand>
+      </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running unit tests for Unix via command: $(TestCommand)"/>
@@ -277,9 +286,9 @@
         -p:ReferenceType=$(ReferenceType)
         -p:TestSet=$(TestSet)
         -p:TestTargetOS=Windows$(TargetGroup)
-        --collect "Code coverage"
+        $(CollectStatement)
         --results-directory $(ResultsDirectory)
-        --filter "category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests"
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -300,9 +309,9 @@
         -p:ReferenceType=$(ReferenceType)
         -p:TestSet=$(TestSet)
         -p:TestTargetOS=Unixnetcoreapp
-        --collect "Code coverage"
+        $(CollectStatement)
         --results-directory $(ResultsDirectory)
-        --filter "category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests"
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Functional-Unixnetcoreapp-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -326,9 +335,9 @@
         -p:ReferenceType=$(ReferenceType)
         -p:TestSet=$(TestSet)
         -p:TestTargetOS=Windows$(TargetGroup)
-        --collect "Code coverage"
+        $(CollectStatement)
         --results-directory $(ResultsDirectory)
-        --filter "category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests"
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -349,9 +358,9 @@
         -p:ReferenceType=$(ReferenceType)
         -p:TestSet=$(TestSet)
         -p:TestTargetOS=Unixnetcoreapp
-        --collect "Code coverage"
+        $(CollectStatement)
         --results-directory $(ResultsDirectory)
-        --filter "category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests"
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
