@@ -74,6 +74,20 @@ jobs:
           dotnet tool install --global dotnet-reportgenerator-globaltool
         displayName: Install dotnet tools
           
+      - pwsh: |
+          Write-Host "Removing leftover coverage files from previous runs..."
+          Remove-Item $(netFxDir) -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item $(netCoreDir) -Recurse -Force -ErrorAction SilentlyContinue
+
+          Write-Host "Removing leftover merged XML files from previous runs..."
+          Remove-Item coverageNetFxXml -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item coverageNetCoreXml -Recurse -Force -ErrorAction SilentlyContinue
+
+          Write-Host "Removing leftover reports from previous runs..."
+          Remove-Item coveragereportNetFx -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item coveragereportNetCore -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item coveragereportAddOns -Recurse -Force -ErrorAction SilentlyContinue
+
       - ${{ each targetFramework in parameters.targetFrameworks }}:
         - task: DownloadPipelineArtifact@2
           displayName: 'Download Coverage Reports [${{ targetFramework }}]'
@@ -196,3 +210,9 @@ jobs:
             ./codecov --verbose upload-process --fail-on-error -t $(CODECOV_TOKEN) -f "coveragereportNetCore\Cobertura.xml" -F netcore
             ./codecov --verbose upload-process --fail-on-error -t $(CODECOV_TOKEN) -f "coveragereportAddOns\Cobertura.xml" -F addons
           displayName: Upload to CodeCov
+      
+      - pwsh: |
+          Write-Host "Removing reports..."
+          Remove-Item coveragereportNetFx -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item coveragereportNetCore -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item coveragereportAddOns -Recurse -Force -ErrorAction SilentlyContinue
