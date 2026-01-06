@@ -36,11 +36,17 @@ trigger: none
 # pipelines.
 #
 # The pipeline identifiers are displayed in the Azure DevOps UI, so it is
-# helpful if they indicate the project and pipeline name, hence the strange
-# looking values below.
+# helpful if they indicate the project, folder, and pipeline name, hence the
+# verbose values below.
 #
 resources:
   pipelines:
+
+    # TODO: Remove this pipeline; it exists for testing via PR runs.
+    - pipeline: Public-ADO-PR-SqlClient-Package
+      project: Public
+      source: /ADO/PR-SqlClient-Package
+
     # The CI-SqlClient-Package pipeline in the Public project.
     - pipeline: Public-ADO-CI-SqlClient-Package
       project: Public
@@ -48,7 +54,8 @@ resources:
       trigger:
         branches:
           include:
-          - main
+            - main
+
     # The MDS Main CI-Package pipeline in the ADO.Net project.
     - pipeline: ADO-Net-Internal-CI-MDS-Main-CI-Package
       project: ADO.Net
@@ -56,7 +63,7 @@ resources:
       trigger:
         branches:
           include:
-          - internal/main
+            - internal/main
 
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
@@ -79,6 +86,13 @@ stages:
   - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self
     parameters:
       buildConfiguration: ${{ parameters.buildConfiguration }}
+      # If we were triggered by an upstream pipeline, use the alias of that
+      # pipeline resource.  Otherwise, assume we were triggered manually via the
+      # Azure DevOps UI and arbitrarily choose use the Public
+      # CI-SqlClient-Package pipeline.
+      #
+      # TODO: Use CI-SqlClient-Package instead of PR-SqlClient-Package.
+      pipelineAlias: $[coalesce(variables['Resources.TriggeringAlias'], 'Public-ADO-PR-SqlClient-Package')]
       # All of the pipelines that trigger us produce the same artifact name.
       # (See dotnet-sqlclient-ci-core.yml.)
       pipelineArtifactName: Artifacts

@@ -27,6 +27,21 @@ parameters:
       - Debug
       - Release
 
+  # The alias of the pipeline whose artifacts we should download.  This is the
+  # name given to a pipeline resource in the resources definition section of the
+  # top-level pipeline, for example:
+  #
+  #   resources:
+  #     pipelines:
+  #       - pipeline: <alias>
+  #
+  # See:
+  #
+  # https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/resources-pipelines-pipeline?view=azure-pipelines#the-pipeline-resource-metadata-as-predefined-variables
+  #
+  - name: pipelineAlias
+    type: string
+
   # The name of the pipeline artifact to download that contains the MDS package
   # to stress test.
   - name: pipelineArtifactName
@@ -125,6 +140,7 @@ stages:
         poolName: ADO-CI-1ES-Pool
         vmImage: ADO-UB20-SQL22
         sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml
+        pipelineAlias: ${{ parameters.pipelineAlias }}
         pipelineArtifactName: ${{ parameters.pipelineArtifactName }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
         solution: $(solution)
@@ -146,6 +162,7 @@ stages:
         # don't have to install one explicitly.
         vmImage: ADO-MMS22-SQL22
         sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml
+        pipelineAlias: ${{ parameters.pipelineAlias }}
         pipelineArtifactName: ${{ parameters.pipelineArtifactName }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
         solution: $(solution)
@@ -170,6 +187,7 @@ stages:
         poolName: Azure Pipelines
         vmImage: macos-latest
         sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml
+        pipelineAlias: ${{ parameters.pipelineAlias }}
         pipelineArtifactName: ${{ parameters.pipelineArtifactName }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
         solution: $(solution)
