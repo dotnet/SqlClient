@@ -40,7 +40,7 @@ jobs:
     vmImage: 'ADO-MMS22-SQL19'
     
   variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
-  - template: ../../../libraries/mds-validation-variables.yml@self
+  - template: /eng/pipelines/libraries/mds-validation-variables.yml@self
   
   - name: pathToDownloadedNuget # path to the downloaded nuget files
     value: $(Pipeline.Workspace)\${{parameters.packageFolderName }}

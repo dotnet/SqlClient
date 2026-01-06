@@ -158,7 +158,7 @@ jobs:
     displayName: 'Verify Password'
 
   - ${{ if ne(parameters.configProperties, '{}') }}:
-    - template: ../steps/update-config-file-step.yml@self # update config.json file
+    - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self # update config.json file
       parameters:
         debug: ${{ parameters.debug }}
         UseManagedSNIOnWindows: ${{ parameters.usemanagedSNI }}
@@ -233,7 +233,7 @@ jobs:
         displayName: 'Start Sql Browser'
         condition: eq(variables['Agent.OS'], 'Windows_NT')
     - ${{ elseif eq(parameters.configSqlFor, 'local') }}:
-      - template: ../steps/configure-sql-server-step.yml@self # configure SQL Server
+      - template: /eng/pipelines/common/templates/steps/configure-sql-server-step.yml@self # configure SQL Server
         parameters:
           operatingSystem: ${{ parameters.operatingSystem }}
           netcoreVersionTestUtils: ${{ parameters.netcoreVersionTestUtils }}
@@ -264,7 +264,7 @@ jobs:
           ${{ if parameters.configProperties.FileStreamDirectory }}:
             fileStreamDirectory: ${{ parameters.configProperties.FileStreamDirectory }}
 
-    - template: ../steps/build-all-tests-step.yml@self # build tests
+    - template: /eng/pipelines/common/templates/steps/build-all-tests-step.yml@self # build tests
       parameters:
         targetFramework: ${{ parameters.targetFramework }}
         buildConfiguration: ${{ parameters.buildConfiguration }}
@@ -277,7 +277,7 @@ jobs:
           OSGroup: Unix
 
   - ${{ if eq(parameters.enableX64Test, true) }}: # run native tests
-    - template: ../steps/run-all-tests-step.yml@self # run tests
+    - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self # run tests
       parameters:
         debug: ${{ parameters.debug }}
         targetFramework: ${{ parameters.targetFramework }}
@@ -298,7 +298,7 @@ jobs:
     #    forever and needs a serious rethinking).
     - ${{ if ne(variables['dotnetx86RootPath'], '') }}:
       - ${{ if startswith(parameters.targetFramework, 'net4')}}:
-        - template: ../steps/ensure-dotnet-version.yml
+        - template: /eng/pipelines/common/templates/steps/ensure-dotnet-version.yml
           parameters:
             installDir: "$(dotnetx86RootPath)"
             packageType: "sdk"
@@ -313,14 +313,14 @@ jobs:
             echo %TrimmedFrameworkVersion%
             echo ##vso[task.setvariable variable=netVersionX86]%TrimmedFrameworkVersion%
           displayName: "Trim dotnet version"
-        - template: ../steps/ensure-dotnet-version.yml
+        - template: /eng/pipelines/common/templates/steps/ensure-dotnet-version.yml
           parameters:
             installDir: "$(dotnetx86RootPath)"
             packageType: "sdk"
             usePreview: "false"
             version: $(netVersionX86)
 
-    - template: ../steps/run-all-tests-step.yml@self
+    - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self
       parameters:
         debug: ${{ parameters.debug }}
         targetFramework: ${{ parameters.targetFramework }}
@@ -332,7 +332,7 @@ jobs:
         operatingSystem: ${{ parameters.operatingSystem }}
 
   - ${{ if and(eq(parameters.publishTestResults, true), eq(parameters.referenceType, 'Project')) }}: # publish test results if build type is project
-    - template: ../steps/publish-test-results-step.yml@self
+    - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
       parameters:
         debug: ${{ parameters.debug }}
         targetFramework: ${{ parameters.targetFramework }}

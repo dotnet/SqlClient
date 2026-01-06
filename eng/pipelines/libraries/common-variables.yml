@@ -69,7 +69,7 @@ variables:
   - name: Preview
     value: '-preview'
   - name: Revision
-    value: '2'
+    value: '3'
 
   - name: mdsPackageVersion
     value: $(Major).$(Minor).$(Patch)

@@ -16,7 +16,7 @@
   <!--These properties can be modified locally to target .NET version of choice to build and test entire test suite-->
   <PropertyGroup>
     <TargetNetFxVersion Condition="'$(TargetNetFxVersion)' == ''">net462</TargetNetFxVersion>
-    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">net8.0;net9.0</TargetNetCoreVersion>
+    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">net8.0;net9.0;net10.0</TargetNetCoreVersion>
   </PropertyGroup>
 
   <Choose>

@@ -126,11 +126,18 @@ jobs:
         - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
           displayName: '[Debug] Print Environment Variables'
 
-      # Install the .NET 9.0 SDK.
+      # Install the .NET 10.0 SDK.
       - task: UseDotNet@2
-        displayName: Install .NET 9.0 SDK
+        displayName: Install .NET 10.0 SDK
         inputs:
           packageType: sdk
+          version: 10.x
+
+      # Install the .NET 9.0 runtime.
+      - task: UseDotNet@2
+        displayName: Install .NET 9.0 Runtime
+        inputs:
+          packageType: runtime
           version: 9.x
 
       # Install the .NET 8.0 runtime.

@@ -1379,8 +1379,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             Debug.Assert(obj != null, "null pooledObject?");
             Debug.Assert(obj.EnlistedTransaction == null, "pooledObject is still enlisted?");
 
-            obj.DeactivateConnection();
-
             // called by the transacted connection pool , once it's removed the
             // connection from it's list.  We put the connection back in general
             // circulation.
@@ -1393,6 +1391,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             if (State is Running && obj.CanBePooled)
             {
+                obj.ResetConnection();
                 PutNewObject(obj);
             }
             else

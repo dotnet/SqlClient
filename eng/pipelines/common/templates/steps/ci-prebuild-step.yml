@@ -15,13 +15,19 @@ parameters:
       - Package
 
 steps:
-- template: ensure-dotnet-version.yml
+- template: /eng/pipelines/common/templates/steps/ensure-dotnet-version.yml
   parameters:
     packageType: sdk
     usePreview: false
+    version: 10.0
+
+- template: /eng/pipelines/common/templates/steps/ensure-dotnet-version.yml
+  parameters:
+    packageType: runtime
+    usePreview: false
     version: 9.0
 
-- template: ensure-dotnet-version.yml
+- template: /eng/pipelines/common/templates/steps/ensure-dotnet-version.yml
   parameters:
     packageType: runtime
     usePreview: false
@@ -33,7 +39,7 @@ steps:
     displayName: 'List Environment Variables [debug]'
 
 - ${{if eq(parameters.referenceType, 'Package')}}:
-  - template: update-nuget-config-local-feed-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/update-nuget-config-local-feed-step.yml@self
     parameters:
       debug: ${{ parameters.debug }}
       packagePath: $(Build.SourcesDirectory)/packages

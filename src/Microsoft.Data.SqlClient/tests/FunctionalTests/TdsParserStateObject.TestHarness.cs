@@ -5,10 +5,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reflection;
 using Microsoft.Data.SqlClient.Tests;
-
-using SwitchesHelper = Microsoft.Data.SqlClient.Tests.Common.LocalAppContextSwitchesHelper;
+using Microsoft.Data.SqlClient.Tests.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -163,7 +161,25 @@ namespace Microsoft.Data.SqlClient
         [DebuggerStepThrough]
         private void AddError(object value) => throw new Exception(value as string ?? "AddError");
 
-        private SwitchesHelper LocalAppContextSwitches = new();
+        private class SwitchesHelper : IDisposable
+        {
+            private readonly LocalAppContextSwitchesHelper _helper = new();
+
+            public void Dispose()
+            {
+                _helper.Dispose();
+            }
+
+            public bool UseCompatibilityProcessSni
+            {
+                get
+                {
+                    var value = _helper.UseCompatibilityProcessSni;
+                    return value.HasValue && value.Value;
+                }
+            }
+        }
+        private readonly SwitchesHelper LocalAppContextSwitches = new SwitchesHelper();
 
 #if NETFRAMEWORK
         private SniNativeWrapperImpl _native;

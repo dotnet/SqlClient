@@ -777,6 +777,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             {
                 return;
             }
+
+            internal override void ResetConnection()
+            {
+                return;
+            }
             #endregion
         }
         #endregion

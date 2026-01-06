@@ -67,7 +67,7 @@ public abstract class CertificateFixtureBase : IDisposable
         DateTimeOffset notBefore = DateTimeOffset.UtcNow.AddDays(-1);
         DateTimeOffset notAfter = DateTimeOffset.UtcNow.AddDays(1);
         byte[] passwordBytes = new byte[32];
-        string password = null;
+        string? password = null;
         Random rnd = new Random();
 
         rnd.NextBytes(passwordBytes);
@@ -256,7 +256,7 @@ catch [Exception]
 
     protected void AddToStore(X509Certificate2 cert, StoreLocation storeLocation, StoreName storeName)
     {
-        CertificateStoreContext storeContext = _certificateStoreModifications.Find(csc => csc.Location == storeLocation && csc.Name == storeName);
+        CertificateStoreContext? storeContext = _certificateStoreModifications.Find(csc => csc.Location == storeLocation && csc.Name == storeName);
 
         if (storeContext == null)
         {

@@ -41,34 +41,34 @@ jobs:
     vmImage: 'ADO-MMS22-SQL19'
     
   variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
-  - template: ../../../libraries/mds-validation-variables.yml@self
+  - template: /eng/pipelines/libraries/mds-validation-variables.yml@self
 
   steps:
-  - template: ../steps/pre-build-step.yml
+  - template: /eng/pipelines/common/templates/steps/pre-build-step.yml
  
   - ${{parameters.downloadPackageStep }}
 
-  - template: ../steps/update-nuget-config-local-feed-step.yml
+  - template: /eng/pipelines/common/templates/steps/update-nuget-config-local-feed-step.yml
     parameters:
       packagePath: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
 
-  - template: ../steps/update-config-file-step.yml
+  - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml
     parameters: 
       TCPConnectionString: $(SQL_TCP_CONN_STRING)
       NPConnectionString: $(SQL_NP_CONN_STRING)
       SupportsIntegratedSecurity: false
 
-  - template: ../steps/prepare-test-db-step.yml
+  - template: /eng/pipelines/common/templates/steps/prepare-test-db-step.yml
 
 # build & test
-  - template: ../steps/build-and-run-tests-netfx-step.yml
+  - template: /eng/pipelines/common/templates/steps/build-and-run-tests-netfx-step.yml
     parameters:
       referenceType: Package
       buildConfiguration: Release
       ${{ if parameters.isPreview }}:
         mdsPackageVersion: $(previewMdsPackageVersion)
 
-  - template: ../steps/build-and-run-tests-netcore-step.yml
+  - template: /eng/pipelines/common/templates/steps/build-and-run-tests-netcore-step.yml
     parameters:
       referenceType: Package
       buildConfiguration: Release

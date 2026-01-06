@@ -33,10 +33,10 @@ steps:
           secureFile: 'netfxKeypair.snk'
 
     - task: UseDotNet@2
-      displayName: 'Install .NET 9.x SDK'
+      displayName: 'Install .NET 10.x SDK'
       inputs:
           packageType: 'sdk'
-          version: '9.x'
+          version: '10.x'
 
     - task: MSBuild@1
       displayName: 'Build.proj - BuildAkv'

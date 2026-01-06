@@ -31,12 +31,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             SniPacket packet;
             if (!_pool.TryGet(out packet))
             {
-#if DEBUG
                 int id = Interlocked.Increment(ref s_packetId);
                 packet = new SniPacket(this, id);
-#else
-                packet = new SniPacket();
-#endif
             }
 #if DEBUG
             else

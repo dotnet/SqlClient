@@ -4,12 +4,18 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 steps:
-- template: ./ensure-dotnet-version.yml@self
+- template: /eng/pipelines/common/templates/steps/ensure-dotnet-version.yml@self
   parameters:
     packageType: 'sdk'
+    version: '10.0'
+    usePreview: false
+
+- template: /eng/pipelines/common/templates/steps/ensure-dotnet-version.yml@self
+  parameters:
+    packageType: 'runtime'
     version: '9.0'
 
-- template: ./ensure-dotnet-version.yml@self
+- template: /eng/pipelines/common/templates/steps/ensure-dotnet-version.yml@self
   parameters:
     packageType: 'runtime'
     version: '8.0'

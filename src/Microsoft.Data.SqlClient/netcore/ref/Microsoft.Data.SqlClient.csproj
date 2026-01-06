@@ -48,13 +48,11 @@
     <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
-
-    <!-- Transitive dependencies that would otherwise bring in older, vulnerable versions. -->
-    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
-  <!-- netstandard dependencies -->
-  <ItemGroup Condition="'$(TargetGroup)' != 'netcoreapp'">
+  <!-- .NET Standard 2.0 dependencies -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="System.Text.Json" />
     <PackageReference Include="System.Threading.Channels" />
   </ItemGroup>
    

@@ -292,7 +292,13 @@
     <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
     <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
-  
+
+  <Target Name="BuildNetCoreUnix" DependsOnTargets="RestoreNetCore">
+    <MSBuild Projects="@(NetCoreDriver)"
+             Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;"
+             RemoveProperties="TargetsWindows;TargetsUnix;" />
+   </Target>
+
   <!-- Build .NET Standard target DLLs for Lib folder from here.
    This target enables BuildForLib for the NetCore ref project. -->
   <Target Name="BuildNetStandard">

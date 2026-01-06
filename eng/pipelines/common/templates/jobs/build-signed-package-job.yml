@@ -25,7 +25,7 @@ jobs:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
     
   variables:
-  - template: ../../../libraries/variables.yml@self
+  - template: /eng/pipelines/libraries/variables.yml@self
   - ${{ if parameters.isPreview }}:
     - name: abstractionsPackageVersion
       value: $(abstractionsPackagePreviewVersion)
@@ -50,12 +50,12 @@ jobs:
       msbuildArguments: -t:BuildTools
 
   # Perform analysis before building, since this step will clobber build output.
-  - template: ../steps/code-analyze-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/code-analyze-step.yml@self
   
   # Update the root NuGet.config to use the packages/ directory as a source.
   # When we build MDS in Package mode, it depends on the Abstractions package,
   # which we will build and package into packages/.
-  - template: ../steps/update-nuget-config-local-feed-step.yml
+  - template: /eng/pipelines/common/templates/steps/update-nuget-config-local-feed-step.yml@self
     parameters:
       packagePath: $(REPOROOT)/packages
   
@@ -68,7 +68,7 @@ jobs:
       msbuildArguments: -t:BuildAbstractions
 
   # Build MDS in Package mode, producing signed DLLs.
-  - template: ../steps/build-all-configurations-signed-dlls-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/build-all-configurations-signed-dlls-step.yml@self
     parameters:
       # These variables are sourced from common-variables.yml.
       abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
@@ -78,11 +78,11 @@ jobs:
       mdsPackageVersion: $(mdsPackageVersion)
       referenceType: Package
 
-  - template: ../steps/esrp-code-signing-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/esrp-code-signing-step.yml@self
     parameters:
       artifactType: dll
   
-  - template: ../steps/generate-nuget-package-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
     parameters:
       buildConfiguration: Release
       displayName: 'Create MDS NuGet Package'
@@ -93,17 +93,17 @@ jobs:
       properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion)'
       referenceType: Package
   
-  - template: ../steps/esrp-code-signing-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/esrp-code-signing-step.yml@self
     parameters:
       artifactType: pkg
   
-  - template: ../steps/copy-dlls-for-test-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/copy-dlls-for-test-step.yml@self
     parameters:
       buildConfiguration: Release
       product: MDS
 
   # Publish symbols to servers
-  - template: ../steps/publish-symbols-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/publish-symbols-step.yml@self
     parameters:
       buildConfiguration: Release
       publishSymbols: ${{ parameters['PublishSymbols'] }}

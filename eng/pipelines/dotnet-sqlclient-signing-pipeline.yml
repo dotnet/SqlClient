@@ -145,7 +145,7 @@ extends:
     - stage: buildMDS
       displayName: 'Build MDS'
       jobs:
-      - template: eng/pipelines/common/templates/jobs/build-signed-package-job.yml@self
+      - template: /eng/pipelines/common/templates/jobs/build-signed-package-job.yml@self
         parameters:
           symbolsFolder: $(symbolsFolder)
           softwareFolder: $(softwareFolder)
@@ -156,7 +156,7 @@ extends:
       displayName: 'MDS Package Validation'
       dependsOn: buildMDS
       jobs:
-      - template: eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self
+      - template: /eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self
         parameters:
           packageFolderName: $(packageFolderName)
           isPreview: ${{ parameters['isPreview'] }}
@@ -167,7 +167,7 @@ extends:
             displayName: 'Download NuGet Package'
 
 # Disabling as of 10/15/2025 due to OneBranch apparently disallowing MSBuild tasks in validation stages.
-#      - template: eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
+#      - template: /eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
 #        parameters:
 #          packageFolderName: $(packageFolderName)
 #          isPreview: ${{ parameters['isPreview'] }}

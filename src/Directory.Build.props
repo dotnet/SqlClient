@@ -150,8 +150,8 @@
     https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/configure-language-version
   -->
   <PropertyGroup>
-    <!-- The newest .NET SDK we support is .NET 9.0, which uses C# 13 -->
-    <LangVersion>13</LangVersion>
+    <!-- The newest .NET SDK we support is .NET 10.0, which uses C# 14 -->
+    <LangVersion>14</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup>

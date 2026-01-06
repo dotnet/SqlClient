@@ -181,7 +181,7 @@
     <Compile Include="SQL\KerberosTests\KerberosTest.cs" />
     <Compile Include="SQL\KerberosTests\KerberosTicketManager\KerberosTicketManager.cs" />
     <Compile Include="SQL\LocalDBTest\LocalDBTest.cs" />
-    <Compile Include="SQL\MARSSessionPoolingTest\MARSSessionPoolingTest.cs" />
+    <Compile Include="SQL\MARSSessionPoolingTest\MarsSessionPoolingTest.cs" />
     <Compile Include="SQL\MARSTest\MARSTest.cs" />
     <Compile Include="SQL\MirroringTest\ConnectionOnMirroringTest.cs" />
     <Compile Include="SQL\ParallelTransactionsTest\ParallelTransactionsTest.cs" />
@@ -277,6 +277,7 @@
     <Compile Include="DataCommon\SqlClientCustomTokenCredential.cs" />
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
     <Compile Include="DataCommon\UsernamePasswordProvider.cs" />
+    <Compile Include="DataCommon\XEventScope.cs" />
     <Compile Include="Extensions\StreamExtensions.netfx.cs" />
     <Compile Include="SQL\Common\AsyncDebugScope.cs" />
     <Compile Include="SQL\Common\ConnectionPoolWrapper.cs" />

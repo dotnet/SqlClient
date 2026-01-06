@@ -24,7 +24,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 deltaTime: TimeSpan.FromMilliseconds(250));
 
         // Test relies on error 4060 for automatic retry, which is not reliable when using Azure or AAD auth
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [MemberData(nameof(ConnectionRetryOpenInvalidCatalogFailed_Data), DisableDiscoveryEnumeration = true)]
         public void ConnectionRetryOpenInvalidCatalogFailed(string cnnString, SqlRetryLogicBaseProvider provider)
         {
@@ -48,7 +49,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 deltaTime: TimeSpan.FromMilliseconds(250));
 
         // Test relies on error 4060 for automatic retry, which is not reliable when using Azure or AAD auth
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [MemberData(nameof(ConnectionCancelRetryOpenInvalidCatalog_Data), DisableDiscoveryEnumeration = true)]
         public void ConnectionCancelRetryOpenInvalidCatalog(string cnnString, SqlRetryLogicBaseProvider provider)
         {
@@ -124,7 +126,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 maxInterval: TimeSpan.FromSeconds(1),
                 deltaTime: TimeSpan.FromMilliseconds(250));
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [MemberData(nameof(ConcurrentExecution_Data), DisableDiscoveryEnumeration = true)]
         public void ConcurrentExecution(string cnnString, SqlRetryLogicBaseProvider provider)
         {
@@ -159,7 +162,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static TheoryData<string, SqlRetryLogicBaseProvider> DefaultOpenWithoutRetry_Data =>
             RetryLogicTestHelper.GetNonRetriableCases();
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [MemberData(nameof(DefaultOpenWithoutRetry_Data), DisableDiscoveryEnumeration = true)]
         public void DefaultOpenWithoutRetry(string connectionString, SqlRetryLogicBaseProvider cnnProvider)
         {
@@ -191,7 +195,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 deltaTime: TimeSpan.FromMilliseconds(250));
 
         // Test relies on error 4060 for automatic retry, which is not reliable when using Azure or AAD auth
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [MemberData(nameof(ConnectionRetryOpenAsyncInvalidCatalogFailed_Data), DisableDiscoveryEnumeration = true)]
         public async Task ConnectionRetryOpenAsyncInvalidCatalogFailed(string cnnString, SqlRetryLogicBaseProvider provider)
         {
@@ -215,7 +220,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 deltaTime: TimeSpan.FromMilliseconds(250));
 
         // Test relies on error 4060 for automatic retry, which is not returned when using AAD auth
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.TcpConnectionStringDoesNotUseAadAuth))]
+        // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.TcpConnectionStringDoesNotUseAadAuth), nameof(DataTestUtility.IsNotAzureServer))]
         [MemberData(nameof(ConnectionCancelRetryOpenAsyncInvalidCatalog_Data), DisableDiscoveryEnumeration = true)]
         public async Task ConnectionCancelRetryOpenAsyncInvalidCatalog(string cnnString, SqlRetryLogicBaseProvider provider)
         {

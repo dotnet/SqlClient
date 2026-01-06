@@ -68,7 +68,7 @@ stages:
       # ------------------------------------------------------------------------
       # Build and test on Linux.
 
-      - template: ../jobs/test-abstractions-package-ci-job.yml@self
+      - template: /eng/pipelines/jobs/test-abstractions-package-ci-job.yml@self
         parameters:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
@@ -83,7 +83,7 @@ stages:
       # ------------------------------------------------------------------------
       # Build and test on Windows
 
-      - template: ../jobs/test-abstractions-package-ci-job.yml@self
+      - template: /eng/pipelines/jobs/test-abstractions-package-ci-job.yml@self
         parameters:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
@@ -98,7 +98,7 @@ stages:
       # ------------------------------------------------------------------------
       # Build and test on macOS.
 
-      - template: ../jobs/test-abstractions-package-ci-job.yml
+      - template: /eng/pipelines/jobs/test-abstractions-package-ci-job.yml@self
         parameters:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
@@ -113,7 +113,7 @@ stages:
       # ------------------------------------------------------------------------
       # Create and publish the NuGet package.
 
-      - template: ../jobs/pack-abstractions-package-ci-job.yml@self
+      - template: /eng/pipelines/jobs/pack-abstractions-package-ci-job.yml@self
         parameters:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}

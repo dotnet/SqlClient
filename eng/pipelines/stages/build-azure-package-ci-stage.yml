@@ -131,8 +131,7 @@ stages:
       # ------------------------------------------------------------------------
       # Build and test on Linux.
 
-      # Use the Azure Pipelines pool for basic testing.
-      - template: ../jobs/test-azure-package-ci-job.yml@self
+      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
@@ -150,7 +149,7 @@ stages:
           vmImage: ubuntu-latest
 
       # Use our 1ES ADO pool for comprehensive testing.
-      - template: ../jobs/test-azure-package-ci-job.yml@self
+      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
@@ -171,7 +170,7 @@ stages:
       # Build and test on Windows
 
       # Use the Azure Pipelines pool for basic testing.
-      - template: ../jobs/test-azure-package-ci-job.yml@self
+      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
@@ -189,7 +188,7 @@ stages:
           vmImage: windows-latest
 
       # Use our 1ES ADO pool for comprehensive testing.
-      - template: ../jobs/test-azure-package-ci-job.yml@self
+      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
@@ -210,7 +209,7 @@ stages:
       # Build and test on macOS.
 
       # Use the Azure Pipelines pool for basic testing.
-      - template: ../jobs/test-azure-package-ci-job.yml
+      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
@@ -232,7 +231,7 @@ stages:
       # ------------------------------------------------------------------------
       # Create and publish the NuGet package.
 
-      - template: ../jobs/pack-azure-package-ci-job.yml@self
+      - template: /eng/pipelines/jobs/pack-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}

@@ -88,5 +88,5 @@
   <ItemGroup>
     <None Include="../../../../tools/icons/dotnet.png" Pack="true" PackagePath="/" />
   </ItemGroup>
-  
+
 </Project>

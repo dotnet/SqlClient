@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <AssemblyName>Common</AssemblyName>
     <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
@@ -9,8 +8,15 @@
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
     <IsTestProject>true</IsTestProject>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- OS Constants ==================================================== -->
+  <PropertyGroup>
+    <DefineConstants Condition="'$(OSGroup.ToUpper())'=='UNIX'">$(DefineConstants),_UNIX</DefineConstants>
+    <DefineConstants Condition="'$(OSGroup.ToUpper())'=='WINDOWS_NT'">$(DefineConstants),_WINDOWS</DefineConstants>
+  </PropertyGroup>
+  
   <!-- .NET Framework Packages -->
   <ItemGroup>
     <!-- For compilation targeting .NET Framework using .NET SDKs. -->
