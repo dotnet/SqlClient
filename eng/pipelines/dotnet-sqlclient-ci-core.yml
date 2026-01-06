@@ -186,7 +186,7 @@ stages:
           - build_mds_akv_packages_stage
       referenceType: ${{ parameters.referenceType }}
       ${{if eq(parameters.debug, 'true')}}:
-        verbosity: diagnostic
+        dotnetVerbosity: diagnostic
 
   # Run the stress tests, if desired.
   - ${{ if eq(parameters.enableStressTests, true) }}:

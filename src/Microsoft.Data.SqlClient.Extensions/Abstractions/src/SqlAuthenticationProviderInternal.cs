@@ -32,7 +32,7 @@ public abstract partial class SqlAuthenticationProvider
         /// </summary>
         static Internal()
         {
-            // Choose the MDS assembly name based on the build configuration and
+            // Choose the MDS assembly name based on compilation flags and the
             // runtime environment.  See the top-level Directory.Build.props for
             // more information.
             string assemblyName = "Microsoft.Data.SqlClient";
@@ -198,7 +198,8 @@ public abstract partial class SqlAuthenticationProvider
 
         private static void Log(string message)
         {
-            // TODO(ADO-39080): Convert to proper logging.
+            // TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39080):
+            // Convert to proper logging.
             Console.WriteLine($"SqlAuthenticationProvider.Internal(): {message}");
         }
     }

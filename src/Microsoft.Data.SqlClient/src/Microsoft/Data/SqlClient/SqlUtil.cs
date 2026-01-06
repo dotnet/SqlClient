@@ -1302,15 +1302,6 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_NetworkLibraryNotSupported));
         }
-        internal static Exception UnsupportedFeatureAndToken(SqlConnectionInternal internalConnection, string token)
-        {
-            var innerException = ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedToken, token));
-
-            SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQL_UnsupportedFeature), "", 0));
-            SqlException exc = SqlException.CreateException(errors, "", internalConnection, innerException);
-            return exc;
-        }
 
         #region Always Encrypted Errors
 

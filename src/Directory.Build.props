@@ -168,7 +168,7 @@
       and only for non-pipeline builds (i.e. developer builds).  This ensures
       that pipeline builds and package-reference based builds use the normal
       MDS assembly name.  These builds already include safeguards to build
-      downstream projects for specifit target frameworks individually, and thus
+      downstream projects for specific target frameworks individually, and thus
       don't encounter the same assembly name conflicts.
 
       For developer builds, we don't care that the MDS assembly name isn't

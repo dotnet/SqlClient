@@ -59,7 +59,7 @@ namespace Microsoft.SqlServer.Server
             {
                 res = temp;
             }
-            
+
             return res;
         }
         public static string GetString(string res, params object[] args)
