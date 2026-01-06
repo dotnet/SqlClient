@@ -23,24 +23,6 @@
   </ItemGroup>
   
   <!-- ===================================================================== -->
-  <!-- Driver Packages -->
- 
-  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
-    <PackageVersion
-      Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
-      Version="$(AbstractionsPackageVersion)" />
-    <PackageVersion
-      Include="Microsoft.Data.SqlClient.Extensions.Azure"
-      Version="$(AzurePackageVersion)" />
-    <PackageVersion
-      Include="Microsoft.Data.SqlClient"
-      Version="$(MdsPackageVersion)" />
-    <PackageVersion
-      Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
-      Version="$(AkvPackageVersion)" />
-  </ItemGroup>
-  
-  <!-- ===================================================================== -->
   <!-- Shared Dependencies -->
 
   <!-- Public -->
