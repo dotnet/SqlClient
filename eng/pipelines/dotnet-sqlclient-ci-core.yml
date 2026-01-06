@@ -68,6 +68,11 @@ parameters:
   type: object
   default: [net462, net8.0, net9.0, net10.0]
 
+- name: uploadCodeCov
+  displayName: 'Upload Code Coverage to CodeCov'
+  type: boolean
+  default: true
+
 - name: buildType
   displayName: 'Build Type'
   default: Project
@@ -178,7 +183,7 @@ stages:
             # You can find Pipeline Variables by visiting the main page of the
             # pipeline and choosing Edit -> Variables.
             #
-            upload: ${{ eq(variables.ci_var_uploadTestResult, 'true') }}
+            upload: ${{ parameters.uploadCodeCov }}
 
 # test stages configurations
   # self hosted SQL Server on Windows
