@@ -82,17 +82,21 @@ parameters:
     type: boolean
     default: false
 
+variables:
+  # If we were triggered by an upstream pipeline, use the alias of that
+  # pipeline resource.  Otherwise, assume we were triggered manually via the
+  # Azure DevOps UI and arbitrarily choose use the Public
+  # CI-SqlClient-Package pipeline.
+  #
+  # TODO: Use CI-SqlClient-Package instead of PR-SqlClient-Package.
+  - name: pipelineAlias
+    value: $[coalesce(variables['Resources.TriggeringAlias'], 'Public-ADO-PR-SqlClient-Package')]
+
 stages:
   - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self
     parameters:
       buildConfiguration: ${{ parameters.buildConfiguration }}
-      # If we were triggered by an upstream pipeline, use the alias of that
-      # pipeline resource.  Otherwise, assume we were triggered manually via the
-      # Azure DevOps UI and arbitrarily choose use the Public
-      # CI-SqlClient-Package pipeline.
-      #
-      # TODO: Use CI-SqlClient-Package instead of PR-SqlClient-Package.
-      pipelineAlias: $[coalesce(variables['Resources.TriggeringAlias'], 'Public-ADO-PR-SqlClient-Package')]
+      pipelineAlias: $(pipelineAlias)
       # All of the pipelines that trigger us produce the same artifact name.
       # (See dotnet-sqlclient-ci-core.yml.)
       pipelineArtifactName: Artifacts
