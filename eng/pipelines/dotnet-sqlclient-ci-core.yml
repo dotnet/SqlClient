@@ -198,6 +198,7 @@ stages:
           - build_azure_package_stage
         pipelineArtifactName: $(artifactName)
         mdsPackageVersion: $(mdsPackageVersion)
+        azurePackageVersion: $(azurePackageVersion)
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
   
   # Run the MDS and AKV tests.

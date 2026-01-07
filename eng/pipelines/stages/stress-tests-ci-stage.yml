@@ -20,6 +20,14 @@
 # depended on by downstream stages.
 
 parameters:
+
+  # The Azure package version to stress test.  This version must be available in
+  # one of the configured NuGet sources.
+  - name: azurePackageVersion
+    displayName: Azure Package Version
+    type: string
+    default: ''
+
   # The type of build to produce (Debug or Release)
   - name: buildConfiguration
     displayName: Build Configuration
@@ -99,6 +107,7 @@ stages:
           --verbosity ${{parameters.dotnetVerbosity}}
           --artifacts-path $(dotnetArtifactsDir)
           -p:MdsPackageVersion=${{parameters.mdsPackageVersion}}
+          -p:AzurePackageVersion=${{parameters.azurePackageVersion}}
 
       # dotnet CLI arguments for build/run commands.
       - name: buildArguments
