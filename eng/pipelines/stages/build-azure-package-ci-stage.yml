@@ -38,6 +38,19 @@ parameters:
   - name: abstractionsPackageVersion
     type: string
 
+  # The name of the pool to use for jobs that require customized VM images.
+  - name: adoPoolName
+    type: string
+    # This variable should be defined in AzureDevOps Library variable groups,
+    # for both the Public and ADO.Net projects.
+    #
+    # Any pool specified here must contain images with the following names:
+    #
+    #   - ADO-UB22-SQL22
+    #   - ADO-CI-Win11
+    #
+    default: $(ci_var_defaultPoolName)
+
   # The name of the pipeline artifact to publish.
   - name: azureArtifactName
     type: string
@@ -47,6 +60,12 @@ parameters:
   - name: azurePackageVersion
     type: string
 
+  # The name of the general Azure pool to use for jobs that don't require
+  # customized VM images.
+  - name: azurePoolName
+    type: string
+    default: Azure Pipelines
+
   # The type of build to produce (Release or Debug)
   - name: buildConfiguration
     type: string
@@ -55,10 +74,39 @@ parameters:
     - Release
     - Debug
 
+  # True to enable extra debug steps and logging.
+  - name: debug
+    type: boolean
+    default: false
+
   # The stages we depend on, if any.
   - name: dependsOn
     type: object
     default: []
+
+  # The dotnet CLI verbosity to use.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+  # The name of the MDS pipeline artifact to download.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: mdsArtifactName
+    type: string
+    default: MDS.Artifact
+
+  # The MDS package verion to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: mdsPackageVersion
+    type: string
   
   # The reference type to use:
   #
@@ -70,17 +118,6 @@ parameters:
     values:
     - Package
     - Project
-
-  # The dotnet CLI verbosity to use.
-  - name: verbosity
-    type: string
-    default: normal
-    values:
-    - quiet
-    - minimal
-    - normal
-    - detailed
-    - diagnostic
 
 stages:
 
@@ -99,48 +136,97 @@ stages:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
           displayNamePrefix: Linux
-          jobNameSuffix: linux
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          jobNameSuffix: linux_basic
+          mdsArtifactName: MDS.Artifact
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: []
-          netRuntimes: [net8.0, net9.0]
-          poolName: Azure Pipelines
+          netRuntimes: [net8.0, net9.0, net10.0]
+          poolName: ${{ parameters.azurePoolName }}
           referenceType: ${{ parameters.referenceType }}
-          verbosity: ${{ parameters.verbosity }}
           vmImage: ubuntu-latest
+
+      # Use our 1ES ADO pool for comprehensive testing.
+      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
+        parameters:
+          abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
+          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          displayNamePrefix: Linux
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          jobNameSuffix: linux_comprehensive
+          mdsArtifactName: MDS.Artifact
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          netFrameworkRuntimes: []
+          netRuntimes: [net8.0, net9.0, net10.0]
+          poolName: ${{ parameters.adoPoolName }}
+          referenceType: ${{ parameters.referenceType }}
+          vmImage: ADO-UB22-SQL22
 
       # ------------------------------------------------------------------------
       # Build and test on Windows
 
+      # Use the Azure Pipelines pool for basic testing.
       - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
           displayNamePrefix: Win
-          jobNameSuffix: windows
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          jobNameSuffix: windows_basic
+          mdsArtifactName: MDS.Artifact
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: [net462]
-          netRuntimes: [net8.0, net9.0]
-          poolName: Azure Pipelines
+          netRuntimes: [net8.0, net9.0, net10.0]
+          poolName: ${{ parameters.azurePoolName }}
           referenceType: ${{ parameters.referenceType }}
-          verbosity: ${{ parameters.verbosity }}
           vmImage: windows-latest
+
+      # Use our 1ES ADO pool for comprehensive testing.
+      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
+        parameters:
+          abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
+          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          displayNamePrefix: Win
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          jobNameSuffix: windows_comprehensive
+          mdsArtifactName: MDS.Artifact
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          netFrameworkRuntimes: [net462]
+          netRuntimes: [net8.0, net9.0, net10.0]
+          poolName: ${{ parameters.adoPoolName }}
+          referenceType: ${{ parameters.referenceType }}
+          vmImage: ADO-CI-Win11
 
       # ------------------------------------------------------------------------
       # Build and test on macOS.
 
+      # Use the Azure Pipelines pool for basic testing.
       - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactName: ${{ parameters.abstractionsArtifactName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
           displayNamePrefix: macOS
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: macos
+          mdsArtifactName: MDS.Artifact
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: []
-          netRuntimes: [net8.0, net9.0]
-          poolName: Azure Pipelines
+          netRuntimes: [net8.0, net9.0, net10.0]
+          poolName: ${{ parameters.azurePoolName }}
           referenceType: ${{ parameters.referenceType }}
-          verbosity: ${{ parameters.verbosity }}
           vmImage: macos-latest
+
+      # We do not currently have any images in our 1ES ADO pools for macOS.
 
       # ------------------------------------------------------------------------
       # Create and publish the NuGet package.
@@ -152,11 +238,14 @@ stages:
           azureArtifactName: ${{ parameters.azureArtifactName }}
           azurePackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
           dependsOn:
             # We depend on all of the test jobs to ensure the tests pass before
             # producing the NuGet package.
-            - test_azure_package_job_linux
-            - test_azure_package_job_windows
+            - test_azure_package_job_linux_basic
+            - test_azure_package_job_linux_comprehensive
+            - test_azure_package_job_windows_basic
+            - test_azure_package_job_windows_comprehensive
             - test_azure_package_job_macos
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           referenceType: ${{ parameters.referenceType }}
-          verbosity: ${{ parameters.verbosity }}

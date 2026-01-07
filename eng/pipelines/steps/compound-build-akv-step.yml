@@ -44,6 +44,12 @@ steps:
           packageType: 'runtime'
           version: '9.x'
 
+    - task: UseDotNet@2
+      displayName: 'Install .NET 8.x Runtime'
+      inputs:
+          packageType: 'runtime'
+          version: '8.x'
+
     - task: MSBuild@1
       displayName: 'Build.proj - BuildAkv'
       inputs:

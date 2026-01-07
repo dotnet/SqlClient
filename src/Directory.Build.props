@@ -17,7 +17,7 @@
 
       See the BUILDGUIDE.md for more details.
     -->
-    <ReferenceType Condition="$(ReferenceType) == ''">Project</ReferenceType>
+    <ReferenceType Condition="'$(ReferenceType)' == ''">Project</ReferenceType>
   </PropertyGroup>
   <PropertyGroup Condition="$(BuildForRelease) == 'true'">
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
@@ -152,5 +152,44 @@
   <PropertyGroup>
     <!-- The newest .NET SDK we support is .NET 10.0, which uses C# 14 -->
     <LangVersion>14</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--
+      We currently define 2 separate projects for MDS that both produce an
+      assembly named 'Microsoft.Data.SqlClient'.  This confuses MSBuild during
+      project-reference based builds of downstream projects (like AKV, Azure, or
+      tests) - it can't resolve the correct assembly based on the downstream
+      project's target framework.  To avoid such conflicts, we append a suffix
+      to the MDS AssemblyName property:  '.NetCore' for .NET targets, and
+      '.NetFx' for .NET Framwork targets.
+
+      These suffices are only applied during project-reference based builds,
+      and only for non-pipeline builds (i.e. developer builds).  This ensures
+      that pipeline builds and package-reference based builds use the normal
+      MDS assembly name.  These builds already include safeguards to build
+      downstream projects for specific target frameworks individually, and thus
+      don't encounter the same assembly name conflicts.
+
+      For developer builds, we don't care that the MDS assembly name isn't
+      truthful.  MSBuild finds the correct artifacts based on target framework
+      and all downstream projects build without needing a target framework
+      specified.
+
+      For package reference or pipeline builds, the assembly name remains
+      truthful and downstream projects don't encounter MSBuild restore problems
+      since the MDS artifacts are pulled from the NuGet package directly.
+
+      There are some downstream projects that still expect different assembly
+      names, even during pipeline builds.  For those, we define the
+      ForceMdsAssemblyNameSuffix property, which overrides the default pipeline
+      behaviour for project-based builds.
+
+      The boolean property ApplyMdsAssemblyNameSuffix can be used by any
+      project to determine whether or not to apply the MDS assembly name suffix.
+    -->
+    <ApplyMdsAssemblyNameSuffix>false</ApplyMdsAssemblyNameSuffix>
+    <ApplyMdsAssemblyNameSuffix
+      Condition="'$(ReferenceType)' == 'Project' AND ('$(ForceMdsAssemblyNameSuffix)' == 'true' OR '$(TF_BUILD)' != 'true')">true</ApplyMdsAssemblyNameSuffix>
   </PropertyGroup>
 </Project>

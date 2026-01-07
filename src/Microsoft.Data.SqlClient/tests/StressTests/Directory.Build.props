@@ -6,7 +6,7 @@
   <!-- Properties common to all projects in this solution. -->
   <PropertyGroup>
     <!-- Target all frameworks that MDS supports. -->
-    <TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net462;net8.0;net9.0;net10.0</TargetFrameworks>
 
     <!--
       Use the latest C# language version, regardless of what a particular

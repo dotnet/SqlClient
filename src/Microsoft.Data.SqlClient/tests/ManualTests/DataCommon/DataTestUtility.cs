@@ -239,6 +239,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStringsSetup.Add(TCPConnectionString);
                 }
             }
+
+            // Many of our tests require a Managed Identity provider to be
+            // registered.
+            //
+            // TODO: Figure out which ones and install on-demand rather than
+            // globally.
+            SqlAuthenticationProvider.SetProvider(
+                SqlAuthenticationMethod.ActiveDirectoryManagedIdentity,
+                new ManagedIdentityProvider());
         }
 
         public static IEnumerable<string> ConnectionStrings => GetConnectionStrings(withEnclave: true);
