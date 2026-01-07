@@ -2,10 +2,6 @@
   "tool": "Credential Scanner",
   "suppressions": [
     {
-      "file": "src/Microsoft.Data.SqlClient/tests/Docker/DockerLinuxTest/Program.cs",
-      "justification": "Test projects should be skipped"
-    },
-    {
       "file": "src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.Servers/TDSServerArguments.cs",
       "justification": "Test projects should be skipped"
     },
@@ -14,12 +10,16 @@
       "justification": "Test projects should be skipped"
     },
     {
-      "file": "src/docker-compose.yml",
-      "justification": "Docker test project should be excluded"
-    },
-    {
       "file": "doc/samples/SqlConnectionStringBuilder.cs",
       "justification": "Documentation could include sample data and can be ignored"
+    },
+    {
+      "file": "src/Microsoft.Data.SqlClient/tests/UnitTests/Fixtures/AlwaysEncrypted/NativeColumnEncryptionKeyCertificateBaselineFixture.cs",
+      "justification": "Test projects should be skipped"
+    },
+    {
+      "file": "src/Microsoft.Data.SqlClient/tests/UnitTests/Resources/AlwaysEncrypted/NativeColumnEncryptionKeyBaseline/Certificate.pfx",
+      "justification": "Test projects should be skipped"
     }
   ]
 }

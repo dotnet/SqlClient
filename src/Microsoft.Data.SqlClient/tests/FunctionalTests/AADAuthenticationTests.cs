@@ -5,7 +5,7 @@
 using System;
 using System.Security;
 using System.Threading.Tasks;
-using Microsoft.Identity.Client;
+using Microsoft.Data.SqlClient.FunctionalTests.DataCommon;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -49,11 +49,32 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Throws<InvalidOperationException>(() => connection.AccessToken = "SampleAccessToken");
             }
         }
+        
+        #if NETFRAMEWORK
+        // This test is only valid for .NET Framework
+
+        /// <summary>
+        /// Tests whether SQL Auth provider is overridden using app.config file.
+        /// This use case is only supported for .NET Framework applications, as driver doesn't support reading configuration from appsettings.json file.
+        /// In future if need be, appsettings.json support can be added.
+        /// </summary>
+        [Fact]
+        public async Task IsDummySqlAuthenticationProviderSetByDefault()
+        {
+            var provider = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive);
+
+            Assert.NotNull(provider);
+            Assert.Equal(typeof(DummySqlAuthenticationProvider), provider.GetType());
+
+            var token = await provider.AcquireTokenAsync(null);
+            Assert.Equal(token.AccessToken, DummySqlAuthenticationProvider.DUMMY_TOKEN_STR);
+        }
+        #endif
 
         [Fact]
         public void CustomActiveDirectoryProviderTest()
         {
-            SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(CustomDeviceFlowCallback);
+            SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(static (result) => Task.CompletedTask);
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
             Assert.Equal(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
         }
@@ -69,15 +90,9 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void CustomActiveDirectoryProviderTest_AppClientId_DeviceFlowCallback()
         {
-            SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(CustomDeviceFlowCallback, Guid.NewGuid().ToString());
+            SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(static (result) => Task.CompletedTask, Guid.NewGuid().ToString());
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
             Assert.Equal(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
-        }
-
-        private Task CustomDeviceFlowCallback(DeviceCodeResult result)
-        {
-            Console.WriteLine(result.Message);
-            return Task.FromResult(0);
         }
     }
 }

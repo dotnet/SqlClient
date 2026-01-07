@@ -3,15 +3,16 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
+
+# This step configures an existing SQL Server running on the local Linux host.
+# For example, our 1ES Hosted Pool has images like ADO-UB20-SQL22 that come with
+# SQL Server 2022 pre-installed and running.
+
 parameters:
   - name: password
     type: string
     default: $(password)
 
-  - name: targetNetCoreVersion
-    type: string
-    default: $(MainTargetNetCoreVersion)
-  
   - name: condition
     type: string
     default: and(succeeded(), eq(variables['Agent.OS'], 'Linux'))
@@ -19,16 +20,12 @@ parameters:
 steps:
 # Linux only steps
 - bash: |
-    echo ${{parameters.targetNetCoreVersion }}
-    
     sudo systemctl stop mssql-server
     
     # Password for the SA user (required)
+
     MSSQL_SA_PW=${{parameters.password }}
-    if [ "$MSSQL_SA_PW" = "generated_placeholder" ]; then
-      exit 0
-    fi
-    
+
     # Product ID of the version of SQL server you're installing
     # Must be evaluation, developer, express, web, standard, enterprise, or your 25 digit product key
     MSSQL_PID='enterprise'

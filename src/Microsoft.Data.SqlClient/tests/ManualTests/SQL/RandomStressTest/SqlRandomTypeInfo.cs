@@ -73,10 +73,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         protected void ValidateColumnInfo(SqlRandomTableColumn columnInfo)
         {
             if (columnInfo == null)
+            {
                 throw new ArgumentNullException(nameof(columnInfo));
+            }
 
             if (Type != columnInfo.Type)
+            {
                 throw new ArgumentException("Type mismatch");
+            }
         }
 
         /// <summary>
@@ -137,14 +141,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         protected object ReadCharData(DbDataReader reader, int ordinal, Type asType)
         {
             if (reader.IsDBNull(ordinal))
+            {
                 return DBNull.Value;
+            }
 
             if (asType == typeof(string))
+            {
                 return reader.GetString(ordinal);
+            }
             else if (asType == typeof(char[]) || asType == typeof(DBNull))
+            {
                 return reader.GetString(ordinal).ToCharArray();
+            }
             else
+            {
                 throw new NotSupportedException("Wrong type: " + asType.FullName);
+            }
         }
 
         /// <summary>
@@ -153,12 +165,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         protected object ReadByteArray(DbDataReader reader, int ordinal, Type asType)
         {
             if (reader.IsDBNull(ordinal))
+            {
                 return DBNull.Value;
+            }
 
             if (asType == typeof(byte[]) || asType == typeof(DBNull))
+            {
                 return (byte[])reader.GetValue(ordinal);
+            }
             else
+            {
                 throw new NotSupportedException("Wrong type: " + asType.FullName);
+            }
         }
 
         protected bool IsNullOrDbNull(object value)
@@ -179,17 +197,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bothDbNull = isNullActual && isNullExpected;
 
             if (bothDbNull)
+            {
                 return true;
+            }
 
             if (isNullActual || isNullExpected)
+            {
                 return false; // only one is null, but not both
+            }
 
             if (expectedType == null)
+            {
                 return true;
+            }
 
             // both not null
             if (expectedType != expected.GetType())
+            {
                 throw new ArgumentException("Wrong type!");
+            }
 
             return (expectedType == actual.GetType());
         }
@@ -216,7 +242,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             for (int i = 0; i < end; i++)
             {
                 if (expected[i] != actual[i])
+                {
                     return false;
+                }
             }
 
             // check for padding in actual values
@@ -255,7 +283,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             for (int i = 0; i < end; i++)
             {
                 if (expected[i] != actual[i])
+                {
                     return false;
+                }
             }
 
             // check for padding in actual values
@@ -279,7 +309,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             bool bothDbNull;
             if (!CompareDbNullAndType(typeof(T), expected, actual, out bothDbNull) || bothDbNull)
+            {
                 return bothDbNull;
+            }
 
             return expected.Equals(actual);
         }
@@ -292,7 +324,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             bool bothDbNull;
             if (!CompareDbNullAndType(typeof(byte[]), expected, actual, out bothDbNull) || bothDbNull)
+            {
                 return bothDbNull;
+            }
+
             return CompareByteArray((byte[])expected, (byte[])actual, allowIncomplete, paddingValue);
         }
 
@@ -303,7 +338,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             bool bothDbNull;
             if (!CompareDbNullAndType(typeof(char[]), expected, actual, out bothDbNull) || bothDbNull)
+            {
                 return bothDbNull;
+            }
+
             return CompareCharArray((char[])expected, (char[])actual, allowIncomplete, paddingValue);
         }
 
@@ -314,14 +352,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             ValidateReadType(typeof(DateTime), asType);
             if (reader.IsDBNull(ordinal))
+            {
                 return DBNull.Value;
+            }
+
             return reader.GetDateTime(ordinal);
         }
 
         protected void ValidateReadType(Type expectedType, Type readAsType)
         {
             if (readAsType != expectedType && readAsType != typeof(DBNull))
+            {
                 throw new ArgumentException("Wrong type: " + readAsType.FullName);
+            }
         }
 
         /// <summary>
@@ -330,7 +373,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public object Read(DbDataReader reader, int ordinal, SqlRandomTableColumn columnInfo, Type asType)
         {
             if (reader == null || asType == null)
+            {
                 throw new ArgumentNullException("reader == null || asType == null");
+            }
+
             ValidateColumnInfo(columnInfo);
             return ReadInternal(reader, ordinal, columnInfo, asType);
         }

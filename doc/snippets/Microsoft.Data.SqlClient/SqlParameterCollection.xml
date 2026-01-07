@@ -9,7 +9,7 @@
           If the command contains an ad hoc SQL statement, as opposed to a stored-procedure name, the number of the parameters in the collection must be equal to the number of parameter placeholders within the command text, or SQL Server raises an error. With a stored procedure, all the parameters declared in the stored procedure without a default value must be provided. Parameters declared with a default value are optional. This lets you specify a value other than the default.
         </para>
         <para>
-          For more information with additional sample code demonstrating how to use parameters, see <see href="/sql/connect/ado-net/commands-parameters">Commands and Parameters</see>.
+          For more information with additional sample code demonstrating how to use parameters, see <see href="https://learn.microsoft.com/sql/connect/ado-net/commands-parameters">Commands and Parameters</see>.
         </para>
       </remarks>
       <example>

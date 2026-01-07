@@ -3,10 +3,14 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
+using System.Reflection;
 using Xunit;
+
+using SwitchesHelper = Microsoft.Data.SqlClient.Tests.Common.LocalAppContextSwitchesHelper;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
@@ -97,7 +101,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(string.Empty, p.XmlSchemaCollectionOwningSchema);
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         [Fact]
         public void Constructor2_Value_DateOnly()
         {
@@ -216,37 +220,54 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(string.Empty, p.ParameterName);
         }
 
+        public static IEnumerable<object[]> Constructor3Data()
+        {
+            return new object[][]
+            {
+                new object[]{ SqlDbType.BigInt, DbType.Int64 },
+                new object[]{ SqlDbType.Binary, DbType.Binary },
+                new object[]{ SqlDbType.Bit, DbType.Boolean },
+                new object[]{ SqlDbType.Char, DbType.AnsiStringFixedLength },
+                new object[]{ SqlDbType.Date, DbType.Date },
+                new object[]{ SqlDbType.DateTime, DbType.DateTime },
+                new object[]{ SqlDbType.DateTimeOffset, DbType.DateTimeOffset },
+                new object[]{ SqlDbType.Decimal, DbType.Decimal },
+                new object[]{ SqlDbType.Float, DbType.Double },
+                new object[]{ SqlDbType.Image, DbType.Binary },
+                new object[]{ SqlDbType.Int, DbType.Int32 },
+                new object[]{ SqlDbType.Money, DbType.Currency },
+                new object[]{ SqlDbType.NChar, DbType.StringFixedLength },
+                new object[]{ SqlDbType.NText, DbType.String },
+                new object[]{ SqlDbType.NVarChar, DbType.String },
+                new object[]{ SqlDbType.Real, DbType.Single },
+                new object[]{ SqlDbType.SmallDateTime, DbType.DateTime },
+                new object[]{ SqlDbType.SmallInt, DbType.Int16 },
+                new object[]{ SqlDbType.SmallMoney, DbType.Currency },
+                new object[]{ SqlDbType.Structured, DbType.Object },
+                new object[]{ SqlDbType.Text, DbType.AnsiString },
+                new object[]{ SqlDbType.Time, DbType.Time },
+                new object[]{ SqlDbType.Timestamp, DbType.Binary },
+                new object[]{ SqlDbType.TinyInt, DbType.Byte },
+                new object[]{ SqlDbType.Udt, DbType.Object },
+                new object[]{ SqlDbType.UniqueIdentifier, DbType.Guid },
+                new object[]{ SqlDbType.VarBinary, DbType.Binary },
+                new object[]{ SqlDbType.VarChar, DbType.AnsiString },
+                new object[]{ SqlDbType.Variant, DbType.Object },
+                new object[]{ SqlDbType.Xml, DbType.Xml }
+            };
+        }
+
         [Theory]
-        [InlineData(SqlDbType.BigInt, DbType.Int64)]
-        [InlineData(SqlDbType.Binary, DbType.Binary)]
-        [InlineData(SqlDbType.Bit, DbType.Boolean)]
-        [InlineData(SqlDbType.Char, DbType.AnsiStringFixedLength)]
-        [InlineData(SqlDbType.Date, DbType.Date)]
-        [InlineData(SqlDbType.DateTime, DbType.DateTime)]
-        [InlineData(SqlDbType.DateTimeOffset, DbType.DateTimeOffset)]
-        [InlineData(SqlDbType.Decimal, DbType.Decimal)]
-        [InlineData(SqlDbType.Float, DbType.Double)]
-        [InlineData(SqlDbType.Image, DbType.Binary)]
-        [InlineData(SqlDbType.Int, DbType.Int32)]
-        [InlineData(SqlDbType.Money, DbType.Currency)]
-        [InlineData(SqlDbType.NChar, DbType.StringFixedLength)]
-        [InlineData(SqlDbType.NText, DbType.String)]
-        [InlineData(SqlDbType.NVarChar, DbType.String)]
-        [InlineData(SqlDbType.Real, DbType.Single)]
-        [InlineData(SqlDbType.SmallDateTime, DbType.DateTime)]
-        [InlineData(SqlDbType.SmallInt, DbType.Int16)]
-        [InlineData(SqlDbType.SmallMoney, DbType.Currency)]
-        [InlineData(SqlDbType.Structured, DbType.Object)]
-        [InlineData(SqlDbType.Text, DbType.AnsiString)]
-        [InlineData(SqlDbType.Time, DbType.Time)]
-        [InlineData(SqlDbType.Timestamp, DbType.Binary)]
-        [InlineData(SqlDbType.TinyInt, DbType.Byte)]
-        [InlineData(SqlDbType.Udt, DbType.Object)]
-        [InlineData(SqlDbType.UniqueIdentifier, DbType.Guid)]
-        [InlineData(SqlDbType.VarBinary, DbType.Binary)]
-        [InlineData(SqlDbType.VarChar, DbType.AnsiString)]
-        [InlineData(SqlDbType.Variant, DbType.Object)]
-        [InlineData(SqlDbType.Xml, DbType.Xml)]
+        [MemberData(
+            nameof(Constructor3Data)
+#if NETFRAMEWORK
+            // .NET Framework puts system enums in something called the Global
+            // Assembly Cache (GAC), and xUnit refuses to serialize enums that
+            // live there.  So for .NET Framework, we disable enumeration of the
+            // test data to avoid warnings on the console when running tests.
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         public void Constructor3_Types(SqlDbType sqlDbType, DbType dbType)
         {
             SqlParameter p = new SqlParameter("types", sqlDbType);
@@ -286,11 +307,24 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(expected, p.SourceColumn);
         }
 
+        public static IEnumerable<object[]> Constructor6Data()
+        {
+            return new object[][]
+            {
+                new object[]{ ParameterDirection.Input, true, 0, 0, "", "", DataRowVersion.Current },
+                new object[]{ ParameterDirection.InputOutput, true, 0, 0, null, "", DataRowVersion.Default },
+                new object[]{ ParameterDirection.Output, false, 0, 255, "Col", "Col", DataRowVersion.Original },
+                new object[]{ ParameterDirection.ReturnValue, false, 99, 100, " Col ", " Col ", DataRowVersion.Proposed }
+            };
+        }
+
         [Theory]
-        [InlineData(ParameterDirection.Input, true, 0, 0, "", "", DataRowVersion.Current)]
-        [InlineData(ParameterDirection.InputOutput, true, 0, 0, null, "", DataRowVersion.Default)]
-        [InlineData(ParameterDirection.Output, false, 0, 255, "Col", "Col", DataRowVersion.Original)]
-        [InlineData(ParameterDirection.ReturnValue, false, 99, 100, " Col ", " Col ", DataRowVersion.Proposed)]
+        [MemberData(
+            nameof(Constructor6Data)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         public void Constructor6(ParameterDirection parameterDirection, bool isNullable, byte precision, byte scale, string sourceColumn, string expectedSourceColumn, DataRowVersion dataRowVersion)
         {
             SqlParameter p = new SqlParameter("", SqlDbType.Bit, int.MaxValue, parameterDirection, isNullable, precision, scale, sourceColumn, dataRowVersion, null);
@@ -303,11 +337,24 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(dataRowVersion, p.SourceVersion);
         }
 
+        public static IEnumerable<object[]> Constructor7Data()
+        {
+            return new object[][]
+            {
+                new object[]{ ParameterDirection.Input, 0, 0, null, "", DataRowVersion.Current, false, null, "", null, "", null, "" },
+                new object[]{ ParameterDirection.InputOutput, 255, 255, "", "", DataRowVersion.Default, true, "", "", "", "", "", "" },
+                new object[]{ ParameterDirection.Output, 99, 100, "Source", "Source", DataRowVersion.Original, false, "aaa", "aaa", "bbb", "bbb", "ccc", "ccc" },
+                new object[]{ ParameterDirection.ReturnValue, 100, 99, " Source ", " Source ", DataRowVersion.Proposed, true, " aaa ", " aaa ", " bbb ", " bbb ", " ccc ", " ccc " }
+            };
+        }
+
         [Theory]
-        [InlineData(ParameterDirection.Input, 0, 0, null, "", DataRowVersion.Current, false, null, "", null, "", null, "")]
-        [InlineData(ParameterDirection.InputOutput, 255, 255, "", "", DataRowVersion.Default, true, "", "", "", "", "", "")]
-        [InlineData(ParameterDirection.Output, 99, 100, "Source", "Source", DataRowVersion.Original, false, "aaa", "aaa", "bbb", "bbb", "ccc", "ccc")]
-        [InlineData(ParameterDirection.ReturnValue, 100, 99, " Source ", " Source ", DataRowVersion.Proposed, true, " aaa ", " aaa ", " bbb ", " bbb ", " ccc ", " ccc ")]
+        [MemberData(
+            nameof(Constructor7Data)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         public void Constructor7(ParameterDirection parameterDirection, byte precision, byte scale, string sourceColumn, string expectedSourceColumn, DataRowVersion dataRowVersion, bool sourceColumnNullMapping, string xmlSchemaCollectionDatabase, string expectedXmlSchemaCollectionDatabase, string xmlSchemaCollectionOwningSchema, string expectedXmlSchemaCollectionOwningSchema, string xmlSchemaCollectionName, string expectedXmlSchemaCollectionName)
         {
             SqlParameter p = new SqlParameter("", SqlDbType.Bit, int.MaxValue, parameterDirection, precision, scale, sourceColumn, dataRowVersion, sourceColumnNullMapping, null, xmlSchemaCollectionDatabase, xmlSchemaCollectionOwningSchema, xmlSchemaCollectionName);
@@ -441,7 +488,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(value, p.Value);
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         [Fact]
         public void InferType_DateOnly()
         {
@@ -1009,28 +1056,41 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(p.Value);
         }
 
+        public static IEnumerable<object[]> ParameterSupportedData()
+        {
+            return new object[][]
+            {
+                new object[]{ DbType.AnsiString, SqlDbType.VarChar },
+                new object[]{ DbType.AnsiStringFixedLength, SqlDbType.Char },
+                new object[]{ DbType.Binary, SqlDbType.VarBinary },
+                new object[]{ DbType.Boolean, SqlDbType.Bit },
+                new object[]{ DbType.Byte, SqlDbType.TinyInt },
+                new object[]{ DbType.Currency, SqlDbType.Money },
+                new object[]{ DbType.Date, SqlDbType.Date },
+                new object[]{ DbType.DateTime, SqlDbType.DateTime },
+                new object[]{ DbType.DateTime2, SqlDbType.DateTime2 },
+                new object[]{ DbType.DateTimeOffset, SqlDbType.DateTimeOffset },
+                new object[]{ DbType.Decimal, SqlDbType.Decimal },
+                new object[]{ DbType.Double, SqlDbType.Float },
+                new object[]{ DbType.Guid, SqlDbType.UniqueIdentifier },
+                new object[]{ DbType.Int16, SqlDbType.SmallInt },
+                new object[]{ DbType.Int32, SqlDbType.Int },
+                new object[]{ DbType.Int64, SqlDbType.BigInt },
+                new object[]{ DbType.Object, SqlDbType.Variant },
+                new object[]{ DbType.Single, SqlDbType.Real },
+                new object[]{ DbType.String, SqlDbType.NVarChar },
+                new object[]{ DbType.Time, SqlDbType.Time },
+                new object[]{ DbType.Xml, SqlDbType.Xml }
+            };
+        }
+        
         [Theory]
-        [InlineData(DbType.AnsiString, SqlDbType.VarChar)]
-        [InlineData(DbType.AnsiStringFixedLength, SqlDbType.Char)]
-        [InlineData(DbType.Binary, SqlDbType.VarBinary)]
-        [InlineData(DbType.Boolean, SqlDbType.Bit)]
-        [InlineData(DbType.Byte, SqlDbType.TinyInt)]
-        [InlineData(DbType.Currency, SqlDbType.Money)]
-        [InlineData(DbType.Date, SqlDbType.Date)]
-        [InlineData(DbType.DateTime, SqlDbType.DateTime)]
-        [InlineData(DbType.DateTime2, SqlDbType.DateTime2)]
-        [InlineData(DbType.DateTimeOffset, SqlDbType.DateTimeOffset)]
-        [InlineData(DbType.Decimal, SqlDbType.Decimal)]
-        [InlineData(DbType.Double, SqlDbType.Float)]
-        [InlineData(DbType.Guid, SqlDbType.UniqueIdentifier)]
-        [InlineData(DbType.Int16, SqlDbType.SmallInt)]
-        [InlineData(DbType.Int32, SqlDbType.Int)]
-        [InlineData(DbType.Int64, SqlDbType.BigInt)]
-        [InlineData(DbType.Object, SqlDbType.Variant)]
-        [InlineData(DbType.Single, SqlDbType.Real)]
-        [InlineData(DbType.String, SqlDbType.NVarChar)]
-        [InlineData(DbType.Time, SqlDbType.Time)]
-        [InlineData(DbType.Xml, SqlDbType.Xml)]
+        [MemberData(
+            nameof(ParameterSupportedData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         public void Parameter_Supported(DbType dbType, SqlDbType sqlDbType)
         {
             var parameter = new SqlParameter();
@@ -1039,12 +1099,25 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(sqlDbType, parameter.SqlDbType);
         }
 
+        public static IEnumerable<object[]> ParameterNotSupportedData()
+        {
+            return new object[][]
+            {
+                new object[]{ DbType.SByte },
+                new object[]{ DbType.UInt16 },
+                new object[]{ DbType.UInt32 },
+                new object[]{ DbType.UInt64 },
+                new object[]{ DbType.VarNumeric }
+            };
+        }
+
         [Theory]
-        [InlineData(DbType.SByte)]
-        [InlineData(DbType.UInt16)]
-        [InlineData(DbType.UInt32)]
-        [InlineData(DbType.UInt64)]
-        [InlineData(DbType.VarNumeric)]
+        [MemberData(
+            nameof(ParameterNotSupportedData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         public void Parameter_NotSupported(DbType dbType)
         {
             var parameter = new SqlParameter();
@@ -1850,6 +1923,51 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             A = long.MinValue,
             B = long.MaxValue
+        }
+
+
+        private static readonly object _parameterLegacyScaleLock = new();
+
+        [Theory]
+        [InlineData(null, 7, true)]
+        [InlineData(0, 7, true)]
+        [InlineData(1, 1, true)]
+        [InlineData(2, 2, true)]
+        [InlineData(3, 3, true)]
+        [InlineData(4, 4, true)]
+        [InlineData(5, 5, true)]
+        [InlineData(6, 6, true)]
+        [InlineData(7, 7, true)]
+        [InlineData(null, 7, false)]
+        [InlineData(0, 0, false)]
+        [InlineData(1, 1, false)]
+        [InlineData(2, 2, false)]
+        [InlineData(3, 3, false)]
+        [InlineData(4, 4, false)]
+        [InlineData(5, 5, false)]
+        [InlineData(6, 6, false)]
+        [InlineData(7, 7, false)]
+        public void SqlDateTime2Scale_Legacy(int? setScale, byte outputScale, bool legacyVarTimeZeroScaleSwitchValue)
+        {
+            lock (_parameterLegacyScaleLock)
+            {
+                using SwitchesHelper switches = new SwitchesHelper();
+                switches.LegacyVarTimeZeroScaleBehaviour =
+                    legacyVarTimeZeroScaleSwitchValue;
+
+                var parameter = new SqlParameter
+                {
+                    DbType = DbType.DateTime2
+                };
+                if (setScale.HasValue)
+                {
+                    parameter.Scale = (byte)setScale.Value;
+                }
+
+                var actualScale = (byte)typeof(SqlParameter).GetMethod("GetActualScale", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(parameter, null);
+
+                Assert.Equal(outputScale, actualScale);
+            }
         }
     }
 }

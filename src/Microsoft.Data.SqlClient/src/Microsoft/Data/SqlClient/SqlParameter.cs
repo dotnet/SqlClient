@@ -14,6 +14,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
@@ -425,7 +426,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionDatabase/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Xml)]
+        [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionDatabase
         {
             get => _xmlSchemaCollection?.Database ?? string.Empty;
@@ -433,7 +434,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionOwningSchema/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Xml)]
+        [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionOwningSchema
         {
             get => _xmlSchemaCollection?.OwningSchema ?? string.Empty;
@@ -441,7 +442,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionName/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Xml)]
+        [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionName
         {
             get => _xmlSchemaCollection?.Name ?? string.Empty;
@@ -451,7 +452,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ForceColumnEncryption/*' />
         [
         DefaultValue(false),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data)
+        ResCategory(nameof(Strings.DataCategory_Data))
         ]
         public bool ForceColumnEncryption
         {
@@ -478,7 +479,7 @@ namespace Microsoft.Data.SqlClient
         public override void ResetDbType() => ResetSqlDbType();
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ParameterName/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         public override string ParameterName
         {
             get => _parameterName ?? string.Empty;
@@ -539,7 +540,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Precision/*' />
         [
         DefaultValue((byte)0),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data)
+        ResCategory(nameof(Strings.DataCategory_Data))
         ]
         public new byte Precision
         {
@@ -552,7 +553,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Scale/*' />
         [
         DefaultValue((byte)0),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data)
+        ResCategory(nameof(Strings.DataCategory_Data))
         ]
         public new byte Scale
         {
@@ -584,12 +585,22 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool ShouldSerializeScale() => _scale != 0; // V1.0 compat, ignore _hasScale
+        private bool ShouldSerializeScale_Legacy() => _scale != 0; // V1.0 compat, ignore _hasScale
+
+        private bool ShouldSerializeScale()
+        {
+            if (LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour)
+            {
+                return ShouldSerializeScale_Legacy();
+            }
+            return _scale != 0 || (GetMetaTypeOnly().IsVarTime && HasFlag(SqlParameterFlags.HasScale));
+        }
+
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlDbType/*' />
         [
         RefreshProperties(RefreshProperties.All),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data),
+        ResCategory(nameof(Strings.DataCategory_Data)),
         DbProviderSpecificTypeProperty(true)
         ]
         public SqlDbType SqlDbType
@@ -709,7 +720,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Value/*' />
         [
         RefreshProperties(RefreshProperties.All),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data),
+        ResCategory(nameof(Strings.DataCategory_Data)),
         TypeConverter(typeof(StringConverter)),
         ]
         public override object Value
@@ -729,6 +740,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (ParameterIsSqlType)
                     {
+                        if (_sqlBufferReturnValue.VariantInternalStorageType == SqlBuffer.StorageType.Vector)
+                        {
+                            return GetVectorReturnValue();
+                        }
                         return _sqlBufferReturnValue.SqlValue;
                     }
                     return _sqlBufferReturnValue.Value;
@@ -748,10 +763,34 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private object GetVectorReturnValue()
+        {
+            var elementType = (MetaType.SqlVectorElementType)_sqlBufferReturnValue.GetVectorInfo()._vectorInfo._elementType;
+            int elementCount = _sqlBufferReturnValue.GetVectorInfo()._vectorInfo._elementCount;
+
+            if (IsNull)
+            {
+                switch (elementType)
+                {
+                    case MetaType.SqlVectorElementType.Float32:
+                        return SqlVector<float>.CreateNull(elementCount);
+                    default:
+                        throw SQL.VectorTypeNotSupported(elementType.ToString());
+                }
+            }
+            switch (elementType)
+            {
+                case MetaType.SqlVectorElementType.Float32:
+                    return new SqlVector<float>((byte[])_sqlBufferReturnValue.Value);
+                default:
+                    throw SQL.VectorTypeNotSupported(elementType.ToString());
+            }
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Direction/*' />
         [
         RefreshProperties(RefreshProperties.All),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data),
+        ResCategory(nameof(Strings.DataCategory_Data)),
         ]
         public override ParameterDirection Direction
         {
@@ -798,7 +837,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Size/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         public override int Size
         {
             get
@@ -818,8 +857,13 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw ADP.InvalidSizeValue(value);
                     }
-                    PropertyChanging();
-                    _size = value;
+
+                    // We ignore the Size property for Vector types, as it is not applicable.
+                    if (_metaType == null || _metaType.SqlDbType != SqlDbTypeExtensions.Vector)
+                    {
+                        PropertyChanging();
+                        _size = value;
+                    }
                 }
             }
         }
@@ -836,7 +880,7 @@ namespace Microsoft.Data.SqlClient
         private bool ShouldSerializeSize() => _size != 0;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumn/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Update)]
+        [ResCategory(nameof(Strings.DataCategory_Update))]
         public override string SourceColumn
         {
             get => _sourceColumn ?? string.Empty;
@@ -844,9 +888,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />   
-        [ResCategory("DataCategory_Update")]
-#if NET6_0_OR_GREATER
-        [ResDescription(StringsHelper.ResourceNames.SqlParameter_SourceColumnNullMapping)]
+        [ResCategory(nameof(Strings.DataCategory_Update))]
+#if NET
+        [ResDescription(nameof(Strings.SqlParameter_SourceColumnNullMapping))]
 #endif
         public override bool SourceColumnNullMapping
         {
@@ -855,11 +899,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ToString/*' />
-        [ResCategory("Data")]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         public override string ToString() => ParameterName;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceVersion/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Update)]
+        [ResCategory(nameof(Strings.DataCategory_Update))]
         public override DataRowVersion SourceVersion
         {
             get
@@ -1006,6 +1050,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="rawParameterName"></param>
+        // @TODO: This is only used in SqlCommand, and literally just adds a '@' at the beginning. This belongs in SqlCommand, without the append logic.
         internal static void AppendPrefixedParameterName(StringBuilder builder, string rawParameterName)
         {
             if (!string.IsNullOrEmpty(rawParameterName))
@@ -1510,7 +1555,6 @@ namespace Microsoft.Data.SqlClient
                 return ScaleInternal;
             }
 
-            // issue: how could a user specify 0 as the actual scale?
             if (GetMetaTypeOnly().IsVarTime)
             {
                 return TdsEnums.DEFAULT_VARTIME_SCALE;
@@ -1594,6 +1638,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.VarBinary:
                         case SqlDbType.Image:
                         case SqlDbType.Timestamp:
+                        case SqlDbTypeExtensions.Vector:
                             coercedSize = (!HasFlag(SqlParameterFlags.IsNull) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? (BinarySize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType))) : 0;
                             _actualSize = (ShouldSerializeSize() ? Size : 0);
                             _actualSize = ((ShouldSerializeSize() && (_actualSize <= coercedSize)) ? _actualSize : coercedSize);
@@ -1605,12 +1650,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.Udt:
                             if (!IsNull)
                             {
-#if NETFRAMEWORK
-                                //call the static function
-                                coercedSize = AssemblyCache.GetLength(val);
-#else
                                 coercedSize = SerializationHelperSql9.SizeInBytes(val);
-#endif
                             }
                             break;
                         case SqlDbType.Structured:
@@ -1892,6 +1932,13 @@ namespace Microsoft.Data.SqlClient
         {
             if (_metaType != null)
             {
+                if (_metaType.SqlDbType == SqlDbTypeExtensions.Vector &&
+                    _direction == ParameterDirection.Input &&
+                    (_value == null || _value == DBNull.Value))
+                {
+                    _value = DBNull.Value;
+                    return MetaType.GetDefaultMetaType();
+                }
                 return _metaType;
             }
             if (_value != null && DBNull.Value != _value)
@@ -1919,6 +1966,7 @@ namespace Microsoft.Data.SqlClient
                     return MetaType.GetMetaTypeFromType(valueType);
                 }
             }
+
             return MetaType.GetDefaultMetaType();
         }
 
@@ -1928,7 +1976,8 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.PrepareParameterType(cmd);
             }
-            else if (!ShouldSerializeSize() && !_metaType.IsFixed)
+            // For vector datatype we do not require size to be specified. It is inferred from the SqlParameter.Value.
+            else if (!ShouldSerializeSize() && !_metaType.IsFixed && _metaType.SqlDbType != SqlDbTypeExtensions.Vector)
             {
                 throw ADP.PrepareParameterSize(cmd);
             }
@@ -1984,7 +2033,7 @@ namespace Microsoft.Data.SqlClient
                 (SqlDbType != SqlDbType.Udt) &&
                 // BUG: (VSTFDevDiv - 479609): Output parameter with size 0 throws for XML, TEXT, NTEXT, IMAGE.
                 // NOTE: (VSTFDevDiv - 479609): Not Fixed for TEXT, NTEXT, IMAGE as these are deprecated LOB types.
-                (SqlDbType != SqlDbType.Xml) &&
+                (SqlDbType != SqlDbType.Xml && SqlDbType != SqlDbTypeExtensions.Json) &&
                 !metaType.IsVarTime
             )
             {
@@ -1994,6 +2043,13 @@ namespace Microsoft.Data.SqlClient
             if (metaType.SqlDbType != SqlDbType.Udt && Direction != ParameterDirection.Output)
             {
                 GetCoercedValue();
+            }
+
+            if (metaType.SqlDbType == SqlDbTypeExtensions.Vector && 
+                (_value == null || _value == DBNull.Value) &&
+                (Direction == ParameterDirection.Output || Direction == ParameterDirection.InputOutput))
+            {
+                throw ADP.NullOutputParameterValueForVector(_parameterName);
             }
 
             //check if the UdtTypeName is specified for Udt params
@@ -2145,6 +2201,10 @@ namespace Microsoft.Data.SqlClient
                 }
                 return sqlString.Value.Length;
             }
+            if (value is ISqlVector sqlVector)
+            {
+                return sqlVector.Size;
+            }
             if (value is SqlChars sqlChars)
             {
                 if (sqlChars.IsNull)
@@ -2191,7 +2251,13 @@ namespace Microsoft.Data.SqlClient
         {
             if (value is decimal decimalValue)
             {
-                return (byte)((decimal.GetBits(decimalValue)[3] & 0x00ff0000) >> 0x10);
+#if NET
+                Span<int> decimalBits = stackalloc int[4];
+                decimal.GetBits(decimalValue, decimalBits);
+#else
+                int[] decimalBits = decimal.GetBits(decimalValue);
+#endif
+                return (byte)((decimalBits[3] & 0x00ff0000) >> 0x10);
             }
             return 0;
         }
@@ -2306,7 +2372,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         value = new DateTimeOffset((DateTime)value);
                     }
-#if NET6_0_OR_GREATER
+#if NET
                     else if ((currentType == typeof(DateOnly)) && (destinationType.SqlDbType == SqlDbType.Date))
                     {
                         value = ((DateOnly)value).ToDateTime(new TimeOnly(0, 0));
@@ -2316,6 +2382,21 @@ namespace Microsoft.Data.SqlClient
                         value = ((TimeOnly)value).ToTimeSpan();
                     }
 #endif
+                    else if (currentType == typeof(SqlVector<float>))
+                    {
+                        value = ((ISqlVector)value).VectorPayload;
+                    }
+                    else if (currentType == typeof(string) && destinationType.SqlDbType == SqlDbTypeExtensions.Vector)
+                    {
+                        try
+                        {
+                            value = (new SqlVector<float>(JsonSerializer.Deserialize<float[]>(value as string)) as ISqlVector).VectorPayload;
+                        }
+                        catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
+                        {
+                            throw ADP.InvalidJsonStringForVector(value as string, ex);
+                        }
+                    }
                     else if (
                         TdsEnums.SQLTABLE == destinationType.TDSType &&
                         (

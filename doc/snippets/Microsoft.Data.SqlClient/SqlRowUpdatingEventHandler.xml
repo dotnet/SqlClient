@@ -18,7 +18,7 @@
           The handler may use the <see cref="T:Microsoft.Data.SqlClient.SqlRowUpdatingEventArgs" /> to influence the processing of the updates. For example, the handler may opt to skip the update of the current row or skip the update of all remaining rows. Note that the rows are updated in the order that they were received from the data source.
         </para>
         <para>
-          When you create a <see cref="T:Microsoft.Data.SqlClient.SqlRowUpdatingEventArgs" /> delegate, you identify the method that will handle the event. To associate the event with your event handler, add an instance of the delegate to the event. The event handler is called whenever the event occurs, unless you remove the delegate. For more information about event handler delegates, see <see href="/dotnet/standard/events/">Handling and Raising Events</see>.
+          When you create a <see cref="T:Microsoft.Data.SqlClient.SqlRowUpdatingEventArgs" /> delegate, you identify the method that will handle the event. To associate the event with your event handler, add an instance of the delegate to the event. The event handler is called whenever the event occurs, unless you remove the delegate. For more information about event handler delegates, see <see href="https://learn.microsoft.com/dotnet/standard/events/">Handling and Raising Events</see>.
         </para>
       </remarks>
     </SqlRowUpdatingEventHandler>

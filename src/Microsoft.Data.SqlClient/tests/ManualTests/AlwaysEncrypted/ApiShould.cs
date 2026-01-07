@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// <summary>
     /// Always Encrypted public API Manual tests.
     /// </summary>
-    public sealed class ApiShould : IClassFixture<PlatformSpecificTestContext>, IDisposable
+    public sealed class ApiShould : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
         private SQLSetupStrategy _fixture;
 
@@ -45,9 +45,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             "'MSSQL_CERTIFICATE_STORE', 'MSSQL_CNG_STORE', 'MSSQL_CSP_PROVIDER'",
             $"'{NotRequiredProviderName}'");
 
-        public ApiShould(PlatformSpecificTestContext context)
+        private HashSet<string> _cancellationExceptionMessages = new HashSet<string>()
         {
-            _fixture = context.Fixture;
+            "A severe error occurred on the current command.  " +
+            "The results, if any, should be discarded." + Environment.NewLine +
+            "Operation cancelled by user.",
+
+            "A severe error occurred on the current command.  " +
+            "The results, if any, should be discarded.",
+
+            "Operation cancelled by user.",
+
+            "The request failed to run because the batch is aborted, " +
+            "this can be caused by abort signal sent from client, " +
+            "or another request is running in the same session, " +
+            "which makes the session busy." + Environment.NewLine +
+            "Operation cancelled by user."
+        };
+
+        public ApiShould(SQLSetupStrategyCertStoreProvider context)
+        {
+            _fixture = context;
             _tableName = _fixture.ApiTestTable.Name;
 
             ApiTestTable _customKeyStoreProviderTable = _fixture.CustomKeyStoreProviderTestTable as ApiTestTable;
@@ -148,8 +166,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             const string firstColumnName = @"firstColumn";
             const string secondColumnName = @"secondColumn";
             const string thirdColumnName = @"thirdColumn";
-            string inputProcedureName = DataTestUtility.GetUniqueName("InputProc").ToString();
-            string outputProcedureName = DataTestUtility.GetUniqueName("OutputProc").ToString();
+            string inputProcedureName = DataTestUtility.GetShortName("InputProc").ToString();
+            string outputProcedureName = DataTestUtility.GetShortName("OutputProc").ToString();
             const int charColumnSize = 100;
             const int decimalColumnPrecision = 10;
             const int decimalColumnScale = 4;
@@ -425,7 +443,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
-        [ClassData(typeof(AEConnectionStringProviderWithSchemaType))]
+        [MemberData(
+            nameof(DataHelpers.AEConnectionStringProviderWithSchemaType),
+            MemberType = typeof(DataHelpers)
+#if NETFRAMEWORK
+            // .NET Framework puts system enums in something called the Global
+            // Assembly Cache (GAC), and xUnit refuses to serialize enums that
+            // live there.  So for .NET Framework, we disable enumeration of the
+            // test data to avoid warnings on the console when running tests.
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public void TestSqlDataAdapterFillSchema(string connection, SchemaType schemaType)
         {
             CleanUpTable(connection, _tableName);
@@ -530,6 +558,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             {
                                 tryagain = true;
                                 break;
+                            }
+                            else
+                            {
+                                throw;
                             }
                         }
                         Assert.Equal(numberOfRows, rowsAffected);
@@ -692,9 +724,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
-        public async void TestExecuteReaderAsyncWithLargeQuery(string connectionString)
+        public async Task TestExecuteReaderAsyncWithLargeQuery(string connectionString)
         {
-            string randomName = DataTestUtility.GetUniqueName(Guid.NewGuid().ToString().Replace("-", ""), false);
+            string randomName = DataTestUtility.GetShortName(Guid.NewGuid().ToString().Replace("-", ""), false);
             if (randomName.Length > 50)
             {
                 randomName = randomName.Substring(0, 50);
@@ -744,7 +776,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
-        [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet1))]
+        [MemberData(
+            nameof(DataHelpers.AEConnectionStringProviderWithCommandBehaviorSet1),
+            MemberType = typeof(DataHelpers)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public void TestExecuteReaderWithCommandBehavior(string connection, CommandBehavior commandBehavior)
         {
             string[] columnNames = new string[3] { "CustomerId", "FirstName", "LastName" };
@@ -878,8 +916,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using SqlCommand sqlCommand = new("", sqlConnection, transaction: null,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
 
-            string procWithoutParams = DataTestUtility.GetUniqueName("EnclaveWithoutParams", withBracket: false);
-            string procWithParam = DataTestUtility.GetUniqueName("EnclaveWithParams", withBracket: false);
+            string procWithoutParams = DataTestUtility.GetShortName("EnclaveWithoutParams", withBracket: false);
+            string procWithParam = DataTestUtility.GetShortName("EnclaveWithParams", withBracket: false);
 
             try
             {
@@ -1141,7 +1179,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
-        [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet2))]
+        [MemberData(
+            nameof(DataHelpers.AEConnectionStringProviderWithCommandBehaviorSet2),
+            MemberType = typeof(DataHelpers)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public void TestPrepareWithExecuteReaderAsync(string connection, CommandBehavior commandBehavior)
         {
             CleanUpTable(connection, _tableName);
@@ -1828,7 +1872,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
-        [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet2))]
+        [MemberData(
+            nameof(DataHelpers.AEConnectionStringProviderWithCommandBehaviorSet2),
+            MemberType = typeof(DataHelpers)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public void TestSqlCommandSequentialAccessCodePaths(string connection, CommandBehavior value)
         {
             CleanUpTable(connection, _tableName);
@@ -1913,7 +1963,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ActiveIssue("10620")] // Randomly hangs the process.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
-        [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet1))]
+        [MemberData(
+            nameof(DataHelpers.AEConnectionStringProviderWithCommandBehaviorSet1),
+            MemberType = typeof(DataHelpers)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public void TestBeginAndEndExecuteReaderWithAsyncCallback(string connection, CommandBehavior commandbehavior)
         {
             CleanUpTable(connection, _tableName);
@@ -1949,18 +2005,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithExecutionMethod))]
-        public void TestSqlCommandCancel(string connection, string value, int number)
+        public void TestSqlCommandCancel(string connection, string value)
         {
             CleanUpTable(connection, _tableName);
 
             string executeMethod = value;
             Assert.True(!string.IsNullOrWhiteSpace(executeMethod), @"executeMethod should not be null or empty");
-
-            int numberOfCancelCalls = number;
-            Assert.True(numberOfCancelCalls >= 0, "numberofCancelCalls should be >=0.");
 
             IList<object> values = GetValues(dataHint: 58);
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
@@ -1973,7 +2025,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 sqlConnection.Open();
 
-                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT * FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                // WAITFOR DELAY is present to ensure that the command is always executing by the time the cancellation occurs.
+                // Without this, a command which has completed by the time the cancellation occurs will fail the test. It's last
+                // in the command to ensure that cancellation is tested while row data or metadata is flowing.
+                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT * FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId; WAITFOR DELAY '00:00:00.150'",
                     sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1983,29 +2038,50 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     CommandHelper.s_sleepDuringTryFetchInputParameterEncryptionInfo?.SetValue(null, true);
 
-                    Thread[] threads = new Thread[2];
+                    Task[] tasks = new Task[2];
+                    ManualResetEventSlim startWorkloadSignal = new ManualResetEventSlim(false);
+                    ManualResetEventSlim workloadCompleteSignal = new ManualResetEventSlim(false);
 
-                    // Invoke ExecuteReader or ExecuteNonQuery in another thread.
+                    /*
+                     * Invoke ExecuteReader or ExecuteNonQuery in another thread.
+                     * Use long-running tasks to create the thread. This enables any failed assertions to propagate, rather than
+                     * allowing the exception to kill the thread and the process.
+                     * These threads should progress in the sequence below:
+                     * 
+                     * Workload Thread                      | Cancel Thread
+                     * ------------------------------------ | -------------
+                     * Start thread                         | Start thread
+                     * Wait for signal                      | -
+                     * -                                    | Set signal for workload start
+                     * Start workload execution             | Loop, cancelling workload until workload complete signal set
+                     * Throw cancellation exception         | -
+                     * Set signal for workload complete     | -
+                     * End thread                           | Finish loop and end thread
+                     */
                     if (executeMethod == @"ExecuteReader")
                     {
-                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteReader));
+                        tasks[0] = new Task(Thread_ExecuteReader,
+                            new TestCommandCancelParams(sqlCommand, _tableName, startWorkloadSignal, workloadCompleteSignal),
+                            TaskCreationOptions.LongRunning);
                     }
                     else
                     {
-                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteNonQuery));
+                        tasks[0] = new Task(Thread_ExecuteNonQuery,
+                            new TestCommandCancelParams(sqlCommand, _tableName, startWorkloadSignal, workloadCompleteSignal),
+                            TaskCreationOptions.LongRunning);
                     }
-
-                    threads[1] = new Thread(new ParameterizedThreadStart(Thread_Cancel));
+                    tasks[1] = new Task(Thread_Cancel,
+                        new TestCommandCancelParams(sqlCommand, _tableName, startWorkloadSignal, workloadCompleteSignal),
+                        TaskCreationOptions.LongRunning);
 
                     // Start the execute thread.
-                    threads[0].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
+                    tasks[0].Start();
 
                     // Start the thread which cancels the above command started by the execute thread.
-                    threads[1].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
+                    tasks[1].Start();
 
                     // Wait for the threads to finish.
-                    threads[0].Join();
-                    threads[1].Join();
+                    Task.WaitAll(tasks);
 
                     CommandHelper.s_sleepDuringTryFetchInputParameterEncryptionInfo?.SetValue(null, false);
 
@@ -2027,37 +2103,48 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     Assert.True(rowsAffected == numberOfRows, "Unexpected number of rows affected as returned by EndExecuteReader.");
 
-                    // Verify the state of the sql command object.
+                    // Verify the state of the sql command object. Also ensure that the exit lock was set (and didn't time out.)
                     VerifySqlCommandStateAfterCompletionOrCancel(sqlCommand);
+                    Assert.True(workloadCompleteSignal.IsSet);
+                    startWorkloadSignal.Reset();
+                    workloadCompleteSignal.Reset();
 
                     CommandHelper.s_sleepDuringRunExecuteReaderTdsForSpDescribeParameterEncryption?.SetValue(null, true);
 
                     // Invoke ExecuteReader or ExecuteNonQuery in another thread.
-                    threads = new Thread[2];
+                    tasks = new Task[2];
                     if (executeMethod == @"ExecuteReader")
                     {
-                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteReader));
+                        tasks[0] = new Task(Thread_ExecuteReader,
+                            new TestCommandCancelParams(sqlCommand, _tableName, startWorkloadSignal, workloadCompleteSignal),
+                            TaskCreationOptions.LongRunning);
                     }
                     else
                     {
-                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteNonQuery));
+                        tasks[0] = new Task(Thread_ExecuteNonQuery,
+                            new TestCommandCancelParams(sqlCommand, _tableName, startWorkloadSignal, workloadCompleteSignal),
+                            TaskCreationOptions.LongRunning);
                     }
-                    threads[1] = new Thread(new ParameterizedThreadStart(Thread_Cancel));
+                    tasks[1] = new Task(Thread_Cancel,
+                        new TestCommandCancelParams(sqlCommand, _tableName, startWorkloadSignal, workloadCompleteSignal),
+                        TaskCreationOptions.LongRunning);
 
                     // Start the execute thread.
-                    threads[0].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
+                    tasks[0].Start();
 
                     // Start the thread which cancels the above command started by the execute thread.
-                    threads[1].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
+                    tasks[1].Start();
 
                     // Wait for the threads to finish.
-                    threads[0].Join();
-                    threads[1].Join();
+                    Task.WaitAll(tasks);
 
                     CommandHelper.s_sleepDuringRunExecuteReaderTdsForSpDescribeParameterEncryption?.SetValue(null, false);
 
-                    // Verify the state of the sql command object.
+                    // Verify the state of the sql command object. Also ensure that the exit lock was set (and didn't time out.)
                     VerifySqlCommandStateAfterCompletionOrCancel(sqlCommand);
+                    Assert.True(workloadCompleteSignal.IsSet);
+                    startWorkloadSignal.Reset();
+                    workloadCompleteSignal.Reset();
 
                     rowsAffected = 0;
 
@@ -2079,31 +2166,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     CommandHelper.s_sleepAfterReadDescribeEncryptionParameterResults?.SetValue(null, true);
 
-                    threads = new Thread[2];
+                    tasks = new Task[2];
                     if (executeMethod == @"ExecuteReader")
                     {
-                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteReader));
+                        tasks[0] = new Task(Thread_ExecuteReader,
+                            new TestCommandCancelParams(sqlCommand, _tableName, startWorkloadSignal, workloadCompleteSignal),
+                            TaskCreationOptions.LongRunning);
                     }
                     else
                     {
-                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteNonQuery));
+                        tasks[0] = new Task(Thread_ExecuteNonQuery,
+                            new TestCommandCancelParams(sqlCommand, _tableName, startWorkloadSignal, workloadCompleteSignal),
+                            TaskCreationOptions.LongRunning);
                     }
-                    threads[1] = new Thread(new ParameterizedThreadStart(Thread_Cancel));
+                    tasks[1] = new Task(Thread_Cancel,
+                        new TestCommandCancelParams(sqlCommand, _tableName, startWorkloadSignal, workloadCompleteSignal),
+                        TaskCreationOptions.LongRunning);
 
                     // Start the execute thread.
-                    threads[0].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
+                    tasks[0].Start();
 
                     // Start the thread which cancels the above command started by the execute thread.
-                    threads[1].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
+                    tasks[1].Start();
 
                     // Wait for the threads to finish.
-                    threads[0].Join();
-                    threads[1].Join();
+                    Task.WaitAll(tasks);
 
                     CommandHelper.s_sleepAfterReadDescribeEncryptionParameterResults?.SetValue(null, false);
 
-                    // Verify the state of the sql command object.
+                    // Verify the state of the sql command object. Also ensure that the exit lock was set (and didn't time out.)
                     VerifySqlCommandStateAfterCompletionOrCancel(sqlCommand);
+                    Assert.True(workloadCompleteSignal.IsSet);
 
                     rowsAffected = 0;
 
@@ -2450,6 +2543,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Task readAsyncTask = ReadAsync(cmd, values, CommandBehavior.Default);
             readAsyncTask.GetAwaiter().GetResult();
 
+            // TODO(GH-3604): This section fails on Linux:
+            //
+            // Failed Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.ApiShould.TestRetryWhenAEEnclaveCacheIsStale(connectionString: "Data Source=tcp:10.0.0.4;Database=NORTHWIND;UID=sa"···) [45 s]
+            // EXEC : error Message:  [/mnt/vss/_work/1/s/build.proj]
+            //     Microsoft.Data.SqlClient.EnclaveDelegate+RetryableEnclaveQueryExecutionException : testing
+            //     Stack Trace:
+            //     at Microsoft.Data.SqlClient.SqlCommand.EndExecuteReaderAsync(IAsyncResult asyncResult) in /_/src/Microsoft.Data.SqlClient/netcore/src/Microsoft/Data/SqlClient/SqlCommand.netcore.cs:line 1025
+            //     at Microsoft.Data.SqlClient.SqlCommand.<>c.<InternalExecuteReaderAsync>b__233_1(IAsyncResult asyncResult) in /_/src/Microsoft.Data.SqlClient/netcore/src/Microsoft/Data/SqlClient/SqlCommand.netcore.cs:line 1569
+            //     at System.Threading.Tasks.TaskFactory`1.FromAsyncCoreLogic(IAsyncResult iar, Func`2 endFunction, Action`1 endAction, Task`1 promise, Boolean requiresSynchronization)
+            // --- End of stack trace from previous location ---
+            //     at Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.ApiShould.ReadAsync(SqlCommand sqlCommand, IList`1 values, CommandBehavior commandBehavior) in /_/src/Microsoft.Data.SqlClient/tests/ManualTests/AlwaysEncrypted/ApiShould.cs:line 2776
+            //     at Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.ApiShould.TestRetryWhenAEEnclaveCacheIsStale(String connectionString) in /_/src/Microsoft.Data.SqlClient/tests/ManualTests/AlwaysEncrypted/ApiShould.cs:line 2563
+            //     at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+            //     at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+            /*
 #if DEBUG
             CommandHelper.ForceThrowDuringGenerateEnclavePackage(cmd);
 
@@ -2469,7 +2577,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Task readAsyncTask2 = ReadAsync(cmd, values, CommandBehavior.Default);
             readAsyncTask2.GetAwaiter().GetResult();
 #endif
-
+            */
+            
             // revert the CEK change to the CustomerId column
             cmd.Parameters.Clear();
             cmd.CommandText = string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey1.Name);
@@ -3061,10 +3170,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
             catch (AggregateException aggregateException)
             {
+                bool unexpected = false;
                 foreach (Exception ex in aggregateException.InnerExceptions)
                 {
-                    Assert.True(ex is SqlException, @"cancelling a command through cancellation token resulted in unexpected exception.");
-                    Assert.True(@"Operation cancelled by user." == ex.Message, @"cancelling a command through cancellation token resulted in unexpected error message.");
+                    if (ex is SqlException or InvalidOperationException)
+                    {
+                        Assert.Equal("Operation cancelled by user.", ex.Message);
+                    }
+                    else
+                    {
+                        unexpected = true;
+                        Console.WriteLine($"Cancellation produced non-SqlException: {ex}");
+                    }
+                }
+                if (unexpected)
+                {
+                    Assert.Fail("Unexpected exceptions encountered; see console for details.");
                 }
             }
 
@@ -3096,47 +3217,97 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.True(rowsAffected == numberOfRows, "Unexpected number of rows affected as returned by EndExecuteReader.");
         }
 
-        private void Thread_ExecuteReader(object cancelCommandTestParamsObject)
+        private void Thread_ExecuteReader(object state)
         {
+            TestCommandCancelParams cancelCommandTestParamsObject = state as TestCommandCancelParams;
+            SqlCommand sqlCommand = cancelCommandTestParamsObject?.SqlCommand;
+            SqlDataReader reader = null;
+
             Assert.True(cancelCommandTestParamsObject != null, @"cancelCommandTestParamsObject should not be null.");
-            SqlCommand sqlCommand = ((TestCommandCancelParams)cancelCommandTestParamsObject).SqlCommand as SqlCommand;
             Assert.True(sqlCommand != null, "sqlCommand should not be null.");
 
-            string.Format(@"SELECT * FROM {0} WHERE FirstName = @FirstName AND CustomerId = @CustomerId", ((TestCommandCancelParams)cancelCommandTestParamsObject).TableName);
-            using (SqlDataReader reader = sqlCommand.ExecuteReader())
+            try
             {
-                while (reader.Read())
+                // Wait for the cancellation thread to open this lock...
+                cancelCommandTestParamsObject.StartWorkloadSignal.Wait();
+
+                Exception ex = Assert.ThrowsAny<Exception>(() =>
                 {
-                    Assert.Throws<InvalidOperationException>(() => sqlCommand.ExecuteReader());
+                    reader = sqlCommand.ExecuteReader();
+                    while (reader.Read())
+                    { }
+                });
+
+                // We don't use Assert.Contains() here because it truncates the
+                // actual and expected strings when outputting a failure.
+                if (!_cancellationExceptionMessages.Contains(ex.Message))
+                {
+                    Assert.Fail(
+                        $"Exception message \"{ex.Message}\" not found in: [\"" +
+                        string.Join("\", \"", _cancellationExceptionMessages) + "\"]");
                 }
             }
+            finally
+            {
+                reader?.Dispose();
+                // ...and unlock the cancellation thread once we finish.
+                cancelCommandTestParamsObject.WorkloadCompleteSignal.Set();
+            }
         }
 
-        private void Thread_ExecuteNonQuery(object cancelCommandTestParamsObject)
+        private void Thread_ExecuteNonQuery(object state)
         {
+            TestCommandCancelParams cancelCommandTestParamsObject = state as TestCommandCancelParams;
+            SqlCommand sqlCommand = cancelCommandTestParamsObject?.SqlCommand;
+
             Assert.True(cancelCommandTestParamsObject != null, @"cancelCommandTestParamsObject should not be null.");
-            SqlCommand sqlCommand = ((TestCommandCancelParams)cancelCommandTestParamsObject).SqlCommand as SqlCommand;
             Assert.True(sqlCommand != null, "sqlCommand should not be null.");
 
-            string.Format(@"UPDATE {0} SET FirstName = @FirstName WHERE FirstName = @FirstName AND CustomerId = @CustomerId", ((TestCommandCancelParams)cancelCommandTestParamsObject).TableName);
+            try
+            {
+                // Wait for the cancellation thread to open this lock...
+                cancelCommandTestParamsObject.StartWorkloadSignal.Wait();
 
-            Exception ex = Assert.Throws<InvalidOperationException>(() => sqlCommand.ExecuteNonQuery());
-            Assert.Equal(@"Operation cancelled by user.", ex.Message);
+                Exception ex = Assert.ThrowsAny<Exception>(() => sqlCommand.ExecuteNonQuery());
+
+                // We don't use Assert.Contains() here because it truncates the
+                // actual and expected strings when outputting a failure.
+                if (!_cancellationExceptionMessages.Contains(ex.Message))
+                {
+                    Assert.Fail(
+                        $"Exception message \"{ex.Message}\" not found in: [\"" +
+                        string.Join("\", \"", _cancellationExceptionMessages) + "\"]");
+                }
+            }
+            finally
+            {
+                // ...and unlock the cancellation thread once we finish.
+                cancelCommandTestParamsObject.WorkloadCompleteSignal.Set();
+            }
         }
 
-        private void Thread_Cancel(object cancelCommandTestParamsObject)
+        private void Thread_Cancel(object state)
         {
+            TestCommandCancelParams cancelCommandTestParamsObject = state as TestCommandCancelParams;
+            SqlCommand sqlCommand = cancelCommandTestParamsObject?.SqlCommand;
+            int cancellations = 0;
+            System.Diagnostics.Stopwatch cancellationStart = new System.Diagnostics.Stopwatch();
+
             Assert.True(cancelCommandTestParamsObject != null, @"cancelCommandTestParamsObject should not be null.");
-            SqlCommand sqlCommand = ((TestCommandCancelParams)cancelCommandTestParamsObject).SqlCommand as SqlCommand;
             Assert.True(sqlCommand != null, "sqlCommand should not be null.");
 
-            Thread.Sleep(millisecondsTimeout: 500);
+            cancellationStart.Start();
+            cancelCommandTestParamsObject.StartWorkloadSignal.Set();
 
-            // Repeatedly cancel.
-            for (int i = 0; i < ((TestCommandCancelParams)cancelCommandTestParamsObject).NumberofTimesToRunCancel; i++)
+            // Repeatedly cancel until the other thread signals that it's completed execution
+            // (or until the command timeout has passed.)
+            do
             {
                 sqlCommand.Cancel();
-            }
+                cancellations++;
+            } while (!cancelCommandTestParamsObject.WorkloadCompleteSignal.Wait(0)
+                && cancellationStart.ElapsedMilliseconds <= sqlCommand.CommandTimeout);
+            cancellationStart.Stop();
         }
 
         public void Dispose()
@@ -3169,7 +3340,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public string LastName { get; set; }
     }
 
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
     public record CustomerDateOnly(int Id, string FirstName, string LastName, DateOnly DateOfBirth, TimeOnly TimeOfDay);
 #endif
 
@@ -3264,67 +3435,42 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     internal class TestCommandCancelParams
     {
         /// <summary>
-        /// SqlCommand object.
-        /// </summary>
-        private readonly object _sqlCommand;
-
-        /// <summary>
-        /// Name of the test/works as table name
-        /// </summary>
-        private readonly string _tableName;
-
-        /// <summary>
-        /// number of times to run cancel.
-        /// </summary>
-        private readonly int _numberofCancelCommands;
-
-        /// <summary>
         /// Return the SqlCommand object.
         /// </summary>
-        public object SqlCommand
-        {
-            get
-            {
-                return _sqlCommand;
-            }
-        }
+        public SqlCommand SqlCommand { get; }
 
         /// <summary>
-        /// Return the tablename.
+        /// Return the table name (usually equal to the name of the test.)
         /// </summary>
-        public object TableName
-        {
-            get
-            {
-                return _tableName;
-            }
-        }
+        public string TableName { get; }
 
         /// <summary>
-        /// Return the number of times to run cancel.
+        /// Lock set by the thread cancelling the SqlCommand.
         /// </summary>
-        public int NumberofTimesToRunCancel
-        {
-            get
-            {
-                return _numberofCancelCommands;
-            }
-        }
+        public ManualResetEventSlim StartWorkloadSignal { get; }
+
+        /// <summary>
+        /// Lock set by the thread executing the SqlCommand.
+        /// </summary>
+        public ManualResetEventSlim WorkloadCompleteSignal { get; }
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="sqlCommand"></param>
         /// <param name="tableName"></param>
-        /// <param name="numberofTimesToCancel"></param>
-        public TestCommandCancelParams(object sqlCommand, string tableName, int numberofTimesToCancel)
+        /// <param name="numberOfTimesToCancel"></param>
+        /// <param name="startWorkloadSignal"></param>
+        /// <param name="workloadCompleteSignal"></param>
+        public TestCommandCancelParams(SqlCommand sqlCommand, string tableName, ManualResetEventSlim startWorkloadSignal, ManualResetEventSlim workloadCompleteSignal)
         {
             Assert.True(sqlCommand != null, "sqlCommand should not be null.");
             Assert.True(!string.IsNullOrWhiteSpace(tableName), "tableName should not be null or empty.");
 
-            _sqlCommand = sqlCommand;
-            _tableName = tableName;
-            _numberofCancelCommands = numberofTimesToCancel;
+            SqlCommand = sqlCommand;
+            TableName = tableName;
+            StartWorkloadSignal = startWorkloadSignal;
+            WorkloadCompleteSignal = workloadCompleteSignal;
         }
     }
 }

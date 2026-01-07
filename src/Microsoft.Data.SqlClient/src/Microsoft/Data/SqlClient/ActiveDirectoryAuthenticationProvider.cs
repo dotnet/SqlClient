@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Identity.Client;
 #if INTERACTIVE_AUTH
@@ -118,7 +119,9 @@ namespace Microsoft.Data.SqlClient
         public override bool IsSupported(SqlAuthenticationMethod authentication)
         {
             return authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated
+            #pragma warning disable 0618 // Type or member is obsolete
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
+            #pragma warning restore 0618 // Type or member is obsolete
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
@@ -186,7 +189,7 @@ namespace Microsoft.Data.SqlClient
              */
             string redirectUri = s_nativeClientRedirectUri;
 
-#if NET6_0_OR_GREATER
+#if NET
             if (parameters.AuthenticationMethod != SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
             {
                 redirectUri = "http://localhost";
@@ -346,10 +349,95 @@ namespace Microsoft.Data.SqlClient
 #endif
                 default:
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | {0} authentication mode not supported by ActiveDirectoryAuthenticationProvider class.", parameters.AuthenticationMethod);
-                        throw SQL.UnsupportedAuthenticationSpecified(parameters.AuthenticationMethod);
+                        // The AcquireTokenByIntegratedWindowsAuth method is marked as obsolete in MSAL.NET
+                        // but it is still a supported way to acquire tokens for Active Directory Integrated authentication.
+#pragma warning disable CS0618 // Type or member is obsolete
+                        result = await app.AcquireTokenByIntegratedWindowsAuth(scopes)
+#pragma warning restore CS0618 // Type or member is obsolete
+                            .WithCorrelationId(parameters.ConnectionId)
+                            .WithUsername(parameters.UserId)
+                            .ExecuteAsync(cancellationToken: cts.Token)
+                            .ConfigureAwait(false);
                     }
+                    else
+                    {
+#pragma warning disable CS0618 // Type or member is obsolete
+                        result = await app.AcquireTokenByIntegratedWindowsAuth(scopes)
+#pragma warning restore CS0618 // Type or member is obsolete
+                            .WithCorrelationId(parameters.ConnectionId)
+                            .ExecuteAsync(cancellationToken: cts.Token)
+                            .ConfigureAwait(false);
+                    }
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Integrated auth mode. Expiry Time: {0}", result?.ExpiresOn);
+                }
             }
+            #pragma warning disable 0618 // Type or member is obsolete
+            else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
+            #pragma warning restore 0618 // Type or member is obsolete
+            {
+                string pwCacheKey = GetAccountPwCacheKey(parameters);
+                object previousPw = s_accountPwCache.Get(pwCacheKey);
+                byte[] currPwHash = GetHash(parameters.Password);
+
+                if (previousPw != null &&
+                    previousPw is byte[] previousPwBytes &&
+                    // Only get the cached token if the current password hash matches the previously used password hash
+                    AreEqual(currPwHash, previousPwBytes))
+                {
+                    result = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
+                }
+
+                if (result == null)
+                {
+#pragma warning disable CS0618 // Type or member is obsolete
+                    result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
+#pragma warning restore CS0618 // Type or member is obsolete
+                       .WithCorrelationId(parameters.ConnectionId)
+                       .ExecuteAsync(cancellationToken: cts.Token)
+                       .ConfigureAwait(false);
+
+                    // We cache the password hash to ensure future connection requests include a validated password
+                    // when we check for a cached MSAL account. Otherwise, a connection request with the same username
+                    // against the same tenant could succeed with an invalid password when we re-use the cached token.
+                    using (ICacheEntry entry = s_accountPwCache.CreateEntry(pwCacheKey))
+                    {
+                        entry.Value = GetHash(parameters.Password);
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(s_accountPwCacheTtlInHours);
+                    }
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Password auth mode. Expiry Time: {0}", result?.ExpiresOn);
+                }
+            }
+            else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
+                parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
+            {
+                try
+                {
+                    result = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (silent) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
+                }
+                catch (MsalUiRequiredException)
+                {
+                    // An 'MsalUiRequiredException' is thrown in the case where an interaction is required with the end user of the application,
+                    // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired),
+                    // or the user needs to perform two factor authentication.
+                    result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback).ConfigureAwait(false);
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
+                }
+
+                if (result == null)
+                {
+                    // If no existing 'account' is found, we request user to sign in interactively.
+                    result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback).ConfigureAwait(false);
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
+                }
+            }
+            else
+            {
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | {0} authentication mode not supported by ActiveDirectoryAuthenticationProvider class.", parameters.AuthenticationMethod);
+                throw SQL.UnsupportedAuthenticationSpecified(parameters.AuthenticationMethod);
+            }
+
+            return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
         }
 
         private static async Task<AuthenticationResult> TryAcquireTokenSilent(IPublicClientApplication app, SqlAuthenticationParameters parameters,
@@ -416,7 +504,7 @@ namespace Microsoft.Data.SqlClient
                 if (interactiveAuthStateObject.authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive)
                 {
                     CancellationTokenSource ctsInteractive = new();
-#if NET6_0_OR_GREATER
+#if NET
                     /*
                      * On .NET Core, MSAL will start the system browser as a separate process. MSAL does not have control over this browser,
                      * but once the user finishes authentication, the web page is redirected in such a way that MSAL can intercept the Uri.
@@ -620,16 +708,28 @@ namespace Microsoft.Data.SqlClient
 
         private IPublicClientApplication CreateClientAppInstance(PublicClientAppKey publicClientAppKey)
         {
-            return PublicClientApplicationBuilder.Create(publicClientAppKey._applicationClientId)
-            .WithAuthority(publicClientAppKey._authority)
-            .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
-            .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
-            .WithRedirectUri(publicClientAppKey._redirectUri)
+            PublicClientApplicationBuilder builder = PublicClientApplicationBuilder
+                .CreateWithApplicationOptions(new PublicClientApplicationOptions
+                {
+                    ClientId = publicClientAppKey._applicationClientId,
+                    ClientName = DbConnectionStringDefaults.ApplicationName,
+                    ClientVersion = Common.ADP.GetAssemblyVersion().ToString(),
+                    RedirectUri = publicClientAppKey._redirectUri,
 #if INTERACTIVE_AUTH
-            .WithParentActivityOrWindow(ParentActivityOrWindow)
-            .WithBroker(new BrokerOptions(BrokerOptions.OperatingSystems.Windows))
+                    ParentActivityOrWindow = ParentActivityOrWindow
+                    BrokerOptions = new BrokerOptions(BrokerOptions.OperatingSystems.Windows)
 #endif
-            .Build();
+                })
+                .WithAuthority(publicClientAppKey._authority);
+            
+            #if NETFRAMEWORK
+            if (_iWin32WindowFunc is not null)
+            {
+                builder.WithParentActivityOrWindow(_iWin32WindowFunc);
+            }
+            #endif
+
+            return builder.Build();
         }
 
         private static TokenCredentialData CreateTokenCredentialInstance(TokenCredentialKey tokenCredentialKey, string secret)
@@ -647,11 +747,34 @@ namespace Microsoft.Data.SqlClient
                 if (tokenCredentialKey._clientId is not null)
                 {
                     defaultAzureCredentialOptions.ManagedIdentityClientId = tokenCredentialKey._clientId;
+#pragma warning disable CS0618 // Type or member is obsolete
                     defaultAzureCredentialOptions.SharedTokenCacheUsername = tokenCredentialKey._clientId;
+#pragma warning restore CS0618 // Type or member is obsolete
                     defaultAzureCredentialOptions.WorkloadIdentityClientId = tokenCredentialKey._clientId;
                 }
 
-                return new TokenCredentialData(new DefaultAzureCredential(defaultAzureCredentialOptions), GetHash(secret));
+                // SqlClient is a library and provides support to acquire access
+                // token using 'DefaultAzureCredential' on user demand when they
+                // specify 'Authentication = Active Directory Default' in
+                // connection string.
+                //
+                // Default Azure Credential is instantiated by the calling
+                // application when using "Active Directory Default"
+                // authentication code to connect to Azure SQL instance.
+                // SqlClient is a library, doesn't instantiate the credential
+                // without running application instructions.
+                //
+                // Note that CodeQL suppression support can only detect
+                // suppression comments that appear immediately above the
+                // flagged statement, or appended to the end of the statement.
+                // Multi-line justifications are not supported.
+                //
+                // https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/codeql/codeql-semmle#guidance-on-suppressions
+                //
+                // CodeQL [SM05137] See above for justification.
+                DefaultAzureCredential cred = new(defaultAzureCredentialOptions);
+
+                return new TokenCredentialData(cred, GetHash(secret));
             }
 
             TokenCredentialOptions tokenCredentialOptions = new() { AuthorityHost = new Uri(tokenCredentialKey._authority) };

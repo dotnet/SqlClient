@@ -5,117 +5,31 @@
         Defines the mapping between a column in a <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance's data source and a column in the instance's destination table.
       </summary>
       <remarks>
-        <para>
-          Column mappings define the mapping between data source and the target table.
-        </para>
-        <para>
-          If mappings are not defined - that is, the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings" /> collection is empty - the columns are mapped implicitly based on ordinal position. For this to work, source and target schemas must match. If they do not, an <see cref="T:System.InvalidOperationException" /> will be thrown.
-        </para>
-        <para>
-          If the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings" /> collection is not empty, not every column present in the data source has to be specified. Those not mapped by the collection are ignored.
-        </para>
-        <para>
-          You can refer to source and target columns by either name or ordinal. You can also mix by-name and by-ordinal column references in the same mappings collection.
-        </para>
+        <format type="text/markdown">
+          <![CDATA[  
+Column mappings define the mapping between data source and the target table.
+
+If mappings are not defined - that is, the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings%2A> collection is empty - the columns are mapped implicitly based on ordinal position. For this to work, source and target schemas must match. If they do not, an <xref:System.InvalidOperationException> will be thrown.
+
+If the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings%2A> collection is not empty, not every column present in the data source has to be specified. Those not mapped by the collection are ignored.
+
+You can refer to source and target columns by either name or ordinal. You can also mix by-name and by-ordinal column references in the same mappings collection.
+
+]]></format>
       </remarks>
       <example>
-        <para>
-          The following example bulk copies data from a source table in the <b>AdventureWorks</b>
-          sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, and each destination column is in the same ordinal position as its corresponding source column, the column names do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using<b>SqlBulkCopy</b>only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <!-- SqlBulkCopy_ColumnMapping -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
-          
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoDifferentColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
-          
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, ProductNumber FROM Production.Product;",
-                          sourceConnection);
-                      SqlDataReader reader = commandSourceData.ExecuteReader();
-          
-                      // Set up the bulk copy object.
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                      {
-                          bulkCopy.DestinationTableName = "dbo.BulkCopyDemoDifferentColumns";
-          
-                          // Set up the column mappings by name.
-                          SqlBulkCopyColumnMapping mapID =
-                              new SqlBulkCopyColumnMapping("ProductID", "ProdID");
-                          bulkCopy.ColumnMappings.Add(mapID);
-          
-                          SqlBulkCopyColumnMapping mapName =
-                              new SqlBulkCopyColumnMapping("Name", "ProdName");
-                          bulkCopy.ColumnMappings.Add(mapName);
-          
-                          SqlBulkCopyColumnMapping mapNumber =
-                              new SqlBulkCopyColumnMapping("ProductNumber", "ProdNum");
-                          bulkCopy.ColumnMappings.Add(mapNumber);
-          
-                          // Write from the source to the destination.
-                          try
-                          {
-                              bulkCopy.WriteToServer(reader);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                          finally
-                          {
-                              // Close the SqlDataReader. The SqlBulkCopy
-                              // object is automatically closed at the end
-                              // of the using block.
-                              reader.Close();
-                          }
-                      }
-          
-                      // Perform a final count on the destination 
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                  }
-              }
-          
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+        <format type="text/markdown">
+          <![CDATA[  
+The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, and each destination column is in the same ordinal position as its corresponding source column, the column names do not match. <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping> objects are used to create a column map for the bulk copy.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.ColumnMapping#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMapping.cs#1)]
+
+]]></format>
       </example>
     </SqlBulkCopyColumnMapping>
     <ctor name="default">
@@ -126,102 +40,16 @@
         If you use this constructor, you must then define the source for the mapping using the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceColumn" /> property or the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceOrdinal" /> property, and define the destination for the mapping using the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationColumn" /> property or the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationOrdinal" /> property.
       </remarks>
       <example>
-        <para>
-          The following example bulk copies data from a source table in the <b>AdventureWorks</b>  sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <!-- SqlBulkCopy_ColumnMapping -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
-          
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoDifferentColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
-          
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, ProductNumber FROM Production.Product;",
-                          sourceConnection);
-                      SqlDataReader reader = commandSourceData.ExecuteReader();
-          
-                      // Set up the bulk copy object.
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                      {
-                          bulkCopy.DestinationTableName = "dbo.BulkCopyDemoDifferentColumns";
-          
-                          // Set up the column mappings by name.
-                          SqlBulkCopyColumnMapping mapID =
-                              new SqlBulkCopyColumnMapping("ProductID", "ProdID");
-                          bulkCopy.ColumnMappings.Add(mapID);
-          
-                          SqlBulkCopyColumnMapping mapName =
-                              new SqlBulkCopyColumnMapping("Name", "ProdName");
-                          bulkCopy.ColumnMappings.Add(mapName);
-          
-                          SqlBulkCopyColumnMapping mapNumber =
-                              new SqlBulkCopyColumnMapping("ProductNumber", "ProdNum");
-                          bulkCopy.ColumnMappings.Add(mapNumber);
-          
-                          // Write from the source to the destination.
-                          try
-                          {
-                              bulkCopy.WriteToServer(reader);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                          finally
-                          {
-                              // Close the SqlDataReader. The SqlBulkCopy
-                              // object is automatically closed at the end
-                              // of the using block.
-                              reader.Close();
-                          }
-                      }
-          
-                      // Perform a final count on the destination 
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                  }
-              }
-          
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+        <format type="text/markdown">
+          <![CDATA[  
+The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping> objects are used to create a column map for the bulk copy.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.ColumnMapping#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMapping.cs#1)]
+
+]]></format>
       </example>
     </ctor>
     <ctor name="sourceColumnOrdinalIntegerAndDestinationOrdinalInteger">
@@ -235,107 +63,17 @@
         Creates a new column mapping, using column ordinals to refer to source and destination columns.
       </summary>
       <example>
-        <para>
-          The following example bulk copies data from a source table in the <b>AdventureWorks</b>  sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy based on the ordinal positions of the columns.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <!-- SqlBulkCopy_ColumnMappingOrdinal -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection =
-                             new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
-          
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM " +
-                          "dbo.BulkCopyDemoDifferentColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
-          
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, " +
-                          "ProductNumber " +
-                          "FROM Production.Product;", sourceConnection);
-                      SqlDataReader reader =
-                          commandSourceData.ExecuteReader();
-          
-                      // Set up the bulk copy object.
-                      using (SqlBulkCopy bulkCopy =
-                                 new SqlBulkCopy(connectionString))
-                      {
-                          bulkCopy.DestinationTableName = "dbo.BulkCopyDemoDifferentColumns";
-          
-                          // Set up the column mappings by ordinal.
-                          SqlBulkCopyColumnMapping columnMapID =
-                              new SqlBulkCopyColumnMapping(0, 0);
-                          bulkCopy.ColumnMappings.Add(columnMapID);
-          
-                          SqlBulkCopyColumnMapping columnMapName =
-                              new SqlBulkCopyColumnMapping(1, 2);
-                          bulkCopy.ColumnMappings.Add(columnMapName);
-          
-                          SqlBulkCopyColumnMapping columnMapNumber =
-                              new SqlBulkCopyColumnMapping(2, 1);
-                          bulkCopy.ColumnMappings.Add(columnMapNumber);
-          
-                          // Write from the source to the destination.
-                          try
-                          {
-                              bulkCopy.WriteToServer(reader);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                          finally
-                          {
-                              // Close the SqlDataReader. The SqlBulkCopy
-                              // object is automatically closed at the end
-                              // of the using block.
-                              reader.Close();
-                          }
-                      }
-          
-                      // Perform a final count on the destination 
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                  }
-              }
-          
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+        <format type="text/markdown">
+          <![CDATA[  
+The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping> objects are used to create a column map for the bulk copy based on the ordinal positions of the columns.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.ColumnMappingOrdinal#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingOrdinal.cs#1)]
+]]></format>
       </example>
     </ctor>
     <ctor name="sourceColumnOrdinalIntegerAndDestinationColumnString">
@@ -349,107 +87,18 @@
         Creates a new column mapping, using a column ordinal to refer to the source column and a column name for the target column.
       </summary>
       <example>
-        <para>
-          The following example bulk copies data from a source table in the <b>AdventureWorks</b> sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <!-- SqlBulkCopy_ColumnMappingOrdinalName -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
-          
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM " +
-                          "dbo.BulkCopyDemoDifferentColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
-          
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, " +
-                          "ProductNumber " +
-                          "FROM Production.Product;", sourceConnection);
-                      SqlDataReader reader =
-                          commandSourceData.ExecuteReader();
-          
-                      // Set up the bulk copy object.
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                      {
-                          bulkCopy.DestinationTableName =
-                              "dbo.BulkCopyDemoDifferentColumns";
-          
-                          // Set up the column mappings by ordinal and name.
-                          SqlBulkCopyColumnMapping columnMapID =
-                              new SqlBulkCopyColumnMapping(0, "ProdID");
-                          bulkCopy.ColumnMappings.Add(columnMapID);
-          
-                          SqlBulkCopyColumnMapping columnMapName =
-                              new SqlBulkCopyColumnMapping(1, "ProdName");
-                          bulkCopy.ColumnMappings.Add(columnMapName);
-          
-                          SqlBulkCopyColumnMapping columnMapNumber =
-                              new SqlBulkCopyColumnMapping(2, "ProdNum");
-                          bulkCopy.ColumnMappings.Add(columnMapNumber);
-          
-                          // Write from the source to the destination.
-                          try
-                          {
-                              bulkCopy.WriteToServer(reader);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                          finally
-                          {
-                              // Close the SqlDataReader. The SqlBulkCopy
-                              // object is automatically closed at the end
-                              // of the using block.
-                              reader.Close();
-                          }
-                      }
-          
-                      // Perform a final count on the destination 
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                  }
-              }
-          
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }          
-        </code>
+        <format type="text/markdown">
+          <![CDATA[  
+The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping> objects are used to create a column map for the bulk copy.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.ColumnMappingOrdinalName#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingOrdinalName.cs#1)]
+
+]]></format>
       </example>
     </ctor>
     <ctor name="sourceColumnStringAndDestinationOrdinalInteger">
@@ -463,106 +112,18 @@
         Creates a new column mapping, using a column name to refer to the source column and a column ordinal for the target column.
       </summary>
       <example>
-        <para>
-          The following example bulk copies data from a source table in the <b>AdventureWorks</b> sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <!-- SqlBulkCopy_ColumnMappingNameOrdinal -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
-          
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM " +
-                          "dbo.BulkCopyDemoDifferentColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
-          
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, " +
-                          "ProductNumber " +
-                          "FROM Production.Product;", sourceConnection);
-                      SqlDataReader reader =
-                          commandSourceData.ExecuteReader();
-          
-                      // Set up the bulk copy object.
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                      {
-                          bulkCopy.DestinationTableName =
-                              "dbo.BulkCopyDemoDifferentColumns";
-          
-                          // Set up the column mappings by name and ordinal.
-                          SqlBulkCopyColumnMapping columnMapID =
-                              new SqlBulkCopyColumnMapping("ProductID", 0);
-                          bulkCopy.ColumnMappings.Add(columnMapID);
-          
-                          SqlBulkCopyColumnMapping columnMapName =
-                              new SqlBulkCopyColumnMapping("Name", 2);
-                          bulkCopy.ColumnMappings.Add(columnMapName);
-          
-                          SqlBulkCopyColumnMapping columnMapNumber =
-                              new SqlBulkCopyColumnMapping("ProductNumber", 1);
-                          bulkCopy.ColumnMappings.Add(columnMapNumber);
-          
-                          // Write from the source to the destination.
-                          try
-                          {
-                              bulkCopy.WriteToServer(reader);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                          finally
-                          {
-                              // Close the SqlDataReader. The SqlBulkCopy
-                              // object is automatically closed at the end
-                              // of the using block.
-                              reader.Close();
-                          }
-                      }
-          
-                      // Perform a final count on the destination 
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                  }
-              }
-          
-              private static string GetConnectionString() 
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+        <format type="text/markdown">
+          <![CDATA[  
+The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping> objects are used to create a column map for the bulk copy.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.ColumnMappingNameOrdinal#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingNameOrdinal.cs#1)]
+
+]]></format>
       </example>
     </ctor>
     <ctor name="sourceColumnStringAndDestinationColumnString">
@@ -576,102 +137,18 @@
         Creates a new column mapping, using column names to refer to source and destination columns.
       </summary>
       <example>
-        <para>
-          The following example bulk copies data from a source table in the <b>AdventureWorks</b>  sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <!-- SqlBulkCopy_ColumnMapping -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
-          
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoDifferentColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
-          
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, ProductNumber FROM Production.Product;",
-                          sourceConnection);
-                      SqlDataReader reader = commandSourceData.ExecuteReader();
-          
-                      // Set up the bulk copy object.
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                      {
-                          bulkCopy.DestinationTableName = "dbo.BulkCopyDemoDifferentColumns";
-          
-                          // Set up the column mappings by name.
-                          SqlBulkCopyColumnMapping mapID =
-                              new SqlBulkCopyColumnMapping("ProductID", "ProdID");
-                          bulkCopy.ColumnMappings.Add(mapID);
-          
-                          SqlBulkCopyColumnMapping mapName =
-                              new SqlBulkCopyColumnMapping("Name", "ProdName");
-                          bulkCopy.ColumnMappings.Add(mapName);
-          
-                          SqlBulkCopyColumnMapping mapNumber =
-                              new SqlBulkCopyColumnMapping("ProductNumber", "ProdNum");
-                          bulkCopy.ColumnMappings.Add(mapNumber);
-          
-                          // Write from the source to the destination.
-                          try
-                          {
-                              bulkCopy.WriteToServer(reader);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                          finally
-                          {
-                              // Close the SqlDataReader. The SqlBulkCopy
-                              // object is automatically closed at the end
-                              // of the using block.
-                              reader.Close();
-                          }
-                      }
-          
-                      // Perform a final count on the destination 
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                  }
-              }
-          
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+        <format type="text/markdown">
+          <![CDATA[  
+The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping> objects are used to create a column map for the bulk copy.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.ColumnMapping#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMapping.cs#1)]
+
+]]></format>
       </example>
     </ctor>
     <DestinationColumn>
@@ -682,112 +159,21 @@
         The string value of the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationColumn" /> property.
       </value>
       <remarks>
-        The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationColumn" /> and <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationOrdinal" /> properties are mutually exclusive. The last value set takes precedence.
+        The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationColumn" /> and <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationOrdinal" /> properties are mutually exclusive. The last value set takes precedence.
       </remarks>
       <example>
-        <para>
-          The following example bulk copies data from a source table in the <b>AdventureWorks</b>  sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <!-- SqlBulkCopy_ColumnMappingDestinationColumn -->
-        <code language="c#">
-            using System;
-            using System.Data;
-            using Microsoft.Data.SqlClient;
-            
-            class Program
-            {
-                static void Main()
-                {
-                    string connectionString = GetConnectionString();
-                    // Open a sourceConnection to the AdventureWorks database.
-                    using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                    {
-                        sourceConnection.Open();
-            
-                        // Perform an initial count on the destination table.
-                        SqlCommand commandRowCount = new SqlCommand(
-                            "SELECT COUNT(*) FROM " +
-                            "dbo.BulkCopyDemoDifferentColumns;",
-                            sourceConnection);
-                        long countStart = System.Convert.ToInt32(
-                            commandRowCount.ExecuteScalar());
-                        Console.WriteLine("Starting row count = {0}", countStart);
-            
-                        // Get data from the source table as a SqlDataReader.
-                        SqlCommand commandSourceData = new SqlCommand(
-                            "SELECT ProductID, Name, " +
-                            "ProductNumber " +
-                            "FROM Production.Product;", sourceConnection);
-                        SqlDataReader reader =
-                            commandSourceData.ExecuteReader();
-            
-                        // Set up the bulk copy object.
-                        using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                        {
-                            bulkCopy.DestinationTableName =
-                                "dbo.BulkCopyDemoDifferentColumns";
-            
-                            // Set up the column mappings source and destination.
-                            SqlBulkCopyColumnMapping mapID = new SqlBulkCopyColumnMapping();
-                            mapID.SourceColumn = "ProductID";
-                            mapID.DestinationColumn = "ProdID";
-                            bulkCopy.ColumnMappings.Add(mapID);
-            
-                            SqlBulkCopyColumnMapping mapName = new SqlBulkCopyColumnMapping();
-                            mapName.SourceColumn = "Name";
-                            mapName.DestinationColumn = "ProdName";
-                            bulkCopy.ColumnMappings.Add(mapName);
-            
-                            SqlBulkCopyColumnMapping mapNumber = new SqlBulkCopyColumnMapping();
-                            mapNumber.SourceColumn = "ProductNumber";
-                            mapNumber.DestinationColumn = "ProdNum";
-                            bulkCopy.ColumnMappings.Add(mapNumber);
-            
-                            // Write from the source to the destination.
-                            try
-                            {
-                                bulkCopy.WriteToServer(reader);
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine(ex.Message);
-                            }
-                            finally
-                            {
-                                // Close the SqlDataReader. The SqlBulkCopy
-                                // object is automatically closed at the end
-                                // of the using block.
-                                reader.Close();
-                            }
-                        }
-            
-                        // Perform a final count on the destination 
-                        // table to see how many rows were added.
-                        long countEnd = System.Convert.ToInt32(
-                            commandRowCount.ExecuteScalar());
-                        Console.WriteLine("Ending row count = {0}", countEnd);
-                        Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                        Console.WriteLine("Press Enter to finish.");
-                        Console.ReadLine();
-                    }
-                }
-            
-                private static string GetConnectionString()
-                {
-                    // To avoid storing the sourceConnection string in your code,
-                    // you can retrieve it from a configuration file.
-                    return "Data Source=(local); " +
-                        " Integrated Security=true;" +
-                        "Initial Catalog=AdventureWorks;";
-                }
-            }
-        </code>
+        <format type="text/markdown">
+          <![CDATA[  
+The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping> objects are used to create a column map for the bulk copy.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.ColumnMappingDestinationColumn#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingDestinationColumn.cs#1)]
+
+]]></format>
       </example>
     </DestinationColumn>
     <DestinationOrdinal>
@@ -798,112 +184,21 @@
         The integer value of the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationOrdinal" /> property, or -1 if the property has not been set.
       </value>
       <remarks>
-        The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationColumn" /> and <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationOrdinal" /> properties are mutually exclusive. The last value set takes precedence.
+        The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationColumn" /> and <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationOrdinal" /> properties are mutually exclusive. The last value set takes precedence.
       </remarks>
       <example>
-        <para>
-          The following example bulk copies data from a source table in the <b>AdventureWorks</b> sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <!-- SqlBulkCopy_ColumnMappingDestinationOrdinal -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
-          
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM " +
-                          "dbo.BulkCopyDemoDifferentColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
-          
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, " +
-                          "ProductNumber " +
-                          "FROM Production.Product;", sourceConnection);
-                      SqlDataReader reader =
-                          commandSourceData.ExecuteReader();
-          
-                      // Set up the bulk copy object.
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                      {
-                          bulkCopy.DestinationTableName =
-                              "dbo.BulkCopyDemoDifferentColumns";
-          
-                          // Set up the column mappings source and destination.
-                          SqlBulkCopyColumnMapping mapID = new SqlBulkCopyColumnMapping();
-                          mapID.SourceOrdinal = 0;
-                          mapID.DestinationOrdinal = 0;
-                          bulkCopy.ColumnMappings.Add(mapID);
-          
-                          SqlBulkCopyColumnMapping mapName = new SqlBulkCopyColumnMapping();
-                          mapName.SourceOrdinal = 1;
-                          mapName.DestinationOrdinal = 2;
-                          bulkCopy.ColumnMappings.Add(mapName);
-          
-                          SqlBulkCopyColumnMapping mapNumber = new SqlBulkCopyColumnMapping();
-                          mapNumber.SourceOrdinal = 2;
-                          mapNumber.DestinationOrdinal = 1;
-                          bulkCopy.ColumnMappings.Add(mapNumber);
-          
-                          // Write from the source to the destination.
-                          try
-                          {
-                              bulkCopy.WriteToServer(reader);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                          finally
-                          {
-                              // Close the SqlDataReader. The SqlBulkCopy
-                              // object is automatically closed at the end
-                              // of the using block.
-                              reader.Close();
-                          }
-                      }
-          
-                      // Perform a final count on the destination 
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                  }
-              }
-          
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                      " Integrated Security=true;" +
-                      "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+        <format type="text/markdown">
+          <![CDATA[  
+The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping> objects are used to create a column map for the bulk copy.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.ColumnMappingDestinationOrdinal#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingDestinationOrdinal.cs#1)]
+
+]]></format>
       </example>
     </DestinationOrdinal>
     <SourceColumn>
@@ -914,112 +209,21 @@
         The string value of the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceColumn" /> property.
       </value>
       <remarks>
-        The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceColumn" /> and <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceOrdinal " /> properties are mutually exclusive. The last value set takes precedence.
+        The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceColumn" /> and <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceOrdinal" /> properties are mutually exclusive. The last value set takes precedence.
       </remarks>
       <example>
-        <para>
-          The following example bulk copies data from a source table in the <b>AdventureWorks</b> sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <!-- SqlBulkCopy_ColumnMappingDestinationColumn -->
-        <code language="c#">
-            using System;
-            using System.Data;
-            using Microsoft.Data.SqlClient;
-            
-            class Program
-            {
-                static void Main()
-                {
-                    string connectionString = GetConnectionString();
-                    // Open a sourceConnection to the AdventureWorks database.
-                    using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                    {
-                        sourceConnection.Open();
-            
-                        // Perform an initial count on the destination table.
-                        SqlCommand commandRowCount = new SqlCommand(
-                            "SELECT COUNT(*) FROM " +
-                            "dbo.BulkCopyDemoDifferentColumns;",
-                            sourceConnection);
-                        long countStart = System.Convert.ToInt32(
-                            commandRowCount.ExecuteScalar());
-                        Console.WriteLine("Starting row count = {0}", countStart);
-            
-                        // Get data from the source table as a SqlDataReader.
-                        SqlCommand commandSourceData = new SqlCommand(
-                            "SELECT ProductID, Name, " +
-                            "ProductNumber " +
-                            "FROM Production.Product;", sourceConnection);
-                        SqlDataReader reader =
-                            commandSourceData.ExecuteReader();
-            
-                        // Set up the bulk copy object.
-                        using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                        {
-                            bulkCopy.DestinationTableName =
-                                "dbo.BulkCopyDemoDifferentColumns";
-            
-                            // Set up the column mappings source and destination.
-                            SqlBulkCopyColumnMapping mapID = new SqlBulkCopyColumnMapping();
-                            mapID.SourceColumn = "ProductID";
-                            mapID.DestinationColumn = "ProdID";
-                            bulkCopy.ColumnMappings.Add(mapID);
-            
-                            SqlBulkCopyColumnMapping mapName = new SqlBulkCopyColumnMapping();
-                            mapName.SourceColumn = "Name";
-                            mapName.DestinationColumn = "ProdName";
-                            bulkCopy.ColumnMappings.Add(mapName);
-            
-                            SqlBulkCopyColumnMapping mapNumber = new SqlBulkCopyColumnMapping();
-                            mapNumber.SourceColumn = "ProductNumber";
-                            mapNumber.DestinationColumn = "ProdNum";
-                            bulkCopy.ColumnMappings.Add(mapNumber);
-            
-                            // Write from the source to the destination.
-                            try
-                            {
-                                bulkCopy.WriteToServer(reader);
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine(ex.Message);
-                            }
-                            finally
-                            {
-                                // Close the SqlDataReader. The SqlBulkCopy
-                                // object is automatically closed at the end
-                                // of the using block.
-                                reader.Close();
-                            }
-                        }
-            
-                        // Perform a final count on the destination 
-                        // table to see how many rows were added.
-                        long countEnd = System.Convert.ToInt32(
-                            commandRowCount.ExecuteScalar());
-                        Console.WriteLine("Ending row count = {0}", countEnd);
-                        Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                        Console.WriteLine("Press Enter to finish.");
-                        Console.ReadLine();
-                    }
-                }
-            
-                private static string GetConnectionString()
-                {
-                    // To avoid storing the sourceConnection string in your code,
-                    // you can retrieve it from a configuration file.
-                    return "Data Source=(local); " +
-                        " Integrated Security=true;" +
-                        "Initial Catalog=AdventureWorks;";
-                }
-            }
-        </code>
+        <format type="text/markdown">
+          <![CDATA[  
+The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping> objects are used to create a column map for the bulk copy.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.ColumnMappingDestinationColumn#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingDestinationColumn.cs#1)]
+
+]]></format>
       </example>
     </SourceColumn>
     <SourceOrdinal>
@@ -1030,112 +234,21 @@
         The integer value of the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceOrdinal" /> property.
       </value>
       <remarks>
-        The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceColumn" /> and <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceOrdinal" /> properties are mutually exclusive. The last value set takes precedence.
+        The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceColumn" /> and <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceOrdinal" /> properties are mutually exclusive. The last value set takes precedence.
       </remarks>
       <example>
-        <para>
-          The following example bulk copies data from a source table in the <b>AdventureWorks</b>  sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <!-- SqlBulkCopy_ColumnMappingDestinationOrdinal -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
-          
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM " +
-                          "dbo.BulkCopyDemoDifferentColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
-          
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, " +
-                          "ProductNumber " +
-                          "FROM Production.Product;", sourceConnection);
-                      SqlDataReader reader =
-                          commandSourceData.ExecuteReader();
-          
-                      // Set up the bulk copy object.
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                      {
-                          bulkCopy.DestinationTableName =
-                              "dbo.BulkCopyDemoDifferentColumns";
-          
-                          // Set up the column mappings source and destination.
-                          SqlBulkCopyColumnMapping mapID = new SqlBulkCopyColumnMapping();
-                          mapID.SourceOrdinal = 0;
-                          mapID.DestinationOrdinal = 0;
-                          bulkCopy.ColumnMappings.Add(mapID);
-          
-                          SqlBulkCopyColumnMapping mapName = new SqlBulkCopyColumnMapping();
-                          mapName.SourceOrdinal = 1;
-                          mapName.DestinationOrdinal = 2;
-                          bulkCopy.ColumnMappings.Add(mapName);
-          
-                          SqlBulkCopyColumnMapping mapNumber = new SqlBulkCopyColumnMapping();
-                          mapNumber.SourceOrdinal = 2;
-                          mapNumber.DestinationOrdinal = 1;
-                          bulkCopy.ColumnMappings.Add(mapNumber);
-          
-                          // Write from the source to the destination.
-                          try
-                          {
-                              bulkCopy.WriteToServer(reader);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                          finally
-                          {
-                              // Close the SqlDataReader. The SqlBulkCopy
-                              // object is automatically closed at the end
-                              // of the using block.
-                              reader.Close();
-                          }
-                      }
-          
-                      // Perform a final count on the destination 
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                  }
-              }
-          
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                      " Integrated Security=true;" +
-                      "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+        <format type="text/markdown">
+          <![CDATA[  
+The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping> objects are used to create a column map for the bulk copy.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.ColumnMappingDestinationOrdinal#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingDestinationOrdinal.cs#1)]
+
+]]></format>
       </example>
     </SourceOrdinal>
   </members>

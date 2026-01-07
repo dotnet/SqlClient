@@ -45,8 +45,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         #region Sync
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
+
+        public static TheoryData<string, SqlRetryLogicBaseProvider> RetryExecuteFail_Data =>
+            RetryLogicTestHelper.GetConnectionStringAndRetryProviders(
+                numberOfRetries: 2,
+                maxInterval: TimeSpan.FromMilliseconds(100));
+
+        // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [MemberData(nameof(RetryExecuteFail_Data), DisableDiscoveryEnumeration = true)]
         public void RetryExecuteFail(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
@@ -90,8 +97,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
+        public static TheoryData<string, SqlRetryLogicBaseProvider> RetryExecuteCancel_Data =>
+            RetryLogicTestHelper.GetConnectionStringAndRetryProviders(
+                numberOfRetries: 2,
+                maxInterval: TimeSpan.FromMilliseconds(100));
+
+        // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [MemberData(nameof(RetryExecuteCancel_Data), DisableDiscoveryEnumeration = true)]
         public void RetryExecuteCancel(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
@@ -135,9 +148,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ActiveIssue("14588")]
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
+        public static TheoryData<string, SqlRetryLogicBaseProvider> RetryExecuteWithTransactionScope_Data =>
+            RetryLogicTestHelper.GetConnectionStringAndRetryProviders(
+                numberOfRetries: 5,
+                maxInterval: TimeSpan.FromMilliseconds(100));
+
+        // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [MemberData(nameof(RetryExecuteWithTransactionScope_Data), DisableDiscoveryEnumeration = true)]
         public void RetryExecuteWithTransScope(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
@@ -171,10 +189,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        public static TheoryData<string, SqlRetryLogicBaseProvider> RetryExecuteWithTransaction_Data =>
+            RetryLogicTestHelper.GetConnectionStringAndRetryProviders(
+                numberOfRetries: 5,
+                maxInterval: TimeSpan.FromMilliseconds(100));
+
         // Synapse: 111214;An attempt to complete a transaction has failed. No corresponding transaction found.
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
-        public void RetryExecuteWithTrans(string cnnString, SqlRetryLogicBaseProvider provider)
+        // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [MemberData(nameof(RetryExecuteWithTransaction_Data), DisableDiscoveryEnumeration = true)]
+        public void RetryExecuteWithTransaction(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
             int cancelAfterRetries = numberOfTries + 1;
@@ -208,10 +232,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        public static TheoryData<string, SqlRetryLogicBaseProvider> RetryExecuteUnauthorizedSqlStatementDml_Data =>
+            RetryLogicTestHelper.GetConnectionStringAndRetryProviders(
+                numberOfRetries: 2,
+                maxInterval: TimeSpan.FromMilliseconds(100),
+                transientErrorCodes: [102, 207, 2812],
+                unauthorizedStatementRegex: RetryLogicTestHelper.FilterDmlStatements);
+
         // Synapse: Msg 103010, Level 16, State 1, Line 1 | Parse error at line: 1, column: 1: Incorrect syntax near 'command'
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyFilterDMLStatements), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
-        public void RetryExecuteUnauthorizedSqlStatementDML(string cnnString, SqlRetryLogicBaseProvider provider)
+        // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [MemberData(nameof(RetryExecuteUnauthorizedSqlStatementDml_Data), DisableDiscoveryEnumeration = true)]
+        public void RetryExecuteUnauthorizedSqlStatementDml(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
             int cancelAfterRetries = numberOfTries + 1;
@@ -221,7 +253,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection cnn = new SqlConnection(cnnString))
             using (SqlCommand cmd = CreateCommand(cnn, provider, cancelAfterRetries))
             {
-                #region unauthorized
+                // Unauthorized commands
                 cmd.CommandText = "UPDATE bad command";
                 Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
                 Assert.Equal(0, currentRetries);
@@ -237,8 +269,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 cmd.CommandText = "TRUNCATE TABLE bad command";
                 Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
                 Assert.Equal(0, currentRetries);
-                #endregion
 
+                // Authorized commands
                 cmd.CommandText = "SELECT bad command";
                 Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
                 Assert.Equal(numberOfTries, currentRetries + 1);
@@ -261,14 +293,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ActiveIssue("14325")]
+        public static TheoryData<string, SqlRetryLogicBaseProvider> DropDatabaseWithActiveConnection_Data =>
+            RetryLogicTestHelper.GetConnectionStringAndRetryProviders(
+                numberOfRetries: 5,
+                maxInterval: TimeSpan.FromSeconds(2),
+                deltaTime: TimeSpan.FromMilliseconds(500),
+                transientErrorCodes: RetryLogicTestHelper.GetDefaultTransientErrorCodes(3702));
+
         // avoid creating a new database in Azure
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyDropDB), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
+        [MemberData(nameof(DropDatabaseWithActiveConnection_Data), DisableDiscoveryEnumeration = true)]
         public void DropDatabaseWithActiveConnection(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int currentRetries = 0;
-            string database = DataTestUtility.GetUniqueNameForSqlServer($"RetryLogic_{provider.RetryLogic.RetryIntervalEnumerator.GetType().Name}", false);
+            string database = DataTestUtility.GetLongName($"RetryLogic_{provider.RetryLogic.RetryIntervalEnumerator.GetType().Name}", false);
             var builder = new SqlConnectionStringBuilder(cnnString)
             {
                 InitialCatalog = database,
@@ -323,14 +361,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        public static TheoryData<string, SqlRetryLogicBaseProvider> UpdateLockedTable_Data =>
+            RetryLogicTestHelper.GetConnectionStringAndRetryProviders(
+                numberOfRetries: 10,
+                maxInterval: TimeSpan.FromMilliseconds(100));
+
         // In Managed SNI by Named pipe connection, SqlCommand doesn't respect timeout. "ActiveIssue 12167"
         // Synapse: Does not support WAITFOR DELAY.
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotUsingManagedSNIOnWindows), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyLockedTable), parameters: new object[] { 10 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
-        public void UpdateALockedTable(string cnnString, SqlRetryLogicBaseProvider provider)
+        // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotUsingManagedSNIOnWindows), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [MemberData(nameof(UpdateLockedTable_Data), DisableDiscoveryEnumeration = true)]
+        public void UpdateLockedTable(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int currentRetries = 0;
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Region");
+            string tableName = DataTestUtility.GetLongName("Region");
             string fieldName = "RegionDescription";
 
             using (var cnn1 = new SqlConnection(cnnString))
@@ -382,8 +426,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetNoneRetriableCondition), MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
+        public static TheoryData<string, SqlRetryLogicBaseProvider> NoneRetriableExecuteFail_Data =>
+            RetryLogicTestHelper.GetNonRetriableCases();
+
+        // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [MemberData(nameof(NoneRetriableExecuteFail_Data), DisableDiscoveryEnumeration = true)]
         public void NoneRetriableExecuteFail(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             string query = "SELECT bad command";
@@ -416,9 +464,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #endregion
 
         #region Async
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
-        public async void RetryExecuteAsyncFail(string cnnString, SqlRetryLogicBaseProvider provider)
+
+        public static TheoryData<string, SqlRetryLogicBaseProvider> RetryExecuteAsyncFail_Data =>
+            RetryLogicTestHelper.GetConnectionStringAndRetryProviders(
+                numberOfRetries: 2,
+                maxInterval: TimeSpan.FromMilliseconds(100));
+
+        // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [MemberData(nameof(RetryExecuteAsyncFail_Data), DisableDiscoveryEnumeration = true)]
+        public async Task RetryExecuteAsyncFail(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
             int cancelAfterRetries = numberOfTries + 1;
@@ -481,9 +536,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
-        public async void RetryExecuteAsyncCancel(string cnnString, SqlRetryLogicBaseProvider provider)
+        public static TheoryData<string, SqlRetryLogicBaseProvider> RetryExecuteAsyncCancel_Data =>
+            RetryLogicTestHelper.GetConnectionStringAndRetryProviders(
+                numberOfRetries: 2,
+                maxInterval: TimeSpan.FromMilliseconds(100));
+
+        // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [MemberData(nameof(RetryExecuteAsyncCancel_Data), DisableDiscoveryEnumeration = true)]
+        public async Task RetryExecuteAsyncCancel(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
             int cancelAfterRetries = numberOfTries - 1;
@@ -548,8 +609,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #endregion
 
         #region Concurrent
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
+
+        public static TheoryData<string, SqlRetryLogicBaseProvider> ConcurrentExecution_Data =>
+            RetryLogicTestHelper.GetConnectionStringAndRetryProviders(
+                numberOfRetries: 2,
+                maxInterval: TimeSpan.FromMilliseconds(100));
+
+        // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [MemberData(nameof(ConcurrentExecution_Data), DisableDiscoveryEnumeration = true)]
         public void ConcurrentExecution(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             string query = "SELECT bad command";
@@ -565,9 +633,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
-        public async void ConcurrentExecutionAsync(string cnnString, SqlRetryLogicBaseProvider provider)
+        public static TheoryData<string, SqlRetryLogicBaseProvider> ConcurrentExecutionAsync_Data =>
+            RetryLogicTestHelper.GetConnectionStringAndRetryProviders(
+                numberOfRetries: 2,
+                maxInterval: TimeSpan.FromMilliseconds(100));
+
+        // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [MemberData(nameof(ConcurrentExecutionAsync_Data), DisableDiscoveryEnumeration = true)]
+        public async Task ConcurrentExecutionAsync(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             string query = "SELECT bad command";
             await ProcessDataAsAsync(cnnString, provider, query, cmd => cmd.ExecuteScalarAsync());

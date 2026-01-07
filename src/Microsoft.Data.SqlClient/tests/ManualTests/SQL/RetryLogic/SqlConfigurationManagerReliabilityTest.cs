@@ -48,7 +48,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             s_commandCRLTest.RetryExecuteFail(TcpCnnString, cmdProvider);
             if (DataTestUtility.IsNotAzureSynapse())
             {
-                s_commandCRLTest.RetryExecuteUnauthorizedSqlStatementDML(TcpCnnString, cmdProvider);
+                // @TODO: Why are we calling a test from another test?
+                s_commandCRLTest.RetryExecuteUnauthorizedSqlStatementDml(TcpCnnString, cmdProvider);
             }
         }
         #endregion

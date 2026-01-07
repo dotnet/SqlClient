@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.Server
     ///  These are all based off of knowing the clr type of the value
     ///  as an ExtendedClrTypeCode enum for rapid access.
     /// </summary>
-    internal class MetaDataUtilsSmi
+    internal static class MetaDataUtilsSmi
     {
         internal const SqlDbType InvalidSqlDbType = (SqlDbType)(-1);
         internal const long InvalidMaxLength = -2;
@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient.Server
             SqlDbType.Structured,           // System.Collections.Generic.IEnumerable<Microsoft.Data.SqlClient.Server.SqlDataRecord>
             SqlDbType.Time,                 // System.TimeSpan
             SqlDbType.DateTimeOffset,       // System.DateTimeOffset
-#if NET6_0_OR_GREATER
+#if NET
             SqlDbType.Date,                 // System.DateOnly
             SqlDbType.Time,                 // System.TimeOnly  
 #endif
@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         private static Dictionary<Type, ExtendedClrTypeCode> CreateTypeToExtendedTypeCodeMap()
         {
-#if NET6_0_OR_GREATER
+#if NET
             int Count = 44;
 #else
             int Count = 42;
@@ -140,7 +140,7 @@ namespace Microsoft.Data.SqlClient.Server
                 { typeof(IEnumerable<SqlDataRecord>), ExtendedClrTypeCode.IEnumerableOfSqlDataRecord },
                 { typeof(TimeSpan), ExtendedClrTypeCode.TimeSpan },
                 { typeof(DateTimeOffset), ExtendedClrTypeCode.DateTimeOffset },
-#if NET6_0_OR_GREATER
+#if NET
                 { typeof(DateOnly), ExtendedClrTypeCode.DateOnly },
                 { typeof(TimeOnly), ExtendedClrTypeCode.TimeOnly },
 #endif
@@ -163,10 +163,6 @@ namespace Microsoft.Data.SqlClient.Server
                     type == SqlDbType.VarChar ||
                     type == SqlDbType.Text;
 
-        internal static bool IsBinaryType(SqlDbType type) => type == SqlDbType.Binary ||
-                    type == SqlDbType.VarBinary ||
-                    type == SqlDbType.Image;
-
         // Does this type use PLP format values?
         internal static bool IsPlpFormat(SmiMetaData metaData) => 
                     metaData.MaxLength == SmiMetaData.UnlimitedMaxLengthIndicator ||
@@ -187,14 +183,10 @@ namespace Microsoft.Data.SqlClient.Server
         //      must instantiate a Type object.  The typecode switch also degenerates into a large if-then-else for
         //      all but the primitive clr types.
         internal static ExtendedClrTypeCode DetermineExtendedTypeCodeForUseWithSqlDbType(
-                SqlDbType dbType,
-                bool isMultiValued,
-                object value,
-                Type udtType
-#if NETFRAMEWORK
-                ,ulong smiVersion
-#endif
-            )
+            SqlDbType dbType,
+            bool isMultiValued,
+            object value,
+            Type udtType)
         {
             ExtendedClrTypeCode extendedCode = ExtendedClrTypeCode.Invalid;
 
@@ -213,28 +205,47 @@ namespace Microsoft.Data.SqlClient.Server
                 {
                     case SqlDbType.BigInt:
                         if (value.GetType() == typeof(long))
+                        {
                             extendedCode = ExtendedClrTypeCode.Int64;
+                        }
                         else if (value.GetType() == typeof(SqlInt64))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlInt64;
+                        }
+
                         break;
                     case SqlDbType.Binary:
                     case SqlDbType.VarBinary:
                     case SqlDbType.Image:
                     case SqlDbType.Timestamp:
                         if (value.GetType() == typeof(byte[]))
+                        {
                             extendedCode = ExtendedClrTypeCode.ByteArray;
+                        }
                         else if (value.GetType() == typeof(SqlBinary))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlBinary;
+                        }
                         else if (value.GetType() == typeof(SqlBytes))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlBytes;
+                        }
                         else if (value.GetType() == typeof(StreamDataFeed))
+                        {
                             extendedCode = ExtendedClrTypeCode.Stream;
+                        }
+
                         break;
                     case SqlDbType.Bit:
                         if (value.GetType() == typeof(bool))
+                        {
                             extendedCode = ExtendedClrTypeCode.Boolean;
+                        }
                         else if (value.GetType() == typeof(SqlBoolean))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlBoolean;
+                        }
+
                         break;
                     case SqlDbType.Char:
                     case SqlDbType.NChar:
@@ -243,92 +254,150 @@ namespace Microsoft.Data.SqlClient.Server
                     case SqlDbType.Text:
                     case SqlDbType.VarChar:
                         if (value.GetType() == typeof(string))
+                        {
                             extendedCode = ExtendedClrTypeCode.String;
+                        }
+
                         if (value.GetType() == typeof(TextDataFeed))
+                        {
                             extendedCode = ExtendedClrTypeCode.TextReader;
+                        }
                         else if (value.GetType() == typeof(SqlString))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlString;
+                        }
                         else if (value.GetType() == typeof(char[]))
+                        {
                             extendedCode = ExtendedClrTypeCode.CharArray;
+                        }
                         else if (value.GetType() == typeof(SqlChars))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlChars;
+                        }
                         else if (value.GetType() == typeof(char))
+                        {
                             extendedCode = ExtendedClrTypeCode.Char;
+                        }
+
                         break;
                     case SqlDbType.Date:
-#if NET6_0_OR_GREATER
+#if NET
                         if (value.GetType() == typeof(DateOnly))
+                        {
                             extendedCode = ExtendedClrTypeCode.DateOnly;
+                        }
                         else if (value.GetType() == typeof(DateTime))
+                        {
                             extendedCode = ExtendedClrTypeCode.DateTime;
+                        }
                         else if (value.GetType() == typeof(SqlDateTime))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlDateTime;
+                        }
 
                         break;
 #endif
-                    case SqlDbType.DateTime2:
-#if NETFRAMEWORK
-                        if (smiVersion >= SmiContextFactory.Sql2008Version)
-                        {
-                            goto case SqlDbType.DateTime;
-                        }
-                        break;
-#endif
                     case SqlDbType.DateTime:
+                    case SqlDbType.DateTime2:
                     case SqlDbType.SmallDateTime:
                         if (value.GetType() == typeof(DateTime))
+                        {
                             extendedCode = ExtendedClrTypeCode.DateTime;
+                        }
                         else if (value.GetType() == typeof(SqlDateTime))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlDateTime;
+                        }
+
                         break;
                     case SqlDbType.Decimal:
                         if (value.GetType() == typeof(decimal))
+                        {
                             extendedCode = ExtendedClrTypeCode.Decimal;
+                        }
                         else if (value.GetType() == typeof(SqlDecimal))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlDecimal;
+                        }
+
                         break;
                     case SqlDbType.Real:
                         if (value.GetType() == typeof(float))
+                        {
                             extendedCode = ExtendedClrTypeCode.Single;
+                        }
                         else if (value.GetType() == typeof(SqlSingle))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlSingle;
+                        }
+
                         break;
                     case SqlDbType.Int:
                         if (value.GetType() == typeof(int))
+                        {
                             extendedCode = ExtendedClrTypeCode.Int32;
+                        }
                         else if (value.GetType() == typeof(SqlInt32))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlInt32;
+                        }
+
                         break;
                     case SqlDbType.Money:
                     case SqlDbType.SmallMoney:
                         if (value.GetType() == typeof(SqlMoney))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlMoney;
+                        }
                         else if (value.GetType() == typeof(decimal))
+                        {
                             extendedCode = ExtendedClrTypeCode.Decimal;
+                        }
+
                         break;
                     case SqlDbType.Float:
                         if (value.GetType() == typeof(SqlDouble))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlDouble;
+                        }
                         else if (value.GetType() == typeof(double))
+                        {
                             extendedCode = ExtendedClrTypeCode.Double;
+                        }
+
                         break;
                     case SqlDbType.UniqueIdentifier:
                         if (value.GetType() == typeof(SqlGuid))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlGuid;
+                        }
                         else if (value.GetType() == typeof(Guid))
+                        {
                             extendedCode = ExtendedClrTypeCode.Guid;
+                        }
+
                         break;
                     case SqlDbType.SmallInt:
                         if (value.GetType() == typeof(short))
+                        {
                             extendedCode = ExtendedClrTypeCode.Int16;
+                        }
                         else if (value.GetType() == typeof(SqlInt16))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlInt16;
+                        }
+
                         break;
                     case SqlDbType.TinyInt:
                         if (value.GetType() == typeof(byte))
+                        {
                             extendedCode = ExtendedClrTypeCode.Byte;
+                        }
                         else if (value.GetType() == typeof(SqlByte))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlByte;
+                        }
+
                         break;
                     case SqlDbType.Variant:
                         // SqlDbType doesn't help us here, call general-purpose function
@@ -352,38 +421,49 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.Invalid;
                         }
                         break;
-#if NET6_0_OR_GREATER
+#if NET
                     case SqlDbType.Time:
                         if (value.GetType() == typeof(TimeOnly))
+                        {
                             extendedCode = ExtendedClrTypeCode.TimeOnly;
+                        }
                         else if (value.GetType() == typeof(TimeSpan))
+                        {
                             extendedCode = ExtendedClrTypeCode.TimeSpan;
+                        }
+
                         break;
 #else
                     case SqlDbType.Time:
-                        if (value.GetType() == typeof(TimeSpan)
-#if NETFRAMEWORK
-                        && smiVersion >= SmiContextFactory.Sql2008Version
-#endif
-                            )
+                        if (value.GetType() == typeof(TimeSpan))
+                        {
                             extendedCode = ExtendedClrTypeCode.TimeSpan;
+                        }
+
                         break;
 #endif
                     case SqlDbType.DateTimeOffset:
-                        if (value.GetType() == typeof(DateTimeOffset)
-#if NETFRAMEWORK
-                        && smiVersion >= SmiContextFactory.Sql2008Version
-#endif
-                            )
+                        if (value.GetType() == typeof(DateTimeOffset))
+                        {
                             extendedCode = ExtendedClrTypeCode.DateTimeOffset;
+                        }
+
                         break;
                     case SqlDbType.Xml:
                         if (value.GetType() == typeof(SqlXml))
+                        {
                             extendedCode = ExtendedClrTypeCode.SqlXml;
+                        }
+
                         if (value.GetType() == typeof(XmlDataFeed))
+                        {
                             extendedCode = ExtendedClrTypeCode.XmlReader;
+                        }
                         else if (value.GetType() == typeof(string))
+                        {
                             extendedCode = ExtendedClrTypeCode.String;
+                        }
+
                         break;
                     case SqlDbType.Structured:
                         if (isMultiValued)
@@ -985,27 +1065,5 @@ namespace Microsoft.Data.SqlClient.Server
                             null,
                             null);
         }
-
-#if NETFRAMEWORK
-
-        static internal bool IsValidForSmiVersion(SmiExtendedMetaData md, ulong smiVersion)
-        {
-            if (SmiContextFactory.LatestVersion == smiVersion)
-            {
-                return true;
-            }
-            else
-            {
-                // 2005 doesn't support Structured nor the new time types
-                Debug.Assert(SmiContextFactory.Sql2005Version == smiVersion, "Other versions should have been eliminated during link stage");
-                return md.SqlDbType != SqlDbType.Structured &&
-                        md.SqlDbType != SqlDbType.Date &&
-                        md.SqlDbType != SqlDbType.DateTime2 &&
-                        md.SqlDbType != SqlDbType.DateTimeOffset &&
-                        md.SqlDbType != SqlDbType.Time;
-            }
-        }
-
-#endif
     }
 }

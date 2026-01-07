@@ -7,18 +7,24 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
-using System.Net;
-using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Interop.Common.Sni;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Connection;
+
+#if NETFRAMEWORK
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
+using Interop.Windows.Kernel32;
+#else
+using System.Net.Sockets;
+#endif
 
 namespace Microsoft.Data.SqlClient
 {
@@ -46,11 +52,10 @@ namespace Microsoft.Data.SqlClient
 
     internal static class AsyncHelper
     {
-        internal static Task CreateContinuationTask(Task task, Action onSuccess,
-#if NETFRAMEWORK
-            SqlInternalConnectionTds connectionToDoom = null,
-#endif
-             Action<Exception> onFailure = null)
+        internal static Task CreateContinuationTask(
+            Task task,
+            Action onSuccess,
+            Action<Exception> onFailure = null)
         {
             if (task == null)
             {
@@ -60,8 +65,9 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
-#if NET6_0_OR_GREATER
-                ContinueTaskWithState(task, completion,
+                ContinueTaskWithState(
+                    task,
+                    completion,
                     state: Tuple.Create(onSuccess, onFailure, completion),
                     onSuccess: static (object state) =>
                     {
@@ -77,16 +83,6 @@ namespace Microsoft.Data.SqlClient
                         Action<Exception> failure = parameters.Item2;
                         failure?.Invoke(exception);
                     }
-#else
-                ContinueTask(task, completion,
-                    onSuccess: () =>
-                    {
-                        onSuccess();
-                        completion.SetResult(null);
-                    },
-                    onFailure: onFailure,
-                    connectionToDoom: connectionToDoom
-#endif
                 );
                 return completion.Task;
             }
@@ -114,13 +110,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static Task CreateContinuationTask<T1, T2>(Task task, Action<T1, T2> onSuccess, T1 arg1, T2 arg2, SqlInternalConnectionTds connectionToDoom = null, Action<Exception> onFailure = null)
+        internal static Task CreateContinuationTask<T1, T2>(
+            Task task,
+            Action<T1, T2> onSuccess,
+            T1 arg1,
+            T2 arg2,
+            Action<Exception> onFailure = null)
         {
-            return CreateContinuationTask(task, () => onSuccess(arg1, arg2),
-#if NETFRAMEWORK
-                connectionToDoom,
-#endif
-                onFailure);
+            return CreateContinuationTask(task, () => onSuccess(arg1, arg2), onFailure);
         }
 
         internal static void ContinueTask(Task task,
@@ -128,18 +125,8 @@ namespace Microsoft.Data.SqlClient
             Action onSuccess,
             Action<Exception> onFailure = null,
             Action onCancellation = null,
-#if NET6_0_OR_GREATER
-            Func<Exception, Exception> exceptionConverter = null
-#else
-            Func<Exception, Exception> exceptionConverter = null,
-            SqlInternalConnectionTds connectionToDoom = null,
-            SqlConnection connectionToAbort = null
-#endif
-        )
+            Func<Exception, Exception> exceptionConverter = null)
         {
-#if NETFRAMEWORK
-            Debug.Assert((connectionToAbort == null) || (connectionToDoom == null), "Should not specify both connectionToDoom and connectionToAbort");
-#endif
             task.ContinueWith(
                 tsk =>
                 {
@@ -172,95 +159,16 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-#if NETFRAMEWORK
-                        if (connectionToDoom != null || connectionToAbort != null)
-                        {
-                            RuntimeHelpers.PrepareConstrainedRegions();
-                            try
-                            {
-#if DEBUG
-                                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-                                RuntimeHelpers.PrepareConstrainedRegions();
-                                try
-                                {
-                                    tdsReliabilitySection.Start();
-#endif //DEBUG
-                                    onSuccess();
-#if DEBUG
-                                }
-                                finally
-                                {
-                                    tdsReliabilitySection.Stop();
-                                }
-#endif //DEBUG
-                            }
-                            catch (System.OutOfMemoryException e)
-                            {
-                                if (connectionToDoom != null)
-                                {
-                                    connectionToDoom.DoomThisConnection();
-                                }
-                                else
-                                {
-                                    connectionToAbort.Abort(e);
-                                }
-                                completion.SetException(e);
-                                throw;
-                            }
-                            catch (System.StackOverflowException e)
-                            {
-                                if (connectionToDoom != null)
-                                {
-                                    connectionToDoom.DoomThisConnection();
-                                }
-                                else
-                                {
-                                    connectionToAbort.Abort(e);
-                                }
-                                completion.SetException(e);
-                                throw;
-                            }
-                            catch (System.Threading.ThreadAbortException e)
-                            {
-                                if (connectionToDoom != null)
-                                {
-                                    connectionToDoom.DoomThisConnection();
-                                }
-                                else
-                                {
-                                    connectionToAbort.Abort(e);
-                                }
-                                completion.SetException(e);
-                                throw;
-                            }
-                            catch (Exception e)
-                            {
-                                completion.SetException(e);
-                            }
-                        }
-                        else
-                        { // no connection to doom - reliability section not required
-                            try
-                            {
-                                onSuccess();
-                            }
-                            catch (Exception e)
-                            {
-                                completion.SetException(e);
-                            }
-                        }
-                    }
-#else
                         try
                         {
                             onSuccess();
                         }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
                         catch (Exception e)
                         {
                             completion.SetException(e);
                         }
                     }
-#endif
                 }, TaskScheduler.Default
             );
         }
@@ -273,18 +181,8 @@ namespace Microsoft.Data.SqlClient
             Action<object> onSuccess,
             Action<Exception, object> onFailure = null,
             Action<object> onCancellation = null,
-#if NET6_0_OR_GREATER
-            Func<Exception, Exception> exceptionConverter = null
-#else
-            Func<Exception, object, Exception> exceptionConverter = null,
-            SqlInternalConnectionTds connectionToDoom = null,
-            SqlConnection connectionToAbort = null
-#endif
-        )
+            Func<Exception, Exception> exceptionConverter = null)
         {
-#if NETFRAMEWORK
-            Debug.Assert((connectionToAbort == null) || (connectionToDoom == null), "Should not specify both connectionToDoom and connectionToAbort");
-#endif
             task.ContinueWith(
                 (Task tsk, object state2) =>
                 {
@@ -293,12 +191,9 @@ namespace Microsoft.Data.SqlClient
                         Exception exc = tsk.Exception.InnerException;
                         if (exceptionConverter != null)
                         {
-                            exc = exceptionConverter(exc
-#if NETFRAMEWORK
-                                , state2
-#endif
-                                );
+                            exc = exceptionConverter(exc);
                         }
+
                         try
                         {
                             onFailure?.Invoke(exc, state2);
@@ -319,79 +214,13 @@ namespace Microsoft.Data.SqlClient
                             completion.TrySetCanceled();
                         }
                     }
-#if NETFRAMEWORK
-                    else if (connectionToDoom != null || connectionToAbort != null)
-                    {
-                        RuntimeHelpers.PrepareConstrainedRegions();
-                        try
-                        {
-#if DEBUG
-                            TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-                            RuntimeHelpers.PrepareConstrainedRegions();
-                            try
-                            {
-                                tdsReliabilitySection.Start();
-#endif //DEBUG
-                                onSuccess(state2);
-#if DEBUG
-                            }
-                            finally
-                            {
-                                tdsReliabilitySection.Stop();
-                            }
-#endif //DEBUG
-                        }
-                        catch (System.OutOfMemoryException e)
-                        {
-                            if (connectionToDoom != null)
-                            {
-                                connectionToDoom.DoomThisConnection();
-                            }
-                            else
-                            {
-                                connectionToAbort.Abort(e);
-                            }
-                            completion.SetException(e);
-                            throw;
-                        }
-                        catch (System.StackOverflowException e)
-                        {
-                            if (connectionToDoom != null)
-                            {
-                                connectionToDoom.DoomThisConnection();
-                            }
-                            else
-                            {
-                                connectionToAbort.Abort(e);
-                            }
-                            completion.SetException(e);
-                            throw;
-                        }
-                        catch (System.Threading.ThreadAbortException e)
-                        {
-                            if (connectionToDoom != null)
-                            {
-                                connectionToDoom.DoomThisConnection();
-                            }
-                            else
-                            {
-                                connectionToAbort.Abort(e);
-                            }
-                            completion.SetException(e);
-                            throw;
-                        }
-                        catch (Exception e)
-                        {
-                            completion.SetException(e);
-                        }
-                    }
-#endif
                     else
                     {
                         try
                         {
                             onSuccess(state2);
                         }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
                         catch (Exception e)
                         {
                             completion.SetException(e);
@@ -439,26 +268,30 @@ namespace Microsoft.Data.SqlClient
                 );
             }
         }
-
-#if NET6_0_OR_GREATER
-        internal static void SetTimeoutExceptionWithState(TaskCompletionSource<object> completion, int timeout, object state, Func<object, Exception> onFailure, CancellationToken cancellationToken)
+        
+        internal static void SetTimeoutExceptionWithState(
+            TaskCompletionSource<object> completion,
+            int timeout,
+            object state,
+            Func<object, Exception> onFailure,
+            CancellationToken cancellationToken)
         {
-            if (timeout > 0)
+            if (timeout <= 0)
             {
-                Task.Delay(timeout * 1000, cancellationToken).ContinueWith(
-                    (Task task, object state) =>
-                    {
-                        if (!task.IsCanceled && !completion.Task.IsCompleted)
-                        {
-                            completion.TrySetException(onFailure(state));
-                        }
-                    },
-                    state: state,
-                    cancellationToken: CancellationToken.None
-                );
+                return;
             }
+
+            Task.Delay(timeout * 1000, cancellationToken).ContinueWith(
+                (task, innerState) =>
+                {
+                    if (!task.IsCanceled && !completion.Task.IsCompleted)
+                    {
+                        completion.TrySetException(onFailure(innerState));
+                    }
+                },
+                state: state,
+                cancellationToken: CancellationToken.None);
         }
-#endif
     }
 
     internal static class SQL
@@ -484,10 +317,6 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CannotGetDTCAddress));
         }
 
-        static internal Exception InvalidOptionLength(string key)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_InvalidOptionLength, key));
-        }
         internal static Exception InvalidInternalPacketSize(string str)
         {
             return ADP.ArgumentOutOfRange(str);
@@ -515,11 +344,7 @@ namespace Microsoft.Data.SqlClient
         }
         static internal Exception CredentialsNotProvided(SqlAuthenticationMethod auth)
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CredentialsNotProvided, DbConnectionStringBuilderUtil.AuthenticationTypeToString(auth)));
-        }
-        static internal Exception InvalidCertAuth()
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_Certificate));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CredentialsNotProvided, DbConnectionStringUtilities.AuthenticationTypeToString(auth)));
         }
         internal static Exception AuthenticationAndIntegratedSecurity()
         {
@@ -607,10 +432,6 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ConnectionLockedForBcpEvent));
         }
-        internal static Exception FatalTimeout()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_FatalTimeout));
-        }
         internal static Exception InstanceFailure()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_InstanceFailure));
@@ -622,10 +443,6 @@ namespace Microsoft.Data.SqlClient
         internal static Exception ChangePasswordConflictsWithSSPI()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_ChangePasswordConflictsWithSSPI));
-        }
-        internal static Exception ChangePasswordRequires2005()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ChangePasswordRequiresYukon));
         }
         internal static Exception UnknownSysTxIsolationLevel(System.Transactions.IsolationLevel isolationLevel)
         {
@@ -678,11 +495,6 @@ namespace Microsoft.Data.SqlClient
             return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedAuthentication, authentication));
         }
 
-        internal static Exception UnsupportedSqlAuthenticationMethod(SqlAuthenticationMethod authentication)
-        {
-            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedSqlAuthenticationMethod, authentication));
-        }
-
         internal static Exception UnsupportedAuthenticationSpecified(SqlAuthenticationMethod authentication)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UnsupportedAuthenticationSpecified, authentication));
@@ -698,11 +510,6 @@ namespace Microsoft.Data.SqlClient
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotCreateAuthInitializer, type), e);
         }
 
-        internal static Exception CannotInitializeAuthProvider(string type, Exception e)
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CannotInitializeAuthProvider, type), e);
-        }
-
         internal static Exception UnsupportedAuthenticationByProvider(string authentication, string type)
         {
             return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedAuthenticationByProvider, type, authentication));
@@ -711,11 +518,6 @@ namespace Microsoft.Data.SqlClient
         internal static Exception CannotFindAuthProvider(string authentication)
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotFindAuthProvider, authentication));
-        }
-
-        internal static Exception CannotGetAuthProviderConfig(Exception e)
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CannotGetAuthProviderConfig), e);
         }
 
         internal static Exception ParameterCannotBeEmpty(string paramName)
@@ -746,11 +548,6 @@ namespace Microsoft.Data.SqlClient
         //
         // SQL.DataCommand
         //
-        internal static Exception NotificationsRequire2005()
-        {
-            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_NotificationsRequireYukon));
-        }
-
         internal static ArgumentOutOfRangeException NotSupportedEnumerationValue(Type type, int value)
         {
             return ADP.ArgumentOutOfRange(StringsHelper.GetString(Strings.SQL_NotSupportedEnumerationValue, type.Name, value.ToString(System.Globalization.CultureInfo.InvariantCulture)), type.Name);
@@ -803,6 +600,7 @@ namespace Microsoft.Data.SqlClient
             return exception;
         }
 
+        // @TODO: Rename....
         internal static Exception PendingBeginXXXExists()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_PendingBeginXXXExists));
@@ -865,10 +663,6 @@ namespace Microsoft.Data.SqlClient
         internal static Exception UnexpectedTypeNameForNonStructParams(string paramName)
         {
             return ADP.NotSupported(StringsHelper.GetString(Strings.SqlParameter_UnexpectedTypeNameForNonStruct, paramName));
-        }
-        internal static Exception SingleValuedStructNotSupported()
-        {
-            return ADP.NotSupported(StringsHelper.GetString(Strings.MetaType_SingleValuedStructNotSupported));
         }
         internal static Exception ParameterInvalidVariant(string paramName)
         {
@@ -959,10 +753,6 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Overflow(StringsHelper.GetString(Strings.SQL_TimeOverflow, time));
         }
-        internal static Exception InvalidServerCertificate()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_InvalidServerCertificate));
-        }
 
         //
         // SQL.SqlDataReader
@@ -1005,6 +795,16 @@ namespace Microsoft.Data.SqlClient
         internal static Exception TextReaderNotSupportOnColumnType(string columnName)
         {
             return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_TextReaderNotSupportOnColumnType, columnName));
+        }
+
+        internal static Exception VectorNotSupportedOnColumnType(string columnName)
+        {
+            return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_VectorNotSupportedOnColumnType, columnName));
+        }
+
+        internal static Exception VectorTypeNotSupported(string value)
+        {
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_VectorTypeNotSupported, value));
         }
 
         internal static Exception XmlReaderNotSupportOnColumnType(string columnName)
@@ -1068,7 +868,9 @@ namespace Microsoft.Data.SqlClient
         //
         // SQL.SqlDelegatedTransaction
         //
-        static internal Exception CannotCompleteDelegatedTransactionWithOpenResults(SqlInternalConnectionTds internalConnection, bool marsOn)
+        static internal Exception CannotCompleteDelegatedTransactionWithOpenResults(
+            SqlConnectionInternal internalConnection,
+            bool marsOn)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, null, (StringsHelper.GetString(Strings.ADP_OpenReaderExists, marsOn ? ADP.Command : ADP.Connection)), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
@@ -1082,23 +884,9 @@ namespace Microsoft.Data.SqlClient
             return e;
         }
 
-        internal static Exception SqlDepCannotBeCreatedInProc()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlNotify_SqlDepCannotBeCreatedInProc));
-        }
-
-        static internal Exception SqlNotificationException(SqlNotificationEventArgs notify)
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQLNotify_ErrorFormat, notify.Type, notify.Info, notify.Source));
-        }
-
         //
         // SQL.SqlMetaData
         //
-        internal static Exception SqlMetaDataNoMetaData()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlMetaData_NoMetadata));
-        }
         internal static Exception UnexpectedUdtTypeNameForNonUdtParams()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQLUDT_UnexpectedUdtTypeName));
@@ -1137,10 +925,6 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlMetaData_SpecifyBothSortOrderAndOrdinal, order.ToString(), ordinal));
         }
 
-        internal static Exception TableTypeCanOnlyBeParameter()
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQLTVP_TableTypeCanOnlyBeParameter));
-        }
         internal static Exception UnsupportedColumnTypeForSqlProvider(string columnName, string typeName)
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SqlProvider_InvalidDataColumnType, columnName, typeName));
@@ -1172,77 +956,6 @@ namespace Microsoft.Data.SqlClient
         internal static Exception IEnumerableOfSqlDataRecordHasNoRows()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.IEnumerableOfSqlDataRecordHasNoRows));
-        }
-
-        //
-        //  SqlPipe
-        //
-        internal static Exception SqlPipeCommandHookedUpToNonContextConnection()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlPipe_CommandHookedUpToNonContextConnection));
-        }
-
-        internal static Exception SqlPipeMessageTooLong(int messageLength)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.SqlPipe_MessageTooLong, messageLength));
-        }
-
-        internal static Exception SqlPipeIsBusy()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlPipe_IsBusy));
-        }
-
-        internal static Exception SqlPipeAlreadyHasAnOpenResultSet(string methodName)
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlPipe_AlreadyHasAnOpenResultSet, methodName));
-        }
-
-        internal static Exception SqlPipeDoesNotHaveAnOpenResultSet(string methodName)
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlPipe_DoesNotHaveAnOpenResultSet, methodName));
-        }
-
-        //
-        // : ISqlResultSet
-        //
-        internal static Exception SqlResultSetClosed(string methodname)
-        {
-            if (methodname == null)
-            {
-                return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SqlResultSetClosed2));
-            }
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SqlResultSetClosed, methodname));
-        }
-        internal static Exception SqlResultSetNoData(string methodname)
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_DataReaderNoData, methodname));
-        }
-        internal static Exception SqlRecordReadOnly(string methodname)
-        {
-            if (methodname == null)
-            {
-                return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SqlRecordReadOnly2));
-            }
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SqlRecordReadOnly, methodname));
-        }
-
-        internal static Exception SqlResultSetRowDeleted(string methodname)
-        {
-            if (methodname == null)
-            {
-                return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SqlResultSetRowDeleted2));
-            }
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SqlResultSetRowDeleted, methodname));
-        }
-
-        internal static Exception SqlResultSetCommandNotInSameConnection()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SqlResultSetCommandNotInSameConnection));
-        }
-
-        internal static Exception SqlResultSetNoAcceptableCursor()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SqlResultSetNoAcceptableCursor));
         }
 
         //
@@ -1279,6 +992,10 @@ namespace Microsoft.Data.SqlClient
         internal static Exception BulkLoadNonMatchingColumnName(string columnName)
         {
             return BulkLoadNonMatchingColumnName(columnName, null);
+        }
+        internal static Exception BulkLoadNonMatchingColumnNames(IEnumerable<string> columnNames)
+        {
+            return BulkLoadNonMatchingColumnName(string.Join(",", columnNames), null);
         }
         internal static Exception BulkLoadNonMatchingColumnName(string columnName, Exception e)
         {
@@ -1369,7 +1086,7 @@ namespace Microsoft.Data.SqlClient
         internal static Exception UnsupportedSysTxForGlobalTransactions()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.
-#if NET6_0_OR_GREATER
+#if NET
                 SQL_UnsupportedSysTxVersion));
 #else
                 GT_UnsupportedSysTxVersion));
@@ -1396,7 +1113,9 @@ namespace Microsoft.Data.SqlClient
         /// * server-provided failover partner - raising SqlException in this case
         /// * connection string with failover partner and MultiSubnetFailover=true - raising argument one in this case with the same message
         /// </summary>
-        internal static Exception MultiSubnetFailoverWithFailoverPartner(bool serverProvidedFailoverPartner, SqlInternalConnectionTds internalConnection)
+        internal static Exception MultiSubnetFailoverWithFailoverPartner(
+            bool serverProvidedFailoverPartner,
+            SqlConnectionInternal internalConnection)
         {
             string msg = StringsHelper.GetString(Strings.SQLMSF_FailoverPartnerNotSupported);
             if (serverProvidedFailoverPartner)
@@ -1416,19 +1135,19 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception MultiSubnetFailoverWithMoreThan64IPs()
         {
-            string msg = GetSNIErrorMessage((int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithMoreThan64IPs);
+            string msg = GetSNIErrorMessage(SniErrors.MultiSubnetFailoverWithMoreThan64IPs);
             return ADP.InvalidOperation(msg);
         }
 
         internal static Exception MultiSubnetFailoverWithInstanceSpecified()
         {
-            string msg = GetSNIErrorMessage((int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithInstanceSpecified);
+            string msg = GetSNIErrorMessage(SniErrors.MultiSubnetFailoverWithInstanceSpecified);
             return ADP.Argument(msg);
         }
 
         internal static Exception MultiSubnetFailoverWithNonTcpProtocol()
         {
-            string msg = GetSNIErrorMessage((int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithNonTcpProtocol);
+            string msg = GetSNIErrorMessage(SniErrors.MultiSubnetFailoverWithNonTcpProtocol);
             return ADP.Argument(msg);
         }
 
@@ -1440,7 +1159,7 @@ namespace Microsoft.Data.SqlClient
             return ADP.Argument(StringsHelper.GetString(Strings.SQLROR_FailoverNotSupported));
         }
 
-        internal static Exception ROR_FailoverNotSupportedServer(SqlInternalConnectionTds internalConnection)
+        internal static Exception ROR_FailoverNotSupportedServer(SqlConnectionInternal internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_FailoverNotSupported)), "", 0));
@@ -1449,7 +1168,7 @@ namespace Microsoft.Data.SqlClient
             return exc;
         }
 
-        internal static Exception ROR_RecursiveRoutingNotSupported(SqlInternalConnectionTds internalConnection, int maxNumberOfRedirectRoute)
+        internal static Exception ROR_RecursiveRoutingNotSupported(SqlConnectionInternal internalConnection, int maxNumberOfRedirectRoute)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_RecursiveRoutingNotSupported, maxNumberOfRedirectRoute)), "", 0));
@@ -1458,16 +1177,7 @@ namespace Microsoft.Data.SqlClient
             return exc;
         }
 
-        internal static Exception ROR_UnexpectedRoutingInfo(SqlInternalConnectionTds internalConnection)
-        {
-            SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_UnexpectedRoutingInfo)), "", 0));
-            SqlException exc = SqlException.CreateException(errors, null, internalConnection, innerException: null, batchCommand: null);
-            exc._doNotReconnect = true;
-            return exc;
-        }
-
-        internal static Exception ROR_InvalidRoutingInfo(SqlInternalConnectionTds internalConnection)
+        internal static Exception ROR_InvalidRoutingInfo(SqlConnectionInternal internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_InvalidRoutingInfo)), "", 0));
@@ -1476,7 +1186,7 @@ namespace Microsoft.Data.SqlClient
             return exc;
         }
 
-        internal static Exception ROR_TimeoutAfterRoutingInfo(SqlInternalConnectionTds internalConnection)
+        internal static Exception ROR_TimeoutAfterRoutingInfo(SqlConnectionInternal internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_TimeoutAfterRoutingInfo)), "", 0));
@@ -1516,7 +1226,7 @@ namespace Microsoft.Data.SqlClient
             return exc;
         }
 
-        internal static Exception CR_EncryptionChanged(SqlInternalConnectionTds internalConnection)
+        internal static Exception CR_EncryptionChanged(SqlConnectionInternal internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_EncryptionChanged), "", 0));
@@ -1532,7 +1242,7 @@ namespace Microsoft.Data.SqlClient
             return exc;
         }
 
-        internal static SqlException CR_NoCRAckAtReconnection(SqlInternalConnectionTds internalConnection)
+        internal static SqlException CR_NoCRAckAtReconnection(SqlConnectionInternal internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_NoCRAckAtReconnection), "", 0));
@@ -1540,10 +1250,10 @@ namespace Microsoft.Data.SqlClient
             return exc;
         }
 
-        internal static SqlException CR_TDSVersionNotPreserved(SqlInternalConnectionTds internalConnection)
+        internal static SqlException CR_TDSVersionNotPreserved(SqlConnectionInternal internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_TDSVestionNotPreserved), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_TDSVersionNotPreserved), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", internalConnection, innerException: null, batchCommand: null);
             return exc;
         }
@@ -1582,16 +1292,6 @@ namespace Microsoft.Data.SqlClient
             ADP.TraceExceptionAsReturnValue(e);
             return e;
         }
-        // SQLBU 402363: Exception to prevent Parameter.Size data corruption case from working.
-        //  This should be temporary until changing to correct behavior can be safely implemented.
-        static internal Exception ParameterSizeRestrictionFailure(int index)
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.OleDb_CommandParameterError, index.ToString(CultureInfo.InvariantCulture), "SqlParameter.Size"));
-        }
-        internal static Exception SubclassMustOverride()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlMisc_SubclassMustOverride));
-        }
 
         // ProjectK\CoreCLR specific errors
         internal static Exception UnsupportedKeyword(string keyword)
@@ -1601,30 +1301,6 @@ namespace Microsoft.Data.SqlClient
         internal static Exception NetworkLibraryKeywordNotSupported()
         {
             return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_NetworkLibraryNotSupported));
-        }
-        internal static Exception UnsupportedFeatureAndToken(SqlInternalConnectionTds internalConnection, string token)
-        {
-            var innerException = ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedToken, token));
-
-            SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQL_UnsupportedFeature), "", 0));
-            SqlException exc = SqlException.CreateException(errors, "", internalConnection, innerException);
-            return exc;
-        }
-
-        internal static Exception BatchedUpdatesNotAvailableOnContextConnection()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BatchedUpdatesNotAvailableOnContextConnection));
-        }
-        internal static Exception Azure_ManagedIdentityException(string msg)
-        {
-            SqlErrorCollection errors = new SqlErrorCollection
-            {
-                new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, msg, "", 0)
-            };
-            SqlException exc = SqlException.CreateException(errors, null);
-            exc._doNotReconnect = true; // disable open retry logic on this error
-            return exc;
         }
 
         #region Always Encrypted Errors
@@ -1688,14 +1364,29 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception NullCertificatePath(string[] validLocations, bool isSystemOp)
         {
-            Debug.Assert(2 == validLocations.Length);
-            if (isSystemOp)
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
-                return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCertificatePathSysErr, validLocations[0], validLocations[1], @"/"));
+                Debug.Assert(validLocations.Length == 2);
+                if (isSystemOp)
+                {
+                    return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCertificatePathSysErr, validLocations[0], validLocations[1], @"/"));
+                }
+                else
+                {
+                    return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCertificatePath, validLocations[0], validLocations[1], @"/"));
+                }
             }
             else
             {
-                return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCertificatePath, validLocations[0], validLocations[1], @"/"));
+                Debug.Assert(validLocations.Length == 1);
+                if (isSystemOp)
+                {
+                    return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCertificatePathSysErr_Unix, validLocations[0], @"/"));
+                }
+                else
+                {
+                    return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCertificatePath_Unix, validLocations[0], @"/"));
+                }
             }
         }
 
@@ -1725,14 +1416,29 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception InvalidCertificatePath(string actualCertificatePath, string[] validLocations, bool isSystemOp)
         {
-            Debug.Assert(2 == validLocations.Length);
-            if (isSystemOp)
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
-                return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificatePathSysErr, actualCertificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                Debug.Assert(validLocations.Length == 2);
+                if (isSystemOp)
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificatePathSysErr, actualCertificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
+                else
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificatePath, actualCertificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
             }
             else
             {
-                return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificatePath, actualCertificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                Debug.Assert(validLocations.Length == 1);
+                if (isSystemOp)
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificatePathSysErr_Unix, actualCertificatePath, validLocations[0], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
+                else
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificatePath_Unix, actualCertificatePath, validLocations[0], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
             }
         }
 
@@ -1846,17 +1552,29 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception InvalidCertificateLocation(string certificateLocation, string certificatePath, string[] validLocations, bool isSystemOp)
         {
-
-#if NETFRAMEWORK
-            Debug.Assert(2 == validLocations.Length);
-#endif
-            if (isSystemOp)
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
-                return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocationSysErr, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                Debug.Assert(validLocations.Length == 2);
+                if (isSystemOp)
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocationSysErr, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
+                else
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocation, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
             }
             else
             {
-                return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocation, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                Debug.Assert(validLocations.Length == 1);
+                if (isSystemOp)
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocationSysErr_Unix, certificateLocation, certificatePath, validLocations[0], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
+                else
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocation_Unix, certificateLocation, certificatePath, validLocations[0], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
             }
         }
 
@@ -1901,44 +1619,19 @@ namespace Microsoft.Data.SqlClient
             return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidAlgorithmVersionInEncryptedCEK, actual.ToString(@"X2"), expected.ToString(@"X2")), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
         }
 
-        internal static Exception InvalidCiphertextLengthInEncryptedCEK(int actual, int expected, string certificateName)
+        internal static Exception InvalidCiphertextLengthInEncryptedCEK(string keyType, string keyPathReference, int actual, int expected, string masterKeyPath)
         {
-            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCiphertextLengthInEncryptedCEK, actual, expected, certificateName), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCiphertextLengthInEncryptedCEK, actual, expected, keyType, masterKeyPath, keyPathReference), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
         }
 
-        internal static Exception InvalidCiphertextLengthInEncryptedCEKCsp(int actual, int expected, string masterKeyPath)
+        internal static Exception InvalidSignatureInEncryptedCEK(string keyType, string keyPathReference, int actual, int expected, string masterKeyPath)
         {
-            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCiphertextLengthInEncryptedCEKCsp, actual, expected, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidSignatureInEncryptedCEK, actual, expected, keyType, masterKeyPath, keyPathReference), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
         }
 
-        internal static Exception InvalidCiphertextLengthInEncryptedCEKCng(int actual, int expected, string masterKeyPath)
+        internal static Exception InvalidSignature(string masterKeyPath, string keyType)
         {
-            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCiphertextLengthInEncryptedCEKCng, actual, expected, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
-        }
-
-        internal static Exception InvalidSignatureInEncryptedCEK(int actual, int expected, string masterKeyPath)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidSignatureInEncryptedCEK, actual, expected, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
-        }
-
-        internal static Exception InvalidSignatureInEncryptedCEKCsp(int actual, int expected, string masterKeyPath)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidSignatureInEncryptedCEKCsp, actual, expected, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
-        }
-
-        internal static Exception InvalidSignatureInEncryptedCEKCng(int actual, int expected, string masterKeyPath)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidSignatureInEncryptedCEKCng, actual, expected, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
-        }
-
-        internal static Exception InvalidCertificateSignature(string certificatePath)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateSignature, certificatePath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
-        }
-
-        internal static Exception InvalidSignature(string masterKeyPath)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidSignature, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidSignature, keyType, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
         }
 
         internal static Exception CertificateWithNoPrivateKey(string keyPath, bool isSystemOp)
@@ -1958,11 +1651,6 @@ namespace Microsoft.Data.SqlClient
         internal static Exception NullPlainText()
         {
             return ADP.ArgumentNull(StringsHelper.GetString(Strings.TCE_NullPlainText));
-        }
-
-        static internal Exception VeryLargeCiphertext(long cipherTextLength, long maxCipherTextSize, long plainTextLength)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.TCE_VeryLargeCiphertext, cipherTextLength, maxCipherTextSize, plainTextLength));
         }
 
         internal static Exception NullCipherText()
@@ -2179,21 +1867,6 @@ namespace Microsoft.Data.SqlClient
 
         #region Always Encrypted - Enclave provider/configuration errors
 
-        internal static Exception CannotGetSqlColumnEncryptionEnclaveProviderConfig(Exception innerException)
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig, innerException.Message), innerException);
-        }
-
-        internal static Exception CannotCreateSqlColumnEncryptionEnclaveProvider(string providerName, string type, Exception innerException)
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_CannotCreateSqlColumnEncryptionEnclaveProvider, providerName, type, innerException.Message), innerException);
-        }
-
-        internal static Exception SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty));
-        }
-
         internal static Exception NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe(string enclaveType)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe, "sp_describe_parameter_encryption", enclaveType));
@@ -2207,11 +1880,6 @@ namespace Microsoft.Data.SqlClient
         internal static Exception EnclaveTypeNullForEnclaveBasedQuery()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveTypeNullForEnclaveBasedQuery));
-        }
-
-        internal static Exception EnclaveProvidersNotConfiguredForEnclaveBasedQuery()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery));
         }
 
         internal static Exception EnclaveProviderNotFound(string enclaveType, string attestationProtocol = null)
@@ -2416,83 +2084,27 @@ namespace Microsoft.Data.SqlClient
         // Merged Provider
         //
 
-        static internal Exception ContextAllowsLimitedKeywords()
+        static internal Exception ContextConnectionIsUnsupported()
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextAllowsLimitedKeywords));
-        }
-        static internal Exception ContextAllowsOnlyTypeSystem2005()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextAllowsOnlyTypeSystem2005));
-        }
-        static internal Exception ContextConnectionIsInUse()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextConnectionIsInUse));
-        }
-        static internal Exception ContextUnavailableOutOfProc()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextUnavailableOutOfProc));
-        }
-        static internal Exception ContextUnavailableWhileInProc()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextUnavailableWhileInProc));
-        }
-        static internal Exception NestedTransactionScopesNotSupported()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_NestedTransactionScopesNotSupported));
-        }
-        static internal Exception NotAvailableOnContextConnection()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_NotAvailableOnContextConnection));
-        }
-        static internal Exception NotificationsNotAvailableOnContextConnection()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_NotificationsNotAvailableOnContextConnection));
-        }
-
-        static internal Exception UserInstanceNotAvailableInProc()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UserInstanceNotAvailableInProc));
-        }
-        static internal Exception ArgumentLengthMismatch(string arg1, string arg2)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_ArgumentLengthMismatch, arg1, arg2));
-        }
-        static internal Exception InvalidSqlDbTypeOneAllowedType(SqlDbType invalidType, string method, SqlDbType allowedType)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_InvalidSqlDbTypeWithOneAllowedType, invalidType, method, allowedType));
-        }
-        static internal Exception SqlPipeErrorRequiresSendEnd()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_PipeErrorRequiresSendEnd));
-        }
-        static internal Exception TooManyValues(string arg)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_TooManyValues), arg);
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextConnectionIsUnsupported));
         }
 
         /// <summary>
         /// gets a message for SNI error (sniError must be valid, non-zero error code)
         /// </summary>
-        internal static string GetSNIErrorMessage(int sniError)
+        internal static string GetSNIErrorMessage(uint sniError)
         {
-            Debug.Assert(sniError > 0 && sniError <= (int)SNINativeMethodWrapper.SniSpecialErrors.MaxErrorValue, "SNI error is out of range");
+            Debug.Assert(sniError > 0 && sniError <= SniErrors.MaxErrorValue, "SNI error is out of range");
 
             string errorMessageId = string.Format("SNI_ERROR_{0}", sniError);
             return StringsHelper.GetResourceString(errorMessageId);
         }
-
-        // BulkLoad
-        internal const string WriteToServer = "WriteToServer";
 
         // Default values for SqlDependency and SqlNotificationRequest
         internal const int SqlDependencyTimeoutDefault = 0;
         internal const int SqlDependencyServerTimeout = 5 * 24 * 3600; // 5 days - used to compute default TTL of the dependency
         internal const string SqlNotificationServiceDefault = "SqlQueryNotificationService";
         internal const string SqlNotificationStoredProcedureDefault = "SqlQueryNotificationStoredProcedure";
-
-        // constant strings
-        internal const string Transaction = "Transaction";
-        internal const string Connection = "Connection";
 
         private static IEnumerable<string> Map<T>(IEnumerable<T> source, Func<T, string> selector)
         {
@@ -2512,20 +2124,15 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         internal static Exception SocketDidNotThrow()
         {
-            return new InternalException(StringsHelper.GetString(Strings.SQL_SocketDidNotThrow, nameof(SocketException), nameof(SocketError.WouldBlock)));
+            return new Exception(StringsHelper.GetString(Strings.SQL_SocketDidNotThrow, nameof(SocketException), nameof(SocketError.WouldBlock)));
         }
 #else
         static internal Exception SnapshotNotSupported(System.Data.IsolationLevel level)
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_SnapshotNotSupported, typeof(System.Data.IsolationLevel), level.ToString()));
-        }
-        static internal Exception UnexpectedSmiEvent(Microsoft.Data.SqlClient.Server.SmiEventSink_Default.UnexpectedEventType eventType)
-        {
-            Debug.Assert(false, "UnexpectedSmiEvent: " + eventType.ToString());    // Assert here, because these exceptions will most likely be eaten by the server.
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UnexpectedSmiEvent, (int)eventType));
         }
 #endif
 
@@ -2556,10 +2163,6 @@ namespace Microsoft.Data.SqlClient
         {
             return StringsHelper.GetString(Strings.SQL_EncryptionNotSupportedByServer);
         }
-        internal static string CTAIPNotSupportedByServer()
-        {
-            return StringsHelper.GetString(Strings.SQL_CTAIPNotSupportedByServer);
-        }
         internal static string OperationCancelled()
         {
             return StringsHelper.GetString(Strings.SQL_OperationCancelled);
@@ -2575,10 +2178,6 @@ namespace Microsoft.Data.SqlClient
         internal static string SSPIGenerateError()
         {
             return StringsHelper.GetString(Strings.SQL_SSPIGenerateError);
-        }
-        internal static string KerberosTicketMissingError()
-        {
-            return StringsHelper.GetString(Strings.SQL_KerberosTicketMissingError);
         }
         internal static string Timeout()
         {
@@ -2678,7 +2277,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>escapes the name with [], also escapes the last close bracket with double-bracket</returns>
         internal static string EscapeIdentifier(string name)
         {
-            Debug.Assert(!ADP.IsEmpty(name), "null or empty identifiers are not allowed");
+            Debug.Assert(!string.IsNullOrEmpty(name), "null or empty identifiers are not allowed");
             return "[" + name.Replace("]", "]]") + "]";
         }
 
@@ -2688,7 +2287,7 @@ namespace Microsoft.Data.SqlClient
         internal static void EscapeIdentifier(StringBuilder builder, string name)
         {
             Debug.Assert(builder != null, "builder cannot be null");
-            Debug.Assert(!ADP.IsEmpty(name), "null or empty identifiers are not allowed");
+            Debug.Assert(!string.IsNullOrEmpty(name), "null or empty identifiers are not allowed");
 
             builder.Append("[");
             builder.Append(name.Replace("]", "]]"));
@@ -2713,7 +2312,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>escaped and quoted literal string</returns>
         internal static string MakeStringLiteral(string input)
         {
-            if (ADP.IsEmpty(input))
+            if (string.IsNullOrEmpty(input))
             {
                 return "''";
             }
@@ -2775,55 +2374,5 @@ namespace Microsoft.Data.SqlClient
             }
         }
     }
-
-#if NETFRAMEWORK
-    sealed internal class InOutOfProcHelper
-    {
-        private static readonly InOutOfProcHelper SingletonInstance = new InOutOfProcHelper();
-
-        private bool _inProc = false;
-
-        // InOutOfProcHelper detects whether it's running inside the server or not.  It does this
-        //  by checking for the existence of a well-known function export on the current process.
-        //  Note that calling conventions, etc. do not matter -- we'll never call the function, so
-        //  only the name match or lack thereof matter.
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        private InOutOfProcHelper()
-        {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                // SafeNativeMethods.GetModuleHandle calls into kernel32.dll, so return early to avoid
-                // a System.EntryPointNotFoundException on non-Windows platforms, e.g. Mono.
-                return;
-            }
-            // Don't need to close this handle...
-            // SxS: we use this method to check if we are running inside the SQL Server process. This call should be safe in SxS environment.
-            IntPtr handle = Common.SafeNativeMethods.GetModuleHandle(null);
-            if (IntPtr.Zero != handle)
-            {
-                // SQLBU 359301: Currently, the server exports different names for x86 vs. AMD64 and IA64.  Supporting both names
-                //  for now gives the server time to unify names across platforms without breaking currently-working ones.
-                //  We can remove the obsolete name once the server is changed.
-                if (IntPtr.Zero != Common.SafeNativeMethods.GetProcAddress(handle, "_______SQL______Process______Available@0"))
-                {
-                    _inProc = true;
-                }
-                else if (IntPtr.Zero != Common.SafeNativeMethods.GetProcAddress(handle, "______SQL______Process______Available"))
-                {
-                    _inProc = true;
-                }
-            }
-        }
-
-        internal static bool InProc
-        {
-            get
-            {
-                return SingletonInstance._inProc;
-            }
-        }
-    }
-#endif
 }
 

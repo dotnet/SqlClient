@@ -16,11 +16,11 @@
     <None Remove=".AssemblyAttributes" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)'=='net46'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net46'">
     <Compile Include="TypeForwards.cs" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)'!='net46'">
+  <ItemGroup Condition="'$(TargetFramework)' != 'net46'">
     <Compile Include="IBinarySerialize.cs" />
     <Compile Include="InvalidUdtException.cs" />
     <Compile Include="SqlFacetAttribute.cs" />

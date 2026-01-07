@@ -13,10 +13,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private class FakeDiagnosticSourceWriteObserver : IObserver<KeyValuePair<string, object>>
         {
             private readonly Action<KeyValuePair<string, object>> _writeCallback;
+            private readonly List<string> _receivedDiagnosticNames;
 
-            public FakeDiagnosticSourceWriteObserver(Action<KeyValuePair<string, object>> writeCallback)
+            public FakeDiagnosticSourceWriteObserver(Action<KeyValuePair<string, object>> writeCallback, List<string> receivedDiagnosticNames)
             {
                 _writeCallback = writeCallback;
+                _receivedDiagnosticNames = receivedDiagnosticNames;
             }
 
             public void OnCompleted()
@@ -29,16 +31,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             public void OnNext(KeyValuePair<string, object> value)
             {
+                lock (_receivedDiagnosticNames)
+                {
+                    _receivedDiagnosticNames.Add(value.Key);
+                }
                 _writeCallback(value);
             }
         }
 
+        private readonly List<string> _receivedDiagnosticNames;
         private readonly Action<KeyValuePair<string, object>> _writeCallback;
         private bool _writeObserverEnabled;
 
         public FakeDiagnosticListenerObserver(Action<KeyValuePair<string, object>> writeCallback)
         {
             _writeCallback = writeCallback;
+            _receivedDiagnosticNames = [];
         }
 
         public void OnCompleted()
@@ -53,7 +61,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             if (value.Name.Equals("SqlClientDiagnosticListener"))
             {
-                value.Subscribe(new FakeDiagnosticSourceWriteObserver(_writeCallback), IsEnabled);
+                value.Subscribe(new FakeDiagnosticSourceWriteObserver(_writeCallback, _receivedDiagnosticNames), IsEnabled);
+            }
+        }
+
+        public bool HasReceivedDiagnostic(string diagnosticName)
+        {
+            lock (_receivedDiagnosticNames)
+            {
+                return _receivedDiagnosticNames.Contains(diagnosticName);
             }
         }
 

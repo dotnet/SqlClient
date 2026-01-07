@@ -5,11 +5,9 @@
       <summary>Extensions for SqlDbType.</summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[  
-
+          <![CDATA[
 ## Remarks  
 The <xref:Microsoft.Data.SqlDbTypeExtensions> class provides <xref:System.Data.SqlDbType> enums which will be added. These are meant to be used by applications which cannot leverage the enums in <xref:System.Data.SqlDbType> available in newer .NET runtime versions.
-
 ]]>
         </format>
       </remarks>
@@ -20,5 +18,13 @@ The <xref:Microsoft.Data.SqlDbTypeExtensions> class provides <xref:System.Data.S
         <see cref="T:System.Data.SqlDbType" /> enum value for JSON datatype.
       </returns>
     </SqlJson>
+    <SqlVector name="default">
+      <summary>
+        Gets the <see cref="T:System.Data.SqlDbType" /> enum value for the vector datatype.
+      </summary>
+      <returns>
+        <see cref="T:System.Data.SqlDbType" /> enum value for vector datatype.
+      </returns>
+    </SqlVector>
   </members>
 </docs>

@@ -38,17 +38,12 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 - name: 'debug'
   displayName: 'Enable debug output'
   type: boolean
-  default: true
+  default: false
 
 - name: publishSymbols
   displayName: 'Publish symbols'
   type: boolean
   default: false
-
-- name: MDS_PackageRef_Version
-  displayName: 'MDS package version of AKV Provider (build AKV)'
-  type: string
-  default: 5.1.5
 
 - name: CurrentNetFxVersion
   displayName: 'Lowest supported .NET Framework version (MDS validation)'
@@ -67,14 +62,18 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: boolean
   default: false
 
+# The timeout, in minutes, for each test job.
+- name: testJobTimeout
+  displayName: 'Test job timeout (in minutes)'
+  type: number
+  default: 90
+
 variables:
   - template: /eng/pipelines/libraries/variables.yml@self
   - name: packageFolderName
     value: drop_buildMDS_build_signed_package
   - name: PublishSymbols
     value: ${{ parameters['publishSymbols'] }}
-  - name: MDS_PackageRef_Version
-    value: ${{ parameters['MDS_PackageRef_Version'] }}
   - name: CurrentNetFxVersion
     value: ${{ parameters['CurrentNetFxVersion'] }}
 
@@ -89,16 +88,26 @@ extends:
   template: v2/OneBranch.${{parameters.oneBranchType }}.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
   parameters:
     featureFlags:
+      # Suggested by MerlinBot (https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient/pullrequest/4882)
+      EnableCDPxPAT: false
       WindowsHostVersion: 1ESWindows2022
     globalSdl: # https://aka.ms/obpipelines/sdl
+      tsa:
+        # The OneBranch template will set 'break' to false for the other SDL
+        # tools when TSA is enabled.  This allows TSA to gather the results
+        # and publish them for downstream analysis.
+        enabled: true
       apiscan:
-        enabled: ${{ not(parameters['isPreview']) }}
+        enabled: true
+        # For non-official builds, the OneBranch template seems to set APIScan's
+        # 'break' to true even when TSA is enabled.  We don't want APIScan to
+        # break non-official builds, so we explicitly set 'break' to false here.
+        ${{ if ne(parameters.oneBranchType, 'Official') }}:
+          break: false
         softwareFolder: $(softwareFolder)
         symbolsFolder: $(symbolsFolder)
         softwarename: Microsoft.Data.SqlClient
         versionNumber: $(AssemblyFileVersion)
-      tsa:
-        enabled: ${{ not(parameters['isPreview']) }} # onebranch publish all sdl results to TSA. If TSA is disabled all SDL tools will forced into 'break' build mode.
       codeql:
         compiled:
         enabled: ${{ not(parameters['isPreview']) }}
@@ -130,15 +139,6 @@ extends:
         tsaOptionsPath: $(REPOROOT)\.config\tsaoptions.json
         disableLegacyManifest: true
     stages:
-    - stage: buildAKV
-      displayName: 'Build AKV Provider'
-      jobs:
-      - template: eng/pipelines/common/templates/jobs/build-signed-akv-package-job.yml@self
-        parameters:
-          symbolsFolder: $(symbolsFolder)
-          softwareFolder: $(softwareFolder)
-          publishSymbols: ${{ parameters['publishSymbols'] }}
-
     - stage: buildMDS
       displayName: 'Build MDS'
       jobs:
@@ -163,12 +163,14 @@ extends:
             patterns: '**/*.*nupkg'
             displayName: 'Download NuGet Package'
 
-      - template: eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
-        parameters:
-          packageFolderName: $(packageFolderName)
-          isPreview: ${{ parameters['isPreview'] }}
-          downloadPackageStep:
-            download: current
-            artifact: $(packageFolderName)
-            patterns: '**/*.nupkg'
-            displayName: 'Download NuGet Package'
+# Disabling as of 10/15/2025 due to OneBranch apparently disallowing MSBuild tasks in validation stages.
+#      - template: eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
+#        parameters:
+#          packageFolderName: $(packageFolderName)
+#          isPreview: ${{ parameters['isPreview'] }}
+#          timeout: ${{ parameters.testJobTimeout }}
+#          downloadPackageStep:
+#            download: current
+#            artifact: $(packageFolderName)
+#            patterns: '**/*.nupkg'
+#            displayName: 'Download NuGet Package'

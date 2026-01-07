@@ -51,7 +51,7 @@
       </example>
     </SqlBatch>
     <ctor1>
-      <summary>Initializes a new <see cref="T:SqlBatch" />.</summary>
+      <summary>Initializes a new <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />.</summary>
       <example>
         <para>
           The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, then adds multiple <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> objects to the batch. It then executes the batch, creating a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> and then the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> as the <c>using</c> blocks fall out of scope.
@@ -103,7 +103,7 @@
       </example>
     </ctor1>
     <ctor2>
-      <summary>Initializes a new <see cref="T:SqlBatch" />.</summary>
+      <summary>Initializes a new <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />.</summary>
       <param name="connection">
         A <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> that represents the connection to an instance of SQL Server.
       </param>
@@ -176,7 +176,7 @@
     </BatchCommands>
     <Commands>
       <summary>
-        The list of commands contained in the batch in a <see cref="T:System.Collections.Generic.List{Microsoft.Data.SqlClient.SqlBatchCommand}" />.
+        The list of <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> contained in the batch in a <see cref="T:System.Collections.Generic.List`1" />.
       </summary>
     </Commands>
     <ExecuteReader>
@@ -309,10 +309,14 @@
       </summary>
       <returns>A <see cref="T:System.Data.Common.DbDataReader" /> object.</returns>
       <remarks>
-        When the batch returns multiple result sets from different commands, <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.NextResult" /> can be used to advance the reader to the next result set.
-        <note type="note">
-          This method benefits from <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader(System.Data.CommandBehavior)" />, and all the expected exceptions of that method also apply here.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+When the batch returns multiple result sets from different commands, <xref:Microsoft.Data.SqlClient.SqlDataReader.NextResult> can be used to advance the reader to the next result set.
+
+> [!NOTE]
+> This method benefits from <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader(System.Data.CommandBehavior)>, and all the expected exceptions of that method also apply here.
+          ]]>
+        </format>
       </remarks>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         An error occurred while executing the batch.
@@ -329,15 +333,16 @@
       </summary>
       <returns>A task representing the asynchronous operation.</returns>
       <remarks>
-        <para>
-          For more information about asynchronous programming, see <see href="/dotnet/framework/data/adonet/asynchronous-programming">Asynchronous Programming</see>.
-        </para>
-        <para>
-          This method stores in the task it returns all non-usage exceptions that the method's synchronous counterpart can throw. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <see cref="T:System.ArgumentException" />, are still thrown synchronously. For the stored exceptions, see the exceptions thrown by <see cref="M:System.Data.Common.DbBatch.ExecuteDbDataReader(System.Data.CommandBehavior)" />.
-        </para>
-        <note type="note">
-          This method benefits from <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync(System.Threading.CancellationToken)" />, and all the expected exceptions of that method also apply here.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+For more information about asynchronous programming, see [Asynchronous Programming](https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming).
+
+This method stores in the task it returns all non-usage exceptions that the method's synchronous counterpart can throw. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <xref:System.ArgumentException>, are still thrown synchronously. For the stored exceptions, see the exceptions thrown by <xref:System.Data.Common.DbBatch.ExecuteDbDataReader(System.Data.CommandBehavior)>.
+
+> [!NOTE]
+> This method benefits from <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync(System.Threading.CancellationToken)>, and all the expected exceptions of that method also apply here.
+          ]]>
+        </format>
       </remarks>
       <exception cref="T:System.OperationCanceledException">
         The cancellation token was canceled. This exception is stored into the returned task.
@@ -349,10 +354,14 @@
       </summary>
       <returns>The total number of rows affected across all the batch commands.</returns>
       <remarks>
-        You can use <see cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery" /> to perform catalog operations (for example, querying the structure of a database or creating database objects such as tables), or to change the data in a database by executing UPDATE, INSERT, or DELETE statements. Although <see cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery" /> does not return any rows, any output parameters or return values mapped to parameters are populated with data. For UPDATE, INSERT, and DELETE statements, the return value is the total number of rows affected by the batch. If no UPDATE, INSERT, or DELETE statements are included in the batch, the return value is -1.
-        <note type="note">
-          This method benefits from <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery" />, and all the expected exceptions of that method also apply here.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+You can use <xref:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery> to perform catalog operations (for example, querying the structure of a database or creating database objects such as tables), or to change the data in a database by executing UPDATE, INSERT, or DELETE statements. Although <xref:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery> does not return any rows, any output parameters or return values mapped to parameters are populated with data. For UPDATE, INSERT, and DELETE statements, the return value is the total number of rows affected by the batch. If no UPDATE, INSERT, or DELETE statements are included in the batch, the return value is -1.
+
+> [!NOTE]
+> This method benefits from <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery>, and all the expected exceptions of that method also apply here.
+          ]]>
+        </format>
       </remarks>
     </ExecuteNonQuery>
     <ExecuteNonQueryAsync>
@@ -364,18 +373,19 @@
       </summary>
       <returns>A task representing the asynchronous operation.</returns>
       <remarks>
-        <para>
-          For more information about asynchronous programming, see <see href="/dotnet/framework/data/adonet/asynchronous-programming">Asynchronous Programming</see>.
-        </para>
-        <para>
-          If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <see cref="T:System.ArgumentException" />, are still thrown synchronously.
-        </para>
-        <note type="note">
-          This method benefits from <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQueryAsync(System.Threading.CancellationToken)" />, and all the expected exceptions of that method also apply here.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+For more information about asynchronous programming, see [Asynchronous Programming](https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming).
+
+If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <xref:System.ArgumentException>, are still thrown synchronously.
+
+> [!NOTE]
+> This method benefits from <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQueryAsync(System.Threading.CancellationToken)>, and all the expected exceptions of that method also apply here.
+          ]]>
+        </format>
       </remarks>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">An error occurred while executing the batch.</exception>
-      <related type="Article" href="/dotnet/framework/data/adonet/ado-net-overview">ADO.NET Overview</related>
+      <related type="Article" href="https://learn.microsoft.com/sql/connect/ado-net/overview-sqlclient-driver">Overview of the SqlClient driver</related>
       <exception cref="T:System.OperationCanceledException">
         The cancellation token was canceled. This exception is stored into the returned task.
       </exception>
@@ -396,7 +406,7 @@
       </summary>
       <returns>The first column of the first row in the first result set.</returns>
       <remarks>
-        This method benefits from <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteScalarAsync" />, and all the expected exceptions of that method also apply here. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <see cref="T:System.ArgumentException" />, are still thrown synchronously.
+        This method benefits from <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteScalarAsync(System.Threading.CancellationToken)" />, and all the expected exceptions of that method also apply here. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <see cref="T:System.ArgumentException" />, are still thrown synchronously.
       </remarks>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         An error occurred while executing the batch.

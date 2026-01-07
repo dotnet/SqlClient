@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
@@ -11,25 +12,27 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
-
 using System.Security;
-using System.Security.Permissions;
+using System.Security.Authentication;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
-using IsolationLevel = System.Data.IsolationLevel;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Identity.Client;
 using Microsoft.SqlServer.Server;
-using System.Security.Authentication;
+using IsolationLevel = System.Data.IsolationLevel;
 
 #if NETFRAMEWORK
-using Microsoft.Win32;
 using System.Reflection;
-using System.Runtime.ConstrainedExecution;
-using System.Runtime.InteropServices;
+using System.Security.Permissions;
+#endif
+
+#if _WINDOWS
 using System.Runtime.Versioning;
+using Microsoft.Win32;
 #endif
 
 namespace Microsoft.Data.Common
@@ -43,10 +46,12 @@ namespace Microsoft.Data.Common
     /// This class is used so that there will be compile time checking of error messages.
     /// The resource Framework.txt will ensure proper string text based on the appropriate locale.
     /// </summary>
+    // @TODO: This file needs to be broken up
     internal static partial class ADP
     {
         // NOTE: Initializing a Task in SQL CLR requires the "UNSAFE" permission set (http://msdn.microsoft.com/en-us/library/ms172338.aspx)
         // Therefore we are lazily initializing these Tasks to avoid forcing customers to use the "UNSAFE" set when they are actually using no Async features
+        // @TODO: These are not necessary because the TPL has optimized commonly used task return values like true and false.
         private static Task<bool> s_trueTask;
         internal static Task<bool> TrueTask => s_trueTask ??= Task.FromResult(true);
 
@@ -65,23 +70,27 @@ namespace Microsoft.Data.Common
         internal const int MaxBufferAccessTokenExpiry = 600;
 
         #region UDT
-#if NETFRAMEWORK
-        private static readonly MethodInfo s_method = typeof(InvalidUdtException).GetMethod("Create", BindingFlags.NonPublic | BindingFlags.Static);
-#endif
+
+        #if NETFRAMEWORK
+        private static readonly MethodInfo s_udtFactory =
+            typeof(InvalidUdtException).GetMethod("Create", BindingFlags.NonPublic | BindingFlags.Static);
+        #endif
+
         /// <summary>
         /// Calls "InvalidUdtException.Create" method when an invalid UDT occurs.
         /// </summary>
         internal static InvalidUdtException CreateInvalidUdtException(Type udtType, string resourceReasonName)
         {
-            InvalidUdtException e =
-#if NETFRAMEWORK
-                (InvalidUdtException)s_method.Invoke(null, new object[] { udtType, resourceReasonName });
-            ADP.TraceExceptionAsReturnValue(e);
-#else
-                InvalidUdtException.Create(udtType, resourceReasonName);
-#endif
+            #if NETFRAMEWORK
+            InvalidUdtException e = (InvalidUdtException)s_udtFactory.Invoke(null, [udtType, resourceReasonName]);
+            #else
+            InvalidUdtException e = InvalidUdtException.Create(udtType, resourceReasonName);
+            #endif
+
+            TraceExceptionAsReturnValue(e);
             return e;
         }
+
         #endregion
 
         static private void TraceException(string trace, Exception e)
@@ -128,7 +137,18 @@ namespace Microsoft.Data.Common
             }
         }
 
-        internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, int dueTime, int period)
+        internal static Timer UnsafeCreateTimer(
+            TimerCallback callback,
+            object state,
+            int dueTimeMilliseconds,
+            int periodMilliseconds) =>
+            UnsafeCreateTimer(
+                callback,
+                state,
+                TimeSpan.FromMilliseconds(dueTimeMilliseconds),
+                TimeSpan.FromMilliseconds(periodMilliseconds));
+        
+        internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, TimeSpan dueTime, TimeSpan period)
         {
             // Don't capture the current ExecutionContext and its AsyncLocals onto 
             // a global timer causing them to live forever
@@ -152,6 +172,7 @@ namespace Microsoft.Data.Common
                 }
             }
         }
+            
 
 #region COM+ exceptions
         internal static ArgumentException Argument(string error)
@@ -346,13 +367,6 @@ namespace Microsoft.Data.Common
             return e;
         }
 
-        internal static ArgumentOutOfRangeException ArgumentOutOfRange(string message, string parameterName, object value)
-        {
-            ArgumentOutOfRangeException e = new(parameterName, value, message);
-            TraceExceptionAsReturnValue(e);
-            return e;
-        }
-
         internal static AuthenticationException SSLCertificateAuthenticationException(string message)
         {
             AuthenticationException e = new(message);
@@ -419,6 +433,46 @@ namespace Microsoft.Data.Common
             return InvalidEnumerationValue(typeof(CommandBehavior), (int)value);
         }
 
+
+        #if _UNIX
+        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
+        {
+            // No registry in non-Windows environments
+            return null;
+        }
+        #endif
+        #if _WINDOWS
+        [ResourceExposure(ResourceScope.Machine)]
+        [ResourceConsumption(ResourceScope.Machine)]
+        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
+        {
+            #if NETFRAMEWORK
+            new RegistryPermission(RegistryPermissionAccess.Read, $@"HKEY_LOCAL_MACHINE\{subkey}").Assert();
+            #endif
+
+            try
+            {
+                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(subkey, false))
+                {
+                    return key?.GetValue(queryvalue);
+                }
+            }
+            catch (SecurityException e)
+            {
+                // Even though we assert permission - it's possible there are
+                // ACL's on registry that cause SecurityException to be thrown.
+                ADP.TraceExceptionWithoutRethrow(e);
+                return null;
+            }
+            #if NETFRAMEWORK
+            finally
+            {
+                CodeAccessPermission.RevertAssert();
+            }
+            #endif
+        }
+        #endif
+
         internal static void ValidateCommandBehavior(CommandBehavior value)
         {
             if (((int)value < 0) || (0x3F < (int)value))
@@ -442,15 +496,16 @@ namespace Microsoft.Data.Common
             return InvalidEnumerationValue(typeof(Format), (int)value);
         }
 
-        internal static ArgumentOutOfRangeException NotSupportedUserDefinedTypeSerializationFormat(Format value, string method)
-            => NotSupportedEnumerationValue(typeof(Format), value.ToString(), method);
-
         internal static ArgumentException InvalidArgumentLength(string argumentName, int limit)
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidArgumentLength, argumentName, limit));
 
         internal static ArgumentException MustBeReadOnly(string argumentName) => Argument(StringsHelper.GetString(Strings.ADP_MustBeReadOnly, argumentName));
 
-        internal static Exception CreateSqlException(MsalException msalException, SqlConnectionString connectionOptions, SqlInternalConnectionTds sender, string username)
+        internal static Exception CreateSqlException(
+            MsalException msalException,
+            SqlConnectionString connectionOptions,
+            SqlConnectionInternal sender,
+            string username)
         {
             // Error[0]
             SqlErrorCollection sqlErs = new();
@@ -607,13 +662,22 @@ namespace Microsoft.Data.Common
             foreach (Delegate del in mcd?.GetInvocationList())
             {
                 if (del.Target is DbCommandBuilder)
+                {
                     return del;
+                }
             }
 
             return null;
         }
 
         internal static long TimerCurrent() => DateTime.UtcNow.ToFileTimeUtc();
+
+        internal static long FastTimerCurrent() => Environment.TickCount;
+
+        internal static uint CalculateTickCountElapsed(long startTick, long endTick)
+        {
+            return (uint)(endTick - startTick);
+        }
 
         internal static long TimerFromSeconds(int seconds)
         {
@@ -750,24 +814,63 @@ namespace Microsoft.Data.Common
 
         private const string ONDEMAND_PREFIX = "-ondemand";
         private const string AZURE_SYNAPSE = "-ondemand.sql.azuresynapse.";
+        private const string FABRIC_DATAWAREHOUSE = "datawarehouse.fabric.microsoft.com";
+        private const string PBI_DATAWAREHOUSE = "datawarehouse.pbidedicated.microsoft.com";
+        private const string PBI_DATAWAREHOUSE2 = ".pbidedicated.microsoft.com";
+        private const string PBI_DATAWAREHOUSE3 = ".pbidedicated.windows.net";
+        private const string AZURE_SQL = ".database.windows.net";
+        private const string AZURE_SQL_GERMANY = ".database.cloudapi.de";
+        private const string AZURE_SQL_USGOV = ".database.usgovcloudapi.net";
+        private const string AZURE_SQL_CHINA = ".database.chinacloudapi.cn";
+        private const string AZURE_SQL_FABRIC = ".database.fabric.microsoft.com";
+
+        /// <summary>
+        /// Represents a collection of Azure SQL Server endpoint URLs for various regions and environments.
+        /// </summary>
+        /// <remarks>This array includes endpoint URLs for Azure SQL in global, Germany, US Government,
+        /// China, and Fabric environments. These endpoints are used to identify and interact with Azure SQL services 
+        /// in their respective regions or environments.</remarks>
+        internal static readonly List<string> s_azureSqlServerEndpoints = new() { AZURE_SQL,
+                                                                        AZURE_SQL_GERMANY,
+                                                                        AZURE_SQL_USGOV,
+                                                                        AZURE_SQL_CHINA,
+                                                                        AZURE_SQL_FABRIC };
+        
+        /// <summary>
+        /// Contains endpoint strings for Azure SQL Server on-demand services.
+        /// Each entry is a combination of the ONDEMAND_PREFIX and a specific Azure SQL endpoint string.
+        /// Example format: "ondemand.database.windows.net".
+        /// </summary>
+        internal static readonly string[] s_azureSqlServerOnDemandEndpoints = { ONDEMAND_PREFIX + AZURE_SQL,
+                                                                                ONDEMAND_PREFIX + AZURE_SQL_GERMANY,
+                                                                                ONDEMAND_PREFIX + AZURE_SQL_USGOV,
+                                                                                ONDEMAND_PREFIX + AZURE_SQL_CHINA,
+                                                                                ONDEMAND_PREFIX + AZURE_SQL_FABRIC };
+        /// <summary>
+        /// Represents a collection of endpoint identifiers for Azure Synapse and related services.
+        /// </summary>
+        /// <remarks>This array contains predefined endpoint strings used to identify Azure Synapse and
+        /// associated services, such as Fabric Data Warehouse and Power BI Data Warehouse.</remarks>
+        internal static readonly string[] s_azureSynapseEndpoints = { FABRIC_DATAWAREHOUSE,
+                                                                      PBI_DATAWAREHOUSE,
+                                                                      PBI_DATAWAREHOUSE2,
+                                                                      PBI_DATAWAREHOUSE3 };
+
+        internal static readonly string[] s_azureSynapseOnDemandEndpoints = [.. s_azureSqlServerOnDemandEndpoints, .. s_azureSynapseEndpoints];
 
         internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
         {
-            return IsEndpoint(dataSource, ONDEMAND_PREFIX) || dataSource.Contains(AZURE_SYNAPSE);
+            return IsEndpoint(dataSource, s_azureSynapseOnDemandEndpoints)
+                || dataSource.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase) >= 0; 
         }
-
-        internal static readonly string[] s_azureSqlServerEndpoints = { StringsHelper.GetString(Strings.AZURESQL_GenericEndpoint),
-                                                                        StringsHelper.GetString(Strings.AZURESQL_GermanEndpoint),
-                                                                        StringsHelper.GetString(Strings.AZURESQL_UsGovEndpoint),
-                                                                        StringsHelper.GetString(Strings.AZURESQL_ChinaEndpoint)};
-
+        
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
         {
-            return IsEndpoint(dataSource, null);
+            return IsEndpoint(dataSource, s_azureSqlServerEndpoints);
         }
 
         // This method assumes dataSource parameter is in TCP connection string format.
-        private static bool IsEndpoint(string dataSource, string prefix)
+        private static bool IsEndpoint(string dataSource, ICollection<string> endpoints)
         {
             int length = dataSource.Length;
             // remove server port
@@ -777,8 +880,17 @@ namespace Microsoft.Data.Common
                 length = foundIndex;
             }
 
-            // check for the instance name
-            foundIndex = dataSource.LastIndexOf('\\', length - 1, length - 1);
+            // Safeguard LastIndexOf call to avoid ArgumentOutOfRangeException when length is 0
+            if (length > 0)
+            {
+                // check for the instance name
+                foundIndex = dataSource.LastIndexOf('\\', length - 1, length - 1);
+            }
+            else
+            {
+                foundIndex = -1;
+            }
+
             if (foundIndex > 0)
             {
                 length = foundIndex;
@@ -791,10 +903,9 @@ namespace Microsoft.Data.Common
             }
 
             // check if servername ends with any endpoints
-            for (int index = 0; index < s_azureSqlServerEndpoints.Length; index++)
+            foreach (var endpoint in endpoints)
             {
-                string endpoint = string.IsNullOrEmpty(prefix) ? s_azureSqlServerEndpoints[index] : prefix + s_azureSqlServerEndpoints[index];
-                if (length > endpoint.Length)
+                if (length >= endpoint.Length)
                 {
                     if (string.Compare(dataSource, length - endpoint.Length, endpoint, 0, endpoint.Length, StringComparison.OrdinalIgnoreCase) == 0)
                     {
@@ -883,6 +994,27 @@ namespace Microsoft.Data.Common
             };
         }
 
+        internal static ArgumentOutOfRangeException InvalidIsolationLevel(IsolationLevel value)
+        {
+            // @TODO: Use single line debug assert?
+            #if DEBUG
+            switch (value)
+            {
+                case IsolationLevel.Unspecified:
+                case IsolationLevel.Chaos:
+                case IsolationLevel.ReadUncommitted:
+                case IsolationLevel.ReadCommitted:
+                case IsolationLevel.RepeatableRead:
+                case IsolationLevel.Serializable:
+                case IsolationLevel.Snapshot:
+                    Debug.Fail("valid IsolationLevel " + value.ToString());
+                    break;
+            }
+            #endif
+
+            return InvalidEnumerationValue(typeof(IsolationLevel), (int)value);
+        }
+
         internal static InvalidOperationException NoConnectionString()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_NoConnectionString));
 
@@ -945,7 +1077,7 @@ namespace Microsoft.Data.Common
 
             SqlDependencyObtainProcessDispatcherFailureObjectHandle = 50,
             SqlDependencyProcessDispatcherFailureCreateInstance = 51,
-            SqlDependencyProcessDispatcherFailureAppDomain = 52,
+            
             SqlDependencyCommandHashIsNotAssociatedWithNotification = 53,
 
             UnknownTransactionFailure = 60,
@@ -1005,12 +1137,6 @@ namespace Microsoft.Data.Common
         internal static Exception InvalidDataLength(long length)
             => IndexOutOfRange(StringsHelper.GetString(Strings.SQL_InvalidDataLength, length.ToString(CultureInfo.InvariantCulture)));
 
-        internal static bool CompareInsensitiveInvariant(string strvalue, string strconst)
-            => 0 == CultureInfo.InvariantCulture.CompareInfo.Compare(strvalue, strconst, CompareOptions.IgnoreCase);
-
-        internal static int DstCompare(string strA, string strB) // this is null safe
-            => CultureInfo.CurrentCulture.CompareInfo.Compare(strA, strB, ADP.DefaultCompareOptions);
-
         internal static void SetCurrentTransaction(Transaction transaction) => Transaction.Current = transaction;
 
         internal static Exception NonSeqByteAccess(long badIndex, long currIndex, string method)
@@ -1020,9 +1146,6 @@ namespace Microsoft.Data.Common
                                                         method));
 
         internal static Exception NegativeParameter(string parameterName) => InvalidOperation(StringsHelper.GetString(Strings.ADP_NegativeParameter, parameterName));
-
-        internal static Exception InvalidXmlMissingColumn(string collectionName, string columnName)
-            => Argument(StringsHelper.GetString(Strings.MDF_InvalidXmlMissingColumn, collectionName, columnName));
 
         internal static InvalidOperationException AsyncOperationPending() => InvalidOperation(StringsHelper.GetString(Strings.ADP_PendingAsyncOperation));
 #endregion
@@ -1092,13 +1215,25 @@ namespace Microsoft.Data.Common
             return e;
         }
 
+        internal static Exception NullOutputParameterValueForVector(string paramName)
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_NullOutputParameterValueForVector, paramName));
+
+        internal static ArgumentException InvalidVectorHeader()
+            => Argument(StringsHelper.GetString(Strings.ADP_InvalidVectorHeader));
+
+        internal static Exception InvalidJsonStringForVector(string value, Exception inner)
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidJsonStringForVector, value), inner);
+
         internal static Exception DeriveParametersNotSupported(IDbCommand value)
             => DataAdapter(StringsHelper.GetString(Strings.ADP_DeriveParametersNotSupported, value.GetType().Name, value.CommandType.ToString()));
 
         internal static Exception NoStoredProcedureExists(string sproc) => InvalidOperation(StringsHelper.GetString(Strings.ADP_NoStoredProcedureExists, sproc));
+
+        internal static Exception InvalidCommandTimeout(int value, [CallerMemberName] string property = "")
+            => Argument(StringsHelper.GetString(Strings.ADP_InvalidCommandTimeout, value.ToString(CultureInfo.InvariantCulture)), property);
 #endregion
 
-#region DbMetaDataFactory
+#region SqlMetaDataFactory
         internal static Exception DataTableDoesNotExist(string collectionName)
             => Argument(StringsHelper.GetString(Strings.MDF_DataTableDoesNotExist, collectionName));
 
@@ -1135,8 +1270,6 @@ namespace Microsoft.Data.Common
         internal static Exception OpenReaderExists(Exception e, bool marsOn)
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_OpenReaderExists, marsOn ? ADP.Command : ADP.Connection), e);
 
-        internal static Exception InvalidXml() => Argument(StringsHelper.GetString(Strings.MDF_InvalidXml));
-
         internal static Exception InvalidXmlInvalidValue(string collectionName, string columnName)
             => Argument(StringsHelper.GetString(Strings.MDF_InvalidXmlInvalidValue, collectionName, columnName));
 
@@ -1153,13 +1286,6 @@ namespace Microsoft.Data.Common
 
         internal static Exception AmbiguousCollectionName(string collectionName)
             => Argument(StringsHelper.GetString(Strings.MDF_AmbiguousCollectionName, collectionName));
-
-        internal static Exception MissingDataSourceInformationColumn() => Argument(StringsHelper.GetString(Strings.MDF_MissingDataSourceInformationColumn));
-
-        internal static Exception IncorrectNumberOfDataSourceInformationRows()
-            => Argument(StringsHelper.GetString(Strings.MDF_IncorrectNumberOfDataSourceInformationRows));
-
-        internal static Exception MissingRestrictionColumn() => Argument(StringsHelper.GetString(Strings.MDF_MissingRestrictionColumn));
 
         internal static Exception MissingRestrictionRow() => Argument(StringsHelper.GetString(Strings.MDF_MissingRestrictionRow));
 
@@ -1212,6 +1338,24 @@ namespace Microsoft.Data.Common
 
         internal static ArgumentException InvalidOffsetValue(int value)
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidOffsetValue, value.ToString(CultureInfo.InvariantCulture)));
+
+        internal static ArgumentOutOfRangeException InvalidParameterDirection(ParameterDirection value)
+        {
+            // @TODO: Use single line debug assert?
+            #if DEBUG
+            switch (value)
+            {
+                case ParameterDirection.Input:
+                case ParameterDirection.Output:
+                case ParameterDirection.InputOutput:
+                case ParameterDirection.ReturnValue:
+                    Debug.Fail("valid ParameterDirection " + value.ToString());
+                    break;
+            }
+            #endif
+
+            return InvalidEnumerationValue(typeof(ParameterDirection), (int)value);
+        }
 
         internal static ArgumentException InvalidSizeValue(int value)
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidSizeValue, value.ToString(CultureInfo.InvariantCulture)));
@@ -1312,281 +1456,6 @@ namespace Microsoft.Data.Common
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity));
         #endregion
 
-        internal static bool IsEmpty(string str) => string.IsNullOrEmpty(str);
         internal static readonly IntPtr s_ptrZero = IntPtr.Zero;
-#if NETFRAMEWORK
-#region netfx project only
-        internal static Task<T> CreatedTaskWithException<T>(Exception ex)
-        {
-            TaskCompletionSource<T> completion = new();
-            completion.SetException(ex);
-            return completion.Task;
-        }
-
-        internal static Task<T> CreatedTaskWithCancellation<T>()
-        {
-            TaskCompletionSource<T> completion = new();
-            completion.SetCanceled();
-            return completion.Task;
-        }
-
-        //
-        // Helper Functions
-        //
-        internal static void CheckArgumentLength(string value, string parameterName)
-        {
-            CheckArgumentNull(value, parameterName);
-            if (0 == value.Length)
-            {
-                throw Argument(StringsHelper.GetString(Strings.ADP_EmptyString, parameterName)); // MDAC 94859
-            }
-        }
-
-        // IDbConnection.BeginTransaction, OleDbTransaction.Begin
-        internal static ArgumentOutOfRangeException InvalidIsolationLevel(IsolationLevel value)
-        {
-#if DEBUG
-            switch (value)
-            {
-                case IsolationLevel.Unspecified:
-                case IsolationLevel.Chaos:
-                case IsolationLevel.ReadUncommitted:
-                case IsolationLevel.ReadCommitted:
-                case IsolationLevel.RepeatableRead:
-                case IsolationLevel.Serializable:
-                case IsolationLevel.Snapshot:
-                    Debug.Assert(false, "valid IsolationLevel " + value.ToString());
-                    break;
-            }
-#endif
-            return InvalidEnumerationValue(typeof(IsolationLevel), (int)value);
-        }
-
-        // DBDataPermissionAttribute.KeyRestrictionBehavior
-        internal static ArgumentOutOfRangeException InvalidKeyRestrictionBehavior(KeyRestrictionBehavior value)
-        {
-#if DEBUG
-            switch (value)
-            {
-                case KeyRestrictionBehavior.PreventUsage:
-                case KeyRestrictionBehavior.AllowOnly:
-                    Debug.Assert(false, "valid KeyRestrictionBehavior " + value.ToString());
-                    break;
-            }
-#endif
-            return InvalidEnumerationValue(typeof(KeyRestrictionBehavior), (int)value);
-        }
-
-        // IDataParameter.Direction
-        internal static ArgumentOutOfRangeException InvalidParameterDirection(ParameterDirection value)
-        {
-#if DEBUG
-            switch (value)
-            {
-                case ParameterDirection.Input:
-                case ParameterDirection.Output:
-                case ParameterDirection.InputOutput:
-                case ParameterDirection.ReturnValue:
-                    Debug.Assert(false, "valid ParameterDirection " + value.ToString());
-                    break;
-            }
-#endif
-            return InvalidEnumerationValue(typeof(ParameterDirection), (int)value);
-        }
-
-        //
-        // DbConnectionOptions, DataAccess
-        //
-        internal static ArgumentException InvalidKeyname(string parameterName)
-        {
-            return Argument(StringsHelper.GetString(Strings.ADP_InvalidKey), parameterName);
-        }
-        internal static ArgumentException InvalidValue(string parameterName)
-        {
-            return Argument(StringsHelper.GetString(Strings.ADP_InvalidValue), parameterName);
-        }
-        internal static ArgumentException InvalidMixedArgumentOfSecureCredentialAndContextConnection()
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection));
-        }
-        internal static InvalidOperationException InvalidMixedUsageOfAccessTokenAndContextConnection()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndContextConnection));
-        }
-        internal static Exception InvalidMixedUsageOfAccessTokenAndCredential()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndCredential));
-        }
-
-        //
-        // DBDataPermission, DataAccess, Odbc
-        //
-        internal static Exception InvalidXMLBadVersion()
-        {
-            return Argument(StringsHelper.GetString(Strings.ADP_InvalidXMLBadVersion));
-        }
-        internal static Exception NotAPermissionElement()
-        {
-            return Argument(StringsHelper.GetString(Strings.ADP_NotAPermissionElement));
-        }
-        internal static Exception PermissionTypeMismatch()
-        {
-            return Argument(StringsHelper.GetString(Strings.ADP_PermissionTypeMismatch));
-        }
-
-        //
-        // DbDataReader
-        //
-        internal static Exception NumericToDecimalOverflow()
-        {
-            return InvalidCast(StringsHelper.GetString(Strings.ADP_NumericToDecimalOverflow));
-        }
-
-        //
-        // : IDbCommand
-        //
-        internal static Exception InvalidCommandTimeout(int value, string name)
-        {
-            return Argument(StringsHelper.GetString(Strings.ADP_InvalidCommandTimeout, value.ToString(CultureInfo.InvariantCulture)), name);
-        }
-
-        //
-        // : DbDataAdapter
-        //
-        internal static InvalidOperationException ComputerNameEx(int lastError)
-        {
-            return InvalidOperation(StringsHelper.GetString(Strings.ADP_ComputerNameEx, lastError));
-        }
-
-        //
-        // : SNI
-        //
-        internal static PlatformNotSupportedException SNIPlatformNotSupported(string platform) => new(StringsHelper.GetString(Strings.SNI_PlatformNotSupportedNetFx, platform));
-
-        // global constant strings
-        internal const float FailoverTimeoutStepForTnir = 0.125F; // Fraction of timeout to use in case of Transparent Network IP resolution.
-        internal const int MinimumTimeoutForTnirMs = 500; // The first login attempt in  Transparent network IP Resolution 
-
-        internal static readonly int s_ptrSize = IntPtr.Size;
-        internal static readonly IntPtr s_invalidPtr = new(-1); // use for INVALID_HANDLE
-
-        internal static readonly bool s_isWindowsNT = (PlatformID.Win32NT == Environment.OSVersion.Platform);
-        internal static readonly bool s_isPlatformNT5 = (ADP.s_isWindowsNT && (Environment.OSVersion.Version.Major >= 5));
-
-        [FileIOPermission(SecurityAction.Assert, AllFiles = FileIOPermissionAccess.PathDiscovery)]
-        [ResourceExposure(ResourceScope.Machine)]
-        [ResourceConsumption(ResourceScope.Machine)]
-        internal static string GetFullPath(string filename)
-        { // MDAC 77686
-            return Path.GetFullPath(filename);
-        }
-
-        // TODO: cache machine name and listen to longhorn event to reset it
-        internal static string GetComputerNameDnsFullyQualified()
-        {
-            const int ComputerNameDnsFullyQualified = 3; // winbase.h, enum COMPUTER_NAME_FORMAT
-            const int ERROR_MORE_DATA = 234; // winerror.h
-
-            string value;
-            if (s_isPlatformNT5)
-            {
-                int length = 0; // length parameter must be zero if buffer is null
-                                // query for the required length
-                                // VSTFDEVDIV 479551 - ensure that GetComputerNameEx does not fail with unexpected values and that the length is positive
-                int getComputerNameExError = 0;
-                if (0 == SafeNativeMethods.GetComputerNameEx(ComputerNameDnsFullyQualified, null, ref length))
-                {
-                    getComputerNameExError = Marshal.GetLastWin32Error();
-                }
-                if ((getComputerNameExError != 0 && getComputerNameExError != ERROR_MORE_DATA) || length <= 0)
-                {
-                    throw ADP.ComputerNameEx(getComputerNameExError);
-                }
-
-                StringBuilder buffer = new(length);
-                length = buffer.Capacity;
-                if (0 == SafeNativeMethods.GetComputerNameEx(ComputerNameDnsFullyQualified, buffer, ref length))
-                {
-                    throw ADP.ComputerNameEx(Marshal.GetLastWin32Error());
-                }
-
-                // Note: In Longhorn you'll be able to rename a machine without
-                // rebooting.  Therefore, don't cache this machine name.
-                value = buffer.ToString();
-            }
-            else
-            {
-                value = ADP.MachineName();
-            }
-            return value;
-        }
-
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
-        internal static IntPtr IntPtrOffset(IntPtr pbase, int offset)
-        {
-            if (4 == ADP.s_ptrSize)
-            {
-                return (IntPtr)checked(pbase.ToInt32() + offset);
-            }
-            Debug.Assert(8 == ADP.s_ptrSize, "8 != IntPtr.Size"); // MDAC 73747
-            return (IntPtr)checked(pbase.ToInt64() + offset);
-        }
-
-#endregion
-#else
-#region netcore project only
-
-        //
-        // COM+ exceptions
-        //
-        internal static PlatformNotSupportedException DbTypeNotSupported(string dbType) => new(StringsHelper.GetString(Strings.SQL_DbTypeNotSupportedOnThisPlatform, dbType));
-
-        // IDbConnection.BeginTransaction, OleDbTransaction.Begin
-        internal static ArgumentOutOfRangeException InvalidIsolationLevel(IsolationLevel value)
-        {
-#if DEBUG
-            switch (value)
-            {
-                case IsolationLevel.Unspecified:
-                case IsolationLevel.Chaos:
-                case IsolationLevel.ReadUncommitted:
-                case IsolationLevel.ReadCommitted:
-                case IsolationLevel.RepeatableRead:
-                case IsolationLevel.Serializable:
-                case IsolationLevel.Snapshot:
-                    Debug.Fail("valid IsolationLevel " + value.ToString());
-                    break;
-            }
-#endif
-            return InvalidEnumerationValue(typeof(IsolationLevel), (int)value);
-        }
-
-        // ConnectionUtil
-        internal static Exception IncorrectPhysicalConnectionType() => new ArgumentException(StringsHelper.GetString(StringsHelper.SNI_IncorrectPhysicalConnectionType));
-
-        // IDataParameter.Direction
-        internal static ArgumentOutOfRangeException InvalidParameterDirection(ParameterDirection value)
-        {
-#if DEBUG
-            switch (value)
-            {
-                case ParameterDirection.Input:
-                case ParameterDirection.Output:
-                case ParameterDirection.InputOutput:
-                case ParameterDirection.ReturnValue:
-                    Debug.Fail("valid ParameterDirection " + value.ToString());
-                    break;
-            }
-#endif
-            return InvalidEnumerationValue(typeof(ParameterDirection), (int)value);
-        }
-
-        //
-        // : IDbCommand
-        //
-        internal static Exception InvalidCommandTimeout(int value, [CallerMemberName] string property = "")
-            => Argument(StringsHelper.GetString(Strings.ADP_InvalidCommandTimeout, value.ToString(CultureInfo.InvariantCulture)), property);
-#endregion
-#endif
     }
 }

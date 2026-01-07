@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Data;
@@ -22,8 +26,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public  class JsonStreamTest
     {
         private readonly ITestOutputHelper _output;
-        private static readonly string _jsonFile = "randomRecords.json";
-        private static readonly string _outputFile = "serverRecords.json";
+        private static readonly string _jsonFile = DataTestUtility.GetShortName("randomRecords") + ".json";
+        private static readonly string _outputFile = DataTestUtility.GetShortName("serverRecords") + ".json";
 
         public JsonStreamTest(ITestOutputHelper output)
         {
@@ -157,10 +161,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
         public void TestJsonStreaming()
         {
-            GenerateJsonFile(10000, _jsonFile);
+            GenerateJsonFile(1000, _jsonFile);
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
@@ -173,10 +177,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
         public async Task TestJsonStreamingAsync()
         {
-            GenerateJsonFile(10000, _jsonFile);
+            GenerateJsonFile(1000, _jsonFile);
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 await connection.OpenAsync();

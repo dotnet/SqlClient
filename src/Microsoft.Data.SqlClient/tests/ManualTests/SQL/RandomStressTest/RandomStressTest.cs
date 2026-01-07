@@ -8,6 +8,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -70,8 +71,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 for (int tcount = 0; tcount < ThreadCountDefault; tcount++)
                 {
-                    Thread t = new Thread(TestThread);
-                    t.Start();
+                    _ = Task.Factory.StartNew(TestThread, TaskCreationOptions.LongRunning);
                 }
             }
 
@@ -147,7 +147,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             finally
             {
                 if (Interlocked.Decrement(ref _runningThreads) == 0)
+                {
                     _endEvent.Set();
+                }
             }
         }
 
@@ -264,7 +266,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int readerRand = rand.NextIntInclusive(0, maxValueInclusive: 256);
             CommandBehavior readerBehavior = CommandBehavior.Default;
             if (readerRand % 10 == 0)
+            {
                 readerBehavior = CommandBehavior.SequentialAccess;
+            }
+
             try
             {
                 using (SqlDataReader reader = cmd.ExecuteReader(readerBehavior))
@@ -317,7 +322,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (SqlException e)
             {
                 if (!cancel)
+                {
                     throw;
+                }
 
                 bool expected = false;
 

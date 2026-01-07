@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using Xunit;
@@ -7,14 +11,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     public class TestTrustedMasterKeyPaths : IClassFixture<SQLSetupStrategyCertStoreProvider>
     {
-        private SQLSetupStrategyCertStoreProvider fixture;
+        private readonly string dummyThumbprint;
         private readonly string tableName;
         private readonly string columnMasterKeyPath;
 
         public TestTrustedMasterKeyPaths(SQLSetupStrategyCertStoreProvider fixture)
         {
-            columnMasterKeyPath = string.Format(@"{0}/{1}/{2}", StoreLocation.CurrentUser.ToString(), @"my", CertificateUtility.CreateCertificate().Thumbprint);
-            this.fixture = fixture;
+            dummyThumbprint = new string('F', fixture.ColumnMasterKeyCertificate.Thumbprint.Length);
+            columnMasterKeyPath = fixture.ColumnMasterKeyPath;
             tableName = fixture.TrustedMasterKeyPathsTestTable.Name;
         }
 
@@ -44,7 +48,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.True(rowsFound == 1, "Incorrect number of rows returned in first execution.");
         }
 
-        [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithNullDictionary(string connection)
@@ -83,7 +86,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Clear();
         }
 
-        [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithOneServer(string connection)
@@ -129,7 +131,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Clear();
         }
 
-        [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithMultipleServers(string connection)
@@ -147,18 +148,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
 
             // Add entries for one server
-            List<string> server1TrustedKeyPaths = new List<string>();
-
-            // Add some random key paths
-            foreach (char c in new char[] { 'A', 'B' })
+            List<string> server1TrustedKeyPaths = new List<string>()
             {
-                string tempThumbprint = new string('F', CertificateUtility.CreateCertificate().Thumbprint.Length);
-                string invalidKeyPath = string.Format(@"{0}/my/{1}", StoreLocation.CurrentUser.ToString(), tempThumbprint);
-                server1TrustedKeyPaths.Add(invalidKeyPath);
-            }
-
-            // Add the key path used by the test
-            server1TrustedKeyPaths.Add(columnMasterKeyPath);
+                // Add some random key paths
+                string.Format(@"{0}/my/{1}", StoreLocation.CurrentUser.ToString(), dummyThumbprint),
+                string.Format(@"{0}/my/{1}", StoreLocation.CurrentUser.ToString(), dummyThumbprint),
+                // Add the key path used by the test
+                columnMasterKeyPath
+            };
 
             // Add it to the dictionary
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Add(connBuilder.DataSource, server1TrustedKeyPaths);
@@ -192,7 +189,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Clear();
         }
 
-        [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithInvalidInputs(string connection)
@@ -277,8 +273,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             // Prepare dictionary with invalid key path
             List<string> invalidKeyPathList = new List<string>();
-            string tempThumbprint = new string('F', CertificateUtility.CreateCertificate().Thumbprint.Length);
-            string invalidKeyPath = string.Format(@"{0}/my/{1}", StoreLocation.CurrentUser.ToString(), tempThumbprint);
+            string invalidKeyPath = string.Format(@"{0}/my/{1}", StoreLocation.CurrentUser.ToString(), dummyThumbprint);
             invalidKeyPathList.Add(invalidKeyPath);
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Add(connBuilder.DataSource, invalidKeyPathList);
 

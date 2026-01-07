@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Reflection;
@@ -15,8 +19,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void TestByteArrayParameters()
         {
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("CMD");
-            string procName = DataTestUtility.GetUniqueNameForSqlServer("CMD");
+            string tableName = DataTestUtility.GetLongName("CMD");
+            string procName = DataTestUtility.GetLongName("CMD");
             byte[] bArray = new byte[] { 1, 2, 3 };
 
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))

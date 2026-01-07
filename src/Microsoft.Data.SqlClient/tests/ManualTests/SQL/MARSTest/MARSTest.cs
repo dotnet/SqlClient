@@ -223,7 +223,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         rows1++;
                         if (rows1 == rowCount / 2)
+                        {
                             break;
+                        }
                     }
                     Assert.True(rows1 == rowCount / 2, "MARSSyncBusyReaderTest Failure, #1");
 
@@ -234,7 +236,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         {
                             rows2++;
                             if (rows2 == rowCount / 2)
+                            {
                                 break;
+                            }
                         }
                         Assert.True(rows2 == rowCount / 2, "MARSSyncBusyReaderTest Failure, #2");
 
@@ -251,7 +255,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static async void MARSAsyncExecuteNonQueryTest()
+        public static async Task MARSAsyncExecuteNonQueryTest()
         {
             using SqlConnection con = new(_connStr);
             con.Open();
@@ -298,7 +302,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static async void MARSAsyncExecuteReaderTest1()
+        public static async Task MARSAsyncExecuteReaderTest1()
         {
             using SqlConnection con = new(_connStr);
             con.Open();
@@ -412,7 +416,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static async void MARSAsyncExecuteReaderTest2()
+        public static async Task MARSAsyncExecuteReaderTest2()
         {
             using SqlConnection con = new(_connStr);
             con.Open();
@@ -463,7 +467,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static async void MARSAsyncExecuteReaderTest3()
+        public static async Task MARSAsyncExecuteReaderTest3()
         {
             using SqlConnection con = new(_connStr);
             con.Open();
@@ -525,7 +529,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static async void MARSAsyncExecuteReaderTest4()
+        public static async Task MARSAsyncExecuteReaderTest4()
         {
             using SqlConnection con = new(_connStr);
             con.Open();

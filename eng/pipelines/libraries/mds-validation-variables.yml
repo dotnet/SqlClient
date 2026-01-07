@@ -17,7 +17,7 @@ variables:
   - name: expectedFolderNames
     value: lib,ref,runtimes
   - name: expectedDotnetVersions
-    value: net462,net6.0,net8.0
+    value: netstandard2.0,net462,net8.0,net9.0
   - name: Database
     value: Northwind
   - name: platform
@@ -25,7 +25,7 @@ variables:
   - name: TargetNetFxVersion
     value: net481
   - name: TargetNetCoreVersion
-    value: net8.0
+    value: net9.0
   - name: SQLTarget
     value: localhost
   - name: encrypt

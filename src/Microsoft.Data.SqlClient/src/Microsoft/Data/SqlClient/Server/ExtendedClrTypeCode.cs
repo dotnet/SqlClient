@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.Server
         IEnumerableOfSqlDataRecord, // System.Collections.Generic.IEnumerable<Microsoft.Data.SqlClient.Server.SqlDataRecord>
         TimeSpan,                   // System.TimeSpan
         DateTimeOffset,             // System.DateTimeOffset
-#if NET6_0_OR_GREATER
+#if NET
         DateOnly,                   // System.DateOnly
         TimeOnly,                   // System.TimeOnly
 #endif

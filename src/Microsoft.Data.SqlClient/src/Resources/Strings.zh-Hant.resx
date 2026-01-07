@@ -231,17 +231,11 @@
   <data name="ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity" xml:space="preserve">
     <value>無法將 Credential 與 Integrated Security 連接字串關鍵字搭配使用。</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection" xml:space="preserve">
-    <value>無法將 Credential 與 Context Connection 關鍵字搭配使用。</value>
-  </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword" xml:space="preserve">
     <value>如果連接字串中指定了 'UserID'、'UID'、'Password' 或 'PWD'，就無法設定 AccessToken 屬性。</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity" xml:space="preserve">
     <value>如果 'Integrated Security' 連接字串關鍵字已設為 'true' 或 'SSPI'，就無法設定 AccessToken 屬性。</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndContextConnection" xml:space="preserve">
-    <value>無法使用 'Context Connection' 關鍵字設定 AccessToken 屬性。</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndCredential" xml:space="preserve">
     <value>如果已設定 Credential 屬性，就無法設定 AccessToken 屬性。</value>
@@ -1845,9 +1839,6 @@
   <data name="ADP_ColumnSchemaMismatch" xml:space="preserve">
     <value>{1} 的 SourceColumn '{0}' 與 {3} 的 DataColumn '{2}' 之間發生不可轉換類型不符的問題。</value>
   </data>
-  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
-    <value>遺漏 SourceColumn '{2}' 的 DataColumn '{0}'。</value>
-  </data>
   <data name="ADP_ColumnSchemaMissing2" xml:space="preserve">
     <value>在 DataTable '{1}' 中遺漏 SourceColumn '{2}' 的 DataColumn '{0}'。</value>
   </data>
@@ -2075,9 +2066,6 @@
   </data>
   <data name="ADP_InvalidDestinationBufferIndex" xml:space="preserve">
     <value>無效的目的緩衝區 ({0} 的大小) 位移: {1}</value>
-  </data>
-  <data name="ADP_DataReaderNoData" xml:space="preserve">
-    <value>資料列/資料行沒有資料。</value>
   </data>
   <data name="ADP_NumericToDecimalOverflow" xml:space="preserve">
     <value>數值太大，超過 96 位元小數。</value>
@@ -2532,6 +2520,9 @@
   <data name="SQL_AsyncConnectionRequired" xml:space="preserve">
     <value>此命令需要非同步連接。請在連接字串中設定 "Asynchronous Processing=true"。</value>
   </data>
+  <data name="SQL_ConnectTimeout" xml:space="preserve">
+    <value>連接嘗試逾時。</value>
+  </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>等候逾時已過時。結果為已連接中斷。</value>
   </data>
@@ -2781,30 +2772,6 @@
   <data name="SQL_InvalidDataLength" xml:space="preserve">
     <value>資料長度 '{0}' 小於 0。</value>
   </data>
-  <data name="SQL_SqlResultSetClosed" xml:space="preserve">
-    <value>當 SqlResultSet 已關閉時，嘗試呼叫方法 {0} 失敗。</value>
-  </data>
-  <data name="SQL_SqlResultSetClosed2" xml:space="preserve">
-    <value>無法完成操作，因為 SqlResultSet 已關閉。</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly" xml:space="preserve">
-    <value>當記錄為唯讀時無法呼叫 '{0}'。</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly2" xml:space="preserve">
-    <value>無法完成操作，因為記錄為唯讀。</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted" xml:space="preserve">
-    <value>當目前的資料列已刪除時，嘗試呼叫方法 {0} 無效</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted2" xml:space="preserve">
-    <value>無法完成操作，因為目前的資料列已刪除。</value>
-  </data>
-  <data name="SQL_SqlResultSetCommandNotInSameConnection" xml:space="preserve">
-    <value>無法完成操作，因為已經從原始的連接中解除建立 SqlResultSet 命令的關聯。SqlResultSet 已關閉。</value>
-  </data>
-  <data name="SQL_SqlResultSetNoAcceptableCursor" xml:space="preserve">
-    <value>無法建立包含欲查選項指定查詢的 SqlResultSet。</value>
-  </data>
   <data name="SQL_SqlUpdatableRecordReadOnly" xml:space="preserve">
     <value>當 SqlDataRecord 為唯讀時，無法呼叫 '{0}'。</value>
   </data>
@@ -2874,47 +2841,20 @@
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
     <value>目前載入的 System.Transactions.dll 不支援全域交易。請升級為 .NET Framework 4.6.2 或更新版本。</value>
   </data>
-  <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
-    <value>內容連接上並不支援批次更新。</value>
-  </data>
-  <data name="SQL_ContextAllowsLimitedKeywords" xml:space="preserve">
-    <value>Type System Version 關鍵字是唯一在要求內容連接時可能需要使用的其他連接字串關鍵字。</value>
-  </data>
-  <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
-    <value>此內容連接不支援 Type System Version=SQL Server 2000。</value>
-  </data>
-  <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
-    <value>此內容連接已在使用中。</value>
-  </data>
-  <data name="SQL_ContextUnavailableOutOfProc" xml:space="preserve">
-    <value>要求的操作需要 SqlClr 內容，這是在 Sql Server 程序中執行時唯一可用的內容。</value>
-  </data>
-  <data name="SQL_ContextUnavailableWhileInProc" xml:space="preserve">
-    <value>要求的操作需要 Sql Server 執行緒。目前的執行緒是由使用者編碼或其他非 Sql Server 引擎碼所啟動的。</value>
+  <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
+    <value>不支援使用 Microsoft.Data.SqlClient 連線至內容連線。</value>
   </data>
   <data name="SQL_NestedTransactionScopesNotSupported" xml:space="preserve">
     <value>不支援巢狀 TransactionScopes。</value>
   </data>
-  <data name="SQL_NotAvailableOnContextConnection" xml:space="preserve">
-    <value>在此內容連接上無法使用要求的操作。</value>
-  </data>
-  <data name="SQL_NotificationsNotAvailableOnContextConnection" xml:space="preserve">
-    <value>在此內容連接尚無法使用通知。</value>
-  </data>
   <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
     <value>未預期的伺服器事件: {0}。</value>
-  </data>
-  <data name="SQL_UserInstanceNotAvailableInProc" xml:space="preserve">
-    <value>在 Sql Server 程序中執行時並不允許使用者執行個體。</value>
   </data>
   <data name="SQL_ArgumentLengthMismatch" xml:space="preserve">
     <value>'{0}' 的長度必須和 '{1}' 的長度相符。</value>
   </data>
   <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
     <value>SqlDbType '{0}' 對 {1} 是無效的。只支援 {2}。</value>
-  </data>
-  <data name="SQL_PipeErrorRequiresSendEnd" xml:space="preserve">
-    <value>發生錯誤，已傳送優先資料列至 SqlPipe。在進行其他傳送之前，必須先呼叫 SendResultsEnd。</value>
   </data>
   <data name="SQL_TooManyValues" xml:space="preserve">
     <value>太多數值。</value>
@@ -3663,9 +3603,6 @@
   <data name="SQLNotify_AlreadyHasCommand" xml:space="preserve">
     <value>SqlCommand 物件已與其他 SqlDependency 物件關聯。</value>
   </data>
-  <data name="SqlNotify_SqlDepCannotBeCreatedInProc" xml:space="preserve">
-    <value>在 SQL Server 程序中執行時，SqlDependency 物件就不能建立。</value>
-  </data>
   <data name="SqlDependency_DatabaseBrokerDisabled" xml:space="preserve">
     <value>尚未啟用目前資料庫的 SQL Server Service Broker，因此不支援查詢通知。如果您想要使用通知，請啟用這個資料庫的 Service Broker。</value>
   </data>
@@ -3725,21 +3662,6 @@
   </data>
   <data name="IEnumerableOfSqlDataRecordHasNoRows" xml:space="preserve">
     <value>SqlDataRecord 列舉之中沒有記錄。若要傳送沒有資料列的 table-valued parameter，請使用該值的 null 參考來代替。</value>
-  </data>
-  <data name="SqlPipe_CommandHookedUpToNonContextConnection" xml:space="preserve">
-    <value>當某命令的連接不是內容連接時，SqlPipe 不支援該命令的執行。</value>
-  </data>
-  <data name="SqlPipe_MessageTooLong" xml:space="preserve">
-    <value>訊息長度 {0} 超過支援的最大長度 4000。</value>
-  </data>
-  <data name="SqlPipe_IsBusy" xml:space="preserve">
-    <value>當管線忙碌於其他操作時便無法使用。</value>
-  </data>
-  <data name="SqlPipe_AlreadyHasAnOpenResultSet" xml:space="preserve">
-    <value>正傳送結果集至管線中。在呼叫 {0} 前請先結束目前的結果集。</value>
-  </data>
-  <data name="SqlPipe_DoesNotHaveAnOpenResultSet" xml:space="preserve">
-    <value>結果集尚未初始化。在呼叫 {0} 前請先呼叫 SendResultSetStart。</value>
   </data>
   <data name="SNI_PN0" xml:space="preserve">
     <value>HTTP 提供者</value>
@@ -3805,7 +3727,7 @@
     <value>關聯連接埠與 I/O 完成機制失敗</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>通訊端為 null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>逾時錯誤</value>
@@ -4032,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>憑證路徑不得為 Null。請使用下列格式: &lt;憑證位置&gt;{2}&lt;憑證存放區&gt;{2}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{0}' 或 '{1}'。</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>憑證路徑不能為空。請使用下列格式: &lt;憑證位置&gt;{1}&lt;憑證存放區&gt;{1}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{0}'。</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>內部錯誤。憑證路徑不得為 Null。請使用下列格式: &lt;憑證位置&gt;{2}&lt;憑證存放區&gt;{2}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{0}' 或 '{1}'。</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>內部錯誤。憑證路徑不能為空。請使用下列格式: &lt;憑證位置&gt;{1}&lt;憑證存放區&gt;{1}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{0}'。</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>資料行主要金鑰路徑不得為 null。對於儲存在 Microsoft 密碼編譯服務提供者 (CSP) 中的金鑰，請使用下列格式: &lt;CSP 提供者名稱&gt;{0}&lt;金鑰識別碼&gt;。</value>
@@ -4050,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>憑證路徑無效: '{0}'。請使用下列格式: &lt;憑證位置&gt;{3}&lt;憑證存放區&gt;{3}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{1}' 或 '{2}'。</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>無效的憑證路徑: '{0}'。請使用下列格式: &lt;憑證位置&gt;{2}&lt;憑證存放區&gt;{2}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{1}'。</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>內部錯誤。憑證路徑無效: '{0}'。請使用下列格式: &lt;憑證位置&gt;{3}&lt;憑證存放區&gt;{3}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{1}' 或 '{2}'。</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>內部錯誤。無效的憑證路徑: '{0}'。請使用下列格式: &lt;憑證位置&gt;{2}&lt;憑證存放區&gt;{2}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{1}'。</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>資料行主要金鑰路徑 '{0}' 無效。對於儲存在 Microsoft 密碼編譯服務提供者 (CSP) 中的金鑰，請使用下列格式: &lt;CSP 提供者名稱&gt;{1}&lt;金鑰識別碼&gt;。</value>
@@ -4068,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>憑證路徑 '{1}' 中的憑證位置 '{0}' 無效。請使用下列格式: &lt;憑證位置&gt;{4}&lt;憑證存放區&gt;{4}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{2}' 或 '{3}'。</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>憑證路徑 '{1}' 中的憑證位置 '{0}' 無效。請使用下列格式: &lt;憑證位置&gt;{3}&lt;憑證存放區&gt;{3}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{2}'。</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>內部錯誤。憑證路徑 '{1}' 中的憑證位置 '{0}' 無效。請使用下列格式: &lt;憑證位置&gt;{4}&lt;憑證存放區&gt;{4}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{2}' 或 '{3}'。</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>內部錯誤。憑證路徑 '{1}' 中的憑證位置 '{0}' 無效。請使用下列格式: &lt;憑證位置&gt;{3}&lt;憑證存放區&gt;{3}&lt;憑證指紋&gt;，其中 &lt;憑證位置&gt; 為 '{2}'。</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>憑證路徑 '{1}' 中指定了的憑證存放區 '{0}' 無效。預期值: '{2}'。</value>
@@ -4135,28 +4075,13 @@
     <value>指定的加密資料行加密金鑰，包含無效的加密演算法版本 '{0}'。預期的版本為 '{1}'。</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>指定的加密資料行加密金鑰的加密文字長度 {0}，不符合使用 '{2}' 中資料行主要金鑰 (憑證) 時的加密文字長度 {1}。可能是該加密資料行加密金鑰已損毀，或指定的憑證路徑不正確。</value>
-  </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
-    <value>使用 '{2}' 中的資料行主要金鑰 (非對稱金鑰) 時，指定之加密資料行加密金鑰的加密文字長度 {0} 不符合加密文字長度 {1}。可能是因為加密資料行加密金鑰已毀損，或指定的 Microsoft 密碼編譯服務提供者 (CSP) 路徑不正確。</value>
-  </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCng" xml:space="preserve">
-    <value>使用 '{2}' 中的資料行主要金鑰 (非對稱金鑰) 時，指定之加密資料行加密金鑰的加密文字長度 {0} 不符合加密文字長度 {1}。可能是加密資料行加密金鑰已毀損，或指定的 Microsoft 密碼編譯 API: 新一代密碼編譯 (CNG) 路徑不正確。</value>
+    <value>指定的加密資料行加密金鑰加密文字長度 {0} 與在 '{3}' 中使用資料行主要金鑰 ({2}) 時的加密文字長度 {1} 不符。可能是該加密資料行加密金鑰已損毀，或指定的 {4} 路徑不正確。</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>指定的加密資料行加密金鑰的簽章長度 {0}，不符合使用 '{2}' 中資料行主要金鑰 (憑證) 時的簽章長度 {1}。可能是該加密資料行加密金鑰已損毀，或指定的憑證路徑不正確。</value>
-  </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
-    <value>使用 '{2}' 中的資料行主要金鑰 (非對稱金鑰) 時，指定之加密資料行加密金鑰的特徵標記長度 {0} 不符合特徵標記長度 {1}。可能是加密資料行加密金鑰已毀損，或指定的 Microsoft 密碼編譯服務提供者 (CSP) 路徑不正確。</value>
-  </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
-    <value>使用 '{2}' 中的資料行主要金鑰 (非對稱金鑰) 時，指定之加密資料行加密金鑰的特徵標記長度 {0} 不符合特徵標記長度 {1}。可能是加密資料行加密金鑰已毀損，或指定的 Microsoft 密碼編譯 API: 新一代密碼編譯 (CNG) 路徑不正確。</value>
-  </data>
-  <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
-    <value>指定的加密資料行加密金鑰簽章，不符合從 '{0}' 中資料行主要金鑰 (憑證) 計算所得的簽章。可能是該加密資料行加密金鑰已損毀，或指定的路徑不正確。</value>
+    <value>指定的加密資料行加密金鑰簽章長度 {0} 與在 '{3}' 中使用資料行主要金鑰 ({2}) 時的簽章長度 {1} 不符。可能是該加密資料行加密金鑰已損毀，或指定的 {4} 路徑不正確。</value>
   </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>指定的加密資料行加密金鑰特徵標記長度，不符合 '{0}' 中由資料行主要金鑰 (非對稱金鑰) 計算而來的特徵標記長度。可能是因為加密資料行加密金鑰已毀損，或指定的路徑不正確。</value>
+    <value>指定之加密資料行的加密金鑰簽章與從 '{1}' 中之資料行主要金鑰 ({0}) 計算所得的簽章不符。可能是該加密資料行加密金鑰已損毀，或指定的路徑不正確。</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>金鑰路徑 '{0}' 中所指定的憑證沒有可將資料行加密金鑰加密的私密金鑰。請確認憑證已正確匯入。</value>
@@ -4442,18 +4367,6 @@
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>為連接集區定義封鎖期間行為。</value>
-  </data>
-  <data name="AZURESQL_GenericEndpoint" xml:space="preserve">
-    <value>.database.windows.net</value>
-  </data>
-  <data name="AZURESQL_GermanEndpoint" xml:space="preserve">
-    <value>.database.cloudapi.de</value>
-  </data>
-  <data name="AZURESQL_UsGovEndpoint" xml:space="preserve">
-    <value>.database.usgovcloudapi.net</value>
-  </data>
-  <data name="AZURESQL_ChinaEndpoint" xml:space="preserve">
-    <value>.database.chinacloudapi.cn</value>
   </data>
   <data name="TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled" xml:space="preserve">
     <value>定義是否啟用查詢中繼資料快取。</value>
@@ -4742,5 +4655,32 @@
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>在資料行 '{0}' 上取得 JsonDocument 的嘗試無效。JsonDocument 僅支援 JSON 類型的資料行。</value>
+  </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>緩衝區進階超出範圍 {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>已超過緩衝區大小上限: {0}</value>
+  </data>
+  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
+    <value>遺漏 SourceColumn '{2}' 的 DataColumn '{0}'。</value>
+  </data>
+  <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
+    <value>SqlBatchCommand 列表尚未初始化。</value>
+  </data>
+  <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
+    <value>從資料行 '{0}' 取得向量資料的嘗試無效。向量僅支援向量類型的資料行。</value>
+  </data>
+  <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
+    <value>不支援的向量類型 '{0}'。</value>
+  </data>
+  <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
+    <value>SqlDbType 向量的輸出參數 '{0}' 不支援 'null' 值。</value>
+  </data>
+  <data name="ADP_InvalidVectorHeader" xml:space="preserve">
+    <value>收到的向量標頭無效。</value>
+  </data>
+  <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
+    <value>{0} 向量的 JSON 字串無效。</value>
   </data>
 </root>

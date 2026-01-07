@@ -95,8 +95,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             private const string TCE_EmptyCspKeyId = @"Internal error. Empty key identifier specified in column master key path: 'MSSQL_CSP_PROVIDER/'. Use the following format for a key stored in a Microsoft cryptographic service provider \(CSP\): <CSP Provider Name>\/<Key Identifier>.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidCspKey = @"Internal error. Invalid Microsoft cryptographic service provider \(CSP\) name: 'MSSQL_CSP_PROVIDER'. Verify that the CSP provider name in column master key path: 'MSSQL_CSP_PROVIDER/KeyName' is valid and installed on the machine.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidAlgorithmVersion = @"Specified encrypted column encryption key contains an invalid encryption algorithm version '02'. Expected version is '01'.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
-            private const string TCE_InvalidCiphertextLengthInEncryptedCEK = @"The specified encrypted column encryption key's ciphertext length: 128 does not match the ciphertext length: 256 when using column master key \(asymmetric key\) in 'Microsoft Enhanced RSA and AES Cryptographic Provider/KeyName'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptographic Service provider \(CSP\) path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
-            private const string TCE_InvalidSignatureInEncryptedCEK = @"The specified encrypted column encryption key's signature length: 128 does not match the signature length: 256 when using column master key \(asymmetric key\) in 'Microsoft Enhanced RSA and AES Cryptographic Provider/KeyName'. The encrypted column encryption key may be corrupt, or the specified Microsoft cryptographic service provider \(CSP\) path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+            private const string TCE_InvalidCiphertextLengthInEncryptedCEK = @"The specified encrypted column encryption key's ciphertext length: 128 does not match the ciphertext length: 256 when using column master key \(asymmetric key\) in 'Microsoft Enhanced RSA and AES Cryptographic Provider/KeyName'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptographic Service Provider \(CSP\) path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+            private const string TCE_InvalidSignatureInEncryptedCEK = @"The specified encrypted column encryption key's signature length: 128 does not match the signature length: 256 when using column master key \(asymmetric key\) in 'Microsoft Enhanced RSA and AES Cryptographic Provider/KeyName'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptographic Service Provider \(CSP\) path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
             private const string TCE_InvalidSignature = @"The specified encrypted column encryption key signature does not match the signature computed with the column master key \(asymmetric key\) in 'Microsoft Enhanced RSA and AES Cryptographic Provider/KeyName'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
             private string TCE_InvalidCspKeyId = $@"Internal error. Invalid key identifier: 'KeyName/{DUMMY_KEY}'. Verify that the key identifier in column master key path: 'Microsoft Enhanced RSA and AES Cryptographic Provider/KeyName/{DUMMY_KEY}' is valid and exists in the CSP.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
 
@@ -183,7 +183,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public static void AddKeyToCsp(string containerName)
         {
-#if NET6_0_OR_GREATER
+#if NET
             System.Diagnostics.Debug.Assert(OperatingSystem.IsWindows());
 #endif
             CspParameters cspParams = new();
@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public static void RemoveKeyFromCsp(string containerName)
         {
-#if NET6_0_OR_GREATER
+#if NET
             System.Diagnostics.Debug.Assert(OperatingSystem.IsWindows());
 #endif
             CspParameters cspParams = new CspParameters();

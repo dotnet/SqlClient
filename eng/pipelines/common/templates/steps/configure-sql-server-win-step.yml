@@ -3,6 +3,11 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
+
+# This step configures an existing SQL Server running on the local Windows host.
+# For example, our 1ES Hosted Pool has images like ADO-MMS22-SQL22 that come
+# with SQL Server 2022 pre-installed and running.
+
 parameters:
 # Windows only parameters
   - name: instanceName
@@ -63,7 +68,7 @@ parameters:
     default: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
 
 steps:
-# windows only steps
+# Windows only steps
 - powershell: |
     try
     {
@@ -101,11 +106,7 @@ steps:
 
 - powershell: |
     $password = "${{parameters.password }}"
-    if ( "generated_placeholder" -eq $password )
-    {
-        $password = [guid]::NewGuid().ToString()
-    }
-    
+
     $machineName = $env:COMPUTERNAME
     
     if ("${{parameters.instanceName }}" -ne "MSSQLSERVER"){
@@ -196,6 +197,44 @@ steps:
   condition: ${{parameters.condition }}
 
 - powershell: |
+    # Create Certificate
+    $computerDnsName = [System.Net.Dns]::Resolve($null).HostName
+    $certificate = New-SelfSignedCertificate -DnsName $computerDnsName,localhost -CertStoreLocation cert:\LocalMachine\My -FriendlyName test99 -KeySpec KeyExchange
+
+    # Get path to Private key (used later)
+    $keyPath = $certificate.PrivateKey.CspKeyContainerInfo.UniqueKeyContainerName
+    $machineKeyPath = "$env:ProgramData\Microsoft\Crypto\RSA\MachineKeys\$keyPath"
+
+    # Add certificate to trusted roots
+    $store = new-object System.Security.Cryptography.X509Certificates.X509Store(
+        [System.Security.Cryptography.X509Certificates.StoreName]::Root,
+        "localmachine"
+    )
+
+    $store.open("MaxAllowed") 
+    $store.add($certificate) 
+    $store.close()
+
+    # Get SQL Server instances and add the Certificate
+    $instances = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL'
+    foreach ($instance in $instances){
+        $instance | ForEach-Object {
+        $_.PSObject.Properties | Where-Object { $_.Name -notmatch '^PS.*' } | ForEach-Object {
+                Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$($_.Value)\MSSQLServer\SuperSocketNetLib" -Name Certificate -Value $certificate.Thumbprint.ToLower()
+                
+                # Grant read access to Private Key for SQL Service Account
+                if ($($_.Name) -eq "MSSQLSERVER") {
+                    icacls $machineKeyPath /grant "NT Service\MSSQLSERVER:R"
+                } else {
+                    icacls $machineKeyPath /grant "NT Service\MSSQL`$$($_.Name):R"
+                }
+            }
+        }
+    }
+  displayName: 'Add SQL Certificate [Win]'
+  condition: ${{parameters.condition }}
+
+- powershell: |
     # You need to restart SQL Server for the change to persist
     # -Force takes care of any dependent services, like SQL Agent.
     # Note: if the instance is named, replace MSSQLSERVER with MSSQL$ followed by
@@ -210,6 +249,7 @@ steps:
     }
     
     Restart-Service -Name "$serviceName" -Force
+    Restart-Service -Name MSSQLSERVER* -Force
   
   displayName: 'Restart SQL Server [Win]'
   condition: ${{parameters.condition }}

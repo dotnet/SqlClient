@@ -1,0 +1,63 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# @TODO: This can probably be made generic and pass in the command lines for msbuild
+#        BUT, they should be kept separate by now as we rebuild build.proj in parallel, we won't
+#        affect >1 project at a time.
+# @TODO: NugetPackageVersion should not be used for MDS package version
+
+parameters:
+    - name: assemblyFileVersion
+      type: string
+
+    - name: buildConfiguration
+      type: string
+      values:
+        - Debug
+        - Release
+
+    - name: mdsPackageVersion
+      type: string
+
+steps:
+    - task: DownloadSecureFile@1
+      displayName: 'Download Signing Key'
+      inputs:
+          retryCount: 5
+          secureFile: 'netfxKeypair.snk'
+
+    - task: UseDotNet@2
+      displayName: 'Install .NET 10.x SDK'
+      inputs:
+          packageType: 'sdk'
+          version: '10.x'
+
+    - task: UseDotNet@2
+      displayName: 'Install .NET 9.x Runtime'
+      inputs:
+          packageType: 'runtime'
+          version: '9.x'
+
+    - task: UseDotNet@2
+      displayName: 'Install .NET 8.x Runtime'
+      inputs:
+          packageType: 'runtime'
+          version: '8.x'
+
+    - task: MSBuild@1
+      displayName: 'Build.proj - BuildAkv'
+      inputs:
+          solution: '$(REPO_ROOT)/build.proj'
+          configuration: '${{ parameters.buildConfiguration }}'
+          msbuildArguments: >-
+              -t:BuildAkv
+              -p:AssemblyFileVersion=${{ parameters.assemblyFileVersion }}
+              -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }}
+              -p:ReferenceType=Package
+              -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
+              
+    - script: tree /a /f $(BUILD_OUTPUT)
+      displayName: Output Build Output Tree

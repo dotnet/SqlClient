@@ -10,7 +10,7 @@ using System.Threading;
 
 namespace Microsoft.Data
 {
-    internal partial class StringsHelper : Strings
+    internal sealed class StringsHelper : Strings
     {
         private static StringsHelper s_loader = null;
         private readonly ResourceManager _resources;
@@ -34,7 +34,9 @@ namespace Microsoft.Data
         {
             StringsHelper sys = GetLoader();
             if (sys is null)
+            {
                 return null;
+            }
 
             // If "res" is a resource id, temp will not be null, "res" will contain the retrieved resource string.
             // If "res" is not a resource id, temp will be null.
@@ -63,7 +65,7 @@ namespace Microsoft.Data
             }
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         // This method is used to decide if we need to append the exception message parameters to the message when calling Strings.Format. 
         // by default it returns false.
         // Native code generators can replace the value this returns based on user input at the time of native code generation.

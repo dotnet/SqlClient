@@ -58,9 +58,8 @@ parameters:
     type: string
     default: $(password)
 
-  - name: targetNetCoreVersion
+  - name: netcoreVersionTestUtils
     type: string
-    default: $(MainTargetNetCoreVersion)
 
   - name: databaseName
     type: string
@@ -93,13 +92,18 @@ steps:
   - template: configure-sql-server-linux-step.yml@self
     parameters:
       password: ${{parameters.password}}
-      targetNetCoreVersion: ${{parameters.targetNetCoreVersion}}
+
+- ${{ elseif eq(parameters.operatingSystem, 'Mac') }}:
+  # macOS only steps
+  - template: configure-sql-server-macos-step.yml@self
+    parameters:
+      password: ${{parameters.password}}
 
 # Common steps
 - task: DotNetCoreCLI@2
   displayName: 'Build Ext Utilities'
   inputs:
-    arguments: '-f ${{parameters.targetNetCoreVersion }}'
+    arguments: '-f ${{parameters.netcoreVersionTestUtils }}'
     workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.ExtUtilities
   retryCountOnTaskFailure: 1
 
@@ -107,5 +111,5 @@ steps:
   displayName: 'Create Test Database ${{parameters.databaseName }}'
   inputs:
     command: run
-    arguments: '-f ${{parameters.targetNetCoreVersion }} -- "CreateDatabase" ${{parameters.databaseName }} '
+    arguments: '-f ${{parameters.netcoreVersionTestUtils }} -- "CreateDatabase" ${{parameters.databaseName }} '
     workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.ExtUtilities

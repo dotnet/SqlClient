@@ -8,17 +8,18 @@ using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using System.Xml;
+using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.ConnectionPool;
+
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 using System.Security.Principal;
-using Microsoft.Data;
+using Microsoft.Data.SqlClient.LocalDb;
 #endif
-using System.Threading;
-using System.Xml;
-using Microsoft.Data.Common;
-using Microsoft.Data.ProviderBase;
-using Microsoft.Data.SqlClient;
 
 // This class is the process wide dependency dispatcher.  It contains all connection listeners for the entire process and 
 // receives notifications on those connections to dispatch to the corresponding AppDomain dispatcher to notify the
@@ -100,7 +101,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 if (connStringObj.LocalDBInstance != null)
                 {
                     // If it is LocalDB, we demanded LocalDB permissions too
-                    LocalDBAPI.AssertLocalDBPermissions();
+                    LocalDbApi.AssertLocalDbPermissions();
                 }
 #endif
                 _con.Open();
@@ -690,7 +691,6 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                             if (_hashHelper.Identity != null)
                             { // Only impersonate if Integrated Security.
                                 WindowsImpersonationContext context = null;
-                                RuntimeHelpers.PrepareConstrainedRegions(); // CER for context.Undo.
                                 try
                                 {
                                     context = _windowsIdentity.Impersonate();
@@ -1451,7 +1451,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
     }
 
     // Needed for remoting to prevent lifetime issues and default GC cleanup.
-#if NET6_0_OR_GREATER
+#if NET
     [Obsolete("InitializeLifetimeService() is not supported after .Net5.0 and throws PlatformNotSupportedException.")]
 #endif
     public override object InitializeLifetimeService()

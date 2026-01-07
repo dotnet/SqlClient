@@ -231,17 +231,11 @@
   <data name="ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity" xml:space="preserve">
     <value>Credential kann nicht mit dem Schlüsselwort für Verbindungszeichenfolgen "Integrated Security" verwendet werden.</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection" xml:space="preserve">
-    <value>Credential kann nicht mit dem Schlüsselwort "Context Connection" verwendet werden.</value>
-  </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword" xml:space="preserve">
     <value>AccessToken-Eigenschaft kann nicht festgelegt werden, wenn 'UserID', 'UID', 'Password' oder 'PWD' in der Verbindungszeichenfolge angegeben wurde.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity" xml:space="preserve">
     <value>AccessToken-Eigenschaft kann nicht festgelegt werden, wenn das Schlüsselwort für Verbindungszeichenfolgen 'Integrated Security' auf 'true' oder 'SSPI' gesetzt wurde.</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndContextConnection" xml:space="preserve">
-    <value>AccessToken-Eigenschaft kann nicht mit dem Schlüsselwort 'Context Connection' festgelegt werden.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndCredential" xml:space="preserve">
     <value>AccessToken-Eigenschaft kann nicht festgelegt werden, wenn bereits die Credential-Eigenschaft festgelegt wurde.</value>
@@ -1845,9 +1839,6 @@
   <data name="ADP_ColumnSchemaMismatch" xml:space="preserve">
     <value>Nicht konvertierbarer Typenkonflikt zwischen SourceColumn '{0}' von {1} und DataColumn '{2}' von {3}.</value>
   </data>
-  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
-    <value>DataColumn '{0}' für SourceColumn '{2}' ist nicht vorhanden.</value>
-  </data>
   <data name="ADP_ColumnSchemaMissing2" xml:space="preserve">
     <value>DataColumn '{0}' in der DataTable '{1}' für SourceColumn '{2}' ist nicht vorhanden.</value>
   </data>
@@ -2075,9 +2066,6 @@
   </data>
   <data name="ADP_InvalidDestinationBufferIndex" xml:space="preserve">
     <value>Ungültiger Zielpufferoffset (Größe von {0}): {1}</value>
-  </data>
-  <data name="ADP_DataReaderNoData" xml:space="preserve">
-    <value>Keine Daten für die Zeile/Spalte.</value>
   </data>
   <data name="ADP_NumericToDecimalOverflow" xml:space="preserve">
     <value>Der numerische Wert ist zu groß, um in eine Dezimalzahl mit 96 Bits zu passen.</value>
@@ -2362,7 +2350,7 @@
     <value>Interner Microsoft.Data.OleDb.OleDbDataAdapter-Fehler: ungültiger Parameteraccessor: {0} {1}.</value>
   </data>
   <data name="OleDb_UninitializedParameters" xml:space="preserve">
-    <value>Parameter {0}: die Eigenschaft OleDbType ist nicht initialisiert: OleDbType.{1}.</value>
+    <value>Parameter[{0}]: die Eigenschaft OleDbType ist nicht initialisiert: OleDbType.{1}.</value>
   </data>
   <data name="OleDb_NoProviderSupportForParameters" xml:space="preserve">
     <value>Die ICommandWithParameters-Schnittstelle wird vom '{0}'-Provider nicht unterstützt. Befehlsparameter werden vom aktuellen Provider nicht unterstützt.</value>
@@ -2531,6 +2519,9 @@
   </data>
   <data name="SQL_AsyncConnectionRequired" xml:space="preserve">
     <value>Dieser Befehl erfordert eine asynchrone Verbindung. Legen Sie in der Verbindungszeichenfolge "Asynchronous Processing=true" fest.</value>
+  </data>
+  <data name="SQL_ConnectTimeout" xml:space="preserve">
+    <value>Timeout beim Versuch, eine Verbindung herzustellen.</value>
   </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
     <value>Timeout abgelaufen. Die Verbindung wurde aus diesem Grund unterbrochen.</value>
@@ -2781,30 +2772,6 @@
   <data name="SQL_InvalidDataLength" xml:space="preserve">
     <value>Datenlänge '{0}' ist kleiner als 0.</value>
   </data>
-  <data name="SQL_SqlResultSetClosed" xml:space="preserve">
-    <value>Ungültiger Versuch des Aufrufs von Methode {0}, wenn SqlResultSet geschlossen ist.</value>
-  </data>
-  <data name="SQL_SqlResultSetClosed2" xml:space="preserve">
-    <value>Operation kann nicht abgeschlossen werden, da SqlResultSet geschlossen ist.</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly" xml:space="preserve">
-    <value>'{0}' kann nicht aufgerufen werden, wenn der Datensatz schreibgeschützt ist.</value>
-  </data>
-  <data name="SQL_SqlRecordReadOnly2" xml:space="preserve">
-    <value>Operation kann nicht abgeschlossen werden, da der Datensatz schreibgeschützt ist.</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted" xml:space="preserve">
-    <value>Ungültiger Versuch des Aufrufs von Methode {0}, wenn die aktuelle Zeile gelöscht wurde</value>
-  </data>
-  <data name="SQL_SqlResultSetRowDeleted2" xml:space="preserve">
-    <value>Operation kann nicht abgeschlossen werden, da die aktuelle Zeile gelöscht wurde</value>
-  </data>
-  <data name="SQL_SqlResultSetCommandNotInSameConnection" xml:space="preserve">
-    <value>Operation kann nicht abgeschlossen werden, da der Befehl, der SqlResultSet erstellt hat, von der ursprünglichen Verbindung getrennt wurde. SqlResultSet ist geschlossen.</value>
-  </data>
-  <data name="SQL_SqlResultSetNoAcceptableCursor" xml:space="preserve">
-    <value>SqlResultSet konnte für die angegebene Abfrage nicht mit den gewünschten Optionen erstellt werden.</value>
-  </data>
   <data name="SQL_SqlUpdatableRecordReadOnly" xml:space="preserve">
     <value>'{0}' kann nicht aufgerufen werden, wenn SqlDataRecord schreibgeschützt ist.</value>
   </data>
@@ -2874,47 +2841,20 @@
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
     <value>Die aktuell geladene System.Transactions.dll unterstützt keine globalen Transaktionen. Bitte aktualisieren Sie auf .NET Framework 4.6.2 oder höher.</value>
   </data>
-  <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
-    <value>Batchupdates werden bei der Kontextverbindung nicht unterstützt.</value>
-  </data>
-  <data name="SQL_ContextAllowsLimitedKeywords" xml:space="preserve">
-    <value>Das einzige zusätzliche Schlüsselwort für die Verbindungszeichenfolge, das beim Anfordern der Kontextverbindung verwendet werden darf, lautet 'Type System Version'.</value>
-  </data>
-  <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
-    <value>Die Kontextverbindung unterstützt nicht Type System Version=SQL Server 2000.</value>
-  </data>
-  <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
-    <value>Die Kontextverbindung wird bereits verwendet.</value>
-  </data>
-  <data name="SQL_ContextUnavailableOutOfProc" xml:space="preserve">
-    <value>Die angeforderte Operation erfordert einen SqlClr -Kontext, der nur bei Ausführung im Sql Server-Prozess verfügbar ist.</value>
-  </data>
-  <data name="SQL_ContextUnavailableWhileInProc" xml:space="preserve">
-    <value>Für die angeforderte Operation ist ein SQL Server-Ausführungsthread erforderlich. Der aktuelle Thread wurde durch Benutzercode oder einen anderen Nicht-Sql Server-Modulcode gestartet.</value>
+  <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
+    <value>Das Herstellen einer Verbindung mit der Kontextverbindung über Microsoft.Data.SqlClient wird nicht unterstützt.</value>
   </data>
   <data name="SQL_NestedTransactionScopesNotSupported" xml:space="preserve">
     <value>Geschachtelte 'TransactionScopes' werden nicht unterstützt.</value>
   </data>
-  <data name="SQL_NotAvailableOnContextConnection" xml:space="preserve">
-    <value>Die angeforderte Operation ist für die Kontextverbindung nicht verfügbar.</value>
-  </data>
-  <data name="SQL_NotificationsNotAvailableOnContextConnection" xml:space="preserve">
-    <value>Die Benachrichtigungen sind für die Kontextverbindung nicht verfügbar.</value>
-  </data>
   <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
     <value>Unerwartetes Serverereignis: {0}.</value>
-  </data>
-  <data name="SQL_UserInstanceNotAvailableInProc" xml:space="preserve">
-    <value>Benutzerinstanzen sind bei der Ausführung im Sql Server-Prozess nicht zulässig.</value>
   </data>
   <data name="SQL_ArgumentLengthMismatch" xml:space="preserve">
     <value>Die Länge von '{0}' muss mit der Länge von '{1}' übereinstimmen.</value>
   </data>
   <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
-    <value>Der 'SqlDbType' '{0}' ist für {1} unzulässig. Unterstützt wird nur {2}.</value>
-  </data>
-  <data name="SQL_PipeErrorRequiresSendEnd" xml:space="preserve">
-    <value>Fehler bei einer vorherigen Zeile, die an die SqlPipe gesendet wurde. 'SendResultsEnd' muss aufgerufen werden, bevor eine andere Zeile gesendet werden kann.</value>
+    <value>Der SqlDbType '{0}' ist für {1} unzulässig. Unterstützt wird nur {2}.</value>
   </data>
   <data name="SQL_TooManyValues" xml:space="preserve">
     <value>Zu viele Werte.</value>
@@ -3526,7 +3466,7 @@
     <value>Der angegebene TypeName für Parameter '{0}'. TypeName darf nur für Structured-Parameter festgelegt werden.</value>
   </data>
   <data name="MetaType_SingleValuedStructNotSupported" xml:space="preserve">
-    <value>Der SqlDbType.Structured-Typ wird nur für Typen mit mehreren Werten unterstützt.</value>
+    <value>Der Typ SqlDbType.Structured wird nur für Typen mit mehreren Werten unterstützt.</value>
   </data>
   <data name="NullSchemaTableDataTypeNotSupported" xml:space="preserve">
     <value>Die 'DateType'-Spalte für das Feld '{0}' in der Schematabelle ist NULL. 'DataType' darf nicht 'null' sein.</value>
@@ -3663,9 +3603,6 @@
   <data name="SQLNotify_AlreadyHasCommand" xml:space="preserve">
     <value>Dieses SqlCommand-Objekt ist bereits mit einem anderen SqlDependency-Objekt verknüpft.</value>
   </data>
-  <data name="SqlNotify_SqlDepCannotBeCreatedInProc" xml:space="preserve">
-    <value>Das 'SqlDependency'-Objekt kann nicht erstellt werden, wenn es im Rahmen des SQL Server-Prozesses ausgeführt wird.</value>
-  </data>
   <data name="SqlDependency_DatabaseBrokerDisabled" xml:space="preserve">
     <value>Der SQL Server Service Broker für die aktuelle Datenbank ist nicht aktiviert. Als Folge davon werden keine Abfragebenachrichtigungen unterstützt.  Aktivieren Sie den Service Broker für diese Datenbank, wenn Sie Benachrichtigungen verwenden möchten.</value>
   </data>
@@ -3697,7 +3634,7 @@
     <value>GetMetaData ist für diesen SqlDbType nicht gültig.</value>
   </data>
   <data name="SqlMetaData_InvalidSqlDbTypeForConstructorFormat" xml:space="preserve">
-    <value>Der 'dbType' {0} ist für diesen Konstruktor ungültig.</value>
+    <value>Der dbType {0} ist für diesen Konstruktor ungültig.</value>
   </data>
   <data name="SqlMetaData_NameTooLong" xml:space="preserve">
     <value>Der Name ist zu lang.</value>
@@ -3725,21 +3662,6 @@
   </data>
   <data name="IEnumerableOfSqlDataRecordHasNoRows" xml:space="preserve">
     <value>Es sind keine Datensätze in der 'SqlDataRecord'-Enumeration vorhanden. Verwenden Sie zum Senden eines table-valued parameters ohne Zeilen stattdessen einen null-Verweis für den Wert.</value>
-  </data>
-  <data name="SqlPipe_CommandHookedUpToNonContextConnection" xml:space="preserve">
-    <value>'SqlPipe' unterstützt nicht die Ausführung eines Befehls bei einer Nicht-Kontextverbindung.</value>
-  </data>
-  <data name="SqlPipe_MessageTooLong" xml:space="preserve">
-    <value>Die Nachrichtenlänge {0} überschreitet die zulässige Länge von 4.000.</value>
-  </data>
-  <data name="SqlPipe_IsBusy" xml:space="preserve">
-    <value>Die Pipe konnte nicht verwendet werden, da sie zurzeit eine andere Operation ausführt.</value>
-  </data>
-  <data name="SqlPipe_AlreadyHasAnOpenResultSet" xml:space="preserve">
-    <value>Momentan wird ein Resultset an die Pipe gesendet. Beenden Sie das aktuelle Resultset vor dem Aufruf von {0}.</value>
-  </data>
-  <data name="SqlPipe_DoesNotHaveAnOpenResultSet" xml:space="preserve">
-    <value>Das Resultset wurde nicht initiiert. Rufen Sie 'SendResultSetStart' vor dem Aufruf von {0} auf.</value>
   </data>
   <data name="SNI_PN0" xml:space="preserve">
     <value>HTTP-Anbieter</value>
@@ -3805,7 +3727,7 @@
     <value>Zuordnung des Anschlusses mit E/A-Abschlussmechanismus fehlgeschlagen</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Socket ist NULL.</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Timeoutfehler</value>
@@ -4032,8 +3954,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>Zertifikatpfad darf nicht NULL sein. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{2}&lt;Zertifikatspeicher&gt;{2}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; entweder '{0}' oder '{1}' ist.</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Der Zertifikatspfad darf nicht NULL sein. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{1}&lt;Zertifikatspeicher&gt;{1}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; „{0}“ ist.</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>Interner Fehler. Zertifikatpfad darf nicht NULL sein. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{2}&lt;Zertifikatspeicher&gt;{2}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; entweder '{0}' oder '{1}' ist.</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Interner Fehler. Der Zertifikatspfad darf nicht NULL sein. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{1}&lt;Zertifikatspeicher&gt;{1}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; „{0}“ ist.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Der Masterschlüsselpfad der Spalte darf nicht NULL sein. Verwenden Sie das folgende Format für einen in einem Microsoft CSP-Anbieter (Cryptographic Service Provider, Kryptografiedienstanbieter) gespeicherten Schlüssel: &lt;CSP-Anbietername&gt;{0}&lt;Schlüsselbezeichner&gt;.</value>
@@ -4050,8 +3978,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>Ungültiger Zertifikatpfad: '{0}'. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{3}&lt;Zertifikatspeicher&gt;{3}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; entweder '{1}' oder '{2}' ist.</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Ungültiger Zertifikatpfad: „{0}“. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{2}&lt;Zertifikatspeicher&gt;{2}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; „{1}“ ist.</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>Interner Fehler. Ungültiger Zertifikatpfad: '{0}'. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{3}&lt;Zertifikatspeicher&gt;{3}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; entweder '{1}' oder '{2}' ist.</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Interner Fehler. Ungültiger Zertifikatpfad: „{0}“. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{2}&lt;Zertifikatspeicher&gt;{2}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; „{1}“ ist.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Ungültiger Schlüsselbezeichner im Masterschlüsselpfad der Spalte: '{0}'. Verwenden Sie das folgende Format für einen in einem Microsoft CSP-Anbieter (Cryptographic Service Provider, Kryptografiedienstanbieter) gespeicherten Schlüssel: &lt;CSP-Anbietername&gt;{1}&lt;Schlüsselbezeichner&gt;.</value>
@@ -4068,8 +4002,14 @@
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
     <value>Ungültiger Zertifikatspeicherort '{0}' im Zertifikatpfad '{1}'. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{4}&lt;Zertifikatspeicher&gt;{4}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; entweder '{2}' oder '{3}' ist.</value>
   </data>
+  <data name="TCE_InvalidCertificateLocation_Unix" xml:space="preserve">
+    <value>Ungültiger Zertifikatspeicherort „{0}“ im Zertifikatspfad „{1}“. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{3}&lt;Zertifikatspeicher&gt;{3}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; „{2}“ ist.</value>
+  </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
     <value>Interner Fehler. Ungültiger Zertifikatspeicherort '{0}' im Zertifikatpfad '{1}'. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{4}&lt;Zertifikatspeicher&gt;{4}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; entweder '{2}' oder '{3}' ist.</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr_Unix" xml:space="preserve">
+    <value>Interner Fehler. Ungültiger Zertifikatspeicherort „{0}“ im Zertifikatspfad „{1}“. Verwenden Sie das folgende Format: &lt;Zertifikatspeicherort&gt;{3}&lt;Zertifikatspeicher&gt;{3}&lt;Zertifikatfingerabdruck&gt;, wobei &lt;Zertifikatspeicherort&gt; „{2}“ ist.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
     <value>Ungültiger Zertifikatspeicher '{0}' im Zertifikatpfad '{1}'. Erwarteter Wert: '{2}'.</value>
@@ -4135,28 +4075,13 @@
     <value>Der Verschlüsselungsschlüssel der angegebenen verschlüsselten Spalte enthält die ungültige Verschlüsselungsalgorithmusversion "{0}". Erwartet wird die Version "{1}".</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>Die angegebene Chiffretextlänge {0} des Verschlüsselungsschlüssels der verschlüsselten Spalte entspricht nicht der Chiffretextlänge {1}, wenn der Spaltenhauptschlüssel (Zertifikat) in '{2}' verwendet wird. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist möglicherweise beschädigt, oder der angegebene Zertifikatpfad ist falsch.</value>
-  </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
-    <value>Die angegebene Länge {0} des Verschlüsselungstexts des Verschlüsselungsschlüssels der verschlüsselten Spalte stimmt nicht mit der Länge {1} des Verschlüsselungstexts überein, wenn der Masterschlüssel der Spalte (asymmetrischer Schlüssel) in '{2}' verwendet wird. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist ggf. fehlerhaft, oder der angegebene Microsoft CSP-Pfad (Cryptographic Service Provider, Kryptografiedienstanbieter) ist ggf. falsch.</value>
-  </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCng" xml:space="preserve">
-    <value>Die angegebene Länge {0} des Verschlüsselungstexts des Verschlüsselungsschlüssels der verschlüsselten Spalte stimmt nicht mit der Länge {1} des Verschlüsselungstexts überein, wenn der Masterschlüssel der Spalte (asymmetrischer Schlüssel) in '{2}' verwendet wird. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist ggf. fehlerhaft, oder der Pfad des angegebenen Microsoft CNG-Anbieters (Cryptography API Next Generation) ist ggf. falsch.</value>
+    <value>Die angegebene Chiffretextlänge {0} des Verschlüsselungsschlüssels der verschlüsselten Spalte entspricht nicht der Chiffretextlänge {1}, wenn der Spaltenhauptschlüssel ({2}) in „{3}“ verwendet wird. Der verschlüsselte Spaltenverschlüsselungsschlüssel ist vielleicht beschädigt, oder es wurde möglicherweise ein falscher {4}-Pfad angegeben.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>Die angegebene Signaturlänge {0} des Verschlüsselungsschlüssels der verschlüsselten Spalte entspricht nicht der Signaturlänge {1}, wenn der Spaltenhauptschlüssel (Zertifikat) in '{2}' verwendet wird. Der Verschlüsselungschlüssel der verschlüsselten Spalte ist möglicherweise beschädigt, oder der angegebene Zertifikatpfad ist falsch.</value>
-  </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
-    <value>Die angegebene Länge {0} der Signatur des Verschlüsselungsschlüssels der verschlüsselten Spalte stimmt nicht mit der Länge {1} der Signatur überein, wenn der Masterschlüssel der Spalte (asymmetrischer Schlüssel) in '{2}' verwendet wird. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist ggf. fehlerhaft, oder der angegebene Microsoft CSP-Pfad (Cryptographic Service Provider, Kryptografiedienstanbieter) ist ggf. falsch.</value>
-  </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
-    <value>Die angegebene Länge {0} der Signatur des Verschlüsselungsschlüssels der verschlüsselten Spalte stimmt nicht mit der Länge {1} der Signatur überein, wenn der Masterschlüssel der Spalte (asymmetrischer Schlüssel) in '{2}' verwendet wird. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist ggf. fehlerhaft, oder der Pfad des angegebenen Microsoft CNG-Anbieters (Cryptography API Next Generation) ist ggf. falsch.</value>
-  </data>
-  <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
-    <value>Die angegebene Verschlüsselungsschlüsselsignatur der verschlüsselten Spalte entspricht nicht der Signatur, die mit dem Spaltenhauptschlüssel (Zertifikat) in '{0}' berechnet wurde. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist möglicherweise beschädigt, oder der angegebene Pfad ist falsch.</value>
+    <value>Die angegebene Signaturlänge {0} des Verschlüsselungsschlüssels der verschlüsselten Spalte entspricht nicht der Signaturlänge {1}, wenn der Spaltenhauptschlüssel ({2}) in „{3}“ verwendet wird. Der verschlüsselte Spaltenverschlüsselungsschlüssel ist vielleicht beschädigt, oder es wurde möglicherweise ein falscher {4}-Pfad angegeben.</value>
   </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>Die angegebene Signatur des Verschlüsselungsschlüssels der verschlüsselten Spalte stimmt nicht mit dem Masterschlüssel der Spalte (asymmetrischer Schlüssel) in '{0}' überein. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist ggf. fehlerhaft, oder der angegebene Pfad ist ggf. falsch.</value>
+    <value>Die angegebene Verschlüsselungsschlüsselsignatur der verschlüsselten Spalte entspricht nicht der Signatur, die mit dem Spaltenhauptschlüssel ({0}) in „{1}“ berechnet wurde. Der verschlüsselte Spaltenverschlüsselungsschlüssel ist vielleicht beschädigt, oder es wurde möglicherweise ein falscher Pfad angegeben.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>Unter dem Schlüsselpfad '{0}' festgelegtes Zertifikat verfügt nicht über einen privaten Schlüssel zur Verschlüsselung eines Spaltenverschlüsselungsschlüssels. Stellen Sie sicher, dass das Zertifikat korrekt importiert wurde.</value>
@@ -4442,18 +4367,6 @@
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Definiert das Verhalten im Blockierungszeitraum für einen Verbindungspool.</value>
-  </data>
-  <data name="AZURESQL_GenericEndpoint" xml:space="preserve">
-    <value>.database.windows.net</value>
-  </data>
-  <data name="AZURESQL_GermanEndpoint" xml:space="preserve">
-    <value>.database.cloudapi.de</value>
-  </data>
-  <data name="AZURESQL_UsGovEndpoint" xml:space="preserve">
-    <value>.database.usgovcloudapi.net</value>
-  </data>
-  <data name="AZURESQL_ChinaEndpoint" xml:space="preserve">
-    <value>.database.chinacloudapi.cn</value>
   </data>
   <data name="TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled" xml:space="preserve">
     <value>Definiert, ob das Zwischenspeichern von Abfragemetadaten aktiviert ist.</value>
@@ -4742,5 +4655,32 @@
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Ungültiger Versuch, „JsonDocument“ für Spalte „{0}“ abzurufen. „JsonDocument“ wird nur für Spalten vom Typ JSON unterstützt.</value>
+  </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>Puffer wurde zu weit erweitert {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>Maximale Puffergröße überschritten: {0}</value>
+  </data>
+  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
+    <value>DataColumn '{0}' für SourceColumn '{2}' ist nicht vorhanden.</value>
+  </data>
+  <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
+    <value>Die SqlBatchCommand-Liste wurde nicht initialisiert.</value>
+  </data>
+  <data name="SQL_VectorNotSupportedOnColumnType" xml:space="preserve">
+    <value>Ungültiger Versuch, Vektordaten aus Spalte „{0}“ abzurufen. Vektoren werden nur für Spalten vom Typ Vektor unterstützt.</value>
+  </data>
+  <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
+    <value>Nicht unterstützter Vektortyp „{0}“.</value>
+  </data>
+  <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
+    <value>Der Nullwert wird für den Ausgabeparameter '{0}' des SqlDbtype-Vektors nicht unterstützt.</value>
+  </data>
+  <data name="ADP_InvalidVectorHeader" xml:space="preserve">
+    <value>Ungültiger Vektorheader empfangen.</value>
+  </data>
+  <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
+    <value>{0} Ungültige JSON-Zeichenfolge für Vektor.</value>
   </data>
 </root>

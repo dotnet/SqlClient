@@ -5,99 +5,21 @@
         Lets you efficiently bulk load a SQL Server table with data from another source.
       </summary>
       <remarks>
-        Microsoft SQL Server includes a popular command-prompt utility named <b>bcp</b> for moving data from one table to another, whether on a single server or between servers. The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class lets you write managed code solutions that provide similar functionality. There are other ways to load data into a SQL Server table (INSERT statements, for example), but <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> offers a significant performance advantage over them. The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class can be used to write data only to SQL Server tables. However, the data source is not limited to SQL Server; any data source can be used, as long as the data can be loaded to a <see cref="T:System.Data.DataTable" /> instance or read with a <see cref="T:System.Data.IDataReader" /> instance. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> will fail when bulk loading a <see cref="T:System.Data.DataTable" /> column of type <see cref="T:System.Data.SqlTypes.SqlDateTime" /> into a SQL Server column whose type is one of the date/time types added in SQL Server 2008.
+        Microsoft SQL Server includes a popular command-prompt utility named **bcp** for moving data from one table to another, whether on a single server or between servers. The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class lets you write managed code solutions that provide similar functionality. There are other ways to load data into a SQL Server table (INSERT statements, for example), but <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> offers a significant performance advantage over them. The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class can be used to write data only to SQL Server tables. However, the data source is not limited to SQL Server; any data source can be used, as long as the data can be loaded to a <see cref="T:System.Data.DataTable" /> instance or read with a <see cref="T:System.Data.IDataReader" /> instance. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> will fail when bulk loading a <see cref="T:System.Data.DataTable" /> column of type <see cref="T:System.Data.SqlTypes.SqlDateTime" /> into a SQL Server column whose type is one of the date/time types added in SQL Server 2008.
       </remarks>
       <example>
-        The following console application demonstrates how to load data using the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class. In this example, a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is used to copy data from the <b>Production.Product</b> table in the SQL Server <b>AdventureWorks</b> database to a similar table in the same database.
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
+        <format type="text/markdown">
+          <![CDATA[  
+The following console application demonstrates how to load data using the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class. In this example, a <xref:Microsoft.Data.SqlClient.SqlDataReader> is used to copy data from the **Production.Product** table in the SQL Server **AdventureWorks** database to a similar table in the same database.
 
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
 
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoMatchingColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, ProductNumber FROM Production.Product;",
-                          sourceConnection);
-                      SqlDataReader reader = commandSourceData.ExecuteReader();
+[!code-csharp[BulkCopy.Single#1](~/../sqlclient/doc/samples/SqlBulkCopy_Single.cs#1)]
 
-                      // Open the destination connection. In the real world you would
-                      // not use SqlBulkCopy to move data from one table to the other
-                      // in the same database. This is for demonstration purposes only.
-                      using (SqlConnection destinationConnection = new SqlConnection(connectionString))
-                      {
-                          destinationConnection.Open();
-
-                          // Set up the bulk copy object.
-                          // Note that the column positions in the source
-                          // data reader match the column positions in
-                          // the destination table so there is no need to
-                          // map columns.
-                          using (SqlBulkCopy bulkCopy = new SqlBulkCopy(destinationConnection))
-                          {
-                              bulkCopy.DestinationTableName = "dbo.BulkCopyDemoMatchingColumns";
-
-                              try
-                              {
-                                  // Write from the source to the destination.
-                                  bulkCopy.WriteToServer(reader);
-                              }
-                              catch (Exception ex)
-                              {
-                                  Console.WriteLine(ex.Message);
-                              }
-                              finally
-                              {
-                                  // Close the SqlDataReader. The SqlBulkCopy
-                                  // object is automatically closed at the end
-                                  // of the using block.
-                                  reader.Close();
-                              }
-                          }
-
-                          // Perform a final count on the destination
-                          // table to see how many rows were added.
-                          long countEnd = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                          Console.WriteLine("Ending row count = {0}", countEnd);
-                          Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                          Console.WriteLine("Press Enter to finish.");
-                          Console.ReadLine();
-                      }
-                  }
-              }
-
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+]]></format>
       </example>
     </SqlBulkCopy>
     <ctor name="SqlConnectionParameter">
@@ -108,104 +30,25 @@
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class using the specified open instance of <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />.
       </summary>
       <remarks>
-        Because the connection is already open when the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance is initialized, the connection remains open after the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance is closed. If the <c>connection</c> argument is null, an <see cref="T:System.ArgumentNullException" /> is thrown.    
+        Because the connection is already open when the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance is initialized, the connection remains open after the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance is closed. If the `connection` argument is null, an <see cref="T:System.ArgumentNullException" /> is thrown.
       </remarks>
       <example>
-        <para>
-          The following console application demonstrates how to bulk load data using a connection that is already open. In this example, a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is used to copy data from the <b>Production.Product</b> table in the SQL Server <b>AdventureWorks</b> database to a similar table in the same database. This example is for demonstration purposes only. You would not use <c>SqlBulkCopy</c> to move data from one table to another in the same database in a production application. Note that the source data does not have to be located on SQL Server; you can use any data source that can be read to an <see cref="T:System.Data.IDataReader" /> or loaded to a <see cref="T:System.Data.DataTable" />.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
+        <format type="text/markdown">
+          <![CDATA[  
+The following console application demonstrates how to bulk load data using a connection that is already open. In this example, a <xref:Microsoft.Data.SqlClient.SqlDataReader>
+is used to copy data from the **Production.Product** table in the SQL Server **AdventureWorks** database to a similar table in the same database. This example is for demonstration
+purposes only. You would not use `SqlBulkCopy` to move data from one table to another in the same database in a production application.
+Note that the source data does not have to be located on SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a
+<xref:System.Data.DataTable>.
 
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
 
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoMatchingColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, ProductNumber FROM Production.Product;",
-                          sourceConnection);
-                      SqlDataReader reader = commandSourceData.ExecuteReader();
+[!code-csharp[BulkCopy.Single#1](~/../sqlclient/doc/samples/SqlBulkCopy_Single.cs#1)]
 
-                      // Open the destination connection. In the real world you would
-                      // not use SqlBulkCopy to move data from one table to the other
-                      // in the same database. This is for demonstration purposes only.
-                      using (SqlConnection destinationConnection = new SqlConnection(connectionString))
-                      {
-                          destinationConnection.Open();
-
-                          // Set up the bulk copy object.
-                          // Note that the column positions in the source
-                          // data reader match the column positions in
-                          // the destination table so there is no need to
-                          // map columns.
-                          using (SqlBulkCopy bulkCopy = new SqlBulkCopy(destinationConnection))
-                          {
-                              bulkCopy.DestinationTableName = "dbo.BulkCopyDemoMatchingColumns";
-
-                              try
-                              {
-                                  // Write from the source to the destination.
-                                  bulkCopy.WriteToServer(reader);
-                              }
-                              catch (Exception ex)
-                              {
-                                  Console.WriteLine(ex.Message);
-                              }
-                              finally
-                              {
-                                  // Close the SqlDataReader. The SqlBulkCopy
-                                  // object is automatically closed at the end
-                                  // of the using block.
-                                  reader.Close();
-                              }
-                          }
-
-                          // Perform a final count on the destination
-                          // table to see how many rows were added.
-                          long countEnd = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                          Console.WriteLine("Ending row count = {0}", countEnd);
-                          Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                          Console.WriteLine("Press Enter to finish.");
-                          Console.ReadLine();
-                      }
-                  }
-              }
-
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+]]></format>
       </example>
     </ctor>
     <ctor name="SqlConnectionAndSqlBulkCopyOptionAndSqlTransactionParameters">
@@ -225,12 +68,12 @@
         If options include <see cref="F:Microsoft.Data.SqlClient.SqlBulkCopyOptions.UseInternalTransaction"/> and the <paramref name="externalTransaction" /> argument is not <see langword="null" />, an <b>InvalidArgumentException</b> is thrown.
       </remarks>
       <example>
-        For examples demonstrating how to use <c>SqlBulkCopy</c> in a transaction, see <see href="/sql/connect/ado-net/sql/transaction-bulk-copy-operations">Transaction and Bulk Copy Operations</see>.
+        For examples demonstrating how to use <c>SqlBulkCopy</c> in a transaction, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/transaction-bulk-copy-operations">Transaction and Bulk Copy Operations</see>.
       </example>
-      <related type="Article" href="https://msdn.microsoft.com/library/83a7a0d2-8018-4354-97b9-0b1d99f8342b">
+      <related type="Article" href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-operations-sql-server">
         Performing Bulk Copy Operations
       </related>
-      <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">
+      <related type="Article" href="https://learn.microsoft.com/sql/connect/ado-net/overview-sqlclient-driver">
         Overview of the SqlClient driver
       </related>
     </ctor>
@@ -247,94 +90,24 @@
         Initializes and opens a new instance of <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> based on the supplied <paramref name="connectionString" />. The constructor uses the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> to initialize a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class.
       </summary>
       <remarks>
-        The connection is automatically closed at the end of the bulk copy operation. If <paramref name="connectionString" /> is <see langword="null" /> , an <see cref="T:System.ArgumentNullException" /> is thrown. If <paramref name="connectionString" /> is an empty string, an <see cref="T:System.ArgumentException" /> is thrown.
+        The connection is automatically closed at the end of the bulk copy operation. If `connectionString` is null, an <see cref="T:System.ArgumentNullException" /> is thrown. If `connectionString` is an empty string, an <see cref="T:System.ArgumentException" /> is thrown.
       </remarks>
       <example>
-        <para>
-          The following console application demonstrates how to bulk load data by using a connection specified as a string. The connection is automatically closed when the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance is closed. In this example, the source data is first read from a SQL Server table to a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance. The source data does not have to be located on SQL Server; you can use any data source that can be read to an <see cref="T:System.Data.IDataReader" /> or loaded to a <see cref="T:System.Data.DataTable" />.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
+        <format type="text/markdown">
+          <![CDATA[  
+The following console application demonstrates how to bulk load data by using a connection specified as a string. The connection is automatically
+closed when the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance is closed.
+In this example, the source data is first read from a SQL Server table to a <xref:Microsoft.Data.SqlClient.SqlDataReader> instance.
+The source data does not have to be located on SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a <xref:System.Data.DataTable>.
 
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-          
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
 
-                  // Perform an initial count on the destination table.
-                  SqlCommand commandRowCount = new SqlCommand(
-                      "SELECT COUNT(*) FROM dbo.BulkCopyDemoMatchingColumns;",
-                      sourceConnection);
-                  long countStart = System.Convert.ToInt32(
-                      commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
-                  // Get data from the source table as a SqlDataReader.
-                  SqlCommand commandSourceData = new SqlCommand(
-                      "SELECT ProductID, Name, ProductNumber FROM Production.Product;",
-                      sourceConnection);
-                  SqlDataReader reader = commandSourceData.ExecuteReader();
+[!code-csharp[SqlBulkCopy.ConnectionString#1](~/../sqlclient/doc/samples/SqlBulkCopy_ConnectionString.cs#1)]
 
-                  // Set up the bulk copy object using a connection string.
-                  // In the real world you would not use SqlBulkCopy to move
-                  // data from one table to the other in the same database.
-                  using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                  {
-                      bulkCopy.DestinationTableName = "dbo.BulkCopyDemoMatchingColumns";
-
-                      try
-                      {
-                          // Write from the source to the destination.
-                          bulkCopy.WriteToServer(reader);
-                      }
-                      catch (Exception ex)
-                      {
-                          Console.WriteLine(ex.Message);
-                      }
-                      finally
-                      {
-                          // Close the SqlDataReader. The SqlBulkCopy
-                          // object is automatically closed at the end
-                          // of the using block.
-                          reader.Close();
-                      }
-                  }
-
-                  // Perform a final count on the destination
-                  // table to see how many rows were added.
-                  long countEnd = System.Convert.ToInt32(
-                      commandRowCount.ExecuteScalar());
-                  Console.WriteLine("Ending row count = {0}", countEnd);
-                  Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                  Console.WriteLine("Press Enter to finish.");
-                  Console.ReadLine();
-              }
-          }
-
-          private static string GetConnectionString()
-          {
-              // To avoid storing the sourceConnection string in your code,
-              // you can retrieve it from a configuration file.
-              return "Data Source=(local); " +
-                     " Integrated Security=true;" +
-                     "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+]]></format>
       </example>
       <exception cref="T:System.ArgumentException">
         If <paramref name="connectionString" /> is an empty string, an <see cref="T:System.ArgumentException" /> is thrown.
@@ -354,92 +127,25 @@
         You can obtain detailed information about all the bulk copy options in the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyOptions" /> topic.
       </remarks>
       <example>
-        <para>
-          The following console application demonstrates how to perform a bulk load by using a connection specified as a string. An option is set to use the value in the identity column of the source table when you load the destination table. In this example, the source data is first read from a SQL Server table to a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance. The source table and destination table each include an Identity column. By default, a new value for the <b>Identity</b> column is generated in the destination table for each row added. In this example, an option is set when the connection is opened that forces the bulk load process to use the <b>Identity</b> values from the source table instead. To see how the option changes the way the bulk load works, run the sample with the <b>dbo.BulkCopyDemoMatchingColumns</b> table empty. All rows load from the source. Then run the sample again without emptying the table. An exception is thrown and the code writes a message to the console notifying you that rows weren't added because of primary key constraint violations.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
+        <format type="text/markdown">
+          <![CDATA[  
+The following console application demonstrates how to perform a bulk load by using a connection specified as a string.
+An option is set to use the value in the identity column of the source table when you load the destination table. In this example,
+the source data is first read from a SQL Server table to a <xref:Microsoft.Data.SqlClient.SqlDataReader> instance.
+The source table and destination table each include an Identity column. By default, a new value for the **Identity** column is generated in the destination table for each row added.
+In this example, an option is set when the connection is opened that forces the bulk load process to use the **Identity** values from the source table instead.
+To see how the option changes the way the bulk load works, run the sample with the **dbo.BulkCopyDemoMatchingColumns** table empty. All rows load from the source.
+Then run the sample again without emptying the table. An exception is thrown and the code writes a message to the console notifying you that rows weren't
+added because of primary key constraint violations.
 
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
 
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoMatchingColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, ProductNumber FROM Production.Product;",
-                          sourceConnection);
-                      SqlDataReader reader = commandSourceData.ExecuteReader();
+[!code-csharp[SqlBulkCopy.KeepIdentity#1](~/../sqlclient/doc/samples/SqlBulkCopy_KeepIdentity.cs#1)]
 
-                      // Create the SqlBulkCopy object using a connection string
-                      // and the KeepIdentity option.
-                      // In the real world you would not use SqlBulkCopy to move
-                      // data from one table to the other in the same database.
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString, SqlBulkCopyOptions.KeepIdentity))
-                      {
-                          bulkCopy.DestinationTableName = "dbo.BulkCopyDemoMatchingColumns";
-            
-                          try
-                          {
-                              // Write from the source to the destination.
-                              bulkCopy.WriteToServer(reader);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                          finally
-                          {
-                              // Close the SqlDataReader. The SqlBulkCopy
-                              // object is automatically closed at the end
-                              // of the using block.
-                              reader.Close();
-                          }
-                      }
-            
-                      // Perform a final count on the destination
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(
-                      commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                  }
-              }
-
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+]]></format>
       </example>
     </ctor>
     <BatchSize>
@@ -454,102 +160,30 @@
           A batch is complete when <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" /> rows have been processed or there are no more rows to send to the destination data source.
         </para>
         <para>
-          Zero (the default) indicates that each <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> operation is a single batch.
+          Zero (the default) indicates that each <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> operation is a single batch.
         </para>
         <para>
           If the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance has been declared without the <see cref="F:Microsoft.Data.SqlClient.SqlBulkCopyOptions.UseInternalTransaction" /> option in effect, rows are sent to the server <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" /> rows at a time, but no transaction-related action is taken. If <see cref="F:Microsoft.Data.SqlClient.SqlBulkCopyOptions.UseInternalTransaction" /> is in effect, each batch of rows is inserted as a separate transaction.
         </para>
         <para>
-          The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" /> property can be set at any time. If a bulk copy is already in progress, the current batch is sized according to the previous batch size. Subsequent batches use the new size. If the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" /> is initially zero and changed while a <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> operation is already in progress, that operation loads the data as a single batch. Any subsequent <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> operations on the same <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance use the new <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" />.
+          The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" /> property can be set at any time. If a bulk copy is already in progress, the current batch is sized according to the previous batch size. Subsequent batches use the new size. If the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" /> is initially zero and changed while a <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> operation is already in progress, that operation loads the data as a single batch. Any subsequent <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> operations on the same <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance use the new <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" />.
         </para>
       </remarks>
       <example>
-        <para>
-          The following console application demonstrates how to bulk load data in batches of 50 rows. For an example illustrating how <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" /> works with a transaction, see <see href="/sql/connect/ado-net/sql/transaction-bulk-copy-operations">Transaction and Bulk Copy Operations</see>.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <code language="c#">
-          using Microsoft.Data.SqlClient;
+        <format type="text/markdown">
+          <![CDATA[  
+The following console application demonstrates how to bulk load data in batches of 50 rows. For an example illustrating how <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize>
+works with a transaction, see [Transaction and Bulk Copy Operations](https://learn.microsoft.com/sql/connect/ado-net/sql/transaction-bulk-copy-operations).
 
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
-        
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoMatchingColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
-            
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, ProductNumber FROM Production.Product;",
-                          sourceConnection);
-                      SqlDataReader reader = commandSourceData.ExecuteReader();
-        
-                      // Create the SqlBulkCopy object using a connection string.
-                      // In the real world you would not use SqlBulkCopy to move
-                      // data from one table to the other in the same database.
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                      {
-                          bulkCopy.DestinationTableName = "dbo.BulkCopyDemoMatchingColumns";
-                
-                          // Set the BatchSize.
-                          bulkCopy.BatchSize = 50;
-                
-                          try
-                          {
-                              // Write from the source to the destination.
-                              bulkCopy.WriteToServer(reader);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                          finally
-                          {
-                              // Close the SqlDataReader. The SqlBulkCopy
-                              // object is automatically closed at the end
-                              // of the using block.
-                              reader.Close();
-                          }
-            
-                          // Perform a final count on the destination
-                          // table to see how many rows were added.
-                          long countEnd = System.Convert.ToInt32(
-                              commandRowCount.ExecuteScalar());
-                          Console.WriteLine("Ending row count = {0}", countEnd);
-                          Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                          Console.WriteLine("Press Enter to finish.");
-                          Console.ReadLine();
-                      }
-                  }
-              }
-    
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance,
+it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.BatchSize#1](~/../sqlclient/doc/samples/SqlBulkCopy_BatchSize.cs#1)]
+
+]]></format>
       </example>
     </BatchSize>
     <BulkCopyTimeout>
@@ -560,99 +194,23 @@
         The integer value of the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BulkCopyTimeout" /> property. The default is 30 seconds. A value of 0 indicates no limit; the bulk copy will wait indefinitely.
       </value>
       <remarks>
-        If the operation does time out, the transaction is not committed and all copied rows are removed from the destination table.
+        If the operation does time out, the transaction is not committed and all copied rows are removed from the destination table.  
       </remarks>
       <example>
-        <para>
-          The following console application demonstrates how to modify the time-out to 60 seconds when bulk loading data. In this example, the source data is first read from a SQL Server table to a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance. The source data does not have to be located on SQL Server; you can use any data source that can be read to an <see cref="T:System.Data.IDataReader" /> or loaded to a <see cref="T:System.Data.DataTable" />.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
+        <format type="text/markdown">
+          <![CDATA[  
+The following console application demonstrates how to modify the time-out to 60 seconds when bulk loading data.
+In this example, the source data is first read from a SQL Server table to a <xref:Microsoft.Data.SqlClient.SqlDataReader> instance.
+The source data does not have to be located on SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a <xref:System.Data.DataTable>.
 
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-        
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection =
-                  new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
-            
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoMatchingColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
-            
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, ProductNumber FROM Production.Product;",
-                          sourceConnection); 
-                      SqlDataReader reader = commandSourceData.ExecuteReader();
-            
-                      // Create the SqlBulkCopy object using a connection string.
-                      // In the real world you would not use SqlBulkCopy to move
-                      // data from one table to the other in the same database.
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                      {
-                          bulkCopy.DestinationTableName =
-                          "dbo.BulkCopyDemoMatchingColumns";
-                
-                          // Set the timeout.
-                          bulkCopy.BulkCopyTimeout = 60;
-                
-                          try
-                          {
-                              // Write from the source to the destination.
-                              bulkCopy.WriteToServer(reader);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                          finally
-                          {
-                              // Close the SqlDataReader. The SqlBulkCopy
-                              // object is automatically closed at the end
-                              // of the using block.
-                              reader.Close();
-                          }
-                      }
-            
-                      // Perform a final count on the destination
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(
-                      commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                  }
-              }
-    
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.Timeout#1](~/../sqlclient/doc/samples/SqlBulkCopy_Timeout.cs#1)]
+
+]]></format>
       </example>
     </BulkCopyTimeout>
     <Close>
@@ -660,171 +218,21 @@
         Closes the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance.
       </summary>
       <remarks>
-        After you call <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.Close" /> on the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object, no other operation will succeed. Calls to the <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> method will throw an <see cref="T:System.InvalidOperationException" />. Calling the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.Close" /> method from the <see cref="E:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied" /> event causes an <see cref="T:System.InvalidOperationException" /> to be thrown. Note that open <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instances are closed implicitly at the end of a <c>using</c> block.
+        After you call <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.Close" /> on the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object, no other operation will succeed. Calls to the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> method will throw an <see cref="T:System.InvalidOperationException" />. Calling the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.Close" /> method from the <see cref="E:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied" /> event causes an <see cref="T:System.InvalidOperationException" /> to be thrown. Note that open <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instances are closed implicitly at the end of a <c>using</c> block.
       </remarks>
       <example>
-        <para>
-          The following example uses the same <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance to add sales orders and their associated details to two destination tables. Because the <b>AdventureWorks</b> sales order tables are large, the sample reads only orders placed by a certain account number and bulk copies those orders and details to the destination tables. The <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.Close" /> method is used only after both bulk copy operations are complete.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
+        <format type="text/markdown">
+          <![CDATA[  
+The following example uses the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance to add sales orders and their associated details to two destination tables. Because the **AdventureWorks** sales order tables are large, the sample reads only orders placed by a certain account number and bulk copies those orders and details to the destination tables. The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> method is used only after both bulk copy operations are complete.
 
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  
-                  // Open a connection to the AdventureWorks database.
-                  using (SqlConnection connection = new SqlConnection(connectionString))
-                  {
-                      connection.Open();
-            
-                      // Empty the destination tables.
-                      SqlCommand deleteHeader = new SqlCommand(
-                          "DELETE FROM dbo.BulkCopyDemoOrderHeader;",
-                          connection);
-                      deleteHeader.ExecuteNonQuery();
-                      SqlCommand deleteDetail = new SqlCommand(
-                          "DELETE FROM dbo.BulkCopyDemoOrderDetail;",
-                          connection);
-                      deleteDetail.ExecuteNonQuery();
-            
-                      // Perform an initial count on the destination
-                      // table with matching columns.
-                      SqlCommand countRowHeader = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoOrderHeader;",
-                          connection);
-                      long countStartHeader = System.Convert.ToInt32(
-                      countRowHeader.ExecuteScalar());
-                      Console.WriteLine(
-                          "Starting row count for Header table = {0}",
-                          countStartHeader);
-            
-                      // Perform an initial count on the destination
-                      // table with different column positions.
-                      SqlCommand countRowDetail = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoOrderDetail;",
-                          connection);
-                      long countStartDetail = System.Convert.ToInt32(
-                          countRowDetail.ExecuteScalar());
-                      Console.WriteLine(
-                          "Starting row count for Detail table = {0}",
-                          countStartDetail);
-            
-                      // Get data from the source table as a SqlDataReader.
-                      // The Sales.SalesOrderHeader and Sales.SalesOrderDetail
-                      // tables are quite large and could easily cause a timeout
-                      // if all data from the tables is added to the destination.
-                      // To keep the example simple and quick, a parameter is
-                      // used to select only orders for a particular account
-                      // as the source for the bulk insert.
-                      SqlCommand headerData = new SqlCommand(
-                          "SELECT [SalesOrderID], [OrderDate], " +
-                          "[AccountNumber] FROM [Sales].[SalesOrderHeader] " +
-                          "WHERE [AccountNumber] = @accountNumber;",
-                          connection);
-                      SqlParameter parameterAccount = new SqlParameter();
-                      parameterAccount.ParameterName = "@accountNumber";
-                      parameterAccount.SqlDbType = SqlDbType.NVarChar;
-                      parameterAccount.Direction = ParameterDirection.Input;
-                      parameterAccount.Value = "10-4020-000034";
-                      headerData.Parameters.Add(parameterAccount);
-                      SqlDataReader readerHeader = headerData.ExecuteReader();
-            
-                      // Get the Detail data in a separate connection.
-                      using (SqlConnection connection2 = new SqlConnection(connectionString))
-                      {
-                          connection2.Open();
-                          SqlCommand sourceDetailData = new SqlCommand(
-                              "SELECT [Sales].[SalesOrderDetail].[SalesOrderID], [SalesOrderDetailID], " +
-                              "[OrderQty], [ProductID], [UnitPrice] FROM [Sales].[SalesOrderDetail] " +
-                              "INNER JOIN [Sales].[SalesOrderHeader] ON [Sales].[SalesOrderDetail]." +
-                              "[SalesOrderID] = [Sales].[SalesOrderHeader].[SalesOrderID] " +
-                              "WHERE [AccountNumber] = @accountNumber;",
-                              connection2);
-                
-                          SqlParameter accountDetail = new SqlParameter();
-                          accountDetail.ParameterName = "@accountNumber";
-                          accountDetail.SqlDbType = SqlDbType.NVarChar;
-                          accountDetail.Direction = ParameterDirection.Input;
-                          accountDetail.Value = "10-4020-000034";
-                          sourceDetailData.Parameters.Add(accountDetail);
-                          SqlDataReader readerDetail = sourceDetailData.ExecuteReader();
-                
-                          // Create the SqlBulkCopy object.
-                          using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                          {
-                              bulkCopy.DestinationTableName = "dbo.BulkCopyDemoOrderHeader";
-                
-                              // Write readerHeader to the destination.
-                              try
-                              {
-                                  bulkCopy.WriteToServer(readerHeader);
-                              }
-                              catch (Exception ex)
-                              {
-                                  Console.WriteLine(ex.Message);
-                              }
-                              finally
-                              {
-                                  readerHeader.Close();
-                              }
-                
-                              // Set up a different destination and
-                              // map columns.
-                              bulkCopy.DestinationTableName = "dbo.BulkCopyDemoOrderDetail";
-                    
-                              // Write readerDetail to the destination.
-                              try
-                              {
-                                  bulkCopy.WriteToServer(readerDetail);
-                              }
-                              catch (Exception ex)
-                              {
-                                  Console.WriteLine(ex.Message);
-                              }
-                              finally
-                              {
-                                  readerDetail.Close();
-                              }
-                          }
-                
-                          // Perform a final count on the destination
-                          // tables to see how many rows were added.
-                          long countEndHeader = System.Convert.ToInt32(
-                              countRowHeader.ExecuteScalar());
-                          Console.WriteLine("{0} rows were added to the Header table.",
-                          countEndHeader - countStartHeader);
-                          
-                          long countEndDetail = System.Convert.ToInt32(
-                              countRowDetail.ExecuteScalar());
-                          Console.WriteLine("{0} rows were added to the Detail table.",
-                          countEndDetail - countStartDetail);
-                          Console.WriteLine("Press Enter to finish.");
-                          Console.ReadLine();
-                      }
-                  }
-              }
-    
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the connection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.OrdersDetails#1](~/../sqlclient/doc/samples/SqlBulkCopy_OrdersDetails.cs#1)]
+
+]]></format>
       </example>
     </Close>
     <EnableStreaming>
@@ -835,12 +243,17 @@
         <see langword="true" /> if a <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object can stream data from an <see cref="T:System.Data.IDataReader" /> object; otherwise, false. The default is <see langword="false" />.
       </value>
       <remarks>
-        <para>
-          When <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.EnableStreaming" /> is <see langword="true" />, <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> reads from an <see cref="T:System.Data.IDataReader" /> object using <see cref="F:System.Data.CommandBehavior.SequentialAccess" />, optimizing memory usage by using the <see cref="T:System.Data.IDataReader" /> streaming capabilities. Streaming is only applicable to max data types (i.e. VARBINARY(MAX), VARCHAR(MAX), NVARCHAR(MAX), and XML). When <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.EnableStreaming" /> is set to <see langword="false" />, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class loads all the data returned by the <see cref="T:System.Data.IDataReader" /> object into memory before sending it to the server.
-        </para>
-        <note type="note">
-          The main advantage of enabling streaming is reducing memory usage during bulk copy of max data types.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[  
+When <xref:Microsoft.Data.SqlClient.SqlBulkCopy.EnableStreaming> is `true`, <xref:Microsoft.Data.SqlClient.SqlBulkCopy> reads from an <xref:System.Data.IDataReader> object using <xref:System.Data.CommandBehavior.SequentialAccess>,
+optimizing memory usage by using the <xref:System.Data.IDataReader> streaming capabilities. Streaming is only applicable to max data types (i.e.
+VARBINARY(MAX), VARCHAR(MAX), NVARCHAR(MAX), and XML). When <xref:Microsoft.Data.SqlClient.SqlBulkCopy.EnableStreaming> is set to false,
+the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class loads all the data returned by the <xref:System.Data.IDataReader> object into memory before sending it to the server.
+
+> [!NOTE]
+> The main advantage of enabling streaming is reducing memory usage during bulk copy of max data types.
+
+]]></format>
       </remarks>
     </EnableStreaming>
     <ColumnMappings>
@@ -879,7 +292,7 @@
       </value>
       <remarks>
         <para>
-          If <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> has not been set when <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> is called, an <see cref="T:System.ArgumentNullException" /> is thrown. If <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> is modified while a <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> operation is running, the change does not affect the current operation. The new <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> value is used the next time a <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> method is called. 
+          If <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> has not been set when <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> is called, an <see cref="T:System.ArgumentNullException" /> is thrown. If <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> is modified while a <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> operation is running, the change does not affect the current operation. The new <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> value is used the next time a <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> method is called. 
         </para>
         <para>
           <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> is a three-part name (<c>&lt;database&gt;.&lt;owningschema&gt;.&lt;name&gt;</c>). You can qualify the table name with its database and owning schema if you choose. However, if the table name uses an underscore ("_") or any other special characters, you must escape the name using surrounding brackets as in (<c>[&lt;database&gt;.&lt;owningschema&gt;.&lt;name_01&gt;]</c>).
@@ -889,104 +302,21 @@
         </para>
       </remarks>
       <example>
-        <para>
-          The following console application demonstrates how to bulk load data using a connection that is already open. The destination table is a table in the <b>AdventureWorks</b> database.
-        </para>
-        <para>
-          In this example, the connection is first used to read data from a SQL Server table to a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance. The source data does not have to be located on SQL Server; you can use any data source that can be read to an <see cref="T:System.Data.IDataReader" /> or loaded to a <see cref="T:System.Data.DataTable" />.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
+        <format type="text/markdown">
+          <![CDATA[  
+The following console application demonstrates how to bulk load data using a connection that is already open. The destination table is a table in the **AdventureWorks** database.
 
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
+In this example, the connection is first used to read data from a SQL Server table to a <xref:Microsoft.Data.SqlClient.SqlDataReader> instance. The source data does not have to
+be located on SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a <xref:System.Data.DataTable>.
 
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoMatchingColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
 
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, ProductNumber FROM Production.Product;",
-                          sourceConnection);
-                      SqlDataReader reader = commandSourceData.ExecuteReader();
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
-                      // Open the destination connection. In the real world you would
-                      // not use SqlBulkCopy to move data from one table to the other
-                      // in the same database. This is for demonstration purposes only.
-                      using (SqlConnection destinationConnection = new SqlConnection(connectionString))
-                      {
-                          destinationConnection.Open();
+[!code-csharp[SqlBulkCopy.Single#1](~/../sqlclient/doc/samples/SqlBulkCopy_Single.cs#1)]
 
-                          // Set up the bulk copy object.
-                          // Note that the column positions in the source
-                          // data reader match the column positions in
-                          // the destination table so there is no need to
-                          // map columns.
-                          using (SqlBulkCopy bulkCopy = new SqlBulkCopy(destinationConnection))
-                          {
-                              bulkCopy.DestinationTableName = "dbo.BulkCopyDemoMatchingColumns";
-
-                              try
-                              {
-                                  // Write from the source to the destination.
-                                  bulkCopy.WriteToServer(reader);
-                              }
-                              catch (Exception ex)
-                              {
-                                  Console.WriteLine(ex.Message);
-                              }
-                              finally
-                              {
-                                  // Close the SqlDataReader. The SqlBulkCopy
-                                  // object is automatically closed at the end
-                                  // of the using block.
-                                  reader.Close();
-                              }
-                          }
-
-                          // Perform a final count on the destination
-                          // table to see how many rows were added.
-                          long countEnd = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                          Console.WriteLine("Ending row count = {0}", countEnd);
-                          Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                          Console.WriteLine("Press Enter to finish.");
-                          Console.ReadLine();
-                      }
-                  }
-              }
-
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+]]></format>
       </example>
     </DestinationTableName>
     <NotifyAfter>
@@ -1005,105 +335,23 @@
         </para>
       </remarks>
       <example>
-        <para>
-          The following console application demonstrates how to bulk load data using a connection that is already open. The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter" /> property is set so that the event handler is called after every 50 rows copied to the table.
-        </para>
-        <para>
-          In this example, the connection is first used to read data from a SQL Server table to a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance. Then a second connection is opened to bulk copy the data. Note that the source data does not have to be located on SQL Server; you can use any data source that can be read to an <see cref="T:System.Data.IDataReader" /> or loaded to a <see cref="T:System.Data.DataTable" />.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>. 
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
+        <format type="text/markdown">
+          <![CDATA[  
+The following console application demonstrates how to bulk load data using a connection that is already open. The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter> property is set so that
+the event handler is called after every 50 rows copied to the table.
 
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
-        
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoMatchingColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("NotifyAfter Sample");
-                      Console.WriteLine("Starting row count = {0}", countStart);
-        
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, " +
-                          "ProductNumber " +
-                          "FROM Production.Product;",
-                          sourceConnection);
-                      SqlDataReader reader = commandSourceData.ExecuteReader();
-        
-                      // Create the SqlBulkCopy object using a connection string.
-                      // In the real world you would not use SqlBulkCopy to move
-                      // data from one table to the other in the same database.
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                      {
-                          bulkCopy.DestinationTableName = "dbo.BulkCopyDemoMatchingColumns";
-                
-                          // Set up the event handler to notify after 50 rows.
-                          bulkCopy.SqlRowsCopied += new SqlRowsCopiedEventHandler(OnSqlRowsCopied);
-                          bulkCopy.NotifyAfter = 50;
-                
-                          try
-                          {
-                              // Write from the source to the destination.
-                              bulkCopy.WriteToServer(reader);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                          finally
-                          {
-                              // Close the SqlDataReader. The SqlBulkCopy
-                              // object is automatically closed at the end
-                              // of the using block.
-                              reader.Close();
-                          }
-                      }
-        
-                      // Perform a final count on the destination
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(
-                      commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                      }
-                  }
-        
-              private static void OnSqlRowsCopied(object sender, SqlRowsCopiedEventArgs e)
-              {
-                  Console.WriteLine("Copied {0} so far...", e.RowsCopied);
-              }
-            
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+In this example, the connection is first used to read data from a SQL Server table to a <xref:Microsoft.Data.SqlClient.SqlDataReader> instance. Then a second connection is opened to bulk copy the data.
+Note that the source data does not have to be located on SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a <xref:System.Data.DataTable>.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT`
+statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.NotifyAfter#1](~/../sqlclient/doc/samples/SqlBulkCopy_NotifyAfter.cs#1)]
+
+]]></format>
       </example>
     </NotifyAfter>
     <SqlRowsCopied>
@@ -1115,112 +363,30 @@
           Note that the settings of <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter" /> and <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" /> are independent. Receipt of a <see cref="E:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied" /> event does not imply that any rows have been sent to the server or committed.
         </para>
         <para>
-          You cannot call <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.Close" /> or <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Close" /> from this event. Doing this will cause an <see cref="T:System.InvalidOperationException" /> being thrown, and the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object state will not change. If the user wants to cancel the operation from the event, the <see cref="P:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs.Abort" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs" /> can be used. (See <see href="/sql/connect/ado-net/sql/transaction-bulk-copy-operations">Transaction and Bulk Copy Operations</see> for examples that use the <see cref="P:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs.Abort" /> property.)
+          You cannot call <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.Close" /> or <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Close" /> from this event. Doing this will cause an <see cref="T:System.InvalidOperationException" /> being thrown, and the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object state will not change. If the user wants to cancel the operation from the event, the <see cref="P:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs.Abort" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs" /> can be used. (See <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/transaction-bulk-copy-operations">Transaction and Bulk Copy Operations</see> for examples that use the <see cref="P:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs.Abort" /> property.)
         </para>
         <para>
           No action, such as transaction activity, is supported in the connection during the execution of the bulk copy operation, and it is recommended that you not use the same connection used during the <see cref="E:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied" /> event. However, you can open a different connection.
         </para>
       </remarks>
       <example>
-        <para>
-          The following console application demonstrates how to bulk load data using a connection that is already open. The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter" /> property is set so that the event handler is called after every 50 rows copied to the table.
-        </para>
-        <para>
-          In this example, the connection is first used to read data from a SQL Server table to a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance. Note that the source data does not have to be located on SQL Server; you can use any data source that can be read to an <see cref="T:System.Data.IDataReader" /> or loaded to a <see cref="T:System.Data.DataTable" />.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
+        <format type="text/markdown">
+          <![CDATA[  
+The following console application demonstrates how to bulk load data using a connection that is already open. The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter> property is set so that
+the event handler is called after every 50 rows copied to the table.
 
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
-        
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoMatchingColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("NotifyAfter Sample");
-                      Console.WriteLine("Starting row count = {0}", countStart);
-        
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, " +
-                          "ProductNumber " +
-                          "FROM Production.Product;",
-                          sourceConnection);
-                      SqlDataReader reader = commandSourceData.ExecuteReader();
-        
-                      // Create the SqlBulkCopy object using a connection string.
-                      // In the real world you would not use SqlBulkCopy to move
-                      // data from one table to the other in the same database.
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                      {
-                          bulkCopy.DestinationTableName = "dbo.BulkCopyDemoMatchingColumns";
-                
-                          // Set up the event handler to notify after 50 rows.
-                          bulkCopy.SqlRowsCopied += new SqlRowsCopiedEventHandler(OnSqlRowsCopied);
-                          bulkCopy.NotifyAfter = 50;
-                
-                          try
-                          {
-                              // Write from the source to the destination.
-                              bulkCopy.WriteToServer(reader);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                          finally
-                          {
-                              // Close the SqlDataReader. The SqlBulkCopy
-                              // object is automatically closed at the end
-                              // of the using block.
-                              reader.Close();
-                          }
-                      }
-        
-                      // Perform a final count on the destination
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(
-                      commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                      }
-                  }
-        
-              private static void OnSqlRowsCopied(object sender, SqlRowsCopiedEventArgs e)
-              {
-                  Console.WriteLine("Copied {0} so far...", e.RowsCopied);
-              }
-            
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+In this example, the connection is first used to read data from a SQL Server table to a <xref:Microsoft.Data.SqlClient.SqlDataReader> instance. Note that the source data does not have to be located on
+SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a <xref:System.Data.DataTable>.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier
+and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.NotifyAfter#1](~/../sqlclient/doc/samples/SqlBulkCopy_NotifyAfter.cs#1)]
+
+]]></format>
       </example>
     </SqlRowsCopied>
     <RowsCopied>
@@ -1263,15 +429,19 @@
         Releases all resources used by the current instance of the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class.
       </summary>
       <remarks>
-        <para>
-          Call <c>Dispose</c> when you are finished using the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />. The <c>Dispose</c> method leaves the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> in an unusable state. After calling <c>Dispose</c>, you must release all references to the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> so the garbage collector can reclaim the memory that the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> was occupying.
-        </para>
-        <para>
-          For more information, see <see href="/dotnet/standard/garbage-collection/unmanaged">Cleaning Up Unmanaged Resources</see> and <see href="/dotnet/standard/garbage-collection/implementing-dispose">Implementing a Dispose Method</see>.
-        </para>
-        <note type="note">
-          Always call <c>Dispose</c> before you release your last reference to the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />. Otherwise, the resources it is using will not be freed until the garbage collector calls the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object's <c>Finalize</c> method.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[  
+Call `Dispose` when you are finished using the <xref:Microsoft.Data.SqlClient.SqlBulkCopy>. The `Dispose` method leaves the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> in an unusable state.
+After calling `Dispose`, you must release all references to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> so the garbage collector can reclaim the memory that the
+<xref:Microsoft.Data.SqlClient.SqlBulkCopy> was occupying.
+
+For more information, see [Cleaning Up Unmanaged Resources](https://learn.microsoft.com/dotnet/standard/garbage-collection/unmanaged) and
+[Implementing a Dispose Method](https://learn.microsoft.com/dotnet/standard/garbage-collection/implementing-dispose).
+
+> [!NOTE]
+> Always call `Dispose` before you release your last reference to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy>. Otherwise, the resources it is using will not be freed until the garbage collector calls the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object's `Finalize` method.
+
+]]></format>
       </remarks>
     </System.IDisposable.Dispose>
     <WriteToServer name="DbDataReaderParameter">
@@ -1294,10 +464,10 @@
       </summary>
       <remarks>
         <para>
-          The copy operation starts at the next available row in the reader. Most of the time, the reader was just returned by <see cref="M:System.Data.IDbCommand.ExecuteReader" /> or a similar call, so the next available row is the first row. To process multiple results, call <see cref="M:System.Data.IDataReader.NextResult" /> on the data reader and call <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> again.
+          The copy operation starts at the next available row in the reader. Most of the time, the reader was just returned by <see cref="M:System.Data.IDbCommand.ExecuteReader" /> or a similar call, so the next available row is the first row. To process multiple results, call <see cref="M:System.Data.IDataReader.NextResult" /> on the data reader and call <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> again.
         </para>
         <para>
-          Note that using <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> modifies the state of the reader. The method will call <see cref="M:System.Data.IDataReader.Read" /> until it returns false, the operation is aborted, or an error occurs. This means that the data reader will be in a different state, probably at the end of the result set, when the <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> operation is complete.
+          Note that using <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> modifies the state of the reader. The method will call <see cref="M:System.Data.IDataReader.Read" /> until it returns false, the operation is aborted, or an error occurs. This means that the data reader will be in a different state, probably at the end of the result set, when the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> operation is complete.
         </para>
         <para>
           While the bulk copy operation is in progress, the associated destination <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> is busy serving it, and no other operations can be performed on the connection.
@@ -1307,91 +477,19 @@
         </para>
       </remarks>
       <example>
-        <para>
-          The following console application demonstrates how to bulk load data from a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />. The destination table is a table in the <b>AdventureWorks</b> database.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>. 
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
+        <format type="text/markdown">
+          <![CDATA[  
+The following console application demonstrates how to bulk load data from a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The destination table is a table in the **AdventureWorks** database.
 
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-          
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
 
-                  // Perform an initial count on the destination table.
-                  SqlCommand commandRowCount = new SqlCommand(
-                      "SELECT COUNT(*) FROM dbo.BulkCopyDemoMatchingColumns;",
-                      sourceConnection);
-                  long countStart = System.Convert.ToInt32(
-                      commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a
+Transact-SQL `INSERT … SELECT` statement to copy the data.
 
-                  // Get data from the source table as a SqlDataReader.
-                  SqlCommand commandSourceData = new SqlCommand(
-                      "SELECT ProductID, Name, ProductNumber FROM Production.Product;",
-                      sourceConnection);
-                  SqlDataReader reader = commandSourceData.ExecuteReader();
+[!code-csharp[SqlBulkCopy.ConnectionString#1](~/../sqlclient/doc/samples/SqlBulkCopy_ConnectionString.cs#1)]
 
-                  // Set up the bulk copy object using a connection string.
-                  // In the real world you would not use SqlBulkCopy to move
-                  // data from one table to the other in the same database.
-                  using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                  {
-                      bulkCopy.DestinationTableName = "dbo.BulkCopyDemoMatchingColumns";
-
-                      try
-                      {
-                          // Write from the source to the destination.
-                          bulkCopy.WriteToServer(reader);
-                      }
-                      catch (Exception ex)
-                      {
-                          Console.WriteLine(ex.Message);
-                      }
-                      finally
-                      {
-                          // Close the SqlDataReader. The SqlBulkCopy
-                          // object is automatically closed at the end
-                          // of the using block.
-                          reader.Close();
-                      }
-                  }
-
-                  // Perform a final count on the destination
-                  // table to see how many rows were added.
-                  long countEnd = System.Convert.ToInt32(
-                      commandRowCount.ExecuteScalar());
-                  Console.WriteLine("Ending row count = {0}", countEnd);
-                  Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                  Console.WriteLine("Press Enter to finish.");
-                  Console.ReadLine();
-              }
-          }
-
-          private static string GetConnectionString()
-          {
-              // To avoid storing the sourceConnection string in your code,
-              // you can retrieve it from a configuration file.
-              return "Data Source=(local); " +
-                     " Integrated Security=true;" +
-                     "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+]]></format>
       </example>
       <exception cref="T:System.InvalidOperationException">
         A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.
@@ -1416,139 +514,28 @@
         </para>
       </remarks>
       <example>
-        <para>
-          The following Console application demonstrates how to bulk load data from a <see cref="T:System.Data.DataTable" />. The destination table is a table in the <b>AdventureWorks</b> database.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          In this example, a <see cref="T:System.Data.DataTable" /> is created at run time and is the source of the <c>SqlBulkCopy</c> operation.
-        </para>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  // Open a connection to the AdventureWorks database.
-                  using (SqlConnection connection = new SqlConnection(connectionString))
-                  {
-                      connection.Open();
-          
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoMatchingColumns;",
-                          connection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
-          
-                      // Create a table with some rows. 
-                      DataTable newProducts = MakeTable();
-          
-                      // Create the SqlBulkCopy object. 
-                      // Note that the column positions in the source DataTable 
-                      // match the column positions in the destination table so 
-                      // there is no need to map columns. 
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection))
-                      {
-                          bulkCopy.DestinationTableName = "dbo.BulkCopyDemoMatchingColumns";
-          
-                          try
-                          {
-                              // Write from the source to the destination.
-                              bulkCopy.WriteToServer(newProducts);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                      }
-          
-                      // Perform a final count on the destination 
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                  }
-              }
-          
-              private static DataTable MakeTable()
-              {
-                  // Create a new DataTable named NewProducts.
-                  DataTable newProducts = new DataTable("NewProducts");
-          
-                  // Add three column objects to the table. 
-                  DataColumn productID = new DataColumn();
-                  productID.DataType = System.Type.GetType("System.Int32");
-                  productID.ColumnName = "ProductID";
-                  productID.AutoIncrement = true;
-                  newProducts.Columns.Add(productID);
-          
-                  DataColumn productName = new DataColumn();
-                  productName.DataType = System.Type.GetType("System.String");
-                  productName.ColumnName = "Name";
-                  newProducts.Columns.Add(productName);
-          
-                  DataColumn productNumber = new DataColumn();
-                  productNumber.DataType = System.Type.GetType("System.String");
-                  productNumber.ColumnName = "ProductNumber";
-                  newProducts.Columns.Add(productNumber);
-          
-                  // Create an array for DataColumn objects.
-                  DataColumn[] keys = new DataColumn[1];
-                  keys[0] = productID;
-                  newProducts.PrimaryKey = keys;
-          
-                  // Add some new rows to the collection. 
-                  DataRow row = newProducts.NewRow();
-                  row["Name"] = "CC-101-WH";
-                  row["ProductNumber"] = "Cyclocomputer - White";
-          
-                  newProducts.Rows.Add(row);
-                  row = newProducts.NewRow();
-                  row["Name"] = "CC-101-BK";
-                  row["ProductNumber"] = "Cyclocomputer - Black";
-          
-                  newProducts.Rows.Add(row);
-                  row = newProducts.NewRow();
-                  row["Name"] = "CC-101-ST";
-                  row["ProductNumber"] = "Cyclocomputer - Stainless";
-                  newProducts.Rows.Add(row);
-                  newProducts.AcceptChanges();
-          
-                  // Return the new DataTable. 
-                  return newProducts;
-              }
-            
-              private static string GetConnectionString() 
-              {
-                  // To avoid storing the connection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+        <format type="text/markdown">
+          <![CDATA[  
+The following Console application demonstrates how to bulk load data from a <xref:System.Data.DataTable>. The destination table is a table in the **AdventureWorks** database.
+
+In this example, a <xref:System.Data.DataTable> is created at run time and is the source of the `SqlBulkCopy` operation.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.DataTable#1](~/../sqlclient/doc/samples/SqlBulkCopy_DataTable.cs#1)]
+
+]]></format>
       </example>
       <exception cref="T:System.InvalidOperationException">
         A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.
       </exception>
-      <related type="Article" href="https://msdn.microsoft.com/library/83a7a0d2-8018-4354-97b9-0b1d99f8342b">
+      <related type="Article" href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-operations-sql-server">
         Performing Bulk Copy Operations
       </related>
-      <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">
+      <related type="Article" href="https://learn.microsoft.com/sql/connect/ado-net/overview-sqlclient-driver">
         Overview of the SqlClient driver
       </related>
     </WriteToServer>
@@ -1563,147 +550,37 @@
         Copies only rows that match the supplied row state in the supplied <see cref="T:System.Data.DataTable" /> to a destination table specified by the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object.
       </summary>
       <remarks>
-        <para>
-          Only rows in the <see cref="T:System.Data.DataTable" /> that are in the states indicated in the <paramref name="rowState" /> argument and have not been deleted are copied to the destination table.
-        </para>
-        <note type="note">
-          If <see cref="F:System.Data.DataRowState.Deleted" /> is specified, any <see cref="F:System.Data.DataRowState.Unchanged" />, <see cref="F:System.Data.DataRowState.Added" />, and <see cref="F:System.Data.DataRowState.Modified" /> rows will also be copied to the server. No exception will be raised.
-        </note>
-        <para>
-          While the bulk copy operation is in progress, the associated destination <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> is busy serving it, and no other operations can be performed on the connection.
-        </para>
-        <para>
-          The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings" /> collection maps from the <see cref="T:System.Data.DataTable" /> columns to the destination database table.
-        </para>
+        <format type="text/markdown">
+          <![CDATA[  
+Only rows in the <xref:System.Data.DataTable> that are in the states indicated in the `rowState` argument and have not been deleted are copied to the destination table.
+
+> [!NOTE]
+> If <xref:System.Data.DataRowState.Deleted> is specified, any <xref:System.Data.DataRowState.Unchanged>, <xref:System.Data.DataRowState.Added>, and <xref:System.Data.DataRowState.Modified>
+rows will also be copied to the server. No exception will be raised.
+
+While the bulk copy operation is in progress, the associated destination <xref:Microsoft.Data.SqlClient.SqlConnection> is busy serving it, and no other operations can be performed on the connection.
+
+The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings> collection maps from the <xref:System.Data.DataTable> columns to the destination database table.
+
+]]>
+      </format>
       </remarks>
       <example>
-        <para>
-          The following Console application demonstrates how to bulk load only the rows in a <see cref="T:System.Data.DataTable" /> that match a specified state. In this case, only unchanged rows are added. The destination table is a table in the <b>AdventureWorks</b> database.
-        </para>
-        <para>
-          In this example, a <see cref="T:System.Data.DataTable" /> is created at run time and three rows are added to it. Before the <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> method is executed, one of the rows is edited. The <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> method is called with a <see cref="F:System.Data.DataRowState.Unchanged" /> <paramref name="rowState" /> argument, so only the two unchanged rows are bulk copied to the destination.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>. This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </note>
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  // Open a connection to the AdventureWorks database.
-                  using (SqlConnection connection = new SqlConnection(connectionString))
-                  {
-                      connection.Open();
-          
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoMatchingColumns;",
-                          connection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
-          
-                      // Create a table with some rows. 
-                      DataTable newProducts = MakeTable();
-          
-                      // Make a change to one of the rows in the DataTable.
-                      DataRow row = newProducts.Rows[0];
-                      row.BeginEdit();
-                      row["Name"] = "AAA";
-                      row.EndEdit();
-          
-                      // Create the SqlBulkCopy object. 
-                      // Note that the column positions in the source DataTable 
-                      // match the column positions in the destination table so 
-                      // there is no need to map columns. 
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection))
-                      {
-                          bulkCopy.DestinationTableName = "dbo.BulkCopyDemoMatchingColumns";
-          
-                          try
-                          {
-                              // Write unchanged rows from the source to the destination.
-                              bulkCopy.WriteToServer(newProducts, DataRowState.Unchanged);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                      }
-          
-                      // Perform a final count on the destination 
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                  }
-              }
-          
-              private static DataTable MakeTable()
-              {
-                  // Create a new DataTable named NewProducts.
-                  DataTable newProducts = new DataTable("NewProducts");
-          
-                  // Add three column objects to the table. 
-                  DataColumn productID = new DataColumn();
-                  productID.DataType = System.Type.GetType("System.Int32");
-                  productID.ColumnName = "ProductID";
-                  productID.AutoIncrement = true;
-                  newProducts.Columns.Add(productID);
-          
-                  DataColumn productName = new DataColumn();
-                  productName.DataType = System.Type.GetType("System.String");
-                  productName.ColumnName = "Name";
-                  newProducts.Columns.Add(productName);
-          
-                  DataColumn productNumber = new DataColumn();
-                  productNumber.DataType = System.Type.GetType("System.String");
-                  productNumber.ColumnName = "ProductNumber";
-                  newProducts.Columns.Add(productNumber);
-          
-                  // Create an array for DataColumn objects.
-                  DataColumn[] keys = new DataColumn[1];
-                  keys[0] = productID;
-                  newProducts.PrimaryKey = keys;
-          
-                  // Add some new rows to the collection. 
-                  DataRow row = newProducts.NewRow();
-                  row["Name"] = "CC-101-WH";
-                  row["ProductNumber"] = "Cyclocomputer - White";
-          
-                  newProducts.Rows.Add(row);
-                  row = newProducts.NewRow();
-                  row["Name"] = "CC-101-BK";
-                  row["ProductNumber"] = "Cyclocomputer - Black";
-          
-                  newProducts.Rows.Add(row);
-                  row = newProducts.NewRow();
-                  row["Name"] = "CC-101-ST";
-                  row["ProductNumber"] = "Cyclocomputer - Stainless";
-                  newProducts.Rows.Add(row);
-                  newProducts.AcceptChanges();
-          
-                  // Return the new DataTable. 
-                  return newProducts;
-              }
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the connection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+        <format type="text/markdown">
+          <![CDATA[ 
+The following Console application demonstrates how to bulk load only the rows in a <xref:System.Data.DataTable> that match a specified state. In this case, only unchanged rows are added. The destination table is a table in the **AdventureWorks** database.
+
+In this example, a <xref:System.Data.DataTable> is created at run time and three rows are added to it. Before the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)> method is executed, one of the rows is edited.
+The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)> method is called with a `DataRowState.Unchanged` `rowState` argument, so only the two unchanged rows are bulk copied to the destination.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.DataRowState#1](~/../sqlclient/doc/samples/SqlBulkCopy_DataRowState.cs#1)]
+
+]]></format>
       </example>
       <exception cref="T:System.InvalidOperationException">
         A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.
@@ -1725,132 +602,20 @@
         </para>
       </remarks>
       <example>
-        <para>
-          The following console application demonstrates how to bulk load data from a <see cref="T:System.Data.DataRow" /> array. The destination table is a table in the <b>AdventureWorks</b> database.
-        </para>
-        <para>
-          In this example, a <see cref="T:System.Data.DataTable" /> is created at run time. A single row is selected from the <see cref="T:System.Data.DataTable" /> to copy to the destination table.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>. This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </note>
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  
-                  // Open a connection to the AdventureWorks database.
-                  using (SqlConnection connection = new SqlConnection(connectionString))
-                  {
-                      connection.Open();
-          
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoMatchingColumns;",
-                          connection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
-          
-                      // Create a table with some rows. 
-                      DataTable newProducts = MakeTable();
-          
-                      // Get a reference to a single row in the table. 
-                      DataRow[] rowArray = newProducts.Select("Name='CC-101-BK'");
-          
-                      // Create the SqlBulkCopy object. 
-                      // Note that the column positions in the source DataTable 
-                      // match the column positions in the destination table so 
-                      // there is no need to map columns. 
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection))
-                      {
-                          bulkCopy.DestinationTableName = "dbo.BulkCopyDemoMatchingColumns";
-          
-                          try
-                          {
-                              // Write the array of rows to the destination.
-                              bulkCopy.WriteToServer(rowArray);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                      }
-          
-                      // Perform a final count on the destination 
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                  }
-              }
-          
-              private static DataTable MakeTable()
-              {
-                  // Create a new DataTable named NewProducts.
-                  DataTable newProducts = new DataTable("NewProducts");
-          
-                  // Add three column objects to the table. 
-                  DataColumn productID = new DataColumn();
-                  productID.DataType = System.Type.GetType("System.Int32");
-                  productID.ColumnName = "ProductID";
-                  productID.AutoIncrement = true;
-                  newProducts.Columns.Add(productID);
-          
-                  DataColumn productName = new DataColumn();
-                  productName.DataType = System.Type.GetType("System.String");
-                  productName.ColumnName = "Name";
-                  newProducts.Columns.Add(productName);
-          
-                  DataColumn productNumber = new DataColumn();
-                  productNumber.DataType = System.Type.GetType("System.String");
-                  productNumber.ColumnName = "ProductNumber";
-                  newProducts.Columns.Add(productNumber);
-          
-                  // Create an array for DataColumn objects.
-                  DataColumn[] keys = new DataColumn[1];
-                  keys[0] = productID;
-                  newProducts.PrimaryKey = keys;
-          
-                  // Add some new rows to the collection. 
-                  DataRow row = newProducts.NewRow();
-                  row["Name"] = "CC-101-WH";
-                  row["ProductNumber"] = "Cyclocomputer - White";
-          
-                  newProducts.Rows.Add(row);
-                  row = newProducts.NewRow();
-                  row["Name"] = "CC-101-BK";
-                  row["ProductNumber"] = "Cyclocomputer - Black";
-          
-                  newProducts.Rows.Add(row);
-                  row = newProducts.NewRow();
-                  row["Name"] = "CC-101-ST";
-                  row["ProductNumber"] = "Cyclocomputer - Stainless";
-                  newProducts.Rows.Add(row);
-                  newProducts.AcceptChanges();
-          
-                  // Return the new DataTable. 
-                  return newProducts;
-              }
-            
-              private static string GetConnectionString() 
-              {
-                  // To avoid storing the connection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+        <format type="text/markdown">
+          <![CDATA[  
+The following console application demonstrates how to bulk load data from a <xref:System.Data.DataRow> array. The destination table is a table in the **AdventureWorks** database.  
+
+In this example, a <xref:System.Data.DataTable> is created at run time. A single row is selected from the <xref:System.Data.DataTable> to copy to the destination table.  
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
+
+[!code-csharp[SqlBulkCopy.RowArray#1](~/../sqlclient/doc/samples/SqlBulkCopy_RowArray.cs#1)]
+
+]]></format>
       </example>
       <exception cref="T:System.InvalidOperationException">
         A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.
@@ -1868,16 +633,16 @@
         A task representing the asynchronous operation.
       </returns>
       <remarks>
-        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
+        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> multiple times for the same instance before task completion. Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataRow[])" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> multiple times for the same instance before task completion. Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataRow[])" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -1900,17 +665,17 @@
         A task representing the asynchronous operation.
       </returns>
       <remarks>
-        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
+        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> multiple times for the same instance before task completion.</item>
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataRow[])" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> multiple times for the same instance before task completion.</description></item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataRow[])" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -1929,19 +694,19 @@
         A task representing the asynchronous operation.
       </returns>
       <remarks>
-        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
+        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> multiple times for the same instance before task completion.</item>
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>The <see cref="T:System.Data.IDataReader" /> was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</item>
-          <item>The <see cref="T:System.Data.IDataReader" /> 's associated connection was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> multiple times for the same instance before task completion.</description></item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>The <see cref="T:System.Data.IDataReader" /> was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</description></item>
+          <item><description>The <see cref="T:System.Data.IDataReader" /> 's associated connection was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -1976,19 +741,19 @@
         A task representing the asynchronous operation.
       </returns>
       <remarks>
-        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
+        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> multiple times for the same instance before task completion.</item>
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>The <see cref="T:System.Data.IDataReader" /> was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</item>
-          <item>The <see cref="T:System.Data.IDataReader" /> 's associated connection was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> multiple times for the same instance before task completion.</description></item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>The <see cref="T:System.Data.IDataReader" /> was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</description></item>
+          <item><description>The <see cref="T:System.Data.IDataReader" /> 's associated connection was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -2011,19 +776,19 @@
         A task representing the asynchronous operation.
       </returns>
       <remarks>
-        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
+        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> multiple times for the same instance before task completion.</item>
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>The <see cref="T:System.Data.IDataReader" /> was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</item>
-          <item>The <see cref="T:System.Data.IDataReader" /> 's associated connection was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> multiple times for the same instance before task completion.</description></item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>The <see cref="T:System.Data.IDataReader" /> was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</description></item>
+          <item><description>The <see cref="T:System.Data.IDataReader" /> 's associated connection was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -2042,17 +807,17 @@
         A task representing the asynchronous operation.
       </returns>
       <remarks>
-        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
+        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> multiple times for the same instance before task completion.</item>
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable)" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> multiple times for the same instance before task completion.</description></item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable)" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -2075,17 +840,17 @@
         A task representing the asynchronous operation.
       </returns>
       <remarks>
-        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
+        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> multiple times for the same instance before task completion.</item>
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable)" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> multiple times for the same instance before task completion.</description></item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable)" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -2107,17 +872,17 @@
         A task representing the asynchronous operation.
       </returns>
       <remarks>
-        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
+        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> multiple times for the same instance before task completion.</item>
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable,System.Data.DataRowState)" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> multiple times for the same instance before task completion.</description></item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable,System.Data.DataRowState)" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -2143,17 +908,17 @@
         A task representing the asynchronous operation.
       </returns>
       <remarks>
-        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
+        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> multiple times for the same instance before task completion.</item>
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable,System.Data.DataRowState)" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> multiple times for the same instance before task completion.</description></item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable,System.Data.DataRowState)" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">

@@ -41,25 +41,5 @@ namespace Microsoft.Data.SqlClient
                 return _rootKey;
             }
         }
-
-        /// <summary>
-        /// Computes SHA256 value of the plain text key bytes
-        /// </summary>
-        /// <returns>A string containing SHA256 hash of the root key</returns>
-        internal virtual string GetKeyHash()
-        {
-            return SqlSecurityUtility.GetSHA256Hash(RootKey);
-        }
-
-        /// <summary>
-        /// Gets the length of the root key
-        /// </summary>
-        /// <returns>
-        /// Returns the length of the root key
-        /// </returns>
-        internal virtual int Length()
-        {
-            return _rootKey.Length;
-        }
     }
 }

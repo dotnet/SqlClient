@@ -1,5 +1,4 @@
-﻿
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.using System;
 
@@ -9,15 +8,15 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.TestFixtures.Setup;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class SQLSetupStrategy : IDisposable
+    public class SQLSetupStrategy : ColumnMasterKeyCertificateFixture
     {
         internal const string ColumnEncryptionAlgorithmName = @"AEAD_AES_256_CBC_HMAC_SHA256";
 
-        protected static X509Certificate2 certificate;
-        public string keyPath { get; internal set; }
+        public string ColumnMasterKeyPath { get; }
         public Table ApiTestTable { get; private set; }
         public Table BulkCopyAEErrorMessageTestTable { get; private set; }
         public Table BulkCopyAETestTable { get; private set; }
@@ -59,15 +58,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public Dictionary<string, string> sqlBulkTruncationTableNames = new Dictionary<string, string>();
 
         public SQLSetupStrategy()
+            : base(true)
         {
-            if (certificate == null)
-            {
-                certificate = CertificateUtility.CreateCertificate();
-            }
-            keyPath = string.Concat(StoreLocation.CurrentUser.ToString(), "/", StoreName.My.ToString(), "/", certificate.Thumbprint);
+            ColumnMasterKeyPath = $"{StoreLocation.CurrentUser}/{StoreName.My}/{ColumnMasterKeyCertificate.Thumbprint}";
         }
 
-        protected SQLSetupStrategy(string customKeyPath) => keyPath = customKeyPath;
+        protected SQLSetupStrategy(string customKeyPath)
+            : base(false)
+        {
+            ColumnMasterKeyPath = customKeyPath;
+        }
 
         internal virtual void SetupDatabase()
         {
@@ -88,7 +88,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     }
                 }
 
-                // Insert data for TrustedMasterKeyPaths tests.
+            }
+            // Insert data for TrustedMasterKeyPaths tests.
+            InsertSampleData(TrustedMasterKeyPathsTestTable.Name);
+        }
+
+        protected void InsertSampleData(string tableName)
+        {
+            foreach(string value in DataTestUtility.AEConnStringsSetup)
+            {
                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(value)
                 {
                     ConnectTimeout = 10000
@@ -97,7 +105,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 using (SqlConnection sqlConn = new SqlConnection(builder.ToString()))
                 {
                     sqlConn.Open();
-                    DatabaseHelper.InsertCustomerData(sqlConn, null, TrustedMasterKeyPathsTestTable.Name, customer);
+
+                    Table.DeleteData(tableName, sqlConn);
+                    DatabaseHelper.InsertCustomerData(sqlConn, null, tableName, customer);
                 }
             }
         }
@@ -146,9 +156,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlNullValuesTable = new SqlNullValuesTable(GenerateUniqueName("SqlNullValuesTable"), columnEncryptionKeys[0]);
             tables.Add(SqlNullValuesTable);
 
-            // columnEncryptionKeys[2] is encrypted with DummyCMK. use this encrypted column to test custom key store providers
-            CustomKeyStoreProviderTestTable = new ApiTestTable(GenerateUniqueName("CustomKeyStoreProviderTestTable"), columnEncryptionKeys[2], columnEncryptionKeys[0], useDeterministicEncryption: true);
-            tables.Add(CustomKeyStoreProviderTestTable);
+            if (columnEncryptionKeys.Count > 2)
+            {
+                // columnEncryptionKeys[2] is encrypted with DummyCMK. use this encrypted column to test custom key store providers
+                CustomKeyStoreProviderTestTable = new ApiTestTable(GenerateUniqueName("CustomKeyStoreProviderTestTable"), columnEncryptionKeys[2], columnEncryptionKeys[0], useDeterministicEncryption: true);
+                tables.Add(CustomKeyStoreProviderTestTable);
+            }
 
             TabNVarCharMaxSource = new BulkCopyTruncationTables(GenerateUniqueName("TabNVarCharMaxSource"), columnEncryptionKeys[0]);
             tables.Add(TabNVarCharMaxSource);
@@ -259,13 +272,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         protected string GenerateUniqueName(string baseName) => string.Concat("AE-", baseName, "-", Guid.NewGuid().ToString());
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             databaseObjects.Reverse();
             foreach (string value in DataTestUtility.AEConnStringsSetup)
@@ -276,49 +283,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     databaseObjects.ForEach(o => o.Drop(sqlConnection));
                 }
             }
-        }
-    }
-
-    // Use this class as the fixture for AE tests to ensure only one platform-specific fixture
-    // is created for each test class
-    public class PlatformSpecificTestContext : IDisposable
-    {
-        private SQLSetupStrategy certStoreFixture = null;
-        private SQLSetupStrategy akvFixture = null;
-        public SQLSetupStrategy Fixture => certStoreFixture ?? akvFixture;
-
-        public PlatformSpecificTestContext()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                certStoreFixture = new SQLSetupStrategyCertStoreProvider();
-            }
-            else
-            {
-                akvFixture = new SQLSetupStrategyAzureKeyVault();
-            }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-
-            try
-            {
-                if (disposing)
-                {
-                    akvFixture?.Dispose();
-                }
-            }
-            finally
-            {
-                certStoreFixture?.Dispose();
-            }
+            base.Dispose(disposing);
         }
     }
 }

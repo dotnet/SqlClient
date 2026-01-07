@@ -23,11 +23,11 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed class MetaType
     {
-#if NET6_0_OR_GREATER
+#if NET
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
         internal readonly Type ClassType;   // com+ type
-#if NET6_0_OR_GREATER
+#if NET
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
         internal readonly Type SqlType;
@@ -63,12 +63,21 @@ namespace Microsoft.Data.SqlClient
         internal readonly bool Is90Supported;
         internal readonly bool Is100Supported;
 
+        // SqlVector Element Types
+        //
+        // These underlying values must match the vector "dimension type" values
+        // in the TDS protocol.
+        internal enum SqlVectorElementType : byte
+        {
+            Float32 = 0x00
+        }
+
         public MetaType(byte precision, byte scale, int fixedLength, bool isFixed, bool isLong, bool isPlp, byte tdsType, byte nullableTdsType, string typeName,
-#if NET6_0_OR_GREATER
+#if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
             Type classType,
-#if NET6_0_OR_GREATER
+#if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
             Type sqlType, SqlDbType sqldbType, DbType dbType, byte propBytes)
@@ -139,6 +148,7 @@ namespace Microsoft.Data.SqlClient
             type == SqlDbType.VarBinary ||
             type == SqlDbType.Timestamp ||
             type == SqlDbType.Udt ||
+            type == SqlDbTypeExtensions.Vector ||
             (int)type == 24 /*SqlSmallVarBinary*/;
 
         private static bool _Is70Supported(SqlDbType type) =>
@@ -230,6 +240,8 @@ namespace Microsoft.Data.SqlClient
                     return MetaUdt;
                 case SqlDbTypeExtensions.Json:
                     return s_MetaJson;
+                case SqlDbTypeExtensions.Vector:
+                    return s_MetaVector;
                 case SqlDbType.Structured:
                     if (isMultiValued)
                     {
@@ -337,37 +349,73 @@ namespace Microsoft.Data.SqlClient
                         return s_metaVariant;
                     } // check sql types now
                     else if (dataType == typeof(SqlBinary))
+                    {
                         return MetaVarBinary;
+                    }
                     else if (dataType == typeof(SqlBoolean))
+                    {
                         return s_metaBit;
+                    }
                     else if (dataType == typeof(SqlByte))
+                    {
                         return s_metaTinyInt;
+                    }
                     else if (dataType == typeof(SqlBytes))
+                    {
                         return MetaVarBinary;
+                    }
                     else if (dataType == typeof(SqlChars))
+                    {
                         return MetaNVarChar; // MDAC 87587
+                    }
                     else if (dataType == typeof(SqlDateTime))
+                    {
                         return s_metaDateTime;
+                    }
                     else if (dataType == typeof(SqlDouble))
+                    {
                         return s_metaFloat;
+                    }
                     else if (dataType == typeof(SqlGuid))
+                    {
                         return s_metaUniqueId;
+                    }
                     else if (dataType == typeof(SqlInt16))
+                    {
                         return s_metaSmallInt;
+                    }
                     else if (dataType == typeof(SqlInt32))
+                    {
                         return s_metaInt;
+                    }
                     else if (dataType == typeof(SqlInt64))
+                    {
                         return s_metaBigInt;
+                    }
                     else if (dataType == typeof(SqlMoney))
+                    {
                         return s_metaMoney;
+                    }
                     else if (dataType == typeof(SqlDecimal))
+                    {
                         return MetaDecimal;
+                    }
                     else if (dataType == typeof(SqlSingle))
+                    {
                         return s_metaReal;
+                    }
                     else if (dataType == typeof(SqlXml))
+                    {
                         return MetaXml;
+                    }
                     else if (dataType == typeof(SqlJson))
+                    {
                         return s_MetaJson;
+                    }
+                    else if (dataType == typeof(SqlVector<float>))
+                    {
+                        return s_MetaVector;
+                    }
                     else if (dataType == typeof(SqlString))
                     {
                         return ((inferLen && !((SqlString)value).IsNull)
@@ -386,7 +434,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         return MetaDateTimeOffset;
                     }
-#if NET6_0_OR_GREATER
+#if NET
                     else if (dataType == typeof(DateOnly))
                     {
                         return s_metaDate;
@@ -465,45 +513,85 @@ namespace Microsoft.Data.SqlClient
         internal static object GetNullSqlValue(Type sqlType)
         {
             if (sqlType == typeof(SqlSingle))
+            {
                 return SqlSingle.Null;
+            }
             else if (sqlType == typeof(SqlString))
+            {
                 return SqlString.Null;
+            }
             else if (sqlType == typeof(SqlDouble))
+            {
                 return SqlDouble.Null;
+            }
             else if (sqlType == typeof(SqlBinary))
+            {
                 return SqlBinary.Null;
+            }
             else if (sqlType == typeof(SqlGuid))
+            {
                 return SqlGuid.Null;
+            }
             else if (sqlType == typeof(SqlBoolean))
+            {
                 return SqlBoolean.Null;
+            }
             else if (sqlType == typeof(SqlByte))
+            {
                 return SqlByte.Null;
+            }
             else if (sqlType == typeof(SqlInt16))
+            {
                 return SqlInt16.Null;
+            }
             else if (sqlType == typeof(SqlInt32))
+            {
                 return SqlInt32.Null;
+            }
             else if (sqlType == typeof(SqlInt64))
+            {
                 return SqlInt64.Null;
+            }
             else if (sqlType == typeof(SqlDecimal))
+            {
                 return SqlDecimal.Null;
+            }
             else if (sqlType == typeof(SqlDateTime))
+            {
                 return SqlDateTime.Null;
+            }
             else if (sqlType == typeof(SqlMoney))
+            {
                 return SqlMoney.Null;
+            }
             else if (sqlType == typeof(SqlXml))
+            {
                 return SqlXml.Null;
+            }
             else if (sqlType == typeof(object))
+            {
                 return DBNull.Value;
+            }
             else if (sqlType == typeof(IEnumerable<DbDataRecord>))
+            {
                 return DBNull.Value;
+            }
             else if (sqlType == typeof(DataTable))
+            {
                 return DBNull.Value;
+            }
             else if (sqlType == typeof(DateTime))
+            {
                 return DBNull.Value;
+            }
             else if (sqlType == typeof(TimeSpan))
+            {
                 return DBNull.Value;
+            }
             else if (sqlType == typeof(DateTimeOffset))
+            {
                 return DBNull.Value;
+            }
             else
             {
                 Debug.Fail("Unknown SqlType!");
@@ -527,7 +615,9 @@ namespace Microsoft.Data.SqlClient
             object comVal = null;
 
             if (ADP.IsNull(sqlVal))
+            {
                 return comVal;
+            }
 
             switch (sqlVal)
             {
@@ -661,7 +751,7 @@ namespace Microsoft.Data.SqlClient
                         break;
                     case TimeSpan:
                     case DateTimeOffset:
-#if NET6_0_OR_GREATER
+#if NET
                     case TimeOnly:
                     case DateOnly:
 #endif
@@ -870,6 +960,8 @@ namespace Microsoft.Data.SqlClient
                     return MetaDateTimeOffset;
                 case TdsEnums.SQLJSON:
                     return s_MetaJson;
+                case TdsEnums.SQLVECTOR:
+                    return s_MetaVector;
 
                 case TdsEnums.SQLVOID:
                 default:
@@ -978,6 +1070,8 @@ namespace Microsoft.Data.SqlClient
 
         internal static readonly MetaType s_MetaJson = new(255, 255, -1, false, true, true, TdsEnums.SQLJSON, TdsEnums.SQLJSON, MetaTypeName.JSON, typeof(string), typeof(string), SqlDbTypeExtensions.Json, DbType.String, 0);
 
+        internal static readonly MetaType s_MetaVector = new(255, 255, -1, false, false, false, TdsEnums.SQLVECTOR, TdsEnums.SQLVECTOR, MetaTypeName.VECTOR, typeof(byte[]), typeof(SqlBinary), SqlDbTypeExtensions.Vector, DbType.Binary, 2);
+
         public static TdsDateTime FromDateTime(DateTime dateTime, byte cb)
         {
             SqlDateTime sqlDateTime;
@@ -1019,12 +1113,31 @@ namespace Microsoft.Data.SqlClient
         internal static int GetTimeSizeFromScale(byte scale)
         {
             if (scale <= 2)
+            {
                 return 3;
+            }
 
             if (scale <= 4)
+            {
                 return 4;
+            }
 
             return 5;
+        }
+
+        internal static int GetVectorElementSize(byte type)
+        {
+            switch (type)
+            {
+                case 0: return sizeof(float);
+                default:
+                    throw SQL.VectorTypeNotSupported(type.ToString());
+            }
+        }
+
+        internal static int GetVectorElementCount(int size, byte elementType)
+        {
+            return (size - TdsEnums.VECTOR_HEADER_SIZE) / GetVectorElementSize(elementType);
         }
 
         //
@@ -1065,6 +1178,7 @@ namespace Microsoft.Data.SqlClient
             public const string DATETIME2 = "datetime2";
             public const string DATETIMEOFFSET = "datetimeoffset";
             public const string JSON = "json";
+            public const string VECTOR = "vector";
         }
     }
 

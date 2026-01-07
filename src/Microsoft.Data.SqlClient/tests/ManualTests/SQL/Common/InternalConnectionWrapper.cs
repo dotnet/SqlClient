@@ -58,7 +58,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public InternalConnectionWrapper(SqlConnection connection, bool supportKillByTSql = false, string originalConnectionString = "")
         {
             if (connection == null)
+            {
                 throw new ArgumentNullException(nameof(connection));
+            }
 
             _internalConnection = connection.GetInternalConnection();
             ConnectionString = connection.ConnectionString;
@@ -98,7 +100,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public bool IsInternalConnectionOf(SqlConnection connection)
         {
             if (connection == null)
+            {
                 throw new ArgumentNullException(nameof(connection));
+            }
 
             return (_internalConnection == connection.GetInternalConnection());
         }
@@ -126,20 +130,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             object tdsParser = ConnectionHelper.GetParser(_internalConnection);
             object stateObject = TdsParserHelper.GetStateObject(tdsParser);
-            object sessionHandle = TdsParserStateObjectHelper.GetSessionHandle(stateObject);
 
-            Assembly systemDotData = Assembly.Load(new AssemblyName(typeof(SqlConnection).GetTypeInfo().Assembly.FullName));
-            Type sniHandleType = systemDotData.GetType("Microsoft.Data.SqlClient.SNI.SNIHandle");
-            MethodInfo killConn = sniHandleType.GetMethod("KillConnection");
+            Assembly assembly = Assembly.Load(new AssemblyName(typeof(SqlConnection).GetTypeInfo().Assembly.FullName));
+            Type sniHandleType = assembly.GetType("Microsoft.Data.SqlClient.ManagedSni.SniHandle");
 
-            if (killConn != null)
+            MethodInfo killConn = null;
+            if (sniHandleType is not null)
             {
-                killConn.Invoke(sessionHandle, null);
+                killConn = sniHandleType.GetMethod("KillConnection");
             }
-            else
+            
+            if (killConn is null)
             {
                 throw new InvalidOperationException("Error: Could not find SNI KillConnection test hook. This operation is only supported in debug builds.");
             }
+                
+            killConn.Invoke(
+                TdsParserStateObjectHelper.GetSessionHandle(stateObject),
+                null);
+
             // Ensure kill occurs outside of check connection window
             Thread.Sleep(100);
         }
@@ -225,7 +234,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             InternalConnectionWrapper objAsWrapper = obj as InternalConnectionWrapper;
             if ((objAsWrapper != null) && (objAsWrapper._internalConnection == _internalConnection))
+            {
                 areEquals = true;
+            }
 
             return areEquals;
         }

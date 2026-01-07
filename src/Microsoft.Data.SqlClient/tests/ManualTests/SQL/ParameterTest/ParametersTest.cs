@@ -8,8 +8,13 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
-#if NET6_0_OR_GREATER
+using System.Globalization;
+using Microsoft.Data.SqlClient.Tests.Common;
+
+
+#if !NETFRAMEWORK
 using Microsoft.SqlServer.Types;
 using Microsoft.Data.SqlClient.Server;
 #endif
@@ -115,7 +120,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void Test_Copy_SqlParameter()
         {
             using var conn = new SqlConnection(s_connString);
-            string cTableName = DataTestUtility.GetUniqueNameForSqlServer("#tmp");
+            string cTableName = DataTestUtility.GetLongName("#tmp");
             try
             {
                 // Create tmp table
@@ -239,8 +244,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var expectedGuid = Guid.NewGuid();
             var cmd = new SqlCommand("select @input", conn);
             cmd.Parameters.AddWithValue("@input", expectedGuid);
+
             var result = cmd.ExecuteScalar();
             Assert.Equal(expectedGuid, (Guid)result);
+
+            cmd.Parameters[0].Value = new SqlGuid(expectedGuid);
+            result = cmd.ExecuteScalar();
+            Assert.Equal(expectedGuid, (Guid)result);
+
+            cmd.Parameters[0].Value = SqlGuid.Null;
+            result = cmd.ExecuteScalar();
+            Assert.Equal(DBNull.Value, result);
         }
 
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'TYPE'.
@@ -257,9 +271,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Table");
-            string procName = DataTestUtility.GetUniqueNameForSqlServer("Proc");
-            string typeName = DataTestUtility.GetUniqueName("Type");
+            string tableName = DataTestUtility.GetLongName("Table");
+            string procName = DataTestUtility.GetLongName("Proc");
+            string typeName = DataTestUtility.GetShortName("Type");
             try
             {
                 connection.Open();
@@ -310,7 +324,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'TYPE'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestParametersWithSqlRecordsTVPInsert()
@@ -338,8 +352,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             };
             
             using SqlConnection connection = new(builder.ConnectionString);
-            string procName = DataTestUtility.GetUniqueNameForSqlServer("Proc");
-            string typeName = DataTestUtility.GetUniqueName("Type");
+            string procName = DataTestUtility.GetLongName("Proc");
+            string typeName = DataTestUtility.GetShortName("Type");
             try
             {
                 connection.Open();
@@ -398,8 +412,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestDateOnlyTVPDataTable_CommandSP()
         {
-            string tableTypeName = "[dbo]." + DataTestUtility.GetUniqueNameForSqlServer("UDTTTestDateOnlyTVP");
-            string spName = DataTestUtility.GetUniqueNameForSqlServer("spTestDateOnlyTVP");
+            string tableTypeName = "[dbo]." + DataTestUtility.GetLongName("UDTTTestDateOnlyTVP");
+            string spName = DataTestUtility.GetLongName("spTestDateOnlyTVP");
             SqlConnection connection = new(s_connString);
             try
             {
@@ -442,6 +456,75 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DataTestUtility.DropUserDefinedType(connection, tableTypeName);
             }
         }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void TestDateOnlyTVPSqlDataRecord_CommandSP()
+        {
+            string tableTypeName = "[dbo]." + DataTestUtility.GetLongName("UDTTTestDateOnlySqlDataRecordTVP");
+            string spName = DataTestUtility.GetLongName("spTestDateOnlySqlDataRecordTVP");
+            SqlConnection connection = new(s_connString);
+            try
+            {
+                connection.Open();
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = $"CREATE TYPE {tableTypeName} AS TABLE ([DateColumn] date NULL, [TimeColumn] time NULL)";
+                    cmd.ExecuteNonQuery();
+                    cmd.CommandText = $"CREATE PROCEDURE {spName} (@dates {tableTypeName} READONLY) AS SELECT COUNT(*) FROM @dates";
+                    cmd.ExecuteNonQuery();
+                }
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = spName;
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    SqlMetaData[] metadata = new SqlMetaData[]
+                    {
+                        new SqlMetaData("DateColumn", SqlDbType.Date),
+                        new SqlMetaData("TimeColumn", SqlDbType.Time)
+                    };
+
+                    SqlDataRecord record1 = new SqlDataRecord(metadata);
+                    record1.SetValues(new DateOnly(2023, 11, 15), new TimeOnly(12, 30, 45));
+
+                    SqlDataRecord record2 = new SqlDataRecord(metadata);
+                    record2.SetValues(new DateOnly(2025, 11, 15), new TimeOnly(13, 31, 46));
+
+                    IList<SqlDataRecord> featureInserts = new List<SqlDataRecord>
+                    {
+                        record1,
+                        record2,
+                    };
+
+                    cmd.Parameters.Add(new SqlParameter
+                    {
+                        ParameterName = "@dates",
+                        SqlDbType = SqlDbType.Structured,
+                        TypeName = tableTypeName,
+                        Value = featureInserts,
+                    });
+
+                    using var reader = cmd.ExecuteReader();
+
+                    Assert.True(reader.HasRows);
+
+                    int count = 0;
+                    while (reader.Read())
+                    {
+                        Assert.NotNull(reader[0]);
+                        count++;
+                    }
+
+                    Assert.Equal(1, count);
+                }
+            }
+            finally
+            {
+                DataTestUtility.DropStoredProcedure(connection, spName);
+                DataTestUtility.DropUserDefinedType(connection, tableTypeName);
+            }
+        }
 #endif
 
         #region Scaled Decimal Parameter & TVP Test
@@ -471,8 +554,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cmd.Connection = cnn;
             using SqlDataReader rdr = cmd.ExecuteReader();
             Assert.True(rdr.Read(), "SqlDataReader must have a value");
-            decimal retrunValue = rdr.GetDecimal(0);
-            Assert.Equal(expectedDecimalValue, retrunValue.ToString());
+            decimal returnValue = rdr.GetDecimal(0);
+            Assert.Equal(expectedDecimalValue, returnValue.ToString(CultureInfo.InvariantCulture));
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -498,13 +581,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ClassData(typeof(ConnectionStringsProvider))]
         public static void TestScaledDecimalParameter_CommandInsert(string connectionString, bool truncateScaledDecimal)
         {
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("TestDecimalParameterCMD");
+            using LocalAppContextSwitchesHelper appContextSwitchesHelper = new();
+
+            string tableName = DataTestUtility.GetLongName("TestDecimalParameterCMD");
             using SqlConnection connection = InitialDatabaseTable(connectionString, tableName);
             try
             {
                 using (SqlCommand cmd = connection.CreateCommand())
                 {
-                    AppContext.SetSwitch(TruncateDecimalSwitch, truncateScaledDecimal);
+                    appContextSwitchesHelper.TruncateScaledDecimal = truncateScaledDecimal;
+
                     var p = new SqlParameter("@Value", null)
                     {
                         Precision = 18,
@@ -530,7 +616,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ClassData(typeof(ConnectionStringsProvider))]
         public static void TestScaledDecimalParameter_BulkCopy(string connectionString, bool truncateScaledDecimal)
         {
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("TestDecimalParameterBC");
+            using LocalAppContextSwitchesHelper appContextSwitchesHelper = new();
+
+            string tableName = DataTestUtility.GetLongName("TestDecimalParameterBC");
             using SqlConnection connection = InitialDatabaseTable(connectionString, tableName);
             try
             {
@@ -548,7 +636,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
 
                     bulkCopy.DestinationTableName = tableName;
-                    AppContext.SetSwitch(TruncateDecimalSwitch, truncateScaledDecimal);
+                    appContextSwitchesHelper.TruncateScaledDecimal = truncateScaledDecimal;
                     bulkCopy.WriteToServer(table);
                 }
                 Assert.True(ValidateInsertedValues(connection, tableName, truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
@@ -564,9 +652,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ClassData(typeof(ConnectionStringsProvider))]
         public static void TestScaledDecimalTVP_CommandSP(string connectionString, bool truncateScaledDecimal)
         {
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("TestDecimalParameterBC");
-            string tableTypeName = DataTestUtility.GetUniqueNameForSqlServer("UDTTTestDecimalParameterBC");
-            string spName = DataTestUtility.GetUniqueNameForSqlServer("spTestDecimalParameterBC");
+            using LocalAppContextSwitchesHelper appContextSwitchesHelper = new();
+
+            string tableName = DataTestUtility.GetLongName("TestDecimalParameterBC");
+            string tableTypeName = DataTestUtility.GetLongName("UDTTTestDecimalParameterBC");
+            string spName = DataTestUtility.GetLongName("spTestDecimalParameterBC");
             using SqlConnection connection = InitialDatabaseUDTT(connectionString, tableName, tableTypeName, spName);
             try
             {
@@ -591,7 +681,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         table.Rows.Add(newRow);
                     }
                     p.Value = table;
-                    AppContext.SetSwitch(TruncateDecimalSwitch, truncateScaledDecimal);
+                    appContextSwitchesHelper.TruncateScaledDecimal = truncateScaledDecimal;
                     cmd.ExecuteNonQuery();
                 }
                 // TVP always rounds data without attention to the configuration.
@@ -851,7 +941,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             int firstInput = 12;
 
-            string sprocName = DataTestUtility.GetUniqueName("P");
+            string sprocName = DataTestUtility.GetShortName("P");
             // input, output
             string createSprocQuery =
                 "CREATE PROCEDURE " + sprocName + " @in int " +
@@ -886,30 +976,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ClosedConnection_SqlParameterValueTest()
         {
-            var threads = new List<Thread>();
-            for (int i = 0; i < 100; i++)
+            var tasks = new Task[100];
+            for (int i = 0; i < tasks.Length; i++)
             {
-                var t = new Thread(() =>
+                var t = Task.Factory.StartNew(() =>
                 {
                     for (int j = 0; j < 1000; j++)
                     {
-                        try
-                        {
-                            RunParameterTest();
-                        }
-                        catch (Exception e)
-                        {
-                            Assert.Fail($"Unexpected exception occurred: {e.Message}");
-                        }
+                        RunParameterTest();
                     }
-                });
-                t.Start();
-                threads.Add(t);
+                }, TaskCreationOptions.LongRunning);
+                tasks[i] = t;
             }
-            for (int i = 0; i < threads.Count; i++)
-            {
-                threads[i].Join();
-            }
+            Task.WaitAll(tasks);
         }
 
         private static void RunParameterTest()
@@ -927,7 +1006,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cm.Parameters.Add(new SqlParameter("@id2", SqlDbType.UniqueIdentifier) { Direction = ParameterDirection.Output });
             try
             {
-                System.Threading.Tasks.Task<int> task = cm.ExecuteNonQueryAsync(cancellationToken.Token);
+                Task<int> task = cm.ExecuteNonQueryAsync(cancellationToken.Token);
                 task.Wait();
             }
             catch (Exception)
@@ -939,7 +1018,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection.Close();
             }
             if (cm.Parameters["@id2"].Value == null)
+            {
                 return;
+            }
             else if ((Guid)cm.Parameters["@id2"].Value != expectedGuid)
             {
                 Assert.Fail("CRITICAL : Unexpected data found in SqlCommand parameters, this is a MAJOR issue.");

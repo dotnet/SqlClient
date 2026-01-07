@@ -7,16 +7,17 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics.Tracing;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Principal;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
@@ -24,6 +25,7 @@ using Azure.Identity;
 using Microsoft.Data.SqlClient.TestUtilities;
 using Microsoft.Identity.Client;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -38,8 +40,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string AADPasswordConnectionString = null;
         public static readonly string AADServicePrincipalId = null;
         public static readonly string AADServicePrincipalSecret = null;
-        public static readonly string AKVBaseUrl = null;
-        public static readonly string AKVUrl = null;
         public static readonly string AKVOriginalUrl = null;
         public static readonly string AKVTenantId = null;
         public static readonly string LocalDbAppName = null;
@@ -72,7 +72,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static string AADUserIdentityAccessToken = null;
         public const string ApplicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
         public const string UdtTestDbName = "UdtTestDb";
-        public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
         public const string EventSourcePrefix = "Microsoft.Data.SqlClient";
         public const string MDSEventSourceName = "Microsoft.Data.SqlClient.EventSource";
         public const string AKVEventSourceName = "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.EventSource";
@@ -89,13 +88,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // SQL server Version
         private static string s_sQLServerVersion = string.Empty;
-        private static bool s_isTDS8Supported;
 
         //SQL Server EngineEdition
         private static string s_sqlServerEngineEdition;
 
-        // JSON Coloumn type
-        public static readonly bool IsJsonSupported = false;
+        // SQL Server capabilities
+        private static bool? s_isDataClassificationSupported;
+        private static bool? s_isVectorSupported;
 
         // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
@@ -105,7 +104,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (!string.IsNullOrEmpty(TCPConnectionString))
                 {
-                    s_sqlServerEngineEdition ??= GetSqlServerProperty(TCPConnectionString, "EngineEdition");
+                    s_sqlServerEngineEdition ??= GetSqlServerProperty(TCPConnectionString, ServerProperty.EngineEdition);
                 }
                 _ = int.TryParse(s_sqlServerEngineEdition, out int engineEditon);
                 return engineEditon == 6;
@@ -116,7 +115,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             get
             {
-                SqlConnectionStringBuilder builder = new (TCPConnectionString);
+                SqlConnectionStringBuilder builder = new(TCPConnectionString);
                 return builder.Authentication == SqlAuthenticationMethod.SqlPassword || builder.Authentication == SqlAuthenticationMethod.NotSpecified;
             }
         }
@@ -127,24 +126,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (!string.IsNullOrEmpty(TCPConnectionString))
                 {
-                    s_sQLServerVersion ??= GetSqlServerProperty(TCPConnectionString, "ProductMajorVersion");
+                    s_sQLServerVersion ??= GetSqlServerProperty(TCPConnectionString, ServerProperty.ProductMajorVersion);
                 }
                 return s_sQLServerVersion;
             }
         }
 
         // Is TDS8 supported
-        public static bool IsTDS8Supported
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(TCPConnectionString))
-                {
-                    s_isTDS8Supported = GetSQLServerStatusOnTDS8(TCPConnectionString);
-                }
-                return s_isTDS8Supported;
-            }
-        }
+        public static bool IsTDS8Supported =>
+            IsTCPConnStringSetup() &&
+                GetSQLServerStatusOnTDS8(TCPConnectionString);
+
+        /// <summary>
+        /// Checks if object SYS.SENSITIVITY_CLASSIFICATIONS exists in SQL Server
+        /// </summary>
+        /// <returns>True, if target SQL Server supports Data Classification</returns>
+        public static bool IsDataClassificationSupported =>
+            s_isDataClassificationSupported ??= IsTCPConnStringSetup() &&
+                IsObjectPresent("SYS.SENSITIVITY_CLASSIFICATIONS");
+
+        /// <summary>
+        /// Determines whether the SQL Server supports the 'vector' data type.
+        /// </summary>
+        /// <remarks>This method attempts to connect to the SQL Server and check for the existence of the
+        /// 'vector' data type. If a connection cannot be established or an error occurs during the query, the method
+        /// returns <see langword="false"/>.</remarks>
+        /// <returns><see langword="true"/> if the 'vector' data type is supported; otherwise, <see langword="false"/>.</returns>
+        public static bool IsSqlVectorSupported =>
+            s_isVectorSupported ??= IsTCPConnStringSetup() &&
+                IsTypePresent("vector");
 
         static DataTestUtility()
         {
@@ -178,9 +188,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ManagedIdentitySupported = c.ManagedIdentitySupported;
             IsManagedInstance = c.IsManagedInstance;
             AliasName = c.AliasName;
-            IsJsonSupported = c.IsJsonSupported;
 
+#if NETFRAMEWORK
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
+#endif
 
             if (TracingEnabled)
             {
@@ -197,8 +208,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (!string.IsNullOrEmpty(AKVOriginalUrl) && Uri.TryCreate(AKVOriginalUrl, UriKind.Absolute, out AKVBaseUri))
             {
                 AKVBaseUri = new Uri(AKVBaseUri, "/");
-                AKVBaseUrl = AKVBaseUri.AbsoluteUri;
-                AKVUrl = (new Uri(AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
             }
 
             AKVTenantId = c.AzureKeyVaultTenantId;
@@ -241,7 +250,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 yield return TCPConnectionString;
             }
             // Named Pipes are not supported on Unix platform and for Azure DB
-            if (Environment.OSVersion.Platform != PlatformID.Unix && IsNotAzureServer() && !string.IsNullOrEmpty(NPConnectionString))
+            if (Environment.OSVersion.Platform != PlatformID.Unix &&
+                IsNotAzureServer() &&
+                !string.IsNullOrEmpty(NPConnectionString))
             {
                 yield return NPConnectionString;
             }
@@ -283,37 +294,96 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SecureString securePassword = new SecureString();
 
             securePassword.MakeReadOnly();
+#pragma warning disable CS0618 // Type or member is obsolete
             result = app.AcquireTokenByUsernamePassword(scopes, userID, password).ExecuteAsync().Result;
+#pragma warning restore CS0618 // Type or member is obsolete
 
             return result.AccessToken;
         });
 
         public static bool IsKerberosTest => !string.IsNullOrEmpty(KerberosDomainUser) && !string.IsNullOrEmpty(KerberosDomainPassword);
 
-        public static string GetSqlServerProperty(string connectionString, string propertyName)
+        #nullable enable
+
+        /// <summary>
+        /// Returns the current test name as: ClassName.MethodName
+        /// xUnit v2 doesn't provide access to a test context, so we use reflection into the
+        /// ITestOutputHelper to get the test name.
+        /// </summary>
+        /// <exception cref="Exception">
+        /// Thrown if any intermediate step of getting to the test name fails or is inaccessible.
+        /// </exception>
+        /// <param name="outputHelper">Output helper instance for the currently running test</param>
+        /// <returns>Current test name</returns>
+        public static string CurrentTestName(ITestOutputHelper outputHelper)
         {
-            string propertyValue = string.Empty;
-            using SqlConnection conn = new(connectionString);
-            conn.Open();
-            SqlCommand command = conn.CreateCommand();
-            command.CommandText = $"SELECT SERVERProperty('{propertyName}')";
-            SqlDataReader reader = command.ExecuteReader();
-            if (reader.Read())
-            {
-                switch (propertyName)
-                {
-                    case "EngineEdition":
-                        propertyValue = reader.GetInt32(0).ToString();
-                        break;
-                    case "ProductMajorVersion":
-                        propertyValue = reader.GetString(0);
-                        break;
-                }
-            }
-            return propertyValue;
+            // Reflect our way to the ITestMethod.
+            Type type = outputHelper.GetType();
+
+            FieldInfo testField = type.GetField("test", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?? throw new Exception("Could not find field 'test' on ITestOutputHelper");
+
+            ITest test = testField.GetValue(outputHelper) as ITest
+                ?? throw new Exception("Field 'test' on outputHelper is null or not an ITest object.");
+
+            ITestMethod testMethod = test.TestCase.TestMethod;
+
+            // Class name will be fully-qualified. We only want the class name, so take the last part.
+            string[] testClassNameParts = testMethod.TestClass.Class.Name.Split('.');
+            string testClassName = testClassNameParts[testClassNameParts.Length - 1];
+
+            string testMethodName = testMethod.Method.Name;
+
+            // Reconstitute the test name as classname.methodname
+            return $"{testClassName}.{testMethodName}";
         }
 
-        public static bool GetSQLServerStatusOnTDS8(string connectionString)
+        /// <summary>
+        /// SQL Server properties we can query.
+        ///
+        /// GOTCHA: The enum member names must match the property names
+        /// queryable via T-SQL SERVERPROPERTY().  See:
+        ///
+        /// https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql
+        /// </summary>
+        public enum ServerProperty
+        {
+            ProductMajorVersion,
+            EngineEdition
+        }
+        
+        public static string GetSqlServerProperty(string connectionString, ServerProperty property)
+        {
+            using SqlConnection conn = new(connectionString);
+            conn.Open();
+            return GetSqlServerProperty(conn, property);
+        }
+
+        public static string GetSqlServerProperty(SqlConnection connection, ServerProperty property)
+        {
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = $"SELECT SERVERProperty('{property}')";
+            using SqlDataReader reader = command.ExecuteReader();
+
+            Assert.True(reader.Read());
+
+            switch (property)
+            {
+                case ServerProperty.EngineEdition:
+                    // EngineEdition is returned as an int.
+                    return reader.GetInt32(0).ToString();
+                case ServerProperty.ProductMajorVersion:
+                default:
+                    // ProductMajorVersion is returned as a string.
+                    //
+                    // Assume any unknown property is also a string.
+                    return reader.GetString(0);
+            }
+        }
+
+        #nullable disable
+
+        private static bool GetSQLServerStatusOnTDS8(string connectionString)
         {
             bool isTDS8Supported = false;
             SqlConnectionStringBuilder builder = new(connectionString)
@@ -355,41 +425,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return present;
         }
 
+        public static bool IsObjectPresent(string objectName)
+        {
+            using SqlConnection connection = new(TCPConnectionString);
+            using SqlCommand command = new("SELECT OBJECT_ID(@name)", connection);
+
+            connection.Open();
+            command.Parameters.AddWithValue("@name", objectName);
+
+            return command.ExecuteScalar() is not DBNull;
+        }
+
+        public static bool IsTypePresent(string typeName)
+        {
+            using SqlConnection connection = new(TCPConnectionString);
+            using SqlCommand command = new("SELECT COUNT(1) FROM SYS.TYPES WHERE [name] = @name", connection);
+
+            connection.Open();
+            command.Parameters.AddWithValue("@name", typeName);
+
+            return (int)command.ExecuteScalar() > 0;
+        }
+
         public static bool IsAdmin
         {
             get
             {
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
                 System.Diagnostics.Debug.Assert(OperatingSystem.IsWindows());
 #endif
                 return new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
             }
-        }
-
-        /// <summary>
-        /// Checks if object SYS.SENSITIVITY_CLASSIFICATIONS exists in SQL Server
-        /// </summary>
-        /// <returns>True, if target SQL Server supports Data Classification</returns>
-        public static bool IsSupportedDataClassification()
-        {
-            try
-            {
-                using (var connection = new SqlConnection(TCPConnectionString))
-                using (var command = new SqlCommand("SELECT * FROM SYS.SENSITIVITY_CLASSIFICATIONS", connection))
-                {
-                    connection.Open();
-                    command.ExecuteNonQuery();
-                }
-            }
-            catch (SqlException e)
-            {
-                // Check for Error 208: Invalid Object Name
-                if (e.Errors != null && e.Errors[0].Number == 208)
-                {
-                    return false;
-                }
-            }
-            return true;
         }
 
         public static bool IsDNSCachingSetup() => !string.IsNullOrEmpty(DNSCachingConnString);
@@ -402,6 +468,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         public static bool IsNotAzureSynapse() => !IsAzureSynapse;
+
+        public static bool IsNotManagedInstance() => !IsManagedInstance;
 
         // Synapse: UDT Test Database not compatible with Azure Synapse.
         public static bool IsUdtTestDatabasePresent() => IsDatabasePresent(UdtTestDbName) && IsNotAzureSynapse();
@@ -452,14 +520,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsNotAzureServer()
         {
-            return !AreConnStringsSetup() || !Utils.IsAzureSqlServer(new SqlConnectionStringBuilder((TCPConnectionString)).DataSource);
+            return !AreConnStringsSetup() || !Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource);
+        }
+
+        public static bool IsAzureServer()
+        {
+            return AreConnStringsSetup() && Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource);
+        }
+
+        public static bool IsNotNamedInstance()
+        {
+            return !AreConnStringsSetup() || !new SqlConnectionStringBuilder(TCPConnectionString).DataSource.Contains(@"\");
+        }
+
+        public static bool IsLocalHost()
+        {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+            return ParseDataSource(builder.DataSource, out string hostname, out _, out _) && string.Equals("localhost", hostname, StringComparison.OrdinalIgnoreCase);
         }
 
         // Synapse: Always Encrypted is not supported with Azure Synapse.
         //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/17858869-support-always-encrypted-in-sql-data-warehouse
         public static bool IsAKVSetupAvailable()
         {
-            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(UserManagedIdentityClientId) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
+            return AKVBaseUri != null && !string.IsNullOrEmpty(UserManagedIdentityClientId) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
         }
 
         private static readonly DefaultAzureCredential s_defaultCredential = new(new DefaultAzureCredentialOptions { ManagedIdentityClientId = UserManagedIdentityClientId });
@@ -472,7 +556,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsTargetReadyForAeWithKeyStore()
         {
             return DataTestUtility.AreConnStringSetupForAE()
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
                 // AE tests on Windows will use the Cert Store. On non-Windows, they require AKV.
                 && (OperatingSystem.IsWindows() || DataTestUtility.IsAKVSetupAvailable())
 #endif
@@ -495,7 +579,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsNotUsingManagedSNIOnWindows() => !UseManagedSNIOnWindows;
 
         public static bool IsUsingNativeSNI() =>
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
             IsNotUsingManagedSNIOnWindows();
 #else 
             true;
@@ -546,48 +630,176 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        /// <summary>
-        /// Generate a unique name to use in Sql Server; 
-        /// some providers does not support names (Oracle supports up to 30).
-        /// </summary>
-        /// <param name="prefix">The name length will be no more then (16 + prefix.Length + escapeLeft.Length + escapeRight.Length).</param>
-        /// <param name="withBracket">Name without brackets.</param>
-        /// <returns>Unique name by considering the Sql Server naming rules.</returns>
-        public static string GetUniqueName(string prefix, bool withBracket = true)
+        // Generate a new GUID and return the characters from its 1st and 4th
+        // parts, as shown here:
+        //
+        //   7ff01cb8-88c7-11f0-b433-00155d7e531e
+        //   ^^^^^^^^           ^^^^
+        //
+        // These 12 characters are concatenated together without any
+        // separators.  These 2 parts typically comprise a timestamp and clock
+        // sequence, most likely to be unique for tests that generate names in
+        // quick succession.
+        private static string GetGuidParts()
         {
-            string escapeLeft = withBracket ? "[" : string.Empty;
-            string escapeRight = withBracket ? "]" : string.Empty;
-            string uniqueName = string.Format("{0}{1}_{2}_{3}{4}",
-                escapeLeft,
-                prefix,
-                DateTime.Now.Ticks.ToString("X", CultureInfo.InvariantCulture), // up to 8 characters
-                Guid.NewGuid().ToString().Substring(0, 6), // take the first 6 characters only
-                escapeRight);
-            return uniqueName;
+            var guid = Guid.NewGuid().ToString();
+            // GOTCHA: The slice operator is inclusive of the start index and
+            // exclusive of the end index!
+            return guid.Substring(0, 8) + guid.Substring(19, 4);
         }
 
         /// <summary>
-        /// Uses environment values `UserName` and `MachineName` in addition to the specified `prefix` and current date
-        /// to generate a unique name to use in Sql Server; 
-        /// SQL Server supports long names (up to 128 characters), add extra info for troubleshooting.
+        /// Generate a short unique database object name, whose maximum length
+        /// is 30 characters, with the format:
+        ///
+        ///   <Prefix>_<GuidParts>
+        ///
+        /// The Prefix will be truncated to satisfy the overall maximum length.
+        ///
+        /// The GUID parts will be the characters from the 1st and 4th blocks
+        /// from a traditional string representation, as shown here:
+        ///
+        ///   7ff01cb8-88c7-11f0-b433-00155d7e531e
+        ///   ^^^^^^^^           ^^^^
+        ///
+        /// These 2 parts typically comprise a timestamp and clock sequence,
+        /// most likely to be unique for tests that generate names in quick
+        /// succession.  The 12 characters are concatenated together without any
+        /// separators.
         /// </summary>
-        /// <param name="prefix">Add the prefix to the generate string.</param>
-        /// <param name="withBracket">Database name must be pass with brackets by default.</param>
-        /// <returns>Unique name by considering the Sql Server naming rules.</returns>
-        public static string GetUniqueNameForSqlServer(string prefix, bool withBracket = true)
+        /// 
+        /// <param name="prefix">
+        /// The prefix to use when generating the unique name, truncated to at
+        /// most 18 characters when withBracket is false, and 16 characters when
+        /// withBracket is true.
+        ///
+        /// This should not contain any characters that cannot be used in
+        /// database object names.  See:
+        /// 
+        /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
+        /// </param>
+        /// 
+        /// <param name="withBracket">
+        /// When true, the entire generated name will be enclosed in square
+        /// brackets, for example:
+        /// 
+        ///   [MyPrefix_7ff01cb811f0]
+        /// </param>
+        /// 
+        /// <returns>
+        /// A unique database object name, no more than 30 characters long.
+        /// </returns>
+        public static string GetShortName(string prefix, bool withBracket = true)
         {
-            string extendedPrefix = string.Format(
-                "{0}_{1}_{2}@{3}",
-                prefix,
-                Environment.UserName,
-                Environment.MachineName,
-                DateTime.Now.ToString("yyyy_MM_dd", CultureInfo.InvariantCulture));
-            string name = GetUniqueName(extendedPrefix, withBracket);
-            if (name.Length > 128)
+            StringBuilder name = new(30);
+
+            if (withBracket)
             {
-                throw new ArgumentOutOfRangeException("the name is too long - SQL Server names are limited to 128");
+                name.Append('[');
             }
-            return name;
+
+            int maxPrefixLength = withBracket ? 16 : 18;
+            if (prefix.Length > maxPrefixLength)
+            {
+                prefix = prefix.Substring(0, maxPrefixLength);
+            }
+
+            name.Append(prefix);
+            name.Append('_');
+            name.Append(GetGuidParts());
+
+            if (withBracket)
+            {
+                name.Append(']');
+            }
+
+            return name.ToString();
+        }
+
+        /// <summary>
+        /// Generate a long unique database object name, whose maximum length is
+        /// 96 characters, with the format:
+        /// 
+        ///   <Prefix>_<GuidParts>_<UserName>_<MachineName>
+        ///
+        /// The Prefix will be truncated to satisfy the overall maximum length.
+        ///
+        /// The GUID Parts will be the characters from the 1st and 4th blocks
+        /// from a traditional string representation, as shown here:
+        ///
+        ///   7ff01cb8-88c7-11f0-b433-00155d7e531e
+        ///   ^^^^^^^^           ^^^^
+        ///
+        /// These 2 parts typically comprise a timestamp and clock sequence,
+        /// most likely to be unique for tests that generate names in quick
+        /// succession.  The 12 characters are concatenated together without any
+        /// separators.
+        ///
+        /// The UserName and MachineName are obtained from the Environment,
+        /// and will be truncated to satisfy the maximum overall length.
+        /// </summary>
+        /// 
+        /// <param name="prefix">
+        /// The prefix to use when generating the unique name, truncated to at
+        /// most 32 characters.
+        ///
+        /// This should not contain any characters that cannot be used in
+        /// database object names.  See:
+        /// 
+        /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
+        /// </param>
+        /// 
+        /// <param name="withBracket">
+        /// When true, the entire generated name will be enclosed in square
+        /// brackets, for example:
+        /// 
+        ///   [MyPrefix_7ff01cb811f0_test_user_ci_agent_machine_name]
+        /// </param>
+        /// 
+        /// <returns>
+        /// A unique database object name, no more than 96 characters long.
+        /// </returns>
+        public static string GetLongName(string prefix, bool withBracket = true)
+        {
+            StringBuilder name = new(96);
+
+            if (withBracket)
+            {
+                name.Append('[');
+            }
+
+            if (prefix.Length > 32)
+            {
+                prefix = prefix.Substring(0, 32);
+            }
+
+            name.Append(prefix);
+            name.Append('_');
+            name.Append(GetGuidParts());
+            name.Append('_');
+
+            var suffix =
+              Environment.UserName + '_' +
+              Environment.MachineName;
+
+            int maxSuffixLength = 96 - name.Length;
+            if (withBracket)
+            {
+                --maxSuffixLength;
+            }
+            if (suffix.Length > maxSuffixLength)
+            {
+                suffix = suffix.Substring(0, maxSuffixLength);
+            }
+
+            name.Append(suffix);
+
+            if (withBracket)
+            {
+                name.Append(']');
+            }
+
+            return name.ToString();
         }
 
         public static void CreateTable(SqlConnection sqlConnection, string tableName, string createBody)
@@ -597,6 +809,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlCommand command = sqlConnection.CreateCommand())
             {
                 command.CommandText = tableCreate;
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public static void CreateSP(SqlConnection sqlConnection, string spName, string spBody)
+        {
+            DropStoredProcedure(sqlConnection, spName);
+            string spCreate = "CREATE PROCEDURE " + spName + spBody;
+            using (SqlCommand command = sqlConnection.CreateCommand())
+            {
+                command.CommandText = spCreate;
                 command.ExecuteNonQuery();
             }
         }
@@ -1003,7 +1226,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public class MDSEventListener : BaseEventListener
         {
+            private static Type s_activityCorrelatorType = Type.GetType("Microsoft.Data.Common.ActivityCorrelator, Microsoft.Data.SqlClient");
+            private static PropertyInfo s_currentActivityProperty = s_activityCorrelatorType.GetProperty("Current", BindingFlags.NonPublic | BindingFlags.Static);
+
+            public readonly HashSet<string> ActivityIDs = new();
+
             public override string Name => MDSEventSourceName;
+
+            protected override void OnMatchingEventWritten(EventWrittenEventArgs eventData)
+            {
+                object currentActivity = s_currentActivityProperty.GetValue(null);
+                string activityId = GetActivityId(currentActivity);
+
+                ActivityIDs.Add(activityId);
+            }
+
+            private static string GetActivityId(object currentActivity)
+            {
+                Type activityIdType = currentActivity.GetType();
+                FieldInfo idField = activityIdType.GetField("Id", BindingFlags.NonPublic | BindingFlags.Instance);
+                FieldInfo sequenceField = activityIdType.GetField("Sequence", BindingFlags.NonPublic | BindingFlags.Instance);
+
+                Guid id = (Guid)idField.GetValue(currentActivity);
+                uint sequence = (uint)sequenceField.GetValue(currentActivity);
+
+                // This activity ID format matches the one used in the XEvents trace
+                return string.Format("{0}-{1}", id, sequence).ToUpper();
+            }
         }
 
         public class BaseEventListener : EventListener
@@ -1032,9 +1281,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     IDs.Add(eventData.EventId);
                     EventData.Add(eventData);
+                    OnMatchingEventWritten(eventData);
                 }
             }
+
+            protected virtual void OnMatchingEventWritten(EventWrittenEventArgs eventData)
+            {
+            }
         }
+
+        #nullable enable
 
         /// <summary>
         /// Resolves the machine's fully qualified domain name if it is applicable.
@@ -1062,4 +1318,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return fqdn.ToString();
         }
     }
+
+    #nullable disable
 }

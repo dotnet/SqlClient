@@ -15,17 +15,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static string s_tableName;
 
         // Synapse: Azure Synapse does not support RANK
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsSupportedDataClassification))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsDataClassificationSupported))]
         public static void TestDataClassificationResultSetRank()
         {
-            s_tableName = DataTestUtility.GetUniqueNameForSqlServer("DC");
+            s_tableName = DataTestUtility.GetLongName("DC");
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand sqlCommand = sqlConnection.CreateCommand())
             {
                 try
                 {
                     sqlConnection.Open();
-                    Assert.True(DataTestUtility.IsSupportedDataClassification());
+                    Assert.True(DataTestUtility.IsDataClassificationSupported);
                     CreateTable(sqlCommand);
                     AddSensitivity(sqlCommand, rankEnabled: true);
                     InsertData(sqlCommand);
@@ -38,17 +38,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSupportedDataClassification))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsDataClassificationSupported))]
         public static void TestDataClassificationResultSet()
         {
-            s_tableName = DataTestUtility.GetUniqueNameForSqlServer("DC");
+            s_tableName = DataTestUtility.GetLongName("DC");
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand sqlCommand = sqlConnection.CreateCommand())
             {
                 try
                 {
                     sqlConnection.Open();
-                    Assert.True(DataTestUtility.IsSupportedDataClassification());
+                    Assert.True(DataTestUtility.IsDataClassificationSupported);
                     CreateTable(sqlCommand);
                     AddSensitivity(sqlCommand);
                     InsertData(sqlCommand);
@@ -219,7 +219,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             sqlCommand.ExecuteNonQuery();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSupportedDataClassification))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsDataClassificationSupported))]
         public static void TestDataClassificationBulkCopy()
         {
             var data = new DataTable("Company");
@@ -232,7 +232,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             data.Rows.Add(Guid.NewGuid(), "Company 2", "sample2@contoso.com", 1);
             data.Rows.Add(Guid.NewGuid(), "Company 3", "sample3@contoso.com", 1);
 
-            var tableName = DataTestUtility.GetUniqueNameForSqlServer("DC");
+            var tableName = DataTestUtility.GetLongName("DC");
 
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {

@@ -12,7 +12,6 @@ parameters:
 
   - name: publishSymbols
     type: string
-    default: '$(PublishSymbols)'
 
   - name: symbolsVersion
     type: string
@@ -45,8 +44,13 @@ parameters:
     default: MDS
     values:
     - MDS
-    - AKV
     - MSS
+
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
 
 steps:
 - powershell: 'Write-Host "##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{parameters.SymAccount}}"'
@@ -59,31 +63,13 @@ steps:
     inputs:
       SymbolsFolder: '$(Build.SourcesDirectory)\artifacts\${{parameters.referenceType }}\bin'
       SearchPattern: |
-        Windows_NT/$(Configuration).AnyCPU/**/Microsoft.Data.SqlClient.pdb
-        Unix/$(Configuration).AnyCPU/**/Microsoft.Data.SqlClient.pdb
+        Windows_NT/${{ parameters.buildConfiguration }}.AnyCPU/**/Microsoft.Data.SqlClient.pdb
+        Unix/${{ parameters.buildConfiguration }}.AnyCPU/**/Microsoft.Data.SqlClient.pdb
       IndexSources: false
       SymbolServerType: TeamServices
       SymbolsMaximumWaitTime: 60
       SymbolExpirationInDays: 1825 # 5 years
       SymbolsProduct: Microsoft.Data.SqlClient
-      SymbolsVersion: ${{parameters.symbolsVersion }}
-      SymbolsArtifactName: ${{parameters.symbolsArtifactName }}
-      Pat: $(System.AccessToken)
-    condition: and(succeeded(), ${{ eq(parameters.publishSymbols, 'true') }})
-
-- ${{ if eq(parameters.product, 'AKV') }}:
-  - task: PublishSymbols@2
-    displayName: 'Upload symbols to ${{parameters.SymAccount }} org'
-    inputs:
-      SymbolsFolder: '$(Build.SourcesDirectory)\artifacts\${{parameters.referenceType }}\bin'
-      SearchPattern: |
-        Windows_NT/$(Configuration).AnyCPU/AzureKeyVaultProvider/**/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb
-        AnyOS/$(Configuration).AnyCPU/AzureKeyVaultProvider/**/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb
-      IndexSources: false
-      SymbolServerType: TeamServices
-      SymbolsMaximumWaitTime: 60
-      SymbolExpirationInDays: 1825 # 5 years
-      SymbolsProduct: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
       SymbolsVersion: ${{parameters.symbolsVersion }}
       SymbolsArtifactName: ${{parameters.symbolsArtifactName }}
       Pat: $(System.AccessToken)

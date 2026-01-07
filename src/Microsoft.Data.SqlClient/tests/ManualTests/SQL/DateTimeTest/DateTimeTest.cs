@@ -212,7 +212,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             Assert.True(IsValidParam(SqlDbType.Date, "c1", new DateTime(1753, 1, 1, 0, 0, 0, DateTimeKind.Local), conn, tableName), "FAILED: Invalid param for Date SqlDbType");
                             Assert.False(IsValidParam(SqlDbType.Date, "c1", new TimeSpan(), conn, tableName), "FAILED: Invalid param for Date SqlDbType");
                             Assert.True(IsValidParam(SqlDbType.Date, "c1", "1753-1-1", conn, tableName), "FAILED: Invalid param for Date SqlDbType");
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
                             Assert.True(IsValidParam(SqlDbType.Date, "c1", new DateOnly(1753, 1, 1), conn, tableName), "FAILED: Invalid param for Date SqlDbType");
                             Assert.False(IsValidParam(SqlDbType.Date, "c1", new TimeOnly(), conn, tableName), "FAILED: Invalid param for Date SqlDbType");
 #endif
@@ -225,7 +225,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             Assert.False(IsValidParam(SqlDbType.Time, "c2", new DateTime(1753, 1, 1, 0, 0, 0, DateTimeKind.Local), conn, tableName), "FAILED: Invalid param for Time SqlDbType");
                             Assert.True(IsValidParam(SqlDbType.Time, "c2", TimeSpan.Parse("20:12:13.36"), conn, tableName), "FAILED: Invalid param for Time SqlDbType");
                             Assert.True(IsValidParam(SqlDbType.Time, "c2", "20:12:13.36", conn, tableName), "FAILED: Invalid param for Time SqlDbType");
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
                             Assert.False(IsValidParam(SqlDbType.Time, "c2", new DateOnly(1753, 1, 1), conn, tableName), "FAILED: Invalid param for Time SqlDbType");
                             Assert.True(IsValidParam(SqlDbType.Time, "c2", new TimeOnly(20, 12, 13, 360), conn, tableName), "FAILED: Invalid param for Time SqlDbType");
 #endif
@@ -382,7 +382,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             Assert.True(IsValidParam(DbType.Date, "c1", new DateTime(1753, 1, 1, 0, 0, 0, DateTimeKind.Local), conn, tableName), "FAILED: Invalid param for Date DbType");
                             Assert.False(IsValidParam(DbType.Date, "c1", new TimeSpan(), conn, tableName), "FAILED: Invalid param for Date DbType");
                             Assert.True(IsValidParam(DbType.Date, "c1", "1753-1-1", conn, tableName), "FAILED: Invalid param for Date DbType");
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
                             Assert.True(IsValidParam(DbType.Date, "c1", new DateOnly(1753, 1, 1), conn, tableName), "FAILED: Invalid param for Date DbType");
                             Assert.False(IsValidParam(DbType.Date, "c1", new TimeOnly(), conn, tableName), "FAILED: Invalid param for Date DbType");
 #endif
@@ -396,7 +396,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             Assert.False(IsValidParam(DbType.Time, "c2", new DateTime(1753, 1, 1, 0, 0, 0, DateTimeKind.Local), conn, tableName), "FAILED: Invalid param for Time DbType");
                             Assert.True(IsValidParam(DbType.Time, "c2", TimeSpan.Parse("20:12:13.36"), conn, tableName), "FAILED: Invalid param for Time DbType");
                             Assert.True(IsValidParam(DbType.Time, "c2", "20:12:13.36", conn, tableName), "FAILED: Invalid param for Time DbType");
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
                             Assert.False(IsValidParam(DbType.Time, "c2", new DateOnly(1753, 1, 1), conn, tableName), "FAILED: Invalid param for Time DbType");
                             Assert.True(IsValidParam(DbType.Time, "c2", new TimeOnly(20, 12, 13, 360), conn, tableName), "FAILED: Invalid param for Time DbType");
 #endif
@@ -492,7 +492,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                             for (int otherValNum = 0; otherValNum < valueStrList.Length; otherValNum++)
                                             {
                                                 if (valNum == otherValNum)
+                                                {
                                                     continue;
+                                                }
 
                                                 Assert.True(currValueStr.Equals(valueStrList[otherValNum]),
                                                     string.Format("FAILED: Value from {0} not equivalent to {1} result", valueNameList[valNum], valueNameList[otherValNum]));
@@ -520,7 +522,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
         // Synapse: CREATE or ALTER PROCEDURE statement uses syntax or features that are not supported in SQL Server PDW.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void ReaderParameterTest_DateOnly_TimeOnly()

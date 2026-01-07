@@ -5,117 +5,35 @@
         Collection of <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> objects that inherits from <see cref="T:System.Collections.CollectionBase" />.
       </summary>
       <remarks>
-        <para>
-          Column order hints define the sort order of the column in the destination table.
-        </para>
-        <para>
-          SqlBulkCopy's performance is improved if the data being imported is sorted according to the clustered index on the table, if any. If the data is sorted in an order that differs from the order of a clustered index key or if there is no clustered index on the table, the order hint is ignored.
-        </para>
-        <para>
-          Order hints can be specified for any number of columns in the destination table. By default, the bulk insert operation assumes the data is unordered if no hints are provided.
-        </para>
-        <para>
-          The column names supplied must be valid column names in the destination table. The order in which hints can be specified is arbitrary. A single column name cannot be specified more than once.
-        </para>
-        <para>
-          If the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings" /> collection is not empty, order hints can only be provided for valid destination columns which have been mapped.
-        </para>
-        <para>
-          If a <see cref="T:Microsoft.Data.SqlClient.SortOrder" /> of Unspecified is given, an <see cref="T:System.ArgumentException" /> will be thrown.
-        </para>
+        <format type="text/markdown">
+          <![CDATA[  
+Column order hints define the sort order of the column in the destination table.
+
+SqlBulkCopy's performance is improved if the data being imported is sorted according to the clustered index on the table, if any. If the data is sorted in an order that differs from the order of a clustered index key or if there is no clustered index on the table, the order hint is ignored.
+
+Order hints can be specified for any number of columns in the destination table. By default, the bulk insert operation assumes the data is unordered if no hints are provided.
+
+The column names supplied must be valid column names in the destination table. The order in which hints can be specified is arbitrary. A single column name cannot be specified more than once. 
+
+If the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings> collection is not empty, order hints can only be provided for valid destination columns which have been mapped.
+
+If a <xref:Microsoft.Data.SqlClient.SortOrder> of Unspecified is given, an <xref:System.ArgumentException> will be thrown.
+
+]]></format>
       </remarks>
       <example>
-        <para>
-          The following example bulk copies data from a source table in the <b>AdventureWorks</b> sample database to a destination table in the same database. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" />s are added to the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection" /> of the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object to specify order hints for the bulk copy operation.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <!-- SqlBulkCopy_ColumnOrderHintCollection -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
-          
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM " +
-                          "dbo.BulkCopyDemoMatchingColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
-          
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, " +
-                          "ProductNumber " +
-                          "FROM Production.Product;", sourceConnection);
-                      SqlDataReader reader =
-                          commandSourceData.ExecuteReader();
-          
-                      // Set up the bulk copy object. 
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                      {
-                          bulkCopy.DestinationTableName =
-                              "dbo.BulkCopyDemoMatchingColumns";
-          
-                          // Specify the sort order for the ProductNumber column in 
-                          // the destination table.
-                          bulkCopy.ColumnOrderHints.Add("ProductNumber", SortOrder.Ascending);
-          
-                          // Write from the source to the destination.
-                          try
-                          {
-                              bulkCopy.WriteToServer(reader);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                          finally
-                          {
-                              // Close the SqlDataReader. The SqlBulkCopy
-                              // object is automatically closed at the end
-                              // of the using block.
-                              reader.Close();
-                          }
-                      }
-          
-                      // Perform a final count on the destination 
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                  }
-              }
-          
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+        <format type="text/markdown">
+          <![CDATA[    
+The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint>s are added to the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection> of the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object to specify order hints for the bulk copy operation.  
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup). 
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.ColumnOrderHintCollection#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnOrderHintCollection.cs#1)]
+
+]]></format>
       </example>
     </SqlBulkCopyColumnOrderHintCollection>
     <Add name="columnOrderHintParameter">
@@ -129,100 +47,19 @@
         A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> object.
       </returns>
       <example>
-        <para>
-          The following example bulk copies data from a source table in the <b>AdventureWorks</b> sample database to a destination table in the same database. A SqlBulkCopyColumnOrderHint object is used to define the sort order for the <b>ProductNumber</b> destination column.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <!-- SqlBukCopy_ColumnOrderHintCollectionAdd -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
-          
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM " +
-                          "dbo.BulkCopyDemoMatchingColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
-          
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, " +
-                          "ProductNumber " +
-                          "FROM Production.Product;", sourceConnection);
-                      SqlDataReader reader =
-                          commandSourceData.ExecuteReader();
-          
-                      // Set up the bulk copy object. 
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                      {
-                          bulkCopy.DestinationTableName =
-                              "dbo.BulkCopyDemoMatchingColumns";
-          
-                          // Specify the sort order for the ProductNumber column in 
-                          // the destination table.
-                          // Setup an order hint for the ProductNumber column.
-                          SqlBulkCopyColumnOrderHint hintNumber =
-                              new SqlBulkCopyColumnOrderHint("ProductNumber", SortOrder.Ascending);
-                          bulkCopy.ColumnOrderHints.Add(hintNumber);
-          
-                          // Write from the source to the destination.
-                          try
-                          {
-                              bulkCopy.WriteToServer(reader);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                          finally
-                          {
-                              // Close the SqlDataReader. The SqlBulkCopy
-                              // object is automatically closed at the end
-                              // of the using block.
-                              reader.Close();
-                          }
-                      }
-          
-                      // Perform a final count on the destination 
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                  }
-              }
-          
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+        <format type="text/markdown">
+          <![CDATA[  
+The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. A <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint> object is used to define the sort order for the **ProductNumber** destination column.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup). 
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
+
+[!code-csharp[SqlBulkCopy.ColumnOrderHintCollectionAdd#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnOrderHintCollectionAdd.cs)]
+
+]]>
+</format>
       </example>
       <exception cref="T:System.ArgumentException">
         The value is null.
@@ -242,98 +79,19 @@
         A column column order hint.
       </returns>
       <example>
-        <para>
-          The following example bulk copies data from a source table in the <b>AdventureWorks</b> sample database to a destination table in the same database. A SqlBulkCopyColumnOrderHint object is added to the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnOrderHints" /> by providing the destination column name and its sort order.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <!-- SqlBulkCopy_ColumnOrderHintCollectionAdd2 -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                
-                  // Open a sourceConnection to the AdventureWorks database.
-                  using (SqlConnection sourceConnection = new SqlConnection(connectionString))
-                  {
-                      sourceConnection.Open();
-          
-                      // Perform an initial count on the destination table.
-                      SqlCommand commandRowCount = new SqlCommand(
-                          "SELECT COUNT(*) FROM " +
-                          "dbo.BulkCopyDemoMatchingColumns;",
-                          sourceConnection);
-                      long countStart = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Starting row count = {0}", countStart);
-          
-                      // Get data from the source table as a SqlDataReader.
-                      SqlCommand commandSourceData = new SqlCommand(
-                          "SELECT ProductID, Name, " +
-                          "ProductNumber " +
-                          "FROM Production.Product;", sourceConnection);
-                      SqlDataReader reader =
-                          commandSourceData.ExecuteReader();
-          
-                      // Set up the bulk copy object. 
-                      using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                      {
-                          bulkCopy.DestinationTableName =
-                              "dbo.BulkCopyDemoMatchingColumns";
-          
-                          // Specify the sort order for the ProductNumber column in 
-                          // the destination table.
-                          bulkCopy.ColumnOrderHints.Add("ProductNumber", SortOrder.Ascending);
-          
-                          // Write from the source to the destination.
-                          try
-                          {
-                              bulkCopy.WriteToServer(reader);
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine(ex.Message);
-                          }
-                          finally
-                          {
-                              // Close the SqlDataReader. The SqlBulkCopy
-                              // object is automatically closed at the end
-                              // of the using block.
-                              reader.Close();
-                          }
-                      }
-          
-                      // Perform a final count on the destination 
-                      // table to see how many rows were added.
-                      long countEnd = System.Convert.ToInt32(
-                          commandRowCount.ExecuteScalar());
-                      Console.WriteLine("Ending row count = {0}", countEnd);
-                      Console.WriteLine("{0} rows were added.", countEnd - countStart);
-                      Console.WriteLine("Press Enter to finish.");
-                      Console.ReadLine();
-                  }
-              }
-          
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the sourceConnection string in your code, 
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+        <format type="text/markdown">
+          <![CDATA[  
+The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. A <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint> object is added to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnOrderHints> by providing the destination column name and its sort order.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup). 
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a 
+Transact-SQL `INSERT … SELECT` statement to copy the data.  
+
+[!code-csharp[SqlBulkCopy.ColumnOrderHintCollectionAdd2#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnOrderHintCollectionAdd2.cs#1)]
+
+]]></format>
       </example>
     </Add>
     <Clear>
@@ -341,199 +99,27 @@
         Clears the contents of the collection.
       </summary>
       <remarks>
-        <para>
-          The <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Clear" /> method is most commonly used when you use a single <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance to process more than one bulk copy operation. If you create column order hints for one bulk copy operation, you must clear the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection" /> after the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> method and before processing the next bulk copy.
-        </para>
-        <para>
-          Performing several bulk copies using the same <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance will usually be more efficient from a performance point of view than using a separate <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> for each operation.
-        </para>
+        <format type="text/markdown">
+          <![CDATA[  
+The <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Clear> method is most commonly used when you use a single <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance to process more than one bulk copy operation. If you create column order hints for one bulk copy operation, you must clear the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection> after the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> method and before processing the next bulk copy.  
+
+Performing several bulk copies using the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance will usually be more efficient from a performance point of view than using a separate <xref:Microsoft.Data.SqlClient.SqlBulkCopy> for each operation.  
+
+]]></format>
       </remarks>
       <example>
-        <para>
-          The following example performs two bulk copy operations. The first operation copies sales order header information, and the second copies sales order details. The example defines a column order hint for each bulk copy operation. The <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Clear" /> method must be used after the first bulk copy is performed and before the next bulk copy's order hint is defined.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <!-- SqlBulkCopy_ColumnOrderHintCollectionClear -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  // Open a connection to the AdventureWorks database.
-                  using (SqlConnection connection = new SqlConnection(connectionString))
-                  {
-                      connection.Open();
-          
-                      // Empty the destination tables. 
-                      SqlCommand deleteHeader = new SqlCommand(
-                          "DELETE FROM dbo.BulkCopyDemoOrderHeader;",
-                          connection);
-                      deleteHeader.ExecuteNonQuery();
-                      SqlCommand deleteDetail = new SqlCommand(
-                          "DELETE FROM dbo.BulkCopyDemoOrderDetail;",
-                          connection);
-                      deleteDetail.ExecuteNonQuery();
-          
-                      // Perform an initial count on the destination
-                      //  table with matching columns. 
-                      SqlCommand countRowHeader = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoOrderHeader;",
-                          connection);
-                      long countStartHeader = System.Convert.ToInt32(
-                          countRowHeader.ExecuteScalar());
-                      Console.WriteLine(
-                          "Starting row count for Header table = {0}",
-                          countStartHeader);
-          
-                      // Perform an initial count on the destination
-                      // table with different column positions. 
-                      SqlCommand countRowDetail = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoOrderDetail;",
-                          connection);
-                      long countStartDetail = System.Convert.ToInt32(
-                          countRowDetail.ExecuteScalar());
-                      Console.WriteLine(
-                          "Starting row count for Detail table = {0}",
-                          countStartDetail);
-          
-                      // Get data from the source table as a SqlDataReader.
-                      // The Sales.SalesOrderHeader and Sales.SalesOrderDetail
-                      // tables are quite large and could easily cause a timeout
-                      // if all data from the tables is added to the destination. 
-                      // To keep the example simple and quick, a parameter is  
-                      // used to select only orders for a particular account 
-                      // as the source for the bulk insert. 
-                      SqlCommand headerData = new SqlCommand(
-                          "SELECT [SalesOrderID], [OrderDate], " +
-                          "[AccountNumber] FROM [Sales].[SalesOrderHeader] " +
-                          "WHERE [AccountNumber] = @accountNumber;",
-                          connection);
-                      SqlParameter parameterAccount = new SqlParameter();
-                      parameterAccount.ParameterName = "@accountNumber";
-                      parameterAccount.SqlDbType = SqlDbType.NVarChar;
-                      parameterAccount.Direction = ParameterDirection.Input;
-                      parameterAccount.Value = "10-4020-000034";
-                      headerData.Parameters.Add(parameterAccount);
-                      SqlDataReader readerHeader = headerData.ExecuteReader();
-          
-                      // Get the Detail data in a separate connection.
-                      using (SqlConnection connection2 = new SqlConnection(connectionString))
-                      {
-                          connection2.Open();
-                          SqlCommand sourceDetailData = new SqlCommand(
-                              "SELECT [Sales].[SalesOrderDetail].[SalesOrderID], [SalesOrderDetailID], " +
-                              "[OrderQty], [ProductID], [UnitPrice] FROM [Sales].[SalesOrderDetail] " +
-                              "INNER JOIN [Sales].[SalesOrderHeader] ON [Sales].[SalesOrderDetail]." +
-                              "[SalesOrderID] = [Sales].[SalesOrderHeader].[SalesOrderID] " +
-                              "WHERE [AccountNumber] = @accountNumber;", connection2);
-          
-                          SqlParameter accountDetail = new SqlParameter();
-                          accountDetail.ParameterName = "@accountNumber";
-                          accountDetail.SqlDbType = SqlDbType.NVarChar;
-                          accountDetail.Direction = ParameterDirection.Input;
-                          accountDetail.Value = "10-4020-000034";
-                          sourceDetailData.Parameters.Add(accountDetail);
-                          SqlDataReader readerDetail = sourceDetailData.ExecuteReader();
-          
-                          // Create the SqlBulkCopy object. 
-                          using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                          {
-                              bulkCopy.DestinationTableName =
-                                  "dbo.BulkCopyDemoOrderHeader";
-          
-                              // Guarantee that columns are mapped correctly by
-                              // defining the column mappings for the order.
-                              bulkCopy.ColumnMappings.Add("SalesOrderID", "SalesOrderID");
-                              bulkCopy.ColumnMappings.Add("OrderDate", "OrderDate");
-                              bulkCopy.ColumnMappings.Add("AccountNumber", "AccountNumber");
-          
-                              // Add order hint for OrderDate column.
-                              bulkCopy.ColumnOrderHints.Add("OrderDate", SortOrder.Ascending);
-          
-                              // Write readerHeader to the destination.
-                              try
-                              {
-                                  bulkCopy.WriteToServer(readerHeader);
-                              }
-                              catch (Exception ex)
-                              {
-                                  Console.WriteLine(ex.Message);
-                              }
-                              finally
-                              {
-                                  readerHeader.Close();
-                              }
-          
-                              // Set up the order details destination. 
-                              bulkCopy.DestinationTableName = "dbo.BulkCopyDemoOrderDetail";
-          
-                              // Clear the ColumnMappingCollection.
-                              bulkCopy.ColumnMappings.Clear();
-          
-                              // Add order detail column mappings.
-                              bulkCopy.ColumnMappings.Add("SalesOrderID", "SalesOrderID");
-                              bulkCopy.ColumnMappings.Add("SalesOrderDetailID", "SalesOrderDetailID");
-                              bulkCopy.ColumnMappings.Add("OrderQty", "OrderQty");
-                              bulkCopy.ColumnMappings.Add("ProductID", "ProductID");
-                              bulkCopy.ColumnMappings.Add("UnitPrice", "UnitPrice");
-          
-                              // Clear the ColumnOrderHintCollection.
-                              bulkCopy.ColumnOrderHints.Clear();
-          
-                              // Add order hint for SalesOrderID column.
-                              bulkCopy.ColumnOrderHints.Add("SalesOrderID", SortOrder.Ascending);
-          
-                              // Write readerDetail to the destination.
-                              try
-                              {
-                                  bulkCopy.WriteToServer(readerDetail);
-                              }
-                              catch (Exception ex)
-                              {
-                                  Console.WriteLine(ex.Message);
-                              }
-                              finally
-                              {
-                                  readerDetail.Close();
-                              }
-                          }
-          
-                          // Perform a final count on the destination
-                          // tables to see how many rows were added. 
-                          long countEndHeader = System.Convert.ToInt32(
-                              countRowHeader.ExecuteScalar());
-                          Console.WriteLine("{0} rows were added to the Header table.",
-                              countEndHeader - countStartHeader);
-                          long countEndDetail = System.Convert.ToInt32(
-                              countRowDetail.ExecuteScalar());
-                          Console.WriteLine("{0} rows were added to the Detail table.",
-                              countEndDetail - countStartDetail);
-                          Console.WriteLine("Press Enter to finish.");
-                          Console.ReadLine();
-                      }
-                  }
-              }
-          
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the connection string in your code, 
-                  // you can retrieve it from a configuration file. 
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+        <format type="text/markdown">
+          <![CDATA[  
+The following example performs two bulk copy operations. The first operation copies sales order header information, and the second copies sales order details. The example defines a column order hint for each bulk copy operation. The <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Clear> method must be used after the first bulk copy is performed and before the next bulk copy's order hint is defined.  
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
+
+[!code-csharp[SqlBulkCopy.ColumnOrderHintCollectionClear#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnOrderHintCollectionClear.cs#1)]
+
+]]></format>
       </example>
     </Clear>
     <Contains>
@@ -609,202 +195,29 @@
         Removes the specified <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> element from the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection" />.
       </summary>
       <remarks>
-        <para>
-          The Remove method is most commonly used when you use a single <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance to process more than one bulk copy operation. If you create column order hints for one bulk copy operation, you must clear the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection" /> after the <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> method and before processing the next bulk copy.
-        </para>
-        <para>
-          You can clear the entire collection by using the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Clear" /> method, or remove hints individually using the Remove method or the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.RemoveAt" /> method.
-        </para>
-        <para>
-          Performing several bulk copies using the same <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance will usually be more efficient from a performance point of view than using a separate <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> for each operation.
-        </para>
+        <format type="text/markdown">
+          <![CDATA[  
+The Remove method is most commonly used when you use a single <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance to process more than one bulk copy operation. If you create column order hints for one bulk copy operation, you must clear the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection> after the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method and before processing the next bulk copy.   
+
+You can clear the entire collection by using the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Clear> method, or remove hints individually using the Remove method or the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.RemoveAt%2A> method.  
+
+Performing several bulk copies using the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance will usually be more efficient from a performance point of view than using a separate <xref:Microsoft.Data.SqlClient.SqlBulkCopy> for each operation.   
+
+]]></format>
       </remarks>
       <example>
-        <para>
-          The following example performs two bulk copy operations. The first operation copies sales order header information, and the second copies sales order details. The example defines a column order hint for the <b>OrderDate</b> column in the first bulk copy operation. The hint is removed before the second bulk copy operation.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <!-- SqlBulkCopy_ColumnOrderHintCollectionRemove -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
+        <format type="text/markdown">
+          <![CDATA[  
+The following example performs two bulk copy operations. The first operation copies sales order header information, and the second copies sales order details. The example defines a column order hint for the **OrderDate** column in the first bulk copy operation. The hint is removed before the second bulk copy operation.
 
-                  // Open a connection to the AdventureWorks database.
-                  using (SqlConnection connection = new SqlConnection(connectionString))
-                  {
-                      connection.Open();
-          
-                      // Empty the destination tables. 
-                      SqlCommand deleteHeader = new SqlCommand(
-                          "DELETE FROM dbo.BulkCopyDemoOrderHeader;",
-                          connection);
-                      deleteHeader.ExecuteNonQuery();
-                      SqlCommand deleteDetail = new SqlCommand(
-                          "DELETE FROM dbo.BulkCopyDemoOrderDetail;",
-                          connection);
-                      deleteDetail.ExecuteNonQuery();
-          
-                      // Perform an initial count on the destination
-                      //  table with matching columns. 
-                      SqlCommand countRowHeader = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoOrderHeader;",
-                          connection);
-                      long countStartHeader = System.Convert.ToInt32(
-                          countRowHeader.ExecuteScalar());
-                      Console.WriteLine(
-                          "Starting row count for Header table = {0}",
-                          countStartHeader);
-          
-                      // Perform an initial count on the destination
-                      // table with different column positions. 
-                      SqlCommand countRowDetail = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoOrderDetail;",
-                          connection);
-                      long countStartDetail = System.Convert.ToInt32(
-                          countRowDetail.ExecuteScalar());
-                      Console.WriteLine(
-                          "Starting row count for Detail table = {0}",
-                          countStartDetail);
-          
-                      // Get data from the source table as a SqlDataReader.
-                      // The Sales.SalesOrderHeader and Sales.SalesOrderDetail
-                      // tables are quite large and could easily cause a timeout
-                      // if all data from the tables is added to the destination. 
-                      // To keep the example simple and quick, a parameter is  
-                      // used to select only orders for a particular account 
-                      // as the source for the bulk insert. 
-                      SqlCommand headerData = new SqlCommand(
-                          "SELECT [SalesOrderID], [OrderDate], " +
-                          "[AccountNumber] FROM [Sales].[SalesOrderHeader] " +
-                          "WHERE [AccountNumber] = @accountNumber;",
-                          connection);
-                      SqlParameter parameterAccount = new SqlParameter();
-                      parameterAccount.ParameterName = "@accountNumber";
-                      parameterAccount.SqlDbType = SqlDbType.NVarChar;
-                      parameterAccount.Direction = ParameterDirection.Input;
-                      parameterAccount.Value = "10-4020-000034";
-                      headerData.Parameters.Add(parameterAccount);
-                      SqlDataReader readerHeader = headerData.ExecuteReader();
-          
-                      // Get the Detail data in a separate connection.
-                      using (SqlConnection connection2 = new SqlConnection(connectionString))
-                      {
-                          connection2.Open();
-                          SqlCommand sourceDetailData = new SqlCommand(
-                              "SELECT [Sales].[SalesOrderDetail].[SalesOrderID], [SalesOrderDetailID], " +
-                              "[OrderQty], [ProductID], [UnitPrice] FROM [Sales].[SalesOrderDetail] " +
-                              "INNER JOIN [Sales].[SalesOrderHeader] ON [Sales].[SalesOrderDetail]." +
-                              "[SalesOrderID] = [Sales].[SalesOrderHeader].[SalesOrderID] " +
-                              "WHERE [AccountNumber] = @accountNumber;", connection2);
-          
-                          SqlParameter accountDetail = new SqlParameter();
-                          accountDetail.ParameterName = "@accountNumber";
-                          accountDetail.SqlDbType = SqlDbType.NVarChar;
-                          accountDetail.Direction = ParameterDirection.Input;
-                          accountDetail.Value = "10-4020-000034";
-                          sourceDetailData.Parameters.Add(accountDetail);
-                          SqlDataReader readerDetail = sourceDetailData.ExecuteReader();
-          
-                          // Create the SqlBulkCopy object. 
-                          using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                          {
-                              bulkCopy.DestinationTableName =
-                                  "dbo.BulkCopyDemoOrderHeader";
-          
-                              // Guarantee that columns are mapped correctly by
-                              // defining the column mappings for the order.
-                              bulkCopy.ColumnMappings.Add("SalesOrderID", "SalesOrderID");
-                              bulkCopy.ColumnMappings.Add("OrderDate", "OrderDate");
-                              bulkCopy.ColumnMappings.Add("AccountNumber", "AccountNumber");
-          
-                              // Add the order hint for the OrderDate column.
-                              SqlBulkCopyColumnOrderHint hintDate =
-                                  new SqlBulkCopyColumnOrderHint("OrderDate", SortOrder.Ascending);
-                              bulkCopy.ColumnOrderHints.Add(hintDate);
-          
-                              // Write readerHeader to the destination.
-                              try
-                              {
-                                  bulkCopy.WriteToServer(readerHeader);
-                              }
-                              catch (Exception ex)
-                              {
-                                  Console.WriteLine(ex.Message);
-                              }
-                              finally
-                              {
-                                  readerHeader.Close();
-                              }
-          
-                              // Set up the order details destination. 
-                              bulkCopy.DestinationTableName = "dbo.BulkCopyDemoOrderDetail";
-          
-                              // Clear the ColumnMappingCollection.
-                              bulkCopy.ColumnMappings.Clear();
-          
-                              // Add order detail column mappings.
-                              bulkCopy.ColumnMappings.Add("SalesOrderID", "SalesOrderID");
-                              bulkCopy.ColumnMappings.Add("SalesOrderDetailID", "SalesOrderDetailID");
-                              bulkCopy.ColumnMappings.Add("OrderQty", "OrderQty");
-                              bulkCopy.ColumnMappings.Add("ProductID", "ProductID");
-                              bulkCopy.ColumnMappings.Add("UnitPrice", "UnitPrice");
-          
-                              // Remove the order hint for the OrderDate column.
-                              bulkCopy.ColumnOrderHints.Remove(hintDate);
-          
-                              // Write readerDetail to the destination.
-                              try
-                              {
-                                  bulkCopy.WriteToServer(readerDetail);
-                              }
-                              catch (Exception ex)
-                              {
-                                  Console.WriteLine(ex.Message);
-                              }
-                              finally
-                              {
-                                  readerDetail.Close();
-                              }
-                          }
-          
-                          // Perform a final count on the destination
-                          // tables to see how many rows were added. 
-                          long countEndHeader = System.Convert.ToInt32(
-                              countRowHeader.ExecuteScalar());
-                          Console.WriteLine("{0} rows were added to the Header table.",
-                              countEndHeader - countStartHeader);
-                          long countEndDetail = System.Convert.ToInt32(
-                              countRowDetail.ExecuteScalar());
-                          Console.WriteLine("{0} rows were added to the Detail table.",
-                              countEndDetail - countStartDetail);
-                          Console.WriteLine("Press Enter to finish.");
-                          Console.ReadLine();
-                      }
-                  }
-              }
-          
-              private static string GetConnectionString() 
-              {
-                  // To avoid storing the connection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
+
+[!code-csharp[SqlBulkCopy.ColumnOrderHintCollectionRemove#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnOrderHintCollectionRemove.cs#1)]
+
+]]></format>
       </example>
       <exception cref="T:System.ArgumentNullException">
         The value is null.
@@ -818,199 +231,28 @@
         Removes the column order hint at the specified index from the collection.
       </summary>
       <remarks>
-        <para>
-          The <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.RemoveAt" /> method is most commonly used when you use a single <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance to process more than one bulk copy operation. If you create column order hints for one bulk copy operation, you must clear the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection" /> after the <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> method and before processing the next bulk copy. You can clear the entire collection by using the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Clear" /> method, or remove hints individually using the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Remove" /> method or the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.RemoveAt" /> method.
-        </para>
-        <para>
-          Performing several bulk copies using the same <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance will usually be more efficient from a performance point of view than using a separate <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> for each operation.
-        </para>
+        <format type="text/markdown">
+          <![CDATA[  
+The <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.RemoveAt> method is most commonly used when you use a single <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance to process more than one bulk copy operation. If you create column order hints for one bulk copy operation, you must clear the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection> after the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> method and before processing the next bulk copy. 
+You can clear the entire collection by using the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Clear> method, or remove hints individually using the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Remove> method or the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.RemoveAt> method.  
+
+Performing several bulk copies using the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance will usually be more efficient from a performance point of view than using a separate <xref:Microsoft.Data.SqlClient.SqlBulkCopy> for each operation.  
+
+]]></format>
       </remarks>
       <example>
-        <para>
-          The following example performs two bulk copy operations. The first operation copies sales order header information, and the second copies sales order details. The example defines a column order hint for the <b>OrderDate</b> column in the first bulk copy operation. The hint is removed before the second bulk copy operation.
-        </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
-        <para>
-          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </para>
-        <!-- SqlBulkCopy_ColumnOrderHintCollectionRemoveAt -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  
-                  // Open a connection to the AdventureWorks database.
-                  using (SqlConnection connection = new SqlConnection(connectionString))
-                  {
-                      connection.Open();
-          
-                      // Empty the destination tables. 
-                      SqlCommand deleteHeader = new SqlCommand(
-                          "DELETE FROM dbo.BulkCopyDemoOrderHeader;",
-                          connection);
-                      deleteHeader.ExecuteNonQuery();
-                      SqlCommand deleteDetail = new SqlCommand(
-                          "DELETE FROM dbo.BulkCopyDemoOrderDetail;",
-                          connection);
-                      deleteDetail.ExecuteNonQuery();
-          
-                      // Perform an initial count on the destination
-                      //  table with matching columns. 
-                      SqlCommand countRowHeader = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoOrderHeader;",
-                          connection);
-                      long countStartHeader = System.Convert.ToInt32(
-                          countRowHeader.ExecuteScalar());
-                      Console.WriteLine(
-                          "Starting row count for Header table = {0}",
-                          countStartHeader);
-          
-                      // Perform an initial count on the destination
-                      // table with different column positions. 
-                      SqlCommand countRowDetail = new SqlCommand(
-                          "SELECT COUNT(*) FROM dbo.BulkCopyDemoOrderDetail;",
-                          connection);
-                      long countStartDetail = System.Convert.ToInt32(
-                          countRowDetail.ExecuteScalar());
-                      Console.WriteLine(
-                          "Starting row count for Detail table = {0}",
-                          countStartDetail);
-          
-                      // Get data from the source table as a SqlDataReader.
-                      // The Sales.SalesOrderHeader and Sales.SalesOrderDetail
-                      // tables are quite large and could easily cause a timeout
-                      // if all data from the tables is added to the destination. 
-                      // To keep the example simple and quick, a parameter is  
-                      // used to select only orders for a particular account 
-                      // as the source for the bulk insert. 
-                      SqlCommand headerData = new SqlCommand(
-                          "SELECT [SalesOrderID], [OrderDate], " +
-                          "[AccountNumber] FROM [Sales].[SalesOrderHeader] " +
-                          "WHERE [AccountNumber] = @accountNumber;",
-                          connection);
-                      SqlParameter parameterAccount = new SqlParameter();
-                      parameterAccount.ParameterName = "@accountNumber";
-                      parameterAccount.SqlDbType = SqlDbType.NVarChar;
-                      parameterAccount.Direction = ParameterDirection.Input;
-                      parameterAccount.Value = "10-4020-000034";
-                      headerData.Parameters.Add(parameterAccount);
-                      SqlDataReader readerHeader = headerData.ExecuteReader();
-          
-                      // Get the Detail data in a separate connection.
-                      using (SqlConnection connection2 = new SqlConnection(connectionString))
-                      {
-                          connection2.Open();
-                          SqlCommand sourceDetailData = new SqlCommand(
-                              "SELECT [Sales].[SalesOrderDetail].[SalesOrderID], [SalesOrderDetailID], " +
-                              "[OrderQty], [ProductID], [UnitPrice] FROM [Sales].[SalesOrderDetail] " +
-                              "INNER JOIN [Sales].[SalesOrderHeader] ON [Sales].[SalesOrderDetail]." +
-                              "[SalesOrderID] = [Sales].[SalesOrderHeader].[SalesOrderID] " +
-                              "WHERE [AccountNumber] = @accountNumber;", connection2);
-          
-                          SqlParameter accountDetail = new SqlParameter();
-                          accountDetail.ParameterName = "@accountNumber";
-                          accountDetail.SqlDbType = SqlDbType.NVarChar;
-                          accountDetail.Direction = ParameterDirection.Input;
-                          accountDetail.Value = "10-4020-000034";
-                          sourceDetailData.Parameters.Add(accountDetail);
-                          SqlDataReader readerDetail = sourceDetailData.ExecuteReader();
-          
-                          // Create the SqlBulkCopy object. 
-                          using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
-                          {
-                              bulkCopy.DestinationTableName =
-                                  "dbo.BulkCopyDemoOrderHeader";
-          
-                              // Guarantee that columns are mapped correctly by
-                              // defining the column mappings for the order.
-                              bulkCopy.ColumnMappings.Add("SalesOrderID", "SalesOrderID");
-                              bulkCopy.ColumnMappings.Add("OrderDate", "OrderDate");
-                              bulkCopy.ColumnMappings.Add("AccountNumber", "AccountNumber");
-          
-                              // Add the order hint for the OrderDate column.
-                              SqlBulkCopyColumnOrderHint hintDate =
-                                  new SqlBulkCopyColumnOrderHint("OrderDate", SortOrder.Ascending);
-                              bulkCopy.ColumnOrderHints.Add(hintDate);
-          
-                              // Write readerHeader to the destination.
-                              try
-                              {
-                                  bulkCopy.WriteToServer(readerHeader);
-                              }
-                              catch (Exception ex)
-                              {
-                                  Console.WriteLine(ex.Message);
-                              }
-                              finally
-                              {
-                                  readerHeader.Close();
-                              }
-          
-                              // Set up the order details destination. 
-                              bulkCopy.DestinationTableName = "dbo.BulkCopyDemoOrderDetail";
-          
-                              // Clear the ColumnMappingCollection.
-                              bulkCopy.ColumnMappings.Clear();
-          
-                              // Add order detail column mappings.
-                              bulkCopy.ColumnMappings.Add("SalesOrderID", "SalesOrderID");
-                              bulkCopy.ColumnMappings.Add("SalesOrderDetailID", "SalesOrderDetailID");
-                              bulkCopy.ColumnMappings.Add("OrderQty", "OrderQty");
-                              bulkCopy.ColumnMappings.Add("ProductID", "ProductID");
-                              bulkCopy.ColumnMappings.Add("UnitPrice", "UnitPrice");
-          
-                              // Remove the order hint for the OrderDate column.
-                              bulkCopy.ColumnOrderHints.RemoveAt(0);
-          
-                              // Write readerDetail to the destination.
-                              try
-                              {
-                                  bulkCopy.WriteToServer(readerDetail);
-                              }
-                              catch (Exception ex)
-                              {
-                                  Console.WriteLine(ex.Message);
-                              }
-                              finally
-                              {
-                                  readerDetail.Close();
-                              }
-                          }
-          
-                          // Perform a final count on the destination
-                          // tables to see how many rows were added. 
-                          long countEndHeader = System.Convert.ToInt32(
-                              countRowHeader.ExecuteScalar());
-                          Console.WriteLine("{0} rows were added to the Header table.",
-                              countEndHeader - countStartHeader);
-                          long countEndDetail = System.Convert.ToInt32(
-                              countRowDetail.ExecuteScalar());
-                          Console.WriteLine("{0} rows were added to the Detail table.",
-                              countEndDetail - countStartDetail);
-                          Console.WriteLine("Press Enter to finish.");
-                          Console.ReadLine();
-                      }
-                  }
-              }
-          
-              private static string GetConnectionString()
-              {
-                  // To avoid storing the connection string in your code,
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local); " +
-                         " Integrated Security=true;" +
-                         "Initial Catalog=AdventureWorks;";
-              }
-          }
-        </code>
+        <format type="text/markdown">
+          <![CDATA[  
+The following example performs two bulk copy operations. The first operation copies sales order header information, and the second copies sales order details. The example defines a column order hint for the **OrderDate** column in the first bulk copy operation. The hint is removed before the second bulk copy operation.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
+
+[!code-csharp[SqlBulkCopy.ColumnOrderHintCollectionRemoveAt#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnOrderHintCollectionRemoveAt.cs#1)]
+
+]]></format>
       </example>
       <exception cref="T:System.ArgumentOutOfRangeException">
         The index must be non-negative and less than the size of the collection.

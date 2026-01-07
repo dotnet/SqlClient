@@ -11,7 +11,7 @@
         Represents the method that will handle the <see cref="E:Microsoft.Data.SqlClient.SqlConnection.InfoMessage" /> event of a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> .
       </summary>
       <remarks>
-        When you create a <see cref="T:Microsoft.Data.SqlClient.SqlInfoMessageEventArgs" /> delegate, you identify the method that will handle the event. To associate the event with your event handler, add an instance of the delegate to the event. The event handler is called whenever the event occurs, unless you remove the delegate. For more information about event handler delegates, see <see href="/dotnet/standard/events/">Handling and Raising Events</see>.
+        When you create a <see cref="T:Microsoft.Data.SqlClient.SqlInfoMessageEventArgs" /> delegate, you identify the method that will handle the event. To associate the event with your event handler, add an instance of the delegate to the event. The event handler is called whenever the event occurs, unless you remove the delegate. For more information about event handler delegates, see <see href="https://learn.microsoft.com/dotnet/standard/events/">Handling and Raising Events</see>.
       </remarks>
     </SqlInfoMessageEventHandler>
   </members>

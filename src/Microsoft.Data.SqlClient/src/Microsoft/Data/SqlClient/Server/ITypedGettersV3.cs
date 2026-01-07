@@ -12,11 +12,11 @@ namespace Microsoft.Data.SqlClient.Server
     {
         // Null test
         //      valid for all types
-        bool IsDBNull(SmiEventSink sink, int ordinal);
+        bool IsDBNull(int ordinal);
 
         // Check what type current sql_variant value is
         //      valid for SqlDbType.Variant
-        SmiMetaData GetVariantType(SmiEventSink sink, int ordinal);
+        SmiMetaData GetVariantType(int ordinal);
 
         //
         //  Actual value accessors
@@ -25,44 +25,48 @@ namespace Microsoft.Data.SqlClient.Server
         //
 
         //  valid for SqlDbType.Bit
-        bool GetBoolean(SmiEventSink sink, int ordinal);
+        bool GetBoolean(int ordinal);
 
         //  valid for SqlDbType.TinyInt
-        byte GetByte(SmiEventSink sink, int ordinal);
+        byte GetByte(int ordinal);
 
         // valid for SqlDbTypes: Binary, VarBinary, Image, Udt, Xml, Char, VarChar, Text, NChar, NVarChar, NText
         //  (Character type support needed for ExecuteXmlReader handling)
-        long GetBytesLength(SmiEventSink sink, int ordinal);
-        int GetBytes(SmiEventSink sink, int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length);
+        long GetBytesLength(int ordinal);
+        int GetBytes(int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length);
 
         // valid for character types: Char, VarChar, Text, NChar, NVarChar, NText
-        long GetCharsLength(SmiEventSink sink, int ordinal);
-        int GetChars(SmiEventSink sink, int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length);
-        string GetString(SmiEventSink sink, int ordinal);
+        long GetCharsLength(int ordinal);
+        int GetChars(int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length);
+        string GetString(int ordinal);
 
         // valid for SqlDbType.SmallInt
-        short GetInt16(SmiEventSink sink, int ordinal);
+        short GetInt16(int ordinal);
 
         // valid for SqlDbType.Int
-        int GetInt32(SmiEventSink sink, int ordinal);
+        int GetInt32(int ordinal);
 
         // valid for SqlDbType.BigInt, SqlDbType.Money, SqlDbType.SmallMoney
-        long GetInt64(SmiEventSink sink, int ordinal);
+        long GetInt64(int ordinal);
 
         // valid for SqlDbType.Real
-        float GetSingle(SmiEventSink sink, int ordinal);
+        float GetSingle(int ordinal);
 
         // valid for SqlDbType.Float
-        double GetDouble(SmiEventSink sink, int ordinal);
+        double GetDouble(int ordinal);
 
         // valid for SqlDbType.Numeric (uses SqlDecimal since Decimal cannot hold full range)
-        SqlDecimal GetSqlDecimal(SmiEventSink sink, int ordinal);
+        SqlDecimal GetSqlDecimal(int ordinal);
 
         // valid for DateTime & SmallDateTime
-        DateTime GetDateTime(SmiEventSink sink, int ordinal);
+        DateTime GetDateTime(int ordinal);
 
         // valid for UniqueIdentifier
-        Guid GetGuid(SmiEventSink sink, int ordinal);
+        Guid GetGuid(int ordinal);
+        // valid for SqlDbType.Time
+        TimeSpan GetTimeSpan(int ordinal);
+        // valid for DateTimeOffset
+        DateTimeOffset GetDateTimeOffset(int ordinal);
     }
 }
 

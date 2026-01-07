@@ -7,7 +7,7 @@
       <remarks>
         SQL Server makes it possible for applications to determine the existence of its instances within the current network. The <see cref="T:Microsoft.Data.Sql.SqlDataSourceEnumerator" /> class exposes this information to the application developer, providing a <see cref="T:System.Data.DataTable" /> containing information about all the available servers. This returned table contains a list of server instances that matches the list provided when a user attempts to create a new connection, and on the <c>Connection Properties</c> dialog box, expands the drop-down list containing all the available servers.
       </remarks>
-      <seealso href="/dotnet/framework/data/adonet/sql/enumerating-instances-of-sql-server">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/enumerate-instances-sql-server">
         Enumerating Instances of SQL Server
       </seealso>
     </SqlDataSourceEnumerator>
@@ -18,47 +18,25 @@
       <returns>
         A <see cref="T:System.Data.DataTable" /> containing information about the visible SQL Server instances.
       </returns>
-      <remarks>
-        <para>
-          The table returned by this method contains the following columns, all of which contain strings:
-        </para>
-        <para>
-          <list type="table">
-            <listheader>
-              <term>Column</term>
-              <description>Description</description>
-            </listheader>
-            <item>
-              <term><b>ServerName</b></term>
-              <description>Name of the server.</description>
-            </item>
-            <item>
-              <term><b>InstanceName</b></term>
-              <description>Name of the server instance. Blank if the server is running as the default instance.</description>
-            </item>
-            <item>
-              <term><b>IsClustered</b></term>
-              <description>Indicates whether the server is part of a cluster.</description>
-            </item>
-            <item>
-              <term><b>Version</b></term>
-              <description>
-                Version of the server:
-                <list type="bullet">
-                  <item>10.0.xx for SQL Server 2008</item>
-                  <item>10.50.x for SQL Server 2008 R2</item>
-                  <item>11.0.xx for SQL Server 2012 </item>
-                  <item>12.0.xx for SQL Server 2014</item>
-                  <item>13.0.xx for SQL Server 2016</item>
-                  <item>14.0.xx for SQL Server 2017</item>
-                </list>
-              </description>
-            </item>
-          </list>
-          <note type="note">
-            Due to the nature of the mechanism used by <see cref="T:Microsoft.Data.Sql.SqlDataSourceEnumerator" /> to locate data sources on a network, the method will not always return a complete list of the available servers, and the list might not be the same on every call. If you plan to use this function to let users select a server from a list, make sure that you always also supply an option to type in a name that is not in the list, in case the server enumeration does not return all the available servers. In addition, this method may take a significant amount of time to execute, so be careful about calling it when performance is critical.
-          </note>
-        </para>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+  
+## Remarks  
+The table returned by this method contains the following columns, all of which contain strings:  
+
+|Column|Description|  
+|------------|-----------------|  
+|**ServerName**|Name of the server.|  
+|**InstanceName**|Name of the server instance. Blank if the server is running as the default instance.|  
+|**IsClustered**|Indicates whether the server is part of a cluster.|  
+|**Version**|Version of the server:<ul><li>10.0.xx for SQL Server 2008</li><li>10.50.x for SQL Server 2008 R2</li><li>11.0.xx for SQL Server 2012</li><li>12.0.xx for SQL Server 2014</li><li>13.0.xx for SQL Server 2016</li><li>14.0.xx for SQL Server 2017</li></ul>|  
+  
+> [!NOTE]
+> Due to the nature of the mechanism used by <xref:Microsoft.Data.Sql.SqlDataSourceEnumerator> to locate data sources on a network, the method will not always return a complete list of the available servers, and the list might not be the same on every call. If you plan to use this function to let users select a server from a list, make sure that you always also supply an option to type in a name that is not in the list, in case the server enumeration does not return all the available servers. In addition, this method may take a significant amount of time to execute, so be careful about calling it when performance is critical.  
+
+          ]]>
+        </format>
       </remarks>
       <example>
         <para>
@@ -98,7 +76,7 @@
           } 
         </code>
       </example>
-      <seealso href="/dotnet/framework/data/adonet/sql/enumerating-instances-of-sql-server">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/enumerate-instances-sql-server">
         Enumerating Instances of SQL Server
       </seealso>
     </GetDataSources>
@@ -179,7 +157,7 @@
           } 
         </code>
       </example>
-      <seealso href="/dotnet/framework/data/adonet/sql/enumerating-instances-of-sql-server">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/enumerate-instances-sql-server">
         Enumerating Instances of SQL Server
       </seealso>
     </Instance>

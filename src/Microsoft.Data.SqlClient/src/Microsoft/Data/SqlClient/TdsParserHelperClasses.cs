@@ -14,6 +14,7 @@ using System.Security;
 using System.Security.Authentication;
 using System.Text;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -30,8 +31,8 @@ namespace Microsoft.Data.SqlClient
         NOT_SUP,
         REQ,
         LOGIN,
-#if NETFRAMEWORK
         OPTIONS_MASK = 0x3f,
+#if NETFRAMEWORK
         CTAIP = 0x40,
         CLIENT_CERT = 0x80,
 #endif
@@ -100,22 +101,22 @@ namespace Microsoft.Data.SqlClient
     internal sealed class SqlLogin
     {
         internal SqlAuthenticationMethod authentication = SqlAuthenticationMethod.NotSpecified;  // Authentication type
-        internal int timeout;                                                       // login timeout
-        internal bool userInstance = false;                                   // user instance
-        internal string hostName = "";                                      // client machine name
-        internal string userName = "";                                      // user id
-        internal string password = "";                                      // password
-        internal string applicationName = "";                                      // application name
-        internal string serverName = "";                                      // server name
-        internal string language = "";                                      // initial language
-        internal string database = "";                                      // initial database
-        internal string attachDBFilename = "";                                      // DB filename to be attached
-        internal bool useReplication = false;                                   // user login for replication
-        internal string newPassword = "";                                   // new password for reset password
+        internal int timeout;                                            // login timeout
+        internal bool userInstance = false;                              // user instance
+        internal string hostName = "";                                   // client machine name
+        internal string userName = "";                                   // user id
+        internal string password = "";                                   // password
+        internal string applicationName = "";                            // application name
+        internal string serverName = "";                                 // server name
+        internal string language = "";                                   // initial language
+        internal string database = "";                                   // initial database
+        internal string attachDBFilename = "";                           // DB filename to be attached
+        internal bool useReplication = false;                            // user login for replication
+        internal string newPassword = "";                                // new password for reset password
         internal bool useSSPI = false;                                   // use integrated security
-        internal int packetSize = SqlConnectionString.DEFAULT.Packet_Size; // packet size
-        internal bool readOnlyIntent = false;                                   // read-only intent
-        internal SqlCredential credential;                                      // user id and password in SecureString
+        internal int packetSize = DbConnectionStringDefaults.PacketSize; // packet size
+        internal bool readOnlyIntent = false;                            // read-only intent
+        internal SqlCredential credential;                               // user id and password in SecureString
         internal SecureString newSecurePassword;
     }
 
@@ -125,11 +126,6 @@ namespace Microsoft.Data.SqlClient
         internal byte minorVersion;
         internal short buildNum;
         internal uint tdsVersion;
-#if NETFRAMEWORK
-        internal string programName;
-
-        internal bool isVersion8;
-#endif
     }
 
     internal sealed class SqlFedAuthInfo
@@ -305,9 +301,7 @@ namespace Microsoft.Data.SqlClient
 
         internal DataTable schemaTable;
         private readonly _SqlMetaData[] _metaDataArray;
-#if !NETFRAMEWORK
         internal ReadOnlyCollection<DbColumn> dbColumnSchema;
-#endif
 
         private int _hiddenColumnCount;
         private int[] _visibleColumnMap;
@@ -327,11 +321,9 @@ namespace Microsoft.Data.SqlClient
             id = original.id;
             _hiddenColumnCount = original._hiddenColumnCount;
             _visibleColumnMap = original._visibleColumnMap;
-#if !NETFRAMEWORK
             dbColumnSchema = original.dbColumnSchema;
-#else
             schemaTable = original.schemaTable;
-#endif
+
             if (original._metaDataArray == null)
             {
                 _metaDataArray = null;
@@ -578,7 +570,7 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed class SqlMetaDataUdt
     {
-#if NET6_0_OR_GREATER
+#if NET
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 #endif
         internal Type Type;
@@ -664,6 +656,7 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed class SqlReturnValue : SqlMetaDataPriv
     {
+        // @TODO: Make auto properties (and rename to match)
         internal string parameter;
         internal readonly SqlBuffer value;
 #if NETFRAMEWORK
@@ -752,7 +745,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static readonly MultiPartTableName Null = new MultiPartTableName(new string[] { null, null, null, null });
+        internal static readonly MultiPartTableName Null = new(new string[] { null, null, null, null });
     }
 
     internal static class SslProtocolsHelper
@@ -767,18 +760,20 @@ namespace Microsoft.Data.SqlClient
             {
                 name = "TLS 1.3";
             }*/
-            if ((protocol & SslProtocols.Tls12) == SslProtocols.Tls12)
+#pragma warning disable CA5397 // Do not use deprecated SslProtocols values
+#pragma warning disable CA5398 // Avoid hardcoded SslProtocols values
+            if ((protocol & SslProtocols.Tls12) != SslProtocols.None)
             {
                 name = "TLS 1.2";
             }
 #if NET8_0_OR_GREATER
 #pragma warning disable SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
 #endif
-            else if ((protocol & SslProtocols.Tls11) == SslProtocols.Tls11)
+            else if ((protocol & SslProtocols.Tls11) != SslProtocols.None)
             {
                 name = "TLS 1.1";
             }
-            else if ((protocol & SslProtocols.Tls) == SslProtocols.Tls)
+            else if ((protocol & SslProtocols.Tls) != SslProtocols.None)
             {
                 name = "TLS 1.0";
             }
@@ -786,15 +781,17 @@ namespace Microsoft.Data.SqlClient
 #pragma warning restore SYSLIB0039 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
 #endif
 #pragma warning disable CS0618 // Type or member is obsolete: SSL is deprecated
-            else if ((protocol & SslProtocols.Ssl3) == SslProtocols.Ssl3)
+            else if ((protocol & SslProtocols.Ssl3) != SslProtocols.None)
             {
                 name = "SSL 3.0";
             }
-            else if ((protocol & SslProtocols.Ssl2) == SslProtocols.Ssl2)
+            else if ((protocol & SslProtocols.Ssl2) != SslProtocols.None)
 #pragma warning restore CS0618 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
             {
                 name = "SSL 2.0";
             }
+#pragma warning restore CA5397 // Do not use deprecated SslProtocols values
+#pragma warning restore CA5398 // Avoid hardcoded SslProtocols values
             else
             {
 #if !NETFRAMEWORK
@@ -818,9 +815,13 @@ namespace Microsoft.Data.SqlClient
 #if NET8_0_OR_GREATER
 #pragma warning disable SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
 #endif
-#pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
+#pragma warning disable CS0618 // Type or member is obsolete : SSL is deprecated
+#pragma warning disable CA5397 // Do not use deprecated SslProtocols values
+#pragma warning disable CA5398 // Avoid hardcoded SslProtocols values
             if ((protocol & (SslProtocols.Ssl2 | SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11)) != SslProtocols.None)
-#pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
+#pragma warning restore CA5398 // Avoid hardcoded SslProtocols values
+#pragma warning restore CA5397 // Do not use deprecated SslProtocols values
+#pragma warning restore CS0618 // Type or member is obsolete : SSL is deprecated
 #if NET8_0_OR_GREATER
 #pragma warning restore SYSLIB0039 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
 #endif

@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             sqlCommand.ExecuteNonQuery();
         }
 
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
         /// <summary>
         /// Insert CustomerDateOnly record into table
         /// </summary>
@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     case "int":
                         Assert.True(sqlDataReader.GetInt32(columnsRead) == 45, "FAILED: read int value does not match.");
                         break;
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
                     case "DateOnly":
                         Assert.True(sqlDataReader.GetFieldValue<DateOnly>(columnsRead) == new DateOnly(2001, 1, 31), "FAILED: read DateOnly value does not match.");
                         break;
@@ -213,6 +213,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         internal static string GenerateUniqueName(string baseName) => string.Concat("AE_", baseName, "_", Guid.NewGuid().ToString().Replace('-', '_'));
     }
 
+    public static class DataHelpers
+    {
+        public static IEnumerable<object[]> AEConnectionStringProviderWithSchemaType()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStrings)
+            {
+                yield return new object[] { connStrAE, SchemaType.Source };
+                yield return new object[] { connStrAE, SchemaType.Mapped };
+            }
+        }
+
+        public static IEnumerable<object[]> AEConnectionStringProviderWithCommandBehaviorSet1()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStrings)
+            {
+                yield return new object[] { connStrAE, CommandBehavior.SingleResult };
+                yield return new object[] { connStrAE, CommandBehavior.SingleRow };
+                yield return new object[] { connStrAE, CommandBehavior.CloseConnection };
+                yield return new object[] { connStrAE, CommandBehavior.SequentialAccess };
+            }
+        }
+
+        public static IEnumerable<object[]> AEConnectionStringProviderWithCommandBehaviorSet2()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStrings)
+            {
+                yield return new object[] { connStrAE, CommandBehavior.Default };
+                yield return new object[] { connStrAE, CommandBehavior.SequentialAccess };
+            }
+        }
+    }
+
     public class AEConnectionStringProviderWithBooleanVariable : IEnumerable<object[]>
     {
         public IEnumerator<object[]> GetEnumerator()
@@ -239,47 +271,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public class AEConnectionStringProviderWithCommandBehaviorSet1 : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
-        {
-            foreach (string connStrAE in DataTestUtility.AEConnStrings)
-            {
-                yield return new object[] { connStrAE, CommandBehavior.SingleResult };
-                yield return new object[] { connStrAE, CommandBehavior.SingleRow };
-                yield return new object[] { connStrAE, CommandBehavior.CloseConnection };
-                yield return new object[] { connStrAE, CommandBehavior.SequentialAccess };
-            }
-        }
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-
-    public class AEConnectionStringProviderWithCommandBehaviorSet2 : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
-        {
-            foreach (string connStrAE in DataTestUtility.AEConnStrings)
-            {
-                yield return new object[] { connStrAE, CommandBehavior.Default };
-                yield return new object[] { connStrAE, CommandBehavior.SequentialAccess };
-            }
-        }
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-
-    public class AEConnectionStringProviderWithSchemaType : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
-        {
-            foreach (string connStrAE in DataTestUtility.AEConnStrings)
-            {
-                yield return new object[] { connStrAE, SchemaType.Source };
-                yield return new object[] { connStrAE, SchemaType.Mapped };
-            }
-        }
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-
     public class AEConnectionStringProviderWithIntegers : IEnumerable<object[]>
     {
         public IEnumerator<object[]> GetEnumerator()
@@ -299,10 +290,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             foreach (string connStrAE in DataTestUtility.AEConnStrings)
             {
-                yield return new object[] { connStrAE, @"ExecuteReader", 1 };
-                yield return new object[] { connStrAE, @"ExecuteReader", 3 };
-                yield return new object[] { connStrAE, @"ExecuteNonQuery", 1 };
-                yield return new object[] { connStrAE, @"ExecuteNonQuery", 3 };
+                yield return new object[] { connStrAE, @"ExecuteReader" };
+                yield return new object[] { connStrAE, @"ExecuteNonQuery" };
             }
         }
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

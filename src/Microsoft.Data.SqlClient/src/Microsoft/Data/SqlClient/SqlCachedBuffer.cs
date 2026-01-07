@@ -37,10 +37,25 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal static TdsOperationStatus TryCreate(SqlMetaDataPriv metadata, TdsParser parser, TdsParserStateObject stateObj, out SqlCachedBuffer buffer)
         {
-            byte[] byteArr;
-
-            List<byte[]> cachedBytes = new();
             buffer = null;
+
+            stateObj.RequestContinue(true);
+            (bool canContinue, bool isStarting, bool isContinuing) = stateObj.GetSnapshotStatuses();
+
+            List<byte[]> cachedBytes = null;
+            if (canContinue && isContinuing)
+            {
+                cachedBytes = stateObj.TryTakeSnapshotStorage() as List<byte[]>;
+                if (isStarting)
+                {
+                    cachedBytes = null;
+                }
+            }
+ 
+            if (cachedBytes == null)
+            {
+                cachedBytes = new List<byte[]>();
+            }
 
             // the very first length is already read.
             TdsOperationStatus result = parser.TryPlpBytesLeft(stateObj, out ulong plplength);
@@ -59,13 +74,29 @@ namespace Microsoft.Data.SqlClient
                 }
                 do
                 {
+                    bool returnAfterAdd = false;
                     int cb = (plplength > (ulong)MaxChunkSize) ? MaxChunkSize : (int)plplength;
-                    byteArr = new byte[cb];
-                    result = stateObj.TryReadPlpBytes(ref byteArr, 0, cb, out cb);
+                    byte[] byteArr = new byte[cb];
+                    // pass false for the writeDataSizeToSnapshot parameter because we want to only take data
+                    // from the current packet and not try to do a continue-capable multi packet read
+                    result = stateObj.TryReadPlpBytes(ref byteArr, 0, cb, out cb, canContinue, writeDataSizeToSnapshot: false, compatibilityMode: false);
                     if (result != TdsOperationStatus.Done)
                     {
-                        return result;
+                        if (result == TdsOperationStatus.NeedMoreData && canContinue && cb == byteArr.Length)
+                        {
+                            // succeeded in getting the data but failed to find the next plp length
+                            returnAfterAdd = true;
+                        }
+                        else
+                        {
+                            if (canContinue)
+                            {
+                                stateObj.SetSnapshotStorage(cachedBytes);
+                            }
+                            return result;
+                        }
                     }
+
                     Debug.Assert(cb == byteArr.Length);
                     if (cachedBytes.Count == 0)
                     {
@@ -74,6 +105,13 @@ namespace Microsoft.Data.SqlClient
                     }
                     cachedBytes.Add(byteArr);
                     plplength -= (ulong)cb;
+
+                    if (returnAfterAdd)
+                    {
+                        stateObj.SetSnapshotStorage(cachedBytes);
+                        return result;
+                    }
+
                 } while (plplength > 0);
 
                 result = parser.TryPlpBytesLeft(stateObj, out plplength);

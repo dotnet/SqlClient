@@ -182,7 +182,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public static void AddKeyToCng(string providerName, string containerName)
         {
-#if NET6_0_OR_GREATER
+#if NET
             System.Diagnostics.Debug.Assert(OperatingSystem.IsWindows());
 #endif
             CngKeyCreationParameters keyParams = new CngKeyCreationParameters();
@@ -202,7 +202,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public static void RemoveKeyFromCng(string providerName, string containerName)
         {
-#if NET6_0_OR_GREATER
+#if NET
             System.Diagnostics.Debug.Assert(OperatingSystem.IsWindows());
 #endif
             CngProvider cngProvider = new CngProvider(providerName);

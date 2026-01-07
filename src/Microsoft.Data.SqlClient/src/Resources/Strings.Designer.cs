@@ -241,15 +241,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Update requires a connection..
-        /// </summary>
-        internal static string ADP_ConnecitonRequired_UpdateRows {
-            get {
-                return ResourceManager.GetString("ADP_ConnecitonRequired_UpdateRows", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The connection was not closed. {0}.
         /// </summary>
         internal static string ADP_ConnectionAlreadyOpen {
@@ -349,6 +340,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Update requires a connection..
+        /// </summary>
+        internal static string ADP_ConnectionRequired_UpdateRows {
+            get {
+                return ResourceManager.GetString("ADP_ConnectionRequired_UpdateRows", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The connection&apos;s current state: {0}..
         /// </summary>
         internal static string ADP_ConnectionStateMsg {
@@ -435,15 +435,6 @@ namespace System {
         internal static string ADP_DataReaderClosed {
             get {
                 return ResourceManager.GetString("ADP_DataReaderClosed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to No data exists for the row/column..
-        /// </summary>
-        internal static string ADP_DataReaderNoData {
-            get {
-                return ResourceManager.GetString("ADP_DataReaderNoData", resourceCulture);
             }
         }
         
@@ -880,15 +871,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot set the AccessToken property with the &apos;Context Connection&apos; keyword..
-        /// </summary>
-        internal static string ADP_InvalidMixedUsageOfAccessTokenAndContextConnection {
-            get {
-                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenAndContextConnection", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Cannot set the AccessToken property if the Credential property is already set..
         /// </summary>
         internal static string ADP_InvalidMixedUsageOfAccessTokenAndCredential {
@@ -957,15 +939,6 @@ namespace System {
         internal static string ADP_InvalidMixedUsageOfSecureAndClearCredential {
             get {
                 return ResourceManager.GetString("ADP_InvalidMixedUsageOfSecureAndClearCredential", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot use Credential with Context Connection keyword..
-        /// </summary>
-        internal static string ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection {
-            get {
-                return ResourceManager.GetString("ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection", resourceCulture);
             }
         }
         
@@ -1301,7 +1274,18 @@ namespace System {
                 return ResourceManager.GetString("ADP_NoQuoteChange", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to SqlBatchCommand list has not been initialized..
+        /// </summary>
+        internal static string ADP_NoSqlBatchCommandList
+        {
+            get
+            {
+                return ResourceManager.GetString("ADP_NoSqlBatchCommandList", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to The stored procedure &apos;{0}&apos; doesn&apos;t exist..
         /// </summary>
@@ -1897,47 +1881,29 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Buffer advanced too far {0}.
+        /// </summary>
+        internal static string ArrayBufferWriterAdvancedTooFar {
+            get {
+                return ResourceManager.GetString("ArrayBufferWriterAdvancedTooFar", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Buffer maximum size exceeded: {0}.
+        /// </summary>
+        internal static string ArrayBufferWriterMaximumSizeExceeded {
+            get {
+                return ResourceManager.GetString("ArrayBufferWriterMaximumSizeExceeded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The validation of an attestation token failed. The token signature does not match the computed signature using a public key retrieved from the attestation public key endpoint at &apos;{0}&apos;. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services..
         /// </summary>
         internal static string AttestationTokenSignatureValidationFailed {
             get {
                 return ResourceManager.GetString("AttestationTokenSignatureValidationFailed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to .database.chinacloudapi.cn.
-        /// </summary>
-        internal static string AZURESQL_ChinaEndpoint {
-            get {
-                return ResourceManager.GetString("AZURESQL_ChinaEndpoint", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to .database.windows.net.
-        /// </summary>
-        internal static string AZURESQL_GenericEndpoint {
-            get {
-                return ResourceManager.GetString("AZURESQL_GenericEndpoint", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to .database.cloudapi.de.
-        /// </summary>
-        internal static string AZURESQL_GermanEndpoint {
-            get {
-                return ResourceManager.GetString("AZURESQL_GermanEndpoint", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to .database.usgovcloudapi.net.
-        /// </summary>
-        internal static string AZURESQL_UsGovEndpoint {
-            get {
-                return ResourceManager.GetString("AZURESQL_UsGovEndpoint", resourceCulture);
             }
         }
         
@@ -2295,9 +2261,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Connection Resiliency.
         /// </summary>
-        internal static string DataCategory_ConnectionResilency {
+        internal static string DataCategory_ConnectionResiliency {
             get {
-                return ResourceManager.GetString("DataCategory_ConnectionResilency", resourceCulture);
+                return ResourceManager.GetString("DataCategory_ConnectionResiliency", resourceCulture);
             }
         }
         
@@ -2808,9 +2774,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Ordinal &apos;{0}&apos; exceeds the maximum number..
         /// </summary>
-        internal static string DataColumn_OrdinalExceedMaximun {
+        internal static string DataColumn_OrdinalExceedMaximum {
             get {
-                return ResourceManager.GetString("DataColumn_OrdinalExceedMaximun", resourceCulture);
+                return ResourceManager.GetString("DataColumn_OrdinalExceedMaximum", resourceCulture);
             }
         }
         
@@ -3681,9 +3647,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Relation {0} cannot be merged, because keys have mismatch columns..
         /// </summary>
-        internal static string DataMerge_ReltionKeyColumnsMismatch {
+        internal static string DataMerge_RelationKeyColumnsMismatch {
             get {
-                return ResourceManager.GetString("DataMerge_ReltionKeyColumnsMismatch", resourceCulture);
+                return ResourceManager.GetString("DataMerge_RelationKeyColumnsMismatch", resourceCulture);
             }
         }
         
@@ -6354,18 +6320,18 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Cannot convert from {0} to {1}..
         /// </summary>
-        internal static string Expr_DatatypeConvertion {
+        internal static string Expr_DatatypeConversion {
             get {
-                return ResourceManager.GetString("Expr_DatatypeConvertion", resourceCulture);
+                return ResourceManager.GetString("Expr_DatatypeConversion", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Cannot convert value &apos;{0}&apos; to Type: {1}..
         /// </summary>
-        internal static string Expr_DatavalueConvertion {
+        internal static string Expr_DatavalueConversion {
             get {
-                return ResourceManager.GetString("Expr_DatavalueConvertion", resourceCulture);
+                return ResourceManager.GetString("Expr_DatavalueConversion", resourceCulture);
             }
         }
         
@@ -6408,9 +6374,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Filter expression &apos;{0}&apos; does not evaluate to a Boolean term..
         /// </summary>
-        internal static string Expr_FilterConvertion {
+        internal static string Expr_FilterConversion {
             get {
-                return ResourceManager.GetString("Expr_FilterConvertion", resourceCulture);
+                return ResourceManager.GetString("Expr_FilterConversion", resourceCulture);
             }
         }
         
@@ -7182,9 +7148,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Simple type &apos;{0}&apos; has already be declared with different &apos;{1}&apos;..
         /// </summary>
-        internal static string NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration {
+        internal static string NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration {
             get {
-                return ResourceManager.GetString("NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration", resourceCulture);
+                return ResourceManager.GetString("NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration", resourceCulture);
             }
         }
         
@@ -8344,7 +8310,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to Socket is null.
         /// </summary>
         internal static string SNI_ERROR_10 {
             get {
@@ -9039,9 +9005,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to The client was unable to establish a connection because of an error during connection initialization process before login. Possible causes include the following:  the client tried to connect to an unsupported version of SQL Server; the server was too busy to accept new connections; or there was a resource limitation (insufficient memory or maximum allowed connections) on the server..
         /// </summary>
-        internal static string Snix_PreLoginBeforeSuccessfullWrite {
+        internal static string Snix_PreLoginBeforeSuccessfulWrite {
             get {
-                return ResourceManager.GetString("Snix_PreLoginBeforeSuccessfullWrite", resourceCulture);
+                return ResourceManager.GetString("Snix_PreLoginBeforeSuccessfulWrite", resourceCulture);
             }
         }
         
@@ -9105,15 +9071,6 @@ namespace System {
         internal static string SQL_AuthenticationAndIntegratedSecurity {
             get {
                 return ResourceManager.GetString("SQL_AuthenticationAndIntegratedSecurity", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Batching updates is not supported on the context connection..
-        /// </summary>
-        internal static string SQL_BatchedUpdatesNotAvailableOnContextConnection {
-            get {
-                return ResourceManager.GetString("SQL_BatchedUpdatesNotAvailableOnContextConnection", resourceCulture);
             }
         }
         
@@ -9458,51 +9415,16 @@ namespace System {
                 return ResourceManager.GetString("SQL_ConnectionLockedForBcpEvent", resourceCulture);
             }
         }
-        
+		
         /// <summary>
-        ///   Looks up a localized string similar to The only additional connection string keyword that may be used when requesting the context connection is the Type System Version keyword..
+        ///   Looks up a localized string similar to Connecting to the context connection using Microsoft.Data.SqlClient is not supported..
         /// </summary>
-        internal static string SQL_ContextAllowsLimitedKeywords {
+        internal static string SQL_ContextConnectionIsUnsupported {
             get {
-                return ResourceManager.GetString("SQL_ContextAllowsLimitedKeywords", resourceCulture);
+                return ResourceManager.GetString("SQL_ContextConnectionIsUnsupported", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The context connection does not support Type System Version=SQL Server 2000..
-        /// </summary>
-        internal static string SQL_ContextAllowsOnlyTypeSystem2005 {
-            get {
-                return ResourceManager.GetString("SQL_ContextAllowsOnlyTypeSystem2005", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The context connection is already in use..
-        /// </summary>
-        internal static string SQL_ContextConnectionIsInUse {
-            get {
-                return ResourceManager.GetString("SQL_ContextConnectionIsInUse", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The requested operation requires a SqlClr context, which is only available when running in the Sql Server process..
-        /// </summary>
-        internal static string SQL_ContextUnavailableOutOfProc {
-            get {
-                return ResourceManager.GetString("SQL_ContextUnavailableOutOfProc", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The requested operation requires a Sql Server execution thread.  The current thread was started by user code or other non-Sql Server engine code..
-        /// </summary>
-        internal static string SQL_ContextUnavailableWhileInProc {
-            get {
-                return ResourceManager.GetString("SQL_ContextUnavailableWhileInProc", resourceCulture);
-            }
-        }
+
         
         /// <summary>
         ///   Looks up a localized string similar to Either Credential or both &apos;User ID&apos; and &apos;Password&apos; (or &apos;UID&apos; and &apos;PWD&apos;) connection string keywords must be specified, if &apos;Authentication={0}&apos;..
@@ -9675,6 +9597,15 @@ namespace System {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to: The connection attempt timed out.
+        /// </summary>
+        internal static string SQL_ConnectTimeout {
+            get {
+                return ResourceManager.GetString("SQL_ConnectTimeout", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Timeout expired.  The connection has been broken as a result..
         /// </summary>
@@ -9874,6 +9805,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Invalid attempt to get JsonDocument on column &apos;{0}&apos;. JsonDocument is only supported for columns of type json..
+        /// </summary>
+        internal static string SQL_JsonDocumentNotSupportedOnColumnType {
+            get {
+                return ResourceManager.GetString("SQL_JsonDocumentNotSupportedOnColumnType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot authenticate using Kerberos. Ensure Kerberos has been initialized on the client with &apos;kinit&apos; and a Service Principal Name has been registered for the SQL Server to allow Kerberos authentication..
         /// </summary>
         internal static string SQL_KerberosTicketMissingError {
@@ -9987,24 +9927,6 @@ namespace System {
         internal static string SQL_NonXmlResult {
             get {
                 return ResourceManager.GetString("SQL_NonXmlResult", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The requested operation is not available on the context connection..
-        /// </summary>
-        internal static string SQL_NotAvailableOnContextConnection {
-            get {
-                return ResourceManager.GetString("SQL_NotAvailableOnContextConnection", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Notifications are not available on the context connection..
-        /// </summary>
-        internal static string SQL_NotificationsNotAvailableOnContextConnection {
-            get {
-                return ResourceManager.GetString("SQL_NotificationsNotAvailableOnContextConnection", resourceCulture);
             }
         }
         
@@ -10189,15 +10111,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to An error occurred with a prior row sent to the SqlPipe.  SendResultsEnd must be called before anything else can be sent..
-        /// </summary>
-        internal static string SQL_PipeErrorRequiresSendEnd {
-            get {
-                return ResourceManager.GetString("SQL_PipeErrorRequiresSendEnd", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Precision value &apos;{0}&apos; is either less than 0 or greater than the maximum allowed precision of 38..
         /// </summary>
         internal static string SQL_PrecisionValueOutOfRange {
@@ -10378,78 +10291,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &apos;{0}&apos; cannot be called when the record is read only..
-        /// </summary>
-        internal static string SQL_SqlRecordReadOnly {
-            get {
-                return ResourceManager.GetString("SQL_SqlRecordReadOnly", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Operation cannot be completed because the record is read only..
-        /// </summary>
-        internal static string SQL_SqlRecordReadOnly2 {
-            get {
-                return ResourceManager.GetString("SQL_SqlRecordReadOnly2", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid attempt to call method {0} when SqlResultSet is closed..
-        /// </summary>
-        internal static string SQL_SqlResultSetClosed {
-            get {
-                return ResourceManager.GetString("SQL_SqlResultSetClosed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Operation cannot be completed because the SqlResultSet is closed..
-        /// </summary>
-        internal static string SQL_SqlResultSetClosed2 {
-            get {
-                return ResourceManager.GetString("SQL_SqlResultSetClosed2", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Operation cannot be completed because the command that created the SqlResultSet has been dissociated from the original connection. SqlResultSet is closed..
-        /// </summary>
-        internal static string SQL_SqlResultSetCommandNotInSameConnection {
-            get {
-                return ResourceManager.GetString("SQL_SqlResultSetCommandNotInSameConnection", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to SqlResultSet could not be created for the given query with the desired options..
-        /// </summary>
-        internal static string SQL_SqlResultSetNoAcceptableCursor {
-            get {
-                return ResourceManager.GetString("SQL_SqlResultSetNoAcceptableCursor", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid attempt to call method {0} when the current row is deleted.
-        /// </summary>
-        internal static string SQL_SqlResultSetRowDeleted {
-            get {
-                return ResourceManager.GetString("SQL_SqlResultSetRowDeleted", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Operation cannot be completed because the current row is deleted.
-        /// </summary>
-        internal static string SQL_SqlResultSetRowDeleted2 {
-            get {
-                return ResourceManager.GetString("SQL_SqlResultSetRowDeleted2", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; cannot be called when the SqlDataRecord is read only..
         /// </summary>
         internal static string SQL_SqlUpdatableRecordReadOnly {
@@ -10484,16 +10325,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_StreamNotSupportOnColumnType", resourceCulture);
             }
         }
-
-        /// <summary>
-        ///    Looks up a localized string similar to Invalid attempt to get JsonDocument on column &apos;{0}&apos;. JsonDocument is only supported for columns of type json.
-        /// </summary>
-        internal static string SQL_JsonDocumentNotSupportedOnColumnType {
-            get {
-                return ResourceManager.GetString("SQL_JsonDocumentNotSupportedOnColumnType", resourceCulture);
-            }
-        }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to The Stream does not support reading..
         /// </summary>
@@ -10648,7 +10480,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to This failure occurred while attempting to connect to the routing destination. The duration spent while attempting to connect to the original server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; [Post-Login] complete={4};  .
+        ///   Looks up a localized string similar to This failure occurred while attempting to connect to the routing destination. The duration spent while attempting to connect to the original server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; [Post-Login] complete={4}; .
         /// </summary>
         internal static string SQL_Timeout_RoutingDestinationInfo {
             get {
@@ -10810,19 +10642,65 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to User instances are not allowed when running in the Sql Server process..
+        ///   Looks up a localized string similar to Invalid attempt to get vector data from column '{0}'. Vectors are only supported for columns of type vector..
         /// </summary>
-        internal static string SQL_UserInstanceNotAvailableInProc {
+        internal static string SQL_VectorNotSupportedOnColumnType {
             get {
-                return ResourceManager.GetString("SQL_UserInstanceNotAvailableInProc", resourceCulture);
+                return ResourceManager.GetString("SQL_VectorNotSupportedOnColumnType", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Unsupported Vector type '{0}'..
+        /// </summary>
+        internal static string SQL_VectorTypeNotSupported
+        {
+            get
+            {
+                return ResourceManager.GetString("SQL_VectorTypeNotSupported", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 'null' value not supported for output paramter {0} of SqlDbtype Vector..
+        /// </summary>
+        internal static string ADP_NullOutputParameterValueForVector
+        {
+            get
+            {
+                return ResourceManager.GetString("ADP_NullOutputParameterValueForVector", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid vector header received..
+        /// </summary>
+        internal static string ADP_InvalidVectorHeader
+        {
+            get
+            {
+                return ResourceManager.GetString("ADP_InvalidVectorHeader", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} Invalid JSON string for vector...
+        /// </summary>
+        internal static string ADP_InvalidJsonStringForVector
+        {
+            get
+            {
+                return ResourceManager.GetString("ADP_InvalidJsonStringForVector", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Expecting argument of type {1}, but received type {0}..
         /// </summary>
-        internal static string SQL_WrongType {
-            get {
+        internal static string SQL_WrongType
+        {
+            get
+            {
                 return ResourceManager.GetString("SQL_WrongType", resourceCulture);
             }
         }
@@ -11100,9 +10978,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to The server did not preserve the exact client TDS version requested during a recovery attempt, connection recovery is not possible..
         /// </summary>
-        internal static string SQLCR_TDSVestionNotPreserved {
+        internal static string SQLCR_TDSVersionNotPreserved {
             get {
-                return ResourceManager.GetString("SQLCR_TDSVestionNotPreserved", resourceCulture);
+                return ResourceManager.GetString("SQLCR_TDSVersionNotPreserved", resourceCulture);
             }
         }
         
@@ -11701,15 +11579,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to SqlDependency object cannot be created when running inside the SQL Server process..
-        /// </summary>
-        internal static string SqlNotify_SqlDepCannotBeCreatedInProc {
-            get {
-                return ResourceManager.GetString("SqlNotify_SqlDepCannotBeCreatedInProc", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to DBNull value for parameter &apos;{0}&apos; is not supported. Table-valued parameters cannot be DBNull..
         /// </summary>
         internal static string SqlParameter_DBNullNotSupportedForTVP {
@@ -11814,51 +11683,6 @@ namespace System {
         internal static string SqlParameter_XmlSchemaCollectionOwningSchema {
             get {
                 return ResourceManager.GetString("SqlParameter_XmlSchemaCollectionOwningSchema", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to A result set is currently being sent to the pipe. End the current result set before calling {0}..
-        /// </summary>
-        internal static string SqlPipe_AlreadyHasAnOpenResultSet {
-            get {
-                return ResourceManager.GetString("SqlPipe_AlreadyHasAnOpenResultSet", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to SqlPipe does not support executing a command with a connection that is not a context connection..
-        /// </summary>
-        internal static string SqlPipe_CommandHookedUpToNonContextConnection {
-            get {
-                return ResourceManager.GetString("SqlPipe_CommandHookedUpToNonContextConnection", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Result set has not been initiated.  Call SendResultSetStart before calling {0}..
-        /// </summary>
-        internal static string SqlPipe_DoesNotHaveAnOpenResultSet {
-            get {
-                return ResourceManager.GetString("SqlPipe_DoesNotHaveAnOpenResultSet", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Could not use the pipe while it is busy with another operation..
-        /// </summary>
-        internal static string SqlPipe_IsBusy {
-            get {
-                return ResourceManager.GetString("SqlPipe_IsBusy", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Message length {0} exceeds maximum length supported of 4000..
-        /// </summary>
-        internal static string SqlPipe_MessageTooLong {
-            get {
-                return ResourceManager.GetString("SqlPipe_MessageTooLong", resourceCulture);
             }
         }
         
@@ -11971,7 +11795,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Two or more redirections have occurred. Only one redirection per login is allowed..
+        ///   Looks up a localized string similar to Too many redirections have occurred. Only {0} redirections per login is allowed..
         /// </summary>
         internal static string SQLROR_RecursiveRoutingNotSupported {
             get {
@@ -12144,9 +11968,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to The type of field &apos;{0}&apos; is marked as explicit layout which is not allowed in Native format.
         /// </summary>
-        internal static string SqlUdtReason_NativeFormatExplictLayoutNotAllowed {
+        internal static string SqlUdtReason_NativeFormatExplicitLayoutNotAllowed {
             get {
-                return ResourceManager.GetString("SqlUdtReason_NativeFormatExplictLayoutNotAllowed", resourceCulture);
+                return ResourceManager.GetString("SqlUdtReason_NativeFormatExplicitLayoutNotAllowed", resourceCulture);
             }
         }
         
@@ -12279,18 +12103,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Cannot get value because it is DBNull..
         /// </summary>
-        internal static string StrongTyping_CananotAccessDBNull {
+        internal static string StrongTyping_CannotAccessDBNull {
             get {
-                return ResourceManager.GetString("StrongTyping_CananotAccessDBNull", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot remove relation since it is built in to this dataSet..
-        /// </summary>
-        internal static string StrongTyping_CananotRemoveRelation {
-            get {
-                return ResourceManager.GetString("StrongTyping_CananotRemoveRelation", resourceCulture);
+                return ResourceManager.GetString("StrongTyping_CannotAccessDBNull", resourceCulture);
             }
         }
         
@@ -12300,6 +12115,15 @@ namespace System {
         internal static string StrongTyping_CannotRemoveColumn {
             get {
                 return ResourceManager.GetString("StrongTyping_CannotRemoveColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot remove relation since it is built in to this dataSet..
+        /// </summary>
+        internal static string StrongTyping_CannotRemoveRelation {
+            get {
+                return ResourceManager.GetString("StrongTyping_CannotRemoveRelation", resourceCulture);
             }
         }
         
@@ -12761,7 +12585,18 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCertificateLocation", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid certificate location &apos;{0}&apos; in certificate path &apos;{1}&apos;. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is &apos;{2}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidCertificateLocation_Unix
+        {
+            get
+            {
+                return ResourceManager.GetString("TCE_InvalidCertificateLocation_Unix", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Invalid certificate location &apos;{0}&apos; in certificate path &apos;{1}&apos;. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{2}&apos; or &apos;{3}&apos;..
         /// </summary>
@@ -12770,7 +12605,18 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCertificateLocationSysErr", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Invalid certificate location &apos;{0}&apos; in certificate path &apos;{1}&apos;. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is &apos;{2}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidCertificateLocationSysErr_Unix
+        {
+            get
+            {
+                return ResourceManager.GetString("TCE_InvalidCertificateLocationSysErr_Unix", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid certificate path: &apos;{0}&apos;. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{1}&apos; or &apos;{2}&apos;..
         /// </summary>
@@ -12779,7 +12625,18 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCertificatePath", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid certificate path: &apos;{0}&apos;. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidCertificatePath_Unix
+        {
+            get
+            {
+                return ResourceManager.GetString("TCE_InvalidCertificatePath_Unix", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Invalid certificate path: &apos;{0}&apos;. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{1}&apos; or &apos;{2}&apos;..
         /// </summary>
@@ -12788,13 +12645,15 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCertificatePathSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   Looks up a localized string similar to The specified encrypted column encryption key signature does not match the signature computed with the column master key (certificate) in &apos;{0}&apos;. The encrypted column encryption key may be corrupt, or the specified path may be incorrect..
+        ///   Looks up a localized string similar to Internal error. Invalid certificate path: &apos;{0}&apos;. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is &apos;{1}&apos;..
         /// </summary>
-        internal static string TCE_InvalidCertificateSignature {
-            get {
-                return ResourceManager.GetString("TCE_InvalidCertificateSignature", resourceCulture);
+        internal static string TCE_InvalidCertificatePathSysErr_Unix
+        {
+            get
+            {
+                return ResourceManager.GetString("TCE_InvalidCertificatePathSysErr_Unix", resourceCulture);
             }
         }
         
@@ -12815,31 +12674,13 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCertificateStoreSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect..
+        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s ciphertext length: {0} does not match the ciphertext length: {1} when using column master key ({2}) in &apos;{3}&apos;. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect..
         /// </summary>
         internal static string TCE_InvalidCiphertextLengthInEncryptedCEK {
             get {
                 return ResourceManager.GetString("TCE_InvalidCiphertextLengthInEncryptedCEK", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect..
-        /// </summary>
-        internal static string TCE_InvalidCiphertextLengthInEncryptedCEKCng {
-            get {
-                return ResourceManager.GetString("TCE_InvalidCiphertextLengthInEncryptedCEKCng", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptographic Service provider (CSP) path may be incorrect..
-        /// </summary>
-        internal static string TCE_InvalidCiphertextLengthInEncryptedCEKCsp {
-            get {
-                return ResourceManager.GetString("TCE_InvalidCiphertextLengthInEncryptedCEKCsp", resourceCulture);
             }
         }
         
@@ -13031,40 +12872,22 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidKeyStoreProviderName", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   Looks up a localized string similar to The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in &apos;{0}&apos;. The encrypted column encryption key may be corrupt, or the specified path may be incorrect..
+        ///   Looks up a localized string similar to The specified encrypted column encryption key signature does not match the signature computed with the column master key ({0}) in &apos;{1}&apos;. The encrypted column encryption key may be corrupt, or the specified path may be incorrect..
         /// </summary>
         internal static string TCE_InvalidSignature {
             get {
                 return ResourceManager.GetString("TCE_InvalidSignature", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s signature length: {0} does not match the signature length: {1} when using column master key (certificate) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect..
+        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s signature length: {0} does not match the signature length: {1} when using column master key ({2}) in &apos;{3}&apos;. The encrypted column encryption key may be corrupt, or the specified {4} path may be incorrect..
         /// </summary>
         internal static string TCE_InvalidSignatureInEncryptedCEK {
             get {
                 return ResourceManager.GetString("TCE_InvalidSignatureInEncryptedCEK", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect..
-        /// </summary>
-        internal static string TCE_InvalidSignatureInEncryptedCEKCng {
-            get {
-                return ResourceManager.GetString("TCE_InvalidSignatureInEncryptedCEKCng", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft cryptographic service provider (CSP) path may be incorrect..
-        /// </summary>
-        internal static string TCE_InvalidSignatureInEncryptedCEKCsp {
-            get {
-                return ResourceManager.GetString("TCE_InvalidSignatureInEncryptedCEKCsp", resourceCulture);
             }
         }
         
@@ -13166,7 +12989,18 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullCertificatePath", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is &apos;{0}&apos;..
+        /// </summary>
+        internal static string TCE_NullCertificatePath_Unix
+        {
+            get
+            {
+                return ResourceManager.GetString("TCE_NullCertificatePath_Unix", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{0}&apos; or &apos;{1}&apos;..
         /// </summary>
@@ -13175,7 +13009,18 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullCertificatePathSysErr", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is &apos;{0}&apos;..
+        /// </summary>
+        internal static string TCE_NullCertificatePathSysErr_Unix
+        {
+            get
+            {
+                return ResourceManager.GetString("TCE_NullCertificatePathSysErr_Unix", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Ciphertext value cannot be null..
         /// </summary>
@@ -13908,9 +13753,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Cannot determine the DataSet Element. IsDataSet attribute exist more than once..
         /// </summary>
-        internal static string Xml_TooManyIsDataSetAtributeInSchema {
+        internal static string Xml_TooManyIsDataSetAttributeInSchema {
             get {
-                return ResourceManager.GetString("Xml_TooManyIsDataSetAtributeInSchema", resourceCulture);
+                return ResourceManager.GetString("Xml_TooManyIsDataSetAttributeInSchema", resourceCulture);
             }
         }
         

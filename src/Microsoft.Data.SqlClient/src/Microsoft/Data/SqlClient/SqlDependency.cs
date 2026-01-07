@@ -7,19 +7,22 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading;
+using System.Xml;
+using Microsoft.Data.Common;
+using Microsoft.Data.Sql;
+using Microsoft.Data.SqlClient.ConnectionPool;
+
 #if NETFRAMEWORK
 using System.IO;
 using System.Runtime.Remoting;
 using System.Runtime.Serialization;
 using System.Runtime.Versioning;
 using System.Security.Permissions;
+using Interop.Windows.Sni;
+using Microsoft.Data.SqlClient.LocalDb;
 #endif
-using System.Text;
-using System.Threading;
-using System.Xml;
-using Microsoft.Data.Common;
-using Microsoft.Data.ProviderBase;
-using Microsoft.Data.Sql;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -284,12 +287,6 @@ namespace Microsoft.Data.SqlClient
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency|DEP> {0}, options: '{1}', timeout: '{2}'", ObjectID, options, timeout);
             try
             {
-#if NETFRAMEWORK
-                if (InOutOfProcHelper.InProc)
-                {
-                    throw SQL.SqlDepCannotBeCreatedInProc();
-                }
-#endif
                 if (timeout < 0)
                 {
                     throw SQL.InvalidSqlDependencyTimeout(nameof(timeout));
@@ -314,8 +311,8 @@ namespace Microsoft.Data.SqlClient
 /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/HasChanges/*' />
 #if NETFRAMEWORK
         [
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_HasChanges)
+        ResCategoryAttribute(nameof(Strings.DataCategory_Data)),
+        ResDescriptionAttribute(nameof(Strings.SqlDependency_HasChanges))
         ]
 #endif
         public bool HasChanges => _dependencyFired;
@@ -323,8 +320,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/Id/*' />
 #if NETFRAMEWORK
         [
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_Id)
+        ResCategoryAttribute(nameof(Strings.DataCategory_Data)),
+        ResDescriptionAttribute(nameof(Strings.SqlDependency_Id))
         ]
 #endif
         public string Id => _id;
@@ -345,8 +342,8 @@ namespace Microsoft.Data.SqlClient
 /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/OnChange/*' />
 #if NETFRAMEWORK
         [
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_OnChange)
+        ResCategoryAttribute(nameof(Strings.DataCategory_Data)),
+        ResDescriptionAttribute(nameof(Strings.SqlDependency_OnChange))
         ]
 #endif
         public event OnChangeEventHandler OnChange
@@ -423,8 +420,8 @@ namespace Microsoft.Data.SqlClient
 /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/AddCommandDependency/*' />
 #if NETFRAMEWORK
         [
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_AddCommandDependency)
+        ResCategoryAttribute(nameof(Strings.DataCategory_Data)),
+        ResDescriptionAttribute(nameof(Strings.SqlDependency_AddCommandDependency))
         ]
 #endif
         public void AddCommandDependency(SqlCommand command)
@@ -462,7 +459,7 @@ namespace Microsoft.Data.SqlClient
         [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
         private static void ObtainProcessDispatcher()
         {
-            byte[] nativeStorage = SNINativeMethodWrapper.GetData();
+            byte[] nativeStorage = SqlDependencyProcessDispatcherStorage.NativeGetData();
 
             if (nativeStorage == null)
             {
@@ -470,47 +467,40 @@ namespace Microsoft.Data.SqlClient
 
 #if DEBUG       // Possibly expensive, limit to debug.
                 SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {0}", AppDomain.CurrentDomain.FriendlyName);
-
 #endif // DEBUG
-                _AppDomain masterDomain = SNINativeMethodWrapper.GetDefaultAppDomain();
-
-                if (masterDomain != null)
+                
+                _AppDomain masterDomain = AppDomain.CurrentDomain;
+                
+                ObjectHandle handle = CreateProcessDispatcher(masterDomain);
+                if (handle != null)
                 {
-                    ObjectHandle handle = CreateProcessDispatcher(masterDomain);
+                    SqlDependencyProcessDispatcher dependency = (SqlDependencyProcessDispatcher)handle.Unwrap();
 
-                    if (handle != null)
+                    if (dependency != null)
                     {
-                        SqlDependencyProcessDispatcher dependency = (SqlDependencyProcessDispatcher)handle.Unwrap();
+                        s_processDispatcher = SqlDependencyProcessDispatcher.SingletonProcessDispatcher; // Set to static instance.
 
-                        if (dependency != null)
+                        // Serialize and set in native.
+                        using (MemoryStream stream = new())
                         {
-                            s_processDispatcher = SqlDependencyProcessDispatcher.SingletonProcessDispatcher; // Set to static instance.
-
-                            // Serialize and set in native.
-                            using (MemoryStream stream = new())
-                            {
-                                SqlClientObjRef objRef = new(s_processDispatcher);
-                                DataContractSerializer serializer = new(objRef.GetType());
-                                GetSerializedObject(objRef, serializer, stream);
-                                SNINativeMethodWrapper.SetData(stream.ToArray()); // Native will be forced to synchronize and not overwrite.
-                            }
-                        }
-                        else
-                        {
-                            SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - ObjectHandle.Unwrap returned null!");
-                            throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyObtainProcessDispatcherFailureObjectHandle);
+                            SqlClientObjRef objRef = new(s_processDispatcher);
+                            DataContractSerializer serializer = new(objRef.GetType());
+                            GetSerializedObject(objRef, serializer, stream);
+                            
+                            // Native will be forced to synchronize and not overwrite.
+                            SqlDependencyProcessDispatcherStorage.NativeSetData(stream.ToArray()); 
                         }
                     }
                     else
                     {
-                        SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - AppDomain.CreateInstance returned null!");
-                        throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyProcessDispatcherFailureCreateInstance);
+                        SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - ObjectHandle.Unwrap returned null!");
+                        throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyObtainProcessDispatcherFailureObjectHandle);
                     }
                 }
                 else
                 {
-                    SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - unable to obtain default AppDomain!");
-                    throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyProcessDispatcherFailureAppDomain);
+                    SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - AppDomain.CreateInstance returned null!");
+                    throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyProcessDispatcherFailureCreateInstance);
                 }
             }
             else
@@ -567,14 +557,6 @@ namespace Microsoft.Data.SqlClient
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency.Start|DEP> AppDomainKey: '{0}', queue: '{1}'", AppDomainKey, queue);
             try
             {
-#if NETFRAMEWORK
-                // The following code exists in Stop as well.  It exists here to demand permissions as high in the stack
-                // as possible.
-                if (InOutOfProcHelper.InProc)
-                {
-                    throw SQL.SqlDepCannotBeCreatedInProc();
-                }
-#endif
                 if (string.IsNullOrEmpty(connectionString))
                 {
                     if (connectionString == null)
@@ -600,7 +582,7 @@ namespace Microsoft.Data.SqlClient
                 connectionStringObject.DemandPermission();
                 if (connectionStringObject.LocalDBInstance != null)
                 {
-                    LocalDBAPI.DemandLocalDBPermissions();
+                    LocalDbApi.DemandLocalDbPermissions();
                 }
 #endif
                 // End duplicate Start/Stop logic.
@@ -629,11 +611,9 @@ namespace Microsoft.Data.SqlClient
                             string database = null;
                             string service = null;
                             bool appDomainStart = false;
-#if NETFRAMEWORK
-                            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
+
                             try
-                            { // CER to ensure that if Start succeeds we add to hash completing setup.
+                            {
                               // Start using process wide default service/queue & database from connection string.
                                 result = s_processDispatcher.StartWithDefault(
                                     connectionString,
@@ -720,14 +700,6 @@ namespace Microsoft.Data.SqlClient
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency.Stop|DEP> AppDomainKey: '{0}', queue: '{1}'", AppDomainKey, queue);
             try
             {
-#if NETFRAMEWORK
-                // The following code exists in Stop as well.  It exists here to demand permissions as high in the stack
-                // as possible.
-                if (InOutOfProcHelper.InProc)
-                {
-                    throw SQL.SqlDepCannotBeCreatedInProc();
-                }
-#endif
                 if (string.IsNullOrEmpty(connectionString))
                 {
                     if (connectionString == null)
@@ -753,7 +725,7 @@ namespace Microsoft.Data.SqlClient
                 connectionStringObject.DemandPermission();
                 if (connectionStringObject.LocalDBInstance != null)
                 {
-                    LocalDBAPI.DemandLocalDBPermissions();
+                    LocalDbApi.DemandLocalDbPermissions();
                 }
 #endif
                 // End duplicate Start/Stop logic.
@@ -775,11 +747,9 @@ namespace Microsoft.Data.SqlClient
                             if (useDefaults)
                             {
                                 bool appDomainStop = false;
-#if NETFRAMEWORK
-                                RuntimeHelpers.PrepareConstrainedRegions();
-#endif
+
                                 try
-                                { // CER to ensure that if Stop succeeds we remove from hash completing teardown.
+                                {
                                   // Start using process wide default service/queue & database from connection string.
                                     result = s_processDispatcher.Stop(
                                         connectionString,

@@ -20,9 +20,11 @@ parameters:
     type: string
     default: $(Platform)
   
-  - name: configuration
+  - name: buildConfiguration
     type: string
-    default: $(Configuration)
+    values:
+      - Debug
+      - Release
 
   - name: prebuildSteps
     type: stepList
@@ -44,17 +46,29 @@ jobs:
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
+  # When we're performing a Debug build, we still want to try _compiling_ the
+  # code in Release mode to ensure downstream pipelines don't encounter
+  # compilation errors.  We won't use the Release artifacts for anything else
+  # though.
+  - ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
+    - template: ../steps/ci-project-build-step.yml@self
+      parameters:
+        platform: ${{ parameters.platform }}
+        buildConfiguration: Release
+        operatingSystem: Windows
+        build: all
+
   - template: ../steps/ci-project-build-step.yml@self
     parameters:
       platform: ${{ parameters.platform }}
-      configuration: ${{ parameters.configuration }}
+      buildConfiguration: ${{ parameters.buildConfiguration }}
       operatingSystem: Windows
       build: all
 
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:
       NugetPackageVersion: $(NugetPackageVersion)
-      configuration: $(Configuration)
+      buildConfiguration: ${{ parameters.buildConfiguration }}
       nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
       OutputDirectory: $(packagePath)
       generateSymbolsPackage: false
@@ -63,7 +77,7 @@ jobs:
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:
       NugetPackageVersion: $(NugetPackageVersion)
-      configuration: $(Configuration)
+      buildConfiguration: ${{ parameters.buildConfiguration }}
       nuspecPath: 'tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
       OutputDirectory: $(packagePath)
       generateSymbolsPackage: false

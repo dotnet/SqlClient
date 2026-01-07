@@ -16,11 +16,16 @@ parameters:
     default: ''
 
   - name: buildType
-    displayName: 'Build Type'
     default: Project
     values:
       - Project
       - Package
+
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
 
   - name: prebuildSteps
     type: stepList
@@ -29,6 +34,10 @@ parameters:
   - name: postTestJobs
     type: jobList
     default: []
+
+  # The timeout, in minutes, for each test job.
+  - name: testJobTimeout
+    type: number
 
 stages:
 - ${{ each config in parameters.testConfigurations }}:
@@ -46,7 +55,9 @@ stages:
               - template: ../jobs/ci-run-tests-job.yml@self
                 parameters:
                   debug: ${{ parameters.debug }}
+                  buildConfiguration: ${{ parameters.buildConfiguration }}
                   buildType: ${{ parameters.buildType }}
+                  timeout: ${{ parameters.testJobTimeout }}
                   poolName: ${{ config.value.pool }}
                   hostedPool: ${{ eq(config.value.hostedPool, true) }}
                   image: ${{ image.value }}
@@ -54,6 +65,7 @@ stages:
                   configProperties: ${{ config.value.configProperties }}
                   prebuildSteps: ${{ parameters.prebuildSteps }}
                   targetFramework: ${{ targetFramework }}
+                  netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                   testSet: ${{ testSet }}
                   ${{ each codeCoveTF in config.value.codeCovTargetFrameworks }}:
                     ${{ if eq(codeCoveTF, targetFramework) }}:
@@ -64,12 +76,15 @@ stages:
                     ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:
                       ${{ if eq(x86TF, targetFramework) }}:
                         enableX86Test: true
+                        enableX64Test: false
             - ${{ else }}: # .NET
               - ${{ each useManagedSNI in config.value.useManagedSNI }}:
                 - template: ../jobs/ci-run-tests-job.yml@self
                   parameters:
                     debug: ${{ parameters.debug }}
+                    buildConfiguration: ${{ parameters.buildConfiguration }}
                     buildType: ${{ parameters.buildType }}
+                    timeout: ${{ parameters.testJobTimeout }}
                     poolName: ${{ config.value.pool }}
                     hostedPool: ${{ eq(config.value.hostedPool, true) }}
                     image: ${{ image.value }}
@@ -81,6 +96,7 @@ stages:
                     useManagedSNI: ${{ useManagedSNI }}
                     prebuildSteps: ${{ parameters.prebuildSteps }}                  
                     targetFramework: ${{ targetFramework }}
+                    netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                     testSet: ${{ testSet }}
                     ${{ each codeCoveTF in config.value.codeCovTargetFrameworks }}:
                       ${{ if eq(codeCoveTF, targetFramework) }}:
@@ -91,6 +107,7 @@ stages:
                       ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:
                         ${{ if eq(x86TF, targetFramework) }}:
                           enableX86Test: true
+                          enableX64Test: false
 
 - ${{ if ne(length(parameters.postTestJobs), 0) }}:
   - stage: Post_Test

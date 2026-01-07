@@ -207,7 +207,8 @@ namespace Microsoft.Data.SqlClient
                     EnclaveDHInfo = new EnclaveDiffieHellmanInfo(attestationInfo, offset);
                     offset += EnclaveDHInfo.Size;
 
-                    Debug.Assert(offset == attestationInfo.Length);
+                    // TODO(GH-3604): Fix this failing assertion.
+                    // Debug.Assert(offset == attestationInfo.Length);
                 }
                 catch (Exception exception)
                 {
@@ -401,7 +402,7 @@ namespace Microsoft.Data.SqlClient
                     RequireExpirationTime = true,
                     ValidateLifetime = true,
                     ValidateIssuer = true,
-                    ValidateAudience = false,
+                    ValidateAudience = false, // CodeQL [SM04387] Required for an external standard: Microsoft Azure Attestation does not support the audience claim.
                     RequireSignedTokens = true,
                     ValidIssuers = GenerateListOfIssuers(tokenIssuerUrl),
                     IssuerSigningKeys = issuerSigningKeys

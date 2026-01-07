@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -19,11 +20,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string orderIdQuery = "select orderid from orders where orderid < 10250";
         private static bool IsNotKerberos() => DataTestUtility.IsKerberosTest != true;
 
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3031")]
         [ConditionalFact(nameof(IsNotKerberos))]
         public void TestConnectionStateWithErrorClass20()
         {
-            using TestTdsServer server = TestTdsServer.StartTestServer();
-            using SqlConnection conn = new(server.ConnectionString);
+            using TdsServer server = new TdsServer();
+            server.Start();
+            using SqlConnection conn = new(
+                new SqlConnectionStringBuilder
+                {
+                    DataSource = $"localhost,{server.EndPoint.Port}",
+                    Encrypt = SqlConnectionEncryptOption.Optional
+                }.ConnectionString);
 
             conn.Open();
             SqlCommand cmd = conn.CreateCommand();

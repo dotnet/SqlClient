@@ -37,7 +37,7 @@ For .NET Framework projects it may be necessary to include the following in your
         <DbProviderFactories>
             <add name="SqlClient Data Provider"
                 invariant="Microsoft.Data.SqlClient"
-                description=".Net Framework Data Provider for SqlServer" 
+                description=".Net Framework Data Provider for SqlServer"
                 type="Microsoft.Data.SqlClient.SqlClientFactory, Microsoft.Data.SqlClient" />
         </DbProviderFactories>
     </system.data>
@@ -52,6 +52,7 @@ For .NET Framework projects it may be necessary to include the following in your
 | Can use DateTime object as value for SqlParameter with type `DbType.Time`. | Must use TimeSpan object as value for SqlParameter with type `DbType.Time`. |
 | Using DateTime object as value for SqlParameter with type `DbType.Date` would send date and time to SQL Server. | DateTime object's time components will be truncated when sent to SQL Server using `DbType.Date`. |
 | `Encrypt` defaults to `false`. | Starting in v4.0, default encryption settings were made more secure, requiring opt-in to non-encrypted connections. `Encrypt` defaults to `true` and the driver will always validate the server certificate based on `TrustServerCertificate`. (Previously, server certificates would only be validated if `Encrypt` was also `true`.)<br/><br/>If you need to turn off encryption, you must specify `Encrypt=false`. If you use encryption with a self-signed certificate on the server, you must specify `TrustServerCertificate=true`.<br/><br/>In v5.0, `SqlConnectionStringBuilder.Encrypt` is no longer a `bool`. It's a `SqlConnectionEncryptOption` with multiple values to support `Strict` encryption mode (TDS 8.0). It uses implicit conversion operators to remain code-backwards compatible, but it was a binary breaking change, requiring a recompile of applications. |
+| ConnectionString property uses non-backward compatible keywords with spaces. | The `SqlConnectionStringBuilder` has a `ConnectionString` property that can be used to get the connection string to connect with. The [`Microsoft.Data.SqlClient` connection string](https://learn.microsoft.com/en-us/dotnet/api/microsoft.data.sqlclient.sqlconnection.connectionstring) and the [`System.Data.SqlClient` connection string](https://learn.microsoft.com/en-us/dotnet/api/system.data.sqlclient.sqlconnection.connectionstring) do not support all of the same keywords, so be mindful of that. The `Microsoft.Data.SqlClient` also adds new aliases for some existing keywords. For example, `Microsoft.Data.SqlClient` now supports `Application Intent=ReadOnly` and `Multi Subnet Failover=True`, in addition to the previous `ApplicationIntent=ReadOnly` and `MultiSubnetFailover=True` (notice the spaces in the keywords). Unfortunately, the `SqlConnectionStringBuilder.ConnectionString` uses the new aliases with spaces, which do not exist and are unsupported in `System.Data.SqlClient`. This means if you build a connection string with `Microsoft.Data.SqlClient`, but attempt to use it in an application using `System.Data.SqlClient`, the connection string will not be valid for `System.Data.SqlClient`; you will need to sanitize the connection string by removing the spaces from the keywords. |
 
 ## .NET Framework to .NET Considerations
 

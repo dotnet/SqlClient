@@ -102,6 +102,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("ServerSPN = server2")]
         [InlineData("Failover Partner SPN = server3")]
         [InlineData("FailoverPartnerSPN = server4")]
+        [InlineData("Context Connection = false")]
         public void ConnectionStringTests(string connectionString)
         {
             ExecuteConnectionStringTests(connectionString);
@@ -110,7 +111,6 @@ namespace Microsoft.Data.SqlClient.Tests
         public static readonly IEnumerable<object[]> ConnectionStringTestsNetFx_TestCases = new[]
         {
             new object[] { "Connection Reset = false" },
-            new object[] { "Context Connection = false" },
             new object[] { "Network Library = dbmssocn" },
             new object[] { "Network = dbnmpntw" },
             new object[] { "Net = dbmsrpcn" },
@@ -492,7 +492,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(result);
         }
 
-        #region SqlConnectionEncryptOptionCoverterTests
+        #region TypeConverter Tests
         [Fact]
         public void ConnectionStringFromJsonTests()
         {
@@ -531,6 +531,81 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
+        public void SqlConnectionStringBuilderConverterRoundTrip()
+        {
+            const string SampleConnectionString = "Data Source=localhost;Initial Catalog=master;Integrated Security=True";
+
+            Type instanceDescriptorType = typeof(System.ComponentModel.Design.Serialization.InstanceDescriptor);
+            // Verify that we can use the SqlConnectionStringBuilder's TypeConverter to round-trip a SqlConnectionStringBuilder
+            // to an InstanceDescriptor, then back to another SqlConnectionStringBuilder with the same resultant connection string.
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(SampleConnectionString);
+            TypeConverter converter = TypeDescriptor.GetConverter(typeof(SqlConnectionStringBuilder));
+
+            Assert.NotNull(converter);
+            Assert.True(converter.CanConvertTo(instanceDescriptorType));
+
+            object resultantInstanceDescriptor = converter.ConvertTo(builder, instanceDescriptorType);
+
+            Assert.IsType(instanceDescriptorType, resultantInstanceDescriptor);
+
+            object resultantConnectionStringBuilder = (resultantInstanceDescriptor as System.ComponentModel.Design.Serialization.InstanceDescriptor).Invoke();
+
+            Assert.IsType<SqlConnectionStringBuilder>(resultantConnectionStringBuilder);
+
+            Assert.Equal(builder.ConnectionString, (resultantConnectionStringBuilder as SqlConnectionStringBuilder).ConnectionString);
+        }
+
+        [Fact]
+        public void DataSourceConverterCanConvertFromTest()
+        {
+            PropertyDescriptorCollection csbDescriptor = TypeDescriptor.GetProperties(typeof(SqlConnectionStringBuilder));
+            PropertyDescriptor dataSourceDescriptor = csbDescriptor.Find(nameof(SqlConnectionStringBuilder.DataSource), false);
+            TypeConverter converter = dataSourceDescriptor?.Converter;
+
+            Assert.NotNull(dataSourceDescriptor);
+            Assert.NotNull(converter);
+            // Use the converter to determine if can convert from string data type
+            Assert.True(converter.CanConvertFrom(null, typeof(string)), "Expecting to convert from a string type.");
+            // Use the same converter to determine if can convert from int or bool data types
+            Assert.False(converter.CanConvertFrom(null, typeof(int)), "Not expecting to convert from integer type.");
+            Assert.False(converter.CanConvertFrom(null, typeof(bool)), "Not expecting to convert from boolean type.");
+        }
+
+        [Fact]
+        public void FailoverPartnerConverterCanConvertFromTest()
+        {
+            PropertyDescriptorCollection csbDescriptor = TypeDescriptor.GetProperties(typeof(SqlConnectionStringBuilder));
+            PropertyDescriptor failoverPartnerDescriptor = csbDescriptor.Find(nameof(SqlConnectionStringBuilder.FailoverPartner), false);
+            TypeConverter converter = failoverPartnerDescriptor?.Converter;
+
+            Assert.NotNull(failoverPartnerDescriptor);
+            Assert.NotNull(converter);
+            // Use the converter to determine if can convert from string data type
+            Assert.True(converter.CanConvertFrom(null, typeof(string)), "Expecting to convert from a string type.");
+            // Use the same converter to determine if can convert from int or bool data types
+            Assert.False(converter.CanConvertFrom(null, typeof(int)), "Not expecting to convert from integer type.");
+            Assert.False(converter.CanConvertFrom(null, typeof(bool)), "Not expecting to convert from boolean type.");
+        }
+
+#if NETFRAMEWORK
+        [Fact]
+        public void NetworkLibraryConverterCanConvertFromTest()
+        {
+            PropertyDescriptorCollection csbDescriptor = TypeDescriptor.GetProperties(typeof(SqlConnectionStringBuilder));
+            PropertyDescriptor networkLibraryDescriptor = csbDescriptor.Find(nameof(SqlConnectionStringBuilder.NetworkLibrary), false);
+            TypeConverter converter = networkLibraryDescriptor?.Converter;
+
+            Assert.NotNull(networkLibraryDescriptor);
+            Assert.NotNull(converter);
+            // Use the converter to determine if can convert from string data type
+            Assert.True(converter.CanConvertFrom(null, typeof(string)), "Expecting to convert from a string type.");
+            // Use the same converter to determine if can convert from int or bool data types
+            Assert.False(converter.CanConvertFrom(null, typeof(int)), "Not expecting to convert from integer type.");
+            Assert.False(converter.CanConvertFrom(null, typeof(bool)), "Not expecting to convert from boolean type.");
+        }
+#endif
+
+        [Fact]
         public void SqlConnectionEncryptOptionConverterCanConvertFromTest()
         {
             // Get a converter
@@ -544,17 +619,94 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
+        public void DataSourceConverterCanConvertToTest()
+        {
+            PropertyDescriptorCollection csbDescriptor = TypeDescriptor.GetProperties(typeof(SqlConnectionStringBuilder));
+            PropertyDescriptor dataSourceDescriptor = csbDescriptor.Find(nameof(SqlConnectionStringBuilder.DataSource), false);
+            TypeConverter converter = dataSourceDescriptor?.Converter;
+
+            Assert.NotNull(dataSourceDescriptor);
+            Assert.NotNull(converter);
+            // Use the converter to check if can convert from string
+            Assert.True(converter.CanConvertTo(null, typeof(string)), "Expecting to convert to a string type.");
+            // Use the same convert to check if can convert to int or bool
+            Assert.False(converter.CanConvertTo(null, typeof(int)), "Not expecting to convert to integer type.");
+            Assert.False(converter.CanConvertTo(null, typeof(bool)), "Not expecting to convert to boolean type.");
+        }
+
+        [Fact]
+        public void FailoverPartnerConverterCanConvertToTest()
+        {
+            PropertyDescriptorCollection csbDescriptor = TypeDescriptor.GetProperties(typeof(SqlConnectionStringBuilder));
+            PropertyDescriptor failoverPartnerDescriptor = csbDescriptor.Find(nameof(SqlConnectionStringBuilder.FailoverPartner), false);
+            TypeConverter converter = failoverPartnerDescriptor?.Converter;
+
+            Assert.NotNull(failoverPartnerDescriptor);
+            Assert.NotNull(converter);
+            // Use the converter to check if can convert from string
+            Assert.True(converter.CanConvertTo(null, typeof(string)), "Expecting to convert to a string type.");
+            // Use the same convert to check if can convert to int or bool
+            Assert.False(converter.CanConvertTo(null, typeof(int)), "Not expecting to convert to integer type.");
+            Assert.False(converter.CanConvertTo(null, typeof(bool)), "Not expecting to convert to boolean type.");
+        }
+
+#if NETFRAMEWORK
+        [Fact]
+        public void NetworkLibraryConverterCanConvertToTest()
+        {
+            PropertyDescriptorCollection csbDescriptor = TypeDescriptor.GetProperties(typeof(SqlConnectionStringBuilder));
+            PropertyDescriptor networkLibraryDescriptor = csbDescriptor.Find(nameof(SqlConnectionStringBuilder.NetworkLibrary), false);
+            TypeConverter converter = networkLibraryDescriptor?.Converter;
+
+            Assert.NotNull(networkLibraryDescriptor);
+            Assert.NotNull(converter);
+            // Use the converter to check if can convert from string
+            Assert.True(converter.CanConvertTo(null, typeof(string)), "Expecting to convert to a string type.");
+            // Use the same convert to check if can convert to int or bool
+            Assert.False(converter.CanConvertTo(null, typeof(int)), "Not expecting to convert to integer type.");
+            Assert.False(converter.CanConvertTo(null, typeof(bool)), "Not expecting to convert to boolean type.");
+        }
+#endif
+
+        [Fact]
         public void SqlConnectionEncryptOptionConverterCanConvertToTest()
         {
             // Get a converter
             SqlConnectionEncryptOption option = SqlConnectionEncryptOption.Parse("false");
             TypeConverter converter = TypeDescriptor.GetConverter(option.GetType());
-            // Use the converter to check if can convert from stirng
+            // Use the converter to check if can convert from string
             Assert.True(converter.CanConvertTo(null, typeof(string)), "Expecting to convert to a string type.");
             // Use the same convert to check if can convert to int or bool
-            Assert.False(converter.CanConvertTo(null, typeof(int)), "Not expecting to convert from integer type.");
-            Assert.False(converter.CanConvertTo(null, typeof(bool)), "Not expecting to convert from boolean type.");
+            Assert.False(converter.CanConvertTo(null, typeof(int)), "Not expecting to convert to integer type.");
+            Assert.False(converter.CanConvertTo(null, typeof(bool)), "Not expecting to convert to boolean type.");
         }
+
+#if NETFRAMEWORK
+        [Fact]
+        public void NetworkLibraryGetStandardValuesTest()
+        {
+            PropertyDescriptorCollection csbDescriptor = TypeDescriptor.GetProperties(typeof(SqlConnectionStringBuilder));
+            PropertyDescriptor networkLibraryDescriptor = csbDescriptor.Find(nameof(SqlConnectionStringBuilder.NetworkLibrary), false);
+            TypeConverter converter = networkLibraryDescriptor?.Converter;
+
+            Assert.NotNull(networkLibraryDescriptor);
+            Assert.NotNull(converter);
+
+            Assert.True(converter.GetStandardValuesSupported());
+            Assert.False(converter.GetStandardValuesExclusive());
+
+            System.Collections.ICollection networkLibraries = converter.GetStandardValues();
+            string[] networkLibraryArray = new string[4];
+
+            Assert.Equal(4, networkLibraries.Count);
+            networkLibraries.CopyTo(networkLibraryArray, 0);
+
+            Assert.NotEqual(-1, Array.IndexOf(networkLibraryArray, "Named Pipes (DBNMPNTW)"));
+            Assert.NotEqual(-1, Array.IndexOf(networkLibraryArray, "Shared Memory (DBMSLPCN)"));
+            Assert.NotEqual(-1, Array.IndexOf(networkLibraryArray, "TCP/IP (DBMSSOCN)"));
+            Assert.NotEqual(-1, Array.IndexOf(networkLibraryArray, "VIA (DBMSGNET)"));
+        }
+#endif
 
         [Fact]
         public void SqlConnectionEncryptOptionConverterConvertFromTest()
@@ -577,6 +729,63 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Throws<ArgumentException>(() => converter.ConvertFrom(true));
         }
 
+#if NETFRAMEWORK
+        [Theory]
+        [InlineData("Named Pipes (DBNMPNTW)", "dbnmpntw")]
+        [InlineData("Shared Memory (DBMSLPCN)", "dbmslpcn")]
+        [InlineData("TCP/IP (DBMSSOCN)", "dbmssocn")]
+        [InlineData("VIA (DBMSGNET)", "dbmsgnet")]
+        public void NetworkLibraryConvertFromValidValueTest(string inputValue, string expectedOutput)
+        {
+            PropertyDescriptorCollection csbDescriptor = TypeDescriptor.GetProperties(typeof(SqlConnectionStringBuilder));
+            PropertyDescriptor networkLibraryDescriptor = csbDescriptor.Find(nameof(SqlConnectionStringBuilder.NetworkLibrary), false);
+            TypeConverter converter = networkLibraryDescriptor?.Converter;
+
+            Assert.NotNull(networkLibraryDescriptor);
+            Assert.NotNull(converter);
+
+            // Test case 1: input value as-is
+            object outputValue = converter.ConvertFrom(inputValue);
+
+            Assert.IsType<string>(outputValue);
+            Assert.Equal(expectedOutput, outputValue as string);
+
+            // Test case 2: input value with leading/trailing spaces
+            outputValue = converter.ConvertFrom(" " + inputValue + " ");
+            Assert.IsType<string>(outputValue);
+            Assert.Equal(expectedOutput, outputValue as string);
+
+            // Test case 3: input value with mixed case
+            outputValue = converter.ConvertFrom(inputValue.ToUpper());
+            Assert.IsType<string>(outputValue);
+            Assert.Equal(expectedOutput, outputValue as string);
+        }
+
+        [Fact]
+        public void NetworkLibraryConvertFromInvalidValueTest()
+        {
+            const string InvalidValue = "Sample invalid value";
+
+            PropertyDescriptorCollection csbDescriptor = TypeDescriptor.GetProperties(typeof(SqlConnectionStringBuilder));
+            PropertyDescriptor networkLibraryDescriptor = csbDescriptor.Find(nameof(SqlConnectionStringBuilder.NetworkLibrary), false);
+            TypeConverter converter = networkLibraryDescriptor?.Converter;
+
+            Assert.NotNull(networkLibraryDescriptor);
+            Assert.NotNull(converter);
+
+            // Test case 1: input value as-is
+            object outputValue = converter.ConvertFrom(InvalidValue);
+
+            Assert.IsType<string>(outputValue);
+            Assert.Equal(InvalidValue, outputValue as string);
+
+            // Test case 2: input value with leading/trailing spaces
+            outputValue = converter.ConvertFrom(" " + InvalidValue + " ");
+            Assert.IsType<string>(outputValue);
+            Assert.Equal(InvalidValue, outputValue as string);
+        }
+#endif
+
         [Fact]
         public void SqlConnectionEncryptOptionConverterConvertToTest()
         {
@@ -595,6 +804,61 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Throws<ArgumentException>(() => converter.ConvertTo(SqlConnectionEncryptOption.Parse("false"), typeof(int)));
             Assert.Throws<ArgumentException>(() => converter.ConvertTo(SqlConnectionEncryptOption.Parse("false"), typeof(bool)));
         }
+
+#if NETFRAMEWORK
+        [Theory]
+        [InlineData("dbnmpntw", "Named Pipes (DBNMPNTW)")]
+        [InlineData("dbmslpcn", "Shared Memory (DBMSLPCN)")]
+        [InlineData("dbmssocn", "TCP/IP (DBMSSOCN)")]
+        [InlineData("dbmsgnet", "VIA (DBMSGNET)")]
+        public void NetworkLibraryConvertToValidValueTest(string inputValue, string expectedOutput)
+        {
+            PropertyDescriptorCollection csbDescriptor = TypeDescriptor.GetProperties(typeof(SqlConnectionStringBuilder));
+            PropertyDescriptor networkLibraryDescriptor = csbDescriptor.Find(nameof(SqlConnectionStringBuilder.NetworkLibrary), false);
+            TypeConverter converter = networkLibraryDescriptor?.Converter;
+
+            Assert.NotNull(networkLibraryDescriptor);
+            Assert.NotNull(converter);
+
+            // Test case 1: input value as-is
+            object outputValue = converter.ConvertTo(inputValue, typeof(string));
+
+            Assert.IsType<string>(outputValue);
+            Assert.Equal(expectedOutput, outputValue as string);
+
+            // Test case 2: input value with leading/trailing spaces
+            outputValue = converter.ConvertTo(" " + inputValue + " ", typeof(string));
+            Assert.IsType<string>(outputValue);
+            Assert.Equal(expectedOutput, outputValue as string);
+
+            // Test case 3: input value with mixed case
+            outputValue = converter.ConvertTo(inputValue.ToUpper(), typeof(string));
+            Assert.IsType<string>(outputValue);
+            Assert.Equal(expectedOutput, outputValue as string);
+        }
+
+        [Fact]
+        public void NetworkLibraryConvertToInvalidValueTest()
+        {
+            const string InvalidValue = " Sample invalid value ";
+
+            PropertyDescriptorCollection csbDescriptor = TypeDescriptor.GetProperties(typeof(SqlConnectionStringBuilder));
+            PropertyDescriptor networkLibraryDescriptor = csbDescriptor.Find(nameof(SqlConnectionStringBuilder.NetworkLibrary), false);
+            TypeConverter converter = networkLibraryDescriptor?.Converter;
+
+            Assert.NotNull(networkLibraryDescriptor);
+            Assert.NotNull(converter);
+
+            // In all cases, the output value should be the same as the input value
+            object outputValue = converter.ConvertTo(InvalidValue, typeof(string));
+
+            Assert.IsType<string>(outputValue);
+            Assert.Equal(InvalidValue, outputValue as string);
+
+            // Converting to an invalid type should throw an exception
+            Assert.Throws<NotSupportedException>(() => converter.ConvertTo(InvalidValue, typeof(int)));
+        }
+#endif
 
         internal class UserDbConnectionStringSettings
         {
@@ -643,7 +907,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             return settingsOut;
         }
-        #endregion
+#endregion
 
         internal void ExecuteConnectionStringTests(string connectionString)
         {

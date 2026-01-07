@@ -55,11 +55,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             {
                                 // Read the contents as bytes.
                                 retrievedValue = new byte[fileStream.Length];
-                                fileStream.Read(retrievedValue, 0, (int)(fileStream.Length));
+                                _ = fileStream.Read(retrievedValue, 0, (int)(fileStream.Length));
 
                                 // Reverse the byte array, if the system architecture is little-endian.
                                 if (BitConverter.IsLittleEndian)
+                                {
                                     Array.Reverse(retrievedValue);
+                                }
 
                                 // Compare inserted and retrieved values.
                                 Assert.Equal(s_insertedValues[nRow], BitConverter.ToInt32(retrievedValue, 0));
@@ -99,7 +101,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 // Reverse the byte array, if the system architecture is little-endian.
                 if (BitConverter.IsLittleEndian)
+                {
                     Array.Reverse(insertedValue);
+                }
+
                 try
                 {
                     using SqlConnection connection = new(connString);
@@ -161,7 +166,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 // Reverse the byte array, if the system architecture is little-endian.
                 if (BitConverter.IsLittleEndian)
+                {
                     Array.Reverse(insertedValue);
+                }
 
                 try
                 {
@@ -221,7 +228,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         fileStreamDir += "\\";
                     }
 
-                    string dbName = DataTestUtility.GetUniqueName("FS", false);
+                    string dbName = DataTestUtility.GetShortName("FS", false);
                     string createDBQuery = @$"CREATE DATABASE [{dbName}]
                                          ON PRIMARY
                                           (NAME = PhotoLibrary_data,
@@ -243,7 +250,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (SqlException e)
             {
                 Console.WriteLine("File Stream database could not be setup. " + e.Message);
-                fileStreamDir = null;
+                throw;
             }
             return s_fileStreamDBName;
         }
@@ -266,7 +273,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static string SetupTable(string connString)
         {
             // Generate random table name
-            string tempTable = DataTestUtility.GetUniqueNameForSqlServer("fs");
+            string tempTable = DataTestUtility.GetLongName("fs");
             // Create table
             string createTable = $"CREATE TABLE {tempTable} (EmployeeId INT  NOT NULL  PRIMARY KEY, Photo VARBINARY(MAX) FILESTREAM  NULL, RowGuid UNIQUEIDENTIFIER NOT NULL ROWGUIDCOL UNIQUE DEFAULT NEWID() ) ";
             ExecuteNonQueryCommand(createTable, connString);

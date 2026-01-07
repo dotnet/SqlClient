@@ -78,13 +78,13 @@
           <item>
             <term>10929</term>
             <description>
-              Resource ID: %d. The %s minimum guarantee is %d, maximum limit is %d and the current usage for the database is %d. However, the server is currently too busy to support requests greater than %d for this database. For more information, see http://go.microsoft.com/fwlink/?LinkId=267637. Otherwise, please try again later.
+              Resource ID: %d. The %s minimum guarantee is %d, maximum limit is %d and the current usage for the database is %d. However, the server is currently too busy to support requests greater than %d for this database. For more information, see https://learn.microsoft.com/azure/azure-sql/database/resource-limits-logical-server. Otherwise, please try again later.
             </description>
           </item>
           <item>
             <term>10928</term>
             <description>
-              Resource ID: %d. The %s limit for the database is %d and has been reached. For more information, see http://go.microsoft.com/fwlink/?LinkId=267637.
+              Resource ID: %d. The %s limit for the database is %d and has been reached. For more information, see https://learn.microsoft.com/azure/azure-sql/database/resource-limits-logical-server.
             </description>
           </item>
           <item>
@@ -127,9 +127,10 @@
         A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.
       </returns>
       <remarks>
-        <note type="note">
-          The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
-        </note>
+        <format type="text/markdown">
+> [!NOTE]
+> The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
+        </format>
       </remarks>
       <exception cref="T:System.ArgumentNullException">
         If the <paramref name="retryLogicOption" /> parameter was null.
@@ -137,21 +138,21 @@
       <exception cref="T:System.ArgumentOutOfRangeException">
         If at least one of the following conditions occurs:
         <list type="bullet">
-          <item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.NumberOfTries" /> is less than 1 or bigger than 60.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.DeltaTime" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is not less than <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" />.
-          </item>
+          </description></item>
         </list>
       </exception>
     </CreateExponentialRetryProvider>
@@ -166,9 +167,10 @@
         A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.
       </returns>
       <remarks>
-        <note type="note">
-          The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
-        </note>
+        <format type="text/markdown">
+> [!NOTE]
+> The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
+        </format>
       </remarks>
       <exception cref="T:System.ArgumentNullException">
         If the <paramref name="retryLogicOption" /> parameter was null.
@@ -176,21 +178,21 @@
       <exception cref="T:System.ArgumentOutOfRangeException">
         If at least one of the following conditions occurs:
         <list type="bullet">
-          <item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.NumberOfTries" /> is less than 1 or bigger than 60.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.DeltaTime" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is not less than <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" />.
-          </item>
+          </description></item>
         </list>
       </exception>
     </CreateIncrementalRetryProvider>
@@ -205,9 +207,10 @@
         A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.
       </returns>
       <remarks>
-        <note type="note">
-          The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
-        </note>
+        <format type="text/markdown">
+> [!NOTE]
+> The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
+        </format>
       </remarks>
       <exception cref="T:System.ArgumentNullException">
         If the `retryLogicOption` parameter was null.
@@ -215,21 +218,21 @@
       <exception cref="T:System.ArgumentOutOfRangeException">
         If at least one of the following conditions occurs:
         <list type="bullet">
-          <item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.NumberOfTries" /> is less than 1 or bigger than 60.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.DeltaTime" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is not less than <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" />.
-          </item>
+          </description></item>
         </list>
       </exception>
     </CreateFixedRetryProvider>
@@ -241,9 +244,10 @@
         A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.
       </returns>
       <remarks>
-        <note type="note">
-          The returned provider of this function performs a single execution without any retry logic.
-        </note>
+        <format type="text/markdown">
+> [!NOTE]
+> The returned provider of this function performs a single execution without any retry logic.
+        </format>
       </remarks>
     </CreateNoneRetryProvider>
   </members>

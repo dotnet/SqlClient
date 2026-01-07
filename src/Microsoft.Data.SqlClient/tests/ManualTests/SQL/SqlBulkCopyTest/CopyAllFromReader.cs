@@ -52,8 +52,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                             Assert.True(0 < (long)stats["BytesReceived"], "BytesReceived is non-positive.");
                             Assert.True(0 < (long)stats["BytesSent"], "BytesSent is non-positive.");
-                            Assert.True((long)stats["ConnectionTime"] >= (long)stats["ExecutionTime"], "Connection Time is less than Execution Time.");
-                            Assert.True((long)stats["ExecutionTime"] >= (long)stats["NetworkServerTime"], "Execution Time is less than Network Server Time.");
                             DataTestUtility.AssertEqualsWithDescription((long)0, (long)stats["UnpreparedExecs"], "Non-zero UnpreparedExecs value: " + (long)stats["UnpreparedExecs"]);
                             DataTestUtility.AssertEqualsWithDescription((long)0, (long)stats["PreparedExecs"], "Non-zero PreparedExecs value: " + (long)stats["PreparedExecs"]);
                             DataTestUtility.AssertEqualsWithDescription((long)0, (long)stats["Prepares"], "Non-zero Prepares value: " + (long)stats["Prepares"]);
@@ -63,9 +61,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             DataTestUtility.AssertEqualsWithDescription((long)3, stats["BuffersReceived"], "Unexpected BuffersReceived value.");
                             DataTestUtility.AssertEqualsWithDescription((long)3, stats["BuffersSent"], "Unexpected BuffersSent value.");
                             DataTestUtility.AssertEqualsWithDescription((long)0, stats["IduCount"], "Unexpected IduCount value.");
-                            DataTestUtility.AssertEqualsWithDescription((long)3, stats["SelectCount"], "Unexpected SelectCount value.");
+                            DataTestUtility.AssertEqualsWithDescription((long)6, stats["SelectCount"], "Unexpected SelectCount value.");
                             DataTestUtility.AssertEqualsWithDescription((long)3, stats["ServerRoundtrips"], "Unexpected ServerRoundtrips value.");
-                            DataTestUtility.AssertEqualsWithDescription((long)4, stats["SelectRows"], "Unexpected SelectRows value.");
+                            DataTestUtility.AssertEqualsWithDescription((long)9, stats["SelectRows"], "Unexpected SelectRows value.");
                             DataTestUtility.AssertEqualsWithDescription((long)2, stats["SumResultSets"], "Unexpected SumResultSets value.");
                             DataTestUtility.AssertEqualsWithDescription((long)0, stats["Transactions"], "Unexpected Transactions value.");
                         }

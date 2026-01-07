@@ -20,11 +20,20 @@ parameters:
   - name: isPreview
     type: boolean
 
+  # The timeout, in minutes, for this job.
+  - name: timeout
+    type: number
+
 jobs:
 - job: run_tests_package_reference
   displayName: 'Run tests with package reference'
   ${{ if ne(parameters.dependsOn, 'empty')}}:
     dependsOn: '${{parameters.dependsOn }}'
+
+  # Some of our tests take longer than the default 60 minutes to run on some
+  # OSes and configurations.
+  timeoutInMinutes: ${{ parameters.timeout }}
+
   pool:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
     isCustom: true
@@ -57,12 +66,14 @@ jobs:
   - template: ../steps/build-and-run-tests-netfx-step.yml
     parameters:
       referenceType: Package
+      buildConfiguration: Release
       ${{ if parameters.isPreview }}:
         nugetPackageVersion: $(PreviewNugetPackageVersion)
 
   - template: ../steps/build-and-run-tests-netcore-step.yml
     parameters:
       referenceType: Package
+      buildConfiguration: Release
       cleanFirst: true
       ${{ if parameters.isPreview }}:
         nugetPackageVersion: $(PreviewNugetPackageVersion)

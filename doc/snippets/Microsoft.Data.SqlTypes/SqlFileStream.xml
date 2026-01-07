@@ -5,32 +5,30 @@
         Exposes SQL Server data that is stored with the FILESTREAM column attribute as a sequence of bytes.
       </summary>
       <remarks>
-        <para>
-          The <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> class is used to work with VARBINARY(MAX) data stored with the FILESTREAM attribute in a SQL Server 2008 database. You must install the .NET Framework 3.5 SP1 (or later) to use <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> to work with FILESTREAM data.
-        </para>
-        <para>
-          Specifying the FILESTREAM attribute on a VARBINARY(MAX) column causes SQL Server to store the data in the local NTFS file system instead of in the database file. Transact-SQL statements provide data manipulation capabilities within the server, and Win32 file system interfaces provide streaming access to the data.
-        </para>
-        <note type="note">
-          Individual files stored in a FILESTREAM column cannot be opened directly from the NTFS file system. Streaming FILESTREAM data works only in the context of a SQL Server transaction.
-        </note>
-        <para>
-          The <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> class is derived from the <see cref="T:System.IO.Stream" /> class, which represents an abstraction of a sequence of bytes from some arbitrary data source such as a file or a block of memory. You can read from a FILESTREAM by transferring data from a stream into a data structure such as an array of bytes. You can write to a FILESTREAM by transferring the data from a data structure into a stream. You can also seek within the stream, which allows you to query and modify data at the current position within the stream.
-        </para>
-        <para>
-          For conceptual documentation and code examples, see <see href="/sql/connect/ado-net/sql/filestream-data">FILESTREAM Data</see>.
-        </para>
-        <para>
-          For documentation about setting up and configuring FILESTREAM data on SQL Server, see <see href="https://go.microsoft.com/fwlink/?LinkId=121499">Designing and Implementing FILESTREAM Storage</see> in SQL Server 2008 Books Online.
-        </para>
+        <format type="text/markdown">
+          <![CDATA[  
+The <xref:Microsoft.Data.SqlTypes.SqlFileStream> class is used to work with `varbinary(max)` data stored with the FILESTREAM attribute in a SQL Server 2008 database. You must install the .NET Framework 3.5 SP1 (or later) to use <xref:Microsoft.Data.SqlTypes.SqlFileStream> to work with FILESTREAM data.  
+
+Specifying the FILESTREAM attribute on a `varbinary(max)` column causes SQL Server to store the data in the local NTFS file system instead of in the database file. Transact-SQL statements provide data manipulation capabilities within the server, and Win32 file system interfaces provide streaming access to the data.  
+
+> [!NOTE]
+>  Individual files stored in a FILESTREAM column cannot be opened directly from the NTFS file system. Streaming FILESTREAM data works only in the context of a SQL Server transaction.  
+
+The <xref:Microsoft.Data.SqlTypes.SqlFileStream> class is derived from the <xref:System.IO.Stream> class, which represents an abstraction of a sequence of bytes from some arbitrary data source such as a file or a block of memory. You can read from a FILESTREAM by transferring data from a stream into a data structure such as an array of bytes. You can write to a FILESTREAM by transferring the data from a data structure into a stream. You can also seek within the stream, which allows you to query and modify data at the current position within the stream.  
+
+For conceptual documentation and code examples, see [FILESTREAM Data](https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data).  
+
+For documentation about setting up and configuring FILESTREAM data on SQL Server,  see [Designing and Implementing FILESTREAM Storage](https://go.microsoft.com/fwlink/?LinkId=121499) in SQL Server 2008 Books Online.  
+
+]]></format>
       </remarks>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
-      <seealso href="https://msdn.microsoft.com/library/fafdc31a-f435-4cd3-883f-1dfadd971277">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql-server-data-type-mappings">
         SQL Server Data Type Mappings (ADO.NET)
       </seealso>
-      <seealso href="https://msdn.microsoft.com/library/e00827b3-7511-4b2d-91d7-851ca86cc6b5">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/sql-server-binary-large-value-data">
         SQL Server Binary and Large-Value Data (ADO.NET)
       </seealso>
     </SqlFileStream>
@@ -52,7 +50,7 @@
           When using <see cref="F:System.IO.FileAccess.Write" />, <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a zero byte file. Existing data will be overwritten when the object is closed and the transaction is committed.
         </para>
         <para>
-          When using <see cref="F:System.IO.FileAccess.ReadWrite" />, the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a file which has all the existing data in it. The handle is positioned at the beginning of the file. You can use one of the <see cref="M:System.IO.Stream.Seek" /> methods to move the handle position within the file to write or append new data.
+          When using <see cref="F:System.IO.FileAccess.ReadWrite" />, the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a file which has all the existing data in it. The handle is positioned at the beginning of the file. You can use one of the <see cref="M:System.IO.Stream.Seek(System.Int64,System.IO.SeekOrigin)" /> methods to move the handle position within the file to write or append new data.
         </para>         
       </param>
       <summary>
@@ -85,7 +83,7 @@
           </list>
         </para>
         <para>
-          For more information about CAS, see <see href="/dotnet/framework/data/adonet/code-access-security">Code Access Security and ADO.NET</see>.
+          For more information about CAS, see <see href="https://learn.microsoft.com/dotnet/framework/data/adonet/code-access-security">Code Access Security and ADO.NET</see>.
         </para>
         <para>
           If an exception is thrown, any open transactions should be rolled back. Otherwise, data loss can occur.
@@ -120,7 +118,7 @@
       <exception cref="T:System.InvalidOperationException">
         NtCreateFile fails with error code set to ERROR_SHARING_VIOLATION.
       </exception>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </ctor1>
@@ -132,7 +130,7 @@
         The transaction context for the <see langword="SqlFileStream" /> object. When set to null, an implicit transaction will be used for the <see langword="SqlFileStream" /> object. Applications should return the byte array returned by calling the GET_FILESTREAM_TRANSACTION_CONTEXT method.
       </param>
       <param name="access">
-        The access mode to use when opening the file. Supported <see cref="T:System.IO.FileAccess" /> enumeration values are <see cref="F:System.IO.FileAccess.Read" />, <see cref="F:System.IO.FileAccess.Write" />, and <see cref="F:System.IO.FileAccess.ReadWrite" />. When using <see langword="FileAccess.Read" />, the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> object can be used to read all the existing data.  When using <see langword="FileAccess.Write" />, <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a zero byte file. Existing data will be overwritten when the object is closed and the transaction is committed.  When using <see langword="FileAccess.ReadWrite" />, the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a file which has all the existing data in it. The handle is positioned at the beginning of the file. You can use one of the <see cref="M:System.IO.Stream.Seek" /> methods to move the handle position within the file to write or append new data.
+        The access mode to use when opening the file. Supported <see cref="T:System.IO.FileAccess" /> enumeration values are <see cref="F:System.IO.FileAccess.Read" />, <see cref="F:System.IO.FileAccess.Write" />, and <see cref="F:System.IO.FileAccess.ReadWrite" />. When using <see langword="FileAccess.Read" />, the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> object can be used to read all the existing data.  When using <see langword="FileAccess.Write" />, <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a zero byte file. Existing data will be overwritten when the object is closed and the transaction is committed.  When using <see langword="FileAccess.ReadWrite" />, the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a file which has all the existing data in it. The handle is positioned at the beginning of the file. You can use one of the <see cref="M:System.IO.Stream.Seek(System.Int64,System.IO.SeekOrigin)" /> methods to move the handle position within the file to write or append new data.
       </param>
       <param name="options">
         Specifies the option to use while opening the file. Supported <see cref="T:System.IO.FileOptions" /> values are <see cref="F:System.IO.FileOptions.Asynchronous" />, <see cref="F:System.IO.FileOptions.WriteThrough" />, <see cref="F:System.IO.FileOptions.SequentialScan" />, and <see cref="F:System.IO.FileOptions.RandomAccess" />.
@@ -170,7 +168,7 @@
           </list>
         </para>
         <para>
-          For more information about CAS, see <see href="/dotnet/framework/data/adonet/code-access-security">Code Access Security and ADO.NET</see>.
+          For more information about CAS, see <see href="https://learn.microsoft.com/dotnet/framework/data/adonet/code-access-security">Code Access Security and ADO.NET</see>.
         </para>
         <para>
           If an exception is thrown, any open transactions should be rolled back. Otherwise, data loss can occur.
@@ -205,7 +203,7 @@
       <exception cref="T:System.InvalidOperationException">
         NtCreateFile fails with error code set to ERROR_SHARING_VIOLATION.
       </exception>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </ctor2>
@@ -237,7 +235,7 @@
       <exception cref="T:System.NotSupportedException">
         Reading data is not supported on the stream.
       </exception>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </BeginRead>
@@ -269,7 +267,7 @@
       <exception cref="T:System.NotSupportedException">
         Writing data is not supported on the stream.
       </exception>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </BeginWrite>
@@ -280,7 +278,7 @@
       <value>
         <see langword="true" /> if the current stream supports reading; otherwise, <see langword="false" />.
       </value>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </CanRead>
@@ -291,7 +289,7 @@
       <value>
         <see langword="true" /> if the current stream supports seeking; otherwise, <see langword="false" />.
       </value>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </CanSeek>
@@ -310,7 +308,7 @@
       <value>
         <see langword="true" /> if the current stream supports writing; otherwise, <see langword="false" />.
       </value>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </CanWrite>
@@ -343,7 +341,7 @@
       <exception cref="T:System.ArgumentException">
         The <see cref="T:System.IAsyncResult" /> object did not come from the corresponding <see cref="M:Microsoft.Data.SqlTypes.SqlFileStream.BeginRead(System.Byte[],System.Int32,System.Int32,System.AsyncCallback,System.Object)" /> method.
       </exception>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </EndRead>
@@ -357,7 +355,7 @@
       <exception cref="T:System.ArgumentException">
         The <see cref="T:System.IAsyncResult" /> object did not come from the corresponding <see cref="M:Microsoft.Data.SqlTypes.SqlFileStream.BeginRead(System.Byte[],System.Int32,System.Int32,System.AsyncCallback,System.Object)" /> method.
       </exception>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </EndWrite>
@@ -370,7 +368,7 @@
       <summary>
         Clears all buffers for this stream and causes any buffered data to be written to the underlying device.
       </summary>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </Flush>
@@ -381,7 +379,7 @@
       <value>
         An <see cref="T:System.Int64" /> indicating the length of the current stream in bytes.
       </value>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </Length>
@@ -392,7 +390,7 @@
       <value>
         A string value indicating the name of the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" />.
       </value>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </Name>
@@ -403,7 +401,7 @@
       <value>
         The current position within the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" />.
       </value>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </Position>
@@ -429,7 +427,7 @@
       <exception cref="T:System.NotSupportedException">
         The object does not support reading of data.
       </exception>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </Read>
@@ -446,7 +444,7 @@
       <exception cref="T:System.NotSupportedException">
         The object does not support reading of data.
       </exception>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </ReadByte>
@@ -457,7 +455,7 @@
       <value>
         A value, in milliseconds, that determines how long the stream will attempt to read before timing out.
       </value>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </ReadTimeout>
@@ -474,7 +472,7 @@
       <returns>
         The new position within the current stream.
       </returns>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </Seek>
@@ -491,7 +489,7 @@
       <exception cref="T:System.NotSupportedException">
         The object does not support reading of data.
       </exception>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </SetLength>
@@ -502,7 +500,7 @@
       <value>
         The <b>TransactionContext</b> array that was passed to the constructor for this <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> object.
       </value>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </TransactionContext>
@@ -525,7 +523,7 @@
       <exception cref="T:System.NotSupportedException">
         The object does not support writing of data.
       </exception>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </Write>
@@ -542,7 +540,7 @@
       <exception cref="T:System.NotSupportedException">
         The object does not support writing of data.
       </exception>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </WriteByte>
@@ -553,7 +551,7 @@
       <value>
         A value, in milliseconds, that determines how long the stream will attempt to write before timing out.
       </value>
-      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
       </seealso>
     </WriteTimeout>

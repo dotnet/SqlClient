@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <LangVersion>9.0</LangVersion>
     <TargetsWindows Condition="'$(OS)' == 'Windows_NT' AND '$(OSGroup)' == ''">true</TargetsWindows>
     <TargetsWindows Condition="'$(OS)' != 'Windows_NT' AND '$(OSGroup)' == ''">false</TargetsWindows>
     <TargetsWindows Condition="'$(OSGroup)' == 'Windows_NT'">true</TargetsWindows>
@@ -27,8 +26,8 @@
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
   <ItemGroup Condition="$(BuildForRelease) == 'true'">
-    <SourceRoot Include="$(MSBuildThisFileDirectory)/"/>
-    <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)"/>
+    <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
+    <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
   </ItemGroup>
   <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
     <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
@@ -63,11 +62,54 @@
     <NuGetRoot Condition="'$(NuGetRoot)' == ''">$(RepoRoot).nuget\</NuGetRoot>
     <NuGetCmd>$(NuGetRoot)nuget.exe</NuGetCmd>
     <!-- Respect environment variable for the .NET install directory if set; otherwise, use the current default location -->
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <BuildSimulator Condition="'$(BuildSimulator)' != 'true'">false</BuildSimulator>
   </PropertyGroup>
   <PropertyGroup Condition="'$(BuildSimulator)' == 'true'">
     <DefineConstants>$(DefineConstants);ENCLAVE_SIMULATOR</DefineConstants>
+  </PropertyGroup>
+
+  <!-- NuGet Audit Settings -->
+  <PropertyGroup>
+    <!--
+      See the NuGet Audit documentation here:
+
+      https://learn.microsoft.com/en-us/nuget/concepts/auditing-packages
+    -->
+
+    <!--
+      We always want NuGet auditing enabled.  There are no build scenarios
+      where auditing should be disabled.
+    -->
+    <NuGetAudit>true</NuGetAudit>
+
+    <!-- We want all dependencies audited. -->
+    <NuGetAuditMode>all</NuGetAuditMode>
+
+    <!-- We want all possible audit severity messages. -->
+    <NuGetAuditLevel>low</NuGetAuditLevel>
+  </PropertyGroup>
+
+  <!-- Build Warning/Error Settings -->
+  <PropertyGroup>
+    <!-- We treat all warnings as errors. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!--
+      There may be a few specific warnings that should _not_ be considered an
+      error.  This list should be used sparingly to avoid important warnings
+      being ignored.
+    -->
+    <WarningsNotAsErrors></WarningsNotAsErrors>
+
+    <!--
+      If a build is failing due to vulnerable dependencies, you may temporarily
+      uncomment the following line to treat the audit warnings as non-errors.
+      This should only be done as a temporary measure while addressing the
+      vulnerable dependencies.  See:
+
+      https://learn.microsoft.com/en-us/nuget/reference/errors-and-warnings/nu1901-nu1904
+    -->
+    <!-- <WarningsNotAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors> -->
   </PropertyGroup>
 
   <!-- Packaging  for source link-->
@@ -81,20 +123,37 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-  </PropertyGroup>  
+  </PropertyGroup>
 
   <!-- Provides Version properties -->
   <Import Project="$(ToolsDir)props\Versions.props" />
-  <Import Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" Project="$(ToolsDir)props\VersionsNet8OrLater.props" />
   <!-- Provides Tool properties -->
   <Import Project="$(ToolsDir)props\Tools.props" />
   <!-- Provides Build properties -->
-  <Import Project="$(ToolsDir)props\AssemblyInfo.props" /> 
+  <Import Project="$(ToolsDir)props\AssemblyInfo.props" />
   <Import Project="$(ToolsDir)props\AssemblyRef.props" />
   <Import Project="$(ToolsDir)targets\RepositoryInfo.targets" />
 
   <!-- Fix GetTargetPath issues - see https://github.com/dotnet/msbuild/issues/4303#issuecomment-482345617 -->
   <PropertyGroup>
     <AddSyntheticProjectReferencesForSolutionDependencies>false</AddSyntheticProjectReferencesForSolutionDependencies>
+  </PropertyGroup>
+
+  <!--
+    We want to use the latest C# language regardless of target framework,
+    so we explicitly set LangVersion for all targets.
+
+    We will roll this version forward as new C# language versions are released
+    and associated with the newest .NET SDK we support.
+
+    Details here:
+
+    https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning
+
+    https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/configure-language-version
+  -->
+  <PropertyGroup>
+    <!-- The newest .NET SDK we support is .NET 10.0, which uses C# 14 -->
+    <LangVersion>14</LangVersion>
   </PropertyGroup>
 </Project>

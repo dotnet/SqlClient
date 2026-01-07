@@ -56,6 +56,9 @@ jobs:
   - name: ProductVersion    #MDS product version (MDS validation)
     value: $(NugetPackageVersion)
 
+  - name: BuildType
+    value: $[ stageDependencies.buildMDS.build_signed_package.outputs['GetBuildType.CDP_BUILD_TYPE_COPY'] ]
+
   - ${{ if parameters.isPreview }}:
     - name: extractedNugetPath
       value: $(extractedNugetRootPath).$(PreviewNugetPackageVersion)
@@ -69,7 +72,7 @@ jobs:
     displayName: 'Print Environment Variables'
 
   - task: NuGetToolInstaller@1
-    displayName: 'Use NuGet '
+    displayName: 'Use NuGet'
 
   - powershell: |
       #Sets Variables for AssemblyFileVersion, AssemblyVersion and NugetPackageVersion
@@ -121,7 +124,9 @@ jobs:
     displayName: 'Verify nuget signature'
 
   - powershell: |
-      if($env:CDP_BUILD_TYPE -eq 'Official')
+      $buildType = [string]"$(BuildType)" 
+
+      if($buildType -eq 'Official')
       {
           # Recursively find all .dll files in TempFolder (installed nuget folder)
           # Microsoft.Data.SqlClient.dll and Microsoft.Data.SqlClient.resources.dll (in localized folders) should have strong name
@@ -278,8 +283,11 @@ jobs:
     displayName: 'Verify all dlls status are Valid'
 
   - powershell: |
-      # This will check for ProductVersion and FileVersion
-      #  For NetFx we have a different FileVersion, but product versions are all the same some may have and extra numbering at the end. we only check for # first parts
+      # This will check for ProductVersion and FileVersion.
+      #
+      # For NetFx we have a different FileVersion, but product versions are all
+      # the same.  Some may have extra numbering at the end.  We only check for
+      # the first parts.
 
       foreach ( $pVersion in Get-ChildItem *.dll -Path $(extractedNugetPath)  -Recurse | ForEach-Object versioninfo ) 
       {
@@ -324,7 +332,7 @@ jobs:
     displayName: 'Verify "File Version" matches provided pipeline variable "ASSEMBLY_FILE_VERSION" for DLLs'
 
   - powershell: |
-      #Change TestMicrosoftDataSqlClientVersion
+      # Change TestMicrosoftDataSqlClientVersion
 
       [Xml] $versionprops = Get-Content -Path "tools/props/Versions.props" 
       $versionpropspath = "tools\props\Versions.props"
@@ -335,7 +343,7 @@ jobs:
     displayName: 'Modify TestMicrosoftDataSqlClientVersion'
 
   - powershell: |
-      #Change TestMicrosoftDataSqlClientVersion
+      # Check assembly versions.
 
       [Xml] $versionprops = Get-Content -Path "tools/props/Versions.props" 
       $AssemblyFileVersion =  $versionprops.Project.PropertyGroup[0].AssemblyFileVersion

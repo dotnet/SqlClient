@@ -40,18 +40,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 string[] scopes = new string[] { scope };
                 SecureString password = new SecureString();
 
+#pragma warning disable CS0618 // Type or member is obsolete
                 AuthenticationResult result = await PublicClientApplicationBuilder.Create(_appClientId)
                 .WithAuthority(parameters.Authority)
                 .Build().AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
                     .WithCorrelationId(parameters.ConnectionId)
                     .ExecuteAsync(cancellationToken: cts.Token);
+#pragma warning restore CS0618 // Type or member is obsolete
 
                 return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
             }
 
             public override bool IsSupported(SqlAuthenticationMethod authenticationMethod)
             {
+                #pragma warning disable 0618 // Type or member is obsolete
                 return authenticationMethod.Equals(SqlAuthenticationMethod.ActiveDirectoryPassword);
+                #pragma warning restore 0618 // Type or member is obsolete
             }
         }
 
@@ -258,7 +262,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void TestCustomProviderAuthentication()
         {
+            #pragma warning disable 0618 // Type or member is obsolete
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new CustomSqlAuthenticationProvider(DataTestUtility.ApplicationClientId));
+            #pragma warning restore 0618 // Type or member is obsolete
             // Connect to Azure DB with password and retrieve user name using custom authentication provider
             using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
             {
@@ -276,7 +282,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
             // Reset to driver internal provider.
+            #pragma warning disable 0618 // Type or member is obsolete
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new ActiveDirectoryAuthenticationProvider(DataTestUtility.ApplicationClientId));
+            #pragma warning restore 0618 // Type or member is obsolete
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
@@ -501,8 +509,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             SqlException e = Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStrWithNoCred));
 
-            string expectedMessage = "ManagedIdentityCredential authentication unavailable";
-            Assert.Contains(expectedMessage, e.GetBaseException().Message);
+            string expectedMessage = "[Managed Identity] Authentication unavailable";
+            Assert.Contains(expectedMessage, e.GetBaseException().Message, StringComparison.OrdinalIgnoreCase);
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]

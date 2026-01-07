@@ -80,8 +80,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/DataAdapter/*'/>
         [
         DefaultValue(null),
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlCommandBuilder_DataAdapter),
+        ResCategoryAttribute(nameof(Strings.DataCategory_Update)),
+        ResDescriptionAttribute(nameof(Strings.SqlCommandBuilder_DataAdapter)),
         ]
         public new SqlDataAdapter DataAdapter
         {
@@ -254,52 +254,9 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.ArgumentNull(nameof(command));
             }
-#if NETFRAMEWORK
-            TdsParser bestEffortCleanupTarget = null;
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-            try
-            {
-#if NETFRAMEWORK
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try {
-                    tdsReliabilitySection.Start();
-#else
-                {
-#endif // DEBUG
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(command.Connection);
-#endif // NETFRAMEWORK
-                    command.DeriveParameters();
-#if NETFRAMEWORK
-                }
-#if DEBUG
-                finally {
-                    tdsReliabilitySection.Stop();
-                }
-#endif // DEBUG
-#endif // NETFRAMEWORK
-            }
-            catch (OutOfMemoryException e)
-            {
-                command?.Connection?.Abort(e);
-                throw;
-            }
-            catch (StackOverflowException e)
-            {
-                command?.Connection?.Abort(e);
-                throw;
-            }
-            catch (ThreadAbortException e)
-            {
-                command?.Connection?.Abort(e);
-#if NETFRAMEWORK
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-#endif
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            command.DeriveParameters();
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetSchemaTable/*'/>

@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Microsoft.Data.SqlClient.Diagnostics;
 using System;
 using System.Diagnostics.Tracing;
 using System.Text;
@@ -9,77 +10,42 @@ using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal abstract class SqlClientEventSourceBase : EventSource
-    {
-        protected override void OnEventCommand(EventCommandEventArgs command)
-        {
-            base.OnEventCommand(command);
-            EventCommandMethodCall(command);
-        }
-
-        protected virtual void EventCommandMethodCall(EventCommandEventArgs command) { }
-
-        #region not implemented for .Net core 2.1, .Net standard 2.0 and lower
-        internal virtual void HardConnectRequest() { /*no-op*/ }
-
-        internal virtual void HardDisconnectRequest() { /*no-op*/ }
-
-        internal virtual void SoftConnectRequest() { /*no-op*/ }
-
-        internal virtual void SoftDisconnectRequest() { /*no-op*/ }
-
-        internal virtual void EnterNonPooledConnection() { /*no-op*/ }
-
-        internal virtual void ExitNonPooledConnection() { /*no-op*/ }
-
-        internal virtual void EnterPooledConnection() { /*no-op*/ }
-
-        internal virtual void ExitPooledConnection() { /*no-op*/ }
-
-        internal virtual void EnterActiveConnectionPoolGroup() { /*no-op*/ }
-
-        internal virtual void ExitActiveConnectionPoolGroup() { /*no-op*/ }
-
-        internal virtual void EnterInactiveConnectionPoolGroup() { /*no-op*/ }
-
-        internal virtual void ExitInactiveConnectionPoolGroup() { /*no-op*/ }
-
-        internal virtual void EnterActiveConnectionPool() { /*no-op*/ }
-
-        internal virtual void ExitActiveConnectionPool() { /*no-op*/ }
-
-        internal virtual void EnterInactiveConnectionPool() { /*no-op*/ }
-
-        internal virtual void ExitInactiveConnectionPool() { /*no-op*/ }
-
-        internal virtual void EnterActiveConnection() { /*no-op*/ }
-
-        internal virtual void ExitActiveConnection() { /*no-op*/ }
-
-        internal virtual void EnterFreeConnection() { /*no-op*/ }
-
-        internal virtual void ExitFreeConnection() { /*no-op*/ }
-
-        internal virtual void EnterStasisConnection() { /*no-op*/ }
-
-        internal virtual void ExitStasisConnection() { /*no-op*/ }
-
-        internal virtual void ReclaimedConnectionRequest() { /*no-op*/ }
-        #endregion
-    }
-
     // Any changes to event writers might be considered as a breaking change.
     // Other libraries such as OpenTelemetry and ApplicationInsight have based part of their code on BeginExecute and EndExecute arguments number.
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]
-    internal partial class SqlClientEventSource : SqlClientEventSourceBase
+    internal partial class SqlClientEventSource : EventSource
     {
+        private static bool s_initialMetricsEnabled = false;
+
         // Defines the singleton instance for the Resources ETW provider
-        internal static readonly SqlClientEventSource Log = new();
+        public static readonly SqlClientEventSource Log = new();
+
+        // Provides access to metrics.
+        public static readonly SqlClientMetrics Metrics = new SqlClientMetrics(Log, s_initialMetricsEnabled);
 
         private SqlClientEventSource() { }
 
         private const string NullStr = "null";
         private const string SqlCommand_ClassName = nameof(SqlCommand);
+
+#if NET
+        protected override void OnEventCommand(EventCommandEventArgs command)
+        {
+            base.OnEventCommand(command);
+
+            if (command.Command == EventCommand.Enable)
+            {
+                if (Metrics == null)
+                {
+                    s_initialMetricsEnabled = true;
+                }
+                else
+                {
+                    Metrics.EnableEventCounters();
+                }
+            }
+        }
+#endif
 
         #region Event IDs
         // Initialized static Scope IDs
@@ -340,6 +306,9 @@ namespace Microsoft.Data.SqlClient
         internal bool IsAdvancedTraceOn() => Log.IsEnabled(EventLevel.Verbose, Keywords.AdvancedTrace);
 
         [NonEvent]
+        internal bool IsAdvancedTraceBinOn() => Log.IsEnabled(EventLevel.Verbose, Keywords.AdvancedTraceBin);
+
+        [NonEvent]
         internal bool IsCorrelationEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.CorrelationTrace);
 
         [NonEvent]
@@ -464,7 +433,7 @@ namespace Microsoft.Data.SqlClient
             {
                 StringBuilder sb = new StringBuilder(className);
                 sb.Append(".").Append(memberName).Append(" | INFO | SCOPE | Entering Scope {0}");
-                return SNIScopeEnter(sb.ToString());
+                return ScopeEnter(sb.ToString());
             }
             return 0;
         }
@@ -650,6 +619,15 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Pooler Trace
+        [NonEvent]
+        internal void TryPoolerTraceEvent(string message)
+        {
+            if (Log.IsPoolerTraceEnabled())
+            {
+                PoolerTrace(message);
+            }
+        }
+
         [NonEvent]
         internal void TryPoolerTraceEvent<T0>(string message, T0 args0)
         {
@@ -838,11 +816,24 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal void TryAdvancedTraceBinEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args)
+        internal void TryAdvancedTraceBinEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
-            if (Log.IsAdvancedTraceOn())
+            if (Log.IsAdvancedTraceBinOn())
             {
-                AdvancedTraceBin(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
+
+                if (args1 is byte[] args1Bytes)
+                {
+#if NET
+                    AdvancedTraceBin(string.Format(message, args0?.ToString() ?? NullStr, Convert.ToHexString(args1Bytes), args2?.ToString() ?? NullStr));
+#else
+
+                    AdvancedTraceBin(string.Format(message, args0?.ToString() ?? NullStr, BitConverter.ToString(args1Bytes).Replace("-", ""), args2?.ToString() ?? NullStr));
+#endif
+                }
+                else
+                {
+                    AdvancedTraceBin(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
+                }
             }
         }
 
@@ -859,6 +850,16 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Correlation Trace
+
+        [NonEvent]
+        internal void TryCorrelationTraceEvent(string message)
+        {
+            if (Log.IsCorrelationEnabled())
+            {
+                CorrelationTrace(message);
+            }
+        } 
+        
         [NonEvent]
         internal void TryCorrelationTraceEvent<T0>(string message, T0 args0)
         {
@@ -919,6 +920,12 @@ namespace Microsoft.Data.SqlClient
         internal void StateDumpEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
             StateDump(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
+        }
+
+        [NonEvent]
+        internal void StateDumpEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        {
+            StateDump(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
         }
         #endregion
 
@@ -1151,7 +1158,7 @@ namespace Microsoft.Data.SqlClient
             => new TrySNIEventScope(SqlClientEventSource.Log.TrySNIScopeEnterEvent(className, memberName));
     }
 
-    internal readonly ref struct TryEventScope //: IDisposable
+    internal readonly ref struct TryEventScope : IDisposable
     {
         private readonly long _scopeId;
 

@@ -1,0 +1,1017 @@
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
+using System.Linq;
+using System.Net;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
+using System.Threading;
+using Microsoft.SqlServer.TDS.Authentication;
+using Microsoft.SqlServer.TDS.Done;
+using Microsoft.SqlServer.TDS.EndPoint;
+using Microsoft.SqlServer.TDS.EndPoint.FederatedAuthentication;
+using Microsoft.SqlServer.TDS.EndPoint.SSPI;
+using Microsoft.SqlServer.TDS.EnvChange;
+using Microsoft.SqlServer.TDS.Error;
+using Microsoft.SqlServer.TDS.FeatureExtAck;
+using Microsoft.SqlServer.TDS.Info;
+using Microsoft.SqlServer.TDS.Login7;
+using Microsoft.SqlServer.TDS.LoginAck;
+using Microsoft.SqlServer.TDS.PreLogin;
+using Microsoft.SqlServer.TDS.SSPI;
+
+namespace Microsoft.SqlServer.TDS.Servers
+{
+    /// <summary>
+    /// Generic TDS server without specialization
+    /// </summary>
+    public abstract class GenericTdsServer<T> : ITDSServer, IDisposable
+        where T : TdsServerArguments
+    {
+        /// <summary>
+        /// Delegate to be called when a LOGIN7 request has been received and is
+        /// validated.  This is called before any authentication work is done,
+        /// and before any response is sent.
+        /// </summary>
+        public delegate void OnLogin7ValidatedDelegate(
+            TDSLogin7Token login7Token);
+
+        /// <summary>
+        /// Delegate to be called when authentication is completed and TDSResponse
+        /// message is sent to the client.
+        /// </summary>
+        public delegate void OnAuthenticationCompletedDelegate(
+            TDSMessage response);
+
+        /// <summary>
+        /// Default feature extension version supported on the server for vector support.
+        /// </summary>
+        public const byte DefaultSupportedVectorFeatureExtVersion = 0x01;
+
+        /// <summary>
+        /// Property for setting server version for vector feature extension.
+        /// </summary>
+        public bool EnableVectorFeatureExt { get; set; } = false;
+
+        /// <summary>
+        /// Property for setting server flag for user agent feature extension.
+        /// </summary>
+        public bool EnableUserAgentFeatureExt { get; set; } = false;
+
+        /// <summary>
+        /// Property for setting server version for vector feature extension.
+        /// </summary>
+        public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
+
+        /// <summary>
+        /// Property for setting server version for user agent feature extension.
+        /// </summary>
+        public byte ServerSupportedUserAgentFeatureExtVersion { get; set; } = DefaultSupportedUserAgentFeatureExtVersion;
+
+        /// <summary>
+        /// Client version for vector FeatureExtension.
+        /// </summary>
+        private byte _clientSupportedVectorFeatureExtVersion = 0;
+
+        /// <summary>
+        /// Default feature extension version supported on the server for user agent.
+        /// </summary>
+        public const byte DefaultSupportedUserAgentFeatureExtVersion = 0x01;
+
+        /// <summary>
+        /// Session counter
+        /// </summary>
+        private int _sessionCount = 0;
+
+        /// <summary>
+        /// Counts pre-login requests to the server.
+        /// </summary>
+        private int _preLoginCount = 0;
+
+        private TDSServerEndPoint _endpoint;
+
+        /// <summary>
+        /// Initialization constructor
+        /// </summary>
+        public GenericTdsServer(T arguments) :
+            this(arguments, new QueryEngine(arguments))
+        {
+        }
+
+        /// <summary>
+        /// Initialization constructor
+        /// </summary>
+        public GenericTdsServer(T arguments, QueryEngine queryEngine)
+        {
+            // Save arguments
+            Arguments = arguments;
+
+            // Save "relational" query engine
+            Engine = queryEngine;
+
+            // Configure log for the query engine
+            Engine.Log = Arguments.Log;
+        }
+
+        public IPEndPoint EndPoint => _endpoint.ServerEndPoint;
+
+        /// <summary>
+        /// Server configuration
+        /// </summary>
+        protected T Arguments { get; set; }
+
+        /// <summary>
+        /// Query engine instance
+        /// </summary>
+        protected QueryEngine Engine { get; set; }
+
+        /// <summary>
+        /// Counts pre-login requests to the server.
+        /// </summary>
+        public int PreLoginCount => _preLoginCount;
+
+        public OnAuthenticationCompletedDelegate OnAuthenticationResponseCompleted { private get; set; }
+
+        public OnLogin7ValidatedDelegate OnLogin7Validated { private get; set; }
+
+
+        public void Start([CallerMemberName] string methodName = "")
+        {
+            if (_endpoint != null)
+            {
+                throw new InvalidOperationException("Server is already started");
+            }
+            _endpoint = new TDSServerEndPoint(this) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
+            _endpoint.EndpointName = methodName;
+            _endpoint.EventLog = Arguments.Log;
+            _endpoint.Start();
+        }
+
+        /// <summary>
+        /// Create a new session on the server
+        /// </summary>
+        /// <returns>A new instance of the session</returns>
+        public virtual ITDSServerSession OpenSession()
+        {
+            // Atomically increment the session counter
+            Interlocked.Increment(ref _sessionCount);
+
+            // Create a new session
+            GenericTdsServerSession session = new GenericTdsServerSession(this, (uint)_sessionCount);
+
+            // Use configured encryption certificate and protocols
+            session.EncryptionCertificate = Arguments.EncryptionCertificate;
+            session.EncryptionProtocols = Arguments.EncryptionProtocols;
+
+            return session;
+        }
+
+        /// <summary>
+        /// Notify server of the session termination
+        /// </summary>
+        public virtual void CloseSession(ITDSServerSession session)
+        {
+            // Do nothing
+        }
+
+        /// <summary>
+        /// Handler for pre-login request
+        /// </summary>
+        public virtual TDSMessageCollection OnPreLoginRequest(ITDSServerSession session, TDSMessage request)
+        {
+            Interlocked.Increment(ref _preLoginCount);
+
+            // Inflate pre-login request from the message
+            TDSPreLoginToken preLoginRequest = request[0] as TDSPreLoginToken;
+            GenericTdsServerSession genericTdsServerSession = session as GenericTdsServerSession;
+
+            // Log request
+            TDSUtilities.Log(Arguments.Log, "Request", preLoginRequest);
+
+            // Generate server response for encryption
+            TDSPreLoginTokenEncryptionType serverResponse = TDSUtilities.GetEncryptionResponse(preLoginRequest.Encryption, Arguments.Encryption);
+
+            // Update client state with encryption resolution
+            session.Encryption = TDSUtilities.ResolveEncryption(preLoginRequest.Encryption, serverResponse);
+
+            // Create TDS prelogin packet
+            TDSPreLoginToken preLoginToken = new TDSPreLoginToken(Arguments.ServerVersion, serverResponse, false); // TDS server doesn't support MARS
+
+            // Cache the received Nonce into the session
+            genericTdsServerSession.ClientNonce = preLoginRequest.Nonce;
+
+            // Check if the server has been started up as requiring FedAuth when choosing between SSPI and FedAuth
+            if (Arguments.FedAuthRequiredPreLoginOption == TdsPreLoginFedAuthRequiredOption.FedAuthRequired)
+            {
+                if (preLoginRequest.FedAuthRequired == TdsPreLoginFedAuthRequiredOption.FedAuthRequired)
+                {
+                    // Set the FedAuthRequired option
+                    preLoginToken.FedAuthRequired = TdsPreLoginFedAuthRequiredOption.FedAuthRequired;
+                }
+
+                // Keep the federated authentication required flag in the server session
+                genericTdsServerSession.FedAuthRequiredPreLoginServerResponse = preLoginToken.FedAuthRequired;
+
+                if (preLoginRequest.Nonce != null)
+                {
+                    // Generate Server Nonce
+                    preLoginToken.Nonce = _GenerateRandomBytes(32);
+                }
+            }
+
+            // Cache the server Nonce in a session
+            genericTdsServerSession.ServerNonce = preLoginToken.Nonce;
+
+            // Log response
+            TDSUtilities.Log(Arguments.Log, "Response", preLoginToken);
+
+            // Reset authentication information
+            session.SQLUserID = null;
+            session.NTUserAuthenticationContext = null;
+
+            // Respond with a single message that contains only one token
+            return new TDSMessageCollection(new TDSMessage(TDSMessageType.Response, preLoginToken));
+        }
+
+        /// <summary>
+        /// Handler for login request
+        /// </summary>
+        public virtual TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
+        {
+            // Inflate login7 request from the message
+            TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
+
+            // Log request
+            TDSUtilities.Log(Arguments.Log, "Request", loginRequest);
+
+            // Update server context
+            session.Database = string.IsNullOrEmpty(loginRequest.Database) ? "master" : loginRequest.Database;
+
+            // Resolve TDS version
+            session.TDSVersion = TDSVersion.Resolve(TDSVersion.GetTDSVersion(Arguments.ServerVersion), loginRequest.TDSVersion);
+
+            // Check for the TDS version
+            TDSMessageCollection collection = CheckTDSVersion(session);
+
+            // Check if any errors are posted
+            if (collection != null)
+            {
+                // Version check needs to send own message hence we can't proceed
+                return collection;
+            }
+
+            // Indicates federated authentication
+            bool bIsFedAuthConnection = false;
+
+            // Federated authentication option to be used later
+            TDSLogin7FedAuthOptionToken federatedAuthenticationOption = null;
+
+            // Check if feature extension block is available
+            if (loginRequest.FeatureExt != null)
+            {
+                // Go over the feature extension data
+                foreach (TDSLogin7FeatureOptionToken option in loginRequest.FeatureExt)
+                {
+                    // Check option type
+                    switch (option.FeatureID)
+                    {
+                        case TDSFeatureID.SessionRecovery:
+                            {
+                                // Enable session recovery
+                                session.IsSessionRecoveryEnabled = true;
+
+                                // Cast to session state options
+                                TDSLogin7SessionRecoveryOptionToken sessionStateOption = option as TDSLogin7SessionRecoveryOptionToken;
+
+                                // Inflate session state
+                                (session as GenericTdsServerSession).Inflate(sessionStateOption.Initial, sessionStateOption.Current);
+
+                                break;
+                            }
+                        case TDSFeatureID.FederatedAuthentication:
+                            {
+                                // Cast to federated authentication option
+                                federatedAuthenticationOption = option as TDSLogin7FedAuthOptionToken;
+
+                                // Mark authentication as federated
+                                bIsFedAuthConnection = true;
+
+                                // Validate federated authentication option
+                                collection = CheckFederatedAuthenticationOption(session, option as TDSLogin7FedAuthOptionToken);
+
+                                if (collection != null)
+                                {
+                                    // Version error happened.
+                                    return collection;
+                                }
+
+                                // Save the fed auth library to be used
+                                (session as GenericTdsServerSession).FederatedAuthenticationLibrary = federatedAuthenticationOption.Library;
+
+                                break;
+                            }
+                        case TDSFeatureID.JsonSupport:
+                            {
+                                // Enable Json Support
+                                session.IsJsonSupportEnabled = true;
+                                break;
+                            }
+
+                        case TDSFeatureID.VectorSupport:
+                            {
+                                if (EnableVectorFeatureExt)
+                                {
+                                    // Enable Vector Support
+                                    session.IsVectorSupportEnabled = true;
+                                    _clientSupportedVectorFeatureExtVersion = ((TDSLogin7GenericOptionToken)option).Data[0];
+                                }
+                                break;
+                            }
+                        case TDSFeatureID.UserAgentSupport:
+                            {
+                                if (EnableUserAgentFeatureExt)
+                                {
+                                    // Enable User Agent Support
+                                    session.IsUserAgentSupportEnabled = true;
+                                }
+                                break;
+                            }
+
+                        default:
+                            {
+                                // Do nothing
+                                break;
+                            }
+                    }
+                }
+            }
+
+            OnLogin7Validated?.Invoke(loginRequest);
+
+            // Check if SSPI authentication is requested
+            if (loginRequest.OptionalFlags2.IntegratedSecurity == TDSLogin7OptionalFlags2IntSecurity.On)
+            {
+                // Delegate to SSPI authentication
+                return ContinueSSPIAuthentication(session, loginRequest.SSPI);
+            }
+
+            // If it is not a FedAuth connection or the server has been started up as not supporting FedAuth, just ignore the FeatureExtension
+            // Yes unfortunately for the fake server, supporting FedAuth = Requiring FedAuth
+            if (!bIsFedAuthConnection
+                || Arguments.FedAuthRequiredPreLoginOption == TdsPreLoginFedAuthRequiredOption.FedAuthNotRequired)
+            {
+                // We use SQL authentication
+                session.SQLUserID = loginRequest.UserID;
+
+                // Process with the SQL login.
+                return OnSqlAuthenticationCompleted(session);
+            }
+            else
+            {
+                // Fedauth feature extension is present and server has been started up as Requiring (or Supporting) FedAuth
+                if (federatedAuthenticationOption.IsRequestingAuthenticationInfo)
+                {
+                    // Must provide client with more info before completing authentication
+                    return OnFederatedAuthenticationInfoRequest(session);
+                }
+                else
+                {
+                    return OnFederatedAuthenticationCompleted(session, federatedAuthenticationOption.Token);
+                }
+            }
+        }
+
+        public virtual TDSMessageCollection OnFederatedAuthenticationTokenMessage(ITDSServerSession session, TDSMessage message)
+        {
+            // Get the FedAuthToken
+            TDSFedAuthToken fedauthToken = message[0] as TDSFedAuthToken;
+
+            // Log
+            TDSUtilities.Log(Arguments.Log, "Request", fedauthToken);
+
+            return OnFederatedAuthenticationCompleted(session, fedauthToken.Token);
+        }
+
+        /// <summary>
+        /// Handler for SSPI request
+        /// </summary>
+        public virtual TDSMessageCollection OnSSPIRequest(ITDSServerSession session, TDSMessage request)
+        {
+            // Get the SSPI token
+            TDSSSPIClientToken sspiRequest = request[0] as TDSSSPIClientToken;
+
+            // Log request
+            TDSUtilities.Log(Arguments.Log, "Request", sspiRequest.Payload);
+
+            // Delegate to SSPI routine
+            return ContinueSSPIAuthentication(session, sspiRequest.Payload);
+        }
+
+        /// <summary>
+        /// It is called when SQL batch request arrives
+        /// </summary>
+        public virtual TDSMessageCollection OnSQLBatchRequest(ITDSServerSession session, TDSMessage message)
+        {
+            // Delegate to the query engine
+            TDSMessageCollection responseMessage = Engine.ExecuteBatch(session, message);
+
+            // Check if session packet size is different than the engine packet size
+            if (session.PacketSize != Arguments.PacketSize)
+            {
+                // Get the first message
+                TDSMessage firstMessage = responseMessage[0];
+
+                // Find DONE token in it
+                int indexOfDone = firstMessage.IndexOf(firstMessage.Where(t => t is TDSDoneToken).First());
+
+                // Create new packet size environment change token
+                TDSEnvChangeToken envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.PacketSize, Arguments.PacketSize.ToString(), session.PacketSize.ToString());
+
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", envChange);
+
+                // Insert env change before done token
+                firstMessage.Insert(indexOfDone, envChange);
+
+                // Update session with the new packet size
+                session.PacketSize = (uint)Arguments.PacketSize;
+            }
+
+            return responseMessage;
+        }
+
+        /// <summary>
+        /// It is called when attention arrives
+        /// </summary>
+        public virtual TDSMessageCollection OnAttention(ITDSServerSession session, TDSMessage message)
+        {
+            // Delegate into the query engine
+            return Engine.ExecuteAttention(session, message);
+        }
+
+        /// <summary>
+        /// Advances one step in SSPI authentication sequence
+        /// </summary>
+        protected virtual TDSMessageCollection ContinueSSPIAuthentication(ITDSServerSession session, byte[] payload)
+        {
+            // Response to send to the client
+            SSPIResponse response;
+
+            try
+            {
+                // Check if we have an SSPI context
+                if (session.NTUserAuthenticationContext == null)
+                {
+                    // This is the first step so we need to create a server context and initialize it
+                    session.NTUserAuthenticationContext = SSPIContext.CreateServer();
+
+                    // Run the first step of authentication
+                    response = session.NTUserAuthenticationContext.StartServerAuthentication(payload);
+                }
+                else
+                {
+                    // Process SSPI request from the client
+                    response = session.NTUserAuthenticationContext.ContinueServerAuthentication(payload);
+                }
+            }
+            catch (Exception e)
+            {
+                // Prepare ERROR token with the reason
+                TDSErrorToken errorToken = new TDSErrorToken(12345, 1, 15, "Failed to accept security SSPI context", Arguments.ServerName);
+
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", errorToken);
+
+                // Serialize the error token into the response packet
+                TDSMessage responseErrorMessage = new TDSMessage(TDSMessageType.Response, errorToken);
+
+                // Prepare ERROR token with the final errorToken
+                errorToken = new TDSErrorToken(12345, 1, 15, e.Message, Arguments.ServerName);
+
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", errorToken);
+
+                // Serialize the error token into the response packet
+                responseErrorMessage.Add(errorToken);
+
+                // Create DONE token
+                TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
+
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", doneToken);
+
+                // Serialize DONE token into the response packet
+                responseErrorMessage.Add(doneToken);
+
+                // Respond with a single message
+                return new TDSMessageCollection(responseErrorMessage);
+            }
+
+            // Message collection to respond with
+            TDSMessageCollection responseMessages = new TDSMessageCollection();
+
+            // Check if there's a response
+            if (response != null)
+            {
+                // Check if there's a payload
+                if (response.Payload != null)
+                {
+                    // Create SSPI token
+                    TDSSSPIToken sspiToken = new TDSSSPIToken(response.Payload);
+
+                    // Log response
+                    TDSUtilities.Log(Arguments.Log, "Response", sspiToken);
+
+                    // Prepare response message with a single response token
+                    responseMessages.Add(new TDSMessage(TDSMessageType.Response, sspiToken));
+
+                    // Check if we can complete login
+                    if (!response.IsFinal)
+                    {
+                        // Send the message to the client
+                        return responseMessages;
+                    }
+                }
+            }
+
+            // Reset SQL user identifier since we're using NT authentication
+            session.SQLUserID = null;
+
+            // Append successfully authentication response
+            responseMessages.AddRange(OnAuthenticationCompleted(session));
+
+            // Return the message with SSPI token
+            return responseMessages;
+        }
+
+        protected virtual TDSMessageCollection OnFederatedAuthenticationInfoRequest(ITDSServerSession session)
+        {
+            TDSFedAuthInfoToken infoToken = new TDSFedAuthInfoToken();
+
+            // Make fake info options
+            TDSFedAuthInfoOptionSPN spn = new TDSFedAuthInfoOptionSPN(Arguments.ServerPrincipalName);
+            TDSFedAuthInfoOptionSTSURL stsurl = new TDSFedAuthInfoOptionSTSURL(Arguments.StsUrl);
+            infoToken.Options.Add(0, spn);
+            infoToken.Options.Add(1, stsurl);
+
+            // Log response
+            TDSUtilities.Log(Arguments.Log, "Response", spn);
+            TDSUtilities.Log(Arguments.Log, "Response", stsurl);
+
+            TDSMessage infoMessage = new TDSMessage(TDSMessageType.FederatedAuthenticationInfo, infoToken);
+            return new TDSMessageCollection(infoMessage);
+        }
+
+        /// <summary>
+        /// Called by OnLogin7Request when client is using SQL auth. Overridden by subclasses to easily detect when SQL auth is used.
+        /// </summary>
+        protected virtual TDSMessageCollection OnSqlAuthenticationCompleted(ITDSServerSession session)
+        {
+            return OnAuthenticationCompleted(session);
+        }
+
+        protected virtual TDSMessageCollection OnAuthenticationCompleted(ITDSServerSession session)
+        {
+            // Create new database environment change token
+            TDSEnvChangeToken envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.Database, session.Database, "master");
+
+            // Log response
+            TDSUtilities.Log(Arguments.Log, "Response", envChange);
+
+            // Serialize the login token into the response packet
+            TDSMessage responseMessage = new TDSMessage(TDSMessageType.Response, envChange);
+
+            // Create information token on the change
+            TDSInfoToken infoToken = new TDSInfoToken(5701, 2, 0, string.Format("Changed database context to '{0}'", envChange.NewValue), Arguments.ServerName);
+
+            // Log response
+            TDSUtilities.Log(Arguments.Log, "Response", infoToken);
+
+            // Serialize the login token into the response packet
+            responseMessage.Add(infoToken);
+
+            // Create new collation change token
+            envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.SQLCollation, (session as GenericTdsServerSession).Collation);
+
+            // Log response
+            TDSUtilities.Log(Arguments.Log, "Response", envChange);
+
+            // Serialize the login token into the response packet
+            responseMessage.Add(envChange);
+
+            // Create new language change token
+            envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.Language, LanguageString.ToString((session as GenericTdsServerSession).Language));
+
+            // Log response
+            TDSUtilities.Log(Arguments.Log, "Response", envChange);
+
+            // Serialize the login token into the response packet
+            responseMessage.Add(envChange);
+
+            // Create information token on the change
+            infoToken = new TDSInfoToken(5703, 1, 0, string.Format("Changed language setting to {0}", envChange.NewValue), Arguments.ServerName);
+
+            // Log response
+            TDSUtilities.Log(Arguments.Log, "Response", infoToken);
+
+            // Serialize the login token into the response packet
+            responseMessage.Add(infoToken);
+
+            // Create new packet size environment change token
+            envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.PacketSize, Arguments.PacketSize.ToString(), Arguments.PacketSize.ToString());
+
+            // Log response
+            TDSUtilities.Log(Arguments.Log, "Response", envChange);
+
+            // Serialize the login token into the response packet
+            responseMessage.Add(envChange);
+
+            // Update session packet size
+            session.PacketSize = (uint)Arguments.PacketSize;
+
+            // Create login acknowledgement packet
+            TDSLoginAckToken loginResponseToken = new TDSLoginAckToken(Arguments.ServerVersion, session.TDSVersion, TDSLogin7TypeFlagsSQL.SQL, "Microsoft SQL Server");  // Otherwise SNAC yields E_FAIL
+
+            // Log response
+            TDSUtilities.Log(Arguments.Log, "Response", loginResponseToken);
+
+            // Serialize the login token into the response packet
+            responseMessage.Add(loginResponseToken);
+
+            CheckSessionRecovery(session, responseMessage);
+            CheckJsonSupported(session, responseMessage);
+            CheckVectorSupport(session, responseMessage);
+            CheckUserAgentSupport(session, responseMessage);
+
+            if (!string.IsNullOrEmpty(Arguments.FailoverPartner))
+            {
+                envChange = new TDSEnvChangeToken(TDSEnvChangeTokenType.RealTimeLogShipping, Arguments.FailoverPartner);
+
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", envChange);
+
+                responseMessage.Add(envChange);
+            }
+
+            // Create DONE token
+            TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final);
+
+            // Log response
+            TDSUtilities.Log(Arguments.Log, "Response", doneToken);
+
+            // Serialize DONE token into the response packet
+            responseMessage.Add(doneToken);
+
+            // Invoke delegate for response validation
+            OnAuthenticationResponseCompleted?.Invoke(responseMessage);
+
+            // Wrap a single message in a collection
+            return new TDSMessageCollection(responseMessage);
+        }
+
+
+        /// <summary>
+        /// Check if session recovery is enabled
+        /// </summary>
+        /// <param name="session">Server session</param>
+        /// <param name="responseMessage">Response message</param>
+        protected void  CheckSessionRecovery(ITDSServerSession session, TDSMessage responseMessage)
+        {
+            // Check if session recovery is enabled
+            if (session.IsSessionRecoveryEnabled)
+            {
+                // Create Feature extension Ack token
+                TDSFeatureExtAckToken featureExtActToken = new TDSFeatureExtAckToken(new TDSFeatureExtAckSessionStateOption((session as GenericTdsServerSession).Deflate()));
+
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", featureExtActToken);
+
+                // Serialize feature extension token into the response
+                responseMessage.Add(featureExtActToken);
+            }
+        }
+
+
+        /// <summary>
+        /// Check if Json is supported
+        /// </summary>
+        /// <param name="session">Server session</param>
+        /// <param name="responseMessage">Response message</param>
+        protected void CheckJsonSupported(ITDSServerSession session, TDSMessage responseMessage)
+        {
+            // Check if Json is supported
+            if (session.IsJsonSupportEnabled)
+            {
+                // Create ack data (1 byte: Version number)
+                byte[] data = new byte[1];
+                data[0] = (byte)1;
+
+                // Create Json support as a generic feature extension option
+                TDSFeatureExtAckGenericOption jsonSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.JsonSupport, (uint)data.Length, data);
+
+                // Look for feature extension token
+                TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
+
+                if (featureExtAckToken == null)
+                {
+                    // Create feature extension ack token
+                    featureExtAckToken = new TDSFeatureExtAckToken(jsonSupportOption);
+                    responseMessage.Add(featureExtAckToken);
+                }
+                else
+                {
+                    // Update the existing token
+                    featureExtAckToken.Options.Add(jsonSupportOption);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Check if Vector is supported
+        /// </summary>
+        /// <param name="session">Server session</param>
+        /// <param name="responseMessage">Response message</param>
+        protected void CheckVectorSupport(ITDSServerSession session, TDSMessage responseMessage)
+        {
+            // Check if Vector is supported
+            if (session.IsVectorSupportEnabled)
+            {
+                // Create ack data (1 byte: Version number)
+                byte[] data = new byte[1];
+                data[0] = ServerSupportedVectorFeatureExtVersion > _clientSupportedVectorFeatureExtVersion ? _clientSupportedVectorFeatureExtVersion : ServerSupportedVectorFeatureExtVersion;
+
+                // Create vector support as a generic feature extension option
+                TDSFeatureExtAckGenericOption vectorSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.VectorSupport, (uint)data.Length, data);
+
+                // Look for feature extension token
+                TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
+
+                if (featureExtAckToken == null)
+                {
+                    // Create feature extension ack token
+                    featureExtAckToken = new TDSFeatureExtAckToken(vectorSupportOption);
+                    responseMessage.Add(featureExtAckToken);
+                }
+                else
+                {
+                    // Update the existing token
+                    featureExtAckToken.Options.Add(vectorSupportOption);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Check if UserAgent support is enabled
+        /// </summary>
+        /// <param name="session">Server session</param>
+        /// <param name="responseMessage">Response message</param>
+        protected void CheckUserAgentSupport(ITDSServerSession session, TDSMessage responseMessage)
+        {
+            // If tests request it, force an ACK for UserAgentSupport with no negotiation
+            if (session.IsUserAgentSupportEnabled)
+            {
+                // Create ack data (1 byte: Version number)
+                byte[] data = new byte[1];
+                data[0] = ServerSupportedUserAgentFeatureExtVersion;
+
+                // Create user agent support as a generic feature extension option
+                TDSFeatureExtAckGenericOption userAgentSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.UserAgentSupport, (uint)data.Length, data);
+
+                // Look for feature extension token
+                TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
+
+                if (featureExtAckToken == null)
+                {
+                    // Create feature extension ack token
+                    featureExtAckToken = new TDSFeatureExtAckToken(userAgentSupportOption);
+                    responseMessage.Add(featureExtAckToken);
+                }
+                else
+                {
+                    // Update the existing token
+                    featureExtAckToken.Options.Add(userAgentSupportOption);
+                }
+            }
+
+        }
+
+        /// <summary>
+        /// Complete the Federated Login
+        /// </summary>
+        /// <param name="session">Server session</param>
+        /// <returns>Federated Login message collection</returns>
+        protected virtual TDSMessageCollection OnFederatedAuthenticationCompleted(ITDSServerSession session, byte[] ticket)
+        {
+            // Delegate to successful authentication routine
+            TDSMessageCollection responseMessageCollection = OnAuthenticationCompleted(session);
+
+            // Get the last message
+            TDSMessage targetMessage = responseMessageCollection.Last();
+
+            IFederatedAuthenticationTicket decryptedTicket = null;
+
+            try
+            {
+                // Get the Federated Authentication ticket using RPS
+                decryptedTicket = FederatedAuthenticationTicketService.DecryptTicket((session as GenericTdsServerSession).FederatedAuthenticationLibrary, ticket);
+
+                if (decryptedTicket is RpsTicket)
+                {
+                    TDSUtilities.Log(Arguments.Log, "RPS ticket session key: ", (decryptedTicket as RpsTicket).sessionKey);
+                }
+                else if (decryptedTicket is JwtTicket)
+                {
+                    TDSUtilities.Log(Arguments.Log, "JWT Ticket Received", null);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Prepare ERROR token
+                TDSErrorToken errorToken = new TDSErrorToken(54879, 1, 20, "Authentication error in Federated Authentication Ticket Service: " + ex.Message, Arguments.ServerName);
+
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", errorToken);
+
+                // Create DONE token
+                TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
+
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", doneToken);
+
+                // Return the message and stop processing request
+                return new TDSMessageCollection(new TDSMessage(TDSMessageType.Response, errorToken, doneToken));
+            }
+
+            // Create federated authentication extension option
+            TDSFeatureExtAckFederatedAuthenticationOption federatedAuthenticationOption;
+            if ((session as GenericTdsServerSession).FederatedAuthenticationLibrary == TDSFedAuthLibraryType.MSAL)
+            {
+                // For the time being, fake fedauth tokens are used for ADAL, so decryptedTicket is null.
+                federatedAuthenticationOption =
+                    new TDSFeatureExtAckFederatedAuthenticationOption((session as GenericTdsServerSession).ClientNonce, null);
+            }
+            else
+            {
+                federatedAuthenticationOption =
+                    new TDSFeatureExtAckFederatedAuthenticationOption((session as GenericTdsServerSession).ClientNonce,
+                                                                       decryptedTicket.GetSignature((session as GenericTdsServerSession).ClientNonce));
+            }
+
+            // Look for feature extension token
+            TDSFeatureExtAckToken featureExtActToken = (TDSFeatureExtAckToken)targetMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
+
+            // Check if response already contains federated authentication
+            if (featureExtActToken == null)
+            {
+                // Create Feature extension Ack token
+                featureExtActToken = new TDSFeatureExtAckToken(federatedAuthenticationOption);
+
+                // Serialize feature extension token into the response
+                // The last token is Done token, so we should put feautureextack token before done token
+                targetMessage.Insert(targetMessage.Count - 1, featureExtActToken);
+            }
+            else
+            {
+                // Update
+                featureExtActToken.Options.Add(federatedAuthenticationOption);
+            }
+
+            // Log response
+            TDSUtilities.Log(Arguments.Log, "Response", federatedAuthenticationOption);
+
+            // Wrap a message with a collection
+            return responseMessageCollection;
+        }
+
+        /// <summary>
+        /// Ensure that federated authentication option is valid
+        /// </summary>
+        protected virtual TDSMessageCollection CheckFederatedAuthenticationOption(ITDSServerSession session, TDSLogin7FedAuthOptionToken federatedAuthenticationOption)
+        {
+            // Check if server's prelogin response for FedAuthRequired prelogin option is echoed back correctly in FedAuth Feature Extenion Echo
+            if (federatedAuthenticationOption.Echo != (session as GenericTdsServerSession).FedAuthRequiredPreLoginServerResponse)
+            {
+                // Create Error message
+                string message =
+                    string.Format("FEDAUTHREQUIRED option in the prelogin response is not echoed back correctly: in prelogin response, it is {0} and in login, it is {1}: ",
+                    (session as GenericTdsServerSession).FedAuthRequiredPreLoginServerResponse,
+                    federatedAuthenticationOption.Echo);
+
+                // Create errorToken token
+                TDSErrorToken errorToken = new TDSErrorToken(3456, 34, 23, message);
+
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", errorToken);
+
+                // Create DONE token
+                TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
+
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", doneToken);
+
+                // Build a collection with a single message of two tokens
+                return new TDSMessageCollection(new TDSMessage(TDSMessageType.Response, errorToken, doneToken));
+            }
+
+            // Check if the nonce exists
+            if ((federatedAuthenticationOption.Nonce == null && federatedAuthenticationOption.Library == TDSFedAuthLibraryType.IDCRL)
+                || !AreEqual((session as GenericTdsServerSession).ServerNonce, federatedAuthenticationOption.Nonce))
+            {
+                // Error message
+                string message = string.Format("Unexpected NONCEOPT specified in the Federated authentication feature extension");
+
+                // Create errorToken token
+                TDSErrorToken errorToken = new TDSErrorToken(5672, 32, 87, message);
+
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", errorToken);
+
+                // Create DONE token
+                TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
+
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", doneToken);
+
+                // Build a collection with a single message of two tokens
+                return new TDSMessageCollection(new TDSMessage(TDSMessageType.Response, errorToken, doneToken));
+            }
+
+            // We're good
+            return null;
+        }
+
+        /// <summary>
+        /// Checks the TDS version
+        /// </summary>
+        /// <param name="session">Server session</param>
+        /// <returns>Null if the TDS version is supported, errorToken message otherwise</returns>
+        protected virtual TDSMessageCollection CheckTDSVersion(ITDSServerSession session)
+        {
+            // Check if version is supported
+            if (TDSVersion.IsSupported(session.TDSVersion))
+            {
+                return null;
+            }
+
+            // Prepare ERROR token
+            TDSErrorToken errorToken = new TDSErrorToken(12345, 1, 16, "Unsupported TDS client version", Arguments.ServerName);
+
+            // Log response
+            TDSUtilities.Log(Arguments.Log, "Response", errorToken);
+
+            // Create DONE token
+            TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error);
+
+            // Log response
+            TDSUtilities.Log(Arguments.Log, "Response", doneToken);
+
+            // Wrap with message collection
+            return new TDSMessageCollection(new TDSMessage(TDSMessageType.Response, errorToken, doneToken));
+        }
+
+        /// <summary>
+        /// Generates random bytes
+        /// </summary>
+        /// <param name="count">The number of bytes to be generated.</param>
+        /// <returns>Generated random bytes.</returns>
+        private byte[] _GenerateRandomBytes(int count)
+        {
+            byte[] randomBytes = new byte[count];
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomBytes);
+            }
+            
+            return randomBytes;
+        }
+
+        /// <summary>
+        /// Check if two byte arrays are equal
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
+        /// <returns></returns>
+        private bool AreEqual(byte[] left, byte[] right)
+        {
+            if (object.ReferenceEquals(left, right))
+            {
+                return true;
+            }
+
+            if (left == null || right == null || left.Length != right.Length)
+            {
+                return false;
+            }
+
+            return left.SequenceEqual<byte>(right);
+        }
+
+        public virtual void Dispose()
+        {
+            _endpoint?.Dispose();
+            _endpoint = null;
+        }
+    }
+}
