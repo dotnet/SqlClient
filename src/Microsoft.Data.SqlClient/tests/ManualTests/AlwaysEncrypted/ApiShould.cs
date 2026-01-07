@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
@@ -2455,7 +2456,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     Assert.Equal(customerId, (int)reader[0]);
                 }
-                reader.Close();
             };
 
             // change the CEK for the CustomerId column from ColumnEncryptionKey1 to ColumnEncryptionKey2
@@ -2474,7 +2474,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     Assert.Equal(customerId, (int)reader[0]);
                 }
-                reader.Close();
             }
 
             // revert the CEK change to the CustomerId column
@@ -2522,7 +2521,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     Assert.Equal(customerId, (int)reader[0]);
                 }
-                reader.Close();
             }
 
             CommandHelper.InvalidateEnclaveSession(cmd);
@@ -2534,7 +2532,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     Assert.Equal(customerId, (int)reader[0]);
                 }
-                reader.Close();
             }
 
             CommandHelper.InvalidateEnclaveSession(cmd);
@@ -2568,7 +2565,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     Assert.Equal(customerId, (int)reader[0]);
                 }
-                reader.Close();
             }
 
             CommandHelper.ForceThrowDuringGenerateEnclavePackage(cmd);
@@ -2863,11 +2859,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <param name="cancellationToken"></param>
         private async Task ExecuteReaderAsync(SqlCommand sqlCommand, CancellationToken cancellationToken)
         {
-            using (SqlDataReader reader = await sqlCommand.ExecuteReaderAsync(cancellationToken))
-            {
-                while (await reader.ReadAsync())
-                { }
-            }
+            using SqlDataReader reader = await sqlCommand.ExecuteReaderAsync(cancellationToken);
+            await reader.FlushResultSetAsync();
         }
 
         /// <summary>
@@ -3222,7 +3215,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             TestCommandCancelParams cancelCommandTestParamsObject = state as TestCommandCancelParams;
             SqlCommand sqlCommand = cancelCommandTestParamsObject?.SqlCommand;
-            SqlDataReader reader = null;
 
             Assert.True(cancelCommandTestParamsObject != null, @"cancelCommandTestParamsObject should not be null.");
             Assert.True(sqlCommand != null, "sqlCommand should not be null.");
@@ -3234,9 +3226,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 Exception ex = Assert.ThrowsAny<Exception>(() =>
                 {
-                    reader = sqlCommand.ExecuteReader();
-                    while (reader.Read())
-                    { }
+                    using SqlDataReader reader = sqlCommand.ExecuteReader();
+                    reader.FlushResultSet();
                 });
 
                 // We don't use Assert.Contains() here because it truncates the
@@ -3249,8 +3240,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
             finally
             {
-                reader?.Dispose();
-                // ...and unlock the cancellation thread once we finish.
+                // Unlock the cancellation thread once we finish.
                 cancelCommandTestParamsObject.WorkloadCompleteSignal.Set();
             }
         }

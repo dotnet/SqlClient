@@ -6,6 +6,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Collections;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -37,11 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     clientConnectionId = connection.ClientConnectionId;
                     Assert.True(clientConnectionId != Guid.Empty);
 
-                    int row = 0;
-                    while (dr.Read())
-                    {
-                        row++;
-                    }
+                    dr.FlushResultSet();
                 }
             }
             // Ensure calling RetrieveStatistics multiple times do not affect the ConnectionTime

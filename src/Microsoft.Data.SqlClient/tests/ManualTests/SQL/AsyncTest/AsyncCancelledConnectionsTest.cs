@@ -5,6 +5,7 @@
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -140,7 +141,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Task timeBombTask = null;
             try
             {
-                // Set us up the (time) bomb
+                // Set up us the (time) bomb
                 if (poison)
                 {
                     timeBombTask = TimeBombAsync(command);
@@ -164,10 +165,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     // This looks a little strange, we failed to read above so this should
                     // fail too. But consider the case where this code is elsewhere (in the
                     // Dispose method of a class holding this logic)
-                    while (await reader.NextResultAsync())
-                    {
-                        // Discard all results
-                    }
+                    await reader.FlushAllResultsAsync(flushResults: false);
 
                     throw;
                 }

@@ -307,15 +307,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 int clientSPID = conn.ServerProcessId;
                 int serverSPID = 0;
                 InternalConnectionWrapper wrapper = new(conn, true, builder.ConnectionString);
+
                 using SqlCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "SELECT @@SPID";
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        serverSPID = reader.GetInt16(0);
-                    }
-                }
+
+                serverSPID = (int)cmd.ExecuteScalar()!;
 
                 Assert.Equal(serverSPID, clientSPID);
                 // Also check SPID after query execution
@@ -324,13 +320,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 wrapper.KillConnectionByTSql();
 
                 // Connection resiliency should reconnect transparently
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        serverSPID = reader.GetInt16(0);
-                    }
-                }
+                serverSPID = (int)cmd.ExecuteScalar()!;
 
                 // SPID should match server's SPID
                 Assert.Equal(serverSPID, conn.ServerProcessId);
