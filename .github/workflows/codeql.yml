@@ -60,9 +60,8 @@ jobs:
     - name: Setup .NET Core SDK
       uses: actions/setup-dotnet@v5.0.1
       with:
-        # TODO: Update this to .NET 10 once PR #3686 is complete.
         # TODO: Replace this with global-json-file once PR #3797 is complete.
-        dotnet-version: 9.x
+        dotnet-version: 10.x
         dotnet-quality: ga
         #global-json-file: global.json
 

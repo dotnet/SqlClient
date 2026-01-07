@@ -3,16 +3,10 @@
 
   <!-- We purposely do not include any parent Directory.Build.props files. -->
 
-  <!--
-    We do, however, include Versions.props to get some default version
-    numbers for dependent packages.
-  -->
-  <Import Project="../../../../tools/props/Versions.props" />
-
   <!-- Properties common to all projects in this solution. -->
   <PropertyGroup>
     <!-- Target all frameworks that MDS supports. -->
-    <TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net462;net8.0;net9.0;net10.0</TargetFrameworks>
 
     <!--
       Use the latest C# language version, regardless of what a particular
