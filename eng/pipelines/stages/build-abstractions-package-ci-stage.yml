@@ -76,7 +76,7 @@ stages:
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: linux
           netFrameworkRuntimes: []
-          netRuntimes: [net8.0, net9.0]
+          netRuntimes: [net8.0, net9.0, net10.0]
           poolName: Azure Pipelines
           vmImage: ubuntu-latest
 
@@ -91,7 +91,7 @@ stages:
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: windows
           netFrameworkRuntimes: [net462]
-          netRuntimes: [net8.0, net9.0]
+          netRuntimes: [net8.0, net9.0, net10.0]
           poolName: Azure Pipelines
           vmImage: windows-latest
 
@@ -106,7 +106,7 @@ stages:
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: macos
           netFrameworkRuntimes: []
-          netRuntimes: [net8.0, net9.0]
+          netRuntimes: [net8.0, net9.0, net10.0]
           poolName: Azure Pipelines
           vmImage: macos-latest
 

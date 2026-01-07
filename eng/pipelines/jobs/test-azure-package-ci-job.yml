@@ -7,8 +7,8 @@
 # This job builds the Azure package and runs its tests for a set of .NET
 # runtimes.
 #
-# This template defines a job named 'test_azure_package_job_<suffix>' that can
-# be depended on by downstream jobs.
+# This template defines a job named 'test_azure_package_job_<jobNameSuffix>'
+# that can be depended on by downstream jobs.
 
 parameters:
 
@@ -119,6 +119,8 @@ jobs:
     variables:
 
       # The Azure test project file to use for all dotnet CLI commands.
+      #
+      # Building this project implicitly builds the Azure project.
       - name: project
         value: src/Microsoft.Data.SqlClient.Extensions/Azure/test/Azure.Test.csproj
 
@@ -218,7 +220,7 @@ jobs:
       # This must be done before building the project.  This template updates
       # the sample config file, which is then copied into place by the build.
       #
-      - template: ../common/templates/steps/update-config-file-step.yml@self
+      - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self
         parameters:
           debug: ${{ parameters.debug }}
           
@@ -266,9 +268,9 @@ jobs:
 
       # List the DLLs in the output directory for debugging purposes.
       - ${{ if eq(parameters.debug, true) }}:
-        - pwsh: |
-            Get-ChildItem `
-              -Path "src/Microsoft.Data.SqlClient.Extensions/Azure/test/bin/${{ parameters.buildConfiguration }}" `
+        - pwsh: >
+            Get-ChildItem
+              -Path "src/Microsoft.Data.SqlClient.Extensions/Azure/test/bin/${{ parameters.buildConfiguration }}"
               -Recurse
           displayName: '[Debug] List Output DLLs'
 
@@ -304,14 +306,8 @@ jobs:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
           env:
-            # Many of our tests require access to Azure resources that are
-            # currently only granted by agents running our custom ADO-CI 1ES
-            # images in our ADO pool.
             ${{ if startsWith(parameters.poolName, 'ADO-CI') }}:
               ADO_POOL: 1
-            # When using connectedServiceName below, the DotNetCoreCLI task
-            # needs the system access token to be injected as this environment
-            # variable.
             SYSTEM_ACCESSTOKEN: $(System.AccessToken)
             ${{ if eq(parameters.debug, true) }}:
               TEST_DEBUG_EMIT: 1

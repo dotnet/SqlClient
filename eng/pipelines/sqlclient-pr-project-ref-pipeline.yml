@@ -124,7 +124,7 @@ parameters:
     default: [false, true]
 
 extends:
-  template: dotnet-sqlclient-ci-core.yml@self
+  template: /eng/pipelines/dotnet-sqlclient-ci-core.yml@self
   parameters:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     buildPlatforms: ${{ parameters.buildPlatforms }}

@@ -7,8 +7,9 @@
 # This job builds the Abstractions package and runs its tests for a set of .NET
 # runtimes.
 #
-# This template defines a job named 'test_abstractions_package_job_<suffix>'
-# that can be depended on by downstream jobs.
+# This template defines a job named
+# 'test_abstractions_package_job_<jobNameSuffix>' that can be depended on by
+# downstream jobs.
 
 parameters:
 
@@ -82,6 +83,8 @@ jobs:
     variables:
 
       # The Abstractions test project file to use for all dotnet CLI commands.
+      #
+      # Building this project implicitly builds the Abstractions project.
       - name: project
         value: src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/Abstractions.Test.csproj
 
