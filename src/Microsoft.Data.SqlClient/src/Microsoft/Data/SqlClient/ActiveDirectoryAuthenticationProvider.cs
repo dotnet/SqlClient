@@ -261,10 +261,12 @@ namespace Microsoft.Data.SqlClient
 
                 if (result == null)
                 {
+                    #pragma warning disable CS0618 // Type or member is obsolete
                     result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
                        .WithCorrelationId(parameters.ConnectionId)
                        .ExecuteAsync(cancellationToken: cts.Token)
                        .ConfigureAwait(false);
+                    #pragma warning disable CS0618 // Type or member is obsolete
 
                     // We cache the password hash to ensure future connection requests include a validated password
                     // when we check for a cached MSAL account. Otherwise, a connection request with the same username

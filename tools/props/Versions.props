@@ -32,6 +32,7 @@
   <PropertyGroup>
     <AzureIdentityVersion>1.14.2</AzureIdentityVersion>
     <MicrosoftExtensionsCachingMemoryVersion>8.0.1</MicrosoftExtensionsCachingMemoryVersion>
+    <MicrosoftIdentityClientVersion>4.80.0</MicrosoftIdentityClientVersion>
     <MicrosoftIdentityModelJsonWebTokensVersion>7.7.1</MicrosoftIdentityModelJsonWebTokensVersion>
     <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>7.7.1</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
     <SystemRuntimeInteropServicesRuntimeInformationVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationVersion>

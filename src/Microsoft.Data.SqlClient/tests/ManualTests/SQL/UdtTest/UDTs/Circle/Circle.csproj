@@ -18,4 +18,14 @@
   <ItemGroup Condition="'$(TargetGroup)' != 'netfx'">
     <PackageReference Include="Microsoft.SqlServer.Server" Version="$(MicrosoftSqlServerServerVersion)" />
   </ItemGroup>
+
+  <!--
+    Promote some .NET 9 transitive references to direct ones to avoid NuGet
+    warnings aboud conflicts with the .NET 8 versions.
+   -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="$(MicrosoftExtensionsCachingAbstractionsVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftExtensionsCachingMemoryVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="$(MicrosoftExtensionsOptionsVersion)" />
+  </ItemGroup>
 </Project>
