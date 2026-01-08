@@ -18,7 +18,7 @@
 
   <!--
     Promote some .NET 9 transitive references to direct ones to avoid NuGet
-    warnings aboud conflicts with the .NET 8 versions.
+    warnings about conflicts with the .NET 8 versions.
    -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="$(MicrosoftExtensionsCachingAbstractionsVersion)" />

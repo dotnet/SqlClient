@@ -266,7 +266,7 @@ namespace Microsoft.Data.SqlClient
                        .WithCorrelationId(parameters.ConnectionId)
                        .ExecuteAsync(cancellationToken: cts.Token)
                        .ConfigureAwait(false);
-                    #pragma warning disable CS0618 // Type or member is obsolete
+                    #pragma warning restore CS0618 // Type or member is obsolete
 
                     // We cache the password hash to ensure future connection requests include a validated password
                     // when we check for a cached MSAL account. Otherwise, a connection request with the same username
