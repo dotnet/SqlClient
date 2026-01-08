@@ -41,6 +41,10 @@ namespace Microsoft.Data.SqlClient
     internal sealed partial class TdsParser
     {
         private static int _objectTypeCount; // EventSource counter
+        // @TODO: Replace both fields with the `field` keyword when LangVersion >= 14.
+        private static XmlWriterSettings s_asyncXmlWriterSettings;
+        private static XmlWriterSettings s_syncXmlWriterSettings;
+
         private readonly SqlClientLogger _logger = new SqlClientLogger();
 
         private SspiContextProvider _authenticationProvider;
@@ -153,6 +157,12 @@ namespace Microsoft.Data.SqlClient
 
         // NOTE: You must take the internal connection's _parserLock before modifying this
         internal bool _asyncWrite = false;
+
+        private static XmlWriterSettings AsyncXmlWriterSettings =>
+            s_asyncXmlWriterSettings ??= new() { CloseOutput = false, ConformanceLevel = ConformanceLevel.Fragment, Async = true };
+
+        private static XmlWriterSettings SyncXmlWriterSettings =>
+            s_syncXmlWriterSettings ??= new() { CloseOutput = false, ConformanceLevel = ConformanceLevel.Fragment };
 
         /// <summary>
         /// Get or set if column encryption is supported by the server.
@@ -12772,13 +12782,7 @@ namespace Microsoft.Data.SqlClient
                 preambleToSkip = encoding.GetPreamble();
             }
 
-            XmlWriterSettings writerSettings = new XmlWriterSettings();
-            writerSettings.CloseOutput = false; // don't close the memory stream
-            writerSettings.ConformanceLevel = ConformanceLevel.Fragment;
-            if (_asyncWrite)
-            {
-                writerSettings.Async = true;
-            }
+            XmlWriterSettings writerSettings = _asyncWrite ? AsyncXmlWriterSettings : SyncXmlWriterSettings;
 
             using ConstrainedTextWriter writer = new ConstrainedTextWriter(new StreamWriter(new TdsOutputStream(this, stateObj, preambleToSkip), encoding), size);
             using XmlWriter ww = XmlWriter.Create(writer, writerSettings);
