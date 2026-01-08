@@ -67,13 +67,8 @@
     <NetStandardDriver Include="**/netcore/ref/Microsoft.Data.SqlClient*.csproj" />
     <AKVProvider Include="**/add-ons/**/AzureKeyVaultProvider/*.csproj" />
 
-    <UnitTests Include="**/Common/Common.csproj" />
-    <UnitTests Include="**/tools/TDS/TDS/TDS.csproj" />
-    <UnitTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
-    <UnitTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
     <UnitTests Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
     <UnitTestsProj Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
-
 
     <FunctionalTests Include="**/Common/Common.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS/TDS.csproj" />
