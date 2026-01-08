@@ -26,20 +26,20 @@ Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncrypti
     <dependencies>
       <group targetFramework="net462">
         <dependency id="Microsoft.Data.SqlClient" version="[6.0.1,6.1.0)" />
-        <dependency id="Azure.Core" version="1.47.1" />
-        <dependency id="Azure.Security.KeyVault.Keys" version="4.7.0" />
+        <dependency id="Azure.Core" version="1.50.0" />
+        <dependency id="Azure.Security.KeyVault.Keys" version="4.8.0" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" />
       </group>
       <group targetFramework="net8.0">
         <dependency id="Microsoft.Data.SqlClient" version="[6.0.1,6.1.0)" />
-        <dependency id="Azure.Core" version="1.47.1" />
-        <dependency id="Azure.Security.KeyVault.Keys" version="4.7.0" />
+        <dependency id="Azure.Core" version="1.50.0" />
+        <dependency id="Azure.Security.KeyVault.Keys" version="4.8.0" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" />
       </group>
       <group targetFramework="net9.0">
         <dependency id="Microsoft.Data.SqlClient" version="[6.0.1,6.1.0)" />
-        <dependency id="Azure.Core" version="1.47.1" />
-        <dependency id="Azure.Security.KeyVault.Keys" version="4.7.0" />
+        <dependency id="Azure.Core" version="1.50.0" />
+        <dependency id="Azure.Security.KeyVault.Keys" version="4.8.0" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="9.0.11" />
       </group>
     </dependencies>
