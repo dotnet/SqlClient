@@ -1,8 +1,11 @@
+#if NETFRAMEWORK
+namespace SqlMetaDataCS;
+
 using System;
 using System.Data;
 using System.Data.Sql;
 using System.Data.SqlTypes;
-using Microsoft.Data.SqlClient.Server;
+using Microsoft.SqlServer.Server;
 
 public sealed partial class SqlMetaDataTester
 {
@@ -13,7 +16,7 @@ public sealed partial class SqlMetaDataTester
     //<Snippet1>
     // using Microsoft.Data.SqlClient.Server;
 
-    [Microsoft.Data.SqlClient.Server.SqlProcedure]
+    [SqlProcedure]
     public static void CreateNewRecord()
     {
         // Variables.
@@ -62,3 +65,4 @@ public sealed partial class SqlMetaDataTester
     }
     //</Snippet3>
 }
+#endif

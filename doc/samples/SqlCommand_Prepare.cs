@@ -3,7 +3,7 @@ using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
 
-namespace SqlPrepareCS
+namespace SqlCommand_Prepare
 {
     class Program
     {

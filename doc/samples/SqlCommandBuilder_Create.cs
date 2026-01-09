@@ -2,7 +2,7 @@ using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
 
-namespace SqlCommandBuilderCS
+namespace SqlCommandBuilder_Create
 {
     class Program
     {
