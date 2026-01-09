@@ -34,11 +34,6 @@
     Name="CopySniDllsForNetFx"
     AfterTargets="CopyFilesToOutputDirectory"
     Condition="'$(ReferenceType)' == 'Project' AND '$(TargetFramework)' == 'net462'">
-    
-    <!-- Account for an MDS assembly suffix, if necessary. -->
-    <PropertyGroup Condition="'$(ApplyMdsAssemblyNameSuffix)' == 'true'">
-      <MdsNetFxSuffix>.NetFx</MdsNetFxSuffix>
-    </PropertyGroup>
 
     <!-- Glob for the SNI DLL files. -->
     <ItemGroup>
