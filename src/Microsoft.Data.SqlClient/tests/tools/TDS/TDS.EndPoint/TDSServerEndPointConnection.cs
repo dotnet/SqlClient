@@ -74,7 +74,13 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// <summary>
         /// Connection itself
         /// </summary>
-        protected TcpClient Connection { get; set; }
+        public TcpClient Connection { get; set; }
+
+        /// <summary>
+        /// We copy the remote endpoint so it can be used _after_ the connection
+        /// is closed.
+        /// </summary>
+        public System.Net.EndPoint RemoteEndPoint { get; }
 
         /// <summary>
         /// The flag indicates whether server is being stopped
@@ -89,8 +95,9 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             // Save server
             Server = server;
 
-            // Save TCP connection
+            // Save TCP connection and its remote endpoint.
             Connection = connection;
+            RemoteEndPoint = connection.Client.RemoteEndPoint;
 
             // Configure timeouts
             Connection.ReceiveTimeout = 1000;

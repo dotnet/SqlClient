@@ -100,7 +100,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             // Update ServerEndpoint with the actual address/port, e.g. if port=0 was given
             ServerEndPoint = (IPEndPoint)ListenerSocket.LocalEndpoint;
 
-            Log($"{GetType().Name} {EndpointName} Is Server Socket Bound: {ListenerSocket.Server.IsBound} Testing connectivity to the endpoint created for the server.");
+            Log($"Is Server Socket Bound: {ListenerSocket.Server.IsBound} Testing connectivity to the endpoint created for the server.");
             using (TcpClient client = new TcpClient())
             {
                 try
@@ -109,18 +109,18 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                 }
                 catch (Exception e)
                 {
-                    Log($"{GetType().Name} {EndpointName} Error occurred while testing server endpoint {e.Message}");
+                    Log($"Error occurred while testing server endpoint {e.Message}");
                     throw;
                 }
             }
-            Log($"{GetType().Name} {EndpointName} Endpoint test successful.");
+            Log("Endpoint test successful.");
 
             // Initialize the listener
             ListenerThread = new Thread(new ThreadStart(_RequestListener)) { IsBackground = true };
             ListenerThread.Name = "TDS Server EndPoint Listener";
             ListenerThread.Start();
 
-            Log($"{GetType().Name} {EndpointName} Listener Thread Started ");
+            Log("Listener Thread Started ");
         }
 
         /// <summary>
@@ -203,6 +203,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                                 // Register a new connection
                                 Connections.Add(connection);
                             }
+
+                            Log($"New connection accepted: {connection.RemoteEndPoint} Total connections: {Connections.Count} ");
                         }
                         catch (Exception ex)
                         {
@@ -232,23 +234,34 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// </summary>
         private void _OnConnectionClosed(object sender, EventArgs e)
         {
+            T clientConnection = sender as T;
+            bool removed = false;
+
             // Synchronize access to connection collection
             lock (Connections)
             {
                 // Remove the existing connection from the list
-                Connections.Remove(sender as T);
-                Log($"{GetType().Name} {EndpointName} Connection Closed");
+                removed = Connections.Remove(clientConnection);
+            }
+
+            if (removed)
+            {
+                Log($"Connection closed and removed: {clientConnection.RemoteEndPoint}");
+            }
+            else
+            {
+                Log($"Connection closed but NOT removed (not found): {clientConnection.RemoteEndPoint}");
             }
         }
 
         /// <summary>
         /// Write a string to the log
         /// </summary>
-        internal void Log(string text, params object[] args)
+        internal void Log(string text)
         {
             if (EventLog != null)
             {
-                EventLog.WriteLine(text, args);
+                EventLog.WriteLine($"{GetType().Name} {EndpointName} {ServerEndPoint} {text}");
             }
         }
     }
