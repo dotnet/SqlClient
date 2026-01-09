@@ -8,7 +8,9 @@ using System.Diagnostics.Tracing;
 #if NET
 using System.Threading;
 #else
+#if _WINDOWS
 using Interop.Windows.Kernel32;
+#endif
 using Microsoft.Data.Common;
 
 using System.Diagnostics;
