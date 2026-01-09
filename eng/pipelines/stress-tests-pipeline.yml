@@ -1,28 +1,27 @@
-#################################################################################
-# Licensed to the .NET Foundation under one or more agreements.                 #
-# The .NET Foundation licenses this file to you under the MIT license.          #
-# See the LICENSE file in the project root for more information.                #
-#################################################################################
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.
+# The .NET Foundation licenses this file to you under the MIT license.
+# See the LICENSE file in the project root for more information.
+################################################################################
 
-# This pipeline runs the stress test suite using the most recent artifacts from
-# the CI-SqlClient-Package pipeline.
+# This pipeline runs the stress test suite using the artifacts from the
+# triggering pipeline.
 #
 # It runs after every successful run of the following pipelines:
 #
 # Public project:
-#   - PR-SqlClient-Package
-#   - CI-SqlClient-Package
+#   - CI-SqlClient-Package (branch main only)
 #
-# ADO.net project:
-#   - MDS Main CI-Package
+# ADO.Net project:
+#   - MDS Main CI-Package (branch internal/main only)
 #
 # This pipeline definition is mapped to the Stress-SqlClient pipelines:
 #
 # Public project:
 #
-#   TODO
+#   https://dev.azure.com/SqlClientDrivers/public/_build?definitionId=2212
 #
-# ADO.net project:
+# ADO.Net project:
 #
 #   TODO
 
@@ -33,24 +32,38 @@ name: $(DayOfYear)$(Rev:rr)
 pr: none
 trigger: none
 
-# Trigger this pipeline after successful runs of each of the following pipelines.
+# Trigger this pipeline after successful runs of each of the following
+# pipelines.
+#
+# The pipeline identifiers are displayed in the Azure DevOps UI, so it is
+# helpful if they indicate the project, folder, and pipeline name, hence the
+# verbose values below.
+#
 resources:
   pipelines:
-    # The PR-SqlClient-Package pipeline in the Public project.
-    - pipeline: upstreamPipeline1
+
+    # TODO: Remove this pipeline; it exists for testing via PR runs.
+    - pipeline: Public-ADO-PR-SqlClient-Package
       project: Public
       source: /ADO/PR-SqlClient-Package
-      trigger: true
+
     # The CI-SqlClient-Package pipeline in the Public project.
-    - pipeline: upstreamPipeline2
+    - pipeline: Public-ADO-CI-SqlClient-Package
       project: Public
       source: /ADO/CI-SqlClient-Package
-      trigger: true
-    # The MDS Main CI-Package pipeline in the ADO.net project.
-    - pipeline: upstreamPipeline3
-      project: ADO.net
+      trigger:
+        branches:
+          include:
+            - main
+
+    # The MDS Main CI-Package pipeline in the ADO.Net project.
+    - pipeline: ADO-Net-Internal-CI-MDS-Main-CI-Package
+      project: ADO.Net
       source: /Internal CI/MDS Main CI-Package
-      trigger: true
+      trigger:
+        branches:
+          include:
+            - internal/main
 
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
@@ -69,12 +82,22 @@ parameters:
     type: boolean
     default: false
 
+variables:
+  # If we were triggered by an upstream pipeline, use the alias of that pipeline
+  # resource.  Otherwise, assume we were triggered manually via the Azure DevOps
+  # UI and arbitrarily choose the Public CI-SqlClient-Package pipeline.
+  #
+  # TODO: Use CI-SqlClient-Package instead of PR-SqlClient-Package.
+  - name: pipelineAlias
+    value: $[coalesce(variables['Resources.TriggeringAlias'], 'Public-ADO-PR-SqlClient-Package')]
+
 stages:
-- stage: Placeholder
-  displayName: Placeholder Stage
-  jobs:
-  - job: PlaceholderJob
-    displayName: Placeholder Job
-    steps:
-    - script: echo "This is a placeholder stage."
-      displayName: Placeholder Step
+  - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self
+    parameters:
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      pipelineAlias: $(pipelineAlias)
+      # All of the pipelines that trigger us produce the same artifact name.
+      # (See dotnet-sqlclient-ci-core.yml.)
+      pipelineArtifactName: Artifacts
+      ${{ if eq(parameters.debug, 'true') }}:
+        verbosity: 'detailed'

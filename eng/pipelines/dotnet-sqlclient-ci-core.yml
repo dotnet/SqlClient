@@ -90,11 +90,6 @@ parameters:
   type: string
   default: $(ci_var_defaultPoolName)
 
-- name: enableStressTests
-  displayName: Enable Stress Tests
-  type: boolean
-  default: false
-
 # The timeout, in minutes, for each test job.
 - name: testJobTimeout
   type: number
@@ -126,16 +121,6 @@ stages:
                 SNIVersion: ${{parameters.SNIVersion}}
                 SNIValidationFeed: ${{parameters.SNIValidationFeed}}
 
-  - ${{ if eq(parameters.enableStressTests, true) }}:
-    - template: stages/stress-tests-ci-stage.yml@self
-      parameters:
-        buildConfiguration: ${{ parameters.buildConfiguration }}
-        dependsOn: [build_nugets]
-        pipelineArtifactName: $(artifactName)
-        mdsPackageVersion: $(NugetPackageVersion)
-        ${{ if eq(parameters.debug, 'true') }}:
-          verbosity: 'detailed'
-    
   - template: common/templates/stages/ci-run-tests-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
