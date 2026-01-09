@@ -120,7 +120,6 @@
   <Target Name="RestoreTestsNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="$(TestProjectProperties)" />
     <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="$(TestProjectProperties)" />
-    <MSBuild Projects="@(UnitTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
   </Target>
 
   <Target Name="BuildTools" Condition="'$(BuildTools)' == 'true'">
