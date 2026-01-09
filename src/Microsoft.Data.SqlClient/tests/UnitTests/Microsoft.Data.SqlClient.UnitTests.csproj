@@ -10,7 +10,6 @@
   </PropertyGroup>
   <!-- Common references -->
   <ItemGroup>
-    <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Condition="$(TargetGroup) == 'netfx'">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -26,7 +25,6 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
@@ -40,6 +38,7 @@
   </ItemGroup>
   <!-- .NET references -->
   <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp'">
+    <PackageReference Include="System.Configuration.ConfigurationManager" />
     <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
   </ItemGroup>
   <ItemGroup>
