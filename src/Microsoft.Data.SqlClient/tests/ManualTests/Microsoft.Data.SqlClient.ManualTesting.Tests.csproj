@@ -34,6 +34,7 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCspProvider.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == 'AE'">
+    <Compile Include="AlwaysEncrypted\SqlDataAdapterBatchUpdateTests.cs" />
     <Compile Include="AlwaysEncrypted\AKVTests.cs" />
     <Compile Include="AlwaysEncrypted\AKVUnitTests.cs" />
     <Compile Include="AlwaysEncrypted\EnclaveAzureDatabaseTests.cs" />
@@ -53,6 +54,7 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategy.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCertStoreProvider.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ApiTestTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BuyerSellerTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAETestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAEErrorMessageTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyTruncationTables.cs" />
@@ -383,5 +385,8 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>xunit.runner.json</TargetPath>
     </ContentWithTargetPath>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="microsoft.data.sqlclient\tests\manualtests\alwaysencrypted\testfixtures\setup\" />
   </ItemGroup>
 </Project>

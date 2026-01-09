@@ -19,6 +19,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public string ColumnMasterKeyPath { get; }
         public Table ApiTestTable { get; private set; }
+        public Table BuyerSellerTable { get; private set; }
+
         public Table BulkCopyAEErrorMessageTestTable { get; private set; }
         public Table BulkCopyAETestTable { get; private set; }
         public Table ColumnDecryptErrorTestTable { get; private set; }
@@ -132,6 +134,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             ApiTestTable = new ApiTestTable(GenerateUniqueName("ApiTestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
             tables.Add(ApiTestTable);
+
+            BuyerSellerTable = new BuyerSellerTable(GenerateUniqueName("BuyerSellerTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            tables.Add(BuyerSellerTable);
 
             BulkCopyAEErrorMessageTestTable = new BulkCopyAEErrorMessageTestTable(GenerateUniqueName("BulkCopyAEErrorMessageTestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
             tables.Add(BulkCopyAEErrorMessageTestTable);
