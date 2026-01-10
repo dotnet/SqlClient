@@ -7,7 +7,7 @@ parameters:
   - name: AssemblyFileVersion
     type: string
     default: $(AssemblyFileVersion)
-  
+
   - name: Configuration
     type: string
     default: '$(Configuration)'
@@ -23,28 +23,19 @@ parameters:
     - MSS
 
 steps:
-- task: DownloadSecureFile@1
-  displayName: 'Download Key Pair'
-  inputs:
-    secureFile: netfxKeypair.snk
-    retryCount: 5
-
-- task: UseDotNet@2
-  displayName: 'Use .NET 9.x sdk'
-  inputs:
-    packageType: sdk
-    version: '9.x'
-
-- task: UseDotNet@2
-  displayName: 'Install .NET 8.x runtime'
-  inputs:
-    packageType: runtime
-    version: '8.x'
-
-- ${{ if eq(parameters.product, 'MDS') }}:
-  - task: MSBuild@1
-    displayName: 'BuildAllConfigurations using build.proj'
+  - task: DownloadSecureFile@1
+    displayName: 'Download Key Pair'
     inputs:
-      solution: '**/build.proj'
-      configuration: '${{parameters.Configuration }}'
-      msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAllConfigurations -p:GenerateNuget=false -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'
+      secureFile: netfxKeypair.snk
+      retryCount: 5
+
+  # Install the .NET SDK.
+  - template: /eng/pipelines/steps/install-dotnet.yml@self
+
+  - ${{ if eq(parameters.product, 'MDS') }}:
+    - task: MSBuild@1
+      displayName: 'BuildAllConfigurations using build.proj'
+      inputs:
+        solution: '**/build.proj'
+        configuration: '${{parameters.buildConfiguration }}'
+        msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAllConfigurations -p:GenerateNuget=false -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'

@@ -2,6 +2,15 @@
 
 This document provides all the necessary details to build the driver and run tests present in the repository.
 
+## .NET SDK
+
+The projects in this repo require the .NET 10.0 SDK to build.  Please ensure you
+have the latest version of that SDK installed.
+
+Tests and tools may require different .NET Runtimes that may be installed
+independently.  For example, tests targeting .NET 8.0 will need that runtime
+installed.
+
 ## Visual Studio Pre-Requisites
 
 This project should be built with Visual Studio 2019+ for the best compatibility. The required set of components are provided in the below file:

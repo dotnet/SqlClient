@@ -53,19 +53,19 @@ parameters:
 
   - name: testSet
     type: string
-  
+
   - name: publishTestResults
     type: boolean
     default: false
-  
+
   - name: configSqlFor
     type: string # local, azure, or enclave
     default: local
-  
+
   - name: operatingSystem
     type: string
     default: ''
-  
+
   - name: buildType
     displayName: 'Build Type'
     default: Project
@@ -75,8 +75,12 @@ parameters:
 
   # The timeout, in minutes, for this job.
   - name: timeout
-    type: string
-    default: 90
+    type: number
+
+  # True if this is an ARM64 job.
+  - name: isArm64
+    type: boolean
+    default: false
 
 jobs:
 - job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.image, 'unknown_image')) }}
@@ -98,6 +102,19 @@ jobs:
       value: '$(dotnetx86Path)'
 
   steps:
+
+  # Install the .NET SDK and Runtimes.
+  - template: /eng/pipelines/steps/install-dotnet.yml@self
+    parameters:
+      debug: ${{ parameters.debug }}
+      ${{ if parameters.isArm64 }}:
+        architecture: arm64
+        # ARM64 needs to specify slightly different runtime version formats.
+        # See the install-dotnet template docs for more info.
+        runtimes: ['8.0', '9.0']
+      ${{ else }}:
+        runtimes: [8.x, 9.x]
+
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
@@ -116,6 +133,12 @@ jobs:
           Write-Output "The password does not exist or is empty."
       }
     displayName: 'Verify Password'
+
+  - ${{ if eq(parameters.buildType, 'Project') }}:
+    - template: ../steps/ci-project-build-step.yml@self
+      parameters:
+        build: allNoDocs
+        buildConfiguration: ${{ parameters.buildConfiguration }}
 
   - ${{ if ne(parameters.configProperties, '{}') }}:
     - template: ../steps/update-config-file-step.yml@self # update config.json file
@@ -189,7 +212,7 @@ jobs:
               net start $svc_name
               Get-Service $svc_name | Select-Object -Property Name, StartType, Status
           }
-          
+
         displayName: 'Start Sql Browser'
         condition: eq(variables['Agent.OS'], 'Windows_NT')
     - ${{ elseif eq(parameters.configSqlFor, 'local') }}:
@@ -247,33 +270,14 @@ jobs:
     # it should be acceptable to just install a specific version in all cases.
     # @TODO: This setup is very confusing. Ideally we should just be utilizing the dotnet installation
     #    earlier in the job. There has to be a cleaner way of doing this.
-    #    As it stands now, we install dotnet LTS if we're running netfx tests, and the appropriate netX
-    #    version if we're running netcore tests. Technically LTS is not supported by the UseDotNet task
-    #    but we know we're using install-dotnet since we're on windows (for now ... this will not work
-    #    forever and needs a serious rethinking).
     - ${{ if ne(variables['dotnetx86RootPath'], '') }}:
-      - ${{ if startswith(parameters.targetFramework, 'net4')}}:
-        - template: ../steps/ensure-dotnet-version.yml
-          parameters:
-            installDir: "$(dotnetx86RootPath)"
-            packageType: "sdk"
-            usePreview: "false"
-            version: "LTS"
-            windowsArchitecture: "x86"
-      - ${{ else }}:
-        - script: |
-            set FrameworkVersion=${{ parameters.targetFramework }}
-            echo %FrameworkVersion%
-            set TrimmedFrameworkVersion=%FrameworkVersion:~3%
-            echo %TrimmedFrameworkVersion%
-            echo ##vso[task.setvariable variable=netVersionX86]%TrimmedFrameworkVersion%
-          displayName: "Trim dotnet version"
-        - template: ../steps/ensure-dotnet-version.yml
-          parameters:
-            installDir: "$(dotnetx86RootPath)"
-            packageType: "sdk"
-            usePreview: "false"
-            version: $(netVersionX86)
+      # Install the .NET SDK and Runtimes for x86.
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+        parameters:
+          architecture: x86
+          debug: ${{ parameters.debug }}
+          installDir: $(dotnetx86RootPath)
+          runtimes: [8.x, 9.x]
 
     - template: ../steps/run-all-tests-step.yml@self
       parameters:
