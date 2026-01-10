@@ -37,7 +37,11 @@
 
     <!-- Glob for the SNI DLL files. -->
     <ItemGroup>
+      <!-- The old separate MDS projects put the DLLs here. -->
       <SniDlls Include="$(BinFolder)$(Configuration).AnyCPU/Microsoft.Data.SqlClient/netfx/net462/*SNI*.dll" />
+
+      <!-- The new unified project puts the DLLs here. -->
+      <SniDlls Include="$(RepoRoot)artifacts/Microsoft.Data.SqlClient/$(Configuration)/windows_nt/net462/*SNI*.dll" />
     </ItemGroup>
 
     <!-- Copy the SNI DLLs to the output directory. -->
