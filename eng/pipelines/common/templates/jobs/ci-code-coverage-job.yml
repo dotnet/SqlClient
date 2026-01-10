@@ -59,16 +59,12 @@ jobs:
         - pwsh: 'Get-ChildItem env: | Sort-Object Name'
           displayName: '[Debug] List Environment Variables'
 
-      - template: ../steps/ensure-dotnet-version.yml@self
+      # Install the .NET SDK.
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
         parameters:
-            packageType: sdk
-            version: '10.0'
+          debug: ${{ parameters.debug }}
 
-      - template: ../steps/ensure-dotnet-version.yml@self
-        parameters:
-            packageType: runtime
-            version: '9.0'
-
+      # Install additional dotnet tools.
       - pwsh: |
           dotnet tool install --global dotnet-coverage
           dotnet tool install --global dotnet-reportgenerator-globaltool
