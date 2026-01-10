@@ -9,14 +9,6 @@
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions.Test</AssemblyName>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <!--
-      Apply an MDS assembly name suffix, if necessary.  See the top-level
-      Directory.Build.props for more information.
-    -->
-    <DefineConstants Condition="'$(ApplyMdsAssemblyNameSuffix)' == 'true'">$(DefineConstants);APPLY_MDS_ASSEMBLY_NAME_SUFFIX</DefineConstants>
-  </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="../src/Abstractions.csproj" />
   </ItemGroup>

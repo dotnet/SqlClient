@@ -21,7 +21,9 @@ using Microsoft.Data.SqlClient.Connection;
 #if NETFRAMEWORK
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+#if _WINDOWS
 using Interop.Windows.Kernel32;
+#endif
 #else
 using System.Net.Sockets;
 #endif

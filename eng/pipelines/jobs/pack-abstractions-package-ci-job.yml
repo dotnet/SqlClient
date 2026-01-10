@@ -81,7 +81,6 @@ jobs:
         value: >-
           $(commonArguments)
           --configuration ${{ parameters.buildConfiguration }}
-          -p:ForceMdsAssemblyNameSuffix=true
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
 
       # Explicitly unset the $PLATFORM environment variable that is set by the

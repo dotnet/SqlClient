@@ -20,7 +20,9 @@ using System.Runtime.Remoting;
 using System.Runtime.Serialization;
 using System.Runtime.Versioning;
 using System.Security.Permissions;
+#if _WINDOWS
 using Interop.Windows.Sni;
+#endif
 using Microsoft.Data.SqlClient.LocalDb;
 #endif
 

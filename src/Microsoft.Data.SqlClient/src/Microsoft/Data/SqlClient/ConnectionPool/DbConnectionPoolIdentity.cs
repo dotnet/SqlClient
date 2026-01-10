@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             #endif
         }
 
-        #if NETFRAMEWORK
+        #if NETFRAMEWORK && _WINDOWS
         internal static WindowsIdentity GetCurrentWindowsIdentity() =>
             WindowsIdentity.GetCurrent();
         #endif
