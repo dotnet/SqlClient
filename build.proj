@@ -225,7 +225,7 @@
         --logger:"trx;LogFilePrefix=Unit-Windows$(TargetGroup)-$(TestSet)"
       </TestCommand>
       <!-- Convert more than one whitespace character into one space --> 
-      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</TestCommand>
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running unit tests for Windows via command: $(TestCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
@@ -244,7 +244,7 @@
         --logger:"trx;LogFilePrefix=Unit-Unixnetcoreapp-$(TestSet)"
       </TestCommand>
       <!-- Convert more than one whitespace character into one space --> 
-      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</TestCommand>
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running unit tests for Unix via command: $(TestCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
