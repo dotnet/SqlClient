@@ -253,13 +253,8 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                         .ExecuteAsync(cancellationToken: cts.Token)
                         .ConfigureAwait(false);
 
-                    if (result is not null)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Integrated auth mode. Expiry Time: {0}", result.ExpiresOn);
-                        return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
-                    }
-
-                    break;
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Integrated auth mode. Expiry Time: {0}", result.ExpiresOn);
+                    return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
                 }
                 #pragma warning disable CS0618 // Type or member is obsolete
                 case SqlAuthenticationMethod.ActiveDirectoryPassword:
@@ -301,13 +296,8 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(s_accountPwCacheTtlInHours);
                     }
 
-                    
-                    if (result is not null) {
-                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Password auth mode. Expiry Time: {0}", result.ExpiresOn);
-                        return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
-                    }
-
-                    break;
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Password auth mode. Expiry Time: {0}", result.ExpiresOn);
+                    return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
                 }
                 case SqlAuthenticationMethod.ActiveDirectoryInteractive:
                 {
@@ -334,12 +324,8 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
 
                     // If no existing 'account' is found, we request user to sign in interactively.
                     AuthenticationResult result = await AcquireTokenInteractiveAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback).ConfigureAwait(false);
-                    if (result is not null)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
-                        return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
-                    }
-                    break;        
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
+                    return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
                 }
                 case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
                 {
@@ -366,18 +352,10 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
 
                     // If no existing 'account' is found, we request user to sign in interactively.
                     AuthenticationResult result = await AcquireTokenDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback).ConfigureAwait(false);
-                    if (result is not null)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
-                        return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
-                    }
-                    break;
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
+                    return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
                 }
             }
-
-            throw new Extensions.Azure.AuthenticationException(
-                parameters.AuthenticationMethod,
-                "Internal error - authentication result is null");
         }
         catch (MsalException ex)
         {
