@@ -525,13 +525,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             // An 'MsalUiRequiredException' is thrown in the case where an interaction is required with the end user of the application,
             // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired),
             // or the user needs to perform two factor authentication.
-            //
-            // result should be null here, but we make sure of that.
         }
-
-        // If no existing 'account' is found, we request user to sign in interactively.
-        
-
 
         try
         {
@@ -552,40 +546,30 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             // Wait up to 3 minutes.
             ctsInteractive.CancelAfter(180000);
             #endif
-            if (customWebUI != null)
-            {
-                return await app.AcquireTokenInteractive(scopes)
-                    .WithCorrelationId(connectionId)
-                    .WithCustomWebUi(customWebUI)
-                    .WithLoginHint(userId)
-                    .ExecuteAsync(ctsInteractive.Token)
-                    .ConfigureAwait(false);
-            }
-            else
-            {
-                /*
-                    * We will use the MSAL Embedded or System web browser which changes by Default in MSAL according to this table:
-                    *
-                    * Framework        Embedded  System  Default
-                    * -------------------------------------------
-                    * .NET Classic     Yes       Yes^    Embedded
-                    * .NET Core        No        Yes^    System
-                    * .NET Standard    No        No      NONE
-                    * UWP              Yes       No      Embedded
-                    * Xamarin.Android  Yes       Yes     System
-                    * Xamarin.iOS      Yes       Yes     System
-                    * Xamarin.Mac      Yes       No      Embedded
-                    *
-                    * ^ Requires "http://localhost" redirect URI
-                    *
-                    * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/MSAL.NET-uses-web-browser#at-a-glance
-                    */
-                return await app.AcquireTokenInteractive(scopes)
-                    .WithCorrelationId(connectionId)
-                    .WithLoginHint(userId)
-                    .ExecuteAsync(ctsInteractive.Token)
-                    .ConfigureAwait(false);
-            }
+
+            /*
+            * We will use the MSAL Embedded or System web browser which changes by Default in MSAL according to this table:
+            *
+            * Framework        Embedded  System  Default
+            * -------------------------------------------
+            * .NET Classic     Yes       Yes^    Embedded
+            * .NET Core        No        Yes^    System
+            * .NET Standard    No        No      NONE
+            * UWP              Yes       No      Embedded
+            * Xamarin.Android  Yes       Yes     System
+            * Xamarin.iOS      Yes       Yes     System
+            * Xamarin.Mac      Yes       No      Embedded
+            *
+            * ^ Requires "http://localhost" redirect URI
+            *
+            * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/MSAL.NET-uses-web-browser#at-a-glance
+            */
+            return await app.AcquireTokenInteractive(scopes)
+                .WithCorrelationId(connectionId)
+                .WithCustomWebUi(customWebUI)
+                .WithLoginHint(userId)
+                .ExecuteAsync(ctsInteractive.Token)
+                .ConfigureAwait(false);
         }
         catch (OperationCanceledException ex)
         {
