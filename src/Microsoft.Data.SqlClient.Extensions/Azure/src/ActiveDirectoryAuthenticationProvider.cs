@@ -373,14 +373,6 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                     }
                     break;
                 }
-                default:
-                {
-                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | {0} authentication mode not supported by ActiveDirectoryAuthenticationProvider class.", parameters.AuthenticationMethod);
-
-                    throw new Extensions.Azure.AuthenticationException(
-                        parameters.AuthenticationMethod,
-                        $"Authentication method {parameters.AuthenticationMethod} not supported.");
-                }
             }
 
             throw new Extensions.Azure.AuthenticationException(
