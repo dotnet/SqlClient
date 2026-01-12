@@ -188,8 +188,6 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
 
-            TokenCredentialOptions tokenCredentialOptions = new() { AuthorityHost = new Uri(authority) };
-
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity || parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryMSI)
             {
                 // Cache ManagedIdentityCredential based on scope, authority, and clientId
@@ -220,36 +218,16 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
 
-            /*
-                * Today, MSAL.NET uses another redirect URI by default in desktop applications that run on Windows
-                * (urn:ietf:wg:oauth:2.0:oob). In the future, we'll want to change this default, so we recommend
-                * that you use https://login.microsoftonline.com/common/oauth2/nativeclient.
-                *
-                * https://docs.microsoft.com/en-us/azure/active-directory/develop/scenario-desktop-app-registration#redirect-uris
-                */
-            string redirectUri = s_nativeClientRedirectUri;
 
-            #if NET
-            if (parameters.AuthenticationMethod != SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
-            {
-                redirectUri = "http://localhost";
-            }
-            #endif
-
-            PublicClientAppKey pcaKey =
-            #if NETFRAMEWORK
-                new(parameters.Authority, redirectUri, _applicationClientId, _iWin32WindowFunc);
-            #else
-                new(parameters.Authority, redirectUri, _applicationClientId);
-            #endif
 
             AuthenticationResult? result = null;
-            IPublicClientApplication app = await GetPublicClientAppInstanceAsync(pcaKey, cts.Token).ConfigureAwait(false);
 
             #pragma warning disable CS0618 // Type or member is obsolete
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             #pragma warning restore CS0618 // Type or member is obsolete
             {
+                IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, _applicationClientId, cts.Token).ConfigureAwait(false);
+ 
                 result = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
 
                 if (result == null)
@@ -280,6 +258,8 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
             #pragma warning restore CS0618 // Type or member is obsolete
             {
+                IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, _applicationClientId, cts.Token).ConfigureAwait(false);
+
                 string pwCacheKey = GetAccountPwCacheKey(parameters);
                 object? previousPw = s_accountPwCache.Get(pwCacheKey);
                 string password = parameters.Password is null ? string.Empty : parameters.Password;
@@ -297,7 +277,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 {
                     #pragma warning disable CS0618 // Type or member is obsolete
                     result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
-                    #pragma warning disable CS0618 // Type or member is obsolete
+                    #pragma warning restore CS0618 // Type or member is obsolete
                         .WithCorrelationId(parameters.ConnectionId)
                         .ExecuteAsync(cancellationToken: cts.Token)
                         .ConfigureAwait(false);
@@ -317,6 +297,8 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
                 parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
             {
+                IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, _applicationClientId, cts.Token).ConfigureAwait(false);
+
                 try
                 {
                     result = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
@@ -597,18 +579,43 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             => _acquireAuthorizationCodeAsyncCallback.Invoke(authorizationUri, redirectUri, cancellationToken);
     }
 
-    private async Task<IPublicClientApplication> GetPublicClientAppInstanceAsync(PublicClientAppKey publicClientAppKey, CancellationToken cancellationToken)
+    private async Task<IPublicClientApplication> GetPublicClientAppInstanceAsync(
+        SqlAuthenticationParameters parameters,
+        string _applicationClientId,
+        CancellationToken cancellationToken)
     {
-        if (!s_pcaMap.TryGetValue(publicClientAppKey, out IPublicClientApplication clientApplicationInstance))
+        /*
+        * Today, MSAL.NET uses another redirect URI by default in desktop applications that run on Windows
+        * (urn:ietf:wg:oauth:2.0:oob). In the future, we'll want to change this default, so we recommend
+        * that you use https://login.microsoftonline.com/common/oauth2/nativeclient.
+        *
+        * https://docs.microsoft.com/en-us/azure/active-directory/develop/scenario-desktop-app-registration#redirect-uris
+        */
+        string redirectUri = s_nativeClientRedirectUri;
+
+        #if NET
+        if (parameters.AuthenticationMethod != SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
+        {
+            redirectUri = "http://localhost";
+        }
+        #endif
+        PublicClientAppKey pcaKey =
+        #if NETFRAMEWORK
+            new(parameters.Authority, redirectUri, _applicationClientId, _iWin32WindowFunc);
+        #else
+            new(parameters.Authority, redirectUri, _applicationClientId);
+        #endif
+
+        if (!s_pcaMap.TryGetValue(pcaKey, out IPublicClientApplication clientApplicationInstance))
         {
             await s_pcaMapModifierSemaphore.WaitAsync(cancellationToken);
             try
             {
                 // Double-check in case another thread added it while we waited for the semaphore
-                if (!s_pcaMap.TryGetValue(publicClientAppKey, out clientApplicationInstance))
+                if (!s_pcaMap.TryGetValue(pcaKey, out clientApplicationInstance))
                 {
-                    clientApplicationInstance = CreateClientAppInstance(publicClientAppKey);
-                    s_pcaMap.TryAdd(publicClientAppKey, clientApplicationInstance);
+                    clientApplicationInstance = CreateClientAppInstance(pcaKey);
+                    s_pcaMap.TryAdd(pcaKey, clientApplicationInstance);
                 }
             }
             finally
@@ -812,13 +819,13 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         {
             if (obj != null && obj is PublicClientAppKey pcaKey)
             {
-                return (string.CompareOrdinal(_authority, pcaKey._authority) == 0
+                return string.CompareOrdinal(_authority, pcaKey._authority) == 0
                     && string.CompareOrdinal(_redirectUri, pcaKey._redirectUri) == 0
                     && string.CompareOrdinal(_applicationClientId, pcaKey._applicationClientId) == 0
                     #if NETFRAMEWORK
                     && pcaKey._iWin32WindowFunc == _iWin32WindowFunc
                     #endif
-                );
+                ;
             }
             return false;
         }
