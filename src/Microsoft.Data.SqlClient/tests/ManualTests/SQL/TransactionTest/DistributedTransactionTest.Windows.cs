@@ -45,7 +45,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 #endif
 
-        private static bool s_EnlistedTransactionPreservedWhilePooledCondition => DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsNotX86Architecture;
+        // Test fails on SQL Managed Instance with error:
+        // Failure: Item not found in collection
+        //        Collection: [typeof(System.Transactions.TransactionAbortedException), typeof(System.Transactions.TransactionInDoubtException)]
+        //        Not found:  typeof(Microsoft.Data.SqlClient.SqlException)
+        private static bool s_EnlistedTransactionPreservedWhilePooledCondition => DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsNotX86Architecture && DataTestUtility.IsNotManagedInstance();
 
         [ConditionalFact(nameof(s_EnlistedTransactionPreservedWhilePooledCondition), Timeout = 10000)]
         public async Task Test_EnlistedTransactionPreservedWhilePooled()
