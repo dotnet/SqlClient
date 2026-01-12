@@ -106,6 +106,15 @@
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
     <PackageReference Include="System.Data.Odbc" Version="$(SystemDataOdbcVersion)" />
   </ItemGroup>
+
+  <!--
+    Promote some .NET 9 transitive references to direct ones to avoid NuGet
+    warnings about conflicts with the .NET 8 versions.
+   -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
+  </ItemGroup>
+
   <ItemGroup Condition="$(TargetFramework.StartsWith('netcoreapp'))">
     <Compile Include="SslOverTdsStreamTest.cs" />
   </ItemGroup>

@@ -37,13 +37,13 @@
     <MicrosoftIdentityModelJsonWebTokensVersion>7.7.1</MicrosoftIdentityModelJsonWebTokensVersion>
     <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>7.7.1</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
     <SystemRuntimeInteropServicesRuntimeInformationVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationVersion>
+    <SystemSecurityCryptographyPkcsVersion>8.0.1</SystemSecurityCryptographyPkcsVersion>
   </PropertyGroup>
   <!-- NetCore project dependencies -->
   <PropertyGroup>
     <MicrosoftDataSqlClientSNIRuntimeVersion>6.0.2</MicrosoftDataSqlClientSNIRuntimeVersion>
     <MicrosoftSqlServerServerVersion>1.0.0</MicrosoftSqlServerServerVersion>
     <SystemConfigurationConfigurationManagerVersion>8.0.1</SystemConfigurationConfigurationManagerVersion>
-    <SystemSecurityCryptographyPkcsVersion>8.0.1</SystemSecurityCryptographyPkcsVersion>
   </PropertyGroup>
   <!-- AKV Provider project dependencies -->
   <PropertyGroup>
