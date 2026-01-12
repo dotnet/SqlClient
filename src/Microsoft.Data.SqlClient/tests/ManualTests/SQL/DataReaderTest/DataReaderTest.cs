@@ -1089,7 +1089,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task ReadEmptyAndNullPlpStringsAsyncWithNewBehavior()
         {
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("EmptyPlpTest");
+            string tableName = DataTestUtility.GenerateObjectName();
             bool? originalSwitchValue = null;
 
             try
