@@ -179,168 +179,177 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             string audience = parameters.Authority.Substring(separatorIndex + 1);
             string? clientId = string.IsNullOrWhiteSpace(parameters.UserId) ? null : parameters.UserId;
 
-            if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDefault)
+            switch (parameters.AuthenticationMethod)
             {
-                // Cache DefaultAzureCredenial based on scope, authority, audience, and clientId
-                TokenCredentialKey tokenCredentialKey = new(typeof(DefaultAzureCredential), authority, scope, audience, clientId);
-                AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
-                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Default auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
-                return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
-            }
-
-            if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity || parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryMSI)
-            {
-                // Cache ManagedIdentityCredential based on scope, authority, and clientId
-                TokenCredentialKey tokenCredentialKey = new(typeof(ManagedIdentityCredential), authority, scope, string.Empty, clientId);
-                AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
-                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Managed Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
-                return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
-            }
-
-            if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)
-            {
-                // Cache ClientSecretCredential based on scope, authority, audience, and clientId
-                TokenCredentialKey tokenCredentialKey = new(typeof(ClientSecretCredential), authority, scope, audience, clientId);
-                string password = parameters.Password is null ? string.Empty : parameters.Password;
-                AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, password, tokenRequestContext, cts.Token).ConfigureAwait(false);
-                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Service Principal auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
-                return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
-            }
-
-            if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)
-            {
-                // Cache WorkloadIdentityCredential based on authority and clientId
-                TokenCredentialKey tokenCredentialKey = new(typeof(WorkloadIdentityCredential), authority, string.Empty, string.Empty, clientId);
-                // If either tenant id, client id, or the token file path are not specified when fetching the token,
-                // a CredentialUnavailableException will be thrown instead
-                AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
-                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Workload Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
-                return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
-            }
-
-            #pragma warning disable CS0618 // Type or member is obsolete
-            if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
-            #pragma warning restore CS0618 // Type or member is obsolete
-            {
-                IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, _applicationClientId, cts.Token).ConfigureAwait(false);
- 
-                AuthenticationResult? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
-
-                if (cachedResult is not null)
+                case SqlAuthenticationMethod.ActiveDirectoryDefault:
                 {
-                    return new SqlAuthenticationToken(cachedResult.AccessToken, cachedResult.ExpiresOn);
+                    // Cache DefaultAzureCredenial based on scope, authority, audience, and clientId
+                    TokenCredentialKey tokenCredentialKey = new(typeof(DefaultAzureCredential), authority, scope, audience, clientId);
+                    AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Default auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
+                    return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
                 }
 
-                // The AcquireTokenByIntegratedWindowsAuth method is marked
-                // as obsolete in MSAL.NET but it is still a supported way
-                // to acquire tokens for Active Directory Integrated
-                // authentication.
-                var builder =
-                    #pragma warning disable CS0618 // Type or member is obsolete
-                    app.AcquireTokenByIntegratedWindowsAuth(scopes)
-                    #pragma warning restore CS0618 // Type or member is obsolete
-                    .WithCorrelationId(parameters.ConnectionId);
-
-                if (!string.IsNullOrEmpty(parameters.UserId))
+                case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                case SqlAuthenticationMethod.ActiveDirectoryMSI:
                 {
-                    builder = builder.WithUsername(parameters.UserId);
+                    // Cache ManagedIdentityCredential based on scope, authority, and clientId
+                    TokenCredentialKey tokenCredentialKey = new(typeof(ManagedIdentityCredential), authority, scope, string.Empty, clientId);
+                    AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Managed Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
+                    return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
                 }
 
-                AuthenticationResult result = await builder
-                    .ExecuteAsync(cancellationToken: cts.Token)
-                    .ConfigureAwait(false);
-
-                if (result is not null)
+                case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
                 {
-                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Integrated auth mode. Expiry Time: {0}", result.ExpiresOn);
-                    return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
+                    // Cache ClientSecretCredential based on scope, authority, audience, and clientId
+                    TokenCredentialKey tokenCredentialKey = new(typeof(ClientSecretCredential), authority, scope, audience, clientId);
+                    string password = parameters.Password is null ? string.Empty : parameters.Password;
+                    AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, password, tokenRequestContext, cts.Token).ConfigureAwait(false);
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Service Principal auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
+                    return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
                 }
-            }
-            #pragma warning disable CS0618 // Type or member is obsolete
-            else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
-            #pragma warning restore CS0618 // Type or member is obsolete
-            {
-                IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, _applicationClientId, cts.Token).ConfigureAwait(false);
 
-                string pwCacheKey = GetAccountPwCacheKey(parameters);
-                object? previousPw = s_accountPwCache.Get(pwCacheKey);
-                string password = parameters.Password is null ? string.Empty : parameters.Password;
-                byte[] currPwHash = GetHash(password);
-
-                if (previousPw is not null &&
-                    previousPw is byte[] previousPwBytes &&
-                    // Only get the cached token if the current password hash matches the previously used password hash
-                    AreEqual(currPwHash, previousPwBytes))
+                case SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity:
                 {
-                    AuthenticationResult? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
-
-                    if (cachedResult is not null)
-                    {
-                        return new SqlAuthenticationToken(cachedResult.AccessToken, cachedResult.ExpiresOn);
-                    }
+                    // Cache WorkloadIdentityCredential based on authority and clientId
+                    TokenCredentialKey tokenCredentialKey = new(typeof(WorkloadIdentityCredential), authority, string.Empty, string.Empty, clientId);
+                    // If either tenant id, client id, or the token file path are not specified when fetching the token,
+                    // a CredentialUnavailableException will be thrown instead
+                    AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Workload Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
+                    return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
                 }
 
                 #pragma warning disable CS0618 // Type or member is obsolete
-                AuthenticationResult result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
+                case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
                 #pragma warning restore CS0618 // Type or member is obsolete
-                    .WithCorrelationId(parameters.ConnectionId)
-                    .ExecuteAsync(cancellationToken: cts.Token)
-                    .ConfigureAwait(false);
-
-                // We cache the password hash to ensure future connection requests include a validated password
-                // when we check for a cached MSAL account. Otherwise, a connection request with the same username
-                // against the same tenant could succeed with an invalid password when we re-use the cached token.
-                using (ICacheEntry entry = s_accountPwCache.CreateEntry(pwCacheKey))
                 {
-                    entry.Value = currPwHash;
-                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(s_accountPwCacheTtlInHours);
-                }
-
-                
-                if (result is not null) {
-                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Password auth mode. Expiry Time: {0}", result.ExpiresOn);
-                    return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
-                }
-            }
-            else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
-                parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
-            {
-                IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, _applicationClientId, cts.Token).ConfigureAwait(false);
-
-                try
-                {
+                    IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, _applicationClientId, cts.Token).ConfigureAwait(false);
+    
                     AuthenticationResult? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
 
                     if (cachedResult is not null)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (silent) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, cachedResult .ExpiresOn);
                         return new SqlAuthenticationToken(cachedResult.AccessToken, cachedResult.ExpiresOn);
                     }
-                }
-                catch (MsalUiRequiredException)
-                {
-                    // An 'MsalUiRequiredException' is thrown in the case where an interaction is required with the end user of the application,
-                    // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired),
-                    // or the user needs to perform two factor authentication.
-                    //
-                    // result should be null here, but we make sure of that.
-                }
 
-                // If no existing 'account' is found, we request user to sign in interactively.
-                AuthenticationResult result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback).ConfigureAwait(false);
-                if (result is not null)
-                {
-                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
-                    return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
-                }
-            }
-            else
-            {
-                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | {0} authentication mode not supported by ActiveDirectoryAuthenticationProvider class.", parameters.AuthenticationMethod);
+                    // The AcquireTokenByIntegratedWindowsAuth method is marked
+                    // as obsolete in MSAL.NET but it is still a supported way
+                    // to acquire tokens for Active Directory Integrated
+                    // authentication.
+                    var builder =
+                        #pragma warning disable CS0618 // Type or member is obsolete
+                        app.AcquireTokenByIntegratedWindowsAuth(scopes)
+                        #pragma warning restore CS0618 // Type or member is obsolete
+                        .WithCorrelationId(parameters.ConnectionId);
 
-                throw new Extensions.Azure.AuthenticationException(
-                    parameters.AuthenticationMethod,
-                    $"Authentication method {parameters.AuthenticationMethod} not supported.");
+                    if (!string.IsNullOrEmpty(parameters.UserId))
+                    {
+                        builder = builder.WithUsername(parameters.UserId);
+                    }
+
+                    AuthenticationResult result = await builder
+                        .ExecuteAsync(cancellationToken: cts.Token)
+                        .ConfigureAwait(false);
+
+                    if (result is not null)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Integrated auth mode. Expiry Time: {0}", result.ExpiresOn);
+                        return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
+                    }
+
+                    break;
+                }
+                #pragma warning disable CS0618 // Type or member is obsolete
+                case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                #pragma warning restore CS0618 // Type or member is obsolete
+                {
+                    IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, _applicationClientId, cts.Token).ConfigureAwait(false);
+
+                    string pwCacheKey = GetAccountPwCacheKey(parameters);
+                    object? previousPw = s_accountPwCache.Get(pwCacheKey);
+                    string password = parameters.Password is null ? string.Empty : parameters.Password;
+                    byte[] currPwHash = GetHash(password);
+
+                    if (previousPw is not null &&
+                        previousPw is byte[] previousPwBytes &&
+                        // Only get the cached token if the current password hash matches the previously used password hash
+                        AreEqual(currPwHash, previousPwBytes))
+                    {
+                        AuthenticationResult? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
+
+                        if (cachedResult is not null)
+                        {
+                            return new SqlAuthenticationToken(cachedResult.AccessToken, cachedResult.ExpiresOn);
+                        }
+                    }
+
+                    #pragma warning disable CS0618 // Type or member is obsolete
+                    AuthenticationResult result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
+                    #pragma warning restore CS0618 // Type or member is obsolete
+                        .WithCorrelationId(parameters.ConnectionId)
+                        .ExecuteAsync(cancellationToken: cts.Token)
+                        .ConfigureAwait(false);
+
+                    // We cache the password hash to ensure future connection requests include a validated password
+                    // when we check for a cached MSAL account. Otherwise, a connection request with the same username
+                    // against the same tenant could succeed with an invalid password when we re-use the cached token.
+                    using (ICacheEntry entry = s_accountPwCache.CreateEntry(pwCacheKey))
+                    {
+                        entry.Value = currPwHash;
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(s_accountPwCacheTtlInHours);
+                    }
+
+                    
+                    if (result is not null) {
+                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Password auth mode. Expiry Time: {0}", result.ExpiresOn);
+                        return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
+                    }
+
+                    break;
+                }
+                case SqlAuthenticationMethod.ActiveDirectoryInteractive:
+                case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
+                {
+                    IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, _applicationClientId, cts.Token).ConfigureAwait(false);
+
+                    try
+                    {
+                        AuthenticationResult? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
+
+                        if (cachedResult is not null)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (silent) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, cachedResult .ExpiresOn);
+                            return new SqlAuthenticationToken(cachedResult.AccessToken, cachedResult.ExpiresOn);
+                        }
+                    }
+                    catch (MsalUiRequiredException)
+                    {
+                        // An 'MsalUiRequiredException' is thrown in the case where an interaction is required with the end user of the application,
+                        // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired),
+                        // or the user needs to perform two factor authentication.
+                        //
+                        // result should be null here, but we make sure of that.
+                    }
+
+                    // If no existing 'account' is found, we request user to sign in interactively.
+                    AuthenticationResult result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback).ConfigureAwait(false);
+                    if (result is not null)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
+                        return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
+                    }
+                    break;
+                }
+                default:
+                {
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | {0} authentication mode not supported by ActiveDirectoryAuthenticationProvider class.", parameters.AuthenticationMethod);
+
+                    throw new Extensions.Azure.AuthenticationException(
+                        parameters.AuthenticationMethod,
+                        $"Authentication method {parameters.AuthenticationMethod} not supported.");
+                }
             }
 
             throw new Extensions.Azure.AuthenticationException(
