@@ -102,12 +102,19 @@
     <Reference Condition="'$(TargetGroup)'=='netfx'" Include="System.Transactions" />
     <PackageReference Condition="'$(TargetGroup)'=='netfx'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersion)" />
     <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersionNet)" />
-    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
-    <PackageReference Include="Microsoft.Bcl.Cryptography" Version="$(MicrosoftBclCryptographyVersion)" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
     <PackageReference Include="System.Data.Odbc" Version="$(SystemDataOdbcVersion)" />
   </ItemGroup>
+
+  <!--
+    Promote some .NET 9 transitive references to direct ones to avoid NuGet
+    warnings about conflicts with the .NET 8 versions.
+   -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
+  </ItemGroup>
+
   <ItemGroup Condition="$(TargetFramework.StartsWith('netcoreapp'))">
     <Compile Include="SslOverTdsStreamTest.cs" />
   </ItemGroup>
@@ -127,7 +134,6 @@
     <ProjectReference Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Condition="!$(ReferenceType.Contains('Package'))" Include="$(SqlServerSource)Microsoft.SqlServer.Server.csproj" />
     <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
   </ItemGroup>
   <ItemGroup>
