@@ -132,7 +132,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             if (parameters.ConnectionTimeout > 0)
             {
                 // Safely convert to milliseconds.
-                if (int.MaxValue / 1000 > parameters.ConnectionTimeout)
+                if (parameters.ConnectionTimeout > int.MaxValue / 1000)
                 {
                     cts.CancelAfter(int.MaxValue);
                 }
