@@ -301,30 +301,16 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 }
                 case SqlAuthenticationMethod.ActiveDirectoryInteractive:
                 {
-                    IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, _applicationClientId, cts.Token).ConfigureAwait(false);
-
-                    try
-                    {
-                        AuthenticationResult? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
-
-                        if (cachedResult is not null)
-                        {
-                            SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (silent) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, cachedResult .ExpiresOn);
-                            return new SqlAuthenticationToken(cachedResult.AccessToken, cachedResult.ExpiresOn);
-                        }
-                    }
-                    catch (MsalUiRequiredException)
-                    {
-                        // An 'MsalUiRequiredException' is thrown in the case where an interaction is required with the end user of the application,
-                        // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired),
-                        // or the user needs to perform two factor authentication.
-                        //
-                        // result should be null here, but we make sure of that.
-                    }
-
-                    // If no existing 'account' is found, we request user to sign in interactively.
-                    AuthenticationResult result = await AcquireTokenInteractiveAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback).ConfigureAwait(false);
-                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
+                    AuthenticationResult result = await AcquireTokenInteractiveAsync(
+                        parameters,
+                        _applicationClientId,
+                        scopes,
+                        parameters.ConnectionId,
+                        parameters.UserId,
+                        parameters.AuthenticationMethod,
+                        cts,
+                        _customWebUI,
+                        _deviceCodeFlowCallback).ConfigureAwait(false);
                     return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
                 }
                 case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
@@ -511,62 +497,95 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         }
     }
 
-    private static async Task<AuthenticationResult> AcquireTokenInteractiveAsync(IPublicClientApplication app, string[] scopes, Guid connectionId, string? userId,
-        SqlAuthenticationMethod authenticationMethod, CancellationTokenSource cts, ICustomWebUi? customWebUI, Func<DeviceCodeResult, Task> deviceCodeFlowCallback)
+    private async Task<AuthenticationResult> AcquireTokenInteractiveAsync(
+        SqlAuthenticationParameters parameters,
+        string applicationClientId,
+        string[] scopes, 
+        Guid connectionId,
+        string? userId,
+        SqlAuthenticationMethod authenticationMethod, 
+        CancellationTokenSource cts, 
+        ICustomWebUi? customWebUI, 
+        Func<DeviceCodeResult, Task> deviceCodeFlowCallback)
     {
+        IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, applicationClientId, cts.Token).ConfigureAwait(false);
+
         try
         {
-                CancellationTokenSource ctsInteractive = new();
-                #if NET
-                // On .NET Core, MSAL will start the system browser as a
-                // separate process. MSAL does not have control over this
-                // browser, but once the user finishes authentication, the web
-                // page is redirected in such a way that MSAL can intercept the
-                // Uri.  MSAL cannot detect if the user navigates away or simply
-                // closes the browser. Apps using this technique are encouraged
-                // to define a timeout (via CancellationToken). We recommend a
-                // timeout of at least a few minutes, to take into account cases
-                // where the user is prompted to change password or perform 2FA.
-                //
-                // https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/System-Browser-on-.Net-Core#system-browser-experience
-                //
-                // Wait up to 3 minutes.
-                ctsInteractive.CancelAfter(180000);
-                #endif
-                if (customWebUI != null)
-                {
-                    return await app.AcquireTokenInteractive(scopes)
-                        .WithCorrelationId(connectionId)
-                        .WithCustomWebUi(customWebUI)
-                        .WithLoginHint(userId)
-                        .ExecuteAsync(ctsInteractive.Token)
-                        .ConfigureAwait(false);
-                }
-                else
-                {
-                    /*
-                        * We will use the MSAL Embedded or System web browser which changes by Default in MSAL according to this table:
-                        *
-                        * Framework        Embedded  System  Default
-                        * -------------------------------------------
-                        * .NET Classic     Yes       Yes^    Embedded
-                        * .NET Core        No        Yes^    System
-                        * .NET Standard    No        No      NONE
-                        * UWP              Yes       No      Embedded
-                        * Xamarin.Android  Yes       Yes     System
-                        * Xamarin.iOS      Yes       Yes     System
-                        * Xamarin.Mac      Yes       No      Embedded
-                        *
-                        * ^ Requires "http://localhost" redirect URI
-                        *
-                        * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/MSAL.NET-uses-web-browser#at-a-glance
-                        */
-                    return await app.AcquireTokenInteractive(scopes)
-                        .WithCorrelationId(connectionId)
-                        .WithLoginHint(userId)
-                        .ExecuteAsync(ctsInteractive.Token)
-                        .ConfigureAwait(false);
-                }
+            AuthenticationResult? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
+
+            if (cachedResult is not null)
+            {
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (silent) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, cachedResult .ExpiresOn);
+                return cachedResult;
+            }
+        }
+        catch (MsalUiRequiredException)
+        {
+            // An 'MsalUiRequiredException' is thrown in the case where an interaction is required with the end user of the application,
+            // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired),
+            // or the user needs to perform two factor authentication.
+            //
+            // result should be null here, but we make sure of that.
+        }
+
+        // If no existing 'account' is found, we request user to sign in interactively.
+        
+
+
+        try
+        {
+            CancellationTokenSource ctsInteractive = new();
+            #if NET
+            // On .NET Core, MSAL will start the system browser as a
+            // separate process. MSAL does not have control over this
+            // browser, but once the user finishes authentication, the web
+            // page is redirected in such a way that MSAL can intercept the
+            // Uri.  MSAL cannot detect if the user navigates away or simply
+            // closes the browser. Apps using this technique are encouraged
+            // to define a timeout (via CancellationToken). We recommend a
+            // timeout of at least a few minutes, to take into account cases
+            // where the user is prompted to change password or perform 2FA.
+            //
+            // https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/System-Browser-on-.Net-Core#system-browser-experience
+            //
+            // Wait up to 3 minutes.
+            ctsInteractive.CancelAfter(180000);
+            #endif
+            if (customWebUI != null)
+            {
+                return await app.AcquireTokenInteractive(scopes)
+                    .WithCorrelationId(connectionId)
+                    .WithCustomWebUi(customWebUI)
+                    .WithLoginHint(userId)
+                    .ExecuteAsync(ctsInteractive.Token)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                /*
+                    * We will use the MSAL Embedded or System web browser which changes by Default in MSAL according to this table:
+                    *
+                    * Framework        Embedded  System  Default
+                    * -------------------------------------------
+                    * .NET Classic     Yes       Yes^    Embedded
+                    * .NET Core        No        Yes^    System
+                    * .NET Standard    No        No      NONE
+                    * UWP              Yes       No      Embedded
+                    * Xamarin.Android  Yes       Yes     System
+                    * Xamarin.iOS      Yes       Yes     System
+                    * Xamarin.Mac      Yes       No      Embedded
+                    *
+                    * ^ Requires "http://localhost" redirect URI
+                    *
+                    * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/MSAL.NET-uses-web-browser#at-a-glance
+                    */
+                return await app.AcquireTokenInteractive(scopes)
+                    .WithCorrelationId(connectionId)
+                    .WithLoginHint(userId)
+                    .ExecuteAsync(ctsInteractive.Token)
+                    .ConfigureAwait(false);
+            }
         }
         catch (OperationCanceledException ex)
         {
