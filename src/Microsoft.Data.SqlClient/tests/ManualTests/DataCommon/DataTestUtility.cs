@@ -474,6 +474,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsNotAzureSynapse() => !IsAzureSynapse;
 
+        public static bool IsNotManagedInstance() => !IsManagedInstance;
+
         // Synapse: UDT Test Database not compatible with Azure Synapse.
         public static bool IsUdtTestDatabasePresent() => IsDatabasePresent(UdtTestDbName) && IsNotAzureSynapse();
 
