@@ -312,19 +312,15 @@ jobs:
     displayName: 'Verify "File Version" matches provided pipeline variable "ASSEMBLY_FILE_VERSION" for DLLs'
 
   - powershell: |
-      #Change TestMicrosoftDataSqlClientVersion
-
       [Xml] $versionprops = Get-Content -Path "tools/props/Versions.props" 
       $versionpropspath = "tools\props\Versions.props"
-      $versionprops.Project.PropertyGroup[$versionprops.Project.PropertyGroup.Count-1].TestMicrosoftDataSqlClientVersion ="$(NugetPackageVersion)"
+      $versionprops.Project.PropertyGroup[2].TestMicrosoftDataSqlClientVersion ="$(NugetPackageVersion)"
       Write-Host "Saving Test nuget version at $rootfolder\props ...." -ForegroundColor Green
       $versionprops.Save($versionpropspath)
 
     displayName: 'Modify TestMicrosoftDataSqlClientVersion'
 
   - powershell: |
-      #Change TestMicrosoftDataSqlClientVersion
-
       [Xml] $versionprops = Get-Content -Path "tools/props/Versions.props" 
       $AssemblyFileVersion =  $versionprops.Project.PropertyGroup[0].AssemblyFileVersion
       $AssemblyVersion = $versionprops.Project.PropertyGroup[0].AssemblyVersion
