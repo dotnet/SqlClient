@@ -37,21 +37,6 @@ parameters:
       - allNoDocs
 
 steps:
-- template: ./ensure-dotnet-version.yml@self
-  parameters:
-      packageType: 'sdk'
-      version: '10.0'
-
-- template: ./ensure-dotnet-version.yml@self
-  parameters:
-      packageType: 'runtime'
-      version: '9.0'
-
-- template: ./ensure-dotnet-version.yml@self
-  parameters:
-      packageType: 'runtime'
-      version: '8.0'
-
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
     - task: MSBuild@1

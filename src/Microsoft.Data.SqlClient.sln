@@ -255,7 +255,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{EABE3A3E
 		..\eng\pipelines\common\templates\steps\configure-sql-server-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-step.yml
 		..\eng\pipelines\common\templates\steps\configure-sql-server-win-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-win-step.yml
 		..\eng\pipelines\common\templates\steps\copy-dlls-for-test-step.yml = ..\eng\pipelines\common\templates\steps\copy-dlls-for-test-step.yml
-		..\eng\pipelines\common\templates\steps\ensure-dotnet-version.yml = ..\eng\pipelines\common\templates\steps\ensure-dotnet-version.yml
 		..\eng\pipelines\common\templates\steps\esrp-code-signing-step.yml = ..\eng\pipelines\common\templates\steps\esrp-code-signing-step.yml
 		..\eng\pipelines\common\templates\steps\generate-nuget-package-step.yml = ..\eng\pipelines\common\templates\steps\generate-nuget-package-step.yml
 		..\eng\pipelines\common\templates\steps\override-sni-version.yml = ..\eng\pipelines\common\templates\steps\override-sni-version.yml
@@ -297,6 +296,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{AD738BD4
 		..\eng\pipelines\steps\compound-publish-symbols-step.yml = ..\eng\pipelines\steps\compound-publish-symbols-step.yml
 		..\eng\pipelines\steps\roslyn-analyzers-akv-step.yml = ..\eng\pipelines\steps\roslyn-analyzers-akv-step.yml
 		..\eng\pipelines\steps\script-output-environment-variables-step.yml = ..\eng\pipelines\steps\script-output-environment-variables-step.yml
+		..\eng\pipelines\steps\install-dotnet.yml = ..\eng\pipelines\steps\install-dotnet.yml
+		..\eng\pipelines\steps\install-dotnet-arm64.ps1 = ..\eng\pipelines\steps\install-dotnet-arm64.ps1
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.UnitTests", "Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj", "{4461063D-2F2B-274C-7E6F-F235119D258E}"

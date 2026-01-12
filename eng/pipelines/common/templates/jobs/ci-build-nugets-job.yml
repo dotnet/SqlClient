@@ -46,6 +46,9 @@ jobs:
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
+  # Install the .NET SDK.
+  - template: /eng/pipelines/steps/install-dotnet.yml@self
+
   # When we're performing a Debug build, we still want to try _compiling_ the
   # code in Release mode to ensure downstream pipelines don't encounter
   # compilation errors.  We won't use the Release artifacts for anything else
