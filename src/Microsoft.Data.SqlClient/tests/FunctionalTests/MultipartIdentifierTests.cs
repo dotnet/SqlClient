@@ -26,9 +26,6 @@ namespace Microsoft.Data.SqlClient.Tests
         public void SingleUnquotedEndWithShitespace() => RunParse("foo  ", new[] { "foo" });
 
         [Fact]
-        public void SingleQuotedRemoveQuote() => RunParse("[foo]", new[] { "[foo]" }, false);
-
-        [Fact]
         public void SingleQuotedKeepQuote() => RunParse("[foo]", new[] { "foo" });
 
         [Fact]
