@@ -136,12 +136,6 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
-        public void InvalidRightQuote()
-        {
-            ThrowParse<ArgumentException>("foo", new[] { "foo" }, rightQuotes: "[.");
-        }
-
-        [Fact]
         public void InvalidQuotedPartContainsTrailngNonWhitespace() => ThrowParse<ArgumentException>("[foo]!.[bar]", new[] { "foo", "bar" });
 
         [Fact]
@@ -188,7 +182,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 }
             }
 
-            string[] originalParts = MultipartIdentifier.ParseMultipartIdentifier(name, "[\"", "]\"", maxCount, "", true);
+            string[] originalParts = MultipartIdentifier.ParseMultipartIdentifier(name, "[\"", maxCount, "", true);
 
             for (int index = 0; index < expected.Length; index++)
             {
@@ -199,7 +193,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
-        private static void ThrowParse<TException>(string name, string[] expected, string leftQuotes = "[\"", string rightQuotes = "]\"")
+        private static void ThrowParse<TException>(string name, string[] expected, string leftQuotes = "[\"")
             where TException : Exception
         {
             int maxCount = 0;
@@ -212,7 +206,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
 
             Exception originalException = Assert.Throws<TException>(() =>
-              MultipartIdentifier.ParseMultipartIdentifier(name, leftQuotes, rightQuotes, maxCount, "", true)
+              MultipartIdentifier.ParseMultipartIdentifier(name, leftQuotes, maxCount, "", true)
             );
 
             Assert.NotNull(originalException);
@@ -220,12 +214,12 @@ namespace Microsoft.Data.SqlClient.Tests
 
 
 
-        private static void ThrowParse(string name, int expectedLength, string leftQuotes = "[\"", string rightQuotes = "]\"")
+        private static void ThrowParse(string name, int expectedLength, string leftQuotes = "[\"")
         {
             Exception originalException = Assert.Throws<ArgumentException>(
                 () =>
                 {
-                    MultipartIdentifier.ParseMultipartIdentifier(name, leftQuotes, rightQuotes, expectedLength, "test", true);
+                    MultipartIdentifier.ParseMultipartIdentifier(name, leftQuotes, expectedLength, "test", true);
                 }
             );
             Assert.NotNull(originalException);
