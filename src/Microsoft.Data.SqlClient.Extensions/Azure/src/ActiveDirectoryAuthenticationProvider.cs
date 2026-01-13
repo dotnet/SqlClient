@@ -146,7 +146,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             string[] scopes = [scope];
             TokenRequestContext tokenRequestContext = new(scopes);
 
-            var (authority, audience) = SplitAuthority(parameters.Authority);
+            var (authorityUrl, audience) = SplitAuthority(parameters.Authority);
             string? clientId = string.IsNullOrWhiteSpace(parameters.UserId) ? null : parameters.UserId;
 
             switch (parameters.AuthenticationMethod)
@@ -154,7 +154,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 case SqlAuthenticationMethod.ActiveDirectoryDefault:
                 {
                     // Cache DefaultAzureCredenial based on scope, authority, audience, and clientId
-                    TokenCredentialKey tokenCredentialKey = new(typeof(DefaultAzureCredential), authority, scope, audience, clientId);
+                    TokenCredentialKey tokenCredentialKey = new(typeof(DefaultAzureCredential), authorityUrl, scope, audience, clientId);
                     return GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token);
                 }
 
@@ -162,14 +162,14 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 case SqlAuthenticationMethod.ActiveDirectoryMSI:
                 {
                     // Cache ManagedIdentityCredential based on scope, authority, and clientId
-                    TokenCredentialKey tokenCredentialKey = new(typeof(ManagedIdentityCredential), authority, scope, string.Empty, clientId);
+                    TokenCredentialKey tokenCredentialKey = new(typeof(ManagedIdentityCredential), authorityUrl, scope, string.Empty, clientId);
                     return GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token);
                 }
 
                 case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
                 {
                     // Cache ClientSecretCredential based on scope, authority, audience, and clientId
-                    TokenCredentialKey tokenCredentialKey = new(typeof(ClientSecretCredential), authority, scope, audience, clientId);
+                    TokenCredentialKey tokenCredentialKey = new(typeof(ClientSecretCredential), authorityUrl, scope, audience, clientId);
                     string password = parameters.Password is null ? string.Empty : parameters.Password;
                     return GetTokenAsync(tokenCredentialKey, password, tokenRequestContext, cts.Token);
                 }
@@ -177,7 +177,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 case SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity:
                 {
                     // Cache WorkloadIdentityCredential based on authority and clientId
-                    TokenCredentialKey tokenCredentialKey = new(typeof(WorkloadIdentityCredential), authority, string.Empty, string.Empty, clientId);
+                    TokenCredentialKey tokenCredentialKey = new(typeof(WorkloadIdentityCredential), authorityUrl, string.Empty, string.Empty, clientId);
                     // If either tenant id, client id, or the token file path are not specified when fetching the token,
                     // a CredentialUnavailableException will be thrown instead
                     return GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token);
@@ -320,40 +320,44 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         }
     }
 
-    private (string authority, string audience) SplitAuthority(string authority)
+    /// <summary>
+    /// Splits the authority URL into the authority and audience components.
+    /// </summary>
+    /// <remarks>
+    /// We split audience from Authority URL here. Audience can be one of
+    /// the following:
+    ///   - The Azure AD authority audience enumeration
+    ///   - The tenant ID, which can be:
+    ///     - A GUID (the ID of your Azure AD instance), for
+    ///       single-tenant applications
+    ///     - A domain name associated with your Azure AD instance (also
+    ///       for single-tenant applications)
+    ///   - One of these placeholders as a tenant ID in place of the
+    ///     Azure AD authority audience enumeration:
+    ///     - `organizations` for a multitenant application
+    ///     - `consumers` to sign in users only with their personal
+    ///       accounts
+    ///     - `common` to sign in users with their work and school
+    ///       accounts or their personal Microsoft accounts
+    ///
+    /// MSAL will throw a meaningful exception if you specify both the
+    /// Azure AD authority audience and the tenant ID.
+    ///
+    /// If you don't specify an audience, your app will target Azure AD
+    /// and personal Microsoft accounts as an audience.  (That is, it
+    /// will behave as though `common` were specified.)
+    ///
+    /// More information:
+    ///   https://docs.microsoft.com/azure/active-directory/develop/msal-client-application-configuration
+    /// </remarks>
+    /// <param name="authority">The authority URL to split.</param>
+    /// <returns>A tuple containing the authority and audience.</returns>
+    private (string authorityUrl, string audience) SplitAuthority(string authority)
     {
-            // We split audience from Authority URL here. Audience can be one of
-            // the following:
-            //
-            //   - The Azure AD authority audience enumeration
-            //   - The tenant ID, which can be:
-            //     - A GUID (the ID of your Azure AD instance), for
-            //       single-tenant applications
-            //     - A domain name associated with your Azure AD instance (also
-            //       for single-tenant applications)
-            //   - One of these placeholders as a tenant ID in place of the
-            //     Azure AD authority audience enumeration:
-            //     - `organizations` for a multitenant application
-            //     - `consumers` to sign in users only with their personal
-            //       accounts
-            //     - `common` to sign in users with their work and school
-            //       accounts or their personal Microsoft accounts
-            //
-            // MSAL will throw a meaningful exception if you specify both the
-            // Azure AD authority audience and the tenant ID.
-            //
-            // If you don't specify an audience, your app will target Azure AD
-            // and personal Microsoft accounts as an audience.  (That is, it
-            // will behave as though `common` were specified.)
-            //
-            // More information:
-            //
-            //   https://docs.microsoft.com/azure/active-directory/develop/msal-client-application-configuration
-
-            int separatorIndex = authority.LastIndexOf('/');
-            string authorityUrl = authority.Remove(separatorIndex + 1);
-            string audience = authority.Substring(separatorIndex + 1);
-            return (authorityUrl, audience);
+        int separatorIndex = authority.LastIndexOf('/');
+        string authorityUrl = authority.Remove(separatorIndex + 1);
+        string audience = authority.Substring(separatorIndex + 1);
+        return (authorityUrl, audience);
     }
 
     private static async Task<SqlAuthenticationToken> AcquireTokenByUsernamePasswordAsync(
