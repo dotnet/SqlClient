@@ -23,22 +23,73 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     /// to avoid interactive authentication request every-time, within application scope making use of MSAL's userTokenCache.
     /// </summary>
     private static readonly ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication> s_pcaMap = new();
-    private static readonly ConcurrentDictionary<TokenCredentialKey, TokenCredentialData> s_tokenCredentialMap = new();
-    private static SemaphoreSlim s_pcaMapModifierSemaphore = new(1, 1);
-    private static SemaphoreSlim s_tokenCredentialMapModifierSemaphore = new(1, 1);
-    private static readonly MemoryCache s_accountPwCache = new MemoryCache(new MemoryCacheOptions()); 
-    private const int s_accountPwCacheTtlInHours = 2;
-    private const string s_nativeClientRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
-    private const string s_defaultScopeSuffix = "/.default";
-    private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
-    private readonly SqlClientLogger _logger = new();
-    private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
-    private ICustomWebUi? _customWebUI = null;
-    private readonly string _applicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38"; 
 
-    // The MSAL error code that indicates the action should be retried.
-    //
-    // https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/retry-after#simple-retry-for-errors-with-http-error-codes-500-600
+    /// <summary>
+    /// Maps token credential keys to their corresponding token credential data to allow reuse of credentials.
+    /// </summary>
+    private static readonly ConcurrentDictionary<TokenCredentialKey, TokenCredentialData> s_tokenCredentialMap = new();
+
+    /// <summary>
+    /// Controls concurrent access to the <see cref="s_pcaMap"/> to ensure thread safety during modifications.
+    /// </summary>
+    private static SemaphoreSlim s_pcaMapModifierSemaphore = new(1, 1);
+
+    /// <summary>
+    /// Controls concurrent access to the <see cref="s_tokenCredentialMap"/> to ensure thread safety during modifications.
+    /// </summary>
+    private static SemaphoreSlim s_tokenCredentialMapModifierSemaphore = new(1, 1);
+
+    /// <summary>
+    /// Stores validation hashes for account passwords to verify cache validity.
+    /// </summary>
+    private static readonly MemoryCache s_accountPwCache = new MemoryCache(new MemoryCacheOptions());
+
+    /// <summary>
+    /// The time-to-live in hours for items in the account password cache (2 hours).
+    /// </summary>
+    private const int s_accountPwCacheTtlInHours = 2;
+
+    /// <summary>
+    /// The default redirect URI for native clients ("https://login.microsoftonline.com/common/oauth2/nativeclient").
+    /// </summary>
+    private const string s_nativeClientRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
+
+    /// <summary>
+    /// The suffix appended to the resource to form the default scope ("/.default").
+    /// </summary>
+    private const string s_defaultScopeSuffix = "/.default";
+
+    /// <summary>
+    /// The name of the type, used for logging purposes.
+    /// </summary>
+    private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
+
+    /// <summary>
+    /// The logger instance used to trace events and errors within the provider.
+    /// </summary>
+    private readonly SqlClientLogger _logger = new();
+
+    /// <summary>
+    /// The callback delegate invoked to handle the device code flow authentication step.
+    /// </summary>
+    private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
+
+    /// <summary>
+    /// The custom web UI implementation used for interactive authentication when a browser is required.
+    /// </summary>
+    private ICustomWebUi? _customWebUI = null;
+
+    /// <summary>
+    /// The client ID of the application registration in Azure Active Directory (SQL Client default).
+    /// </summary>
+    private readonly string _applicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
+
+    /// <summary>
+    /// The MSAL error code that indicates the action should be retried (429).
+    /// </summary>
+    /// <remarks>
+    /// See <see href="https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/retry-after#simple-retry-for-errors-with-http-error-codes-500-600"/>.
+    /// </remarks>
     private const int MsalRetryStatusCode = 429;
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor/*'/>
@@ -360,6 +411,14 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         return (authorityUrl, audience);
     }
 
+    /// <summary>
+    /// Acquires an access token using the username and password authentication flow.
+    /// </summary>
+    /// <param name="parameters">The authentication parameters containing user credentials.</param>
+    /// <param name="applicationClientId">The client ID of the application.</param>
+    /// <param name="scopes">The scopes to request the token for.</param>
+    /// <param name="cts">The cancellation token source to control the operation cancellation.</param>
+    /// <returns>A task that returns the acquired <see cref="SqlAuthenticationToken"/>.</returns>
     private static async Task<SqlAuthenticationToken> AcquireTokenByUsernamePasswordAsync(
         SqlAuthenticationParameters parameters, 
         string applicationClientId, 
@@ -407,6 +466,14 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
     }
 
+    /// <summary>
+    /// Attempts to acquire an access token silently using the cached account in the public client application.
+    /// </summary>
+    /// <param name="app">The public client application instance.</param>
+    /// <param name="parameters">The authentication parameters.</param>
+    /// <param name="scopes">The scopes to request the token for.</param>
+    /// <param name="cts">The cancellation token source to control the operation cancellation.</param>
+    /// <returns>A task that returns the acquired <see cref="SqlAuthenticationToken"/> if successful; otherwise, <see langword="null"/>.</returns>
     private static async Task<SqlAuthenticationToken?> TryAcquireTokenSilent(IPublicClientApplication app, SqlAuthenticationParameters parameters,
         string[] scopes, CancellationTokenSource cts)
     {
@@ -447,6 +514,14 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         return null;
     }
 
+    /// <summary>
+    /// Acquires an access token using Integrated Windows Authentication.
+    /// </summary>
+    /// <param name="parameters">The authentication parameters.</param>
+    /// <param name="applicationClientId">The client ID of the application.</param>
+    /// <param name="scopes">The scopes to request the token for.</param>
+    /// <param name="cts">The cancellation token source to control the operation cancellation.</param>
+    /// <returns>A task that returns the acquired <see cref="SqlAuthenticationToken"/>.</returns>
     private static async Task<SqlAuthenticationToken> AcquireTokenIntegratedAsync(
         SqlAuthenticationParameters parameters, 
         string applicationClientId,
@@ -484,6 +559,17 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
     }
 
+    /// <summary>
+    /// Acquires an access token using the device code flow.
+    /// </summary>
+    /// <param name="parameters">The authentication parameters.</param>
+    /// <param name="applicationClientId">The client ID of the application.</param>
+    /// <param name="scopes">The scopes to request the token for.</param>
+    /// <param name="connectionId">The connection ID associated with the request.</param>
+    /// <param name="authenticationMethod">The authentication method being used.</param>
+    /// <param name="cts">The cancellation token source to control the operation cancellation.</param>
+    /// <param name="deviceCodeFlowCallback">The callback to handle device code display.</param>
+    /// <returns>A task that returns the acquired <see cref="SqlAuthenticationToken"/>.</returns>
     private static async Task<SqlAuthenticationToken> AcquireTokenDeviceFlowAsync(
         SqlAuthenticationParameters parameters,
         string applicationClientId,
@@ -538,6 +624,19 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         }
     }
 
+    /// <summary>
+    /// Acquires an access token interactively, typically showing a login prompt.
+    /// </summary>
+    /// <param name="parameters">The authentication parameters.</param>
+    /// <param name="applicationClientId">The client ID of the application.</param>
+    /// <param name="scopes">The scopes to request the token for.</param>
+    /// <param name="connectionId">The connection ID associated with the request.</param>
+    /// <param name="userId">The user ID hint.</param>
+    /// <param name="authenticationMethod">The authentication method being used.</param>
+    /// <param name="cts">The cancellation token source to control the operation cancellation.</param>
+    /// <param name="customWebUI">The custom web UI to use for interaction.</param>
+    /// <param name="deviceCodeFlowCallback">The callback for device code flow if fallback is needed (though not directly used here).</param>
+    /// <returns>A task that returns the acquired <see cref="SqlAuthenticationToken"/>.</returns>
     private static async Task<SqlAuthenticationToken> AcquireTokenInteractiveAsync(
         SqlAuthenticationParameters parameters,
         string applicationClientId,
@@ -633,6 +732,11 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         }
     }
 
+    /// <summary>
+    /// The default callback method for device code flow that prints the message to the console.
+    /// </summary>
+    /// <param name="result">The device code result containing the message and code.</param>
+    /// <returns>A completed task.</returns>
     private static Task DefaultDeviceFlowCallback(DeviceCodeResult result)
     {
         // This will print the message on the console which tells the user where to go sign-in using
@@ -650,16 +754,31 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         return Task.FromResult(0);
     }
 
+    /// <summary>
+    /// A custom web UI implementation that delegates the authorization code acquisition to a callback.
+    /// </summary>
     private class CustomWebUi : ICustomWebUi
     {
         private readonly Func<Uri, Uri, CancellationToken, Task<Uri>> _acquireAuthorizationCodeAsyncCallback;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CustomWebUi"/> class.
+        /// </summary>
+        /// <param name="acquireAuthorizationCodeAsyncCallback">The callback to invoke for acquiring the authorization code.</param>
         internal CustomWebUi(Func<Uri, Uri, CancellationToken, Task<Uri>> acquireAuthorizationCodeAsyncCallback) => _acquireAuthorizationCodeAsyncCallback = acquireAuthorizationCodeAsyncCallback;
 
+        /// <inheritdoc/>
         public Task<Uri> AcquireAuthorizationCodeAsync(Uri authorizationUri, Uri redirectUri, CancellationToken cancellationToken)
             => _acquireAuthorizationCodeAsyncCallback.Invoke(authorizationUri, redirectUri, cancellationToken);
     }
 
+    /// <summary>
+    /// Gets or creates a public client application instance based on the provided parameters.
+    /// </summary>
+    /// <param name="parameters">The authentication parameters.</param>
+    /// <param name="applicationClientId">The application client ID.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that returns an <see cref="IPublicClientApplication"/> instance.</returns>
     private static async Task<IPublicClientApplication> GetPublicClientAppInstanceAsync(
         SqlAuthenticationParameters parameters,
         string applicationClientId,
@@ -708,6 +827,14 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         return clientApplicationInstance;
     }
 
+    /// <summary>
+    /// Gets a token using the specified token credential key and secret.
+    /// </summary>
+    /// <param name="tokenCredentialKey">The key identifying the token credential.</param>
+    /// <param name="secret">The secret associated with the credential (e.g., password or client secret).</param>
+    /// <param name="tokenRequestContext">The context for the token request.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that returns the acquired <see cref="SqlAuthenticationToken"/>.</returns>
     private static async Task<SqlAuthenticationToken> GetTokenAsync(TokenCredentialKey tokenCredentialKey, string secret,
         TokenRequestContext tokenRequestContext, CancellationToken cancellationToken)
     {
@@ -750,11 +877,21 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         return new SqlAuthenticationToken(result.Token, result.ExpiresOn);
     }
 
+    /// <summary>
+    /// Generates a cache key for the account password cache.
+    /// </summary>
+    /// <param name="parameters">The authentication parameters.</param>
+    /// <returns>A string key used for caching.</returns>
     private static string GetAccountPwCacheKey(SqlAuthenticationParameters parameters)
     {
         return parameters.Authority + "+" + parameters.UserId;
     }
 
+    /// <summary>
+    /// Computes the SHA256 hash of the input string.
+    /// </summary>
+    /// <param name="input">The input string to hash.</param>
+    /// <returns>A byte array containing the hash.</returns>
     private static byte[] GetHash(string input)
     {
         byte[] unhashedBytes = Encoding.Unicode.GetBytes(input);
@@ -763,6 +900,12 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         return hashedBytes;
     }
 
+    /// <summary>
+    /// Compares two byte arrays for equality.
+    /// </summary>
+    /// <param name="a1">The first byte array.</param>
+    /// <param name="a2">The second byte array.</param>
+    /// <returns><see langword="true"/> if the arrays are equal; otherwise, <see langword="false"/>.</returns>
     private static bool AreEqual(byte[] a1, byte[] a2)
     {
         if (ReferenceEquals(a1, a2))
@@ -781,6 +924,11 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         return a1.AsSpan().SequenceEqual(a2.AsSpan());
     }
 
+    /// <summary>
+    /// Creates a new instance of <see cref="IPublicClientApplication"/> using the provided key.
+    /// </summary>
+    /// <param name="publicClientAppKey">The key containing configuration for the application.</param>
+    /// <returns>A new <see cref="IPublicClientApplication"/> instance.</returns>
     private static IPublicClientApplication CreateClientAppInstance(PublicClientAppKey publicClientAppKey)
     {
         PublicClientApplicationBuilder builder = PublicClientApplicationBuilder
@@ -803,6 +951,12 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         return builder.Build();
     }
 
+    /// <summary>
+    /// Creates a new instance of <see cref="TokenCredentialData"/> using the provided key and secret.
+    /// </summary>
+    /// <param name="tokenCredentialKey">The key containing configuration for the token credential.</param>
+    /// <param name="secret">The secret to be used with the credential.</param>
+    /// <returns>A new <see cref="TokenCredentialData"/> instance.</returns>
     private static TokenCredentialData CreateTokenCredentialInstance(TokenCredentialKey tokenCredentialKey, string secret)
     {
         if (tokenCredentialKey._tokenCredentialType == typeof(DefaultAzureCredential))
@@ -875,15 +1029,39 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         throw new ArgumentException(nameof(ActiveDirectoryAuthenticationProvider));
     }
 
+    /// <summary>
+    /// Uniquely identifies a client application configuration for caching purposes.
+    /// </summary>
     internal class PublicClientAppKey
     {
+        /// <summary>
+        /// The authority (e.g., https://login.microsoftonline.com/tenant).
+        /// </summary>
         public readonly string _authority;
+        /// <summary>
+        /// The redirect URI.
+        /// </summary>
         public readonly string _redirectUri;
+        /// <summary>
+        /// The application client ID.
+        /// </summary>
         public readonly string _applicationClientId;
         #if NETFRAMEWORK
+        /// <summary>
+        /// A function to get the parent window for interactive authentication (wrapper for IWin32Window).
+        /// </summary>
         public readonly Func<System.Windows.Forms.IWin32Window> _iWin32WindowFunc;
         #endif
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PublicClientAppKey"/> class.
+        /// </summary>
+        /// <param name="authority">The authority URL.</param>
+        /// <param name="redirectUri">The redirect URI.</param>
+        /// <param name="applicationClientId">The application client ID.</param>
+#if NETFRAMEWORK
+        /// <param name="iWin32WindowFunc">The function to get the parent window handle.</param>
+#endif
         public PublicClientAppKey(string authority, string redirectUri, string applicationClientId
         #if NETFRAMEWORK
         , Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc
@@ -898,6 +1076,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             #endif
         }
 
+        /// <inheritdoc/>
         public override bool Equals(object obj)
         {
             if (obj != null && obj is PublicClientAppKey pcaKey)
@@ -913,6 +1092,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             return false;
         }
 
+        /// <inheritdoc/>
         public override int GetHashCode() => Tuple.Create(_authority, _redirectUri, _applicationClientId
         #if NETFRAMEWORK
             , _iWin32WindowFunc
@@ -920,11 +1100,25 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             ).GetHashCode();
     }
 
+    /// <summary>
+    /// Encapsulates token credential data, including the credential instance and a hash of the secret.
+    /// </summary>
     internal class TokenCredentialData
     {
+        /// <summary>
+        /// The token credential instance.
+        /// </summary>
         public TokenCredential _tokenCredential;
+        /// <summary>
+        /// The hash of the secret used to create the credential.
+        /// </summary>
         public byte[] _secretHash;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TokenCredentialData"/> class.
+        /// </summary>
+        /// <param name="tokenCredential">The token credential.</param>
+        /// <param name="secretHash">The hash of the secret.</param>
         public TokenCredentialData(TokenCredential tokenCredential, byte[] secretHash)
         {
             _tokenCredential = tokenCredential;
@@ -932,14 +1126,40 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         }
     }
 
+    /// <summary>
+    /// Uniquely identifies a token credential configuration for caching purposes.
+    /// </summary>
     internal class TokenCredentialKey
     {
+        /// <summary>
+        /// The type of the token credential.
+        /// </summary>
         public readonly Type _tokenCredentialType;
+        /// <summary>
+        /// The authority URL.
+        /// </summary>
         public readonly string _authority;
+        /// <summary>
+        /// The scope requested.
+        /// </summary>
         public readonly string _scope;
+        /// <summary>
+        /// The audience (tenant ID or similar).
+        /// </summary>
         public readonly string _audience;
+        /// <summary>
+        /// The client ID (optional).
+        /// </summary>
         public readonly string? _clientId;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TokenCredentialKey"/> class.
+        /// </summary>
+        /// <param name="tokenCredentialType">The type of the credential.</param>
+        /// <param name="authority">The authority URL.</param>
+        /// <param name="scope">The scope.</param>
+        /// <param name="audience">The audience.</param>
+        /// <param name="clientId">The client ID.</param>
         public TokenCredentialKey(Type tokenCredentialType, string authority, string scope, string audience, string? clientId)
         {
             _tokenCredentialType = tokenCredentialType;
@@ -949,6 +1169,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             _clientId = clientId;
         }
 
+        /// <inheritdoc/>
         public override bool Equals(object obj)
         {
             if (obj != null && obj is TokenCredentialKey tcKey)
@@ -963,13 +1184,23 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             return false;
         }
 
+        /// <inheritdoc/>
         public override int GetHashCode() => Tuple.Create(_tokenCredentialType, _authority, _scope, _audience, _clientId).GetHashCode();
     }
 
 }
 
+/// <summary>
+/// Provides internal logging capabilities for the SQL Client.
+/// </summary>
 internal class SqlClientLogger
 {
+    /// <summary>
+    /// Logs an informational message.
+    /// </summary>
+    /// <param name="type">The type name where the log originated.</param>
+    /// <param name="method">The method name where the log originated.</param>
+    /// <param name="message">The message to log.</param>
     public void LogInfo(string type, string method, string message)
     {
         SqlClientEventSource.Log.TryTraceEvent(
@@ -977,14 +1208,28 @@ internal class SqlClientLogger
     }
 }
 
+/// <summary>
+/// Wraps the event source for internal tracing.
+/// </summary>
 internal class SqlClientEventSource
 {
+    /// <summary>
+    /// A simple logger implementation that does nothing (placeholder).
+    /// </summary>
     internal class Logger
     {
+        /// <summary>
+        /// Tries to trace an event (placeholder).
+        /// </summary>
+        /// <param name="message">The message format string.</param>
+        /// <param name="args">The arguments for the message.</param>
         public void TryTraceEvent(string message, params object?[] args)
         {
         }
     }
 
+    /// <summary>
+    /// The singleton logger instance.
+    /// </summary>
     public static readonly Logger Log = new();
 }
