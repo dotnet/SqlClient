@@ -137,9 +137,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/IsSupported/*'/>
     public override bool IsSupported(SqlAuthenticationMethod authentication)
     {
-        #pragma warning disable CS0618 // Type or member is obsolete
         return authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated
-        #pragma warning restore CS0618 // Type or member is obsolete
             #pragma warning disable CS0618 // Type or member is obsolete
             || authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
             #pragma warning restore CS0618 // Type or member is obsolete
@@ -234,9 +232,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                     return GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token);
                 }
 
-                #pragma warning disable CS0618 // Type or member is obsolete
                 case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
-                #pragma warning restore CS0618 // Type or member is obsolete
                 {
                     return AcquireTokenIntegratedAsync(
                         parameters,
