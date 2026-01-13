@@ -9,6 +9,10 @@ namespace Microsoft.Data.Common
     internal class MultipartIdentifier
     {
         private const char IdentifierSeparator = '.';
+        // The indexes of identifier start and end characters in these strings need to
+        // align 1-to-1. An identifier which starts with [ can only end with ].
+        private const string IdentifierStartCharacters = "[\"";
+        private const string IdentifierEndCharacters = "]\"";
 
         private const int MaxParts = 4;
         internal const int ServerIndex = 0;
@@ -16,13 +20,6 @@ namespace Microsoft.Data.Common
         internal const int SchemaIndex = 2;
         internal const int TableIndex = 3;
 
-        /*
-            Left quote strings need to correspond 1 to 1 with the right quote strings
-            example: "ab" "cd",  passed in for the left and the right quote
-            would set a or b as a starting quote character.  
-            If a is the starting quote char then c would be the ending quote char
-            otherwise if b is the starting quote char then d would be the ending quote character.                        
-        */
         internal static string[] ParseMultipartIdentifier(string name, string property, bool ThrowOnEmptyMultipartName)
         {
             return ParseMultipartIdentifier(name, "[\"", "]\"", MaxParts, property, ThrowOnEmptyMultipartName);
