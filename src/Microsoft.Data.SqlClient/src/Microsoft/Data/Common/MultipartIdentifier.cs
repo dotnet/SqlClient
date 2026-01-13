@@ -21,9 +21,9 @@ namespace Microsoft.Data.Common
             If a is the starting quote char then c would be the ending quote char
             otherwise if b is the starting quote char then d would be the ending quote character.                        
         */
-        internal static string[] ParseMultipartIdentifier(string name, string leftQuote, string rightQuote, string property, bool ThrowOnEmptyMultipartName)
+        internal static string[] ParseMultipartIdentifier(string name, string property, bool ThrowOnEmptyMultipartName)
         {
-            return ParseMultipartIdentifier(name, leftQuote, rightQuote, '.', MaxParts, true, property, ThrowOnEmptyMultipartName);
+            return ParseMultipartIdentifier(name, "[\"", "]\"", '.', MaxParts, true, property, ThrowOnEmptyMultipartName);
         }
 
         private enum MPIState

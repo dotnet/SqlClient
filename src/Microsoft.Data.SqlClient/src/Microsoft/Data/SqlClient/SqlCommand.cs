@@ -1292,8 +1292,6 @@ namespace Microsoft.Data.SqlClient
             // Schema, ProcedureName
             string[] parsedSProc = MultipartIdentifier.ParseMultipartIdentifier(
                 name: CommandText,
-                leftQuote: "[\"",
-                rightQuote: "]\"",
                 property: Strings.SQL_SqlCommandCommandText,
                 ThrowOnEmptyMultipartName: false);
 
@@ -2809,8 +2807,6 @@ namespace Microsoft.Data.SqlClient
                         {
                             string[] parts = MultipartIdentifier.ParseMultipartIdentifier(
                                 parameter.TypeName,
-                                leftQuote: "[\"",
-                                rightQuote: "]\"",
                                 property: Strings.SQL_TDSParserTableName,
                                 ThrowOnEmptyMultipartName: false);
                             // @TODO: Combine this and inner if statement
