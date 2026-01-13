@@ -2514,7 +2514,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 string errorMsg = isUdtTypeName ? Strings.SQL_UDTTypeName : Strings.SQL_TypeName;
-                return MultipartIdentifier.ParseMultipartIdentifier(typeName, "[\"", "]\"", '.', 3, true, errorMsg, true);
+                return MultipartIdentifier.ParseMultipartIdentifier(typeName, "[\"", "]\"", 3, true, errorMsg, true);
             }
             catch (ArgumentException)
             {

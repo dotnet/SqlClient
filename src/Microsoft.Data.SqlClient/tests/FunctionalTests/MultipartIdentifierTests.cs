@@ -191,7 +191,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 }
             }
 
-            string[] originalParts = MultipartIdentifier.ParseMultipartIdentifier(name, "[\"", "]\"", '.', maxCount, removeQuotes, "", true);
+            string[] originalParts = MultipartIdentifier.ParseMultipartIdentifier(name, "[\"", "]\"", maxCount, removeQuotes, "", true);
 
             for (int index = 0; index < expected.Length; index++)
             {
@@ -202,7 +202,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
-        private static void ThrowParse<TException>(string name, string[] expected, bool removeQuotes = true, string leftQuotes = "[\"", string rightQuotes = "]\"", char separator = '.')
+        private static void ThrowParse<TException>(string name, string[] expected, bool removeQuotes = true, string leftQuotes = "[\"", string rightQuotes = "]\"")
             where TException : Exception
         {
             int maxCount = 0;
@@ -215,7 +215,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
 
             Exception originalException = Assert.Throws<TException>(() =>
-              MultipartIdentifier.ParseMultipartIdentifier(name, leftQuotes, rightQuotes, separator, maxCount, removeQuotes, "", true)
+              MultipartIdentifier.ParseMultipartIdentifier(name, leftQuotes, rightQuotes, maxCount, removeQuotes, "", true)
             );
 
             Assert.NotNull(originalException);
@@ -223,12 +223,12 @@ namespace Microsoft.Data.SqlClient.Tests
 
 
 
-        private static void ThrowParse(string name, int expectedLength, bool removeQuotes = true, string leftQuotes = "[\"", string rightQuotes = "]\"", char separator = '.')
+        private static void ThrowParse(string name, int expectedLength, bool removeQuotes = true, string leftQuotes = "[\"", string rightQuotes = "]\"")
         {
             Exception originalException = Assert.Throws<ArgumentException>(
                 () =>
                 {
-                    MultipartIdentifier.ParseMultipartIdentifier(name, leftQuotes, rightQuotes, separator, expectedLength, removeQuotes, "test", true);
+                    MultipartIdentifier.ParseMultipartIdentifier(name, leftQuotes, rightQuotes, expectedLength, removeQuotes, "test", true);
                 }
             );
             Assert.NotNull(originalException);

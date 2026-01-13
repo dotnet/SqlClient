@@ -8,6 +8,8 @@ namespace Microsoft.Data.Common
 {
     internal class MultipartIdentifier
     {
+        private const char IdentifierSeparator = '.';
+
         private const int MaxParts = 4;
         internal const int ServerIndex = 0;
         internal const int CatalogIndex = 1;
@@ -23,7 +25,7 @@ namespace Microsoft.Data.Common
         */
         internal static string[] ParseMultipartIdentifier(string name, string property, bool ThrowOnEmptyMultipartName)
         {
-            return ParseMultipartIdentifier(name, "[\"", "]\"", '.', MaxParts, true, property, ThrowOnEmptyMultipartName);
+            return ParseMultipartIdentifier(name, "[\"", "]\"", MaxParts, true, property, ThrowOnEmptyMultipartName);
         }
 
         private enum MPIState
@@ -60,14 +62,14 @@ namespace Microsoft.Data.Common
             return char.IsWhiteSpace(ch);
         }
 
-        internal static string[] ParseMultipartIdentifier(string name, string leftQuote, string rightQuote, char separator, int limit, bool removequotes, string property, bool ThrowOnEmptyMultipartName)
+        internal static string[] ParseMultipartIdentifier(string name, string leftQuote, string rightQuote, int limit, bool removequotes, string property, bool ThrowOnEmptyMultipartName)
         {
             if (limit <= 0)
             {
                 throw ADP.InvalidMultipartNameToManyParts(property, name, limit);
             }
 
-            if (-1 != leftQuote.IndexOf(separator) || -1 != rightQuote.IndexOf(separator) || leftQuote.Length != rightQuote.Length)
+            if (-1 != leftQuote.IndexOf(IdentifierSeparator) || -1 != rightQuote.IndexOf(IdentifierSeparator) || leftQuote.Length != rightQuote.Length)
             {
                 throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, name);
             }
@@ -92,7 +94,7 @@ namespace Microsoft.Data.Common
                                 continue;
                             }
                             else
-                            if (testchar == separator)
+                            if (testchar == IdentifierSeparator)
                             {  // If we found a separator, no string was found, initialize the string we are parsing to Empty and the next one to Empty.
                                // This is NOT a redundant setting of string.Empty it solves the case where we are parsing ".foo" and we should be returning null, null, empty, foo
                                 parsedNames[stringCount] = string.Empty;
@@ -125,7 +127,7 @@ namespace Microsoft.Data.Common
 
                     case MPIState.MPI_ParseNonQuote:
                         {
-                            if (testchar == separator)
+                            if (testchar == IdentifierSeparator)
                             {
                                 parsedNames[stringCount] = sb.ToString(); // set the currently parsed string
                                 IncrementStringCount(name, parsedNames, ref stringCount, property);
@@ -164,7 +166,7 @@ namespace Microsoft.Data.Common
                         {
                             if (!IsWhitespace(testchar))
                             { // If it is not whitespace
-                                if (testchar == separator)
+                                if (testchar == IdentifierSeparator)
                                 {
                                     IncrementStringCount(name, parsedNames, ref stringCount, property);
                                     state = MPIState.MPI_Value;
@@ -209,7 +211,7 @@ namespace Microsoft.Data.Common
                                 state = MPIState.MPI_ParseQuote;
                             }
                             else
-                            if (testchar == separator)
+                            if (testchar == IdentifierSeparator)
                             {      // If its a separator then record what we've parsed
                                 parsedNames[stringCount] = sb.ToString();
                                 IncrementStringCount(name, parsedNames, ref stringCount, property);
@@ -232,7 +234,7 @@ namespace Microsoft.Data.Common
                         {
                             if (!IsWhitespace(testchar))
                             { // If it is not whitespace
-                                if (testchar == separator)
+                                if (testchar == IdentifierSeparator)
                                 { // If it is a separator 
                                     IncrementStringCount(name, parsedNames, ref stringCount, property);
                                     state = MPIState.MPI_Value;
