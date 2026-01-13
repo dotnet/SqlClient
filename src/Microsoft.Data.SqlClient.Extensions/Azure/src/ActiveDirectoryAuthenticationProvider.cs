@@ -121,7 +121,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     #endif
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
-    public override async Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
+    public override Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
     {
         try
         {
@@ -155,9 +155,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 {
                     // Cache DefaultAzureCredenial based on scope, authority, audience, and clientId
                     TokenCredentialKey tokenCredentialKey = new(typeof(DefaultAzureCredential), authority, scope, audience, clientId);
-                    AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
-                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Default auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
-                    return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
+                    return GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token);
                 }
 
                 case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
@@ -165,9 +163,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 {
                     // Cache ManagedIdentityCredential based on scope, authority, and clientId
                     TokenCredentialKey tokenCredentialKey = new(typeof(ManagedIdentityCredential), authority, scope, string.Empty, clientId);
-                    AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
-                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Managed Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
-                    return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
+                    return GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token);
                 }
 
                 case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
@@ -175,9 +171,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                     // Cache ClientSecretCredential based on scope, authority, audience, and clientId
                     TokenCredentialKey tokenCredentialKey = new(typeof(ClientSecretCredential), authority, scope, audience, clientId);
                     string password = parameters.Password is null ? string.Empty : parameters.Password;
-                    AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, password, tokenRequestContext, cts.Token).ConfigureAwait(false);
-                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Service Principal auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
-                    return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
+                    return GetTokenAsync(tokenCredentialKey, password, tokenRequestContext, cts.Token);
                 }
 
                 case SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity:
@@ -186,36 +180,32 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                     TokenCredentialKey tokenCredentialKey = new(typeof(WorkloadIdentityCredential), authority, string.Empty, string.Empty, clientId);
                     // If either tenant id, client id, or the token file path are not specified when fetching the token,
                     // a CredentialUnavailableException will be thrown instead
-                    AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
-                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Workload Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
-                    return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
+                    return GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token);
                 }
 
                 #pragma warning disable CS0618 // Type or member is obsolete
                 case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
                 #pragma warning restore CS0618 // Type or member is obsolete
                 {
-                    AuthenticationResult result = await AcquireTokenIntegratedAsync(
+                    return AcquireTokenIntegratedAsync(
                         parameters,
                         _applicationClientId,
                         scopes,
-                        cts).ConfigureAwait(false);
-                    return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
+                        cts);
                 }
                 #pragma warning disable CS0618 // Type or member is obsolete
                 case SqlAuthenticationMethod.ActiveDirectoryPassword:
                 #pragma warning restore CS0618 // Type or member is obsolete
                 {
-                    AuthenticationResult result = await AcquireTokenByUsernamePasswordAsync(
+                    return AcquireTokenByUsernamePasswordAsync(
                         parameters,
                         _applicationClientId,
                         scopes,
-                        cts).ConfigureAwait(false);
-                    return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
+                        cts);
                 }
                 case SqlAuthenticationMethod.ActiveDirectoryInteractive:
                 {
-                    AuthenticationResult result = await AcquireTokenInteractiveAsync(
+                    return AcquireTokenInteractiveAsync(
                         parameters,
                         _applicationClientId,
                         scopes,
@@ -224,20 +214,18 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                         parameters.AuthenticationMethod,
                         cts,
                         _customWebUI,
-                        _deviceCodeFlowCallback).ConfigureAwait(false);
-                    return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
+                        _deviceCodeFlowCallback);
                 }
                 case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
                 {
-                    AuthenticationResult result = await AcquireTokenDeviceFlowAsync(
+                    return AcquireTokenDeviceFlowAsync(
                         parameters,
                         _applicationClientId,
                         scopes,
                         parameters.ConnectionId,
                         parameters.AuthenticationMethod,
                         cts,
-                        _deviceCodeFlowCallback).ConfigureAwait(false);
-                    return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
+                        _deviceCodeFlowCallback);
                 }
                 default:
                 {
@@ -368,7 +356,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             return (authorityUrl, audience);
     }
 
-    private static async Task<AuthenticationResult> AcquireTokenByUsernamePasswordAsync(
+    private static async Task<SqlAuthenticationToken> AcquireTokenByUsernamePasswordAsync(
         SqlAuthenticationParameters parameters, 
         string applicationClientId, 
         string[] scopes, 
@@ -386,7 +374,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             // Only get the cached token if the current password hash matches the previously used password hash
             AreEqual(currPwHash, previousPwBytes))
         {
-            AuthenticationResult? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
+            SqlAuthenticationToken? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
 
             if (cachedResult is not null)
             {
@@ -412,10 +400,10 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         }
 
         SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Password auth mode. Expiry Time: {0}", result.ExpiresOn);
-        return result;
+        return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
     }
 
-    private static async Task<AuthenticationResult?> TryAcquireTokenSilent(IPublicClientApplication app, SqlAuthenticationParameters parameters,
+    private static async Task<SqlAuthenticationToken?> TryAcquireTokenSilent(IPublicClientApplication app, SqlAuthenticationParameters parameters,
         string[] scopes, CancellationTokenSource cts)
     {
         // Fetch available accounts from 'app' instance
@@ -449,13 +437,13 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             // Read More on API docs: https://docs.microsoft.com/dotnet/api/microsoft.identity.client.clientapplicationbase.acquiretokensilent
             AuthenticationResult? result = await app.AcquireTokenSilent(scopes, account).ExecuteAsync(cancellationToken: cts.Token).ConfigureAwait(false);
             SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (silent) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
-            return result;
+            return result != null ? new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn) : null;
         }
 
         return null;
     }
 
-    private static async Task<AuthenticationResult> AcquireTokenIntegratedAsync(
+    private static async Task<SqlAuthenticationToken> AcquireTokenIntegratedAsync(
         SqlAuthenticationParameters parameters, 
         string applicationClientId,
         string[] scopes, 
@@ -463,7 +451,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     {
         IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, applicationClientId, cts.Token).ConfigureAwait(false);
     
-        AuthenticationResult? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
+        SqlAuthenticationToken? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
 
         if (cachedResult is not null)
         {
@@ -489,10 +477,10 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             .ExecuteAsync(cancellationToken: cts.Token)
             .ConfigureAwait(false);
         SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
-        return result;
+        return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
     }
 
-    private static async Task<AuthenticationResult> AcquireTokenDeviceFlowAsync(
+    private static async Task<SqlAuthenticationToken> AcquireTokenDeviceFlowAsync(
         SqlAuthenticationParameters parameters,
         string applicationClientId,
         string[] scopes,
@@ -505,7 +493,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
 
         try
         {
-            AuthenticationResult? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
+            SqlAuthenticationToken? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
 
             if (cachedResult is not null)
             {
@@ -528,7 +516,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 .ExecuteAsync(cancellationToken: cts.Token)
                 .ConfigureAwait(false);
             SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
-            return result;
+            return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
         }
         catch (OperationCanceledException ex)
         {
@@ -546,7 +534,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         }
     }
 
-    private static async Task<AuthenticationResult> AcquireTokenInteractiveAsync(
+    private static async Task<SqlAuthenticationToken> AcquireTokenInteractiveAsync(
         SqlAuthenticationParameters parameters,
         string applicationClientId,
         string[] scopes, 
@@ -561,7 +549,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
 
         try
         {
-            AuthenticationResult? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
+            SqlAuthenticationToken? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
 
             if (cachedResult is not null)
             {
@@ -620,7 +608,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 .ExecuteAsync(ctsInteractive.Token)
                 .ConfigureAwait(false);
             SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
-            return result;
+            return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
         }
         catch (OperationCanceledException ex)
         {
@@ -716,7 +704,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         return clientApplicationInstance;
     }
 
-    private static async Task<AccessToken> GetTokenAsync(TokenCredentialKey tokenCredentialKey, string secret,
+    private static async Task<SqlAuthenticationToken> GetTokenAsync(TokenCredentialKey tokenCredentialKey, string secret,
         TokenRequestContext tokenRequestContext, CancellationToken cancellationToken)
     {
         if (!s_tokenCredentialMap.TryGetValue(tokenCredentialKey, out TokenCredentialData tokenCredentialInstance))
@@ -753,7 +741,9 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             }
         }
 
-        return await tokenCredentialInstance._tokenCredential.GetTokenAsync(tokenRequestContext, cancellationToken);
+        AccessToken result = await tokenCredentialInstance._tokenCredential.GetTokenAsync(tokenRequestContext, cancellationToken);
+        SqlClientEventSource.Log.TryTraceEvent($"AcquireTokenAsync | Acquired access token for {tokenCredentialKey._tokenCredentialType.Name} auth mode. Expiry Time: {result.ExpiresOn}");
+        return new SqlAuthenticationToken(result.Token, result.ExpiresOn);
     }
 
     private static string GetAccountPwCacheKey(SqlAuthenticationParameters parameters)
