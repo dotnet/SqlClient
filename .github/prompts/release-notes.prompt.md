@@ -3,7 +3,7 @@ name: release-notes
 description: Generate release notes for a specific milestone of the Microsoft.Data.SqlClient project.
 argument-hint: <milestone>
 agent: agent
-tools: ['github/search_issues', 'createFile', 'editFiles', 'readFile']
+tools: ['github/search_issues', 'edit/createFile', 'edit/editFiles', 'read/readFile']
 ---
 
 Generate release notes for the milestone "${input:milestone}".

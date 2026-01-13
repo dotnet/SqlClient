@@ -3,7 +3,7 @@ name: doc-comments
 description: Generate XML documentation comments for C# code following .NET best practices.
 argument-hint: <code>
 agent: agent
-tools: ['editFiles', 'readFile']
+tools: ['edit/editFiles', 'read/readFile']
 ---
 
 You are an expert .NET developer and technical writer. Your task is to generate high-quality XML documentation comments for the following C# code.
