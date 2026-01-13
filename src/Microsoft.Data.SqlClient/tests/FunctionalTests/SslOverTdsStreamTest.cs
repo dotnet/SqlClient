@@ -173,7 +173,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
         private static Stream CreateSslOverTdsStream(Stream stream)
         {
-            Type type = typeof(SqlClientFactory).Assembly.GetType("Microsoft.Data.SqlClient.SNI.SslOverTdsStream");
+            Type type = typeof(SqlClientFactory).Assembly.GetType("Microsoft.Data.SqlClient.ManagedSni.SslOverTdsStream");
             ConstructorInfo ctor = type.GetConstructor(new Type[] { typeof(Stream) });
             Stream instance = (Stream)ctor.Invoke(new object[] { stream });
             return instance;
