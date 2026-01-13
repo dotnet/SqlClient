@@ -227,6 +227,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 {
                     AuthenticationResult result = await AcquireTokenIntegratedAsync(
                         parameters,
+                        _applicationClientId,
                         scopes,
                         cts).ConfigureAwait(false);
                     return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
@@ -362,9 +363,9 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         }
     }
 
-    private async Task<AuthenticationResult> AcquireTokenByUsernamePasswordAsync(SqlAuthenticationParameters parameters, string applicationClientId, string[] scopes, Guid connectionId, CancellationTokenSource cts)
+    private static async Task<AuthenticationResult> AcquireTokenByUsernamePasswordAsync(SqlAuthenticationParameters parameters, string applicationClientId, string[] scopes, Guid connectionId, CancellationTokenSource cts)
     {
-        IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, _applicationClientId, cts.Token).ConfigureAwait(false);
+        IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, applicationClientId, cts.Token).ConfigureAwait(false);
 
         string pwCacheKey = GetAccountPwCacheKey(parameters);
         object? previousPw = s_accountPwCache.Get(pwCacheKey);
@@ -446,12 +447,13 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         return result;
     }
 
-    private async Task<AuthenticationResult> AcquireTokenIntegratedAsync(
+    private static async Task<AuthenticationResult> AcquireTokenIntegratedAsync(
         SqlAuthenticationParameters parameters, 
+        string applicationClientId,
         string[] scopes, 
         CancellationTokenSource cts)
     {
-        IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, _applicationClientId, cts.Token).ConfigureAwait(false);
+        IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, applicationClientId, cts.Token).ConfigureAwait(false);
     
         AuthenticationResult? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
 
@@ -482,7 +484,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         return result;
     }
 
-    private async Task<AuthenticationResult> AcquireTokenDeviceFlowAsync(
+    private static async Task<AuthenticationResult> AcquireTokenDeviceFlowAsync(
         SqlAuthenticationParameters parameters,
         string applicationClientId,
         string[] scopes,
@@ -536,7 +538,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         }
     }
 
-    private async Task<AuthenticationResult> AcquireTokenInteractiveAsync(
+    private static async Task<AuthenticationResult> AcquireTokenInteractiveAsync(
         SqlAuthenticationParameters parameters,
         string applicationClientId,
         string[] scopes, 
@@ -658,9 +660,9 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             => _acquireAuthorizationCodeAsyncCallback.Invoke(authorizationUri, redirectUri, cancellationToken);
     }
 
-    private async Task<IPublicClientApplication> GetPublicClientAppInstanceAsync(
+    private static async Task<IPublicClientApplication> GetPublicClientAppInstanceAsync(
         SqlAuthenticationParameters parameters,
-        string _applicationClientId,
+        string applicationClientId,
         CancellationToken cancellationToken)
     {
         /*
@@ -680,9 +682,9 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         #endif
         PublicClientAppKey pcaKey =
         #if NETFRAMEWORK
-            new(parameters.Authority, redirectUri, _applicationClientId, _iWin32WindowFunc);
+            new(parameters.Authority, redirectUri, applicationClientId, _iWin32WindowFunc);
         #else
-            new(parameters.Authority, redirectUri, _applicationClientId);
+            new(parameters.Authority, redirectUri, applicationClientId);
         #endif
 
         if (!s_pcaMap.TryGetValue(pcaKey, out IPublicClientApplication clientApplicationInstance))
@@ -777,7 +779,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         return a1.AsSpan().SequenceEqual(a2.AsSpan());
     }
 
-    private IPublicClientApplication CreateClientAppInstance(PublicClientAppKey publicClientAppKey)
+    private static IPublicClientApplication CreateClientAppInstance(PublicClientAppKey publicClientAppKey)
     {
         PublicClientApplicationBuilder builder = PublicClientApplicationBuilder
             .CreateWithApplicationOptions(new PublicClientApplicationOptions
