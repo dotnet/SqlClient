@@ -56,8 +56,6 @@ internal static class Config
 
     #region Conditional Fact/Theory Helpers
 
-    internal static bool HasIntegratedSecurityConnectionString() =>
-        !TcpConnectionString.Empty() && IntegratedSecuritySupported;
     internal static bool HasPasswordConnectionString() => !PasswordConnectionString.Empty();
     internal static bool HasServicePrincipal() => !ServicePrincipalId.Empty() && !ServicePrincipalSecret.Empty();
     internal static bool HasSystemAccessToken() => !SystemAccessToken.Empty();

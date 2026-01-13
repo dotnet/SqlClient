@@ -196,7 +196,7 @@ public class AADConnectionTest
 
     [ConditionalFact(
         typeof(Config),
-        nameof(Config.HasIntegratedSecurityConnectionString),
+        nameof(Config.SupportsIntegratedSecurity),
         nameof(Config.HasTcpConnectionString))]
     public static void ADIntegratedUsingSSPI()
     {
@@ -209,9 +209,9 @@ public class AADConnectionTest
 
     [ConditionalFact(
         typeof(Config),
-        nameof(Config.HasPasswordConnectionString),
         nameof(Config.SupportsManagedIdentity),
-        nameof(Config.SupportsSystemAssignedManagedIdentity))]
+        nameof(Config.SupportsSystemAssignedManagedIdentity),
+        nameof(Config.HasPasswordConnectionString))]
     public static void SystemAssigned_ManagedIdentityTest()
     {
         string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
@@ -235,9 +235,9 @@ public class AADConnectionTest
 
     [ConditionalFact(
         typeof(Config),
-        nameof(Config.HasTcpConnectionString),
         nameof(Config.SupportsManagedIdentity),
         nameof(Config.SupportsSystemAssignedManagedIdentity),
+        nameof(Config.HasTcpConnectionString),
         nameof(Config.IsAzureSqlServer))]
     public static void Azure_SystemManagedIdentityTest()
     {
@@ -255,10 +255,10 @@ public class AADConnectionTest
 
     [ConditionalFact(
         typeof(Config),
-        nameof(Config.HasTcpConnectionString),
-        nameof(Config.HasUserManagedIdentityClientId),
         nameof(Config.SupportsManagedIdentity),
         nameof(Config.SupportsSystemAssignedManagedIdentity),
+        nameof(Config.HasTcpConnectionString),
+        nameof(Config.HasUserManagedIdentityClientId),
         nameof(Config.IsAzureSqlServer))]
     public static void Azure_UserManagedIdentityTest()
     {

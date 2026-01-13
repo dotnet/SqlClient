@@ -47,7 +47,7 @@ parameters:
     # Any pool specified here must contain images with the following names:
     #
     #   - ADO-UB22-SQL22
-    #   - ADO-CI-Win11
+    #   - ADO-MMS22-SQL22
     #
     default: $(ci_var_defaultPoolName)
 
@@ -203,7 +203,10 @@ stages:
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.adoPoolName }}
           referenceType: ${{ parameters.referenceType }}
-          vmImage: ADO-CI-Win11
+          # The ADO-MMS22-SQL22 image includes a local SQL Server that supports
+          # integrated security.
+          supportsIntegratedSecurity: true
+          vmImage: ADO-MMS22-SQL22
 
       # ------------------------------------------------------------------------
       # Build and test on macOS.
