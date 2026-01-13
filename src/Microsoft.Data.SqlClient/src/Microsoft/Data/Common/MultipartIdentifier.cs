@@ -22,7 +22,7 @@ namespace Microsoft.Data.Common
 
         internal static string[] ParseMultipartIdentifier(string name, string property, bool ThrowOnEmptyMultipartName)
         {
-            return ParseMultipartIdentifier(name, "[\"", MaxParts, property, ThrowOnEmptyMultipartName);
+            return ParseMultipartIdentifier(name, MaxParts, property, ThrowOnEmptyMultipartName);
         }
 
         private enum MPIState
@@ -59,14 +59,14 @@ namespace Microsoft.Data.Common
             return char.IsWhiteSpace(ch);
         }
 
-        internal static string[] ParseMultipartIdentifier(string name, string leftQuote, int limit, string property, bool ThrowOnEmptyMultipartName)
+        internal static string[] ParseMultipartIdentifier(string name, int limit, string property, bool ThrowOnEmptyMultipartName)
         {
             if (limit <= 0)
             {
                 throw ADP.InvalidMultipartNameToManyParts(property, name, limit);
             }
 
-            if (-1 != leftQuote.IndexOf(IdentifierSeparator) || -1 != IdentifierEndCharacters.IndexOf(IdentifierSeparator) || leftQuote.Length != IdentifierEndCharacters.Length)
+            if (-1 != IdentifierStartCharacters.IndexOf(IdentifierSeparator) || -1 != IdentifierEndCharacters.IndexOf(IdentifierSeparator) || IdentifierStartCharacters.Length != IdentifierEndCharacters.Length)
             {
                 throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, name);
             }
@@ -98,7 +98,7 @@ namespace Microsoft.Data.Common
                                 IncrementStringCount(name, parsedNames, ref stringCount, property);
                             }
                             else
-                            if (-1 != (quoteIndex = leftQuote.IndexOf(testchar)))
+                            if (-1 != (quoteIndex = IdentifierStartCharacters.IndexOf(testchar)))
                             { // If we are a left quote                                                                                                                          
                                 rightQuoteChar = IdentifierEndCharacters[quoteIndex]; // record the corresponding right quote for the left quote
                                 sb.Length = 0;
@@ -132,7 +132,7 @@ namespace Microsoft.Data.Common
                                 throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, name);
                             }
                             else
-                            if (-1 != leftQuote.IndexOf(testchar))
+                            if (-1 != IdentifierStartCharacters.IndexOf(testchar))
                             {
                                 throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, name);
                             }
