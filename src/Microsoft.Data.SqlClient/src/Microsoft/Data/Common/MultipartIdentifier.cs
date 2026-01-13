@@ -25,7 +25,7 @@ namespace Microsoft.Data.Common
         */
         internal static string[] ParseMultipartIdentifier(string name, string property, bool ThrowOnEmptyMultipartName)
         {
-            return ParseMultipartIdentifier(name, "[\"", "]\"", MaxParts, true, property, ThrowOnEmptyMultipartName);
+            return ParseMultipartIdentifier(name, "[\"", "]\"", MaxParts, property, ThrowOnEmptyMultipartName);
         }
 
         private enum MPIState
@@ -62,7 +62,7 @@ namespace Microsoft.Data.Common
             return char.IsWhiteSpace(ch);
         }
 
-        internal static string[] ParseMultipartIdentifier(string name, string leftQuote, string rightQuote, int limit, bool removequotes, string property, bool ThrowOnEmptyMultipartName)
+        internal static string[] ParseMultipartIdentifier(string name, string leftQuote, string rightQuote, int limit, string property, bool ThrowOnEmptyMultipartName)
         {
             if (limit <= 0)
             {
@@ -105,10 +105,6 @@ namespace Microsoft.Data.Common
                             { // If we are a left quote                                                                                                                          
                                 rightQuoteChar = rightQuote[quoteIndex]; // record the corresponding right quote for the left quote
                                 sb.Length = 0;
-                                if (!removequotes)
-                                {
-                                    sb.Append(testchar);
-                                }
                                 state = MPIState.MPI_ParseQuote;
                             }
                             else
@@ -190,10 +186,6 @@ namespace Microsoft.Data.Common
                         {
                             if (testchar == rightQuoteChar)
                             {    // if se are on a right quote see if we are escaping the right quote or ending the quoted string                            
-                                if (!removequotes)
-                                {
-                                    sb.Append(testchar);
-                                }
                                 state = MPIState.MPI_RightQuote;
                             }
                             else
