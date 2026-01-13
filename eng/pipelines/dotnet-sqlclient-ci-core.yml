@@ -206,7 +206,7 @@ stages:
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
-            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+            SupportsIntegratedSecurity: true
             UserManagedIdentityClientId: $(UserManagedIdentityClientId)
             FileStreamDirectory: $(FileStreamDirectory)
             LocalDbAppName: $(LocalDbAppName)
@@ -247,7 +247,7 @@ stages:
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
-            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+            SupportsIntegratedSecurity: true
             UserManagedIdentityClientId: $(UserManagedIdentityClientId)
             FileStreamDirectory: $(FileStreamDirectory)
             LocalDbAppName: $(LocalDbAppName)
@@ -289,7 +289,7 @@ stages:
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
-            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+            SupportsIntegratedSecurity: true
             UserManagedIdentityClientId: $(UserManagedIdentityClientId)
             FileStreamDirectory: $(FileStreamDirectory)
             LocalDbAppName: $(LocalDbAppName)
@@ -318,7 +318,7 @@ stages:
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
-            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+            SupportsIntegratedSecurity: true
             UserManagedIdentityClientId: $(UserManagedIdentityClientId)
             FileStreamDirectory: $(FileStreamDirectory)
             LocalDbAppName: $(LocalDbAppName)
@@ -346,7 +346,7 @@ stages:
             # config.json properties
             TCPConnectionString: $(SQL_TCP_INSTANCE_CONN_STRING)
             NPConnectionString: $(SQL_NP_INSTANCE_CONN_STRING)
-            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+            SupportsIntegratedSecurity: true
             # extra config properties
             SQLRootPath: $(SQL22RootPath)
             instanceName: $(NamedInstance)
@@ -443,7 +443,7 @@ stages:
                 AADServicePrincipalSecret: $(AADServicePrincipalSecret)
               AzureKeyVaultUrl: $(AzureKeyVaultUrl)
               AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
-              SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+              SupportsIntegratedSecurity: true
               UserManagedIdentityClientId: $(UserManagedIdentityClientId)
               AliasName: $(SQLAliasName)            
               LocalDbAppName: $(LocalDbAppName)
