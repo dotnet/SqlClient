@@ -315,30 +315,14 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 }
                 case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
                 {
-                    IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, _applicationClientId, cts.Token).ConfigureAwait(false);
-
-                    try
-                    {
-                        AuthenticationResult? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
-
-                        if (cachedResult is not null)
-                        {
-                            SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (silent) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, cachedResult .ExpiresOn);
-                            return new SqlAuthenticationToken(cachedResult.AccessToken, cachedResult.ExpiresOn);
-                        }
-                    }
-                    catch (MsalUiRequiredException)
-                    {
-                        // An 'MsalUiRequiredException' is thrown in the case where an interaction is required with the end user of the application,
-                        // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired),
-                        // or the user needs to perform two factor authentication.
-                        //
-                        // result should be null here, but we make sure of that.
-                    }
-
-                    // If no existing 'account' is found, we request user to sign in interactively.
-                    AuthenticationResult result = await AcquireTokenDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback).ConfigureAwait(false);
-                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
+                    AuthenticationResult result = await AcquireTokenDeviceFlowAsync(
+                        parameters,
+                        _applicationClientId,
+                        scopes,
+                        parameters.ConnectionId,
+                        parameters.AuthenticationMethod,
+                        cts,
+                        _deviceCodeFlowCallback).ConfigureAwait(false);
                     return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
                 }
             }
@@ -467,16 +451,43 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         return result;
     }
 
-    private static async Task<AuthenticationResult> AcquireTokenDeviceFlowAsync(IPublicClientApplication app, string[] scopes, Guid connectionId, string? userId,
-        SqlAuthenticationMethod authenticationMethod, CancellationTokenSource cts, ICustomWebUi? customWebUI, Func<DeviceCodeResult, Task> deviceCodeFlowCallback)
+    private async Task<AuthenticationResult> AcquireTokenDeviceFlowAsync(
+        SqlAuthenticationParameters parameters,
+        string applicationClientId,
+        string[] scopes,
+        Guid connectionId,
+        SqlAuthenticationMethod authenticationMethod, 
+        CancellationTokenSource cts, 
+        Func<DeviceCodeResult, Task> deviceCodeFlowCallback)
     {
+        IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, applicationClientId, cts.Token).ConfigureAwait(false);
+
         try
         {
-            return await app.AcquireTokenWithDeviceCode(scopes,
+            AuthenticationResult? cachedResult = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
+
+            if (cachedResult is not null)
+            {
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (silent) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, cachedResult .ExpiresOn);
+                return cachedResult;
+            }
+        }
+        catch (MsalUiRequiredException)
+        {
+            // An 'MsalUiRequiredException' is thrown in the case where an interaction is required with the end user of the application,
+            // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired),
+            // or the user needs to perform two factor authentication.
+        }
+        
+        try
+        {
+            AuthenticationResult result = await app.AcquireTokenWithDeviceCode(scopes,
                 deviceCodeResult => deviceCodeFlowCallback(deviceCodeResult))
                 .WithCorrelationId(connectionId)
                 .ExecuteAsync(cancellationToken: cts.Token)
                 .ConfigureAwait(false);
+            SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
+            return result;
         }
         catch (OperationCanceledException ex)
         {
@@ -488,9 +499,6 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 false,
                 0,
                 // TODO: This used to use the following localized strings
-                // depending on the method:
-                //
-                // Strings.SQL_Timeout_Active_Directory_Interactive_Authentication
                 // Strings.SQL_Timeout_Active_Directory_DeviceFlow_Authentication
                 ex.Message,
                 ex);
@@ -564,12 +572,14 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             *
             * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/MSAL.NET-uses-web-browser#at-a-glance
             */
-            return await app.AcquireTokenInteractive(scopes)
+            AuthenticationResult result = await app.AcquireTokenInteractive(scopes)
                 .WithCorrelationId(connectionId)
                 .WithCustomWebUi(customWebUI)
                 .WithLoginHint(userId)
                 .ExecuteAsync(ctsInteractive.Token)
                 .ConfigureAwait(false);
+            SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
+            return result;
         }
         catch (OperationCanceledException ex)
         {
