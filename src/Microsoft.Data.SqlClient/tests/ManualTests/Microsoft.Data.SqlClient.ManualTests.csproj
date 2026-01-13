@@ -11,6 +11,7 @@
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
     <IsTestProject>true</IsTestProject>
+    <RootNamespace>Microsoft.Data.SqlClient.ManualTesting.Tests</RootNamespace>
   </PropertyGroup>
   <ItemGroup Condition="'$(TestSet)' == '' or '$(TestSet)' == 'AE'">
     <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
