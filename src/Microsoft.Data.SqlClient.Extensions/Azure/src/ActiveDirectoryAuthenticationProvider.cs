@@ -968,7 +968,9 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             if (tokenCredentialKey._clientId is not null)
             {
                 defaultAzureCredentialOptions.ManagedIdentityClientId = tokenCredentialKey._clientId;
+                #pragma warning disable CS0618 // Type or member is obsolete
                 defaultAzureCredentialOptions.SharedTokenCacheUsername = tokenCredentialKey._clientId;
+                #pragma warning restore CS0618 // Type or member is obsolete
                 defaultAzureCredentialOptions.WorkloadIdentityClientId = tokenCredentialKey._clientId;
             }
 
