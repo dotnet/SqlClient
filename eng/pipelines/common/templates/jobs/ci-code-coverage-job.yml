@@ -33,7 +33,6 @@ parameters:
   # True to upload code coverage results to CodeCov.
   - name: upload
     type: boolean
-    default: true
 
 jobs:
   - job: CodeCoverage
