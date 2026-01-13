@@ -146,37 +146,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             string[] scopes = [scope];
             TokenRequestContext tokenRequestContext = new(scopes);
 
-            // We split audience from Authority URL here. Audience can be one of
-            // the following:
-            //
-            //   - The Azure AD authority audience enumeration
-            //   - The tenant ID, which can be:
-            //     - A GUID (the ID of your Azure AD instance), for
-            //       single-tenant applications
-            //     - A domain name associated with your Azure AD instance (also
-            //       for single-tenant applications)
-            //   - One of these placeholders as a tenant ID in place of the
-            //     Azure AD authority audience enumeration:
-            //     - `organizations` for a multitenant application
-            //     - `consumers` to sign in users only with their personal
-            //       accounts
-            //     - `common` to sign in users with their work and school
-            //       accounts or their personal Microsoft accounts
-            //
-            // MSAL will throw a meaningful exception if you specify both the
-            // Azure AD authority audience and the tenant ID.
-            //
-            // If you don't specify an audience, your app will target Azure AD
-            // and personal Microsoft accounts as an audience.  (That is, it
-            // will behave as though `common` were specified.)
-            //
-            // More information:
-            //
-            //   https://docs.microsoft.com/azure/active-directory/develop/msal-client-application-configuration
-
-            int separatorIndex = parameters.Authority.LastIndexOf('/');
-            string authority = parameters.Authority.Remove(separatorIndex + 1);
-            string audience = parameters.Authority.Substring(separatorIndex + 1);
+            var (authority, audience) = SplitAuthority(parameters.Authority);
             string? clientId = string.IsNullOrWhiteSpace(parameters.UserId) ? null : parameters.UserId;
 
             switch (parameters.AuthenticationMethod)
@@ -240,7 +210,6 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                         parameters,
                         _applicationClientId,
                         scopes,
-                        parameters.ConnectionId,
                         cts).ConfigureAwait(false);
                     return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
                 }
@@ -363,7 +332,47 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         }
     }
 
-    private static async Task<AuthenticationResult> AcquireTokenByUsernamePasswordAsync(SqlAuthenticationParameters parameters, string applicationClientId, string[] scopes, Guid connectionId, CancellationTokenSource cts)
+    private (string authority, string audience) SplitAuthority(string authority)
+    {
+            // We split audience from Authority URL here. Audience can be one of
+            // the following:
+            //
+            //   - The Azure AD authority audience enumeration
+            //   - The tenant ID, which can be:
+            //     - A GUID (the ID of your Azure AD instance), for
+            //       single-tenant applications
+            //     - A domain name associated with your Azure AD instance (also
+            //       for single-tenant applications)
+            //   - One of these placeholders as a tenant ID in place of the
+            //     Azure AD authority audience enumeration:
+            //     - `organizations` for a multitenant application
+            //     - `consumers` to sign in users only with their personal
+            //       accounts
+            //     - `common` to sign in users with their work and school
+            //       accounts or their personal Microsoft accounts
+            //
+            // MSAL will throw a meaningful exception if you specify both the
+            // Azure AD authority audience and the tenant ID.
+            //
+            // If you don't specify an audience, your app will target Azure AD
+            // and personal Microsoft accounts as an audience.  (That is, it
+            // will behave as though `common` were specified.)
+            //
+            // More information:
+            //
+            //   https://docs.microsoft.com/azure/active-directory/develop/msal-client-application-configuration
+
+            int separatorIndex = authority.LastIndexOf('/');
+            string authorityUrl = authority.Remove(separatorIndex + 1);
+            string audience = authority.Substring(separatorIndex + 1);
+            return (authorityUrl, audience);
+    }
+
+    private static async Task<AuthenticationResult> AcquireTokenByUsernamePasswordAsync(
+        SqlAuthenticationParameters parameters, 
+        string applicationClientId, 
+        string[] scopes, 
+        CancellationTokenSource cts)
     {
         IPublicClientApplication app = await GetPublicClientAppInstanceAsync(parameters, applicationClientId, cts.Token).ConfigureAwait(false);
 
@@ -409,10 +418,8 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     private static async Task<AuthenticationResult?> TryAcquireTokenSilent(IPublicClientApplication app, SqlAuthenticationParameters parameters,
         string[] scopes, CancellationTokenSource cts)
     {
-        AuthenticationResult? result = null;
-
         // Fetch available accounts from 'app' instance
-        System.Collections.Generic.IEnumerator<IAccount> accounts = (await app.GetAccountsAsync().ConfigureAwait(false)).GetEnumerator();
+        IEnumerator<IAccount> accounts = (await app.GetAccountsAsync().ConfigureAwait(false)).GetEnumerator();
 
         IAccount? account = default;
         if (accounts.MoveNext())
@@ -440,11 +447,12 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         {
             // If 'account' is available in 'app', we use the same to acquire token silently.
             // Read More on API docs: https://docs.microsoft.com/dotnet/api/microsoft.identity.client.clientapplicationbase.acquiretokensilent
-            result = await app.AcquireTokenSilent(scopes, account).ExecuteAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+            AuthenticationResult? result = await app.AcquireTokenSilent(scopes, account).ExecuteAsync(cancellationToken: cts.Token).ConfigureAwait(false);
             SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (silent) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
+            return result;
         }
 
-        return result;
+        return null;
     }
 
     private static async Task<AuthenticationResult> AcquireTokenIntegratedAsync(
