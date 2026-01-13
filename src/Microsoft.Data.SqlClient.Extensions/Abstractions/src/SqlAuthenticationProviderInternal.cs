@@ -32,20 +32,7 @@ public abstract partial class SqlAuthenticationProvider
         /// </summary>
         static Internal()
         {
-            // Choose the MDS assembly name based on compilation flags and the
-            // runtime environment.  See the top-level Directory.Build.props for
-            // more information.
-            string assemblyName = "Microsoft.Data.SqlClient";
-            #if (APPLY_MDS_ASSEMBLY_NAME_SUFFIX)
-            if (RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework"))
-            {
-                assemblyName += ".NetFx";
-            }
-            else
-            {
-                assemblyName += ".NetCore";
-            }
-            #endif
+            const string assemblyName = "Microsoft.Data.SqlClient";
 
             // If the MDS package is present, load its
             // SqlAuthenticationProviderManager class and get/set methods.

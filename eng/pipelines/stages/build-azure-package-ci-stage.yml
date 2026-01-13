@@ -137,7 +137,7 @@ stages:
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
-          displayNamePrefix: Linux
+          displayNamePrefix: Linux (basic)
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: linux_basic
           mdsArtifactName: MDS.Artifact
@@ -155,7 +155,7 @@ stages:
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
-          displayNamePrefix: Linux
+          displayNamePrefix: Linux (comprehensive)
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: linux_comprehensive
           mdsArtifactName: MDS.Artifact
@@ -176,7 +176,7 @@ stages:
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
-          displayNamePrefix: Win
+          displayNamePrefix: Win (basic)
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: windows_basic
           mdsArtifactName: MDS.Artifact
@@ -194,7 +194,7 @@ stages:
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
-          displayNamePrefix: Win
+          displayNamePrefix: Win (comprehensive)
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: windows_comprehensive
           mdsArtifactName: MDS.Artifact

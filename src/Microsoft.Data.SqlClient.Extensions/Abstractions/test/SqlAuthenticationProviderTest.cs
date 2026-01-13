@@ -8,23 +8,14 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 public class SqlAuthenticationProviderTest
 {
-    // Choose the MDS assembly name based on compilation flags.  See the
-    // top-level Directory.Build.props for more information.
-    #if (APPLY_MDS_ASSEMBLY_NAME_SUFFIX && NET)
-    const string assemblyName = "Microsoft.Data.SqlClient.NetCore";
-    #elif (APPLY_MDS_ASSEMBLY_NAME_SUFFIX && NETFRAMEWORK)
-    const string assemblyName = "Microsoft.Data.SqlClient.NetFx";
-    #else
-    const string assemblyName = "Microsoft.Data.SqlClient";
-    #endif
-
     /// <summary>
     /// Construct to confirm preconditions.
     /// </summary>
     public SqlAuthenticationProviderTest()
     {
         // Confirm that the MDS assembly is indeed not present.
-        Assert.Throws<FileNotFoundException>(() => Assembly.Load(assemblyName));
+        Assert.Throws<FileNotFoundException>(
+            () => Assembly.Load("Microsoft.Data.SqlClient"));
     }
 
     #region Tests
