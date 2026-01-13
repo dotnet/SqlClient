@@ -27,7 +27,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Address", "Microsoft.Data.S
 		{407890AC-9876-4FEF-A6F1-F36A876BAADE} = {407890AC-9876-4FEF-A6F1-F36A876BAADE}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.ManualTesting.Tests", "Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj", "{45DB5F86-7AE3-45C6-870D-F9357B66BDB5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.ManualTests", "Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTests.csproj", "{45DB5F86-7AE3-45C6-870D-F9357B66BDB5}"
 	ProjectSection(ProjectDependencies) = postProject
 		{37431336-5307-4184-9356-C4B7E47DC714} = {37431336-5307-4184-9356-C4B7E47DC714}
 	EndProjectSection
