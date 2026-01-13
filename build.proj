@@ -91,8 +91,8 @@
     <ManualTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
     <ManualTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
     <ManualTests Include="**/CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
-    <ManualTests Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
-    <ManualTestsProj Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
+    <ManualTests Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj" />
+    <ManualTestsProj Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj" />
   </ItemGroup>
 
   <!-- Top Level Build targets -->
