@@ -38,6 +38,14 @@ parameters:
     type: boolean
     default: false
 
+  - name: bool5
+    type: boolean
+    default: false
+
+  - name: bool6
+    type: boolean
+    default: false
+
 steps:
 
   - pwsh: |
@@ -49,4 +57,6 @@ steps:
       Write-Host "Bool2: ${{ parameters.bool2 }}"
       Write-Host "Bool3: ${{ parameters.bool3 }}"
       Write-Host "Bool4: ${{ parameters.bool4 }}"
+      Write-Host "Bool5: ${{ parameters.bool5 }}"
+      Write-Host "Bool6: ${{ parameters.bool6 }}"
     displayName: 'Display Parameters'

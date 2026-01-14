@@ -160,8 +160,10 @@ jobs:
           bool4: true
         ${{ if parameters.configProperties.SupportsIntegratedSecurity }}:
           bool1: ${{ eq(parameters.configProperties.SupportsIntegratedSecurity, 'true') }}
+          bool2: true
         ${{ if ne(parameters.configProperties.SupportsIntegratedSecurity, 'null') }}:
-          bool2: ${{ eq(parameters.configProperties.SupportsIntegratedSecurity, 'true') }}
+          bool5: ${{ eq(parameters.configProperties.SupportsIntegratedSecurity, 'true') }}
+          bool6: true
 
     - template: ../steps/update-config-file-step.yml@self # update config.json file
       parameters:
