@@ -10,126 +10,126 @@ namespace Microsoft.Data.Common.UnitTests
     public class MultipartIdentifierTests
     {
         [Fact]
-        public void SingleUnquoted() => RunParse("foo", new[] { "foo" });
+        public void SingleUnquoted() => RunParse("foo", ["foo"]);
 
         [Fact]
-        public void SingleUnquotedOvercount() => RunParse("foo", new[] { null, "foo" }, maxCount: 2);
+        public void SingleUnquotedOvercount() => RunParse("foo", [null, "foo"], maxCount: 2);
 
         [Fact]
-        public void SingleUnquotedContainsWhitespace() => RunParse("foo bar", new[] { "foo bar" });
+        public void SingleUnquotedContainsWhitespace() => RunParse("foo bar", ["foo bar"]);
 
         [Fact]
-        public void SingleUnquotedStartWithShitespace() => RunParse("  foo", new[] { "foo" });
+        public void SingleUnquotedStartWithShitespace() => RunParse("  foo", ["foo"]);
 
         [Fact]
-        public void SingleUnquotedEndWithShitespace() => RunParse("foo  ", new[] { "foo" });
+        public void SingleUnquotedEndWithShitespace() => RunParse("foo  ", ["foo"]);
 
         [Fact]
-        public void SingleQuotedKeepQuote() => RunParse("[foo]", new[] { "foo" });
+        public void SingleQuotedKeepQuote() => RunParse("[foo]", ["foo"]);
 
         [Fact]
-        public void SingleQuotedLeadingWhitespace() => RunParse("[ foo]", new[] { " foo" });
+        public void SingleQuotedLeadingWhitespace() => RunParse("[ foo]", [" foo"]);
 
         [Fact]
-        public void SingleQuotedTrailingWhitespace() => RunParse("[foo ]", new[] { "foo " });
+        public void SingleQuotedTrailingWhitespace() => RunParse("[foo ]", ["foo "]);
 
         [Fact]
-        public void QuotedContainsWhitespace() => RunParse("[foo bar]", new[] { "foo bar" });
+        public void QuotedContainsWhitespace() => RunParse("[foo bar]", ["foo bar"]);
 
         [Fact]
-        public void SingleQuotedContainsAndTrailingWhitespace() => RunParse("[foo bar ]", new[] { "foo bar " });
+        public void SingleQuotedContainsAndTrailingWhitespace() => RunParse("[foo bar ]", ["foo bar "]);
 
         [Fact]
-        public void SingleQuotedInternalAndLeadingWhitespace() => RunParse("[ foo bar]", new[] { " foo bar" });
+        public void SingleQuotedInternalAndLeadingWhitespace() => RunParse("[ foo bar]", [" foo bar"]);
 
         [Fact]
-        public void SingleQuotedContainsAndLeadingAndTrailingWhitespace() => RunParse("[ foo bar ]", new[] { " foo bar " });
+        public void SingleQuotedContainsAndLeadingAndTrailingWhitespace() => RunParse("[ foo bar ]", [" foo bar "]);
 
         [Fact]
-        public void SingleQuotedEscapedQuote() => RunParse("[foo]]bar]", new[] { "foo]bar" });
-
-
-        [Fact]
-        public void DoubleUnquotedParts() => RunParse("foo.bar", new[] { "foo", "bar" });
-
-        [Fact]
-        public void DoubleUnquotedPartContainsTrailngWhitespace() => RunParse("foo .bar", new[] { "foo", "bar" });
-
-        [Fact]
-        public void DoubleUnquotedPartContainsLeadingWhitespace() => RunParse("foo. bar", new[] { "foo", "bar" });
-
-        [Fact]
-        public void DoubleUnquotedEmptyFirst() => RunParse(".bar", new[] { "", "bar" });
-
-        [Fact]
-        public void DoubleUnquotedEmptyLast() => RunParse("foo.", new[] { "foo", "" });
-
-        [Fact]
-        public void DoubleQuotedParts() => RunParse("[foo].[bar]", new string[] { "foo", "bar" });
-
-        [Fact]
-        public void DoubleQuotedPartContainsLeadingWhitespace() => RunParse("[foo]. [bar]", new[] { "foo", "bar" });
-
-        [Fact]
-        public void DoubleQuotedPartContainsTrailngWhitespace() => RunParse("[foo] .[bar]", new[] { "foo", "bar" });
+        public void SingleQuotedEscapedQuote() => RunParse("[foo]]bar]", ["foo]bar"]);
 
 
         [Fact]
-        public void TripleUnquotedParts() => RunParse("foo.bar.ed", new[] { "foo", "bar", "ed" });
+        public void DoubleUnquotedParts() => RunParse("foo.bar", ["foo", "bar"]);
 
         [Fact]
-        public void TripleUnquotedMissingMiddle() => RunParse("foo..bar", new[] { "foo", "", "bar" });
+        public void DoubleUnquotedPartContainsTrailngWhitespace() => RunParse("foo .bar", ["foo", "bar"]);
 
         [Fact]
-        public void TripleUnquotedPartContainsTrailingWhitespace() => RunParse("foo .bar .ed", new[] { "foo", "bar", "ed" });
+        public void DoubleUnquotedPartContainsLeadingWhitespace() => RunParse("foo. bar", ["foo", "bar"]);
 
         [Fact]
-        public void TripleUnquotedPartContainsEmptyAndTrailngWhitespace() => RunParse(" .bar .ed", new[] { "", "bar", "ed" });
+        public void DoubleUnquotedEmptyFirst() => RunParse(".bar", ["", "bar"]);
 
         [Fact]
-        public void TripleUnquotedPartContainsLeadingWhitespace() => RunParse("foo. bar.", new[] { "foo", "bar", "" });
+        public void DoubleUnquotedEmptyLast() => RunParse("foo.", ["foo", ""]);
 
         [Fact]
-        public void TripleUnquotedEmptyPart() => RunParse(".bar", new[] { "", "bar" });
+        public void DoubleQuotedParts() => RunParse("[foo].[bar]", ["foo", "bar"]);
 
         [Fact]
-        public void TripleQuotedParts() => RunParse("[foo].[bar]", new[] { "foo", "bar" });
+        public void DoubleQuotedPartContainsLeadingWhitespace() => RunParse("[foo]. [bar]", ["foo", "bar"]);
 
         [Fact]
-        public void TripleQuotedPartContainsLeadingWhitespace() => RunParse("[foo]. [bar]", new[] { "foo", "bar" });
+        public void DoubleQuotedPartContainsTrailngWhitespace() => RunParse("[foo] .[bar]", ["foo", "bar"]);
+
 
         [Fact]
-        public void TripleQuotedPartContainsTrailngWhitespace() => RunParse("[foo] .[bar]", new[] { "foo", "bar" });
+        public void TripleUnquotedParts() => RunParse("foo.bar.ed", ["foo", "bar", "ed"]);
 
         [Fact]
-        public void InvalidUnquotedEmpty() => ThrowParse<ArgumentException>("", new[] { "" });
+        public void TripleUnquotedMissingMiddle() => RunParse("foo..bar", ["foo", "", "bar"]);
 
         [Fact]
-        public void InvalidContainsOpen() => ThrowParse<ArgumentException>("foo[bar", new[] { "foo[bar" });
+        public void TripleUnquotedPartContainsTrailingWhitespace() => RunParse("foo .bar .ed", ["foo", "bar", "ed"]);
 
         [Fact]
-        public void InvalidContainsClose() => ThrowParse<ArgumentException>("foo]bar", new[] { "foo]bar" });
+        public void TripleUnquotedPartContainsEmptyAndTrailngWhitespace() => RunParse(" .bar .ed", ["", "bar", "ed"]);
 
         [Fact]
-        public void InvalidStartsWithClose() => ThrowParse<ArgumentException>("]bar", new[] { "]bar" });
+        public void TripleUnquotedPartContainsLeadingWhitespace() => RunParse("foo. bar.", ["foo", "bar", ""]);
 
         [Fact]
-        public void InvalidEndsWithClose() => ThrowParse<ArgumentException>("bar]", new[] { "bar]" });
+        public void TripleUnquotedEmptyPart() => RunParse(".bar", ["", "bar"]);
 
         [Fact]
-        public void InvalidUnfinishedBraceOpen() => ThrowParse<ArgumentException>("[foo", new[] { "[foo" });
+        public void TripleQuotedParts() => RunParse("[foo].[bar]", ["foo", "bar"]);
 
         [Fact]
-        public void InvalidUnfinishedQuoteOpen() => ThrowParse<ArgumentException>("\"foo", new[] { "\"foo" });
+        public void TripleQuotedPartContainsLeadingWhitespace() => RunParse("[foo]. [bar]", ["foo", "bar"]);
 
         [Fact]
-        public void InvalidQuotedPartContainsTrailngNonWhitespace() => ThrowParse<ArgumentException>("[foo]!.[bar]", new[] { "foo", "bar" });
+        public void TripleQuotedPartContainsTrailngWhitespace() => RunParse("[foo] .[bar]", ["foo", "bar"]);
 
         [Fact]
-        public void InvalidQuotedPartContainsTrailngWhiteSpaceThenNonWhitespace() => ThrowParse<ArgumentException>("[foo] !.[bar]", new[] { "foo", "bar" });
+        public void InvalidUnquotedEmpty() => ThrowParse<ArgumentException>("", [""]);
 
         [Fact]
-        public void InvalidTooManyParts_2to1() => ThrowParse<ArgumentException>("foo.bar", new[] { "foo" });
+        public void InvalidContainsOpen() => ThrowParse<ArgumentException>("foo[bar", ["foo[bar"]);
+
+        [Fact]
+        public void InvalidContainsClose() => ThrowParse<ArgumentException>("foo]bar", ["foo]bar"]);
+
+        [Fact]
+        public void InvalidStartsWithClose() => ThrowParse<ArgumentException>("]bar", ["]bar"]);
+
+        [Fact]
+        public void InvalidEndsWithClose() => ThrowParse<ArgumentException>("bar]", ["bar]"]);
+
+        [Fact]
+        public void InvalidUnfinishedBraceOpen() => ThrowParse<ArgumentException>("[foo", ["[foo"]);
+
+        [Fact]
+        public void InvalidUnfinishedQuoteOpen() => ThrowParse<ArgumentException>("\"foo", ["\"foo"]);
+
+        [Fact]
+        public void InvalidQuotedPartContainsTrailngNonWhitespace() => ThrowParse<ArgumentException>("[foo]!.[bar]", ["foo", "bar"]);
+
+        [Fact]
+        public void InvalidQuotedPartContainsTrailngWhiteSpaceThenNonWhitespace() => ThrowParse<ArgumentException>("[foo] !.[bar]", ["foo", "bar"]);
+
+        [Fact]
+        public void InvalidTooManyParts_2to1() => ThrowParse<ArgumentException>("foo.bar", ["foo"]);
 
         [Fact]
         public void InvalidTooManyPartsEndsInSeparator() => ThrowParse("a.", 1);
