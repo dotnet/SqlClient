@@ -93,8 +93,10 @@
   <Target Name="BuildAll" DependsOnTargets="BuildSqlServerLib;BuildNetFx;BuildNetCore;BuildNetStandard" />
   <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServerLib;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;GenerateNugetPackage" />
   <Target Name="BuildSqlServerPackage" DependsOnTargets="BuildSqlServerLibAnyOS;GenerateSqlServerPackage"/>
-  <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildManualTestsNetCore"/>
-  <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildManualTestsNetFx" Condition="$(IsEnabledWindows) == 'true'"/>
+  
+  <!-- @TODO: Manual tests have a reference to AKV provider, and AKV provider is not built on non-windows pipeline runs. Thus it is added to the dependencies of the build tests target. This is not good since it means AKV is built twice on windows and once on unix, in a mix of implicit and explicit. The pipeline should be modified to build it in both cases, or the build should be updated to have dotnet build the test projects. -->
+  <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildManualTestsNetCore"/>
+  <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildManualTestsNetFx" Condition="$(IsEnabledWindows) == 'true'"/>
 
   <Target Name="RestoreSqlServerLib">
     <MSBuild Projects="@(SqlServerLib)" Targets="restore" />
