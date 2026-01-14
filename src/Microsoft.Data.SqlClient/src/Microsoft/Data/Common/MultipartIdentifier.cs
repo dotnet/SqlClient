@@ -96,7 +96,7 @@ namespace Microsoft.Data.Common
                                 parsedNames[stringCount] = string.Empty;
                                 IncrementStringCount(name, parsedNames, ref stringCount, property);
                             }
-                            else if (-1 != (quoteIndex = IdentifierStartCharacters.IndexOf(testchar)))
+                            else if ((quoteIndex = IdentifierStartCharacters.IndexOf(testchar)) != -1)
                             {
                                 // If we are a left quote, record the corresponding right quote for the left quote
                                 rightQuoteChar = IdentifierEndCharacters[quoteIndex];
@@ -157,21 +157,18 @@ namespace Microsoft.Data.Common
 
                     case MPIState.MPI_LookForNextCharOrSeparator:
                         {
-                            if (!char.IsWhiteSpace(testchar))
+                            if (testchar == IdentifierSeparator)
                             {
-                                if (testchar == IdentifierSeparator)
-                                {
-                                    IncrementStringCount(name, parsedNames, ref stringCount, property);
-                                    state = MPIState.MPI_Value;
-                                }
-                                else
-                                {
-                                    sb.Append(whitespaceSB);
-                                    sb.Append(testchar);
-                                    // Need to set the name here in case the string ends here.
-                                    parsedNames[stringCount] = sb.ToString();
-                                    state = MPIState.MPI_ParseNonQuote;
-                                }
+                                IncrementStringCount(name, parsedNames, ref stringCount, property);
+                                state = MPIState.MPI_Value;
+                            }
+                            else if (!char.IsWhiteSpace(testchar))
+                            {
+                                sb.Append(whitespaceSB);
+                                sb.Append(testchar);
+                                // Need to set the name here in case the string ends here.
+                                parsedNames[stringCount] = sb.ToString();
+                                state = MPIState.MPI_ParseNonQuote;
                             }
                             else
                             {
@@ -225,19 +222,16 @@ namespace Microsoft.Data.Common
 
                     case MPIState.MPI_LookForSeparator:
                         {
-                            if (!char.IsWhiteSpace(testchar))
+                            if (testchar == IdentifierSeparator)
                             {
-                                if (testchar == IdentifierSeparator)
-                                {
-                                    // If it is a separator 
-                                    IncrementStringCount(name, parsedNames, ref stringCount, property);
-                                    state = MPIState.MPI_Value;
-                                }
-                                else
-                                {
-                                    // Otherwise not a separator
-                                    throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, name);
-                                }
+                                // If it is a separator 
+                                IncrementStringCount(name, parsedNames, ref stringCount, property);
+                                state = MPIState.MPI_Value;
+                            }
+                            else if (!char.IsWhiteSpace(testchar))
+                            {
+                                // Otherwise not a separator
+                                throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, name);
                             }
                             break;
                         }
