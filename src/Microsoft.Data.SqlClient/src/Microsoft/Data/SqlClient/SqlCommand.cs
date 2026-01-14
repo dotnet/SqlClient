@@ -1291,9 +1291,9 @@ namespace Microsoft.Data.SqlClient
             // Use common parser for SqlClient and OleDb - parse into 4 parts - Server, Catalog,
             // Schema, ProcedureName
             string[] parsedSProc = MultipartIdentifier.ParseMultipartIdentifier(
-                name: CommandText,
+                identifier: CommandText,
                 property: Strings.SQL_SqlCommandCommandText,
-                ThrowOnEmptyMultipartName: false);
+                throwOnEmptyMultipartIdentifier: false);
 
             if (string.IsNullOrEmpty(parsedSProc[3]))
             {
@@ -2808,7 +2808,7 @@ namespace Microsoft.Data.SqlClient
                             string[] parts = MultipartIdentifier.ParseMultipartIdentifier(
                                 parameter.TypeName,
                                 property: Strings.SQL_TDSParserTableName,
-                                ThrowOnEmptyMultipartName: false);
+                                throwOnEmptyMultipartIdentifier: false);
                             // @TODO: Combine this and inner if statement
                             if (parts?.Length == 4)
                             {
