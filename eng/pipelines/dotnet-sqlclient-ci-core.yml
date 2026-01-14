@@ -206,7 +206,7 @@ stages:
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
-            SupportsIntegratedSecurity: true
+            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
             UserManagedIdentityClientId: $(UserManagedIdentityClientId)
             FileStreamDirectory: $(FileStreamDirectory)
             LocalDbAppName: $(LocalDbAppName)
@@ -247,7 +247,7 @@ stages:
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
-            SupportsIntegratedSecurity: true
+            SupportsIntegratedSecurity: NOT_A_BOOL
             UserManagedIdentityClientId: $(UserManagedIdentityClientId)
             FileStreamDirectory: $(FileStreamDirectory)
             LocalDbAppName: $(LocalDbAppName)

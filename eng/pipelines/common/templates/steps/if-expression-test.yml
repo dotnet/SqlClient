@@ -1,0 +1,32 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.
+# The .NET Foundation licenses this file to you under the MIT license.
+# See the LICENSE file in the project root for more information.
+################################################################################
+
+parameters:
+
+  - name: string1
+    type: string
+    default: 'DEFAULT'
+
+  - name: string2
+    type: string
+    default: 'DEFAULT'
+
+  - name: bool1
+    type: boolean
+    default: false
+
+  - name: bool2
+    type: boolean
+    default: false
+
+steps:
+
+  - pwsh: |
+      Write-Host "String1: ${{ parameters.string1 }}"
+      Write-Host "String2: ${{ parameters.string2 }}"
+      Write-Host "Bool1: ${{ parameters.bool1 }}"
+      Write-Host "Bool2: ${{ parameters.bool2 }}"
+    displayName: 'Display Parameters'

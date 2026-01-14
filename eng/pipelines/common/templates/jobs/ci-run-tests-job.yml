@@ -146,6 +146,17 @@ jobs:
         buildConfiguration: ${{ parameters.buildConfiguration }}
 
   - ${{ if ne(parameters.configProperties, '{}') }}:
+    - template: ../steps/if-expression-test.yml@self
+      parameters:
+        ${{ if parameters.configProperties.TCPConnectionString }}:
+          string1: ${{ parameters.configProperties.TCPConnectionString }}
+        ${{ if ne(parameters.configProperties.TCPConnectionString, null) }}:
+          string2: ${{ parameters.configProperties.TCPConnectionString }}
+        ${{ if parameters.configProperties.SupportsIntegratedSecurity }}:
+          bool1: ${{ eq(parameters.configProperties.SupportsIntegratedSecurity, 'true') }}
+        ${{ if ne(parameters.configProperties.SupportsIntegratedSecurity, null) }}:
+          bool2: ${{ eq(parameters.configProperties.SupportsIntegratedSecurity, 'true') }}
+
     - template: ../steps/update-config-file-step.yml@self # update config.json file
       parameters:
         debug: ${{ parameters.debug }}
