@@ -2,12 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _WINDOWS
+
 using System;
 using System.Data;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Transactions;
-using Microsoft.Data.SqlClient.TestUtilities;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class DistributedTransactionTestWindows
     {
 
-#if NET
+        #if NET
         private static bool s_DelegatedTransactionCondition => DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsNotAzureServer() && DataTestUtility.IsNotX86Architecture;
 
         [ConditionalFact(nameof(s_DelegatedTransactionCondition), Timeout = 10000)]
@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Possible deadlock
             transaction.Commit();
         }
-#endif
+        #endif
 
         /** Test fails on SQL Managed Instance with error:
         *   Failure: Item not found in collection
@@ -56,9 +56,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(s_EnlistedTransactionPreservedWhilePooledCondition), Timeout = 10000)]
         public async Task Test_EnlistedTransactionPreservedWhilePooled()
         {
-#if NET
+            #if NET
             TransactionManager.ImplicitDistributedTransactions = true;
-#endif
+            #endif
+
             await RunTestSet(EnlistedTransactionPreservedWhilePooled);
         }
 
@@ -181,3 +182,4 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     }
 }
 
+#endif
