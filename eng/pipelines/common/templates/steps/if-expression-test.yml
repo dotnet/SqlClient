@@ -14,6 +14,14 @@ parameters:
     type: string
     default: 'DEFAULT'
 
+  - name: string3
+    type: string
+    default: 'DEFAULT'
+
+  - name: string4
+    type: string
+    default: 'DEFAULT'
+
   - name: bool1
     type: boolean
     default: false
@@ -22,11 +30,23 @@ parameters:
     type: boolean
     default: false
 
+  - name: bool3
+    type: boolean
+    default: false
+
+  - name: bool4
+    type: boolean
+    default: false
+
 steps:
 
   - pwsh: |
       Write-Host "String1: ${{ parameters.string1 }}"
       Write-Host "String2: ${{ parameters.string2 }}"
+      Write-Host "String3: ${{ parameters.string3 }}"
+      Write-Host "String4: ${{ parameters.string4 }}"
       Write-Host "Bool1: ${{ parameters.bool1 }}"
       Write-Host "Bool2: ${{ parameters.bool2 }}"
+      Write-Host "Bool3: ${{ parameters.bool3 }}"
+      Write-Host "Bool4: ${{ parameters.bool4 }}"
     displayName: 'Display Parameters'

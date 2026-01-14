@@ -150,11 +150,17 @@ jobs:
       parameters:
         ${{ if parameters.configProperties.TCPConnectionString }}:
           string1: ${{ parameters.configProperties.TCPConnectionString }}
-        ${{ if ne(parameters.configProperties.TCPConnectionString, null) }}:
+        ${{ if ne(parameters.configProperties.TCPConnectionString, 'null') }}:
           string2: ${{ parameters.configProperties.TCPConnectionString }}
+        ${{ if parameters.configProperties.DOES_NOT_EXIST }}:
+          string3: SHOULD_NOT_EXIST
+          bool3: true
+        ${{ if ne(parameters.configProperties.DOES_NOT_EXIST, 'null') }}:
+          string4: SHOULD_NOT_EXIST
+          bool4: true
         ${{ if parameters.configProperties.SupportsIntegratedSecurity }}:
           bool1: ${{ eq(parameters.configProperties.SupportsIntegratedSecurity, 'true') }}
-        ${{ if ne(parameters.configProperties.SupportsIntegratedSecurity, null) }}:
+        ${{ if ne(parameters.configProperties.SupportsIntegratedSecurity, 'null') }}:
           bool2: ${{ eq(parameters.configProperties.SupportsIntegratedSecurity, 'true') }}
 
     - template: ../steps/update-config-file-step.yml@self # update config.json file
