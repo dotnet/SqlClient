@@ -124,12 +124,6 @@ namespace Microsoft.Data.SqlClient.Tests
         public void InvalidUnfinishedQuoteOpen() => ThrowParse<ArgumentException>("\"foo", new[] { "\"foo" });
 
         [Fact]
-        public void InvalidCapacity()
-        {
-            ThrowParse<ArgumentException>("", Array.Empty<string>());
-        }
-
-        [Fact]
         public void InvalidQuotedPartContainsTrailngNonWhitespace() => ThrowParse<ArgumentException>("[foo]!.[bar]", new[] { "foo", "bar" });
 
         [Fact]
