@@ -80,6 +80,9 @@
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
     <ManualTests Include="**/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
     <ManualTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
+    <ManualTests Include="**/tools/TDS/TDS/TDS.csproj" />
+    <ManualTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
+    <ManualTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
     <ManualTests Include="**/CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
     <ManualTests Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
     <ManualTestsProj Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
