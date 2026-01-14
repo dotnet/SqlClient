@@ -11,7 +11,9 @@ namespace Microsoft.Data.Common
     {
         private const char IdentifierSeparator = '.';
         // The indexes of identifier start and end characters in these strings need to
-        // align 1-to-1. An identifier which starts with [ can only end with ].
+        // align 1-to-1. An identifier which starts with [ can only end with ]. As such,
+        // both of the below constants must be the same length.
+        // Separately, neither constant may contain the identifier separator.
         private const string IdentifierStartCharacters = "[\"";
         private const string IdentifierEndCharacters = "]\"";
 
@@ -60,9 +62,6 @@ namespace Microsoft.Data.Common
         internal static string[] ParseMultipartIdentifier(string name, string property, bool ThrowOnEmptyMultipartName, int limit = MaxParts)
         {
             Debug.Assert(limit >= 0 && limit <= MaxParts);
-            Debug.Assert(!ContainsChar(IdentifierStartCharacters, IdentifierSeparator));
-            Debug.Assert(!ContainsChar(IdentifierEndCharacters, IdentifierSeparator));
-            Debug.Assert(IdentifierStartCharacters.Length == IdentifierEndCharacters.Length);
 
             string[] parsedNames = new string[limit];   // return string array                     
             int stringCount = 0;                        // index of current string in the buffer
