@@ -1,272 +1,44 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <ProjectGuid>{45DB5F86-7AE3-45C6-870D-F9357B66BDB5}</ProjectGuid>
+    <!-- @TODO: Use full assembly name here -->
     <AssemblyName>ManualTests</AssemblyName>
-    <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
-    <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <CodeAnalysisRuleSet>Microsoft.Data.SqlClient.ManualTesting.Tests.ruleset</CodeAnalysisRuleSet>
-    <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx'">win</RuntimeIdentifier>
-    <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType.Contains('Package')) AND !$(Platform.Contains('AnyCPU'))">win-$(Platform)</RuntimeIdentifier>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
-    <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
+    <RootNamespace>Microsoft.Data.SqlClient.ManualTests</RootNamespace>
     <IsTestProject>true</IsTestProject>
-    <RootNamespace>Microsoft.Data.SqlClient.ManualTesting.Tests</RootNamespace>
   </PropertyGroup>
-  <ItemGroup Condition="'$(TestSet)' == '' or '$(TestSet)' == 'AE'">
-    <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
-    <Compile Include="AlwaysEncrypted\ExceptionsGenericError.cs" />
-    <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetsWindows)' == 'true' AND ('$(TestSet)' == '' OR '$(TestSet)' == 'AE')">
-    <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspProviderColumnMasterKey.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCspProvider.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == 'AE'">
-    <Compile Include="AlwaysEncrypted\AKVTests.cs" />
-    <Compile Include="AlwaysEncrypted\AKVUnitTests.cs" />
-    <Compile Include="AlwaysEncrypted\EnclaveAzureDatabaseTests.cs" />
-    <Compile Include="AlwaysEncrypted\ExceptionTestAKVStore.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AKVTestTable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AkvColumnMasterKey.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyAzureKeyVault.cs" />
-    <Compile Include="AlwaysEncrypted\ApiShould.cs" />
-    <Compile Include="AlwaysEncrypted\BulkCopyAE.cs" />
-    <Compile Include="AlwaysEncrypted\BulkCopyAEErrorMessage.cs" />
-    <Compile Include="AlwaysEncrypted\ColumnDecryptErrorTests.cs" />
-    <Compile Include="AlwaysEncrypted\End2EndSmokeTests.cs" />
-    <Compile Include="AlwaysEncrypted\SqlBulkCopyTruncation.cs" />
-    <Compile Include="AlwaysEncrypted\SqlNullValues.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\AzureKeyVaultKeyFixture.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\DatabaseHelper.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategy.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCertStoreProvider.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ApiTestTable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAETestTable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAEErrorMessageTestTable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyTruncationTables.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnDecryptErrorTestTable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DateOnlyTestTable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\SqlNullValuesTable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\SqlParameterPropertiesTable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DbObject.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\Table.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ICreatable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\IDroppable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnMasterKey.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnEncryptionKey.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspColumnMasterKey.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DummyKeyStoreProvider.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DummyProviderMasterKey.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtility.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0')) AND ('$(TestSet)' == '' OR '$(TestSet)' == 'AE')">
-    <Compile Include="AlwaysEncrypted\DateOnlyReadTests.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '1'">
-    <Compile Include="SQL\AsyncTest\AsyncTimeoutTest.cs" />
-    <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />
-    <Compile Include="SQL\AsyncTest\BeginExecReaderAsyncTest.cs" />
-    <Compile Include="SQL\AsyncTest\XmlReaderAsyncTest.cs" />
-    <Compile Include="SQL\AsyncTest\AsyncCancelledConnectionsTest.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '2'">
-    <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
-    <Compile Include="SQL\ConfigurableIpPreferenceTest\ConfigurableIpPreferenceTest.cs" />
-    <Compile Include="SQL\ConnectivityTests\AADConnectionTest.cs" />
-    <Compile Include="SQL\ConnectivityTests\ConnectionBehaviorTest.cs" />
-    <Compile Include="SQL\ConnectivityTests\ConnectivityTest.cs" />
-    <Compile Include="SQL\ConnectivityTests\TcpDefaultForAzureTest.cs" />
-    <Compile Include="SQL\DataBaseSchemaTest\ConnectionSchemaTest.cs" />
-    <Compile Include="SQL\DataClassificationTest\DataClassificationTest.cs" />
-    <Compile Include="SQL\DataReaderTest\DataReaderCancellationTest.cs" />
-    <Compile Include="SQL\DataReaderTest\DataReaderStreamsTest.cs" />
-    <Compile Include="SQL\DataReaderTest\DataReaderTest.cs" />
-    <Compile Include="SQL\DataStreamTest\DataStreamTest.cs" />
-    <Compile Include="SQL\DateTimeTest\DateTimeTest.cs" />
-    <Compile Include="SQL\DNSCachingTest\DNSCachingTest.cs" />
-    <Compile Include="SQL\ExceptionTest\ConnectionExceptionTest.cs" />
-    <Compile Include="SQL\ExceptionTest\ExceptionTest.cs" />
-    <Compile Include="SQL\RandomStressTest\Randomizer.cs" />
-    <Compile Include="SQL\RandomStressTest\RandomizerPool.cs" />
-    <Compile Include="SQL\RandomStressTest\SqlRandomColumnOptions.cs" />
-    <Compile Include="SQL\RandomStressTest\SqlRandomizer.cs" />
-    <Compile Include="SQL\RandomStressTest\SqlRandomTable.cs" />
-    <Compile Include="SQL\RandomStressTest\SqlRandomTableColumn.cs" />
-    <Compile Include="SQL\RandomStressTest\SqlRandomTypeInfo.cs" />
-    <Compile Include="SQL\RandomStressTest\SqlRandomTypeInfoCollection.cs" />
-    <Compile Include="SQL\RandomStressTest\SqlRandomTypesForSqlServer.cs" />
-    <Compile Include="SQL\RandomStressTest\RandomStressTest.cs" />
-    <Compile Include="SQL\RetryLogic\RetryLogicCounterTest.cs" />
-    <Compile Include="SQL\RetryLogic\RetryLogicConfigHelper.cs" />
-    <Compile Include="SQL\RetryLogic\RetryLogicTestHelper.cs" />
-    <Compile Include="SQL\RetryLogic\SqlCommandReliabilityTest.cs" />
-    <Compile Include="SQL\RetryLogic\SqlConnectionReliabilityTest.cs" />
-    <Compile Include="SQL\RetryLogic\SqlConfigurationManagerReliabilityTest.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\AdjustPrecScaleForBulkCopy.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\AzureDistributedTransaction.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\ErrorOnRowsMarkedAsDeleted.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\DestinationTableNameWithSpecialChar.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Bug84548.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Bug85007.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Bug903514.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Bug98182.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CheckConstraints.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\ColumnCollation.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopyAllFromReader.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopyAllFromReader1.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopyAllFromReaderAsync.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopyAllFromReaderCancelAsync.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopyAllFromReaderConnectionCloseAsync.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopyAllFromReaderConnectionCloseOnEventAsync.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopyMultipleReaders.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopySomeFromDatatable.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopySomeFromDatatableAsync.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopySomeFromReader.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopySomeFromRowArray.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopySomeFromRowArrayAsync.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopyVariants.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopyWithEvent.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopyWithEvent1.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\InvalidAccessFromEvent.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopyWithEventAsync.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\FireTrigger.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Helpers.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\HiddenTargetColumn.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\MissingTargetColumn.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\MissingTargetColumns.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\MissingTargetTable.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\SqlBulkCopyTest.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\SqlGraphTables.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\TestBulkCopyWithUTF8.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Transaction.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Transaction1.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Transaction2.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Transaction3.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\Transaction4.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\TransactionTestAsync.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\SpecialCharacterNames.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\KeepNulls.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\OrderHint.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\OrderHintAsync.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\OrderHintDuplicateColumn.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\OrderHintIdentityColumn.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\OrderHintMissingTargetColumn.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\OrderHintTransaction.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\TableLock.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\DataConversionErrorMessageTest.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopyWidenNullInexactNumerics.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\WriteToServerTest.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetsWindows)' == 'true' AND ('$(TestSet)' == '' OR '$(TestSet)' == '2')">
-    <Compile Include="SQL\SqlDSEnumeratorTest\SqlDataSourceEnumeratorTest.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '3'">
-    <Compile Include="DDBasics\DDAsyncTest\DDAsyncTest.cs" />
-    <Compile Include="DDBasics\DDDataTypesTest\DDDataTypesTest.cs" />
-    <Compile Include="DDBasics\DDMARSTest\DDMARSTest.cs" />
-    <Compile Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.cs" />
-    <Compile Include="ProviderAgnostic\ReaderTest\ReaderTest.cs" />
-    <Compile Include="TracingTests\EventSourceTest.cs" />
-    <Compile Include="TracingTests\XEventsTracingTest.cs" />
-    <Compile Include="SQL\AADFedAuthTokenRefreshTest\AADFedAuthTokenRefreshTest.cs" />
-    <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
-    <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.cs" />
-    <Compile Include="SQL\DataSourceParserTest\DataSourceParserTest.cs" />
-    <Compile Include="SQL\InstanceNameTest\InstanceNameTest.cs" />
-    <Compile Include="SQL\IntegratedAuthenticationTest\IntegratedAuthenticationTest.cs" />
-    <Compile Include="SQL\JsonTest\JsonBulkCopyTest.cs" />
-    <Compile Include="SQL\JsonTest\JsonStreamTest.cs" />
-    <Compile Include="SQL\JsonTest\JsonTest.cs" />
-    <Compile Include="SQL\KerberosTests\KerberosTest.cs" />
-    <Compile Include="SQL\KerberosTests\KerberosTicketManager\KerberosTicketManager.cs" />
-    <Compile Include="SQL\LocalDBTest\LocalDBTest.cs" />
-    <Compile Include="SQL\MARSSessionPoolingTest\MarsSessionPoolingTest.cs" />
-    <Compile Include="SQL\MARSTest\MARSTest.cs" />
-    <Compile Include="SQL\MirroringTest\ConnectionOnMirroringTest.cs" />
-    <Compile Include="SQL\ParallelTransactionsTest\ParallelTransactionsTest.cs" />
-    <Compile Include="SQL\SplitPacketTest\SplitPacketTest.cs" />
-    <Compile Include="SQL\SqlCommand\SqlCommandCompletedTest.cs" />
-    <Compile Include="SQL\SqlCommand\SqlCommandCancelTest.cs" />
-    <Compile Include="SQL\SqlCommand\SqlCommandExecuteScalarTest.cs" />
-    <Compile Include="SQL\SqlCommand\SqlCommandSetTest.cs" />
-    <Compile Include="SQL\SqlCredentialTest\SqlCredentialTest.cs" />
-    <Compile Include="SQL\SqlDependencyTest\SqlDependencyTest.cs" />
-    <Compile Include="SQL\SqlFileStreamTest\SqlFileStreamTest.cs" />
-    <Compile Include="SQL\SqlNamedPipesTest\SqlNamedPipesTest.cs" />
-    <Compile Include="SQL\SqlNotificationTest\SqlNotificationTest.cs" />
-    <Compile Include="SQL\SqlSchemaInfoTest\SqlSchemaInfoTest.cs" />
-    <Compile Include="SQL\SqlStatisticsTest\SqlStatisticsTest.cs" />
-    <Compile Include="SQL\TransactionTest\DistributedTransactionTest.Windows.cs" />
-    <Compile Include="SQL\TransactionTest\TransactionTest.cs" />
-    <Compile Include="SQL\TransactionTest\TransactionEnlistmentTest.cs" />
-    <Compile Include="SQL\UdtTest\SqlServerTypesTest.cs" />
-    <Compile Include="SQL\UdtTest\UdtBulkCopyTest.cs" />
-    <Compile Include="SQL\UdtTest\UdtDateTimeOffsetTest.cs" />
-    <Compile Include="SQL\UdtTest\UdtTest.cs" />
-    <Compile Include="SQL\UdtTest\UdtTest2.cs" />
-    <Compile Include="SQL\UdtTest\UdtTestHelpers.cs" />
-    <Compile Include="SQL\Utf8SupportTest\Utf8SupportTest.cs" />
-    <Compile Include="SQL\VectorTest\VectorTypeBackwardCompatibilityTests.cs" />
-    <Compile Include="SQL\VectorTest\NativeVectorFloat32Tests.cs" />
-    <Compile Include="SQL\VectorTest\VectorAPIValidationTest.cs" />
-    <Compile Include="SQL\WeakRefTest\WeakRefTest.cs" />
-    <Compile Include="SQL\WeakRefTestYukonSpecific\WeakRefTestYukonSpecific.cs" />
-    <Compile Include="SQL\ParameterTest\DateTimeVariantTest.cs" />
-    <Compile Include="SQL\ParameterTest\OutputParameter.cs" />
-    <Compile Include="SQL\ParameterTest\ParametersTest.cs" />
-    <Compile Include="SQL\ParameterTest\SqlAdapterUpdateBatch.cs" />
-    <Compile Include="SQL\ParameterTest\SqlVariantParam.cs" />
-    <Compile Include="SQL\ParameterTest\SteAttribute.cs" />
-    <Compile Include="SQL\ParameterTest\SteParam.cs" />
-    <Compile Include="SQL\ParameterTest\StePermutationSet.cs" />
-    <Compile Include="SQL\ParameterTest\SteTypeBoundaries.cs" />
-    <Compile Include="SQL\ParameterTest\StreamInputParam.cs" />
-    <Compile Include="SQL\ParameterTest\TvpTest.cs" />
-    <Content Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlParameterTest_DebugMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlParameterTest_DebugMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlParameterTest_DebugMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlParameterTest_ReleaseMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlParameterTest_ReleaseMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="DDBasics\DDDataTypesTest\data.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>data.xml</Link>
-    </Content>
-    <None Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl" />
-    <None Include="SQL\ParameterTest\SqlParameterTest_DebugMode_Azure.bsl" />
-    <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl" />
-    <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '3'">
-    <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolStressTest.cs" />
-    <Compile Include="TracingTests\MetricsTest.cs" />
-    <Compile Include="TracingTests\DiagnosticTest.cs" />
-    <Compile Include="TracingTests\FakeDiagnosticListenerObserver.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0')) AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
-    <Compile Include="SQL\Batch\BatchTests.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
-    <Reference Include="System.Transactions" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetGroup)' == 'netfx' AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
-    <Compile Include="SQL\ConnectionPoolTest\TransactionPoolTest.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="$(Configuration.Contains('Debug')) AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
-    <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.Debug.cs" />
-  </ItemGroup>
+
+  <!-- OS Constants ==================================================== -->
+  <PropertyGroup>
+    <!-- There are some test files in this project that only apply to a certain OS. However, -->
+    <!-- because it isn't possible to run tests for the wrong OS (eg, built for Unix, run on -->
+    <!-- Windows), this value shouldn't be modified except for aiding in development. As     -->
+    <!-- such, the preprocessor constants are set directly from $(OS).                       -->
+    <TargetOs>$(OS)</TargetOs>
+    
+    <!-- Uncomment one of the following lines to override the OS you are developing for.     -->
+    <!-- This is useful if your IDE doesn't show syntax highlighting for code that is not    -->
+    <!-- included via an #if.                                                                -->
+    <!--<TargetOs>Unix</TargetOs>-->
+    <!--<TargetOs>Windows_NT</TargetOs>-->
+    
+    <NormalizedTargetOs>$(TargetOs.ToLower())</NormalizedTargetOs>
+  </PropertyGroup>
+  <Target Name="ValidateOs" BeforeTargets="Build">
+    <Error Condition="'$(TargetOS) != '$(OS)'"
+           Text="Cross-OS compilation of manual tests is not supported. Did you leave a development flag on?" />
+  </Target>
+  
+  <!-- Test Set ======================================================== -->
+  <PropertyGroup>
+    <!-- This is a measure to allow parallelizing this test project across multiple jobs. By -->
+    <!-- default, all tests will run, but if $(TestSet) is specified, a subset of files (see -->
+    <!-- below) will be compiled.                                                            -->
+    <!-- Allowed values: 1, 2, 3, AE, or any subset of these (eg, 123, AE23)                 -->
+    <TestSet Condition="'$(TestSet)' == ''">123AE</TestSet>
+    <NormalizedTestSet>$(TestSet.ToLower())</NormalizedTestSet>
+  </PropertyGroup>
+  
+  <!-- Links to project files ========================================== -->
+  <!-- Items to include in all test sets -->
   <ItemGroup>
     <Compile Include="DataCommon\AADUtility.cs" />
     <Compile Include="DataCommon\AssemblyResourceManager.cs" />
@@ -294,6 +66,290 @@
     <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTestWithTdsServer.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
     <Compile Include="XUnitAssemblyAttributes.cs" />
+  </ItemGroup>
+  
+  <!-- Items to include in test set 1 -->
+  <ItemGroup Condition="$(NormalizedTestSet.Contains('1'))">
+    <Compile Include="SQL\AsyncTest\AsyncCancelledConnectionsTest.cs" />
+    <Compile Include="SQL\AsyncTest\AsyncTimeoutTest.cs" />
+    <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />
+    <Compile Include="SQL\AsyncTest\BeginExecReaderAsyncTest.cs" />
+    <Compile Include="SQL\AsyncTest\XmlReaderAsyncTest.cs" />
+  </ItemGroup>
+  
+  <!-- Items to include in test set 2 -->
+  <ItemGroup Condition="$(NormalizedTestSet.Contains('2'))">
+    <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
+    <Compile Include="SQL\ConfigurableIpPreferenceTest\ConfigurableIpPreferenceTest.cs" />
+    <Compile Include="SQL\ConnectivityTests\AADConnectionTest.cs" />
+    <Compile Include="SQL\ConnectivityTests\ConnectionBehaviorTest.cs" />
+    <Compile Include="SQL\ConnectivityTests\ConnectivityTest.cs" />
+    <Compile Include="SQL\ConnectivityTests\TcpDefaultForAzureTest.cs" />
+    <Compile Include="SQL\DataBaseSchemaTest\ConnectionSchemaTest.cs" />
+    <Compile Include="SQL\DataClassificationTest\DataClassificationTest.cs" />
+    <Compile Include="SQL\DataReaderTest\DataReaderCancellationTest.cs" />
+    <Compile Include="SQL\DataReaderTest\DataReaderStreamsTest.cs" />
+    <Compile Include="SQL\DataReaderTest\DataReaderTest.cs" />
+    <Compile Include="SQL\DataStreamTest\DataStreamTest.cs" />
+    <Compile Include="SQL\DateTimeTest\DateTimeTest.cs" />
+    <Compile Include="SQL\DNSCachingTest\DNSCachingTest.cs" />
+    <Compile Include="SQL\ExceptionTest\ConnectionExceptionTest.cs" />
+    <Compile Include="SQL\ExceptionTest\ExceptionTest.cs" />
+    <Compile Include="SQL\RandomStressTest\Randomizer.cs" />
+    <Compile Include="SQL\RandomStressTest\RandomizerPool.cs" />
+    <Compile Include="SQL\RandomStressTest\RandomStressTest.cs" />
+    <Compile Include="SQL\RandomStressTest\SqlRandomColumnOptions.cs" />
+    <Compile Include="SQL\RandomStressTest\SqlRandomizer.cs" />
+    <Compile Include="SQL\RandomStressTest\SqlRandomTable.cs" />
+    <Compile Include="SQL\RandomStressTest\SqlRandomTableColumn.cs" />
+    <Compile Include="SQL\RandomStressTest\SqlRandomTypeInfo.cs" />
+    <Compile Include="SQL\RandomStressTest\SqlRandomTypeInfoCollection.cs" />
+    <Compile Include="SQL\RandomStressTest\SqlRandomTypesForSqlServer.cs" />
+    <Compile Include="SQL\RetryLogic\RetryLogicConfigHelper.cs" />
+    <Compile Include="SQL\RetryLogic\RetryLogicCounterTest.cs" />
+    <Compile Include="SQL\RetryLogic\RetryLogicTestHelper.cs" />
+    <Compile Include="SQL\RetryLogic\SqlCommandReliabilityTest.cs" />
+    <Compile Include="SQL\RetryLogic\SqlConfigurationManagerReliabilityTest.cs" />
+    <Compile Include="SQL\RetryLogic\SqlConnectionReliabilityTest.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\AdjustPrecScaleForBulkCopy.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\AzureDistributedTransaction.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\Bug84548.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\Bug85007.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\Bug903514.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\Bug98182.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CheckConstraints.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopyWidenNullInexactNumerics.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\DataConversionErrorMessageTest.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\DestinationTableNameWithSpecialChar.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\ErrorOnRowsMarkedAsDeleted.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\ColumnCollation.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopyAllFromReader.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopyAllFromReader1.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopyAllFromReaderAsync.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopyAllFromReaderCancelAsync.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopyAllFromReaderConnectionCloseAsync.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopyAllFromReaderConnectionCloseOnEventAsync.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopyMultipleReaders.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopySomeFromDatatable.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopySomeFromDatatableAsync.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopySomeFromReader.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopySomeFromRowArray.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopySomeFromRowArrayAsync.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopyVariants.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopyWithEvent.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopyWithEvent1.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopyWithEventAsync.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\FireTrigger.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\Helpers.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\HiddenTargetColumn.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\InvalidAccessFromEvent.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\KeepNulls.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\MissingTargetColumn.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\MissingTargetColumns.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\MissingTargetTable.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHint.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHintAsync.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHintDuplicateColumn.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHintIdentityColumn.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHintMissingTargetColumn.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHintTransaction.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\SpecialCharacterNames.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\SqlBulkCopyTest.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\SqlGraphTables.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\TableLock.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\TestBulkCopyWithUTF8.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\Transaction.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\Transaction1.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\Transaction2.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\Transaction3.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\Transaction4.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\TransactionTestAsync.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\WriteToServerTest.cs" />
+  </ItemGroup>
+  
+  <!-- Items to include in test set 3 -->
+  <ItemGroup Condition="$(NormalizedTestSet.Contains('3'))">
+    <Compile Include="DDBasics\DDAsyncTest\DDAsyncTest.cs" />
+    <Compile Include="DDBasics\DDDataTypesTest\DDDataTypesTest.cs" />
+    <Compile Include="DDBasics\DDMARSTest\DDMARSTest.cs" />
+    <Compile Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.cs" />
+    <Compile Include="ProviderAgnostic\ReaderTest\ReaderTest.cs" />
+    <Compile Include="SQL\AADFedAuthTokenRefreshTest\AADFedAuthTokenRefreshTest.cs" />
+    <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolStressTest.cs" />
+    <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
+    <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.cs" />
+    <Compile Include="SQL\DataSourceParserTest\DataSourceParserTest.cs" />
+    <Compile Include="SQL\InstanceNameTest\InstanceNameTest.cs" />
+    <Compile Include="SQL\IntegratedAuthenticationTest\IntegratedAuthenticationTest.cs" />
+    <Compile Include="SQL\JsonTest\JsonBulkCopyTest.cs" />
+    <Compile Include="SQL\JsonTest\JsonStreamTest.cs" />
+    <Compile Include="SQL\JsonTest\JsonTest.cs" />
+    <Compile Include="SQL\KerberosTests\KerberosTest.cs" />
+    <Compile Include="SQL\KerberosTests\KerberosTicketManager\KerberosTicketManager.cs" />
+    <Compile Include="SQL\LocalDBTest\LocalDBTest.cs" />
+    <Compile Include="SQL\MARSSessionPoolingTest\MarsSessionPoolingTest.cs" />
+    <Compile Include="SQL\MARSTest\MARSTest.cs" />
+    <Compile Include="SQL\MirroringTest\ConnectionOnMirroringTest.cs" />
+    <Compile Include="SQL\ParallelTransactionsTest\ParallelTransactionsTest.cs" />
+    <Compile Include="SQL\ParameterTest\DateTimeVariantTest.cs" />
+    <Compile Include="SQL\ParameterTest\OutputParameter.cs" />
+    <Compile Include="SQL\ParameterTest\ParametersTest.cs" />
+    <Compile Include="SQL\ParameterTest\SqlAdapterUpdateBatch.cs" />
+    <Compile Include="SQL\ParameterTest\SqlVariantParam.cs" />
+    <Compile Include="SQL\ParameterTest\SteAttribute.cs" />
+    <Compile Include="SQL\ParameterTest\SteParam.cs" />
+    <Compile Include="SQL\ParameterTest\StePermutationSet.cs" />
+    <Compile Include="SQL\ParameterTest\SteTypeBoundaries.cs" />
+    <Compile Include="SQL\ParameterTest\StreamInputParam.cs" />
+    <Compile Include="SQL\ParameterTest\TvpTest.cs" />
+    <Compile Include="SQL\SplitPacketTest\SplitPacketTest.cs" />
+    <Compile Include="SQL\SqlCommand\SqlCommandCancelTest.cs" />
+    <Compile Include="SQL\SqlCommand\SqlCommandCompletedTest.cs" />
+    <Compile Include="SQL\SqlCommand\SqlCommandExecuteScalarTest.cs" />
+    <Compile Include="SQL\SqlCommand\SqlCommandSetTest.cs" />
+    <Compile Include="SQL\SqlCredentialTest\SqlCredentialTest.cs" />
+    <Compile Include="SQL\SqlDependencyTest\SqlDependencyTest.cs" />
+    <Compile Include="SQL\SqlFileStreamTest\SqlFileStreamTest.cs" />
+    <Compile Include="SQL\SqlNamedPipesTest\SqlNamedPipesTest.cs" />
+    <Compile Include="SQL\SqlNotificationTest\SqlNotificationTest.cs" />
+    <Compile Include="SQL\SqlSchemaInfoTest\SqlSchemaInfoTest.cs" />
+    <Compile Include="SQL\SqlStatisticsTest\SqlStatisticsTest.cs" />
+    <Compile Include="SQL\TransactionTest\TransactionEnlistmentTest.cs" />
+    <Compile Include="SQL\TransactionTest\TransactionTest.cs" />
+    <Compile Include="SQL\UdtTest\SqlServerTypesTest.cs" />
+    <Compile Include="SQL\UdtTest\UdtBulkCopyTest.cs" />
+    <Compile Include="SQL\UdtTest\UdtDateTimeOffsetTest.cs" />
+    <Compile Include="SQL\UdtTest\UdtTest.cs" />
+    <Compile Include="SQL\UdtTest\UdtTest2.cs" />
+    <Compile Include="SQL\UdtTest\UdtTestHelpers.cs" />
+    <Compile Include="SQL\Utf8SupportTest\Utf8SupportTest.cs" />
+    <Compile Include="SQL\VectorTest\NativeVectorFloat32Tests.cs" />
+    <Compile Include="SQL\VectorTest\VectorAPIValidationTest.cs" />
+    <Compile Include="SQL\VectorTest\VectorTypeBackwardCompatibilityTests.cs" />
+    <Compile Include="SQL\WeakRefTest\WeakRefTest.cs" />
+    <Compile Include="SQL\WeakRefTestYukonSpecific\WeakRefTestYukonSpecific.cs" />
+    <Compile Include="TracingTests\DiagnosticTest.cs" />
+    <Compile Include="TracingTests\EventSourceTest.cs" />
+    <Compile Include="TracingTests\FakeDiagnosticListenerObserver.cs" />
+    <Compile Include="TracingTests\MetricsTest.cs" />
+    <Compile Include="TracingTests\XEventsTracingTest.cs" />
+  </ItemGroup>
+  
+  <!-- Items to include in AE test set -->
+  <ItemGroup Condition="$(NormalizedTestSet.Contains('ae'))">
+    <Compile Include="AlwaysEncrypted\AKVTests.cs" />
+    <Compile Include="AlwaysEncrypted\AKVUnitTests.cs" />
+    <Compile Include="AlwaysEncrypted\ApiShould.cs" />
+    <Compile Include="AlwaysEncrypted\BulkCopyAE.cs" />
+    <Compile Include="AlwaysEncrypted\BulkCopyAEErrorMessage.cs" />
+    <Compile Include="AlwaysEncrypted\ColumnDecryptErrorTests.cs" />
+    <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
+    <Compile Include="AlwaysEncrypted\EnclaveAzureDatabaseTests.cs" />
+    <Compile Include="AlwaysEncrypted\End2EndSmokeTests.cs" />
+    <Compile Include="AlwaysEncrypted\ExceptionsGenericError.cs" />
+    <Compile Include="AlwaysEncrypted\ExceptionTestAKVStore.cs" />
+    <Compile Include="AlwaysEncrypted\SqlBulkCopyTruncation.cs" />
+    <Compile Include="AlwaysEncrypted\SqlNullValues.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\AzureKeyVaultKeyFixture.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\DatabaseHelper.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AkvColumnMasterKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AKVTestTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ApiTestTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAEErrorMessageTestTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAETestTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyTruncationTables.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtility.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnDecryptErrorTestTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnEncryptionKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnMasterKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspColumnMasterKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DateOnlyTestTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DbObject.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DummyKeyStoreProvider.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DummyProviderMasterKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ICreatable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\IDroppable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\SqlNullValuesTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\SqlParameterPropertiesTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\Table.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategy.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyAzureKeyVault.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCertStoreProvider.cs" />
+    <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
+  </ItemGroup>
+  
+  <PropertyGroup>
+    <ProjectGuid>{45DB5F86-7AE3-45C6-870D-F9357B66BDB5}</ProjectGuid>
+    <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
+    <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <CodeAnalysisRuleSet>Microsoft.Data.SqlClient.ManualTesting.Tests.ruleset</CodeAnalysisRuleSet>
+    <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx'">win</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType.Contains('Package')) AND !$(Platform.Contains('AnyCPU'))">win-$(Platform)</RuntimeIdentifier>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetsWindows)' == 'true' AND ('$(TestSet)' == '' OR '$(TestSet)' == 'AE')">
+    <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspProviderColumnMasterKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCspProvider.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0')) AND ('$(TestSet)' == '' OR '$(TestSet)' == 'AE')">
+    <Compile Include="AlwaysEncrypted\DateOnlyReadTests.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetsWindows)' == 'true' AND ('$(TestSet)' == '' OR '$(TestSet)' == '2')">
+    <Compile Include="SQL\SqlDSEnumeratorTest\SqlDataSourceEnumeratorTest.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '3'">
+
+    
+   
+    
+    
+    
+    
+    <Compile Include="SQL\TransactionTest\DistributedTransactionTest.Windows.cs" />
+    
+    
+    <Content Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SqlParameterTest_DebugMode.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\SqlParameterTest_DebugMode_Azure.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SqlParameterTest_DebugMode_Azure.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SqlParameterTest_ReleaseMode.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SqlParameterTest_ReleaseMode_Azure.bsl</Link>
+    </Content>
+    <Content Include="DDBasics\DDDataTypesTest\data.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>data.xml</Link>
+    </Content>
+    <None Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl" />
+    <None Include="SQL\ParameterTest\SqlParameterTest_DebugMode_Azure.bsl" />
+    <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl" />
+    <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl" />
+  </ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0')) AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
+    <Compile Include="SQL\Batch\BatchTests.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetGroup)' == 'netfx' AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
+    <Compile Include="SQL\ConnectionPoolTest\TransactionPoolTest.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="$(Configuration.Contains('Debug')) AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
+    <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.Debug.cs" />
+  </ItemGroup>
+  
+
+  <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
+    <Reference Include="System.Transactions" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(TestsPath)Common\Common.csproj">
