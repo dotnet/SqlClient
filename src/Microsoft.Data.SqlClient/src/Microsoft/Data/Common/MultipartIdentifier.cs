@@ -5,6 +5,8 @@
 using System.Diagnostics;
 using System.Text;
 
+#nullable enable
+
 namespace Microsoft.Data.Common
 {
     internal class MultipartIdentifier
@@ -33,7 +35,7 @@ namespace Microsoft.Data.Common
             MPI_RightQuote,
         }
 
-        private static void IncrementStringCount(string identifier, string[] ary, ref int position, string property)
+        private static void IncrementStringCount(string identifier, string?[] ary, ref int position, string property)
         {
             ++position;
             int limit = ary.Length;
@@ -59,16 +61,16 @@ namespace Microsoft.Data.Common
         /// <param name="throwOnEmptyMultipartIdentifier">If <c>true</c>, throw <see cref="ADP.InvalidMultipartName"/> if the multipart identifier is whitespace.</param>
         /// <param name="limit">Number of parts to parse out. Defaults to four (to allow for an identifier formatted as [server].[database].[schema].[object].)</param>
         /// <returns>An array of <paramref name="limit"/> strings containing the various parts in the identifier.</returns>
-        internal static string[] ParseMultipartIdentifier(string identifier, string property, bool throwOnEmptyMultipartIdentifier, int limit = MaxParts)
+        internal static string?[] ParseMultipartIdentifier(string identifier, string property, bool throwOnEmptyMultipartIdentifier, int limit = MaxParts)
         {
             Debug.Assert(limit >= 0 && limit <= MaxParts);
 
-            string[] parts = new string[limit];   // return string array                     
+            string?[] parts = new string?[limit];   // return string array                     
             int stringCount = 0;                        // index of current string in the buffer
             MPIState state = MPIState.MPI_Value;        // Initialize the starting state
 
             StringBuilder sb = new StringBuilder(identifier.Length); // String buffer to hold the string being currently built, init the string builder so it will never be resized
-            StringBuilder whitespaceSB = null;                       // String buffer to hold whitespace used when parsing nonquoted strings  'a b .  c d' = 'a b' and 'c d'
+            StringBuilder? whitespaceSB = null;                       // String buffer to hold whitespace used when parsing nonquoted strings  'a b .  c d' = 'a b' and 'c d'
             char rightQuoteChar = ' ';                               // Right quote character to use given the left quote character found.
             for (int index = 0; index < identifier.Length; ++index)
             {
@@ -133,10 +135,8 @@ namespace Microsoft.Data.Common
                             {
                                 // If it is whitespace, set the currently parsed string
                                 parts[stringCount] = sb.ToString();
-                                if (whitespaceSB == null)
-                                {
-                                    whitespaceSB = new StringBuilder();
-                                }
+
+                                whitespaceSB ??= new StringBuilder();
                                 // Start to record the whitespace. If we are parsing an identifier like "foo bar" we should return "foo bar"
                                 whitespaceSB.Length = 0;
                                 whitespaceSB.Append(testchar);
@@ -166,6 +166,7 @@ namespace Microsoft.Data.Common
                             }
                             else
                             {
+                                whitespaceSB ??= new StringBuilder();
                                 whitespaceSB.Append(testchar);
                             }
                             break;
