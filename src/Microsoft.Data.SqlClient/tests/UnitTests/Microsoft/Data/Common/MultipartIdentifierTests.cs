@@ -3,10 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using Microsoft.Data.Common;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.Tests
+namespace Microsoft.Data.Common.UnitTests
 {
     public class MultipartIdentifierTests
     {
@@ -157,7 +156,7 @@ namespace Microsoft.Data.SqlClient.Tests
         public void InvalidTooManyPartsSeparatorAfterPart() => ThrowParse("a.b.c", 1);
 
 
-        private static void RunParse(string name, string[] expected, int maxCount = 0)
+        private static void RunParse(string name, string?[] expected, int maxCount = 0)
         {
             if (maxCount == 0)
             {
@@ -170,18 +169,18 @@ namespace Microsoft.Data.SqlClient.Tests
                 }
             }
 
-            string[] originalParts = MultipartIdentifier.ParseMultipartIdentifier(name, maxCount, "", true);
+            string?[] originalParts = MultipartIdentifier.ParseMultipartIdentifier(name, maxCount, "", true);
 
             for (int index = 0; index < expected.Length; index++)
             {
-                string expectedPart = expected[index];
-                string originalPart = originalParts[index];
+                string? expectedPart = expected[index];
+                string? originalPart = originalParts[index];
 
                 Assert.Equal(expectedPart, originalPart);
             }
         }
 
-        private static void ThrowParse<TException>(string name, string[] expected)
+        private static void ThrowParse<TException>(string name, string?[] expected)
             where TException : Exception
         {
             int maxCount = 0;
@@ -213,27 +212,5 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.NotNull(originalException);
         }
 
-    }
-}
-
-namespace Microsoft.Data.Common
-{
-    // this is needed for the inclusion of MultipartIdentifier class
-    internal class ADP
-    {
-        internal static ArgumentException InvalidMultipartName(string property, string name)
-        {
-            return new ArgumentException();
-        }
-
-        internal static ArgumentException InvalidMultipartNameIncorrectUsageOfQuotes(string property, string name)
-        {
-            return new ArgumentException();
-        }
-
-        internal static ArgumentException InvalidMultipartNameToManyParts(string property, string name, int limit)
-        {
-            return new ArgumentException();
-        }
     }
 }

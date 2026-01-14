@@ -28,7 +28,6 @@
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
     <Compile Include="DataCommon\TestUtility.cs" />
     <Compile Include="LocalizationTest.cs" />
-    <Compile Include="MultipartIdentifierTests.cs" />
     <Compile Include="MultiplexerTests.cs" />
     <Compile Include="SqlAuthenticationProviderTest.cs" />
     <Compile Include="SqlClientLoggerTest.cs" />
@@ -64,7 +63,6 @@
     <Compile Include="SerializeSqlTypesTest.cs" />
     <Compile Include="TdsParserStateObject.TestHarness.cs" />
     <Compile Include="SqlHelperTest.cs" />
-    <Compile Include="..\..\src\Microsoft\Data\Common\MultipartIdentifier.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserStateObject.Multiplexer.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Packet.cs" />
   </ItemGroup>
