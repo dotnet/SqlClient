@@ -169,7 +169,7 @@ namespace Microsoft.Data.Common.UnitTests
                 }
             }
 
-            string?[] originalParts = MultipartIdentifier.ParseMultipartIdentifier(name, maxCount, "", true);
+            string?[] originalParts = MultipartIdentifier.ParseMultipartIdentifier(name, "", true, maxCount);
 
             for (int index = 0; index < expected.Length; index++)
             {
@@ -193,7 +193,7 @@ namespace Microsoft.Data.Common.UnitTests
             }
 
             Exception originalException = Assert.Throws<TException>(() =>
-              MultipartIdentifier.ParseMultipartIdentifier(name, maxCount, "", true)
+              MultipartIdentifier.ParseMultipartIdentifier(name, "", true, maxCount)
             );
 
             Assert.NotNull(originalException);
@@ -206,7 +206,7 @@ namespace Microsoft.Data.Common.UnitTests
             Exception originalException = Assert.Throws<ArgumentException>(
                 () =>
                 {
-                    MultipartIdentifier.ParseMultipartIdentifier(name, expectedLength, "test", true);
+                    MultipartIdentifier.ParseMultipartIdentifier(name, "test", true, expectedLength);
                 }
             );
             Assert.NotNull(originalException);

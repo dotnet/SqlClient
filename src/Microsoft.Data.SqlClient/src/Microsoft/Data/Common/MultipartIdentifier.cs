@@ -21,11 +21,6 @@ namespace Microsoft.Data.Common
         internal const int SchemaIndex = 2;
         internal const int TableIndex = 3;
 
-        internal static string[] ParseMultipartIdentifier(string name, string property, bool ThrowOnEmptyMultipartName)
-        {
-            return ParseMultipartIdentifier(name, MaxParts, property, ThrowOnEmptyMultipartName);
-        }
-
         private enum MPIState
         {
             MPI_Value,
@@ -58,11 +53,11 @@ namespace Microsoft.Data.Common
         /// Core function for parsing the multipart identifier string.
         /// </summary>
         /// <param name="name">String to parse.</param>
-        /// <param name="limit">Number of names to parse out.</param>
         /// <param name="property">Name of the property containing the multipart identifier.</param>
         /// <param name="ThrowOnEmptyMultipartName">If <c>true</c>, throw <see cref="ADP.InvalidMultipartName"/> if the name is whitespace.</param>
+        /// <param name="limit">Number of names to parse out. Defaults to four (to allow for a name formatted as [server].[database].[schema].[object].)</param>
         /// <returns>An array of <paramref name="limit"/> strings containing the various parts in the identifier.</returns>
-        internal static string[] ParseMultipartIdentifier(string name, int limit, string property, bool ThrowOnEmptyMultipartName)
+        internal static string[] ParseMultipartIdentifier(string name, string property, bool ThrowOnEmptyMultipartName, int limit = MaxParts)
         {
             Debug.Assert(limit >= 0 && limit <= MaxParts);
             Debug.Assert(!ContainsChar(IdentifierStartCharacters, IdentifierSeparator));
