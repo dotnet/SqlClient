@@ -7,6 +7,69 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Stable Release 6.1.4] - 2026-01-15
+
+This update brings the following changes over the previous stable release:
+
+### Fixed
+
+- Fixed NullReferenceException issue with `SqlDataAdapter` when processing batch scenarios where certain SQL RPC calls may not include system parameters
+  ([#3877](https://github.com/dotnet/SqlClient/pull/3877))
+
+- Fixed connection pooling issue where extra connection deactivation was causing active connection counts to go negative
+  ([#3776](https://github.com/dotnet/SqlClient/pull/3776))
+
+### Added
+
+#### Application Context Switch for MultiSubnetFailover
+
+*What Changed:*
+
+- Added new application context switch `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` to set `MultiSubnetFailover=true` by default in connection string
+  ([#3851](https://github.com/dotnet/SqlClient/pull/3851))
+
+*Who Benefits:*
+
+- Applications that need MultiSubnetFailover enabled globally without modifying connection strings
+- Applications deployed in multi-subnet environments that require automatic failover capabilities
+
+*Impact:*
+
+- Applications can now enable MultiSubnetFailover globally using one of the following methods:
+
+```c#
+// In application code
+AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault", true);
+```
+
+```json
+// In runtimeconfig.json
+{
+  "configProperties": {
+    "Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault": true
+  }
+}
+```
+
+```xml
+<!-- In App.Config -->
+<runtime>
+  <AppContextSwitchOverrides value="Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault=true" />
+</runtime>
+```
+
+### Changed
+
+#### Dependency Updates
+
+- Updated dependencies to avoid deprecation warnings and security vulnerabilities. Major version upgrades include Microsoft.IdentityModel.Abstractions (8.14.0) and System.Diagnostics.DiagnosticSource updates across target frameworks
+  ([#3843](https://github.com/dotnet/SqlClient/pull/3843))
+
+#### Performance Optimization for SqlStatistics
+
+- Optimized `SqlStatistics` execution timing by using `Environment.TickCount` instead of more expensive timing mechanisms
+  ([#3830](https://github.com/dotnet/SqlClient/pull/3830))
+
 ## [Preview Release 7.0.0-preview3.25342.7] - 2025-12-08
 
 This update brings the following changes over the previous preview release:
