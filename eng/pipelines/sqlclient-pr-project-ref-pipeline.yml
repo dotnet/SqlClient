@@ -71,11 +71,6 @@ parameters:
     type: object
     default: [net462, net8.0, net9.0]
 
-  - name: uploadCodeCov
-    displayName: 'Upload Code Coverage to CodeCov'
-    type: boolean
-    default: true
-
   - name: debug
     displayName: Enable debug output
     type: boolean
@@ -135,7 +130,6 @@ extends:
     buildPlatforms: ${{ parameters.buildPlatforms }}
     buildType: Project
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
-    uploadCodeCov: ${{ parameters.uploadCodeCov }}
     debug: ${{ parameters.debug }}
     enableStressTests: ${{ parameters.enableStressTests }}
     targetFrameworks: ${{ parameters.targetFrameworks }}
