@@ -68,11 +68,6 @@ parameters:
   type: object
   default: [net462, net8.0, net9.0, net10.0]
 
-- name: uploadCodeCov
-  displayName: 'Upload Code Coverage to CodeCov'
-  type: boolean
-  default: true
-
 - name: buildType
   displayName: 'Build Type'
   default: Project
@@ -176,14 +171,25 @@ stages:
             image: ADO-MMS22-CodeCov
             pool: ${{ parameters.defaultPoolName }}
             targetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
-            # This is a Pipeline Variable defined in the Azure DevOps UI.  It
-            # must be defined with a true/false value for all pipelines that
-            # specify a build type of 'Project'.
+            # We only want to upload coverage results to CodeCov from certain
+            # pipelines.  We use the pipeline name (Build.DefinitionName) to
+            # choose.  This is a predefined variable that is available at
+            # template expansion time, so we can use it to supply a true boolean
+            # value to the upload parameter.
             #
-            # You can find Pipeline Variables by visiting the main page of the
-            # pipeline and choosing Edit -> Variables.
+            # https://learn.microsoft.com/en-us/azure/devops/pipelines/build/variables?view=azure-devops&tabs=yaml#build-variables-devops-services
             #
-            upload: ${{ parameters.uploadCodeCov }}
+            # We're choosing to upload from these pipelines only:
+            #
+            # - PR-SqlClient-Project
+            # - CI-SqlClient
+            #
+            # Other pipelines that share this template and use a Project
+            # buildType don't add much, if any, value to the coverage reports.
+            # They have not been configured with suitable CodeCov credentials to
+            # perform the upload.
+            #
+            upload: ${{ or(eq(variables['Build.DefinitionName'], 'PR-SqlClient-Project'), eq(variables['Build.DefinitionName'], 'CI-SqlClient')) }}
 
 # test stages configurations
   # self hosted SQL Server on Windows
