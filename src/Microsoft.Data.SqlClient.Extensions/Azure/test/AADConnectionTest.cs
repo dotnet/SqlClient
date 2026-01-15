@@ -194,6 +194,19 @@ public class AADConnectionTest
         ConnectAndDisconnect(connStr);
     }
 
+    // This test works on main in the existing jobs (like Win22_Sql22), but
+    // fails in the Azure project tests on a similar agent/image:
+    //
+    //   Failed Microsoft.Data.SqlClient.Extensions.Azure.Test.AADConnectionTest.ADIntegratedUsingSSPI [59 ms]
+    //   Error Message:
+    //     Microsoft.Data.SqlClient.SqlException : Failed to authenticate the user NT Authority\Anonymous Logon in Active Directory (Authentication=ActiveDirectoryIntegrated).
+    //   Error code 0xget_user_name_failed
+    //   Failed to acquire access token for ActiveDirectoryIntegrated: Failed to get user name.
+    //
+    // ActiveIssue tests can be filtered out of test runs on the dotnet CLI
+    // using the filter "category != failing".
+    //
+    [ActiveIssue("https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/40107")]
     [ConditionalFact(
         typeof(Config),
         nameof(Config.SupportsIntegratedSecurity),

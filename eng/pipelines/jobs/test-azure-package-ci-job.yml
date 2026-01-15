@@ -144,11 +144,20 @@ jobs:
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
-      # dotnet CLI arguments for build/test/pack commands
+      # dotnet CLI arguments for build/test/pack commands.
       - name: buildArguments
         value: >-
           $(commonArguments)
           --configuration ${{ parameters.buildConfiguration }}
+
+      # dotnet CLI arguments for test commands.
+      #
+      # Filter out tests annotated with the ActiveIssue attribute, which for
+      # some reason uses the category 'failing' rather than 'ActiveIssue'.
+      #
+      - name: testArguments
+        value: >-
+          --filter "category != failing"
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public
@@ -316,7 +325,7 @@ jobs:
             command: custom
             custom: test
             projects: $(project)
-            arguments: $(buildArguments) --no-build -f ${{ runtime }}
+            arguments: $(buildArguments) $(testArguments) --no-build -f ${{ runtime }}
 
       # Run the tests for each .NET Framework runtime.
       - ${{ each runtime in parameters.netFrameworkRuntimes }}:
@@ -333,4 +342,4 @@ jobs:
             command: custom
             custom: test
             projects: $(project)
-            arguments: $(buildArguments) --no-build -f ${{ runtime }}
+            arguments: $(buildArguments) $(testArguments) --no-build -f ${{ runtime }}
