@@ -171,7 +171,7 @@ stages:
                 # Override the template's default step condition.  We always
                 # want this step to run.
                 condition: true
-                # Use the Azuse DevOps Library variable "password" for the SA
+                # Use the Azure DevOps Library variable "password" for the SA
                 # password.
                 password: $(password)
           vmImage: ADO-UB22-SQL22
@@ -269,10 +269,10 @@ stages:
           dependsOn:
             # We depend on all of the test jobs to ensure the tests pass before
             # producing the NuGet package.
-            - test_azure_package_job_linux_basic
-            - test_azure_package_job_linux_comprehensive
-            - test_azure_package_job_windows_basic
-            - test_azure_package_job_windows_comprehensive
+            - test_azure_package_job_linux
+            - test_azure_package_job_linux_integration
+            - test_azure_package_job_windows
+            - test_azure_package_job_windows_integration
             - test_azure_package_job_macos
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           referenceType: ${{ parameters.referenceType }}
