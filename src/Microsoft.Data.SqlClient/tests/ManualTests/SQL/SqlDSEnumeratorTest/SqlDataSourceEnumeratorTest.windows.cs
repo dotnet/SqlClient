@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _WINDOWS
+
 using System;
 using System.ComponentModel;
 using System.Linq;
@@ -11,9 +13,6 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-#if !NETFRAMEWORK
-        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
     public class SqlDataSourceEnumeratorTest
     {
         private static bool IsEnvironmentAvailable()
@@ -80,3 +79,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
     }
 }
+
+#endif
