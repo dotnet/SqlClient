@@ -269,7 +269,6 @@ public class AADConnectionTest
     [ConditionalFact(
         typeof(Config),
         nameof(Config.SupportsManagedIdentity),
-        nameof(Config.SupportsSystemAssignedManagedIdentity),
         nameof(Config.HasTcpConnectionString),
         nameof(Config.HasUserManagedIdentityClientId),
         nameof(Config.IsAzureSqlServer))]
