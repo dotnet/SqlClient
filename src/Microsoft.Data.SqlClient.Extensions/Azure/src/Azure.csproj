@@ -80,7 +80,7 @@
     <PackageIcon>dotnet.png</PackageIcon>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="../../../../tools/icons/dotnet.png" Pack="true" PackagePath="/" />
+    <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
   </ItemGroup>
 
   <!--
@@ -88,7 +88,7 @@
     depending on our build parameters.
   -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
-    <ProjectReference Include="../../Abstractions/src/Abstractions.csproj"/>
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"/>
   </ItemGroup>
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
     <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" />
@@ -121,6 +121,6 @@
     -->
     <ThisAssemblyNamespace>$(AssemblyName)</ThisAssemblyNamespace>
   </PropertyGroup>
-  <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
+  <Import Project="$(ToolsDir)/targets/GenerateThisAssemblyCs.targets" />
 
 </Project>

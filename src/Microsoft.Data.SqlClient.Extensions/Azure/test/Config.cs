@@ -4,7 +4,6 @@
 
 using System.Runtime.InteropServices;
 using System.Text.Json;
-
 using Microsoft.Data.SqlClient.TestUtilities;
 
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;

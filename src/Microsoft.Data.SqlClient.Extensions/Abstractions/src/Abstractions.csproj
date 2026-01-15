@@ -80,7 +80,7 @@
     <PackageIcon>dotnet.png</PackageIcon>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="../../../../tools/icons/dotnet.png" Pack="true" PackagePath="/" />
+    <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
   </ItemGroup>
 
 </Project>
