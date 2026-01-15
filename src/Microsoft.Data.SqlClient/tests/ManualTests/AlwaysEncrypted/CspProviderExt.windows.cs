@@ -2,6 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
+#if _WINDOWS
+
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -19,12 +22,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     /// <summary>
     /// Always Encrypted public CspProvider Manual tests.
-    /// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     /// </summary>
-#if !NETFRAMEWORK
-    [SupportedOSPlatform("windows")]
-#endif
-    [PlatformSpecific(TestPlatforms.Windows)]
     public class CspProviderExt
     {
         // [Fact(Skip="Run this in non-parallel mode")] or [ConditionalFact()]
@@ -142,3 +140,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
     }
 }
+
+#endif
