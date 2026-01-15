@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Stable Release 6.1.4] - 2026-01-15
 
-This update brings the following changes since the [6.1.3](release-notes/6.1/6.1.1.md) release:
+This update brings the following changes since the [6.1.3](release-notes/6.1/6.1.3.md) release:
 
 ### Fixed
 
