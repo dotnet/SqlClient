@@ -21,6 +21,11 @@
     <!--<TargetOs>Windows_NT</TargetOs>-->
     
     <NormalizedTargetOs>$(TargetOs.ToLower())</NormalizedTargetOs>
+
+    <!-- NOTE: These constants are prefixed with _ to keep them separate from .NET 5+ precompiler -->
+    <!--     flags. Those only apply to OS-specific target frameworks, and would interfere here.  -->
+    <DefineConstants Condition="'$(NormalizedTargetOs)' == 'unix'">$(DefineConstants);_UNIX</DefineConstants>
+    <DefineConstants Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(DefineConstants);_WINDOWS</DefineConstants>
   </PropertyGroup>
   <Target Name="ValidateOs" BeforeTargets="Build">
     <Error Condition="'$(TargetOS) != '$(OS)'"
@@ -244,6 +249,7 @@
     <Compile Include="AlwaysEncrypted\BulkCopyAEErrorMessage.cs" />
     <Compile Include="AlwaysEncrypted\ColumnDecryptErrorTests.cs" />
     <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
+    <Compile Include="AlwaysEncrypted\CspProviderExt.windows.cs" />
     <Compile Include="AlwaysEncrypted\EnclaveAzureDatabaseTests.cs" />
     <Compile Include="AlwaysEncrypted\End2EndSmokeTests.cs" />
     <Compile Include="AlwaysEncrypted\ExceptionsGenericError.cs" />
@@ -263,6 +269,7 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnEncryptionKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspColumnMasterKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspProviderColumnMasterKey.windows.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DateOnlyTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DbObject.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DummyKeyStoreProvider.cs" />
@@ -274,6 +281,7 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\Table.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategy.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyAzureKeyVault.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\SqlSetupStrategyCspProvider.windows.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCertStoreProvider.cs" />
     <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
   </ItemGroup>
@@ -290,11 +298,6 @@
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(TargetsWindows)' == 'true' AND ('$(TestSet)' == '' OR '$(TestSet)' == 'AE')">
-    <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspProviderColumnMasterKey.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCspProvider.cs" />
-  </ItemGroup>
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0')) AND ('$(TestSet)' == '' OR '$(TestSet)' == 'AE')">
     <Compile Include="AlwaysEncrypted\DateOnlyReadTests.cs" />
   </ItemGroup>
