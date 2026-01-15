@@ -181,9 +181,12 @@
     <Compile Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.cs" />
     <Compile Include="ProviderAgnostic\ReaderTest\ReaderTest.cs" />
     <Compile Include="SQL\AADFedAuthTokenRefreshTest\AADFedAuthTokenRefreshTest.cs" />
+    <Compile Include="SQL\Batch\BatchTests.netcore.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolStressTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
+    <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.Debug.cs" />
     <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.cs" />
+    <Compile Include="SQL\ConnectionPoolTest\TransactionPoolTest.netfx.cs" />
     <Compile Include="SQL\DataSourceParserTest\DataSourceParserTest.cs" />
     <Compile Include="SQL\InstanceNameTest\InstanceNameTest.cs" />
     <Compile Include="SQL\IntegratedAuthenticationTest\IntegratedAuthenticationTest.cs" />
@@ -240,6 +243,18 @@
     <Compile Include="TracingTests\FakeDiagnosticListenerObserver.cs" />
     <Compile Include="TracingTests\MetricsTest.cs" />
     <Compile Include="TracingTests\XEventsTracingTest.cs" />
+
+    <!-- Resource files -->
+    <Content Include="DDBasics\DDDataTypesTest\data.xml"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="SQL\ParameterTest\SqlParameterTest_DebugMode_Azure.bsl"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl"
+             CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   
   <!-- Items to include in AE test set -->
@@ -288,7 +303,7 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCertStoreProvider.cs" />
     <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
   </ItemGroup>
-  
+
   <PropertyGroup>
     <ProjectGuid>{45DB5F86-7AE3-45C6-870D-F9357B66BDB5}</ProjectGuid>
     <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
@@ -300,46 +315,6 @@
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
   </PropertyGroup>
-
-  <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '3'">
-
-    <Compile Include="SQL\TransactionTest\DistributedTransactionTest.Windows.cs" />
-    
-    
-    <Content Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlParameterTest_DebugMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlParameterTest_DebugMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlParameterTest_DebugMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlParameterTest_ReleaseMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlParameterTest_ReleaseMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="DDBasics\DDDataTypesTest\data.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>data.xml</Link>
-    </Content>
-    <None Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl" />
-    <None Include="SQL\ParameterTest\SqlParameterTest_DebugMode_Azure.bsl" />
-    <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl" />
-    <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl" />
-  </ItemGroup>
-  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0')) AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
-    <Compile Include="SQL\Batch\BatchTests.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetGroup)' == 'netfx' AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
-    <Compile Include="SQL\ConnectionPoolTest\TransactionPoolTest.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="$(Configuration.Contains('Debug')) AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
-    <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.Debug.cs" />
-  </ItemGroup>
   
 
   <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
