@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -63,7 +65,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-#if NET8_0_OR_GREATER
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void SqlBatchCanCreateParameter()
         {
@@ -81,7 +82,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             batch.BatchCommands.Add(batchCommand);
             batch.ExecuteNonQuery();
         }
-#endif 
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void StoredProcedureBatchSupported()
@@ -663,3 +663,5 @@ END";
         }
     }
 }
+
+#endif

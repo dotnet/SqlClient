@@ -22,10 +22,10 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     
-    <ContentWithTargetPath Include="$(TestsPath)tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
+    <Content Include="$(TestsPath)tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>xunit.runner.json</TargetPath>
-    </ContentWithTargetPath>
+    </Content>
   </ItemGroup>
   
   <!-- References ====================================================== -->
