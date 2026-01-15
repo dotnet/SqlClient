@@ -268,6 +268,7 @@ public class AADConnectionTest
 
     [ConditionalFact(
         typeof(Config),
+        nameof(Config.OnAdoPool),
         nameof(Config.SupportsManagedIdentity),
         nameof(Config.HasTcpConnectionString),
         nameof(Config.HasUserManagedIdentityClientId),
