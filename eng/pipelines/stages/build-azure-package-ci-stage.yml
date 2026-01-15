@@ -46,8 +46,8 @@ parameters:
     #
     # Any pool specified here must contain images with the following names:
     #
-    #   - ADO-UB22-SQL22
     #   - ADO-MMS22-SQL22
+    #   - ADO-UB22-SQL22
     #
     default: $(ci_var_defaultPoolName)
 
@@ -137,9 +137,9 @@ stages:
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
-          displayNamePrefix: Linux (basic)
+          displayNamePrefix: Linux
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: linux_basic
+          jobNameSuffix: linux
           mdsArtifactName: MDS.Artifact
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: []
@@ -155,9 +155,9 @@ stages:
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
-          displayNamePrefix: Linux (comprehensive)
+          displayNamePrefix: Linux Integration
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: linux_comprehensive
+          jobNameSuffix: linux_integration
           mdsArtifactName: MDS.Artifact
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: []
@@ -186,9 +186,9 @@ stages:
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
-          displayNamePrefix: Win (basic)
+          displayNamePrefix: Win
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: windows_basic
+          jobNameSuffix: windows
           mdsArtifactName: MDS.Artifact
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: [net462]
@@ -204,9 +204,9 @@ stages:
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
-          displayNamePrefix: Win (comprehensive)
+          displayNamePrefix: Win Integration
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: windows_comprehensive
+          jobNameSuffix: windows_integration
           mdsArtifactName: MDS.Artifact
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: [net462]
