@@ -20,6 +20,14 @@
 # depended on by downstream stages.
 
 parameters:
+
+  # The Azure package version to stress test.  This version must be available in
+  # one of the configured NuGet sources.
+  - name: azurePackageVersion
+    displayName: Azure Package Version
+    type: string
+    default: ''
+
   # The type of build to produce (Debug or Release)
   - name: buildConfiguration
     displayName: Build Configuration
@@ -36,35 +44,9 @@ parameters:
     type: object
     default: []
 
-  # The name of the pipeline artifact to download that contains the MDS package
-  # to stress test.
-  - name: pipelineArtifactName
-    displayName: Pipeline Artifact Name
-    type: string
-    default: Artifacts
-
-  # The MDS package version to stress test.  This version must be available in
-  # one of the configured NuGet sources.
-  - name: mdsPackageVersion
-    displayName: MDS Package Version
-    type: string
-    default: ''
-
-  # The list of .NET runtimes to test against.
-  - name: netTestRuntimes
-    displayName: .NET Test Runtimes
-    type: object
-    default: [net8.0, net9.0]
-
-  # The list of .NET Framework runtimes to test against.
-  - name: netFrameworkTestRuntimes
-    displayName: .NET Framework Test Runtimes
-    type: object
-    default: [net462, net47, net471, net472, net48, net481]
-
   # The verbosity level for the dotnet CLI commands.
-  - name: verbosity
-    displayName: Dotnet CLI verbosity
+  - name: dotnetVerbosity
+    displayName: dotnet CLI verbosity
     type: string
     default: normal
     values:
@@ -73,6 +55,32 @@ parameters:
     - normal
     - detailed
     - diagnostic
+
+  # The MDS package version to stress test.  This version must be available in
+  # one of the configured NuGet sources.
+  - name: mdsPackageVersion
+    displayName: MDS Package Version
+    type: string
+    default: ''
+
+  # The list of .NET Framework runtimes to test against.
+  - name: netFrameworkTestRuntimes
+    displayName: .NET Framework Test Runtimes
+    type: object
+    default: [net462, net47, net471, net472, net48, net481]
+
+  # The list of .NET runtimes to test against.
+  - name: netTestRuntimes
+    displayName: .NET Test Runtimes
+    type: object
+    default: [net8.0, net9.0]
+
+  # The name of the pipeline artifact to download that contains the MDS package
+  # to stress test.
+  - name: pipelineArtifactName
+    displayName: Pipeline Artifact Name
+    type: string
+    default: Artifacts
 
 stages:
   - stage: run_stress_tests_stage
@@ -96,9 +104,10 @@ stages:
       # dotnet CLI arguments common to all commands.
       - name: commonArguments
         value: >-
-          --verbosity ${{parameters.verbosity}}
+          --verbosity ${{parameters.dotnetVerbosity}}
           --artifacts-path $(dotnetArtifactsDir)
           -p:MdsPackageVersion=${{parameters.mdsPackageVersion}}
+          -p:AzurePackageVersion=${{parameters.azurePackageVersion}}
 
       # dotnet CLI arguments for build/run commands.
       - name: buildArguments

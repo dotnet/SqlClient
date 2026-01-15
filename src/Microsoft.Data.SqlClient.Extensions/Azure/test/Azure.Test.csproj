@@ -18,10 +18,50 @@
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="xunit.runner.console" />
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
+
+  <!-- Copy the xUnit config file to our artifacts. -->
+  <ItemGroup>
+    <Content Include="../../../Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>xunit.runner.json</TargetPath>
+    </Content>
+  </ItemGroup>
+
+  <!-- Ensure SNI DLLs are made available for .NET Framework project reference builds. -->
+  <Import Project="$(ToolsDir)/targets/CopySniDllsForNetFxProjectReferenceBuilds.targets" />
+
+  <!--
+    Depend on the TestUtilities project because it copies the JSON config for
+    tests into the artifacts.  We don't refer to any of its assemblies.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="../../../Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
+  </ItemGroup>
+
+  <!-- Conditional Project References -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
+    <!--
+      Include the .NET or .NET Framework MDS project depending on which
+      framework we are targeting.
+    -->
+    <ProjectReference
+      Condition="'$(TargetFramework)' != 'net462'"
+      Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference
+      Condition="'$(TargetFramework)' == 'net462'"
+      Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup>
+
+  <!-- Conditional Package References -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+  </ItemGroup>
+
 
 </Project>

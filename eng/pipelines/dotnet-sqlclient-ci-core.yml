@@ -103,6 +103,17 @@ parameters:
   type: boolean
   default: true
 
+- name: dotnetVerbosity
+  displayName: dotnet CLI Verbosity
+  type: string
+  default: normal
+  values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
 variables:
   - template: /eng/pipelines/libraries/ci-build-variables.yml@self
   
@@ -121,11 +132,11 @@ stages:
   # under the given artifact name.
   - template: /eng/pipelines/stages/build-abstractions-package-ci-stage.yml@self
     parameters:
-      buildConfiguration: ${{ parameters.buildConfiguration }}
+      abstractionsArtifactName: $(abstractionsArtifactName)
       abstractionsPackageVersion: $(abstractionsPackageVersion)
-      artifactName: $(abstractionsArtifactName)
-      ${{if eq(parameters.debug, 'true')}}:
-        verbosity: diagnostic
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      debug: ${{ parameters.debug }}
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
 
   # Build MDS and its NuGet packages.
   - stage: build_mds_akv_packages_stage
@@ -164,25 +175,31 @@ stages:
       azureArtifactName: $(azureArtifactName)
       azurePackageVersion: $(azurePackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
+      debug: ${{ parameters.debug }}
+      mdsArtifactName: $(mdsArtifactName)
+      mdsPackageVersion: $(mdsPackageVersion)
       # When building via package references, we must depend on the Abstractions
-      # package.
+      # and MDS packages
       ${{ if eq(parameters.referenceType, 'Package') }}:
         dependsOn:
           - build_abstractions_package_stage
+          - build_mds_akv_packages_stage
       referenceType: ${{ parameters.referenceType }}
       ${{if eq(parameters.debug, 'true')}}:
-        verbosity: diagnostic
+        dotnetVerbosity: diagnostic
 
   # Run the stress tests, if desired.
   - ${{ if eq(parameters.enableStressTests, true) }}:
     - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        dependsOn: [build_mds_akv_packages_stage]
+        dependsOn:
+          - build_mds_akv_packages_stage
+          - build_azure_package_stage
         pipelineArtifactName: $(artifactName)
         mdsPackageVersion: $(mdsPackageVersion)
-        ${{ if eq(parameters.debug, 'true') }}:
-          verbosity: 'detailed'
+        azurePackageVersion: $(azurePackageVersion)
+        dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
   
   # Run the MDS and AKV tests.
   - template: /eng/pipelines/common/templates/stages/ci-run-tests-stage.yml@self

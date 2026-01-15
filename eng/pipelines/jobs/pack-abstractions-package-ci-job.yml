@@ -12,14 +12,14 @@
 
 parameters:
 
+  # The name to apply to the published pipeline artifact.
+  - name: abstractionsArtifactName
+    type: string
+    default: Abstractions.Artifact
+
   # The version to apply to the Abstractions NuGet package and its assemblies.
   - name: abstractionsPackageVersion
     type: string
-
-  # The name to apply to the published pipeline artifact.
-  - name: artifactName
-    type: string
-    default: Abstractions.Artifact
 
   # The type of build to test (Release or Debug)
   - name: buildConfiguration
@@ -27,6 +27,11 @@ parameters:
     values:
     - Release
     - Debug
+
+  # True to enable extra debug steps and logging.
+  - name: debug
+    type: boolean
+    default: false
   
   # The list of upstream jobs to depend on.
   - name: dependsOn
@@ -34,7 +39,7 @@ parameters:
     default: []
 
   # The verbosity level for the dotnet CLI commands.
-  - name: verbosity
+  - name: dotnetVerbosity
     type: string
     default: normal
     values:
@@ -69,13 +74,14 @@ jobs:
       # dotnet CLI arguments common to all commands.
       - name: commonArguments
         value: >-
-          --verbosity ${{ parameters.verbosity }}
+          --verbosity ${{ parameters.dotnetVerbosity }}
 
       # dotnet CLI arguments for build/test/pack commands
       - name: buildArguments
         value: >-
           $(commonArguments)
           --configuration ${{ parameters.buildConfiguration }}
+          -p:ForceMdsAssemblyNameSuffix=true
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
@@ -102,6 +108,11 @@ jobs:
 
     steps:
 
+      # Emit environment variables if debug is enabled.
+      - ${{ if eq(parameters.debug, true) }}:
+        - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
+          displayName: '[Debug] Print Environment Variables'
+
       # Install the .NET 10.0 SDK.
       - task: UseDotNet@2
         displayName: Install .NET 10.0 SDK
@@ -112,18 +123,18 @@ jobs:
       # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't
       # support all of our argument combinations for the different build steps.
 
-      # Restore the solution.
+      # Restore the project.
       - task: DotNetCoreCLI@2
-        displayName: Restore Solution
+        displayName: Restore Project
         inputs:
           command: custom
           custom: restore
           projects: $(project)
           arguments: $(commonArguments)
 
-      # Build the solution.
+      # Build the project.
       - task: DotNetCoreCLI@2
-        displayName: Build Solution
+        displayName: Build Project
         inputs:
           command: custom
           custom: build
@@ -144,5 +155,5 @@ jobs:
         displayName: Publish Pipeline Artifact
         inputs:
           targetPath: $(dotnetPackagesDir)
-          artifactName: ${{ parameters.artifactName }}
+          artifactName: ${{ parameters.abstractionsArtifactName }}
           publishLocation: pipeline

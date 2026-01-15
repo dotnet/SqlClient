@@ -1,16 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <!--
+      Append an assembly name suffix, if necessary.  See the top-level
+      Directory.Build.props for more information.
+    -->
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
+    <AssemblyName Condition="'$(ApplyMdsAssemblyNameSuffix)' == 'true'">$(AssemblyName).NetFx</AssemblyName>
+
     <TargetFramework>net462</TargetFramework>
-    <OSGroup Condition="'$(OSGroup)' == ''">$(OS)</OSGroup>
+
     <ProjectGuid>{407890AC-9876-4FEF-A6F1-F36A876BAADE}</ProjectGuid>
     <RootNamespace />
+    <OSGroup Condition="'$(OSGroup)' == ''">$(OS)</OSGroup>
     <EnableLocalAppContext>true</EnableLocalAppContext>
     <OutputPlatform>AnyCPU</OutputPlatform>
     <BinPath>$(BinFolder)$(Configuration).$(OutputPlatform)\</BinPath>
     <ObjPath>$(ObjFolder)$(Configuration).$(OutputPlatform)\</ObjPath>
     <OutputPath>$(BinPath)$(AssemblyName)\netfx\</OutputPath>
-    <DocumentationFile>$(OutputPath)\Microsoft.Data.SqlClient.xml</DocumentationFile>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
     <IntermediateOutputPath>$(ObjPath)$(AssemblyName)\netfx\</IntermediateOutputPath>
     <Product>Framework $(BaseProduct)</Product>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
@@ -898,7 +905,7 @@
       <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NativeSspiContextProvider.windows.cs">
-      <Link>Microsoft\Data\SqlClient\SSPI\NativeSspiContextProvider.windows..cs</Link>
+      <Link>Microsoft\Data\SqlClient\SSPI\NativeSspiContextProvider.windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NegotiateSspiContextProvider.cs">
       <Link>Microsoft\Data\SqlClient\SSPI\NegotiateSspiContextProvider.cs</Link>
