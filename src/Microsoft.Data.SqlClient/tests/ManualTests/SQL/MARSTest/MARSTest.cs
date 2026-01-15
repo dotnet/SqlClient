@@ -690,10 +690,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             });
                     }
                 }
-                catch (Exception e)
-                {
-                    Assert.Fail("CRITIAL: Test should not fail randomly. Exception occurred: " + e.Message);
-                }
                 finally
                 {
                     using var dropConn = new SqlConnection(DataTestUtility.TCPConnectionString);

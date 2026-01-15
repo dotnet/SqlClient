@@ -104,16 +104,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DestinationTableName = s_destinationTable
             };
 
-            try
-            {
-                // Perform bulk copy from source to destination table
-                bulkCopy.WriteToServer(reader);
-            }
-            catch (Exception ex)
-            {
-                // If bulk copy fails, fail the test with the exception message
-                Assert.Fail($"Bulk copy failed: {ex.Message}");
-            }
+            // Perform bulk copy from source to destination table
+            bulkCopy.WriteToServer(reader);
 
             // Verify that the 1 row from the source table has been copied into our destination table.
             Assert.Equal(1, Convert.ToInt16(countCommand.ExecuteScalar()));
@@ -167,17 +159,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 EnableStreaming = enableStreaming,
                 DestinationTableName = s_destinationTable
             };
-
-            try
-            {
-                // Perform bulk copy from source to destination table
-                await bulkCopy.WriteToServerAsync(reader);
-            }
-            catch (Exception ex)
-            {
-                // If bulk copy fails, fail the test with the exception message
-                Assert.Fail($"Bulk copy failed: {ex.Message}");
-            }
+            
+            // Perform bulk copy from source to destination table
+            await bulkCopy.WriteToServerAsync(reader);
 
             // Verify that the 1 row from the source table has been copied into our destination table.
             Assert.Equal(1, Convert.ToInt16(await countCommand.ExecuteScalarAsync()));

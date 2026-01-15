@@ -6,6 +6,7 @@ using System;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -46,80 +47,86 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Synapse: Remove dependency on Northwind database + WAITFOR not supported + ';' not supported
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void PlainCancelTestAsync()
-        {
+        public static Task PlainCancelTestAsync() =>
             PlainCancelAsync(tcp_connStr);
-        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void PlainCancelTestAsyncNP()
-        {
+        public static Task PlainCancelTestAsyncNP() =>
             PlainCancelAsync(np_connStr);
-        }
 
         // Synapse: Remove dependency from Northwind database + WAITFOR not supported + ';' not supported.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void PlainMARSCancelTestAsync()
-        {
+        public static Task PlainMARSCancelTestAsync() =>
             PlainCancelAsync((new SqlConnectionStringBuilder(tcp_connStr) { MultipleActiveResultSets = true }).ConnectionString);
-        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void PlainMARSCancelTestAsyncNP()
-        {
+        public static Task PlainMARSCancelTestAsyncNP() =>
             PlainCancelAsync((new SqlConnectionStringBuilder(np_connStr) { MultipleActiveResultSets = true }).ConnectionString);
-        }
 
         private static void PlainCancel(string connString)
         {
-            using (SqlConnection conn = new SqlConnection(connString))
-            using (SqlCommand cmd = new SqlCommand("select * from dbo.Orders; waitfor delay '00:00:10'; select * from dbo.Orders", conn))
+            // Arrange
+            using SqlConnection conn = new SqlConnection(connString);
+            conn.Open();
+
+            using SqlCommand command = conn.CreateCommand();
+            command.CommandText =
+                @"SELECT * FROM dbo.Orders; " +
+                @"WAITFOR DELAY '00:00:10'; " +
+                @"SELECT * FROM dbo.Orders;";
+
+            // Act
+            Action action = () =>
             {
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    cmd.Cancel();
-                    DataTestUtility.AssertThrowsWrapper<SqlException>(
-                        () =>
-                        {
-                            do
-                            {
-                                while (reader.Read())
-                                {
-                                }
-                            }
-                            while (reader.NextResult());
-                        },
-                        "A severe error occurred on the current command.  The results, if any, should be discarded.");
-                }
-            }
+                // - Execute reader
+                using SqlDataReader reader = command.ExecuteReader();
+
+                // - Cancel command
+                command.Cancel();
+
+                // - Flush results - should throw
+                reader.FlushAllResults();
+            };
+
+            // Assert
+            SqlException exception = Assert.Throws<SqlException>(action);
+            Assert.Contains(
+                "A severe error occurred on the current command.  The results, if any, should be discarded.",
+                exception.Message);
         }
 
-        private static void PlainCancelAsync(string connString)
+        private static async Task PlainCancelAsync(string connString)
         {
-            using (SqlConnection conn = new SqlConnection(connString))
-            using (SqlCommand cmd = new SqlCommand("select * from dbo.Orders; waitfor delay '00:00:10'; select * from dbo.Orders", conn))
+            // Arrange
+            using SqlConnection conn = new SqlConnection(connString);
+            conn.Open();
+
+            using SqlCommand command = conn.CreateCommand();
+            command.CommandText =
+                @"SELECT * FROM dbo.Orders; " +
+                @"WAITFOR DELAY '00:00:10'; " +
+                @"SELECT * FROM dbo.Orders;";
+
+            // Act
+            Func<Task> action = async () =>
             {
-                conn.Open();
-                Task<SqlDataReader> readerTask = cmd.ExecuteReaderAsync();
-                DataTestUtility.AssertThrowsWrapper<SqlException>(
-                    () =>
-                    {
-                        readerTask.Wait(2000);
-                        SqlDataReader reader = readerTask.Result;
-                        cmd.Cancel();
-                        do
-                        {
-                            while (reader.Read())
-                            {
-                            }
-                        }
-                        while (reader.NextResult());
-                    },
-                    "A severe error occurred on the current command.  The results, if any, should be discarded.");
-            }
+                // - Execute reader
+                SqlDataReader reader = await command.ExecuteReaderAsync();
+
+                // - Cancel command
+                command.Cancel();
+
+                // - Flush results - should throw
+                await reader.FlushAllResultsAsync();
+            };
+
+            // Assert
+            SqlException exception = await Assert.ThrowsAsync<SqlException>(action);
+            Assert.Contains(
+                "A severe error occurred on the current command.  The results, if any, should be discarded.",
+                exception.Message);
         }
 
         // Synapse: Remove dependency from Northwind database + WAITFOR not supported + ';' not supported.
@@ -424,20 +431,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string errorMessage = SystemDataResourceManager.Instance.SQL_OperationCancelled;
             string errorMessageSevereFailure = SystemDataResourceManager.Instance.SQL_SevereError;
 
-            DataTestUtility.ExpectFailure<SqlException>(() =>
+            Action action = () =>
             {
                 threadsReady.SignalAndWait();
-                using (SqlDataReader r = command.ExecuteReader())
-                {
-                    do
-                    {
-                        while (r.Read())
-                        {
-                        }
-                    } while (r.NextResult());
-                }
-            }, new string[] { errorMessage, errorMessageSevereFailure });
 
+                using SqlDataReader reader = command.ExecuteReader();
+                reader.FlushAllResults();
+            };
+            
+            SqlException exception = Assert.Throws<SqlException>(action);
+            Assert.Contains(exception.Message, new[] { errorMessage, errorMessageSevereFailure });
         }
 
         private static void CancelSharedCommand(object state)

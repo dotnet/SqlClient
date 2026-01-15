@@ -214,10 +214,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
                         {
                             bulkCopy.WriteToServer(reader);
                         }
-                        catch (Exception ex)
-                        {
-                            Assert.Fail(ex.Message);
-                        }
                         finally
                         {
                             reader.Close();
@@ -251,10 +247,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
                         try
                         {
                             await bulkCopy.WriteToServerAsync(reader);
-                        }
-                        catch (Exception ex)
-                        {
-                            Assert.Fail(ex.Message);
                         }
                         finally
                         {

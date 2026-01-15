@@ -115,15 +115,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void SqlDependencyStartStopTest()
         {
-            try
-            {
-                SqlDependency.Start(DataTestUtility.TCPConnectionString);
-                SqlDependency.Stop(DataTestUtility.TCPConnectionString);
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
+            SqlDependency.Start(DataTestUtility.TCPConnectionString);
+            SqlDependency.Stop(DataTestUtility.TCPConnectionString);
         }
 
         [Fact]
@@ -145,15 +138,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void SqlDependencyStartStopDefaultTest()
         {
-            try
-            {
-                SqlDependency.Start(DataTestUtility.TCPConnectionString, null);
-                SqlDependency.Stop(DataTestUtility.TCPConnectionString, null);
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
+            SqlDependency.Start(DataTestUtility.TCPConnectionString, null);
+            SqlDependency.Stop(DataTestUtility.TCPConnectionString, null);
         }
 
         [Fact]

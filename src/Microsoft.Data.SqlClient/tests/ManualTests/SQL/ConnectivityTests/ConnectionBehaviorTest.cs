@@ -4,6 +4,7 @@
 
 using System.Data;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -13,51 +14,43 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void ConnectionBehaviorClose()
         {
-            using (SqlConnection sqlConnection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MaxPoolSize = 1 }).ConnectionString))
-            {
-                using (SqlCommand command = new SqlCommand("SELECT '1'", sqlConnection))
-                {
-                    sqlConnection.Open();
-                    using (SqlDataReader reader = command.ExecuteReader(CommandBehavior.CloseConnection))
-                    {
-                        while (reader.Read())
-                        {
-                            string result = reader[0].ToString();
-                        }
-                    }
+            // Arrange
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString) { MaxPoolSize = 1 };
+            using SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString);
+            sqlConnection.Open();
 
-                    Assert.Equal(ConnectionState.Closed, sqlConnection.State);
-                }
+            using SqlCommand command = sqlConnection.CreateCommand();
+            command.CommandText = "SELECT 1";
+
+            // Act
+            using (SqlDataReader reader = command.ExecuteReader(CommandBehavior.CloseConnection))
+            {
+                reader.FlushResultSet();
             }
+
+            // Assert
+            Assert.Equal(ConnectionState.Closed, sqlConnection.State);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void ConnectionBehaviorCloseAsync()
+        public async Task ConnectionBehaviorCloseAsync()
         {
-            using (SqlConnection sqlConnection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MaxPoolSize = 1 }).ConnectionString))
-            {
-                Task<bool> result = VerifyConnectionBehaviorCloseAsync(sqlConnection);
-                bool value = result.Result;
-            }
-        }
+            // Arrange
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString) { MaxPoolSize = 1 };
+            using SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString);
+            await sqlConnection.OpenAsync();
 
-        private async Task<bool> VerifyConnectionBehaviorCloseAsync(SqlConnection sqlConnection)
-        {
-            using (SqlCommand command = new SqlCommand("SELECT '1'", sqlConnection))
-            {
-                await sqlConnection.OpenAsync();
-                using (SqlDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.CloseConnection))
-                {
-                    while (reader.Read())
-                    {
-                        string result = reader[0].ToString();
-                    }
-                }
+            using SqlCommand command = sqlConnection.CreateCommand();
+            command.CommandText = "SELECT 1";
 
-                Assert.Equal(ConnectionState.Closed, sqlConnection.State);
+            // Act
+            using (SqlDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.CloseConnection))
+            {
+                await reader.FlushResultSetAsync();
             }
 
-            return true;
+            // Assert
+            Assert.Equal(ConnectionState.Closed, sqlConnection.State);
         }
     }
 }

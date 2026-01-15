@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             var output = MultiplexPacketList(isAsync, dataSize, input);
 
-            ComparePacketLists(dataSize, expected, output);
+            ComparePacketLists(expected, output);
         }
 
         [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             var output = MultiplexPacketList(isAsync, dataSize, input);
 
-            ComparePacketLists(dataSize, expected, output);
+            ComparePacketLists(expected, output);
         }
 
         [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             var output = MultiplexPacketList(isAsync, dataSize, input);
 
-            ComparePacketLists(dataSize, expected, output);
+            ComparePacketLists(expected, output);
         }
 
         [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
@@ -96,7 +96,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             var output = MultiplexPacketList(isAsync, dataSize, input);
 
-            ComparePacketLists(dataSize, expected, output);
+            ComparePacketLists(expected, output);
         }
 
         [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
@@ -115,7 +115,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             var output = MultiplexPacketList(isAsync, dataSize, input);
 
-            ComparePacketLists(dataSize, expected, output);
+            ComparePacketLists(expected, output);
         }
 
         [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             var output = MultiplexPacketList(isAsync, dataSize, input);
 
-            ComparePacketLists(dataSize, expected, output);
+            ComparePacketLists(expected, output);
         }
 
         [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
@@ -154,7 +154,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             var output = MultiplexPacketList(isAsync, dataSize, input);
 
-            ComparePacketLists(dataSize, expected, output);
+            ComparePacketLists(expected, output);
         }
 
         [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
@@ -173,7 +173,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             var output = MultiplexPacketList(isAsync, dataSize, input);
 
-            ComparePacketLists(dataSize, expected, output);
+            ComparePacketLists(expected, output);
         }
 
         [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             var output = MultiplexPacketList(isAsync, dataSize, input);
 
-            ComparePacketLists(dataSize, expected, output);
+            ComparePacketLists(expected, output);
         }
 
         [ConditionalFact(nameof(IsUsingModernProcessSni))]
@@ -208,7 +208,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             var output = MultiplexPacketList(true, dataSize, input);
 
-            ComparePacketLists(dataSize, expected, output);
+            ComparePacketLists(expected, output);
         }
 
         [ConditionalFact(nameof(IsUsingModernProcessSni))]
@@ -252,7 +252,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             var output = MultiplexPacketList(false, dataSize, input);
 
-            ComparePacketLists(dataSize, expected, output);
+            ComparePacketLists(expected, output);
         }
 
         [ExcludeFromCodeCoverage]
@@ -269,16 +269,14 @@ namespace Microsoft.Data.SqlClient.Tests
 
                 if (stateObject._inBytesRead > 0)
                 {
-                    if (
-                        stateObject._inBytesRead < TdsEnums.HEADER_LEN
-                        ||
-                        stateObject._inBytesRead != (TdsEnums.HEADER_LEN +
-                                                     Packet.GetDataLengthFromHeader(
-                                                         stateObject._inBuff.AsSpan(0, TdsEnums.HEADER_LEN)))
-                    )
-                    {
-                        Assert.Fail("incomplete packet exposed after call to ProcessSniPacket");
-                    }
+                    // At least the header must be read
+                    Assert.False(stateObject._inBytesRead < TdsEnums.HEADER_LEN);
+                    
+                    // The full packet must be read, too
+                    Span<byte> header = stateObject._inBuff.AsSpan(0, TdsEnums.HEADER_LEN);
+                    int packetLength = Packet.GetDataLengthFromHeader(header);
+                    int expectedLength = TdsEnums.HEADER_LEN + packetLength;
+                    Assert.Equal(expectedLength, stateObject._inBytesRead);
 
                     if (!isAsync)
                     {
@@ -299,17 +297,14 @@ namespace Microsoft.Data.SqlClient.Tests
 
                     if (stateObject._inBytesRead > 0)
                     {
-                        if (
-                            stateObject._inBytesRead < TdsEnums.HEADER_LEN
-                            ||
-                            stateObject._inBytesRead != (TdsEnums.HEADER_LEN +
-                                                         Packet.GetDataLengthFromHeader(
-                                                             stateObject._inBuff.AsSpan(0, TdsEnums.HEADER_LEN)))
-                        )
-                        {
-                            Assert.Fail(
-                                "incomplete packet exposed after call to ProcessSniPacket with usePartialPacket");
-                        }
+                        // Header must at least have been read
+                        Assert.False(stateObject._inBytesRead < TdsEnums.HEADER_LEN);
+                        
+                        // Full packet must have been read
+                        Span<byte> header =  stateObject._inBuff.AsSpan(0, TdsEnums.HEADER_LEN);
+                        int packetLength = Packet.GetDataLengthFromHeader(header);
+                        int expectedLength = TdsEnums.HEADER_LEN + packetLength;
+                        Assert.Equal(expectedLength, stateObject._inBytesRead);
 
                         output.Add(PacketData.Copy(stateObject._inBuff, stateObject._inBytesUsed,
                             stateObject._inBytesRead));
@@ -326,7 +321,7 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [ExcludeFromCodeCoverage]
-        private static void ComparePacketLists(int dataSize, List<PacketData> expected, List<PacketData> output)
+        private static void ComparePacketLists(List<PacketData> expected, List<PacketData> output)
         {
             Assert.NotNull(expected);
             Assert.NotNull(output);
@@ -334,15 +329,10 @@ namespace Microsoft.Data.SqlClient.Tests
 
             for (int index = 0; index < expected.Count; index++)
             {
-                var a = expected[index];
-                var b = output[index];
-
-                var compare = a.AsSpan().SequenceCompareTo(b.AsSpan());
-
-                if (compare != 0)
-                {
-                    Assert.Fail($"expected data does not match output data at packet index {index}");
-                }
+                Span<byte> a = expected[index].AsSpan();
+                Span<byte> b = output[index].AsSpan();
+                
+                Assert.True(a.SequenceEqual(b), $"Packet data was not equal at index {index}");
             }
         }
 
