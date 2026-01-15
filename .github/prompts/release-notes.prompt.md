@@ -13,7 +13,7 @@ Steps:
     - Search for all **merged** Pull Requests associated with the milestone "${input:milestone}" in the `dotnet/SqlClient` repository.
     - Use `github/search_issues` with query `is:pr is:merged milestone:"${input:milestone}" repo:dotnet/SqlClient`.
 2. Analyze and Categorize
-    - Review the title and body of each PR. For PR's that are porting other PRs to current branch use `github/search_issues` with query `is:pr is:merged repo:dotnet/SqlClient <original PR number>` to get more context.
+    - Review the title and body of each PR. For PRs that are porting other PRs to current branch use `github/search_issues` with query `is:pr is:merged repo:dotnet/SqlClient <original PR number>` to get more context.
     - Categorize them into: `Added`, `Fixed`, `Changed`, `Removed`.
     - Ignore PRs that are labelled as `Area\Engineering`
     - Identify the contributors for the "Contributors" section.
@@ -26,4 +26,4 @@ Steps:
     - Include all the text from the Added, Fixed, Changed, Removed, etc. sections from the release notes.
 5. Update Release Directory README
     - Update `release-notes/<Major.Minor>/README.md`.
-    - Add the new release to the table: `| <Date> | <Version> | [Release Notes]<Version> |`.
+    - Add the new release to the table: `| <Date> | <Version> | [Release Notes](<Version>.md) |`.
