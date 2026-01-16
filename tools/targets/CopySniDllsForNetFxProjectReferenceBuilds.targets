@@ -34,15 +34,14 @@
     Name="CopySniDllsForNetFx"
     AfterTargets="CopyFilesToOutputDirectory"
     Condition="'$(ReferenceType)' == 'Project' AND '$(TargetFramework)' == 'net462'">
-    
-    <!-- Account for an MDS assembly suffix, if necessary. -->
-    <PropertyGroup Condition="'$(ApplyMdsAssemblyNameSuffix)' == 'true'">
-      <MdsNetFxSuffix>.NetFx</MdsNetFxSuffix>
-    </PropertyGroup>
 
     <!-- Glob for the SNI DLL files. -->
     <ItemGroup>
-      <SniDlls Include="$(BinFolder)$(Configuration).AnyCPU/Microsoft.Data.SqlClient$(MdsNetFxSuffix)/netfx/net462/*SNI*.dll" />
+      <!-- The old separate MDS projects put the DLLs here. -->
+      <SniDlls Include="$(BinFolder)$(Configuration).AnyCPU/Microsoft.Data.SqlClient/netfx/net462/*SNI*.dll" />
+
+      <!-- The new unified project puts the DLLs here. -->
+      <SniDlls Include="$(RepoRoot)artifacts/Microsoft.Data.SqlClient/$(Configuration)/windows_nt/net462/*SNI*.dll" />
     </ItemGroup>
 
     <!-- Copy the SNI DLLs to the output directory. -->

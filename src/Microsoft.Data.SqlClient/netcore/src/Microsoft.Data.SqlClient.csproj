@@ -1,11 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!--
-      Append an assembly name suffix, if necessary.  See the top-level
-      Directory.Build.props for more information.
-    -->
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
-    <AssemblyName Condition="'$(ApplyMdsAssemblyNameSuffix)' == 'true'">$(AssemblyName).NetCore</AssemblyName>
 
     <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
 

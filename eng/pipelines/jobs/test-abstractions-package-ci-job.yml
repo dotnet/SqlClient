@@ -98,7 +98,6 @@ jobs:
         value: >-
           $(commonArguments)
           --configuration ${{ parameters.buildConfiguration }}
-          -p:ForceMdsAssemblyNameSuffix=true
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public project.

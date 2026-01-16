@@ -4,7 +4,6 @@
 
 using System.Runtime.InteropServices;
 using System.Text.Json;
-
 using Microsoft.Data.SqlClient.TestUtilities;
 
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
@@ -56,8 +55,6 @@ internal static class Config
 
     #region Conditional Fact/Theory Helpers
 
-    internal static bool HasIntegratedSecurityConnectionString() =>
-        !TcpConnectionString.Empty() && IntegratedSecuritySupported;
     internal static bool HasPasswordConnectionString() => !PasswordConnectionString.Empty();
     internal static bool HasServicePrincipal() => !ServicePrincipalId.Empty() && !ServicePrincipalSecret.Empty();
     internal static bool HasSystemAccessToken() => !SystemAccessToken.Empty();

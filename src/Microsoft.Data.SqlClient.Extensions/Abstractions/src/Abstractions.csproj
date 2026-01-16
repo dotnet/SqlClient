@@ -42,12 +42,6 @@
     <Version>$(AbstractionsPackageVersion)</Version>
 
     <DocumentationFile>$(Artifacts)/doc/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
-
-    <!--
-      Apply an MDS assembly name suffix, if necessary.  See the top-level
-      Directory.Build.props for more information.
-    -->
-    <DefineConstants Condition="'$(ApplyMdsAssemblyNameSuffix)' == 'true'">$(DefineConstants);APPLY_MDS_ASSEMBLY_NAME_SUFFIX</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <!-- Our API is CLS Compliant. -->
@@ -86,7 +80,7 @@
     <PackageIcon>dotnet.png</PackageIcon>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="../../../../tools/icons/dotnet.png" Pack="true" PackagePath="/" />
+    <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
   </ItemGroup>
 
 </Project>

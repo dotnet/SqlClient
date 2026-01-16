@@ -97,6 +97,18 @@ parameters:
     - Package
     - Project
 
+  # Steps to run, if any, to configure a local SQL Server instance on the agent
+  # VM.
+  - name: sqlServerSetupSteps
+    type: stepList
+    default: []
+
+  # True if the VM image includes a local SQL Server that supports connections
+  # via integrated security.
+  - name: supportsIntegratedSecurity
+    type: boolean
+    default: false
+
   # The pool VM image to use.
   - name: vmImage
     type: string
@@ -129,15 +141,23 @@ jobs:
         value: >-
           --verbosity ${{ parameters.dotnetVerbosity }}
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:ForceMdsAssemblyNameSuffix=true
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
-      # dotnet CLI arguments for build/test/pack commands
+      # dotnet CLI arguments for build/test/pack commands.
       - name: buildArguments
         value: >-
           $(commonArguments)
           --configuration ${{ parameters.buildConfiguration }}
+
+      # dotnet CLI arguments for test commands.
+      #
+      # Filter out tests annotated with the ActiveIssue attribute, which for
+      # some reason uses the category 'failing' rather than 'ActiveIssue'.
+      #
+      - name: testArguments
+        value: >-
+          --filter "category != failing"
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public
@@ -232,18 +252,24 @@ jobs:
           AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
           # macOS doesn't support managed identities.
           ManagedIdentitySupported: ${{ not(eq(parameters.vmImage, 'macos-latest')) }}
-          SupportsIntegratedSecurity: ${{ eq(variables['SupportsIntegratedSecurity'], 'true') }}
+          SupportsIntegratedSecurity: ${{ parameters.supportsIntegratedSecurity }}
           TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
           UserManagedIdentityClientId: $(UserManagedIdentityClientId)
           WorkloadIdentityFederationServiceConnectionId: $(WorkloadIdentityFederationServiceConnectionId)
-          # Note: Using the isFork variable to determine if secrets are
-          # available is not ideal since it's an indirect association. But
-          # everything else (referencing secret variables various ways to detect
-          # if they were present) won't run consistently across forks and
-          # non-forks.
+          # Avoid exposing secrets to pipeline jobs triggered via forks.  This
+          # prevents external contributors from creating PRs and running
+          # pipelines that could expose these secrets.
+          #
+          # Note that this isn't a perfect restriction since internal
+          # contributors may want to use forks, but this would prevent them from
+          # running the full test suite.  We don't have a better way to detect
+          # external parties though.
           ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
             AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
             AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+
+      # Perform any local SQL Server setup.
+      - ${{ parameters.sqlServerSetupSteps }}
 
       # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't
       # support all of our argument combinations for the different build steps.
@@ -282,7 +308,7 @@ jobs:
             # Many of our tests require access to Azure resources that are
             # currently only granted by agents running our custom ADO 1ES
             # images in our ADO pools.
-            ${{ if startsWith(parameters.poolName, 'ADO-') }}:
+            ${{ if ne(parameters.poolName, 'Azure Pipelines') }}:
               ADO_POOL: 1
             # When using connectedServiceName below, the DotNetCoreCLI task
             # needs the system access token to be injected as this environment
@@ -299,14 +325,14 @@ jobs:
             command: custom
             custom: test
             projects: $(project)
-            arguments: $(buildArguments) --no-build -f ${{ runtime }}
+            arguments: $(buildArguments) $(testArguments) --no-build -f ${{ runtime }}
 
       # Run the tests for each .NET Framework runtime.
       - ${{ each runtime in parameters.netFrameworkRuntimes }}:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
           env:
-            ${{ if startsWith(parameters.poolName, 'ADO-CI') }}:
+            ${{ if ne(parameters.poolName, 'Azure Pipelines') }}:
               ADO_POOL: 1
             SYSTEM_ACCESSTOKEN: $(System.AccessToken)
             ${{ if eq(parameters.debug, true) }}:
@@ -316,4 +342,4 @@ jobs:
             command: custom
             custom: test
             projects: $(project)
-            arguments: $(buildArguments) --no-build -f ${{ runtime }}
+            arguments: $(buildArguments) $(testArguments) --no-build -f ${{ runtime }}

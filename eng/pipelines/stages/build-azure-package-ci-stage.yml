@@ -46,8 +46,8 @@ parameters:
     #
     # Any pool specified here must contain images with the following names:
     #
+    #   - ADO-MMS22-SQL22
     #   - ADO-UB22-SQL22
-    #   - ADO-CI-Win11
     #
     default: $(ci_var_defaultPoolName)
 
@@ -139,7 +139,7 @@ stages:
           debug: ${{ parameters.debug }}
           displayNamePrefix: Linux
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: linux_basic
+          jobNameSuffix: linux
           mdsArtifactName: MDS.Artifact
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: []
@@ -155,15 +155,25 @@ stages:
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
-          displayNamePrefix: Linux
+          displayNamePrefix: Linux Integration
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: linux_comprehensive
+          jobNameSuffix: linux_integration
           mdsArtifactName: MDS.Artifact
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.adoPoolName }}
           referenceType: ${{ parameters.referenceType }}
+          # The image includes a SQL Server instance that we must configure.
+          sqlServerSetupSteps:
+            - template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
+              parameters:
+                # Override the template's default step condition.  We always
+                # want this step to run.
+                condition: true
+                # Use the Azure DevOps Library variable "password" for the SA
+                # password.
+                password: $(password)
           vmImage: ADO-UB22-SQL22
 
       # ------------------------------------------------------------------------
@@ -178,7 +188,7 @@ stages:
           debug: ${{ parameters.debug }}
           displayNamePrefix: Win
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: windows_basic
+          jobNameSuffix: windows
           mdsArtifactName: MDS.Artifact
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: [net462]
@@ -194,16 +204,33 @@ stages:
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
-          displayNamePrefix: Win
+          displayNamePrefix: Win Integration
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: windows_comprehensive
+          jobNameSuffix: windows_integration
           mdsArtifactName: MDS.Artifact
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.adoPoolName }}
           referenceType: ${{ parameters.referenceType }}
-          vmImage: ADO-CI-Win11
+          # The image includes a SQL Server instance that we must configure.
+          sqlServerSetupSteps:
+            - template: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml@self
+              # Use defaults for most parameters.
+              parameters:
+                # Override the template's default step condition.  We always
+                # want this step to run.
+                condition: true
+                enableLocalDB: true
+                # These variables are from an Azure DevOps Library variable
+                # group.
+                fileStreamDirectory: $(FileStreamDirectory)
+                password: $(password)
+                sqlRootPath: $(SQL22RootPath)
+          # The ADO-MMS22-SQL22 image includes a local SQL Server that supports
+          # integrated security.
+          supportsIntegratedSecurity: true
+          vmImage: ADO-MMS22-SQL22
 
       # ------------------------------------------------------------------------
       # Build and test on macOS.
@@ -242,10 +269,10 @@ stages:
           dependsOn:
             # We depend on all of the test jobs to ensure the tests pass before
             # producing the NuGet package.
-            - test_azure_package_job_linux_basic
-            - test_azure_package_job_linux_comprehensive
-            - test_azure_package_job_windows_basic
-            - test_azure_package_job_windows_comprehensive
+            - test_azure_package_job_linux
+            - test_azure_package_job_linux_integration
+            - test_azure_package_job_windows
+            - test_azure_package_job_windows_integration
             - test_azure_package_job_macos
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           referenceType: ${{ parameters.referenceType }}
