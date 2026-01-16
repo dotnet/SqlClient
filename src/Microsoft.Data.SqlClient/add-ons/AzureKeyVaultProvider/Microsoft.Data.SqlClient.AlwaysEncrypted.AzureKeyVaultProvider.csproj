@@ -1,40 +1,45 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</RootNamespace>
     <AssemblyName>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</AssemblyName>
-    <AddOnName>AzureKeyVaultProvider</AddOnName>
-    <ProjectGuid>{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7}</ProjectGuid>
-    <TargetGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'!='.NETFramework'">netcoreapp</TargetGroup>
-    <TargetGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETFramework'">netfx</TargetGroup>
-    <Configurations>Debug;Release;</Configurations>
-    <Platforms>AnyCPU;x86;x64</Platforms>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AddOnName)</IntermediateOutputPath>
-    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AddOnName)</OutputPath>
-    <DocumentationFile>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName).xml</DocumentationFile>
-    <!--BuildProjectReferences should be kept false to avoid test issues-->
-    <BuildProjectReferences>false</BuildProjectReferences>
+    <RootNamespace>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</RootNamespace>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <IsTrimmable Condition="'$(TargetGroup)'=='netcoreapp'">true</IsTrimmable>
-    <IsAotCompatible Condition="'$(TargetGroup)'=='netcoreapp'">true</IsAotCompatible>
   </PropertyGroup>
-  <!--Generating Strong Name-->
+
+  <!-- Build Output ==================================================== -->
+  <PropertyGroup>
+    <!-- @TODO: $(BindFolder) is OS dependent but we're only ever building AnyOS, so ... can we simplify this? -->
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AddOnName)</OutputPath>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AddOnName)</IntermediateOutputPath>
+    <DocumentationFile>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+
+  <!-- Trim/AOT Support ================================================ -->
+  <PropertyGroup>
+    <IsTrimmable Condition="'$(TargetFramework)' != 'net462'">true</IsTrimmable>
+    <IsAotCompatible Condition="'$(TargetFramework)' != 'net462'">true</IsAotCompatible>
+  </PropertyGroup>
+
+  <!-- Strong name signing ============================================= -->
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(CDP_BUILD_TYPE)'=='Official'">
     <SignAssembly>true</SignAssembly>
     <KeyFile>$(SigningKeyPath)</KeyFile>
   </PropertyGroup>
-  <PropertyGroup>
-    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
+
+  <!-- References ====================================================== -->
+  <!-- MDS Reference -->
   <ItemGroup>
-    <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND !$(ReferenceType.Contains('Package'))" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND !$(ReferenceType.Contains('Package'))" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-    <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Data.SqlClient" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package'" />
+
   </ItemGroup>
 
+  <!-- Other dependencies -->
   <ItemGroup>
     <PackageReference Include="Azure.Core" />
     <PackageReference Include="Azure.Security.KeyVault.Keys" />
