@@ -72,29 +72,37 @@ steps:
 - powershell: |
     try
     {
-    # enable TCP
-    Import-Module "sqlps"
-    $smo = 'Microsoft.SqlServer.Management.Smo.'
-    $wmi = new-object ($smo + 'Wmi.ManagedComputer').
-    # List the object properties, including the instance names.  
-    $Wmi  
-    
-    # Enable the TCP protocol on the default instance.  
-    $Tcp = $wmi.GetSmoObject("ManagedComputer[@Name='$env:COMPUTERNAME']/ ServerInstance[@Name='${{parameters.instanceName }}']/ServerProtocol[@Name='Tcp']")
-    $Tcp.IsEnabled = $true
-    $Tcp.Alter()
-    
-    # Enable the NP protocol on the default instance.
-    $Np = $wmi.GetSmoObject("ManagedComputer[@Name='$env:COMPUTERNAME']/ ServerInstance[@Name='${{parameters.instanceName }}']/ServerProtocol[@Name='Np']")
-    $Np.IsEnabled = $true
-    $Np.Alter()
-    
-    $Tcp
+      # Acquire a WMI handle.
+      Import-Module "sqlps"
+      $smo = 'Microsoft.SqlServer.Management.Smo.'
+      $wmi = new-object ($smo + 'Wmi.ManagedComputer').
+
+      # List the WMI, including the instance names.
+      Write-Host "WMI Information:"
+      $wmi
+
+      # Enable the TCP protocol on the default instance.
+      $Tcp = $wmi.GetSmoObject("ManagedComputer[@Name='$env:COMPUTERNAME']/ ServerInstance[@Name='${{parameters.instanceName }}']/ServerProtocol[@Name='Tcp']")
+      $Tcp.IsEnabled = $true
+      $Tcp.Alter()
+
+      # Emit the TCP object to the pipeline log.
+      Write-Host "TCP Information:"
+      $Tcp
+
+      # Enable the NP protocol on the default instance.
+      $Np = $wmi.GetSmoObject("ManagedComputer[@Name='$env:COMPUTERNAME']/ ServerInstance[@Name='${{parameters.instanceName }}']/ServerProtocol[@Name='Np']")
+      $Np.IsEnabled = $true
+      $Np.Alter()
+
+      # Emit the NP object to the pipeline log.
+      Write-Host "NP Information:"
+      $Np
     }
     catch
     {
-        $error[0] | format-list -force
-        throw
+      $error[0] | format-list -force
+      throw
     }
     
     New-NetFirewallRule -DisplayName "SQL TCP Ports" -Direction Inbound –Protocol TCP –LocalPort 1433 -Action allow
