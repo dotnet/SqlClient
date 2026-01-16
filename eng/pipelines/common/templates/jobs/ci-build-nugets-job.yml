@@ -84,6 +84,21 @@ jobs:
         debug: ${{ parameters.debug }}
         referenceType: ${{ parameters.referenceType }}
 
+  # Install the .NET SDK.
+  - template: /eng/pipelines/steps/install-dotnet.yml@self
+
+  # When we're performing a Debug build, we still want to try _compiling_ the
+  # code in Release mode to ensure downstream pipelines don't encounter
+  # compilation errors.  We won't use the Release artifacts for anything else
+  # though.
+  - ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
+    - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
+      parameters:
+        platform: ${{ parameters.platform }}
+        buildConfiguration: Release
+        operatingSystem: Windows
+        build: all
+
   - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:
       platform: ${{ parameters.platform }}

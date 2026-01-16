@@ -13,10 +13,6 @@ namespace Microsoft.Data.SqlClient
     internal static class TdsEnums
     {
         // internal tdsparser constants
-
-
-        public const string SQL_PROVIDER_NAME = DbConnectionStringDefaults.ApplicationName;
-
         public static readonly decimal SQL_SMALL_MONEY_MIN = new(-214748.3648);
         public static readonly decimal SQL_SMALL_MONEY_MAX = new(214748.3647);
 
@@ -986,9 +982,6 @@ namespace Microsoft.Data.SqlClient
         // Vector Support constants
         internal const byte MAX_SUPPORTED_VECTOR_VERSION = 0x01;
         internal const int VECTOR_HEADER_SIZE = 8;
-
-        // User Agent constants
-        internal const byte SUPPORTED_USER_AGENT_VERSION = 0x01;
 
         // TCE Related constants
         internal const byte MAX_SUPPORTED_TCE_VERSION = 0x03; // max version

@@ -16,8 +16,9 @@ trigger:
     include:
     - .azuredevops
     - .config
+    - doc
+    - eng/pipelines
     - src
-    - eng
     - tools
     - azurepipelines-coverage.yml
     - build.proj

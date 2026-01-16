@@ -73,12 +73,29 @@ steps:
   inputs:
     command: test
     projects: 'src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.FunctionalTests.csproj'
-    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }}  -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.buildConfiguration }} -p:MdsPackageVersion=${{parameters.mdsPackageVersion }} --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"'
+    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }}  -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.buildConfiguration }} -p:MdsPackageVersion=${{parameters.mdsPackageVersion }} --no-build -v n --filter "category!=failing&category!=flaky"'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Run Flaky Functional Tests for ${{parameters.TargetNetCoreVersion }}'
+  inputs:
+    command: test
+    projects: 'src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.FunctionalTests.csproj'
+    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }}  -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.buildConfiguration }} -p:MdsPackageVersion=${{parameters.mdsPackageVersion }} --no-build -v n --filter "category=flaky"'
+  continueOnError: true
 
 - task: DotNetCoreCLI@2
   displayName: 'Run Manual Tests for ${{parameters.TargetNetCoreVersion }}'
   inputs:
     command: test
     projects: 'src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj'
-    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }} -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.buildConfiguration }} -p:MdsPackageVersion=${{parameters.mdsPackageVersion }} --no-build -v n --filter  category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests  --collect "Code Coverage"'
+    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }} -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.buildConfiguration }} -p:MdsPackageVersion=${{parameters.mdsPackageVersion }} --no-build -v n --filter  "category!=failing&category!=flaky" --collect "Code Coverage"'
   retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
+
+- task: DotNetCoreCLI@2
+  displayName: 'Run Flaky Manual Tests for ${{parameters.TargetNetCoreVersion }}'
+  inputs:
+    command: test
+    projects: 'src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj'
+    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }} -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.buildConfiguration }} -p:MdsPackageVersion=${{parameters.mdsPackageVersion }} --no-build -v n --filter  "category=flaky" --collect "Code Coverage"'
+  retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
+  continueOnError: true

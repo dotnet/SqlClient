@@ -256,7 +256,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{EABE3A3E
 		..\eng\pipelines\common\templates\steps\configure-sql-server-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-step.yml
 		..\eng\pipelines\common\templates\steps\configure-sql-server-win-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-win-step.yml
 		..\eng\pipelines\common\templates\steps\copy-dlls-for-test-step.yml = ..\eng\pipelines\common\templates\steps\copy-dlls-for-test-step.yml
-		..\eng\pipelines\common\templates\steps\ensure-dotnet-version.yml = ..\eng\pipelines\common\templates\steps\ensure-dotnet-version.yml
 		..\eng\pipelines\common\templates\steps\esrp-code-signing-step.yml = ..\eng\pipelines\common\templates\steps\esrp-code-signing-step.yml
 		..\eng\pipelines\common\templates\steps\generate-nuget-package-step.yml = ..\eng\pipelines\common\templates\steps\generate-nuget-package-step.yml
 		..\eng\pipelines\common\templates\steps\override-sni-version.yml = ..\eng\pipelines\common\templates\steps\override-sni-version.yml
@@ -298,6 +297,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{AD738BD4
 		..\eng\pipelines\steps\compound-publish-symbols-step.yml = ..\eng\pipelines\steps\compound-publish-symbols-step.yml
 		..\eng\pipelines\steps\roslyn-analyzers-akv-step.yml = ..\eng\pipelines\steps\roslyn-analyzers-akv-step.yml
 		..\eng\pipelines\steps\script-output-environment-variables-step.yml = ..\eng\pipelines\steps\script-output-environment-variables-step.yml
+		..\eng\pipelines\steps\install-dotnet.yml = ..\eng\pipelines\steps\install-dotnet.yml
+		..\eng\pipelines\steps\install-dotnet-arm64.ps1 = ..\eng\pipelines\steps\install-dotnet-arm64.ps1
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.UnitTests", "Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj", "{4461063D-2F2B-274C-7E6F-F235119D258E}"
@@ -337,6 +338,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{5AF52CDD-DF78-3712-7516-5B49F94F9491}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Test", "Microsoft.Data.SqlClient.Extensions\Azure\test\Azure.Test.csproj", "{A7C0B6C7-A4B2-43CA-921B-D4FAEE86ACBC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.TestCommon", "Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj", "{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -726,6 +729,18 @@ Global
 		{A7C0B6C7-A4B2-43CA-921B-D4FAEE86ACBC}.Release|x64.Build.0 = Release|Any CPU
 		{A7C0B6C7-A4B2-43CA-921B-D4FAEE86ACBC}.Release|x86.ActiveCfg = Release|Any CPU
 		{A7C0B6C7-A4B2-43CA-921B-D4FAEE86ACBC}.Release|x86.Build.0 = Release|Any CPU
+		{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}.Debug|x64.ActiveCfg = Debug|x64
+		{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}.Debug|x64.Build.0 = Debug|x64
+		{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}.Debug|x86.ActiveCfg = Debug|x86
+		{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}.Debug|x86.Build.0 = Debug|x86
+		{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}.Release|x64.ActiveCfg = Release|x64
+		{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}.Release|x64.Build.0 = Release|x64
+		{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}.Release|x86.ActiveCfg = Release|x86
+		{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -793,6 +808,7 @@ Global
 		{20C16035-7293-45AC-8217-9B86A389E571} = {0D2F834B-6D91-18D0-3F09-672D448751BD}
 		{5AF52CDD-DF78-3712-7516-5B49F94F9491} = {A20114E1-82D8-903A-C389-726EB4FD943F}
 		{A7C0B6C7-A4B2-43CA-921B-D4FAEE86ACBC} = {5AF52CDD-DF78-3712-7516-5B49F94F9491}
+		{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}

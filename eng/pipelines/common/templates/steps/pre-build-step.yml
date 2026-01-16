@@ -4,33 +4,22 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 steps:
-- template: /eng/pipelines/common/templates/steps/ensure-dotnet-version.yml@self
-  parameters:
-    packageType: 'sdk'
-    version: '10.0'
-    usePreview: false
+  # Install the .NET SDK and Runtimes.
+  - template: /eng/pipelines/steps/install-dotnet.yml@self
+    parameters:
+      runtimes: [8.x, 9.x]
 
-- template: /eng/pipelines/common/templates/steps/ensure-dotnet-version.yml@self
-  parameters:
-    packageType: 'runtime'
-    version: '9.0'
+  - script: SET
+    displayName: 'Print Environment Variables'
 
-- template: /eng/pipelines/common/templates/steps/ensure-dotnet-version.yml@self
-  parameters:
-    packageType: 'runtime'
-    version: '8.0'
+  - powershell: |
+      # use sqlcmd to try to connect to localdb
+      $svc_name = "SQLBrowser"
+      Get-Service $svc_name | Select-Object -Property Name, StartType, Status
+      Set-Service -StartupType Automatic $svc_name
+      net start $svc_name
+      Get-Service $svc_name | Select-Object -Property Name, StartType, Status
+    displayName: 'Start SQLBrowser'
 
-- script: SET
-  displayName: 'Print Environment Variables'
-
-- powershell: |
-    # use sqlcmd to try to connect to localdb
-    $svc_name = "SQLBrowser"
-    Get-Service $svc_name | Select-Object -Property Name, StartType, Status
-    Set-Service -StartupType Automatic $svc_name
-    net start $svc_name
-    Get-Service $svc_name | Select-Object -Property Name, StartType, Status
-  displayName: 'Start SQLBrowser'
-
-- task: NuGetToolInstaller@1
-  displayName: 'Use NuGet'
+  - task: NuGetToolInstaller@1
+    displayName: 'Use NuGet'

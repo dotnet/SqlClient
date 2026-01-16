@@ -21,6 +21,13 @@
     <TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
   </PropertyGroup>
   
+  <!-- Internals visible to ============================================ -->
+  <ItemGroup Condition="'$(CDP_BUILD_TYPE)' != 'Official'">
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>UnitTests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
   <!-- OS Constants ==================================================== -->
   <PropertyGroup>
     <!-- @TODO: Move to directory.build.props? -->
