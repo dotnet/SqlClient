@@ -52,54 +52,43 @@ AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverB
 </runtime>
 ```
 
+### Changed
 
-## Target Platform Support
+- Updated dependencies ([#3840](https://github.com/dotnet/SqlClient/pull/3840)):
+  - .NET Framework 4.6.2:
 
-- .NET Framework 4.6.2+ (Windows ARM64, Windows x64, Windows x86)
-- .NET 8.0+ (Linux, macOS, Windows ARM64, Windows x64, Windows x86)
+    - Azure.Core 1.50.0 - Added
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - Microsoft.IdentityModel.JsonWebTokens 7.5.0 -> 7.7.1
+    - Microsoft.IdentityModel.Protocols.OpenIdConnect 7.5.0 -> 7.7.1
+    - System.Buffers 4.5.1 -> 4.6.1
+    - System.Text.Json 8.0.5 -> 8.0.6
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Encodings.Web - Removed
 
-### Dependencies
+  - .NET 8.0:
 
-#### .NET Framework
+    - Azure.Core 1.50.0 - Added
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - Microsoft.IdentityModel.JsonWebTokens 7.5.0 -> 7.7.1
+    - Microsoft.IdentityModel.Protocols.OpenIdConnect 7.5.0 -> 7.7.1
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Json - Removed
 
-- Azure.Core 1.50.0
-- Azure.Identity 1.17.1
-- Microsoft.Data.SqlClient.SNI 6.0.2
-- Microsoft.Extensions.Caching.Memory 8.0.1
-- Microsoft.Identity.Client 4.80.0
-- Microsoft.IdentityModel.JsonWebTokens 7.7.1
-- Microsoft.IdentityModel.Protocols.OpenIdConnect 7.7.1
-- System.Buffers 4.6.1
-- System.Security.Cryptography.Pkcs 8.0.1
-- System.Text.Json 8.0.6
+  - .NET 9.0:
 
-#### .NET 8
+    - Azure.Core 1.50.0 - Added
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Extensions.Caching.Memory 9.0.4 -> 9.0.11
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - Microsoft.IdentityModel.JsonWebTokens 7.5.0 -> 7.7.1
+    - Microsoft.IdentityModel.Protocols.OpenIdConnect 7.5.0 -> 7.7.1
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Json - Removed
 
-- Azure.Core 1.50.0
-- Azure.Identity 1.17.1
-- Microsoft.Data.SqlClient.SNI.runtime 6.0.2
-- Microsoft.Extensions.Caching.Memory 8.0.1
-- Microsoft.Identity.Client 4.80.0
-- Microsoft.IdentityModel.JsonWebTokens 7.7.1
-- Microsoft.IdentityModel.Protocols.OpenIdConnect 7.7.1
-- Microsoft.SqlServer.Server 1.0.0
-- System.Configuration.ConfigurationManager 8.0.1
-- System.Security.Cryptography.Pkcs 8.0.1
-
-#### .NET 9
-
-- Azure.Core 1.50.0
-- Azure.Identity 1.17.1
-- Microsoft.Data.SqlClient.SNI.runtime 6.0.2
-- Microsoft.Extensions.Caching.Memory 9.0.11
-- Microsoft.Identity.Client 4.80.0
-- Microsoft.IdentityModel.JsonWebTokens 7.7.1
-- Microsoft.IdentityModel.Protocols.OpenIdConnect 7.7.1
-- Microsoft.SqlServer.Server 1.0.0
-- System.Configuration.ConfigurationManager 9.0.4
-- System.Security.Cryptography.Pkcs 9.0.4
-
-
+    
 ## [Stable Release 6.1.4] - 2026-01-15
 
 This update brings the following changes since the [6.1.3](release-notes/6.1/6.1.3.md) release:
