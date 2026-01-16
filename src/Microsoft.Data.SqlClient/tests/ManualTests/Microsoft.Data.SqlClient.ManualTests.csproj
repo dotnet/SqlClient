@@ -410,6 +410,5 @@
 
 <!--  <ItemGroup>-->
 <!--    <ProjectReference Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />-->
-
 <!--  </ItemGroup>-->
 </Project>
