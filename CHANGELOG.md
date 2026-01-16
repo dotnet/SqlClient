@@ -88,7 +88,6 @@ AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverB
     - Microsoft.Bcl.Cryptography - Removed
     - System.Text.Json - Removed
 
-    
 ## [Stable Release 6.1.4] - 2026-01-15
 
 This update brings the following changes since the [6.1.3](release-notes/6.1/6.1.3.md) release:
