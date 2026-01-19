@@ -7,7 +7,6 @@
 # @TODO: This can probably be made generic and pass in the command lines for msbuild
 #        BUT, they should be kept separate by now as we rebuild build.proj in parallel, we won't
 #        affect >1 project at a time.
-# @TODO: mdsPackageVersion should not be used for MDS package version
 
 parameters:
   - name: akvAssemblyFileVersion

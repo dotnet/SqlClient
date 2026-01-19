@@ -27,9 +27,9 @@
     </When>
     <Otherwise>
       <PropertyGroup>
-        <!-- <MdsVersion>5.1.8</MdsVersion> -->
-        <!-- <MdsVersion>6.0.3</MdsVersion> -->
-        <MdsVersion>6.1.3</MdsVersion>
+        <!-- <MdsVersion>5.1.9</MdsVersion> -->
+        <!-- <MdsVersion>6.0.5</MdsVersion> -->
+        <MdsVersion>6.1.4</MdsVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>
