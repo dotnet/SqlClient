@@ -9,7 +9,7 @@ trigger:
   branches:
     include:
 
-    # This pipeline is intended to only run against the ADO dotnet-sqlclient
+    # This pipeline is intended to only run against the ADO.Net dotnet-sqlclient
     # repo.
     - internal/main
   paths:
@@ -75,7 +75,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 variables:
   - template: /eng/pipelines/libraries/variables.yml@self
   - name: packageFolderName
-    value: drop_buildMDS_build_signed_package
+    value: packages
   - name: PublishSymbols
     value: ${{ parameters['publishSymbols'] }}
   - name: CurrentNetFxVersion
@@ -170,7 +170,6 @@ extends:
 # Disabling as of 10/15/2025 due to OneBranch apparently disallowing MSBuild tasks in validation stages.
 #      - template: /eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
 #        parameters:
-#          packageFolderName: $(packageFolderName)
 #          isPreview: ${{ parameters['isPreview'] }}
 #          timeout: ${{ parameters.testJobTimeout }}
 #          downloadPackageStep:

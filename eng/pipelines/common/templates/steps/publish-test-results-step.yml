@@ -55,7 +55,7 @@ steps:
     displayName: '[Debug] List test result coverage files'
 
 - task: PublishPipelineArtifact@1
-  displayName: 'Publish Pipeline Artifact'
+  displayName: 'Publish Pipeline Artifacts'
   inputs:
     targetPath: TestResults
     artifact: '${{parameters.targetFramework }}WinAz$(System.JobId)'

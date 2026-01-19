@@ -4,8 +4,7 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-- name: 'debug'
-  displayName: 'Enable debug output'
+- name: debug
   type: boolean
   default: false
 
@@ -14,7 +13,6 @@ parameters:
 # These are _not_ the target frameworks to build the driver packages for.
 #
 - name: targetFrameworks
-  displayName: 'Target Frameworks on Windows'
   type: object
   default: [net462, net8.0, net9.0, net10.0]
 
@@ -23,48 +21,46 @@ parameters:
 # These are _not_ the target frameworks to build the driver packages for.
 #
 - name: targetFrameworksUnix
-  displayName: 'Target Frameworks on Unix'
   type: object
   default: [net8.0, net9.0, net10.0]
 
+# Netcore Version for Test Utilities
 - name: netcoreVersionTestUtils
-  displayName: 'Netcore Version for Test Utilities'
   type: object
   default: net10.0
 
+# Build Platforms on Windows
 - name: buildPlatforms
-  displayName: 'Build Platforms on Windows'
   type: object
   default: [AnyCPU]
 
+# Test sets to run
 - name: testSets
-  displayName: 'Test Sets'
   type: object
   default: [1, 2, 3]
 
+#  Use Managed/Native SNI on Windows; valid values are:
+#    [true, false]
+#    [false, true]
+#    [false]
+#    [true]
 - name: useManagedSNI
-  displayName: |
-    Use Managed/Native SNI on Windows,
-    values [false, true], [false] or [true] are allowed
   type: object
   default: [false, true]
 
+# SNI Version Override
 - name: SNIVersion
-  displayName: |
-    SNI Version Override
   type: string
   default: ''
 
+# SNI Version Override Nuget Feed
 - name: SNIValidationFeed
-  displayName: |
-    SNI Version Override Nuget Feed
   type: string
   default: https://sqlclientdrivers.pkgs.visualstudio.com/ADO.Net/_packaging/SNIValidation/nuget/v3/index.json
 
 # Frameworks to expect code coverage information for, and to compile into
 # reports.
 - name: codeCovTargetFrameworks
-  displayName: 'Code Coverage Target Frameworks'
   type: object
   default: [net462, net8.0, net9.0, net10.0]
 
@@ -73,7 +69,6 @@ parameters:
 #   Package - use <PackageReference> references to NuGet packages in the
 #             packages/ directory.
 - name: referenceType
-  displayName: 'Reference Type'
   values:
     - Project
     - Package
@@ -88,8 +83,8 @@ parameters:
   type: string
   default: $(ci_var_defaultPoolName)
 
+# True to add a Stress Test stage to the pipeline.
 - name: enableStressTests
-  displayName: Enable Stress Tests
   type: boolean
   default: false
 
@@ -104,7 +99,6 @@ parameters:
   default: true
 
 - name: dotnetVerbosity
-  displayName: dotnet CLI Verbosity
   type: string
   default: normal
   values:
@@ -117,8 +111,8 @@ parameters:
 variables:
   - template: /eng/pipelines/libraries/ci-build-variables.yml@self
 
-  - name: mdsArtifactName
-    value: MDS.Artifact
+  - name: mdsArtifactsName
+    value: MDS.Artifacts
 
 stages:
 
@@ -132,7 +126,7 @@ stages:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.referenceType }}
         mdsPackageVersion: $(mdsPackageVersion)
-        mdsArtifactName: $(mdsArtifactName)
+        mdsArtifactsName: $(mdsArtifactsName)
         ${{if ne(parameters.SNIVersion, '')}}:
           prebuildSteps:
             - template: /eng/pipelines/common/templates/steps/override-sni-version.yml@self
@@ -157,7 +151,7 @@ stages:
       debug: ${{ parameters.debug }}
       buildConfiguration: ${{ parameters.buildConfiguration }}
       referenceType: ${{ parameters.referenceType }}
-      mdsArtifactName: $(mdsArtifactName)
+      mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
       testJobTimeout: ${{ parameters.testJobTimeout }}
 
@@ -166,17 +160,21 @@ stages:
         dependsOn:
           - build_mds_akv_packages_stage
 
-      prebuildSteps: # steps to run prior to building and running tests on each job
+      # Steps to run prior to building and running tests on each job.
+      prebuildSteps:
         - ${{if ne(parameters.SNIVersion, '')}}:
           - template: /eng/pipelines/common/templates/steps/override-sni-version.yml@self
             parameters:
               SNIVersion: ${{parameters.SNIVersion}}
               SNIValidationFeed: ${{parameters.SNIValidationFeed}}
 
-        - template: /eng/pipelines/common/templates/steps/ci-prebuild-step.yml@self
-          parameters:
-            debug: ${{ parameters.debug }}
-            referenceType: ${{ parameters.referenceType }}
+        - ${{if eq(parameters.debug, true)}}:
+          - pwsh: 'Get-ChildItem env: | Sort-Object Name'
+            displayName: '[Debug] List Environment Variables'
+
+        - ${{if eq(parameters.referenceType, 'Package')}}:
+          - pwsh: Copy-Item -Path "$(Build.SourcesDirectory)/NuGet.config.local" -Destination "$(Build.SourcesDirectory)/NuGet.config" -Force
+            displayName: Use local NuGet packages
 
       # Include the code coverage job if the build type is Project.
       ${{ if eq(parameters.referenceType, 'Project') }}:

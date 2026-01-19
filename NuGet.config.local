@@ -1,7 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-  This NuGet config is used by our Azure Pipelines builds when we need to
-  reference packages that are not available on the public nuget.org feed.
+  This NuGet config is used by developers and our pipelines builds when we need
+  to reference packages that are not available on the public nuget.org feed,
+  for example to test AKV that dependds on an un-published version of MDS.
 -->
 <configuration>
   <packageSources>
@@ -12,8 +13,4 @@
     <!-- Our local packages/ directory. -->
     <add key="local" value="packages/" />
   </packageSources>
-  <auditSources>
-    <clear />
-    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-  </auditSources>
 </configuration>

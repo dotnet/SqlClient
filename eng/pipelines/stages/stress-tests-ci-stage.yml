@@ -60,13 +60,13 @@ parameters:
   - name: netFrameworkTestRuntimes
     displayName: .NET Framework Test Runtimes
     type: object
-    default: [net462, net47, net471, net472, net48, net481]
+    default: [net462]
 
   # The list of .NET runtimes to test against.
   - name: netTestRuntimes
     displayName: .NET Test Runtimes
     type: object
-    default: [net8.0, net9.0]
+    default: [net8.0, net9.0, net10.0]
 
   # The name of the pipeline artifact to download that contains the MDS package
   # to stress test.

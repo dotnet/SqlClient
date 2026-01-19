@@ -13,7 +13,7 @@
     <!-- Future Assembly Version values shall be Major.Minor.0.0; e.g. 1.0.0.0 -->
     <SqlServerAssemblyVersion>1.0.0.0</SqlServerAssemblyVersion>
     <SqlServerAssemblyFileVersion Condition="'$(SqlServerAssemblyFileVersion)' == ''">1.0.0.0</SqlServerAssemblyFileVersion>
-    <SqlServerPackageVersion Condition="'$(SqlServerPackageVersion)' == ''">1.0.0-dev</SqlServerPackageVersion>
+    <SqlServerPackageVersion Condition="'$(SqlServerPackageVersion)' == ''">1.0.0.$(BuildNumber)-dev</SqlServerPackageVersion>
     <SqlServerLibVersion>$(SqlServerPackageVersion)</SqlServerLibVersion>
   </PropertyGroup>
 

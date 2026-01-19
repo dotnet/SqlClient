@@ -34,7 +34,7 @@ parameters:
   - name: jobDisplayName
     type: string
 
-  - name: mdsArtifactName
+  - name: mdsArtifactsName
     type: string
 
   - name: mdsPackageVersion
@@ -114,9 +114,9 @@ jobs:
   # artifacts and put them in the packages/ directory in the repo root.
   - ${{ if eq(parameters.referenceType, 'Package') }}:
     - task: DownloadPipelineArtifact@2
-      displayName: Download MDS Package Artifact
+      displayName: Download MDS Package Artifacts
       inputs:
-        artifactName: ${{ parameters.mdsArtifactName }}
+        artifactName: ${{ parameters.mdsArtifactsName }}
         targetPath: $(Build.SourcesDirectory)/packages
 
   # Install the .NET SDK and Runtimes.

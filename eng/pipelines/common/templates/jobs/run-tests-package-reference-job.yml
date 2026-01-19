@@ -9,10 +9,6 @@ parameters:
     default:
       script: echo <empty step>
 
-  - name: packageFolderName
-    type: string
-    default: drop_build_build_signed_package
-
   - name: dependsOn
     type: string
     default: empty
@@ -48,9 +44,8 @@ jobs:
  
   - ${{parameters.downloadPackageStep }}
 
-  - template: /eng/pipelines/common/templates/steps/update-nuget-config-local-feed-step.yml
-    parameters:
-      packagePath: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
+  - pwsh: Copy-Item -Path "$(Build.SourcesDirectory)/NuGet.config.local" -Destination "$(Build.SourcesDirectory)/NuGet.config" -Force
+    displayName: Use local NuGet packages
 
   - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml
     parameters: 

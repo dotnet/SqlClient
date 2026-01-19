@@ -50,11 +50,6 @@ jobs:
   # Perform analysis before building, since this step will clobber build output.
   - template: /eng/pipelines/common/templates/steps/code-analyze-step.yml@self
   
-  # Update the root NuGet.config to use the packages/ directory as a source.
-  - template: /eng/pipelines/common/templates/steps/update-nuget-config-local-feed-step.yml@self
-    parameters:
-      packagePath: $(REPOROOT)/packages
-  
   # Build MDS in Package mode, producing signed DLLs.
   - template: /eng/pipelines/common/templates/steps/build-all-configurations-signed-dlls-step.yml@self
     parameters:
