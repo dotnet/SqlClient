@@ -6,9 +6,6 @@ using System;
 
 #if NETFRAMEWORK
 using System.Runtime.Versioning;
-#endif
-
-#if _WINDOWS
 using System.Security.Principal;
 #endif
 

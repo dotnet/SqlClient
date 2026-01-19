@@ -5,15 +5,15 @@
 #################################################################################
 
 variables:
-  - template: common-variables.yml@self
-  - template: mds-variables.yml@self
+  - template: /eng/pipelines/libraries/common-variables.yml@self
+  - template: /eng/pipelines/libraries/mds-variables.yml@self
 
   - name: TempFolderName # extract the nuget package here
     value: temp
   - name: extractedNugetRootPath
     value: $(Build.SourcesDirectory)\$(TempFolderName)\Microsoft.Data.SqlClient
   - name: extractedNugetPath
-    value: $(extractedNugetRootPath).$(NugetPackageVersion)
+    value: $(extractedNugetRootPath).$(mdsPackageVersion)
   - name: expectedFolderNames
     value: lib,ref,runtimes
   - name: expectedDotnetVersions

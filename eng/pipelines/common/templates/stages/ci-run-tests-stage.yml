@@ -4,36 +4,43 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: debug
-    type: boolean
-    default: false
-
-  - name: testConfigurations
-    type: object
-
-  - name: dependsOn
-    type: string
-    default: ''
-
-  - name: buildType
-    default: Project
-    values:
-      - Project
-      - Package
-
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
-  - name: prebuildSteps
-    type: stepList
+  - name: debug
+    type: boolean
+    default: false
+
+  - name: dependsOn
+    type: object
     default: []
+
+  - name: mdsArtifactName
+    type: string
+    default: MDS.Artifact
+
+  - name: mdsPackageVersion
+    type: string
   
   - name: postTestJobs
     type: jobList
     default: []
+
+  - name: prebuildSteps
+    type: stepList
+    default: []
+
+  - name: referenceType
+    default: Project
+    values:
+      - Project
+      - Package
+
+  - name: testConfigurations
+    type: object
 
   # The timeout, in minutes, for each test job.
   - name: testJobTimeout
@@ -43,26 +50,25 @@ stages:
 - ${{ each config in parameters.testConfigurations }}:
   - ${{ each image in config.value.images }}:
     - stage: ${{ image.key }}
-      ${{ if ne(parameters.dependsOn, '') }}:
-        dependsOn: ${{ parameters.dependsOn }}
-      ${{ else }}:
-        dependsOn: []
+      dependsOn: ${{ parameters.dependsOn }}
       jobs:
       - ${{ each targetFramework in config.value.TargetFrameworks }}:
         - ${{ each platform in config.value.buildPlatforms }}:
           - ${{ each testSet in config.value.TestSets }}:
             - ${{ if contains(targetFramework, 'net4') }}: # .NET Framework
-              - template: ../jobs/ci-run-tests-job.yml@self
+              - template: /eng/pipelines/common/templates/jobs/ci-run-tests-job.yml@self
                 parameters:
                   debug: ${{ parameters.debug }}
                   buildConfiguration: ${{ parameters.buildConfiguration }}
-                  buildType: ${{ parameters.buildType }}
+                  referenceType: ${{ parameters.referenceType }}
                   timeout: ${{ parameters.testJobTimeout }}
                   poolName: ${{ config.value.pool }}
                   hostedPool: ${{ eq(config.value.hostedPool, true) }}
                   image: ${{ image.value }}
                   jobDisplayName: ${{ format('{0}_{1}_{2}', replace(targetFramework, '.', '_'), platform, testSet) }}
                   configProperties: ${{ config.value.configProperties }}
+                  mdsArtifactName: ${{ parameters.mdsArtifactName }}
+                  mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
                   prebuildSteps: ${{ parameters.prebuildSteps }}
                   targetFramework: ${{ targetFramework }}
                   netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
@@ -80,11 +86,11 @@ stages:
                         enableX64Test: false
             - ${{ else }}: # .NET
               - ${{ each useManagedSNI in config.value.useManagedSNI }}:
-                - template: ../jobs/ci-run-tests-job.yml@self
+                - template: /eng/pipelines/common/templates/jobs/ci-run-tests-job.yml@self
                   parameters:
                     debug: ${{ parameters.debug }}
                     buildConfiguration: ${{ parameters.buildConfiguration }}
-                    buildType: ${{ parameters.buildType }}
+                    referenceType: ${{ parameters.referenceType }}
                     timeout: ${{ parameters.testJobTimeout }}
                     poolName: ${{ config.value.pool }}
                     hostedPool: ${{ eq(config.value.hostedPool, true) }}
@@ -95,6 +101,8 @@ stages:
                       jobDisplayName: ${{ format('{0}_{1}_{2}_{3}', replace(targetFramework, '.', '_'), platform, 'NativeSNI', testSet) }}
                     configProperties: ${{ config.value.configProperties }}
                     useManagedSNI: ${{ useManagedSNI }}
+                    mdsArtifactName: ${{ parameters.mdsArtifactName }}
+                    mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
                     prebuildSteps: ${{ parameters.prebuildSteps }}                  
                     targetFramework: ${{ targetFramework }}
                     netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}

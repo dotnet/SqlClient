@@ -619,7 +619,7 @@ namespace Microsoft.Data.SqlClient.Connection
         internal override bool IsAccessTokenExpired
         {
             get => _federatedAuthenticationInfoRequested &&
-                   DateTime.FromFileTimeUtc(_fedAuthToken.expirationFileTime) < DateTime.UtcNow.AddSeconds(accessTokenExpirationBufferTime);
+                   DateTime.FromFileTimeUtc(_fedAuthToken.ExpirationFileTime) < DateTime.UtcNow.AddSeconds(accessTokenExpirationBufferTime);
         }
 
         /// <summary>
@@ -1806,8 +1806,8 @@ namespace Microsoft.Data.SqlClient.Connection
                 // Construct the dbAuthenticationContextKey with information from FedAuthInfo and
                 // store for later use, when inserting in to the token cache.
                 _dbConnectionPoolAuthenticationContextKey = new DbConnectionPoolAuthenticationContextKey(
-                    fedAuthInfo.stsurl,
-                    fedAuthInfo.spn);
+                    fedAuthInfo.StsUrl,
+                    fedAuthInfo.Spn);
 
                 // Try to retrieve the authentication context from the pool, if one does exist for
                 // this key.
@@ -1928,14 +1928,12 @@ namespace Microsoft.Data.SqlClient.Connection
 
                 // If the code flow is here, then we are re-using the context from the cache for
                 // this connection attempt and not generating a new access token on this thread.
-                _fedAuthToken = new SqlFedAuthToken
-                {
-                    accessToken = dbConnectionPoolAuthenticationContext.AccessToken,
-                    expirationFileTime = dbConnectionPoolAuthenticationContext.ExpirationTime.ToFileTime()
-                };
+                _fedAuthToken = new(
+                    dbConnectionPoolAuthenticationContext.AccessToken,
+                    dbConnectionPoolAuthenticationContext.ExpirationTime.ToFileTime());
             }
 
-            Debug.Assert(_fedAuthToken?.accessToken != null,
+            Debug.Assert(_fedAuthToken?.AccessToken != null,
                 "_fedAuthToken and _fedAuthToken.accessToken cannot be null.");
 
             _parser.SendFedAuthToken(_fedAuthToken);
@@ -2717,9 +2715,6 @@ namespace Microsoft.Data.SqlClient.Connection
             // Number of attempts, for tracing purposes, if we underwent retries.
             int numberOfAttempts = 0;
 
-            // Object that will be returned to the caller, containing all required data about the token.
-            _fedAuthToken = new SqlFedAuthToken();
-
             // Username to use in error messages.
             string username = null;
 
@@ -2748,8 +2743,8 @@ namespace Microsoft.Data.SqlClient.Connection
                 {
                     var authParamsBuilder = new SqlAuthenticationParameters.Builder(
                         authenticationMethod: ConnectionOptions.Authentication,
-                        resource: fedAuthInfo.spn,
-                        authority: fedAuthInfo.stsurl,
+                        resource: fedAuthInfo.Spn,
+                        authority: fedAuthInfo.StsUrl,
                         serverName: ConnectionOptions.DataSource,
                         databaseName: ConnectionOptions.InitialCatalog)
                         .WithConnectionId(_clientConnectionId)
@@ -2892,7 +2887,7 @@ namespace Microsoft.Data.SqlClient.Connection
                             break;
                     }
 
-                    Debug.Assert(_fedAuthToken.accessToken != null, "AccessToken should not be null.");
+                    Debug.Assert(_fedAuthToken.AccessToken != null, "AccessToken should not be null.");
 
                     #if DEBUG
                     if (_forceMsalRetry)
@@ -2994,16 +2989,27 @@ namespace Microsoft.Data.SqlClient.Connection
                 }
             }
 
-            Debug.Assert(_fedAuthToken != null, "fedAuthToken should not be null.");
-            Debug.Assert(_fedAuthToken.accessToken?.Length > 0,
-                "fedAuthToken.accessToken should not be null or empty.");
+            // Nullable context has exposed that _fedAuthToken may be null here,
+            // which the existing code didn't handle.
+            if (_fedAuthToken is null)
+            {
+                // We failed to acquire a token, so use a default one.
+                //
+                // TODO: The old code actually allowed the AccessToken byte
+                // array to be null, and then had Debug.Assert()s to verify it
+                // wasn't null.  We never test in debug, so those were never
+                // firing, and we were happily using a _fedAuthToken with a null
+                // AccessToken.  Now that SqlFedAuthToken doesn't allow a null
+                // AccessToken, we just create an empty one instead.
+                _fedAuthToken = new SqlFedAuthToken([], 0);
+            }
 
             // Store the newly generated token in _newDbConnectionPoolAuthenticationContext, only if using pooling.
             if (_dbConnectionPool != null)
             {
-                DateTime expirationTime = DateTime.FromFileTimeUtc(_fedAuthToken.expirationFileTime);
+                DateTime expirationTime = DateTime.FromFileTimeUtc(_fedAuthToken.ExpirationFileTime);
                 _newDbConnectionPoolAuthenticationContext = new DbConnectionPoolAuthenticationContext(
-                    _fedAuthToken.accessToken,
+                    _fedAuthToken.AccessToken,
                     expirationTime);
             }
 
