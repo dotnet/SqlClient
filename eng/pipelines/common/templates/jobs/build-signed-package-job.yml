@@ -85,11 +85,13 @@ jobs:
   - template: /eng/pipelines/common/templates/steps/copy-dlls-for-test-step.yml@self
     parameters:
       buildConfiguration: Release
+      referenceType: Package
       product: MDS
 
   # Publish symbols to servers
   - template: /eng/pipelines/common/templates/steps/publish-symbols-step.yml@self
     parameters:
       buildConfiguration: Release
+      referenceType: Package
       publishSymbols: ${{ parameters['PublishSymbols'] }}
       symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(mdsPackageVersion)_$(System.TimelineId)

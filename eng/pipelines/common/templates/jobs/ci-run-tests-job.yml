@@ -155,6 +155,7 @@ jobs:
       parameters:
         build: allNoDocs
         buildConfiguration: ${{ parameters.buildConfiguration }}
+        referenceType: ${{ parameters.referenceType }}
 
   - ${{ if ne(parameters.configProperties, '{}') }}:
     - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self # update config.json file

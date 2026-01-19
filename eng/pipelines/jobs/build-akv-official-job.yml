@@ -154,7 +154,7 @@ jobs:
                   publishToInternal: true
                   publishToPublic: true
                   publishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
-                  referenceType: 'Package'
+                  referenceType: Package
                   searchPattern: |
                       Windows_NT/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/$(PACKAGE_NAME).pdb
                       AnyOS/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/$(PACKAGE_NAME).pdb

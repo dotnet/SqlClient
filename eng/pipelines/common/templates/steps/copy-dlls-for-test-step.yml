@@ -19,10 +19,9 @@ parameters:
     default: software
   
   - name: referenceType
-    default: project
     values:
-    - project
-    - package
+    - Project
+    - Package
 
   - name: listOfTF
     type: object
