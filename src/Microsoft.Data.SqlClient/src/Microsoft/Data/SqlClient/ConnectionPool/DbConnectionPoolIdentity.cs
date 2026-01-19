@@ -6,8 +6,8 @@ using System;
 
 #if NETFRAMEWORK
 using System.Runtime.Versioning;
-using System.Security.Principal;
 #endif
+using System.Security.Principal;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
