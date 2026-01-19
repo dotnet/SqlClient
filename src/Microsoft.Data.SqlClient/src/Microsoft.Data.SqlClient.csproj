@@ -139,19 +139,6 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
 
-  <!--
-    Refer to the Abstractions package via project or package reference
-    depending on our build parameters.
-  -->
-  <ItemGroup>
-    <ProjectReference
-      Include="../../Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"
-      Condition="'$(ReferenceType)' == 'Project'" />
-    <PackageReference
-      Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
-      Condition="'$(ReferenceType)' == 'Package'" />
-  </ItemGroup>
-
   <!-- CodeGen Targets ================================================= -->
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
 </Project>
