@@ -136,7 +136,7 @@ steps:
         -p:ReferenceType=${{ parameters.ReferenceType }}
         -p:TestEnabled=true
         -p:GenerateDocumentationFile=false
-        -p:configuration=${{ parameters.configuration }}
+        -p:Configuration=${{ parameters.buildConfiguration }}
       verbosityRestore: Detailed
       verbosityPack: Detailed
     retryCountOnTaskFailure: 1
