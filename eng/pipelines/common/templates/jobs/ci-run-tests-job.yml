@@ -150,7 +150,7 @@ jobs:
       }
     displayName: 'Verify Password'
 
-  - ${{ if eq(parameters.buildType, 'Project') }}:
+  - ${{ if eq(parameters.referenceType, 'Project') }}:
     - template: ../steps/ci-project-build-step.yml@self
       parameters:
         build: allNoDocs

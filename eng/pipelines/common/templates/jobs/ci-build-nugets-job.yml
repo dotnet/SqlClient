@@ -83,6 +83,7 @@ jobs:
       parameters:
         platform: ${{ parameters.platform }}
         buildConfiguration: Release
+        referenceType: ${{ parameters.referenceType }}
         operatingSystem: Windows
         build: all
 
