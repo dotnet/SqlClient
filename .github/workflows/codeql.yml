@@ -90,15 +90,11 @@ jobs:
       # projects instead of the main solution file.
       run: |
         dotnet build src/Microsoft.SqlServer.Server
-        dotnet build src/Microsoft.Data.SqlClient.Extensions/Abstractions/src
-        dotnet build src/Microsoft.Data.SqlClient.Extensions/Abstractions/test
         dotnet build src/Microsoft.Data.SqlClient/netcore/ref
         dotnet build src/Microsoft.Data.SqlClient/netcore/src
         dotnet build src/Microsoft.Data.SqlClient/netfx/ref
         dotnet build src/Microsoft.Data.SqlClient/netfx/src
         dotnet build src/Microsoft.Data.SqlClient/src
-        dotnet build src/Microsoft.Data.SqlClient.Extensions/Azure/src
-        dotnet build src/Microsoft.Data.SqlClient.Extensions/Azure/test
         dotnet build src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider
         dotnet build src/Microsoft.Data.SqlClient/tests/UnitTests
         dotnet build src/Microsoft.Data.SqlClient/tests/FunctionalTests
