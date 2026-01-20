@@ -1,0 +1,128 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This stage builds the Abstractions package, runs tests, and publishes the
+# resulting NuGet packages as pipeline artifacts.
+#
+# The NuGet packages have the following properties:
+#
+#   Name:     Microsoft.Data.SqlClient.Extensions.Abstractions
+#   Version:  ${{ abstractionsPackageVersion }} (from parameter)
+#
+# The following NuGet packages are published:
+#
+#   Microsoft.Data.SqlClient.Extensions.Abstractions.<version>.nupkg
+#   Microsoft.Data.SqlClient.Extensions.Abstractions.<version>.snupkg (symbols)
+#
+# The packages are published to pipeline artifacts with the name specified by
+# the ${{ artifactName }} parameter.
+#
+# This template defines a stage named 'build_abstractions_package_stage' that
+# can be depended on by downstream stages.
+
+parameters:
+
+  # The name of the pipeline artifacts to publish.
+  - name: abstractionsArtifactsName
+    type: string
+    default: Abstractions.Artifacts
+
+  # The version to apply to the NuGet package and DLLs.
+  - name: abstractionsPackageVersion
+    type: string
+
+  # The type of build to produce (Release or Debug)
+  - name: buildConfiguration
+    type: string
+    default: Release
+    values:
+    - Release
+    - Debug
+
+  # True to enable extra debug steps and logging.
+  - name: debug
+    type: boolean
+    default: false
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+stages:
+
+  - stage: build_abstractions_package_stage
+    displayName: Build Abstractions Package
+
+    jobs:
+
+      # ------------------------------------------------------------------------
+      # Build and test on Linux.
+
+      - template: /eng/pipelines/jobs/test-abstractions-package-ci-job.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          displayNamePrefix: Linux
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          jobNameSuffix: linux
+          netFrameworkRuntimes: []
+          netRuntimes: [net8.0, net9.0, net10.0]
+          poolName: Azure Pipelines
+          vmImage: ubuntu-latest
+
+      # ------------------------------------------------------------------------
+      # Build and test on Windows
+
+      - template: /eng/pipelines/jobs/test-abstractions-package-ci-job.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          displayNamePrefix: Win
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          jobNameSuffix: windows
+          netFrameworkRuntimes: [net462]
+          netRuntimes: [net8.0, net9.0, net10.0]
+          poolName: Azure Pipelines
+          vmImage: windows-latest
+
+      # ------------------------------------------------------------------------
+      # Build and test on macOS.
+
+      - template: /eng/pipelines/jobs/test-abstractions-package-ci-job.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          displayNamePrefix: macOS
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          jobNameSuffix: macos
+          netFrameworkRuntimes: []
+          netRuntimes: [net8.0, net9.0, net10.0]
+          poolName: Azure Pipelines
+          vmImage: macos-latest
+
+      # ------------------------------------------------------------------------
+      # Create and publish the NuGet package.
+
+      - template: /eng/pipelines/jobs/pack-abstractions-package-ci-job.yml@self
+        parameters:
+          abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
+          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          dependsOn:
+            # We depend on all of the test jobs to ensure the tests pass before
+            # producing the NuGet package.
+            - test_abstractions_package_job_linux
+            - test_abstractions_package_job_windows
+            - test_abstractions_package_job_macos
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

@@ -6,11 +6,29 @@
 
   <!-- ===================================================================== -->
   <!-- Driver Packages -->
- 
+
+  <ItemGroup>
+    <!--
+      We never reference this package via its project, so we always need a
+      version specified.
+    -->
+    <PackageVersion Include="Microsoft.SqlServer.Server" Version="1.0.0" />
+  </ItemGroup>
+
+  <!--
+    We only need other driver package versions specified when building via
+    package references.
+  -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
     <PackageVersion
       Include="Microsoft.Data.SqlClient"
       Version="$(MdsPackageVersion)" />
+    <PackageVersion
+      Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
+      Version="$(AbstractionsPackageVersion)" />
+    <PackageVersion
+      Include="Microsoft.Data.SqlClient.Extensions.Azure"
+      Version="$(AzurePackageVersion)" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
       Version="$(AkvPackageVersion)" />
@@ -73,6 +91,16 @@
   </ItemGroup>
 
   <!-- ===================================================================== -->
+  <!-- MSS Dependencies -->
+
+  <!-- None -->
+
+  <!-- ===================================================================== -->
+  <!-- Abstractions Dependencies -->
+
+  <!-- None -->
+
+  <!-- ===================================================================== -->
   <!-- MDS Dependencies -->
 
   <!-- Common Dependencies (.NET and .NET Framework) -->
@@ -97,7 +125,6 @@
   <!-- .NET Dependencies -->
   <ItemGroup>
     <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="6.0.2" />
-    <PackageVersion Include="Microsoft.SqlServer.Server" Version="1.0.0" />
   </ItemGroup>
 
   <!-- .NET Framework Dependencies -->
@@ -113,15 +140,14 @@
   </ItemGroup>
 
   <!-- ===================================================================== -->
+  <!-- Azure Dependencies -->
+
+  <!-- None -->
+
+  <!-- ===================================================================== -->
   <!-- AKV Dependencies -->
 
   <ItemGroup>
     <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.8.0" />
   </ItemGroup>
-
-  <!-- ===================================================================== -->
-  <!-- MSS Dependencies -->
-
-  <!-- None -->
-
 </Project>

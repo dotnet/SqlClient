@@ -17,6 +17,9 @@
     <SqlServerLibVersion>$(SqlServerPackageVersion)</SqlServerLibVersion>
   </PropertyGroup>
 
+  <!-- Abstractions Package Properties -->
+  <Import Project="..\..\src\Microsoft.Data.SqlClient.Extensions\Abstractions\src\AbstractionsVersions.props" />
+
   <!-- MDS Package Properties -->
   <PropertyGroup>
     <MdsVersionDefault>7.0.0</MdsVersionDefault>
@@ -53,6 +56,9 @@
     -->
     <Version>$(MdsPackageVersion)</Version>
   </PropertyGroup>
+
+  <!-- Azure Package Properties -->
+  <Import Project="..\..\src\Microsoft.Data.SqlClient.Extensions\Azure\src\AzureVersions.props" />
 
   <!-- AKV Package Properties -->
   <PropertyGroup>

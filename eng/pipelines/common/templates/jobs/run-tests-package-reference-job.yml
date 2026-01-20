@@ -67,6 +67,5 @@ jobs:
     parameters:
       referenceType: Package
       buildConfiguration: Release
-      cleanFirst: true
       ${{ if parameters.isPreview }}:
         mdsPackageVersion: $(previewMdsPackageVersion)
