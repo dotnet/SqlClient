@@ -74,6 +74,7 @@ steps:
           msbuildArguments: >-
             -t:BuildAllConfigurations
             -p:ReferenceType=${{ parameters.referenceType }}
+            -p:GenerateNuget=false
             -p:GenerateDocumentationFile=false
             -p:BuildNumber=${{ parameters.buildNumber }}
             -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
@@ -91,6 +92,7 @@ steps:
           msbuildArguments: 
             -t:BuildAllConfigurations
             -p:ReferenceType=${{ parameters.referenceType }}
+            -p:GenerateNuget=false
             -p:BuildNumber=${{ parameters.buildNumber }}
             -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           clean: true
@@ -107,6 +109,7 @@ steps:
         msbuildArguments: >-
           -t:BuildAKVNetFx
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:GenerateNuget=false
           -p:BuildNumber=${{ parameters.buildNumber }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
@@ -121,6 +124,7 @@ steps:
         msbuildArguments: >-
           -t:BuildAKVNetCoreAllOS
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:GenerateNuget=false
           -p:BuildNumber=${{ parameters.buildNumber }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
@@ -136,6 +140,7 @@ steps:
         -t:BuildAll
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:TestEnabled=true
+        -p:GenerateNuget=false
         -p:GenerateDocumentationFile=false
         -p:Configuration=${{ parameters.buildConfiguration }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
