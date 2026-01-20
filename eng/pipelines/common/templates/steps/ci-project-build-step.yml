@@ -56,7 +56,7 @@ steps:
         msbuildArchitecture: x64
         msbuildArguments: >-
           -t:restore
-          -p:ReferenceType=${{ parameters.ReferenceType }}
+          -p:ReferenceType=${{ parameters.referenceType }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       retryCountOnTaskFailure: 1
 
@@ -71,9 +71,8 @@ steps:
           configuration: '${{ parameters.buildConfiguration }}'
           msbuildArguments: >-
             -t:BuildAllConfigurations
-            -p:ReferenceType=${{ parameters.ReferenceType }}
+            -p:ReferenceType=${{ parameters.referenceType }}
             -p:GenerateDocumentationFile=false
-            -p:GenerateNuGet=false
             -p:BuildNumber=${{ parameters.buildNumber }}
             -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           clean: true
@@ -89,8 +88,7 @@ steps:
           configuration: '${{ parameters.buildConfiguration }}'
           msbuildArguments: 
             -t:BuildAllConfigurations
-            -p:ReferenceType=${{ parameters.ReferenceType }}
-            -p:GenerateNuGet=false
+            -p:ReferenceType=${{ parameters.referenceType }}
             -p:BuildNumber=${{ parameters.buildNumber }}
             -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           clean: true
@@ -106,7 +104,7 @@ steps:
         configuration: '${{ parameters.buildConfiguration }}'
         msbuildArguments: >-
           -t:BuildAKVNetFx
-          -p:ReferenceType=${{ parameters.ReferenceType }}
+          -p:ReferenceType=${{ parameters.referenceType }}
           -p:BuildNumber=${{ parameters.buildNumber }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
@@ -120,7 +118,7 @@ steps:
         configuration: '${{ parameters.buildConfiguration }}'
         msbuildArguments: >-
           -t:BuildAKVNetCoreAllOS
-          -p:ReferenceType=${{ parameters.ReferenceType }}
+          -p:ReferenceType=${{ parameters.referenceType }}
           -p:BuildNumber=${{ parameters.buildNumber }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
@@ -134,7 +132,7 @@ steps:
       custom: msbuild
       arguments: >-
         -t:BuildAll
-        -p:ReferenceType=${{ parameters.ReferenceType }}
+        -p:ReferenceType=${{ parameters.referenceType }}
         -p:TestEnabled=true
         -p:GenerateDocumentationFile=false
         -p:Configuration=${{ parameters.buildConfiguration }}
