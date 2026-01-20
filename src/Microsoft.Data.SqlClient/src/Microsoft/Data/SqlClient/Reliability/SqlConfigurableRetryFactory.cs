@@ -60,17 +60,19 @@ namespace Microsoft.Data.SqlClient
                     10928,  // Resource ID: %d. The %s limit for the database is %d and has been reached. For more information, see http://go.microsoft.com/fwlink/?LinkId=267637.
                     10060,  // An error has occurred while establishing a connection to the server. When connecting to SQL Server, this failure may be caused by the fact that under the default settings SQL Server does not allow remote connections. (provider: TCP Provider, error: 0 - A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.) (Microsoft SQL Server, Error: 10060)
                     997,    // A connection was successfully established with the server, but then an error occurred during the login process. (provider: Named Pipes Provider, error: 0 - Overlapped I/O operation is in progress)
-                    233,     // A connection was successfully established with the server, but then an error occurred during the login process. (provider: Shared Memory Provider, error: 0 - No process is on the other end of the pipe.) (Microsoft SQL Server, Error: 233)
-                    64,
-                    20,
-                    0,
+                    233,    // A connection was successfully established with the server, but then an error occurred during the login process. (provider: Shared Memory Provider, error: 0 - No process is on the other end of the pipe.) (Microsoft SQL Server, Error: 233)
+                    64,     // A connection was successfully established with the server, but then an error occurred during the login process. (provider: TCP Provider, error: 0 - The specified network name is no longer available.)
+                    20,     // The instance of SQL Server you attempted to connect to does not support encryption.
+                    0,      // A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: TCP Provider, error: 0 - A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.)
                     -2,     // Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.
                     207,    // invalid column name
                     18456   // Using managed identity in Azure Sql Server throws 18456 for non-existent database instead of 4060. 
             };
 
+        private static readonly ReadOnlyCollection<int> s_defaultTransientErrorsReadOnly = new([.. s_defaultTransientErrors]);
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/DefaultTransientErrors/*' />
-        public static ReadOnlyCollection<int> DefaultTransientErrors => new([.. s_defaultTransientErrors]);
+        public static ReadOnlyCollection<int> DefaultTransientErrors => s_defaultTransientErrorsReadOnly;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateExponentialRetryProvider/*' />
         public static SqlRetryLogicBaseProvider CreateExponentialRetryProvider(SqlRetryLogicOption retryLogicOption)
