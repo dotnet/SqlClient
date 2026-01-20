@@ -141,7 +141,7 @@ stages:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         dependsOn:
           - build_mds_akv_packages_stage
-        pipelineArtifactName: $(artifactName)
+        mdsArtifactsName: $(mdsArtifactsName)
         mdsPackageVersion: $(mdsPackageVersion)
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
   

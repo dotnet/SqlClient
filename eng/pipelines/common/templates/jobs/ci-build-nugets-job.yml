@@ -72,7 +72,7 @@ jobs:
   # setup the top-level NuGet.config to look in packages/ for local NuGet
   # dependencies.
   - ${{ if eq(parameters.referenceType, 'Package') }}:
-    - pwsh: New-Item -Path "$(RepoRoot)/packages" -ItemType Directory -Force
+    - pwsh: New-Item -Path "$(Build.SourcesDirectory)/packages" -ItemType Directory -Force
       displayName: Create packages/ directory
     - pwsh: Copy-Item -Path "$(Build.SourcesDirectory)/NuGet.config.local" -Destination "$(Build.SourcesDirectory)/NuGet.config" -Force
       displayName: Use local NuGet packages
