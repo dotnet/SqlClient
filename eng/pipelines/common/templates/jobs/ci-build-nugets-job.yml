@@ -92,6 +92,7 @@ jobs:
         referenceType: ${{ parameters.referenceType }}
         operatingSystem: Windows
         build: all
+        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:
@@ -100,6 +101,7 @@ jobs:
       referenceType: ${{ parameters.referenceType }}
       operatingSystem: Windows
       build: MDS
+      mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
     parameters:
@@ -118,7 +120,7 @@ jobs:
       referenceType: ${{ parameters.referenceType }}
       operatingSystem: Windows
       build: AKV
-      mdsPackageVersion: ${{parameters.mdsPackageVersion}}
+      mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
     parameters:

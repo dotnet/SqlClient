@@ -42,10 +42,8 @@ parameters:
       - all
       - allNoDocs
   
-  # Used when AKV is built with ReferenceType = Package.
   - name: mdsPackageVersion
     type: string
-    default: ''
 
 steps:
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
@@ -59,6 +57,7 @@ steps:
         msbuildArguments: >-
           -t:restore
           -p:ReferenceType=${{ parameters.ReferenceType }}
+          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       retryCountOnTaskFailure: 1
 
     - ${{ if eq(parameters.build, 'allNoDocs') }}:
@@ -76,6 +75,7 @@ steps:
             -p:GenerateDocumentationFile=false
             -p:GenerateNuGet=false
             -p:BuildNumber=${{ parameters.buildNumber }}
+            -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           clean: true
 
     - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
@@ -92,6 +92,7 @@ steps:
             -p:ReferenceType=${{ parameters.ReferenceType }}
             -p:GenerateNuGet=false
             -p:BuildNumber=${{ parameters.buildNumber }}
+            -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           clean: true
 
   - ${{ if or(eq(parameters.build, 'AKV'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
@@ -107,7 +108,7 @@ steps:
           -t:BuildAKVNetFx
           -p:ReferenceType=${{ parameters.ReferenceType }}
           -p:BuildNumber=${{ parameters.buildNumber }}
-          -p:MdsPackageVersion=${{parameters.mdsPackageVersion}}
+          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
     - task: MSBuild@1
       displayName: 'Build AKV Provider NetCore All OS [Win]'
@@ -121,7 +122,7 @@ steps:
           -t:BuildAKVNetCoreAllOS
           -p:ReferenceType=${{ parameters.ReferenceType }}
           -p:BuildNumber=${{ parameters.buildNumber }}
-          -p:MdsPackageVersion=${{parameters.mdsPackageVersion}}
+          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
 - ${{ if or(eq(parameters.operatingSystem, 'Linux'), eq(parameters.operatingSystem, 'MacOS'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - task: DotNetCoreCLI@2
@@ -137,6 +138,7 @@ steps:
         -p:TestEnabled=true
         -p:GenerateDocumentationFile=false
         -p:Configuration=${{ parameters.buildConfiguration }}
+        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       verbosityRestore: Detailed
       verbosityPack: Detailed
     retryCountOnTaskFailure: 1
