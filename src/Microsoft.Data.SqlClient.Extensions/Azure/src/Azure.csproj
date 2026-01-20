@@ -102,10 +102,6 @@
   <!--
     Generate ThisAssembly.cs which contains some version information that is
     used at runtime and otherwise would not be available.
-
-    We must specify a unique namespace for ThisAssembly since MDS puts its
-    ThisAssembly class in the System namespace, and we cannot have two
-    classes with the same name in the same namespace.
   -->
   <PropertyGroup>
     <!--
