@@ -83,4 +83,18 @@
     <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
   </ItemGroup>
 
+  <!--
+    Generate ThisAssembly.cs which contains some version information that is
+    used at runtime and otherwise would not be available.
+  -->
+  <PropertyGroup>
+    <!--
+      We must specify a unique namespace for ThisAssembly since MDS puts its
+      ThisAssembly class in the System namespace, and we cannot have two
+      classes with the same name in the same namespace.
+    -->
+    <ThisAssemblyNamespace>$(AssemblyName)</ThisAssemblyNamespace>
+  </PropertyGroup>
+  <Import Project="$(ToolsDir)/targets/GenerateThisAssemblyCs.targets" />
+
 </Project>
