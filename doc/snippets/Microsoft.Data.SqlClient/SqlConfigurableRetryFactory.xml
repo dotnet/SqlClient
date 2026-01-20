@@ -14,6 +14,40 @@
             <description>Description</description>
           </listheader>
           <item>
+            <term>-2</term>
+            <description>Execution Timeout Expired. The timeout period elapsed prior to completion of the operation or the server is not responding.</description>
+          </item>
+          <item>
+            <term>0</term>
+            <description>A connection was successfully established with the server, but then an error occurred during the pre-login handshake.</description>
+          </item>
+          <item>
+            <term>20</term>
+            <description>The instance of SQL Server you attempted to connect to does not support encryption.</description>
+          </item>
+          <item>
+            <term>64</term>
+            <description>
+              A connection was successfully established with the server, but then an error occurred during the login process. (provider: TCP Provider, error: 0 - The specified network name is no longer available.) (Microsoft SQL Server, Error: 64)
+            </description>
+          </item>
+          <item>
+            <term>207</term>
+            <description>Invalid column name.</description>
+          </item>
+          <item>
+            <term>233</term>
+            <description>
+              A connection was successfully established with the server, but then an error occurred during the login process. (provider: Shared Memory Provider, error: 0 - No process is on the other end of the pipe.) (Microsoft SQL Server, Error: 233)
+            </description>
+          </item>
+          <item>
+            <term>997</term>
+            <description>
+              A connection was successfully established with the server, but then an error occurred during the login process. (provider: Named Pipes Provider, error: 0 - Overlapped I/O operation is in progress)
+            </description>
+          </item>
+          <item>
             <term>1204</term>
             <description>
               The instance of the SQL Server Database Engine cannot obtain a LOCK resource at this time. Rerun your statement when there are fewer active users. Ask the database administrator to check the lock and memory configuration for this instance, or to check for long-running transactions.
@@ -30,6 +64,78 @@
             <description>Lock request time out period exceeded.</description>
           </item>
           <item>
+            <term>4060</term>
+            <description>Cannot open database "%.*ls" requested by the login. The login failed.</description>
+          </item>
+          <item>
+            <term>4221</term>
+            <description>
+              Login to read-secondary failed due to long wait on 'HADR_DATABASE_WAIT_FOR_TRANSITION_TO_VERSIONING'. The replica is not available for login because row versions are missing for transactions that were in-flight when the replica was recycled. The issue can be resolved by rolling back or committing the active transactions on the primary replica. Occurrences of this condition can be minimized by avoiding long write transactions on the primary.
+            </description>
+          </item>
+          <item>
+            <term>10053</term>
+            <description>Could not convert the data value due to reasons other than sign mismatch or overflow.</description>
+          </item>
+          <item>
+            <term>10054</term>
+            <description>The data value for one or more columns overflowed the type used by the provider.</description>
+          </item>
+          <item>
+            <term>10060</term>
+            <description>
+              An error has occurred while establishing a connection to the server. When connecting to SQL Server, this failure may be caused by the fact that under the default settings SQL Server does not allow remote connections. (provider: TCP Provider, error: 0 - A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.) (Microsoft SQL Server, Error: 10060)
+            </description>
+          </item>
+          <item>
+            <term>10928</term>
+            <description>
+              Resource ID: %d. The %s limit for the database is %d and has been reached. For more information, see https://learn.microsoft.com/azure/azure-sql/database/resource-limits-logical-server.
+            </description>
+          </item>
+          <item>
+            <term>10929</term>
+            <description>
+              Resource ID: %d. The %s minimum guarantee is %d, maximum limit is %d and the current usage for the database is %d. However, the server is currently too busy to support requests greater than %d for this database. For more information, see https://learn.microsoft.com/azure/azure-sql/database/resource-limits-logical-server. Otherwise, please try again later.
+            </description>
+          </item>
+          <item>
+            <term>18456</term>
+            <description>
+              Login failed for user. (Using managed identity in Azure Sql Server throws 18456 for non-existent database instead of 4060.)
+            </description>
+          </item>
+          <item>
+            <term>40143</term>
+            <description>The service has encountered an error processing your request. Please try again.</description>
+          </item>
+          <item>
+            <term>40197</term>
+            <description>The service has encountered an error processing your request. Please try again. Error code %d.</description>
+          </item>
+          <item>
+            <term>40501</term>
+            <description>The service is currently busy. Retry the request after 10 seconds. Incident ID: %ls. Code: %d.</description>
+          </item>
+          <item>
+            <term>40540</term>
+            <description>The service has encountered an error processing your request. Please try again.</description>
+          </item>
+          <item>
+            <term>40613</term>
+            <description>
+              Database '%.*ls' on server '%.*ls' is not currently available. Please retry the connection later. If the problem persists, contact customer support, and provide them the session tracing ID of '%.*ls'.
+            </description>
+          </item>
+          <item>
+            <term>42108</term>
+            <description>Can not connect to the SQL pool since it is paused. Please resume the SQL pool and try again.</description>
+          </item>
+          <item>
+            <term>42109</term>
+            <description>The SQL pool is warming up. Please try again.</description>
+          </item>
+          <item>
             <term>49918</term>
             <description>Cannot process request. Not enough resources to process request.</description>
           </item>
@@ -42,112 +148,6 @@
           <item>
             <term>49920</term>
             <description>Cannot process request. Too many operations in progress for subscription "%ld".</description>
-          </item>
-          <item>
-            <term>4060</term>
-            <description>Cannot open database "%.*ls" requested by the login. The login failed.</description>
-          </item>
-          <item>
-            <term>4221</term>
-            <description>
-              Login to read-secondary failed due to long wait on 'HADR_DATABASE_WAIT_FOR_TRANSITION_TO_VERSIONING'. The replica is not available for login because row versions are missing for transactions that were in-flight when the replica was recycled. The issue can be resolved by rolling back or committing the active transactions on the primary replica. Occurrences of this condition can be minimized by avoiding long write transactions on the primary.
-            </description>
-          </item>
-          <item>
-            <term>40143</term>
-            <description>The service has encountered an error processing your request. Please try again.</description>
-          </item>
-          <item>
-            <term>40613</term>
-            <description>
-              Database '%.*ls' on server '%.*ls' is not currently available. Please retry the connection later. If the problem persists, contact customer support, and provide them the session tracing ID of '%.*ls'.
-            </description>
-          </item>
-          <item>
-            <term>40501</term>
-            <description>The service is currently busy. Retry the request after 10 seconds. Incident ID: %ls. Code: %d.</description>
-          </item>
-          <item>
-            <term>40540</term>
-            <description>The service has encountered an error processing your request. Please try again.</description>
-          </item>
-          <item>
-            <term>40197</term>
-            <description>The service has encountered an error processing your request. Please try again. Error code %d.</description>
-          </item>
-          <item>
-            <term>10929</term>
-            <description>
-              Resource ID: %d. The %s minimum guarantee is %d, maximum limit is %d and the current usage for the database is %d. However, the server is currently too busy to support requests greater than %d for this database. For more information, see https://learn.microsoft.com/azure/azure-sql/database/resource-limits-logical-server. Otherwise, please try again later.
-            </description>
-          </item>
-          <item>
-            <term>10928</term>
-            <description>
-              Resource ID: %d. The %s limit for the database is %d and has been reached. For more information, see https://learn.microsoft.com/azure/azure-sql/database/resource-limits-logical-server.
-            </description>
-          </item>
-          <item>
-            <term>10060</term>
-            <description>
-              An error has occurred while establishing a connection to the server. When connecting to SQL Server, this failure may be caused by the fact that under the default settings SQL Server does not allow remote connections. (provider: TCP Provider, error: 0 - A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.) (Microsoft SQL Server, Error: 10060)
-            </description>
-          </item>
-          <item>
-            <term>10054</term>
-            <description>The data value for one or more columns overflowed the type used by the provider.</description>
-          </item>
-          <item>
-            <term>10053</term>
-            <description>Could not convert the data value due to reasons other than sign mismatch or overflow.</description>
-          </item>
-          <item>
-            <term>997</term>
-            <description>
-              A connection was successfully established with the server, but then an error occurred during the login process. (provider: Named Pipes Provider, error: 0 - Overlapped I/O operation is in progress)
-            </description>
-          </item>
-          <item>
-            <term>233</term>
-            <description>
-              A connection was successfully established with the server, but then an error occurred during the login process. (provider: Shared Memory Provider, error: 0 - No process is on the other end of the pipe.) (Microsoft SQL Server, Error: 233)
-            </description>
-          </item>
-          <item>
-            <term>64</term>
-            <description>
-              A connection was successfully established with the server, but then an error occurred during the login process. (provider: TCP Provider, error: 0 - The specified network name is no longer available.) (Microsoft SQL Server, Error: 64)
-            </description>
-          </item>
-          <item>
-            <term>20</term>
-            <description>The instance of SQL Server you attempted to connect to does not support encryption.</description>
-          </item>
-          <item>
-            <term>0</term>
-            <description>A connection was successfully established with the server, but then an error occurred during the pre-login handshake.</description>
-          </item>
-          <item>
-            <term>-2</term>
-            <description>Execution Timeout Expired. The timeout period elapsed prior to completion of the operation or the server is not responding.</description>
-          </item>
-          <item>
-            <term>207</term>
-            <description>Invalid column name.</description>
-          </item>
-          <item>
-            <term>18456</term>
-            <description>
-              Login failed for user. (Using managed identity in Azure Sql Server throws 18456 for non-existent database instead of 4060.)
-            </description>
-          </item>
-          <item>
-            <term>42108</term>
-            <description>Can not connect to the SQL pool since it is paused. Please resume the SQL pool and try again.</description>
-          </item>
-          <item>
-            <term>42109</term>
-            <description>The SQL pool is warming up. Please try again.</description>
           </item>
         </list>
       </remarks>
@@ -286,10 +286,10 @@
         </format>
       </remarks>
     </CreateNoneRetryProvider>
-    <s_defaultTransientErrors>
+    <DefaultTransientErrors>
       <summary>
-        Gets a readonly replica of the transient error list.
+        The list of default transient error codes.
       </summary>
-    </s_defaultTransientErrors>
+    </DefaultTransientErrors>
   </members>
 </docs>
