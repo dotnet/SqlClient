@@ -42,8 +42,10 @@ parameters:
       - all
       - allNoDocs
   
+  # Necessary when referenceType is Package.
   - name: mdsPackageVersion
     type: string
+    default: ''
 
 steps:
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
