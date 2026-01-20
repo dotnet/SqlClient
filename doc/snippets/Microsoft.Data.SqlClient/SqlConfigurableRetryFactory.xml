@@ -1,4 +1,4 @@
-﻿<docs>
+<docs>
   <members name="SqlConfigurableRetryFactory">
     <SqlConfigurableRetryFactory>
       <summary>
@@ -112,6 +112,42 @@
             <description>
               A connection was successfully established with the server, but then an error occurred during the login process. (provider: Shared Memory Provider, error: 0 - No process is on the other end of the pipe.) (Microsoft SQL Server, Error: 233)
             </description>
+          </item>
+          <item>
+            <term>64</term>
+            <description>
+              A connection was successfully established with the server, but then an error occurred during the login process. (provider: TCP Provider, error: 0 - The specified network name is no longer available.) (Microsoft SQL Server, Error: 64)
+            </description>
+          </item>
+          <item>
+            <term>20</term>
+            <description>The instance of SQL Server you attempted to connect to does not support encryption.</description>
+          </item>
+          <item>
+            <term>0</term>
+            <description>A connection was successfully established with the server, but then an error occurred during the pre-login handshake.</description>
+          </item>
+          <item>
+            <term>-2</term>
+            <description>Execution Timeout Expired. The timeout period elapsed prior to completion of the operation or the server is not responding.</description>
+          </item>
+          <item>
+            <term>207</term>
+            <description>Invalid column name.</description>
+          </item>
+          <item>
+            <term>18456</term>
+            <description>
+              Login failed for user. (Using managed identity in Azure Sql Server throws 18456 for non-existent database instead of 4060.)
+            </description>
+          </item>
+          <item>
+            <term>42108</term>
+            <description>Can not connect to the SQL pool since it is paused. Please resume the SQL pool and try again.</description>
+          </item>
+          <item>
+            <term>42109</term>
+            <description>The SQL pool is warming up. Please try again.</description>
           </item>
         </list>
       </remarks>
@@ -250,5 +286,10 @@
         </format>
       </remarks>
     </CreateNoneRetryProvider>
+    <DefaultTransientErrors>
+      <summary>
+        Gets a readonly replica of the inner transient error list.
+      </summary>
+    </DefaultTransientErrors>
   </members>
 </docs>
