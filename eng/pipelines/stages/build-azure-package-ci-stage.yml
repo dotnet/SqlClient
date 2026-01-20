@@ -1,0 +1,278 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This stage builds the Azure package, runs tests, and publishes the resulting
+# NuGet packages as pipeline artifacts.
+#
+# The NuGet packages have the following properties:
+#
+#   Name:     Microsoft.Data.SqlClient.Extensions.Azure
+#   Version:  azurePackageVersion (from parameters)
+#
+# The following NuGet packages are published:
+#
+#   Microsoft.Data.SqlClient.Extensions.Azure.<version>.nupkg
+#   Microsoft.Data.SqlClient.Extensions.Azure.<version>.snupkg (symbols)
+#
+# The packages are published to pipeline artifacts with the name specified by
+# the azureArtifactName parameter.
+#
+# This template defines a stage named 'build_azure_package_stage' that
+# can be depended on by downstream stages.
+
+parameters:
+
+  # The name of the Abstractions pipeline artifacts to download.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: abstractionsArtifactsName
+    type: string
+    default: Abstractions.Artifacts
+
+  # The Abstractions package verion to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: abstractionsPackageVersion
+    type: string
+
+  # The name of the pool to use for jobs that require customized VM images.
+  - name: adoPoolName
+    type: string
+    # This variable should be defined in AzureDevOps Library variable groups,
+    # for both the Public and ADO.Net projects.
+    #
+    # Any pool specified here must contain images with the following names:
+    #
+    #   - ADO-MMS22-SQL22
+    #   - ADO-UB22-SQL22
+    #
+    default: $(ci_var_defaultPoolName)
+
+  # The name of the pipeline artifacts to publish.
+  - name: azureArtifactsName
+    type: string
+    default: Azure.Artifacts
+
+  # The version to apply to the NuGet package and DLLs.
+  - name: azurePackageVersion
+    type: string
+
+  # The name of the general Azure pool to use for jobs that don't require
+  # customized VM images.
+  - name: azurePoolName
+    type: string
+    default: Azure Pipelines
+
+  # The type of build to produce (Release or Debug)
+  - name: buildConfiguration
+    type: string
+    default: Release
+    values:
+    - Release
+    - Debug
+
+  # True to enable extra debug steps and logging.
+  - name: debug
+    type: boolean
+    default: false
+
+  # The stages we depend on, if any.
+  - name: dependsOn
+    type: object
+    default: []
+
+  # The dotnet CLI verbosity to use.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+  # The name of the MDS pipeline artifacts to download.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: mdsArtifactsName
+    type: string
+    default: MDS.Artifacts
+
+  # The MDS package verion to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: mdsPackageVersion
+    type: string
+  
+  # The reference type to use:
+  #
+  # Project - dependent projects are referenced directly.
+  # Package - dependent projects are referenced via NuGet packages.
+  #
+  - name: referenceType
+    type: string
+    values:
+    - Package
+    - Project
+
+stages:
+
+  - stage: build_azure_package_stage
+    displayName: Build Azure Package
+    
+    dependsOn: ${{ parameters.dependsOn }}
+    
+    jobs:
+
+      # ------------------------------------------------------------------------
+      # Build and test on Linux.
+
+      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
+        parameters:
+          abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
+          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          displayNamePrefix: Linux
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          jobNameSuffix: linux
+          mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          netFrameworkRuntimes: []
+          netRuntimes: [net8.0, net9.0, net10.0]
+          poolName: ${{ parameters.azurePoolName }}
+          referenceType: ${{ parameters.referenceType }}
+          vmImage: ubuntu-latest
+
+      # Use our 1ES ADO pool for comprehensive testing.
+      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
+        parameters:
+          abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
+          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          displayNamePrefix: Linux Integration
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          jobNameSuffix: linux_integration
+          mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          netFrameworkRuntimes: []
+          netRuntimes: [net8.0, net9.0, net10.0]
+          poolName: ${{ parameters.adoPoolName }}
+          referenceType: ${{ parameters.referenceType }}
+          # The image includes a SQL Server instance that we must configure.
+          sqlServerSetupSteps:
+            - template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
+              parameters:
+                # Override the template's default step condition.  We always
+                # want this step to run.
+                condition: true
+                # Use the Azure DevOps Library variable "password" for the SA
+                # password.
+                password: $(password)
+          vmImage: ADO-UB22-SQL22
+
+      # ------------------------------------------------------------------------
+      # Build and test on Windows
+
+      # Use the Azure Pipelines pool for basic testing.
+      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
+        parameters:
+          abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
+          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          displayNamePrefix: Win
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          jobNameSuffix: windows
+          mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          netFrameworkRuntimes: [net462]
+          netRuntimes: [net8.0, net9.0, net10.0]
+          poolName: ${{ parameters.azurePoolName }}
+          referenceType: ${{ parameters.referenceType }}
+          vmImage: windows-latest
+
+      # Use our 1ES ADO pool for comprehensive testing.
+      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
+        parameters:
+          abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
+          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          displayNamePrefix: Win Integration
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          jobNameSuffix: windows_integration
+          mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          netFrameworkRuntimes: [net462]
+          netRuntimes: [net8.0, net9.0, net10.0]
+          poolName: ${{ parameters.adoPoolName }}
+          referenceType: ${{ parameters.referenceType }}
+          # The image includes a SQL Server instance that we must configure.
+          sqlServerSetupSteps:
+            - template: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml@self
+              # Use defaults for most parameters.
+              parameters:
+                # Override the template's default step condition.  We always
+                # want this step to run.
+                condition: true
+                enableLocalDB: true
+                # These variables are from an Azure DevOps Library variable
+                # group.
+                fileStreamDirectory: $(FileStreamDirectory)
+                password: $(password)
+                sqlRootPath: $(SQL22RootPath)
+          # The ADO-MMS22-SQL22 image includes a local SQL Server that supports
+          # integrated security.
+          supportsIntegratedSecurity: true
+          vmImage: ADO-MMS22-SQL22
+
+      # ------------------------------------------------------------------------
+      # Build and test on macOS.
+
+      # Use the Azure Pipelines pool for basic testing.
+      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
+        parameters:
+          abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
+          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          displayNamePrefix: macOS
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          jobNameSuffix: macos
+          mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
+          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          netFrameworkRuntimes: []
+          netRuntimes: [net8.0, net9.0, net10.0]
+          poolName: ${{ parameters.azurePoolName }}
+          referenceType: ${{ parameters.referenceType }}
+          vmImage: macos-latest
+
+      # We do not currently have any images in our 1ES ADO pools for macOS.
+
+      # ------------------------------------------------------------------------
+      # Create and publish the NuGet package.
+
+      - template: /eng/pipelines/jobs/pack-azure-package-ci-job.yml@self
+        parameters:
+          abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
+          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          azureArtifactsName: ${{ parameters.azureArtifactsName }}
+          azurePackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          dependsOn:
+            # We depend on all of the test jobs to ensure the tests pass before
+            # producing the NuGet package.
+            - test_azure_package_job_linux
+            - test_azure_package_job_linux_integration
+            - test_azure_package_job_windows
+            - test_azure_package_job_windows_integration
+            - test_azure_package_job_macos
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          referenceType: ${{ parameters.referenceType }}

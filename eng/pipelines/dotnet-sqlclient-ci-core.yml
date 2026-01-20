@@ -110,15 +110,39 @@ parameters:
 
 variables:
   - template: /eng/pipelines/libraries/ci-build-variables.yml@self
+  
+  - name: abstractionsArtifactsName
+    value: Abstractions.Artifacts
+
+  - name: azureArtifactsName
+    value: Azure.Artifacts
 
   - name: mdsArtifactsName
     value: MDS.Artifacts
 
 stages:
 
+  # Build the Abstractions package, and publish it to the pipeline artifacts
+  # under the given artifact name.
+  - template: /eng/pipelines/stages/build-abstractions-package-ci-stage.yml@self
+    parameters:
+      abstractionsArtifactsName: $(abstractionsArtifactsName)
+      abstractionsPackageVersion: $(abstractionsPackageVersion)
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      debug: ${{ parameters.debug }}
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+
   # Build MDS and its NuGet packages.
   - stage: build_mds_akv_packages_stage
     displayName: 'Build MDS & AKV Packages'
+
+    # When building MDS via packages, we must depend on the Abstractions
+    # package.
+    ${{ if eq(parameters.referenceType, 'Package') }}:
+      dependsOn:
+        - build_abstractions_package_stage
+    ${{ else }}:
+      dependsOn: []
 
     jobs:
     - template: /eng/pipelines/common/templates/jobs/ci-build-nugets-job.yml@self
@@ -133,6 +157,29 @@ stages:
               parameters:
                 SNIVersion: ${{parameters.SNIVersion}}
                 SNIValidationFeed: ${{parameters.SNIValidationFeed}}
+
+  # Build the Azure package, and publish it to the pipeline artifacts under the
+  # given artifact name.
+  - template: /eng/pipelines/stages/build-azure-package-ci-stage.yml@self
+    parameters:
+      abstractionsArtifactsName: $(abstractionsArtifactsName)
+      abstractionsPackageVersion: $(abstractionsPackageVersion)
+      azureArtifactsName: $(azureArtifactsName)
+      azurePackageVersion: $(azurePackageVersion)
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      debug: ${{ parameters.debug }}
+      ${{if eq(parameters.debug, 'true')}}:
+        dotnetVerbosity: diagnostic
+      mdsArtifactsName: $(mdsArtifactsName)
+      mdsPackageVersion: $(mdsPackageVersion)
+      # When testing MDS via packages, we must depend on the Abstractions,
+      # MDS, and Azure packages.
+      ${{ if eq(parameters.referenceType, 'Package') }}:
+        dependsOn:
+          - build_abstractions_package_stage
+          - build_mds_akv_packages_stage
+          - build_azure_package_stage
+      referenceType: ${{ parameters.referenceType }}
 
   # Run the stress tests, if desired.
   - ${{ if eq(parameters.enableStressTests, true) }}:

@@ -29,7 +29,9 @@ The following build targets are defined in `build.proj`:
 
 |Target|Description|
 |-|-|
+|`BuildAbstractions`|Restore, build, and pack the Abstractions package, publishing the resulting NuGet into `packages/`.|
 |`BuildAllConfigurations`|Default target. Builds the .NET Framework and .NET drivers for all target frameworks and operating systems.|
+|`BuildAzure`|Restore, build, and pack the Azure package, publishing the resulting NuGet into `packages/`.|
 |`BuildNetCore`|Builds the .NET driver for all target frameworks.|
 |`BuildNetCoreAllOS`|Builds the .NET driver for all target frameworks and operating systems.|
 |`BuildNetFx`|Builds the .NET Framework driver for all target frameworks.|
@@ -230,6 +232,8 @@ Then, you can specify `Package` references be used, for example:
 
 ```bash
 cp NuGet.config.local NuGet.config
+dotnet build -t:BuildAbstractions
+dotnet build -t:BuildAzure -p:ReferenceType=Package
 dotnet build -t:BuildAll -p:ReferenceType=Package
 dotnet build -t:BuildAKVNetCore -p:ReferenceType=Package
 dotnet build -t:GenerateMdsPackage

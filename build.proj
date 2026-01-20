@@ -66,6 +66,8 @@
   <ItemGroup>
     <Tools Include="tools/GenAPI/Microsoft.DotNet.GenAPI/Microsoft.DotNet.GenAPI.csproj" />
     <SqlServerLib Include="**/Microsoft.SqlServer.Server.csproj" />
+    <Abstractions Include="src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
+    <Azure Include="src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj" />
     <NetFxDriver Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledWindows)' == 'true'" />
     <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
     <!-- Used to build .NET Standard DLL for lib folder from this project. -->
@@ -103,12 +105,97 @@
   <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildManualTestsNetCore"/>
   <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildManualTestsNetFx" Condition="$(IsEnabledWindows) == 'true'"/>
 
+  <!-- Abstractions Targets -->
+  <PropertyGroup>
+    <AbstractionsProperties>$(CommonProperties)</AbstractionsProperties>
+
+    <!--
+      If the AbstractionsPackageVersion property was supplied on the
+      command-line, then pass it along to the Abstractions build.  Otherwise,
+      omit it entirely to avoid it expanding as empty here and thus overriding
+      the default behaviour in the Abstractions project.  Command-line
+      properties take precedence over project defaults, even if their value is
+      empty.  For example:
+
+        dotnet build -p:AbstractionsPackageVersion=
+
+      That results in $(AbstractionsPackageVersion) being defined as empty,
+      and cannot be overridden by the project.
+    -->
+    <AbstractionsProperties
+      Condition="'$(AbstractionsPackageVersion)' != ''">
+      $(AbstractionsProperties);AbstractionsPackageVersion=$(AbstractionsPackageVersion)
+    </AbstractionsProperties>
+
+    <!-- Do the same for the AbstractionsAssemblyFileVersion property. -->
+    <AbstractionsProperties
+      Condition="'$(AbstractionsAssemblyFileVersion)' != ''">
+      $(AbstractionsProperties);AbstractionsAssemblyFileVersion=$(AbstractionsAssemblyFileVersion)
+    </AbstractionsProperties>
+  </PropertyGroup>
+
+  <Target Name="RestoreAbstractions">
+    <MSBuild
+      Projects="@(Abstractions)"
+      Targets="Restore"
+      Properties="$(AbstractionsProperties)" />
+  </Target>
+
+  <Target Name="BuildAbstractions" DependsOnTargets="RestoreAbstractions">
+    <MSBuild
+      Projects="@(Abstractions)"
+      Targets="Build;Pack"
+      Properties="$(AbstractionsProperties)" />
+  </Target>
+
+  <!-- Azure Targets -->
+  <PropertyGroup>
+    <AzureProperties>$(CommonProperties)</AzureProperties>
+
+    <!--
+      If the AzurePackageVersion property was supplied on the command-line, then
+      pass it along to the Azure build.  Otherwise, omit it entirely to avoid it
+      expanding as empty here and thus overriding the default behaviour in the
+      Azure project.  Command-line properties take precedence over project
+      defaults, even if their value is empty.  For example:
+
+        dotnet build -p:AzurePackageVersion=
+
+      That results in $(AzurePackageVersion) being defined as empty, and cannot
+      be overridden by the project.
+    -->
+    <AzureProperties
+      Condition="'$(AzurePackageVersion)' != ''">
+      $(AzureProperties);AzurePackageVersion=$(AzurePackageVersion)
+    </AzureProperties>
+
+    <!-- Do the same for the AzureAssemblyFileVersion property. -->
+    <AzureProperties
+      Condition="'$(AzureAssemblyFileVersion)' != ''">
+      $(AzureProperties);AzureAssemblyFileVersion=$(AzureAssemblyFileVersion)
+    </AzureProperties>
+  </PropertyGroup>
+
+  <Target Name="RestoreAzure">
+    <MSBuild
+      Projects="@(Azure)"
+      Targets="Restore"
+      Properties="$(AzureProperties)" />
+  </Target>
+
+  <Target Name="BuildAzure" DependsOnTargets="RestoreAzure">
+    <MSBuild
+      Projects="@(Azure)"
+      Targets="Build;Pack"
+      Properties="$(AzureProperties)" />
+  </Target>
+
   <!-- Other Targets -->
   <Target Name="RestoreSqlServerLib">
     <MSBuild Projects="@(SqlServerLib)" Targets="restore" Properties="$(SqlServerLibProperties)" />
   </Target>
 
-  <Target Name="RestoreNetCore" DependsOnTargets="RestoreSqlServerLib">
+  <Target Name="RestoreNetCore" DependsOnTargets="RestoreSqlServerLib;RestoreAbstractions">
     <MSBuild Projects="@(NetCoreDriver)" Targets="restore" Properties="$(ProjectProperties)" />
   </Target>
 
@@ -116,7 +203,7 @@
     <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="$(TestProjectProperties)" />
   </Target>
 
-  <Target Name="RestoreNetFx" DependsOnTargets="RestoreSqlServerLib" Condition="'$(IsEnabledWindows)' == 'true'">
+  <Target Name="RestoreNetFx" DependsOnTargets="RestoreSqlServerLib;RestoreAbstractions" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(NetFxDriver)" Targets="restore" Properties="$(ProjectProperties)" />
   </Target>
 
@@ -132,7 +219,7 @@
     <MSBuild Projects="@(Tools)" Properties="$(CommonProperties)" />
   </Target>
 
-  <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx;BuildSqlServerLib" Condition="'$(IsEnabledWindows)' == 'true'">
+  <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx;BuildSqlServerLib;BuildAbstractions" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(NetFxDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties);" />
   </Target>
 
@@ -149,11 +236,11 @@
     <MSBuild Projects="@(SqlServerLib)" Properties="$(CI);$(SqlServerLibProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))" />
   </Target>
 
-  <Target Name="BuildNetCore" DependsOnTargets="RestoreNetCore;BuildSqlServerLib">
+  <Target Name="BuildNetCore" DependsOnTargets="RestoreNetCore;BuildSqlServerLib;BuildAbstractions">
     <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties)" />
   </Target>
 
-  <Target Name="BuildNetCoreAllOS" DependsOnTargets="RestoreNetCore;BuildSqlServerLib">
+  <Target Name="BuildNetCoreAllOS" DependsOnTargets="RestoreNetCore;BuildSqlServerLib;BuildAbstractions">
     <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
     <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
     <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
@@ -349,6 +436,7 @@
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "bin", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", ".nuget", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "obj", SearchOption.AllDirectories))' />
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","packages", SearchOption.AllDirectories))' />
   </Target>
 
   <!-- AKV Targets ========================================================= -->
