@@ -286,10 +286,10 @@
         </format>
       </remarks>
     </CreateNoneRetryProvider>
-    <DefaultTransientErrors>
+    <s_defaultTransientErrors>
       <summary>
-        Gets a readonly replica of the inner transient error list.
+        Gets a readonly replica of the transient error list.
       </summary>
-    </DefaultTransientErrors>
+    </s_defaultTransientErrors>
   </members>
 </docs>

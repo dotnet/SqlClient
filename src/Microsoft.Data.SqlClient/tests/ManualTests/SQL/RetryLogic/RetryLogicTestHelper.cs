@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 NumberOfTries = numberOfRetries,
                 DeltaTime = deltaTime ?? TimeSpan.FromMilliseconds(10),
                 MaxTimeInterval = maxInterval,
-                TransientErrors = transientErrorCodes ?? SqlConfigurableRetryFactory.DefaultTransientErrors,
+                TransientErrors = transientErrorCodes ?? SqlConfigurableRetryFactory.s_defaultTransientErrors,
                 AuthorizedSqlCondition = RetryPreCondition(unauthorizedStatementRegex)
             };
 
@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static IEnumerable<int> GetDefaultTransientErrorCodes(params int[] additionalCodes)
         {
-            var transientErrorCodes = new HashSet<int>(SqlConfigurableRetryFactory.DefaultTransientErrors);
+            var transientErrorCodes = new HashSet<int>(SqlConfigurableRetryFactory.s_defaultTransientErrors);
             foreach (int additionalCode in additionalCodes)
             {
                 transientErrorCodes.Add(additionalCode);

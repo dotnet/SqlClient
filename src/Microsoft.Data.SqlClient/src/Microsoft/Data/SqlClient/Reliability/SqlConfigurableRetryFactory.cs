@@ -37,10 +37,12 @@ namespace Microsoft.Data.SqlClient
     public sealed class SqlConfigurableRetryFactory
     {
         private readonly static object s_syncObject = new();
+
         /// Default known transient error numbers.
-        private static readonly HashSet<int> s_defaultTransientErrors
-            = new HashSet<int>
-                {
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/s_defaultTransientErrors/*' />
+        public static readonly ReadOnlyCollection<int> s_defaultTransientErrors
+            = new(
+                [
                     1204,   // The instance of the SQL Server Database Engine cannot obtain a LOCK resource at this time. Rerun your statement when there are fewer active users. Ask the database administrator to check the lock and memory configuration for this instance, or to check for long-running transactions.
                     1205,   // Transaction (Process ID) was deadlocked on resources with another process and has been chosen as the deadlock victim. Rerun the transaction
                     1222,   // Lock request time out period exceeded.
@@ -67,12 +69,7 @@ namespace Microsoft.Data.SqlClient
                     -2,     // Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.
                     207,    // invalid column name
                     18456   // Using managed identity in Azure Sql Server throws 18456 for non-existent database instead of 4060. 
-            };
-
-        private static readonly ReadOnlyCollection<int> s_defaultTransientErrorsReadOnly = new([.. s_defaultTransientErrors]);
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/DefaultTransientErrors/*' />
-        public static ReadOnlyCollection<int> DefaultTransientErrors => s_defaultTransientErrorsReadOnly;
+            ]);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateExponentialRetryProvider/*' />
         public static SqlRetryLogicBaseProvider CreateExponentialRetryProvider(SqlRetryLogicOption retryLogicOption)
