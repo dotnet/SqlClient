@@ -67,7 +67,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 - name: testJobTimeout
   displayName: 'Test job timeout (in minutes)'
   type: number
-  default: 90
+  default: 60
 
 variables:
   - template: /eng/pipelines/libraries/variables.yml@self
