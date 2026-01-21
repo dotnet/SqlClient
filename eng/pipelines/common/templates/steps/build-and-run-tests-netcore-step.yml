@@ -73,14 +73,38 @@ steps:
   inputs:
     command: test
     projects: 'src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.FunctionalTests.csproj'
-    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }}  -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.buildConfiguration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter "category!=failing&category!=flaky"'
+    arguments: >-
+      -p:Platform=${{ parameters.platform }}
+      -p:TestTargetOS=${{ parameters.TestTargetOS }}
+      -p:TargetNetCoreVersion=${{ parameters.TargetNetCoreVersion }}
+      -p:ReferenceType=${{ parameters.referenceType }}
+      -p:Configuration=${{ parameters.buildConfiguration }}
+      -p:TestMicrosoftDataSqlClientVersion=${{ parameters.NugetPackageVersion }}
+      --no-build
+      -v n
+      --filter "category!=failing&category!=flaky"
+      --blame-hang
+      --blame-hang-dump-type none
+      --blame-hang-timeout 10m
 
 - task: DotNetCoreCLI@2
   displayName: 'Run Flaky Functional Tests for ${{parameters.TargetNetCoreVersion }}'
   inputs:
     command: test
     projects: 'src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.FunctionalTests.csproj'
-    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }}  -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.buildConfiguration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter "category=flaky"'
+    arguments: >-
+      -p:Platform=${{ parameters.platform }}
+      -p:TestTargetOS=${{ parameters.TestTargetOS }}
+      -p:TargetNetCoreVersion=${{ parameters.TargetNetCoreVersion }}
+      -p:ReferenceType=${{ parameters.referenceType }}
+      -p:Configuration=${{ parameters.buildConfiguration }}
+      -p:TestMicrosoftDataSqlClientVersion=${{ parameters.NugetPackageVersion }}
+      --no-build
+      -v n
+      --filter "category=flaky"
+      --blame-hang
+      --blame-hang-dump-type none
+      --blame-hang-timeout 10m
   continueOnError: true
 
 - task: DotNetCoreCLI@2
@@ -88,7 +112,20 @@ steps:
   inputs:
     command: test
     projects: 'src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj'
-    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }} -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.buildConfiguration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter  "category!=failing&category!=flaky" --collect "Code Coverage"'
+    arguments: >-
+      -p:Platform=${{ parameters.platform }}
+      -p:TestTargetOS=${{ parameters.TestTargetOS }}
+      -p:TargetNetCoreVersion=${{ parameters.TargetNetCoreVersion }}
+      -p:ReferenceType=${{ parameters.referenceType }}
+      -p:Configuration=${{ parameters.buildConfiguration }}
+      -p:TestMicrosoftDataSqlClientVersion=${{ parameters.NugetPackageVersion }}
+      --no-build
+      -v n
+      --filter "category!=failing&category!=flaky"
+      --collect "Code Coverage"
+      --blame-hang
+      --blame-hang-dump-type none
+      --blame-hang-timeout 10m
   retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
 - task: DotNetCoreCLI@2
@@ -96,6 +133,19 @@ steps:
   inputs:
     command: test
     projects: 'src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj'
-    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }} -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.buildConfiguration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter  "category=flaky" --collect "Code Coverage"'
+    arguments: >-
+      -p:Platform=${{ parameters.platform }}
+      -p:TestTargetOS=${{ parameters.TestTargetOS }}
+      -p:TargetNetCoreVersion=${{ parameters.TargetNetCoreVersion }}
+      -p:ReferenceType=${{ parameters.referenceType }}
+      -p:Configuration=${{ parameters.buildConfiguration }}
+      -p:TestMicrosoftDataSqlClientVersion=${{ parameters.NugetPackageVersion }}
+      --no-build
+      -v n
+      --filter "category=flaky"
+      --collect "Code Coverage"
+      --blame-hang
+      --blame-hang-dump-type none
+      --blame-hang-timeout 10m
   retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
   continueOnError: true
