@@ -866,7 +866,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         {
             if (obj != null && obj is TokenCredentialKey tcKey)
             {
-                return string.CompareOrdinal(nameof(_tokenCredentialType), nameof(tcKey._tokenCredentialType)) == 0
+                return _tokenCredentialType == tcKey._tokenCredentialType
                     && string.CompareOrdinal(_authority, tcKey._authority) == 0
                     && string.CompareOrdinal(_scope, tcKey._scope) == 0
                     && string.CompareOrdinal(_audience, tcKey._audience) == 0
