@@ -263,7 +263,7 @@ stages:
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           azureArtifactsName: ${{ parameters.azureArtifactsName }}
-          azurePackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          azurePackageVersion: ${{ parameters.azurePackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           dependsOn:

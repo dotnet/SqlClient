@@ -67,7 +67,7 @@
   -->
   <PropertyGroup>
     <PackageId>$(AssemblyName)</PackageId>
-    <PackageVersion>$(AbstractionsPackageVersion)</PackageVersion>
+    <PackageVersion>$(AzurePackageVersion)</PackageVersion>
     <PackageOutputPath>$(PackagesDir)</PackageOutputPath>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
