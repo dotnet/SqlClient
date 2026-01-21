@@ -7,11 +7,12 @@ using System.Collections;
 using System.Collections.Generic;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient
 {
     public class SqlErrorCollectionTests
     {
         private const int ErrorsInTestCollection = 3;
+        private static readonly Exception ReusableException = new();
         
         [Fact]
         public void Constructor_PropertiesInitialized()
@@ -78,7 +79,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             SqlError[] copyDestination = new SqlError[destinationSize];
             
             // Act
-            // - Uses ICollection.CopyTo
+            // - Uses SqlErrorCollection.CopyTo
             Action action = () => collection.CopyTo(copyDestination, offset);
             
             // Assert
@@ -112,7 +113,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         {
             // Arrange
             (SqlErrorCollection collection, SqlError[] _) = GetTestErrorCollection();
-            SqlError[] copyDestination = new SqlError[destinationSize];
+            object[] copyDestination = new object[destinationSize];
             
             // Act
             // - Uses ICollection.CopyTo
@@ -219,7 +220,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
                 errorMessage: "bar",
                 procedure: "baz",
                 lineNumber: 234,
-                exception: new Exception(),
+                exception: ReusableException,
                 batchIndex: 345);
         }
 

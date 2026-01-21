@@ -7,7 +7,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient
 {
     public class SqlErrorTests
     {
@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         {
             // Arrange
             DataContractSerializer serializer = new(typeof(SqlError));
-            MemoryStream stream = new();
+            using MemoryStream stream = new();
             
             // - Create the test error
             SqlError originalError = new(
