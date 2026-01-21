@@ -20,12 +20,12 @@ public abstract partial class SqlAuthenticationProvider
         /// <summary>
         /// Our handle to the reflected GetProvider() method.
         /// </summary>
-        private static MethodInfo? _getProvider = null;
+        private static readonly MethodInfo? _getProvider = null;
 
         /// <summary>
         /// Our handle to the reflected SetProvider() method.
         /// </summary>
-        private static MethodInfo? _setProvider = null;
+        private static readonly MethodInfo? _setProvider = null;
 
         /// <summary>
         /// Static construction performs the reflection lookups.
