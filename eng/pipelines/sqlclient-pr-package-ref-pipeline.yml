@@ -11,6 +11,9 @@
 #   - Microsoft.Data.SqlClient
 #   - Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 #
+# NOTE: This pipeline only runs integration tests - tests that require external
+# resources (e.g. MDS Manual test suite).
+#
 # It is triggered by pushes to PRs that target dev/ and feature/ branches, and
 # the main branch in GitHub.
 #
@@ -136,6 +139,9 @@ extends:
     targetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
     testJobTimeout: ${{ parameters.testJobTimeout }}
     testSets: ${{ parameters.testSets }}
+    # We will only run integration tests during Package reference builds.  This
+    # avoids duplicating test runs from the Project build pipelines.
+    testType: Integration
     useManagedSNI: ${{ parameters.useManagedSNI }}
     # Don't run the AE tests in Debug mode; they rarely succeed.
     ${{ if eq(parameters.buildConfiguration, 'Debug') }}:

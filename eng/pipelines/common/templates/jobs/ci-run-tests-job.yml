@@ -87,6 +87,19 @@ parameters:
     type: boolean
     default: false
 
+  # The type of tests to run:
+  #
+  #   All         - Run all tests.
+  #   Unit        - Only run tests that do not require external resources.
+  #   Integration - Only run tests that require external resources.
+  #
+  - name: testType
+    type: string
+    values:
+      - All
+      - Unit
+      - Integration
+
 jobs:
 - job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.image, 'unknown_image')) }}
 
@@ -269,6 +282,7 @@ jobs:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.buildType }}
         testSet: ${{ parameters.testSet }}
+        testType: ${{ parameters.testType }}
         operatingSystem: ${{ parameters.operatingSystem }}
 
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
@@ -293,6 +307,7 @@ jobs:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.buildType }}
         testSet: ${{ parameters.testSet }}
+        testType: ${{ parameters.testType }}
         msbuildArchitecture: x86
         dotnetx86RootPath: $(dotnetx86RootPath)
         operatingSystem: ${{ parameters.operatingSystem }}
