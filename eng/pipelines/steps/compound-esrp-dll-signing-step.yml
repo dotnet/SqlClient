@@ -54,7 +54,7 @@ steps:
       ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
       EsrpClientId: '${{ parameters.esrpClientId }}'
       FolderPath: '$(BUILD_OUTPUT)'
-      Pattern: '${{ parameters.patterh }}'
+      Pattern: '${{ parameters.pattern }}'
       signConfigType: 'inlineSignParams'
       UseMSIAuthentication: true
       inlineOperation: |
