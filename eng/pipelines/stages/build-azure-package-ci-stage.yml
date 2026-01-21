@@ -18,7 +18,7 @@
 #   Microsoft.Data.SqlClient.Extensions.Azure.<version>.snupkg (symbols)
 #
 # The packages are published to pipeline artifacts with the name specified by
-# the azureArtifactName parameter.
+# the azureArtifactsName parameter.
 #
 # This template defines a stage named 'build_azure_package_stage' that
 # can be depended on by downstream stages.

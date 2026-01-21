@@ -194,5 +194,5 @@ jobs:
         displayName: Publish Pipeline Artifact
         inputs:
           targetPath: $(dotnetPackagesDir)
-          artifactName: ${{ parameters.azureArtifactName }}
+          artifactName: ${{ parameters.azureArtifactsName }}
           publishLocation: pipeline
