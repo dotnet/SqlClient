@@ -10,7 +10,7 @@
 # The NuGet packages have the following properties:
 #
 #   Name:     Microsoft.Data.SqlClient.Extensions.Azure
-#   Version:  azurePackageVersion (from parameters)
+#   Version:  <azurePackageVersion> (from parameters)
 #
 # The following NuGet packages are published:
 #

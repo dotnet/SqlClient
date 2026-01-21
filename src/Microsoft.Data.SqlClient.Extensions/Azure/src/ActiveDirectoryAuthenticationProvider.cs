@@ -24,8 +24,8 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     /// </summary>
     private static readonly ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication> s_pcaMap = new();
     private static readonly ConcurrentDictionary<TokenCredentialKey, TokenCredentialData> s_tokenCredentialMap = new();
-    private static SemaphoreSlim s_pcaMapModifierSemaphore = new(1, 1);
-    private static SemaphoreSlim s_tokenCredentialMapModifierSemaphore = new(1, 1);
+    private static readonly SemaphoreSlim s_pcaMapModifierSemaphore = new(1, 1);
+    private static readonly SemaphoreSlim s_tokenCredentialMapModifierSemaphore = new(1, 1);
     private static readonly MemoryCache s_accountPwCache = new MemoryCache(new MemoryCacheOptions()); 
     private const int s_accountPwCacheTtlInHours = 2;
     private const string s_nativeClientRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
@@ -185,8 +185,6 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Default auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
-
-            TokenCredentialOptions tokenCredentialOptions = new() { AuthorityHost = new Uri(authority) };
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity || parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryMSI)
             {
@@ -486,7 +484,8 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         {
             if (authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive)
             {
-                CancellationTokenSource ctsInteractive = new();
+                using CancellationTokenSource ctsInteractive = new();
+
                 #if NET
                 // On .NET Core, MSAL will start the system browser as a
                 // separate process. MSAL does not have control over this
@@ -503,40 +502,48 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 // Wait up to 3 minutes.
                 ctsInteractive.CancelAfter(180000);
                 #endif
+                
+                // By default, we will use the MSAL Embedded or System web
+                // browser which changes by Default in MSAL according to this
+                // table:
+                //
+                // Framework        Embedded  System  Default
+                // -------------------------------------------
+                // .NET Classic     Yes       Yes^    Embedded
+                // .NET Core        No        Yes^    System
+                // .NET Standard    No        No      NONE
+                // UWP              Yes       No      Embedded
+                // Xamarin.Android  Yes       Yes     System
+                // Xamarin.iOS      Yes       Yes     System
+                // Xamarin.Mac      Yes       No      Embedded
+                //
+                // ^ Requires "http://localhost" redirect URI
+                //
+                // https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/MSAL.NET-uses-web-browser#at-a-glance
+                //
+                AcquireTokenInteractiveParameterBuilder builder =
+                    app.AcquireTokenInteractive(scopes)
+                    .WithCorrelationId(connectionId)
+                    .WithLoginHint(userId);
+                
+                // If we have a custom web UI, use it instead.
                 if (customWebUI != null)
                 {
-                    return await app.AcquireTokenInteractive(scopes)
-                        .WithCorrelationId(connectionId)
-                        .WithCustomWebUi(customWebUI)
-                        .WithLoginHint(userId)
-                        .ExecuteAsync(ctsInteractive.Token)
-                        .ConfigureAwait(false);
+                    #if DEBUG
+                    var chained =
+                    #endif
+
+                    builder.WithCustomWebUi(customWebUI);
+
+                    #if DEBUG
+                    // Confirm that chaining returns the same builder instance.
+                    Debug.Assert(ReferenceEquals(chained, builder));
+                    #endif
                 }
-                else
-                {
-                    /*
-                        * We will use the MSAL Embedded or System web browser which changes by Default in MSAL according to this table:
-                        *
-                        * Framework        Embedded  System  Default
-                        * -------------------------------------------
-                        * .NET Classic     Yes       Yes^    Embedded
-                        * .NET Core        No        Yes^    System
-                        * .NET Standard    No        No      NONE
-                        * UWP              Yes       No      Embedded
-                        * Xamarin.Android  Yes       Yes     System
-                        * Xamarin.iOS      Yes       Yes     System
-                        * Xamarin.Mac      Yes       No      Embedded
-                        *
-                        * ^ Requires "http://localhost" redirect URI
-                        *
-                        * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/MSAL.NET-uses-web-browser#at-a-glance
-                        */
-                    return await app.AcquireTokenInteractive(scopes)
-                        .WithCorrelationId(connectionId)
-                        .WithLoginHint(userId)
-                        .ExecuteAsync(ctsInteractive.Token)
-                        .ConfigureAwait(false);
-                }
+                
+                return await builder
+                    .ExecuteAsync(ctsInteractive.Token)
+                    .ConfigureAwait(false);
             }
             else
             {
@@ -664,7 +671,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     private static byte[] GetHash(string input)
     {
         byte[] unhashedBytes = Encoding.Unicode.GetBytes(input);
-        SHA256 sha256 = SHA256.Create();
+        using SHA256 sha256 = SHA256.Create();
         byte[] hashedBytes = sha256.ComputeHash(unhashedBytes);
         return hashedBytes;
     }
@@ -828,8 +835,8 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
 
     internal class TokenCredentialData
     {
-        public TokenCredential _tokenCredential;
-        public byte[] _secretHash;
+        public readonly TokenCredential _tokenCredential;
+        public readonly byte[] _secretHash;
 
         public TokenCredentialData(TokenCredential tokenCredential, byte[] secretHash)
         {

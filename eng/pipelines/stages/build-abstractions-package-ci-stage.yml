@@ -10,7 +10,7 @@
 # The NuGet packages have the following properties:
 #
 #   Name:     Microsoft.Data.SqlClient.Extensions.Abstractions
-#   Version:  ${{ abstractionsPackageVersion }} (from parameter)
+#   Version:  <abstractionsPackageVersion> (from parameter)
 #
 # The following NuGet packages are published:
 #
@@ -18,7 +18,7 @@
 #   Microsoft.Data.SqlClient.Extensions.Abstractions.<version>.snupkg (symbols)
 #
 # The packages are published to pipeline artifacts with the name specified by
-# the ${{ artifactName }} parameter.
+# the abstractionsArtifactsName parameter.
 #
 # This template defines a stage named 'build_abstractions_package_stage' that
 # can be depended on by downstream stages.
