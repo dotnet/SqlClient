@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<!-- Build Parameters ============================================== -->
+	<PropertyGroup>
+		<!-- Configuration:  Which build configuration to build                                 -->
+		<!-- Allowed values: Debug, Release                                                     -->
+		<!-- Default value:  Debug                                                              -->
+		<Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+
+		<!-- DotnetPath: Path to folder containing the `dotnet` binary. Override this if a      -->
+		<!--    specific version (eg, x86) is required. Otherwise, this defaults to using the   -->
+		<!--    dotnet binary in the PATH variable. The provided path should end with a `\` (or -->
+		<!--    `/`) character. Eg. C:\x86\                                                     -->
+		<DotnetPath Condition="'$(DotnetPath)' == ''"></DotnetPath>
+	</PropertyGroup>
+
+	<!-- Imports ======================================================= -->
+	<Import Project="src/Directory.Build.props" />
+
+	<!-- Microsoft.Data.SqlClient Build Targets ======================== -->
+	<PropertyGroup>
+		<MdsProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj</MdsProjectPath>
+	</PropertyGroup>
+
+	<!-- BuildMds: Builds all binaries for MDS -->
+	<Target Name="BuildMds" DependsOnTargets="BuildMdsUnix;BuildMdsWindows" />
+
+	<!-- BuildMdsUnix: Builds all unix-specific MDS binaries -->
+	<Target Name="BuildMdsUnix">
+		<PropertyGroup>
+			<DotnetCommand>
+				$(DotnetPath)dotnet build $(MdsProjectPath)
+				  -p:Configuration=$(Configuration)
+				  -p:TargetOs=Unix
+			</DotnetCommand>
+			<!-- Convert more than one whitespace character into one space --> 
+			<DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+		</PropertyGroup>
+		<Message Text=">>> Building MDS for Unix via command: $(DotnetCommand)"/>
+		<Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+	</Target>
+
+	<!-- BuildMdsWindows: Builds all windows-specific MDS binaries -->
+	<Target Name="BuildMdsWindows">
+		<PropertyGroup>
+			<DotnetCommand>
+				$(DotnetPath)dotnet build $(MdsProjectPath)
+				  -p:Configuration=$(Configuration)
+				  -p:TargetOs=Windows_NT
+			</DotnetCommand>
+			<!-- Convert more than one whitespace character into one space --> 
+			<DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+		</PropertyGroup>
+		<Message Text=">>> Building MDS for Windows via command: $(DotnetCommand)"/>
+		<Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+	</Target>
+</Project>

@@ -1959,12 +1959,11 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             using SqlConnection xEventManagementConnection = new SqlConnection(connectionString);
             xEventManagementConnection.Open();
 
-            using DataTestUtility.XEventScope xEventScope =
-                new DataTestUtility.XEventScope(
-                    _testName,
-                    xEventManagementConnection,
-                    "ADD EVENT sqlserver.user_event(ACTION(package0.event_sequence))",
-                    "ADD TARGET package0.ring_buffer");
+            using XEventScope xEventScope = new(
+                _testName,
+                xEventManagementConnection,
+                "ADD EVENT sqlserver.user_event(ACTION(package0.event_sequence))",
+                "ADD TARGET package0.ring_buffer");
 
             string sessionName = xEventScope.SessionName;
 

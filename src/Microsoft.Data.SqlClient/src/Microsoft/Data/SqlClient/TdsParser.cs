@@ -18,13 +18,13 @@ using System.Threading.Tasks;
 using System.Xml;
 using Interop.Common.Sni;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
-using Microsoft.Data.SqlClient.UserAgent;
 using Microsoft.Data.SqlClient.Utilities;
 using Microsoft.SqlServer.Server;
 
@@ -41,6 +41,10 @@ namespace Microsoft.Data.SqlClient
     internal sealed partial class TdsParser
     {
         private static int _objectTypeCount; // EventSource counter
+        // @TODO: Replace both fields with the `field` keyword when LangVersion >= 14.
+        private static XmlWriterSettings s_asyncXmlWriterSettings;
+        private static XmlWriterSettings s_syncXmlWriterSettings;
+
         private readonly SqlClientLogger _logger = new SqlClientLogger();
 
         private SspiContextProvider _authenticationProvider;
@@ -101,7 +105,7 @@ namespace Microsoft.Data.SqlClient
         private int _nonTransactedOpenResultCount = 0;
 
         // Connection reference
-        private SqlInternalConnectionTds _connHandler;
+        private SqlConnectionInternal _connHandler;
 
         // Async/Mars variables
         private bool _fMARS = false;
@@ -153,6 +157,12 @@ namespace Microsoft.Data.SqlClient
 
         // NOTE: You must take the internal connection's _parserLock before modifying this
         internal bool _asyncWrite = false;
+
+        private static XmlWriterSettings AsyncXmlWriterSettings =>
+            s_asyncXmlWriterSettings ??= new() { CloseOutput = false, ConformanceLevel = ConformanceLevel.Fragment, Async = true };
+
+        private static XmlWriterSettings SyncXmlWriterSettings =>
+            s_syncXmlWriterSettings ??= new() { CloseOutput = false, ConformanceLevel = ConformanceLevel.Fragment };
 
         /// <summary>
         /// Get or set if column encryption is supported by the server.
@@ -209,7 +219,7 @@ namespace Microsoft.Data.SqlClient
             DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
         }
 
-        internal SqlInternalConnectionTds Connection
+        internal SqlConnectionInternal Connection
         {
             get
             {
@@ -359,17 +369,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void Connect(ServerInfo serverInfo,
-                              SqlInternalConnectionTds connHandler,
-                              TimeoutTimer timeout,
-                              SqlConnectionString connectionOptions,
-#if NETFRAMEWORK
-                              bool withFailover,
-                              bool isFirstTransparentAttempt,
-                              bool disableTnir
-#else
-                              bool withFailover
-#endif
+        internal void Connect(
+            ServerInfo serverInfo,
+            SqlConnectionInternal connHandler,
+            TimeoutTimer timeout,
+            SqlConnectionString connectionOptions,
+
+            #if NETFRAMEWORK
+            bool withFailover,
+            bool isFirstTransparentAttempt,
+            bool disableTnir
+            #else
+            bool withFailover
+            #endif
             )
         {
             SqlConnectionEncryptOption encrypt = connectionOptions.Encrypt;
@@ -1305,11 +1317,11 @@ namespace Microsoft.Data.SqlClient
             // length in bytes
             int length = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
 
-            string clientInterfaceName = TdsEnums.SQL_PROVIDER_NAME;
-            Debug.Assert(TdsEnums.MAXLEN_CLIENTINTERFACE >= clientInterfaceName.Length, "cchCltIntName can specify at most 128 unicode characters. See Tds spec");
+            // Obtain the client interface name.
+            string clientInterfaceName = DbConnectionStringDefaults.ApplicationName;
+            Debug.Assert(clientInterfaceName.Length <= TdsEnums.MAXLEN_CLIENTINTERFACE);
 
             // add up variable-len portions (multiply by 2 for byte len of char strings)
-            //
             checked
             {
                 length += (rec.hostName.Length + rec.applicationName.Length +
@@ -1364,7 +1376,7 @@ namespace Microsoft.Data.SqlClient
                     requestedFeatures, 
                     recoverySessionData, 
                     fedAuthFeatureExtensionData,
-                    UserAgentInfo.UserAgentCachedJsonPayload.ToArray(),
+                    UserAgent.Ucs2Bytes,
                     useFeatureExt, 
                     length
                     );
@@ -1689,7 +1701,7 @@ namespace Microsoft.Data.SqlClient
                 if (asyncClose)
                 {
                     // Wait until we have the parser lock, then try to close
-                    SqlInternalConnectionTds connHandler = _connHandler;
+                    SqlConnectionInternal connHandler = _connHandler;
                     Action<Action> wrapCloseAction = closeAction =>
                     {
                         Task.Factory.StartNew(() =>
@@ -6236,7 +6248,9 @@ namespace Microsoft.Data.SqlClient
         /// Determines if a column value should be transparently decrypted (based on SqlCommand and Connection String settings).
         /// </summary>
         /// <returns>true if the value should be transparently decrypted, false otherwise</returns>
-        internal static bool ShouldHonorTceForRead(SqlCommandColumnEncryptionSetting columnEncryptionSetting, SqlInternalConnectionTds connection)
+        internal static bool ShouldHonorTceForRead(
+            SqlCommandColumnEncryptionSetting columnEncryptionSetting,
+            SqlConnectionInternal connection)
         {
             // Command leve setting trumps all
             switch (columnEncryptionSetting)
@@ -6259,7 +6273,7 @@ namespace Microsoft.Data.SqlClient
         internal static object GetNullSqlValue(SqlBuffer nullVal,
             SqlMetaDataPriv md,
             SqlCommandColumnEncryptionSetting columnEncryptionSetting,
-            SqlInternalConnectionTds connection)
+            SqlConnectionInternal connection)
         {
             SqlDbType type = md.type;
 
@@ -9172,29 +9186,30 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Writes the User Agent feature request to the physical state object.
-        /// The request includes the feature ID, feature data length, version number and encoded JSON payload.
+        ///   Writes the User Agent feature request to the physical state
+        ///   object.  The request includes the feature ID, feature data length,
+        ///   and UCS-2 little-endian encoded payload.
         /// </summary>
-        /// <param name="userAgentJsonPayload"> Byte array of UTF-8 encoded JSON payload for User Agent</param>
+        /// <remarks>
+        ///   The feature request consists of:
+        ///     - 1 byte for the feature ID.
+        ///     - 4 bytes for the feature data length.
+        ///     - N bytes for the UCS-2 payload
+        /// </remarks>
+        /// <param name="userAgent">
+        ///   UCS-2 little-endian encoded UserAgent payload.
+        /// </param>
         /// <param name="write">
-        /// If true, writes the feature request to the physical state object.
-        /// If false, just calculates the length.
+        ///   If true, writes the feature request to the physical state object.
+        ///   If false, just calculates the length.
         /// </param>
         /// <returns>The length of the feature request in bytes.</returns>
-        /// <remarks>
-        /// The feature request consists of:
-        /// - 1 byte for the feature ID.
-        /// - 4 bytes for the feature data length.
-        /// - 1 byte for the version number.
-        /// - N bytes for the JSON payload
-        /// </remarks>
-        internal int WriteUserAgentFeatureRequest(byte[] userAgentJsonPayload,
+        internal int WriteUserAgentFeatureRequest(ReadOnlyMemory<byte> userAgent,
                                                   bool write)
         {
-            // 1byte (Feature Version) + size of UTF-8 encoded JSON payload 
-            int dataLen = 1 + userAgentJsonPayload.Length;
-            // 1byte (Feature ID) + 4bytes (Feature Data Length) + 1byte (Version) + N(JSON payload size)
-            int totalLen = 1 + 4 + dataLen;
+            // 1 byte (Feature ID) + 4 bytes (Feature Data Length) + N bytes
+            // (UCS-2 payload size)
+            int totalLen = 1 + 4 + userAgent.Length;
 
             if (write)
             {
@@ -9202,13 +9217,10 @@ namespace Microsoft.Data.SqlClient
                 _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_USERAGENT);
 
                 // Feature Data Length
-                WriteInt(dataLen, _physicalStateObj);
+                WriteInt(userAgent.Length, _physicalStateObj);
 
-                // Write Feature Version
-                _physicalStateObj.WriteByte(TdsEnums.SUPPORTED_USER_AGENT_VERSION);
-
-                // Write encoded JSON payload
-                _physicalStateObj.WriteByteArray(userAgentJsonPayload, userAgentJsonPayload.Length, 0);
+                // Write encoded UCS-2 payload
+                _physicalStateObj.WriteByteSpan(userAgent.Span);
             }
 
             return totalLen;
@@ -9488,7 +9500,7 @@ namespace Microsoft.Data.SqlClient
                     requestedFeatures,
                     recoverySessionData,
                     fedAuthFeatureExtensionData,
-                    UserAgentInfo.UserAgentCachedJsonPayload.ToArray(),
+                    UserAgent.Ucs2Bytes,
                     useFeatureExt,
                     length,
                     true
@@ -9511,7 +9523,7 @@ namespace Microsoft.Data.SqlClient
         private int ApplyFeatureExData(TdsEnums.FeatureExtension requestedFeatures,
                                        SessionData recoverySessionData,
                                        FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
-                                       byte[] userAgentJsonPayload,
+                                       ReadOnlyMemory<byte> userAgent,
                                        bool useFeatureExt,
                                        int length,
                                        bool write = false)
@@ -9523,7 +9535,7 @@ namespace Microsoft.Data.SqlClient
                     // NOTE: As part of TDS spec UserAgent feature extension should be the first feature extension in the list.
                     if (LocalAppContextSwitches.EnableUserAgent && ((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) != 0))
                     {
-                        length += WriteUserAgentFeatureRequest(userAgentJsonPayload, write);
+                        length += WriteUserAgentFeatureRequest(userAgent, write);
                     }
                     if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)
                     {
@@ -10000,10 +10012,10 @@ namespace Microsoft.Data.SqlClient
                         static (Task task, object state) =>
                         {
                             Debug.Assert(!task.IsCanceled, "Task should not be canceled");
-                            var parameters = (Tuple<TdsParser, TdsParserStateObject, SqlInternalConnectionTds>)state;
+                            var parameters = (Tuple<TdsParser, TdsParserStateObject, SqlConnectionInternal>)state;
                             TdsParser parser = parameters.Item1;
                             TdsParserStateObject tdsParserStateObject = parameters.Item2;
-                            SqlInternalConnectionTds internalConnectionTds = parameters.Item3;
+                            SqlConnectionInternal internalConnectionTds = parameters.Item3;
                             try
                             {
                                 if (task.IsFaulted)
@@ -10237,7 +10249,7 @@ namespace Microsoft.Data.SqlClient
                                     if (releaseConnectionLock)
                                     {
                                         task.ContinueWith(
-                                            static (Task _, object state) => ((SqlInternalConnectionTds)state)._parserLock.Release(),
+                                            static (Task _, object state) => ((SqlConnectionInternal)state)._parserLock.Release(),
                                             state: _connHandler,
                                             TaskScheduler.Default
                                         );
@@ -12768,13 +12780,7 @@ namespace Microsoft.Data.SqlClient
                 preambleToSkip = encoding.GetPreamble();
             }
 
-            XmlWriterSettings writerSettings = new XmlWriterSettings();
-            writerSettings.CloseOutput = false; // don't close the memory stream
-            writerSettings.ConformanceLevel = ConformanceLevel.Fragment;
-            if (_asyncWrite)
-            {
-                writerSettings.Async = true;
-            }
+            XmlWriterSettings writerSettings = _asyncWrite ? AsyncXmlWriterSettings : SyncXmlWriterSettings;
 
             using ConstrainedTextWriter writer = new ConstrainedTextWriter(new StreamWriter(new TdsOutputStream(this, stateObj, preambleToSkip), encoding), size);
             using XmlWriter ww = XmlWriter.Create(writer, writerSettings);
