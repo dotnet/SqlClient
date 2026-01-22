@@ -36,15 +36,20 @@ Microsoft.SqlServer.Server.Format
   <files>
     <file src="..\icons\dotnet.png" target="" />
 
+    <!--
+      We require the $ReferenceType$ property to be supplied on the nuget pack
+      command line to indicate where the DLLs are.
+    -->
+
     <!-- lib .NET Framework 4.6.2 -->
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\net46\Microsoft.SqlServer.Server.dll" target="lib\net46\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\net46\Microsoft.SqlServer.Server.pdb" target="lib\net46\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\net46\Microsoft.SqlServer.Server.xml" target="lib\net46\" exclude="" />
+    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\net46\Microsoft.SqlServer.Server.dll" target="lib\net46\" exclude="" />
+    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\net46\Microsoft.SqlServer.Server.pdb" target="lib\net46\" exclude="" />
+    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\net46\Microsoft.SqlServer.Server.xml" target="lib\net46\" exclude="" />
 
     <!-- lib NetStandard -->
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\netstandard2.0\Microsoft.SqlServer.Server.dll" target="lib\netstandard2.0\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\netstandard2.0\Microsoft.SqlServer.Server.pdb" target="lib\netstandard2.0\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\netstandard2.0\Microsoft.SqlServer.Server.xml" target="lib\netstandard2.0\" exclude="" />
+    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\netstandard2.0\Microsoft.SqlServer.Server.dll" target="lib\netstandard2.0\" exclude="" />
+    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\netstandard2.0\Microsoft.SqlServer.Server.pdb" target="lib\netstandard2.0\" exclude="" />
+    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\netstandard2.0\Microsoft.SqlServer.Server.xml" target="lib\netstandard2.0\" exclude="" />
 
   </files>
 </package>

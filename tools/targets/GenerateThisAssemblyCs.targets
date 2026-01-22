@@ -4,18 +4,31 @@
     <Compile Include="$(IntermediateOutputPath)\ThisAssembly.cs"/>
   </ItemGroup>
 
+  <PropertyGroup>
+    <!--
+      Prepend an assembly CLS Compliance directive unless
+      $(ThisAssemblyClsCompliant) is false.
+    -->
+    <ThisAssemblyClsCompliantContent Condition="'$(ThisAssemblyClsCompliant)' != 'false'">
+[assembly: System.CLSCompliant(true)]
+    </ThisAssemblyClsCompliantContent>
+    
+    <!-- Put the ThisAssembly class in the System namespace by default. -->
+    <ThisAssemblyNamespace Condition="'$(ThisAssemblyNamespace)' == ''">System</ThisAssemblyNamespace>
+  </PropertyGroup>
+
   <Target Name="GenerateThisAssemblyCs"
           BeforeTargets="CoreCompile">
     <PropertyGroup>
       <ThisAssemblyCsContents>
-[assembly: System.CLSCompliant(true)]
-namespace System
+$(ThisAssemblyClsCompliantContent)
+namespace $(ThisAssemblyNamespace)
 {
-internal static class ThisAssembly
-{
-internal const string InformationalVersion = "$(AssemblyFileVersion)"%3B
-internal const string NuGetPackageVersion = "$(Version)"%3B
-}
+    internal static class ThisAssembly
+    {
+        internal const string InformationalVersion = "$(AssemblyFileVersion)"%3B
+        internal const string NuGetPackageVersion = "$(Version)"%3B
+    }
 }
       </ThisAssemblyCsContents>
     </PropertyGroup>
