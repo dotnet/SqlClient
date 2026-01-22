@@ -10,12 +10,6 @@ parameters:
   - name: abstractionsPackageVersion
     type: string
 
-  - name: azureArtifactsName
-    type: string
-
-  - name: azurePackageVersion
-    type: string
-
   - name: buildConfiguration
     type: string
     values:
@@ -81,8 +75,6 @@ stages:
                   configProperties: ${{ config.value.configProperties }}
                   abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
                   abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
-                  azureArtifactsName: ${{ parameters.azureArtifactsName }}
-                  azurePackageVersion: ${{ parameters.azurePackageVersion }}
                   mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
                   mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
                   prebuildSteps: ${{ parameters.prebuildSteps }}
@@ -119,8 +111,6 @@ stages:
                     useManagedSNI: ${{ useManagedSNI }}
                     abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
                     abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
-                    azureArtifactsName: ${{ parameters.azureArtifactsName }}
-                    azurePackageVersion: ${{ parameters.azurePackageVersion }}
                     mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
                     mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
                     prebuildSteps: ${{ parameters.prebuildSteps }}
