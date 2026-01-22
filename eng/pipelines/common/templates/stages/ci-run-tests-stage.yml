@@ -4,6 +4,18 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  - name: abstractionsArtifactsName
+    type: string
+
+  - name: abstractionsPackageVersion
+    type: string
+
+  - name: azureArtifactsName
+    type: string
+
+  - name: azurePackageVersion
+    type: string
+
   - name: buildConfiguration
     type: string
     values:
@@ -24,7 +36,7 @@ parameters:
 
   - name: mdsPackageVersion
     type: string
-  
+
   - name: postTestJobs
     type: jobList
     default: []
@@ -67,6 +79,10 @@ stages:
                   image: ${{ image.value }}
                   jobDisplayName: ${{ format('{0}_{1}_{2}', replace(targetFramework, '.', '_'), platform, testSet) }}
                   configProperties: ${{ config.value.configProperties }}
+                  abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
+                  abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+                  azureArtifactsName: ${{ parameters.azureArtifactsName }}
+                  azurePackageVersion: ${{ parameters.azurePackageVersion }}
                   mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
                   mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
                   prebuildSteps: ${{ parameters.prebuildSteps }}
@@ -101,9 +117,13 @@ stages:
                       jobDisplayName: ${{ format('{0}_{1}_{2}_{3}', replace(targetFramework, '.', '_'), platform, 'NativeSNI', testSet) }}
                     configProperties: ${{ config.value.configProperties }}
                     useManagedSNI: ${{ useManagedSNI }}
+                    abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
+                    abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+                    azureArtifactsName: ${{ parameters.azureArtifactsName }}
+                    azurePackageVersion: ${{ parameters.azurePackageVersion }}
                     mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
                     mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
-                    prebuildSteps: ${{ parameters.prebuildSteps }}                  
+                    prebuildSteps: ${{ parameters.prebuildSteps }}
                     targetFramework: ${{ targetFramework }}
                     netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                     testSet: ${{ testSet }}
@@ -122,7 +142,7 @@ stages:
 - ${{ if ne(length(parameters.postTestJobs), 0) }}:
   - stage: Post_Test
     displayName: 'Post Test Jobs'
-    dependsOn: 
+    dependsOn:
       - ${{ each config in parameters.testConfigurations }}:
         - ${{ each image in config.value.images }}:
           - ${{ image.key }}

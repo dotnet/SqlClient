@@ -4,10 +4,16 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  - name: abstractionsArtifactsName
+    type: string
+
+  - name: abstractionsPackageVersion
+    type: string
+
   - name: configProperties
     type: object
     default: {} # - key: 'value'
-  
+
   - name: configSqlFor
     type: string # local, azure, or enclave
     default: local
@@ -42,7 +48,7 @@ parameters:
 
   - name: netcoreVersionTestUtils
     type: string
-  
+
   - name: operatingSystem
     type: string
     default: ''
@@ -59,7 +65,7 @@ parameters:
   - name: prebuildSteps
     type: stepList
     default: []
-  
+
   - name: publishTestResults
     type: boolean
     default: false
@@ -75,11 +81,11 @@ parameters:
 
   - name: testSet
     type: string
-  
+
   # The timeout, in minutes, for this job.
   - name: timeout
     type: number
-  
+
   # True if this is an ARM64 job.
   - name: isArm64
     type: boolean
@@ -110,9 +116,15 @@ jobs:
 
   steps:
 
-  # If we're testing in Package mode, download the MDS package
+  # If we're testing in Package mode, download the Abstractions and MDS package
   # artifacts and put them in the packages/ directory in the repo root.
   - ${{ if eq(parameters.referenceType, 'Package') }}:
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Abstractions Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.abstractionsArtifactsName }}
+        targetPath: $(Build.SourcesDirectory)/packages
+
     - task: DownloadPipelineArtifact@2
       displayName: Download MDS Package Artifacts
       inputs:
@@ -230,7 +242,7 @@ jobs:
               net start $svc_name
               Get-Service $svc_name | Select-Object -Property Name, StartType, Status
           }
-          
+
         displayName: 'Start Sql Browser'
         condition: eq(variables['Agent.OS'], 'Windows_NT')
     - ${{ elseif eq(parameters.configSqlFor, 'local') }}:
@@ -271,6 +283,7 @@ jobs:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.referenceType }}
         testSet: ${{ parameters.testSet }}
+        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
         ${{ if ne(parameters.operatingSystem, 'Windows') }}:
           OSGroup: Unix
