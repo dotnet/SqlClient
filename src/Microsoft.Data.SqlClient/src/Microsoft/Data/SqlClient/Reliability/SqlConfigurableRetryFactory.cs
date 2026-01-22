@@ -40,7 +40,7 @@ namespace Microsoft.Data.SqlClient
 
         /// Default known transient error numbers.
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/DefaultTransientErrors/*' />
-        public static readonly ReadOnlyCollection<int> DefaultTransientErrors
+        public static ReadOnlyCollection<int> DefaultTransientErrors { get; }
             = new(
                 [
                     -2,     // Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.
@@ -55,6 +55,8 @@ namespace Microsoft.Data.SqlClient
                     1222,   // Lock request time out period exceeded.
                     4060,   // Cannot open database "%.*ls" requested by the login. The login failed.
                     4221,   // Login to read-secondary failed due to long wait on 'HADR_DATABASE_WAIT_FOR_TRANSITION_TO_VERSIONING'. The replica is not available for login because row versions are missing for transactions that were in-flight when the replica was recycled. The issue can be resolved by rolling back or committing the active transactions on the primary replica. Occurrences of this condition can be minimized by avoiding long write transactions on the primary.
+                    10053,  // Could not convert the data value due to reasons other than sign mismatch or overflow.
+                    10054,  // The data value for one or more columns overflowed the type used by the provider.
                     10060,  // An error has occurred while establishing a connection to the server. When connecting to SQL Server, this failure may be caused by the fact that under the default settings SQL Server does not allow remote connections. (provider: TCP Provider, error: 0 - A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.) (Microsoft SQL Server, Error: 10060)
                     10928,  // Resource ID: %d. The %s limit for the database is %d and has been reached. For more information, see http://go.microsoft.com/fwlink/?LinkId=267637.
                     10929,  // Resource ID: %d. The %s minimum guarantee is %d, maximum limit is %d and the current usage for the database is %d. However, the server is currently too busy to support requests greater than %d for this database. For more information, see http://go.microsoft.com/fwlink/?LinkId=267637. Otherwise, please try again later.
