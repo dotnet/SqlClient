@@ -297,6 +297,8 @@ jobs:
         referenceType: ${{ parameters.referenceType }}
         testSet: ${{ parameters.testSet }}
         operatingSystem: ${{ parameters.operatingSystem }}
+        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
     # Set up for x86 tests by manually installing dotnet for x86 to an alternative location. This
@@ -323,6 +325,8 @@ jobs:
         msbuildArchitecture: x86
         dotnetx86RootPath: $(dotnetx86RootPath)
         operatingSystem: ${{ parameters.operatingSystem }}
+        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - ${{ if eq(parameters.publishTestResults, true) }}:
     - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
