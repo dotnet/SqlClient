@@ -289,6 +289,7 @@
         $(DotnetPath)dotnet test "@(UnitTestsProj)"
         -f $(TF)
         -p:Configuration=$(Configuration)
+        -p:ReferenceType=Project
         $(CollectStatement)
         --results-directory $(ResultsDirectory)
         --filter "$(FilterStatement)"
@@ -311,6 +312,7 @@
         $(DotnetPath)dotnet test "@(UnitTestsProj)"
         -f $(TF)
         -p:Configuration=$(Configuration)
+        -p:ReferenceType=Project
         $(CollectStatement)
         --results-directory $(ResultsDirectory)
         --filter "$(FilterStatement)"
@@ -337,6 +339,8 @@
         -f $(TF)
         -p:Configuration=$(Configuration)
         -p:ReferenceType=$(ReferenceType)
+        -p:AbstractionsPackageVersion=$(AbstractionsPackageVersion)
+        -p:MdsPackageVersion=$(MdsPackageVersion)
         $(CollectStatement)
         --results-directory $(ResultsDirectory)
         --filter "$(FilterStatement)"
@@ -360,6 +364,8 @@
         -f $(TF)
         -p:Configuration=$(Configuration)
         -p:ReferenceType=$(ReferenceType)
+        -p:AbstractionsPackageVersion=$(AbstractionsPackageVersion)
+        -p:MdsPackageVersion=$(MdsPackageVersion)
         $(CollectStatement)
         --results-directory $(ResultsDirectory)
         --filter "$(FilterStatement)"
@@ -390,6 +396,8 @@
         -p:ReferenceType=$(ReferenceType)
         -p:TestSet=$(TestSet)
         -p:TestTargetOS=Windows$(TargetGroup)
+        -p:AbstractionsPackageVersion=$(AbstractionsPackageVersion)
+        -p:MdsPackageVersion=$(MdsPackageVersion)
         $(CollectStatement)
         --results-directory $(ResultsDirectory)
         --filter "$(FilterStatement)"
@@ -416,6 +424,8 @@
         -p:ReferenceType=$(ReferenceType)
         -p:TestSet=$(TestSet)
         -p:TestTargetOS=Unixnetcoreapp
+        -p:AbstractionsPackageVersion=$(AbstractionsPackageVersion)
+        -p:MdsPackageVersion=$(MdsPackageVersion)
         $(CollectStatement)
         --results-directory $(ResultsDirectory)
         --filter "$(FilterStatement)"

@@ -4,6 +4,12 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  - name: abstractionsArtifactsName
+    type: string
+
+  - name: abstractionsPackageVersion
+    type: string
+
   - name: configProperties
     type: object
     default: {} # - key: 'value'
@@ -110,9 +116,15 @@ jobs:
 
   steps:
 
-  # If we're testing in Package mode, download the MDS package
+  # If we're testing in Package mode, download the Abstractions and MDS package
   # artifacts and put them in the packages/ directory in the repo root.
   - ${{ if eq(parameters.referenceType, 'Package') }}:
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Abstractions Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.abstractionsArtifactsName }}
+        targetPath: $(Build.SourcesDirectory)/packages
+
     - task: DownloadPipelineArtifact@2
       displayName: Download MDS Package Artifacts
       inputs:
@@ -271,6 +283,7 @@ jobs:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.referenceType }}
         testSet: ${{ parameters.testSet }}
+        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
         ${{ if ne(parameters.operatingSystem, 'Windows') }}:
           OSGroup: Unix

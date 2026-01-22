@@ -5,11 +5,11 @@
 #################################################################################
 parameters:
 
-  - name: buildConfiguration
+  - name: abstractionsAssemblyFileVersion
     type: string
-    values:
-      - Debug
-      - Release
+
+  - name: abstractionsPackageVersion
+    type: string
 
   - name: mdsAssemblyFileVersion
     type: string
@@ -17,13 +17,8 @@ parameters:
   - name: mdsPackageVersion
     type: string
 
-  - name: referenceType
-    type: string
-    values:
-      - Package
-      - Project
-
 steps:
+  # Download our signing key.
   - task: DownloadSecureFile@1
     displayName: 'Download Key Pair'
     inputs:
@@ -33,15 +28,26 @@ steps:
   # Install the .NET SDK.
   - template: /eng/pipelines/steps/install-dotnet.yml@self
 
+  # Configure NuGet to use the local packages/ directory where the Abstractions
+  # package will be.
+  - pwsh: New-Item -Path "$(packageFolderName)" -ItemType Directory -Force
+    displayName: Create packages/ directory
+
+  - pwsh: Copy-Item -Path "$(Build.SourcesDirectory)/NuGet.config.local" -Destination "$(Build.SourcesDirectory)/NuGet.config" -Force
+    displayName: Use local NuGet packages
+
   - task: MSBuild@1
     displayName: 'BuildAllConfigurations using build.proj'
     inputs:
       solution: '**/build.proj'
-      configuration: '${{ parameters.buildConfiguration }}'
+      configuration: Release
       msbuildArguments: >-
         -t:BuildAllConfigurations
-        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:ReferenceType=Package
         -p:GenerateNuget=false
         -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk
         -p:MdsAssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+        -p:AssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+        -p:AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }}
