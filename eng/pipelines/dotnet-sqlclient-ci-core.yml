@@ -202,8 +202,6 @@ stages:
       referenceType: ${{ parameters.referenceType }}
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       abstractionsPackageVersion: $(abstractionsPackageVersion)
-      azureArtifactsName: $(azureArtifactsName)
-      azurePackageVersion: $(azurePackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
       testJobTimeout: ${{ parameters.testJobTimeout }}
