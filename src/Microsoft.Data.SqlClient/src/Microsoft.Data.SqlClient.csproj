@@ -27,7 +27,7 @@
   <PropertyGroup>
     <TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
   </PropertyGroup>
-  
+
   <!-- Internals visible to ============================================ -->
   <ItemGroup Condition="'$(CDP_BUILD_TYPE)' != 'Official'">
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
@@ -57,7 +57,7 @@
     <!--<TargetOs>Windows_NT</TargetOs>-->
 
     <NormalizedTargetOs>$(TargetOs.ToLower())</NormalizedTargetOs>
-    
+
     <!-- NOTE: These constants are prefixed with _ to keep them separate from .NET 5+ precompiler -->
     <!--     flags. Those only apply to OS-specific target frameworks, and would interfere here.  -->
     <DefineConstants Condition="'$(NormalizedTargetOs)' == 'unix'">$(DefineConstants);_UNIX</DefineConstants>
@@ -111,9 +111,7 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.EnterpriseServices" />
     <Reference Include="System.Transactions" />
-    
-    <PackageReference Include="Azure.Core" />
-    <PackageReference Include="Azure.Identity" />
+
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI">
       <PrivateAssets>All</PrivateAssets>
@@ -134,8 +132,6 @@
 
   <!-- References for netcore -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
-    <PackageReference Include="Azure.Core" />
-    <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
@@ -144,6 +140,17 @@
     <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
+  </ItemGroup>
+
+  <!--
+    Refer to the Abstractions package via project or package reference
+    depending on our build parameters.
+  -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->
