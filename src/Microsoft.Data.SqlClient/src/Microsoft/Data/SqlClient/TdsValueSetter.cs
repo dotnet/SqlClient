@@ -354,8 +354,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    char[] chars = value.ToCharArray(offset, length);
-                    bytes = _stateObj.Parser._defaultEncoding.GetBytes(chars);
+                    bytes = _stateObj.Parser._defaultEncoding.GetBytes(value, offset, length);
                 }
                 SetBytes(0, bytes, 0, bytes.Length);
                 SetBytesLength(bytes.Length);
@@ -376,7 +375,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        bytes = _stateObj.Parser._defaultEncoding.GetBytes(value.ToCharArray(offset, length));
+                        bytes = _stateObj.Parser._defaultEncoding.GetBytes(value, offset, length);
                     }
                     _stateObj.Parser.WriteSqlVariantHeader(9 + bytes.Length, TdsEnums.SQLBIGVARCHAR, 7, _stateObj);
                     _stateObj.Parser.WriteUnsignedInt(collation._info, _stateObj); // propbytes: collation.Info
