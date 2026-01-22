@@ -129,7 +129,7 @@
           </item>
           <item>
             <term>42108</term>
-            <description>Can not connect to the SQL pool since it is paused. Please resume the SQL pool and try again.</description>
+            <description>Cannot connect to the SQL pool since it is paused. Please resume the SQL pool and try again.</description>
           </item>
           <item>
             <term>42109</term>
