@@ -193,7 +193,9 @@ stages:
         postTestJobs:
         - template: common/templates/jobs/ci-code-coverage-job.yml@self
           parameters:
-            debug: ${{ parameters.debug }}
+            # TODO: Forcing debug temporarily for PR runs.
+            #debug: ${{ parameters.debug }}
+            debug: true
             image: ADO-MMS22-CodeCov
             pool: ${{ parameters.defaultPoolName }}
             targetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
