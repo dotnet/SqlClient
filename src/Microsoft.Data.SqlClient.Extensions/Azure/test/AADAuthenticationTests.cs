@@ -4,10 +4,6 @@
 
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
-// TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39233):
-// Enable this file once the MDS Azure files have been removed.
-#if false
-
 // These tests were moved from MDS FunctionalTests AADAuthenticationTests.cs.
 public class AADAuthenticationTests
 {
@@ -35,5 +31,3 @@ public class AADAuthenticationTests
         Assert.Same(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
     }
 }
-
-#endif
