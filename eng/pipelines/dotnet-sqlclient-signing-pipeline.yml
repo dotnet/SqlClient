@@ -5,33 +5,10 @@
 #################################################################################
 
 name: $(Year:YY)$(DayOfYear)$(Rev:.rr)
-trigger:
-  branches:
-    include:
-    - internal/release/5.1
-  paths:
-    include:
-    - src
-    - eng
-    - tools
-    - .config
-    - build.proj
-    - '*.cmd'
-    - '*.sh'
 
-schedules:
-- cron: '30 23 * * Sun'
-  displayName: Weekly Sunday 4:30 PM (UTC - 7) Build
-  branches:
-    include:
-    - internal/release/5.1
-  always: true
-
-- cron: '30 3 * * Mon-Fri'
-  displayName: Mon-Fri 8:30 PM (UTC - 7) Build
-  branches:
-    include:
-    - internal/release/5.1
+# 5.1 was retired on 20 Jan 2026.
+pr: none
+trigger: none
 
 parameters: # parameters are shown up in ADO UI in a build queue time
 - name: 'debug'
@@ -86,7 +63,7 @@ variables:
     value: $(NUGETPACKAGEVERSION)
 
 resources:
-  repositories: 
+  repositories:
     - repository: templates
       type: git
       name: OneBranch.Pipelines/GovernedTemplates
