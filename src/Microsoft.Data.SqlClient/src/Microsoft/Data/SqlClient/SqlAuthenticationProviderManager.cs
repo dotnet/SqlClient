@@ -66,7 +66,8 @@ namespace Microsoft.Data.SqlClient
                     return;
                 }
 
-                // TODO(ADO-39845): Verify the assembly is signed by us?
+                // TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39845):
+                // Verify the assembly is signed by us?
 
                 SqlClientEventSource.Log.TryTraceEvent(
                     nameof(SqlAuthenticationProviderManager) +
@@ -262,18 +263,15 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.UnsupportedAuthenticationByProvider(authenticationMethod.ToString(), provider.GetType().Name);
             }
             var methodName = "SetProvider";
-            if (Instance._authenticationsWithAppSpecifiedProvider.Count > 0)
+            foreach (SqlAuthenticationMethod candidateMethod in Instance._authenticationsWithAppSpecifiedProvider)
             {
-                foreach (SqlAuthenticationMethod candidateMethod in Instance._authenticationsWithAppSpecifiedProvider)
+                if (candidateMethod == authenticationMethod)
                 {
-                    if (candidateMethod == authenticationMethod)
-                    {
-                        Instance._sqlAuthLogger.LogError(nameof(SqlAuthenticationProviderManager), methodName, $"Failed to add provider {GetProviderType(provider)} because a user-defined provider with type {GetProviderType(Instance._providers[authenticationMethod])} already existed for authentication {authenticationMethod}.");
+                    Instance._sqlAuthLogger.LogError(nameof(SqlAuthenticationProviderManager), methodName, $"Failed to add provider {GetProviderType(provider)} because a user-defined provider with type {GetProviderType(Instance._providers[authenticationMethod])} already existed for authentication {authenticationMethod}.");
 
-                        // The app has already specified a Provider for this
-                        // authentication method, so we won't override it.
-                        return false;
-                    }
+                    // The app has already specified a Provider for this
+                    // authentication method, so we won't override it.
+                    return false;
                 }
             }
             Instance._providers.AddOrUpdate(

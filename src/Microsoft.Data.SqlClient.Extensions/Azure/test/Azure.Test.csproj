@@ -41,19 +41,14 @@
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
   </ItemGroup>
 
-  <!--
-    TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39233):
-    Uncomment the below items once the Azure files are removed from MDS.
-  -->
-
   <!-- Conditional Project References -->
-  <!-- <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
-  </ItemGroup> -->
+  </ItemGroup>
 
   <!-- Conditional Package References -->
-  <!-- <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
     <PackageReference Include="Microsoft.Data.SqlClient" />
-  </ItemGroup> -->
+  </ItemGroup>
 
 </Project>

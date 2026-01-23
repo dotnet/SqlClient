@@ -1674,7 +1674,7 @@ namespace Microsoft.Data.SqlClient.Connection
                             $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
                             $"Object ID {ObjectID}, " +
                             $"Unknown token for JSONSUPPORT");
-                        
+
                         throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                     }
 
@@ -2691,7 +2691,7 @@ namespace Microsoft.Data.SqlClient.Connection
             const int defaultRetryPeriod = 100;
 
             // Number of attempts we are willing to perform.
-            const int maxAttempts = 1;
+            const int maxAttempts = 2;
 
             // Username to use in error messages.
             string? username = null;
@@ -2704,7 +2704,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
             // We will perform retries if the provider indicates an error that
             // is retryable.
-            for (int attempt = 0; attempt <= maxAttempts; ++attempt)
+            for (int attempt = 1; attempt <= maxAttempts; ++attempt)
             {
                 try
                 {
@@ -2809,7 +2809,7 @@ namespace Microsoft.Data.SqlClient.Connection
                                     authParamsBuilder.WithPassword(ConnectionOptions.Password);
                                 }
                                 SqlAuthenticationParameters parameters = authParamsBuilder;
-                                CancellationTokenSource cts = new();
+                                using CancellationTokenSource cts = new();
                                 // Use Connection timeout value to cancel token acquire request after certain period of time.(int)
                                 if (_timeout.MillisecondsRemaining < Int32.MaxValue)
                                 {
@@ -2845,12 +2845,12 @@ namespace Microsoft.Data.SqlClient.Connection
                         throw SQL.ActiveDirectoryTokenRetrievingTimeout(Enum.GetName(typeof(SqlAuthenticationMethod), ConnectionOptions.Authentication), ex.FailureCode, ex);
                     }
 
-                    // We use a doubling backoff if the provider didn't provide
+                    // We use a linear backoff if the provider didn't provide
                     // a retry period.
                     int retryPeriod =
                       ex.RetryPeriod > 0
                       ? ex.RetryPeriod
-                      : defaultRetryPeriod * (2 ^ attempt);
+                      : defaultRetryPeriod * attempt;
 
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}, Attempt: {1}, sleeping {2}[Milliseconds]", ObjectID, attempt, retryPeriod);
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}, Attempt: {1}, remaining {2}[Milliseconds]", ObjectID, attempt, _timeout.MillisecondsRemaining);

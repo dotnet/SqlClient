@@ -2,10 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-// TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39233):
-// Enable this file once the MDS Azure files have been removed.
-#if false
-
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
 public class DefaultAuthProviderTests
@@ -68,5 +64,3 @@ public class DefaultAuthProviderTests
         }
     }
 }
-
-#endif
