@@ -23,5 +23,5 @@ The branches listed below indicate the repo branch used for the triggered runs.
 |Test-SqlClient-Managed-Instance|[main](https://github.com/dotnet/SqlClient)|Release|No|No|Daily 03:00 UTC|Classic UI|
 |Test-SqlClient-Managed-Instance|[release/6.1](https://github.com/dotnet/SqlClient/tree/release/6.1)|Release|No|No|Daily 03:00 UTC|Classic UI|
 |Test-SqlClient-Managed-Instance|[release/6.0](https://github.com/dotnet/SqlClient/tree/release/6.0)|Release|No|No|Daily 03:00 UTC|Classic UI|
-|sni-ci|[master]()|Release|Yes|No|Mon 04:30 UTC|YAML|
-|sni-ci|[release/6.0]()|Release|Yes|No|Mon 05:30 UTC|YAML|
+|sni-ci|[master](https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/Microsoft.Data.SqlClient.sni)|Release|Yes|No|Mon 04:30 UTC|YAML|
+|sni-ci|[release/6.0](https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/Microsoft.Data.SqlClient.sni?path=%2F&version=GBrelease%2F6.0&_a=contents)|Release|Yes|No|Mon 05:30 UTC|YAML|
