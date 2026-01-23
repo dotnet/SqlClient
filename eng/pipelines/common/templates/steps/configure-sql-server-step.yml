@@ -103,6 +103,7 @@ steps:
 - task: DotNetCoreCLI@2
   displayName: 'Build Ext Utilities'
   inputs:
+    command: build
     arguments: '-f ${{parameters.netcoreVersionTestUtils }}'
     workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.ExtUtilities
   retryCountOnTaskFailure: 1
