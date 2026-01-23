@@ -18,6 +18,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class SqlServerTypesTest
     {
+        private const string BuiltInUdtSelectQuery =
+            "SELECT " +
+            "  hierarchyid::Parse('/1/1/3/') AS col0, " +
+            "  geometry::Parse('LINESTRING (100 100, 20 180, 180 180') AS col1, " +
+            "  geography::Parse('LINESTRING (-122.360 47.656, -122.343 47.656)' AS col2";
+
+        private const string GeometryBytesHexString =
+            "00000000010403000000000000000000594000000000000059400000000000003440000000000080" +
+            "66400000000000806640000000000080664001000000010000000001000000ffffffff0000000002";
+
+        private const string GeographyBytesHexString =
+            "e610000001148716d9cef7d34740d7a3703d0a975ec08716d9cef7d34740cba145b6f3955ec0";
+
+        private const string HierarchyIdBytesHexString = "5ade";
+
         // Synapse: Parse error at line: 1, column: 48: Incorrect syntax near 'hierarchyid'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void GetSchemaTableTest()
@@ -82,171 +97,123 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'hierarchyid'.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void TestUdtSqlDataReaderGetSqlBytesSequentialAccess()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(CommandBehavior.Default)]
+        [InlineData(CommandBehavior.SequentialAccess)]
+        public static void TestUdtSqlDataReaderGetSqlBytes(CommandBehavior behavior)
         {
-            TestUdtSqlDataReaderGetSqlBytes(CommandBehavior.SequentialAccess);
-        }
+            // Arrange
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
 
-        // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'hierarchyid'.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void TestUdtSqlDataReaderGetSqlBytes()
-        {
-            TestUdtSqlDataReaderGetSqlBytes(CommandBehavior.Default);
-        }
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandType = CommandType.Text;
+            command.CommandText = BuiltInUdtSelectQuery;
 
-        private static void TestUdtSqlDataReaderGetSqlBytes(CommandBehavior behavior)
-        {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using SqlDataReader reader = command.ExecuteReader(behavior);
+            reader.Read();
+
+            // Act / Assert
+            void ActAndAssert(int index, string expectedHexString)
             {
-                connection.Open();
-                SqlCommand command = connection.CreateCommand();
-                command.CommandText = "select hierarchyid::Parse('/1/1/3/') as col0, geometry::Parse('LINESTRING (100 100, 20 180, 180 180)') as col1, geography::Parse('LINESTRING(-122.360 47.656, -122.343 47.656)') as col2";
-                using (SqlDataReader reader = command.ExecuteReader(behavior))
-                {
-                    Assert.True(reader.Read());
+                // Act
+                SqlBytes sqlBytes = reader.GetSqlBytes(index);
 
-                    SqlBytes sqlBytes = null;
+                // Assert
+                Assert.Equal(expectedHexString, ToHexString(sqlBytes.Value));
+            }
 
-                    sqlBytes = reader.GetSqlBytes(0);
-                    Assert.Equal("5ade", ToHexString(sqlBytes.Value));
+            ActAndAssert(0, HierarchyIdBytesHexString);
+            ActAndAssert(1, GeometryBytesHexString);
+            ActAndAssert(2, GeographyBytesHexString);
 
-                    sqlBytes = reader.GetSqlBytes(1);
-                    Assert.Equal("0000000001040300000000000000000059400000000000005940000000000000344000000000008066400000000000806640000000000080664001000000010000000001000000ffffffff0000000002", ToHexString(sqlBytes.Value));
-
-                    sqlBytes = reader.GetSqlBytes(2);
-                    Assert.Equal("e610000001148716d9cef7d34740d7a3703d0a975ec08716d9cef7d34740cba145b6f3955ec0", ToHexString(sqlBytes.Value));
-
-                    if (behavior == CommandBehavior.Default)
-                    {
-                        sqlBytes = reader.GetSqlBytes(0);
-                        Assert.Equal("5ade", ToHexString(sqlBytes.Value));
-                    }
-                }
+            // - In default behavior, ensure reading columns out of order works
+            if (behavior is CommandBehavior.Default)
+            {
+                ActAndAssert(0, HierarchyIdBytesHexString);
             }
         }
 
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'hierarchyid'.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void TestUdtSqlDataReaderGetBytesSequentialAccess()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(CommandBehavior.Default)]
+        [InlineData(CommandBehavior.SequentialAccess)]
+        public static void TestUdtSqlDataReaderGetBytesSequentialAccess(CommandBehavior behavior)
         {
-            TestUdtSqlDataReaderGetBytes(CommandBehavior.SequentialAccess);
-        }
+            // Arrange
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
 
-        // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'hierarchyid'.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void TestUdtSqlDataReaderGetBytes()
-        {
-            TestUdtSqlDataReaderGetBytes(CommandBehavior.Default);
-        }
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandType = CommandType.Text;
+            command.CommandText = BuiltInUdtSelectQuery;
 
-        private static void TestUdtSqlDataReaderGetBytes(CommandBehavior behavior)
-        {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using SqlDataReader reader = command.ExecuteReader(behavior);
+            reader.Read();
+
+            // Act / Assert
+            void ActAndAssert(int index, string expectedHexString)
             {
-                connection.Open();
-                SqlCommand command = connection.CreateCommand();
-                command.CommandText = "select hierarchyid::Parse('/1/1/3/') as col0, geometry::Parse('LINESTRING (100 100, 20 180, 180 180)') as col1, geography::Parse('LINESTRING(-122.360 47.656, -122.343 47.656)') as col2";
-                using (SqlDataReader reader = command.ExecuteReader(behavior))
-                {
-                    Assert.True(reader.Read());
+                // Act
+                int byteCount = (int)reader.GetBytes(index, 0, null, 0, 0);
 
-                    int byteCount = 0;
-                    byte[] bytes = null;
+                byte[] bytes = new byte[byteCount];
+                reader.GetBytes(index, 0, bytes, 0, bytes.Length);
 
-                    byteCount = (int)reader.GetBytes(0, 0, null, 0, 0);
-                    Assert.True(byteCount > 0);
-                    bytes = new byte[byteCount];
-                    reader.GetBytes(0, 0, bytes, 0, bytes.Length);
-                    Assert.Equal("5ade", ToHexString(bytes));
+                // Assert
+                Assert.Equal(expectedHexString, ToHexString(bytes));
+            }
 
-                    byteCount = (int)reader.GetBytes(1, 0, null, 0, 0);
-                    Assert.True(byteCount > 0);
-                    bytes = new byte[byteCount];
-                    reader.GetBytes(1, 0, bytes, 0, bytes.Length);
-                    Assert.Equal("0000000001040300000000000000000059400000000000005940000000000000344000000000008066400000000000806640000000000080664001000000010000000001000000ffffffff0000000002", ToHexString(bytes));
+            ActAndAssert(0, HierarchyIdBytesHexString);
+            ActAndAssert(1, GeometryBytesHexString);
+            ActAndAssert(2, GeographyBytesHexString);
 
-                    byteCount = (int)reader.GetBytes(2, 0, null, 0, 0);
-                    Assert.True(byteCount > 0);
-                    bytes = new byte[byteCount];
-                    reader.GetBytes(2, 0, bytes, 0, bytes.Length);
-                    Assert.Equal("e610000001148716d9cef7d34740d7a3703d0a975ec08716d9cef7d34740cba145b6f3955ec0", ToHexString(bytes));
-
-                    if (behavior == CommandBehavior.Default)
-                    {
-                        byteCount = (int)reader.GetBytes(0, 0, null, 0, 0);
-                        Assert.True(byteCount > 0);
-                        bytes = new byte[byteCount];
-                        reader.GetBytes(0, 0, bytes, 0, bytes.Length);
-                        Assert.Equal("5ade", ToHexString(bytes));
-                    }
-                }
+            // - In default behavior, ensure reading columns out of order works
+            if (behavior is CommandBehavior.Default)
+            {
+                ActAndAssert(0, HierarchyIdBytesHexString);
             }
         }
 
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'hierarchyid'.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void TestUdtSqlDataReaderGetStreamSequentialAccess()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(CommandBehavior.Default)]
+        [InlineData(CommandBehavior.SequentialAccess)]
+        public static void TestUdtSqlDataReaderGetStream(CommandBehavior behavior)
         {
-            TestUdtSqlDataReaderGetStream(CommandBehavior.SequentialAccess);
-        }
+            // Arrange
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
 
-        // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'hierarchyid'.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void TestUdtSqlDataReaderGetStream()
-        {
-            TestUdtSqlDataReaderGetStream(CommandBehavior.Default);
-        }
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandType = CommandType.Text;
+            command.CommandText = BuiltInUdtSelectQuery;
 
-        private static void TestUdtSqlDataReaderGetStream(CommandBehavior behavior)
-        {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using SqlDataReader reader = command.ExecuteReader(behavior);
+            reader.Read();
+
+            // Act / Assert
+            void ActAndAssert(int index, string expectedHexString)
             {
-                connection.Open();
-                SqlCommand command = connection.CreateCommand();
-                command.CommandText = "select hierarchyid::Parse('/1/1/3/') as col0, geometry::Parse('LINESTRING (100 100, 20 180, 180 180)') as col1, geography::Parse('LINESTRING(-122.360 47.656, -122.343 47.656)') as col2";
-                using (SqlDataReader reader = command.ExecuteReader(behavior))
-                {
-                    Assert.True(reader.Read());
+                // Act
+                MemoryStream buffer = new MemoryStream();
+                using Stream stream = reader.GetStream(index);
+                stream.CopyTo(buffer);
 
-                    MemoryStream buffer = null;
-                    byte[] bytes = null;
+                byte[] bytes = buffer.ToArray();
 
-                    buffer = new MemoryStream();
-                    using (Stream stream = reader.GetStream(0))
-                    {
-                        stream.CopyTo(buffer);
-                    }
-                    bytes = buffer.ToArray();
-                    Assert.Equal("5ade", ToHexString(bytes));
+                // Assert
+                Assert.Equal(expectedHexString, ToHexString(bytes));
+            }
 
-                    buffer = new MemoryStream();
-                    using (Stream stream = reader.GetStream(1))
-                    {
-                        stream.CopyTo(buffer);
-                    }
-                    bytes = buffer.ToArray();
-                    Assert.Equal("0000000001040300000000000000000059400000000000005940000000000000344000000000008066400000000000806640000000000080664001000000010000000001000000ffffffff0000000002", ToHexString(bytes));
+            ActAndAssert(0, HierarchyIdBytesHexString);
+            ActAndAssert(1, GeometryBytesHexString);
+            ActAndAssert(2, GeographyBytesHexString);
 
-                    buffer = new MemoryStream();
-                    using (Stream stream = reader.GetStream(2))
-                    {
-                        stream.CopyTo(buffer);
-                    }
-                    bytes = buffer.ToArray();
-                    Assert.Equal("e610000001148716d9cef7d34740d7a3703d0a975ec08716d9cef7d34740cba145b6f3955ec0", ToHexString(bytes));
-
-                    if (behavior == CommandBehavior.Default)
-                    {
-                        buffer = new MemoryStream();
-                        using (Stream stream = reader.GetStream(0))
-                        {
-                            stream.CopyTo(buffer);
-                        }
-                        bytes = buffer.ToArray();
-                        Assert.Equal("5ade", ToHexString(bytes));
-                    }
-                }
+            // - In default behavior, ensure reading columns out of order works
+            if (behavior is CommandBehavior.Default)
+            {
+                ActAndAssert(0, HierarchyIdBytesHexString);
             }
         }
 
