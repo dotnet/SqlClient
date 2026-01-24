@@ -601,6 +601,8 @@ namespace Microsoft.Data.SqlClient.Connection
 
         internal string UserInstanceName { get; private set; } = string.Empty;
 
+        internal string InstanceName { get; set; }
+
         internal bool Is2008OrNewer
         {
             get => _parser.Is2008OrNewer;

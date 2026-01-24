@@ -1020,6 +1020,9 @@
     <Compile Include="$(CommonSourceRoot)System\IO\StreamExtensions.netfx.cs">
       <Link>System\IO\StreamExtensions.netfx.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)System\Text\EncodingExtensions.cs">
+      <Link>System\Text\EncodingExtensions.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)System\Runtime\CompilerServices\IsExternalInit.netfx.cs">
       <Link>System\Runtime\CompilerServices\IsExternalInit.netfx.cs</Link>
     </Compile>

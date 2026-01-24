@@ -1031,6 +1031,9 @@
     <Compile Include="$(CommonSourceRoot)Resources\StringsHelper.cs">
       <Link>Resources\StringsHelper.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)System\Text\EncodingExtensions.cs">
+      <Link>System\Text\EncodingExtensions.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)TypeForwards.netcore.cs">
       <Link>TypeForwards.netcore.cs</Link>
     </Compile>
