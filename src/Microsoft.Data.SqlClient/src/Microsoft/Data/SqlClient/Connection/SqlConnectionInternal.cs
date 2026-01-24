@@ -264,8 +264,6 @@ namespace Microsoft.Data.SqlClient.Connection
         /// </summary>
         private readonly DbConnectionPoolIdentity _identity;
 
-        private string _instanceName = string.Empty;
-
         private SqlLoginAck _loginAck;
 
         /// <summary>
@@ -601,11 +599,7 @@ namespace Microsoft.Data.SqlClient.Connection
             get => RoutingInfo != null;
         }
 
-        // @TODO: Make auto-property
-        internal string InstanceName
-        {
-            get => _instanceName;
-        }
+        internal string UserInstanceName { get; private set; } = string.Empty;
 
         internal bool Is2008OrNewer
         {
@@ -1265,7 +1259,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     break;
 
                 case TdsEnums.ENV_USERINSTANCE:
-                    _instanceName = rec._newValue;
+                    UserInstanceName = rec._newValue;
                     break;
 
                 case TdsEnums.ENV_ROUTING:
@@ -3370,7 +3364,7 @@ namespace Microsoft.Data.SqlClient.Connection
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
                         CurrentDatabase = _originalDatabase = ConnectionOptions.InitialCatalog;
                         ServerProvidedFailoverPartner = null;
-                        _instanceName = string.Empty;
+                        UserInstanceName = string.Empty;
 
                         routingAttempts++;
 
@@ -3673,7 +3667,7 @@ namespace Microsoft.Data.SqlClient.Connection
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
                         CurrentDatabase = _originalDatabase = connectionOptions.InitialCatalog;
                         ServerProvidedFailoverPartner = null;
-                        _instanceName = string.Empty;
+                        UserInstanceName = string.Empty;
 
                         AttemptOneLogin(
                             currentServerInfo,

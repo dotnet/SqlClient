@@ -4304,7 +4304,7 @@ namespace Microsoft.Data.SqlClient
 
             // Fail if SSE UserInstance and we have not received this info.
             if (_connHandler.ConnectionOptions.UserInstance &&
-                string.IsNullOrEmpty(_connHandler.InstanceName))
+                string.IsNullOrEmpty(_connHandler.UserInstanceName))
             {
                 stateObj.AddError(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, Server, SQLMessage.UserInstanceFailure(), "", 0));
                 ThrowExceptionAndWarning(stateObj);
