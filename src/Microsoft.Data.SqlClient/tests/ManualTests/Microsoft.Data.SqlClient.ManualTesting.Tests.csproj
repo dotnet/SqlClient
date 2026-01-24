@@ -12,9 +12,6 @@
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
-  <ItemGroup Condition="'$(TestSet)' == 'AE'">
-    <Compile Include="AlwaysEncrypted\SqlDataAdapterBatchUpdateTests.cs" />
-  </ItemGroup>
   <ItemGroup Condition="'$(TestSet)' == '' or '$(TestSet)' == 'AE'">
     <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
     <Compile Include="AlwaysEncrypted\ExceptionsGenericError.cs" />
@@ -278,6 +275,7 @@
     <Compile Include="DataCommon\ProxyServer.cs" />
     <Compile Include="DataCommon\SqlClientCustomTokenCredential.cs" />
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
+    <Compile Include="DataCommon\XEventScope.cs" />
     <Compile Include="Extensions\StreamExtensions.netfx.cs" />
     <Compile Include="SQL\Common\AsyncDebugScope.cs" />
     <Compile Include="SQL\Common\ConnectionPoolWrapper.cs" />

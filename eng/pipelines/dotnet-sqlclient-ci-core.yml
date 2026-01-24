@@ -171,14 +171,25 @@ stages:
             image: ADO-MMS22-CodeCov
             pool: ${{ parameters.defaultPoolName }}
             targetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
-            # This is a Pipeline Variable defined in the Azure DevOps UI.  It
-            # must be defined with a true/false value for all pipelines that
-            # specify a build type of 'Project'.
+            # We only want to upload coverage results to CodeCov from certain
+            # pipelines.  We use the pipeline name (Build.DefinitionName) to
+            # choose.  This is a predefined variable that is available at
+            # template expansion time, so we can use it to supply a true boolean
+            # value to the upload parameter.
             #
-            # You can find Pipeline Variables by visiting the main page of the
-            # pipeline and choosing Edit -> Variables.
+            # https://learn.microsoft.com/en-us/azure/devops/pipelines/build/variables?view=azure-devops&tabs=yaml#build-variables-devops-services
             #
-            upload: ${{ eq(variables.ci_var_uploadTestResult, 'true') }}
+            # We're choosing to upload from these pipelines only:
+            #
+            # - PR-SqlClient-Project
+            # - CI-SqlClient
+            #
+            # Other pipelines that share this template and use a Project
+            # buildType don't add much, if any, value to the coverage reports.
+            # They have not been configured with suitable CodeCov credentials to
+            # perform the upload.
+            #
+            upload: ${{ or(eq(variables['Build.DefinitionName'], 'PR-SqlClient-Project'), eq(variables['Build.DefinitionName'], 'CI-SqlClient')) }}
 
 # test stages configurations
   # self hosted SQL Server on Windows
@@ -228,7 +239,7 @@ stages:
           pool: ${{parameters.defaultPoolName }} # pool name
           images: # list of images to run tests on
             Win22_Sql19_x86: ADO-MMS22-SQL19 # stage display name: image name from the pool
-          TargetFrameworks: [net8.0] #[net462, net8.0] # list of target frameworks to run
+          TargetFrameworks: [net462, net8.0, net9.0]
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
@@ -249,7 +260,7 @@ stages:
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
             # extra config properties
-            x86TestTargetFrameworks: [net8.0] # target frameworks should run tests on x86
+            x86TestTargetFrameworks: [net462, net8.0, net9.0]
             SQLRootPath: $(SQL19RootPath)
             enableLocalDB: true
             # instanceName: default: MSSQLSERVER
@@ -299,7 +310,7 @@ stages:
           pool: ${{parameters.defaultPoolName }}
           images:
             Win22_Sql22_x86: ADO-MMS22-SQL22 
-          TargetFrameworks: [net462]
+          TargetFrameworks: [net462, net8.0, net9.0]
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
@@ -320,7 +331,7 @@ stages:
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
             # extra config properties
-            x86TestTargetFrameworks: [net462] # target frameworks should run tests on x86 as well
+            x86TestTargetFrameworks: [net462, net8.0, net9.0]
             SQLRootPath: $(SQL22RootPath)
             enableLocalDB: true
 
@@ -385,6 +396,7 @@ stages:
           pool: ADO-CI-PUBLIC-ARM64-1ES-EUS-POOL
           images: 
             Win11_ARM64_Azure_Sql: ADO-WIN11-ARM64
+          isArm64: true
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}

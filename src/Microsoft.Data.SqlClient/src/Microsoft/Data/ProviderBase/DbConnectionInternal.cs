@@ -860,7 +860,7 @@ namespace Microsoft.Data.ProviderBase
         {
             Debug.Assert(outerConnection is not null, "outerConnection may not be null.");
 
-            DbMetaDataFactory metaDataFactory = factory.GetMetaDataFactory(poolGroup, this);
+            SqlMetaDataFactory metaDataFactory = factory.GetMetaDataFactory(poolGroup, this);
             Debug.Assert(metaDataFactory is not null, "metaDataFactory may not be null.");
 
             return metaDataFactory.GetSchema(outerConnection, collectionName, restrictions);

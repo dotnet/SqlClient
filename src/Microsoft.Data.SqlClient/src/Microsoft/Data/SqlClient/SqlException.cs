@@ -10,6 +10,8 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.Serialization;
 using System.Text;
+using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.Common.ConnectionString;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -112,7 +114,7 @@ namespace Microsoft.Data.SqlClient
         public byte State => Errors.Count > 0 ? Errors[0].State : default;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Source/*' />
-        override public string Source => TdsEnums.SQL_PROVIDER_NAME;
+        override public string Source => DbConnectionStringDefaults.ApplicationName;
 
 
 #if NET
@@ -174,7 +176,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CreateException(
             SqlError error,
             string serverVersion,
-            SqlInternalConnectionTds internalConnection,
+            SqlConnectionInternal internalConnection,
             Exception innerException = null)
         {
             SqlErrorCollection errorCollection = new() { error };
@@ -200,7 +202,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CreateException(
             SqlErrorCollection errorCollection,
             string serverVersion,
-            SqlInternalConnectionTds internalConnection,
+            SqlConnectionInternal internalConnection,
             Exception innerException = null)
         {
             return CreateException(
@@ -214,7 +216,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CreateException(
             SqlErrorCollection errorCollection,
             string serverVersion,
-            SqlInternalConnectionTds internalConnection,
+            SqlConnectionInternal internalConnection,
             Exception innerException = null,
             SqlBatchCommand batchCommand = null)
         {

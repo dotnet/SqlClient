@@ -9,6 +9,8 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
@@ -902,19 +904,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 });
         }
-        
-        private void SetCachedCommandExecuteNonQueryAsyncContext(ExecuteNonQueryAsyncCallContext instance)
-        {
-            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
-            {
-                // @TODO: Add this to SqlInternalConnection
-                Interlocked.CompareExchange(
-                    ref sqlInternalConnection.CachedCommandExecuteNonQueryAsyncContext,
-                    instance,
-                    comparand: null);
-            }
-        }
-        
+
         #endregion
 
         internal sealed class ExecuteNonQueryAsyncCallContext
@@ -938,7 +928,11 @@ namespace Microsoft.Data.SqlClient
 
             protected override void AfterCleared(SqlCommand owner)
             {
-                owner?.SetCachedCommandExecuteNonQueryAsyncContext(this);
+                DbConnectionInternal internalConnection = owner?._activeConnection?.InnerConnection;
+                if (internalConnection is SqlConnectionInternal sqlInternalConnection)
+                {
+                    sqlInternalConnection.CachedContexts.TrySetCommandExecuteNonQueryAsyncContext(this);
+                }
             }
 
             protected override void Clear()

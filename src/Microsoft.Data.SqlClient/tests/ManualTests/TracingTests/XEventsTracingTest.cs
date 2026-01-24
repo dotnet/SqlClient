@@ -22,6 +22,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _testName = DataTestUtility.CurrentTestName(outputHelper);
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         [InlineData("SELECT @@VERSION", System.Data.CommandType.Text, "sql_statement_starting")]
         [InlineData("sp_help", System.Data.CommandType.StoredProcedure, "rpc_starting")]
@@ -40,7 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using SqlConnection xEventManagementConnection = new(DataTestUtility.TCPConnectionString);
             xEventManagementConnection.Open();
             
-            using DataTestUtility.XEventScope xEventSession = new(
+            using XEventScope xEventSession = new(
                 _testName,
                 xEventManagementConnection,
                 $@"ADD EVENT SQL_STATEMENT_STARTING (ACTION (client_connection_id) WHERE (client_connection_id='{connectionId}')),

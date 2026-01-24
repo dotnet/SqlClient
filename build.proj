@@ -43,6 +43,15 @@
     <NugetPackProperties Condition="'$(TF_BUILD)' == 'true'">$(NugetPackProperties);ContinuousIntegrationBuild=true;</NugetPackProperties>
   </PropertyGroup>
 
+  <!-- Test configuration properties -->
+  <PropertyGroup>
+      <FilterStatement>$(Filter)</FilterStatement>    
+      <FilterStatement Condition="'$(FilterStatement)' == ''">category!=failing&amp;category!=flaky</FilterStatement>
+      <!--Collect code coverage unless explicitly disabled-->
+      <CollectCodeCoverage Condition="'$(CollectCodeCoverage)' == ''">true</CollectCodeCoverage>
+      <CollectStatement Condition="'$(CollectCodeCoverage)' == 'true'">--collect "Code coverage"</CollectStatement>
+  </PropertyGroup>
+
   <!-- Release Build properties must be turned on for Release purposes, and turned off for Code Coverage calculations -->
   <PropertyGroup>
     <BuildForRelease Condition="$(BuildForRelease) == ''">true</BuildForRelease>
@@ -58,21 +67,9 @@
     <NetStandardDriver Include="**/netcore/ref/Microsoft.Data.SqlClient*.csproj" />
     <AKVProvider Include="**/add-ons/**/AzureKeyVaultProvider/*.csproj" />
 
-    <UnitTests Include="**/Common/Common.csproj" />
-    <UnitTests Include="**/tools/TDS/TDS/TDS.csproj" />
-    <UnitTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
-    <UnitTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
     <UnitTests Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
     <UnitTestsProj Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
 
-
-    <FunctionalTests Include="**/Common/Common.csproj" />
-    <FunctionalTests Include="**/tools/TDS/TDS/TDS.csproj" />
-    <FunctionalTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
-    <FunctionalTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
-    <FunctionalTests Include="**/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
-    <FunctionalTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
-    <FunctionalTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
     <FunctionalTests Include="**/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" />
     <FunctionalTestsProj Include="**/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" />
     
@@ -83,6 +80,9 @@
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
     <ManualTests Include="**/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
     <ManualTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
+    <ManualTests Include="**/tools/TDS/TDS/TDS.csproj" />
+    <ManualTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
+    <ManualTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
     <ManualTests Include="**/CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
     <ManualTests Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
     <ManualTestsProj Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
@@ -93,8 +93,10 @@
   <Target Name="BuildAll" DependsOnTargets="BuildSqlServerLib;BuildNetFx;BuildNetCore;BuildNetStandard" />
   <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServerLib;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;GenerateNugetPackage" />
   <Target Name="BuildSqlServerPackage" DependsOnTargets="BuildSqlServerLibAnyOS;GenerateSqlServerPackage"/>
-  <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildUnitTestsNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore"/>
-  <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildUnitTestsNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx" Condition="$(IsEnabledWindows) == 'true'"/>
+  
+  <!-- @TODO: Manual tests have a reference to AKV provider, and AKV provider is not built on non-windows pipeline runs. Thus it is added to the dependencies of the build tests target. This is not good since it means AKV is built twice on windows and once on unix, in a mix of implicit and explicit. The pipeline should be modified to build it in both cases, or the build should be updated to have dotnet build the test projects. -->
+  <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildManualTestsNetCore"/>
+  <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildManualTestsNetFx" Condition="$(IsEnabledWindows) == 'true'"/>
 
   <Target Name="RestoreSqlServerLib">
     <MSBuild Projects="@(SqlServerLib)" Targets="restore" />
@@ -106,8 +108,6 @@
 
   <Target Name="RestoreTestsNetCore">
     <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="$(TestProjectProperties)" />
-    <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="$(TestProjectProperties)" />
-    <MSBuild Projects="@(UnitTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
   </Target>
 
   <Target Name="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
@@ -116,8 +116,6 @@
 
   <Target Name="RestoreTestsNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="$(TestProjectProperties)" />
-    <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="$(TestProjectProperties)" />
-    <MSBuild Projects="@(UnitTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
   </Target>
 
   <Target Name="BuildTools" Condition="'$(BuildTools)' == 'true'">
@@ -166,20 +164,6 @@
     <MSBuild Projects="@(NetStandardDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;BuildForLib=True" RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
 
-  <Target Name="BuildUnitTestsNetCore" DependsOnTargets="RestoreTestsNetCore" Condition="$(ReferenceType.Contains('Project'))">
-    <Message Text=">>> Building UnitTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
-    <MSBuild Projects="@(UnitTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
-  </Target>
-  
-  <Target Name="BuildFunctionalTestsNetCore" DependsOnTargets="RestoreTestsNetCore">
-    <Message Text=">>> Building FunctionalTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
-
-    <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building FunctionalTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);ReferenceType=$(ReferenceType);] ..." Condition="$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))" />
-  </Target>
-
   <Target Name="BuildManualTestsNetCore" DependsOnTargets="RestoreTestsNetCore">
     <Message Text=">>> Building ManualTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))" />
     <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
@@ -187,20 +171,6 @@
     <!-- Only build platform specific builds for Package reference types -->
     <Message Text=">>> Building ManualTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);ReferenceType=$(ReferenceType);] ..." Condition="$(ReferenceType.Contains('Package'))" />
     <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))" />
-  </Target>
-
-  <Target Name="BuildUnitTestsNetFx" DependsOnTargets="RestoreTestsNetFx" Condition="'$(IsEnabledWindows)' == 'true' AND $(ReferenceType.Contains('Project'))">
-    <Message Text=">>> Building UnitTestsNetFx [TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
-    <MSBuild Projects="@(UnitTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))"/>
-  </Target>
-  
-  <Target Name="BuildFunctionalTestsNetFx" DependsOnTargets="RestoreTestsNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
-    <Message Text=">>> Building FunctionalTestsNetFx [TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;] ..." Condition="!$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
-
-    <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building FunctionalTestsNetFx [TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);] ..." Condition="$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))" />
   </Target>
 
   <Target Name="BuildManualTestsNetFx" DependsOnTargets="RestoreTestsNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
@@ -225,17 +195,18 @@
     <PropertyGroup>
       <TestCommand>
         $(DotnetPath)dotnet test "@(UnitTestsProj)"
-        --no-build
-        -v n
+        -f $(TF)
         -p:Configuration=$(Configuration)
-        -p:Target$(TFGroup)Version=$(TF)
-        -p:TestTargetOS=Windows$(TargetGroup)
-        --collect "Code coverage"
+        $(CollectStatement)
         --results-directory $(ResultsDirectory)
-        --filter "category!=failing%26category!=flaky"
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Unit-Windows$(TargetGroup)-$(TestSet)"
+        --blame-hang
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
       </TestCommand>
-      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+      <!-- Convert more than one whitespace character into one space --> 
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running unit tests for Windows via command: $(TestCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
@@ -246,17 +217,18 @@
     <PropertyGroup>
       <TestCommand>
         $(DotnetPath)dotnet test "@(UnitTestsProj)"
-        --no-build
-        -v n
+        -f $(TF)
         -p:Configuration=$(Configuration)
-        -p:TargetNetCoreVersion=$(TF)
-        -p:TestTargetOS=Unixnetcoreapp
-        --collect "Code coverage"
+        $(CollectStatement)
         --results-directory $(ResultsDirectory)
-        --filter "category!=failing%26category!=flaky"
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Unit-Unixnetcoreapp-$(TestSet)"
-    </TestCommand>
-      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+        --blame-hang
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
+      </TestCommand>
+      <!-- Convert more than one whitespace character into one space --> 
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running unit tests for Unix via command: $(TestCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
@@ -270,19 +242,19 @@
     <PropertyGroup>
       <TestCommand>
         $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
-        --no-build
-        -v n
+        -f $(TF)
         -p:Configuration=$(Configuration)
-        -p:Target$(TFGroup)Version=$(TF)
         -p:ReferenceType=$(ReferenceType)
-        -p:TestSet=$(TestSet)
-        -p:TestTargetOS=Windows$(TargetGroup)
-        --collect "Code coverage"
+        $(CollectStatement)
         --results-directory $(ResultsDirectory)
-        --filter "category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests"
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)"
+        --blame-hang
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
       </TestCommand>
-      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+      <!-- Convert more than one whitespace character into one space --> 
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running Functional test for Windows via command: $(TestCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
@@ -293,19 +265,19 @@
     <PropertyGroup>
       <TestCommand>
         $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
-        --no-build
-        -v n
+        -f $(TF)
         -p:Configuration=$(Configuration)
-        -p:TargetNetCoreVersion=$(TF)
         -p:ReferenceType=$(ReferenceType)
-        -p:TestSet=$(TestSet)
-        -p:TestTargetOS=Unixnetcoreapp
-        --collect "Code coverage"
+        $(CollectStatement)
         --results-directory $(ResultsDirectory)
-        --filter "category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests"
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Functional-Unixnetcoreapp-$(TestSet)"
+        --blame-hang
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
       </TestCommand>
-      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+      <!-- Convert more than one whitespace character into one space --> 
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running Functional test for Unix via command: $(TestCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
@@ -326,10 +298,13 @@
         -p:ReferenceType=$(ReferenceType)
         -p:TestSet=$(TestSet)
         -p:TestTargetOS=Windows$(TargetGroup)
-        --collect "Code coverage"
+        $(CollectStatement)
         --results-directory $(ResultsDirectory)
-        --filter "category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests"
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)"
+        --blame-hang
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
     </PropertyGroup>
@@ -349,10 +324,13 @@
         -p:ReferenceType=$(ReferenceType)
         -p:TestSet=$(TestSet)
         -p:TestTargetOS=Unixnetcoreapp
-        --collect "Code coverage"
+        $(CollectStatement)
         --results-directory $(ResultsDirectory)
-        --filter "category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests"
+        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)"
+        --blame-hang
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
     </PropertyGroup>

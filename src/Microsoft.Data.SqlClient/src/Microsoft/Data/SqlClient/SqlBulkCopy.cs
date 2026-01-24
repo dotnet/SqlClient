@@ -15,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Utilities;
 
 namespace Microsoft.Data.SqlClient
@@ -231,7 +232,7 @@ namespace Microsoft.Data.SqlClient
         private bool _hasMoreRowToCopy = false;
         private bool _isAsyncBulkCopy = false;
         private bool _isBulkCopyingInProgress = false;
-        private SqlInternalConnectionTds.SyncAsyncLock _parserLock = null;
+        private SqlConnectionInternal.SyncAsyncLock _parserLock = null;
 
         private SourceColumnMetadata[] _currentRowMetadata;
 
@@ -1157,8 +1158,8 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             }
             else
             { // This will call Read for DataRows, DataTable and IDataReader (this includes all IDataReader except DbDataReader)
-              // Release lock to prevent possible deadlocks
-                SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+                // Release lock to prevent possible deadlocks
+                SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
                 bool semaphoreLock = internalConnection._parserLock.CanBeReleasedFromAnyThread;
                 internalConnection._parserLock.Release();
 
@@ -1367,7 +1368,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         private void RunParser(BulkCopySimpleResultSet bulkCopyHandler = null)
         {
             // In case of error while reading, we should let the connection know that we already own the _parserLock
-            SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+            SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
 
             internalConnection.ThreadHasParserLockForClose = true;
             try
@@ -1385,7 +1386,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         private void RunParserReliably(BulkCopySimpleResultSet bulkCopyHandler = null)
         {
             // In case of error while reading, we should let the connection know that we already own the _parserLock
-            SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+            SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
             internalConnection.ThreadHasParserLockForClose = true;
             try
             {
@@ -1402,7 +1403,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         {
             if (_internalTransaction != null)
             {
-                SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+                SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
                 internalConnection.ThreadHasParserLockForClose = true; // In case of error, let the connection know that we have the lock
                 try
                 {
@@ -1423,7 +1424,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             {
                 if (!_internalTransaction.IsZombied)
                 {
-                    SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+                    SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
                     internalConnection.ThreadHasParserLockForClose = true; // In case of error, let the connection know that we have the lock
                     try
                     {
@@ -2071,7 +2072,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             
             CreateOrValidateConnection(nameof(WriteToServer));
 
-            SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+            SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
 
             Debug.Assert(_parserLock == null, "Previous parser lock not cleaned");
             _parserLock = internalConnection._parserLock;
@@ -2224,7 +2225,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         private bool FireRowsCopiedEvent(long rowsCopied)
         {
             // Release lock to prevent possible deadlocks
-            SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+            SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
             bool semaphoreLock = internalConnection._parserLock.CanBeReleasedFromAnyThread;
             internalConnection._parserLock.Release();
 
@@ -2581,7 +2582,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 while (_hasMoreRowToCopy)
                 {
                     //pre->before every batch: Transaction, BulkCmd and metadata are done.
-                    SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+                    SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
 
                     if (IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
                     { //internal transaction is started prior to each batch if the Option is set.
@@ -2970,7 +2971,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             _hasMoreRowToCopy = true;
             Task<BulkCopySimpleResultSet> internalResultsTask = null;
             BulkCopySimpleResultSet internalResults = new BulkCopySimpleResultSet();
-            SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+            SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
             try
             {
                 _parser = _connection.Parser;

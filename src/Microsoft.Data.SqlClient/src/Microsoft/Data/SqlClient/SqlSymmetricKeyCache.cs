@@ -98,11 +98,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         // In case multiple threads reach here at the same time, the first one wins.
                         // The allocated memory will be reclaimed by Garbage Collector.
-                        MemoryCacheEntryOptions options = new()
-                        {
-                            AbsoluteExpirationRelativeToNow = SqlConnection.ColumnEncryptionKeyCacheTtl
-                        };
-                        _cache.Set(cacheLookupKey, encryptionKey, options);
+                        _cache.Set(cacheLookupKey, encryptionKey, absoluteExpirationRelativeToNow: SqlConnection.ColumnEncryptionKeyCacheTtl);
                     }
                 }
 
