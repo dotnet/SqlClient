@@ -20,7 +20,6 @@ public class LocalAppContextSwitchesTest
     {
         Assert.False(LocalAppContextSwitches.LegacyRowVersionNullBehavior);
         Assert.False(LocalAppContextSwitches.SuppressInsecureTlsWarning);
-        Assert.False(LocalAppContextSwitches.SuppressNativeActivityTelemetry);
         Assert.False(LocalAppContextSwitches.MakeReadAsyncBlocking);
         Assert.True(LocalAppContextSwitches.UseMinimumLoginTimeout);
         Assert.True(LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour);

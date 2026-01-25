@@ -95,13 +95,6 @@ internal static class LocalAppContextSwitches
         "Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
 
     /// <summary>
-    /// The name of the app context switch that controls whether to suppress
-    /// the creation of <see cref="System.Diagnostics.Activity"/> instances.
-    /// </summary>
-    private const string SuppressNativeActivityTelemetryString =
-        "Switch.Microsoft.Data.SqlClient.SuppressNativeActivityTelemetry";
-
-    /// <summary>
     /// The name of the app context switch that controls whether TdsParser
     /// truncates (rather than rounds) decimal and SqlDecimal values when
     /// scaling them.
@@ -219,11 +212,6 @@ internal static class LocalAppContextSwitches
     /// The cached value of the SuppressInsecureTlsWarning switch.
     /// </summary>
     private static SwitchValue s_suppressInsecureTlsWarning = SwitchValue.None;
-
-    /// <summary>
-    /// The cached value of the SuppressNativeActivityTelemetry switch.
-    /// </summary>
-    private static SwitchValue s_suppressNativeActivityTelemetry = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the TruncateScaledDecimal switch.
@@ -498,17 +486,6 @@ internal static class LocalAppContextSwitches
             SuppressInsecureTlsWarningString,
             defaultValue: false,
             ref s_suppressInsecureTlsWarning);
-
-    /// <summary>
-    /// Suppresses the creation of <see cref="System.Diagnostics.Activity"/> instances
-    /// within SqlClient. This prevents duplicate activities from being recorded if an
-    /// existing library already hooks other diagnostic pathways and creates them.
-    /// </summary>
-    public static bool SuppressNativeActivityTelemetry =>
-        AcquireAndReturn(
-            SuppressNativeActivityTelemetryString,
-            defaultValue: false,
-            ref s_suppressNativeActivityTelemetry);
 
     /// <summary>
     /// When set to true, TdsParser will truncate (rather than round) decimal
