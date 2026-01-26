@@ -37,10 +37,10 @@ jobs:
     steps:
 
       - ${{if eq(parameters.debug, true)}}:
-        - pwsh: Get-Volume
+        - script: df -h
           displayName: '[Debug] Show Disk Usage'
 
-        - pwsh: 'Get-ChildItem env: | Sort-Object Name'
+        - script: env | sort
           displayName: '[Debug] List Environment Variables'
 
       # Install the .NET SDK.
@@ -77,14 +77,14 @@ jobs:
           targetPath: $(workingDir)/originals
 
       - ${{if eq(parameters.debug, true)}}:
-        - pwsh: Get-Volume
+        - script: df -h
           displayName: '[Debug] Show Disk Usage'
 
-        - pwsh: Get-ChildItem "$(workingDir)/originals" -Recurse -File
+        - script: ls -alFR "$(workingDir)/originals"
           displayName: '[Debug] List coverage files'
 
       # Merge them all into a single XML file.
-      - pwsh: >-
+      - script: >-
           dotnet-coverage merge "$(workingDir)/originals/**/*.coverage"
           --output "$(workingDir)/merge/coverage.xml"
           --output-format xml
@@ -93,7 +93,7 @@ jobs:
         displayName: Merge coverage files to XML
 
       - ${{if eq(parameters.debug, true)}}:
-        - pwsh: Get-Volume
+        - script: df -h
           displayName: '[Debug] Show Disk Usage'
 
       # Publish the intermediate XML coverage file as a pipeline artifact for
@@ -106,7 +106,7 @@ jobs:
 
       # Convert the merged XML file into Cobertura reports for publishing, one
       # per package (MDS, AKV, etc).
-      - pwsh: >-
+      - script: >-
           reportgenerator
           "-reports:$(workingDir)/merge/coverage.xml"
           "-targetdir:$(workingDir)/cobertura/mds"
@@ -116,7 +116,7 @@ jobs:
           "-classfilters:+Microsoft.Data.*"
         displayName: '[MDS] Convert to Cobertura format'
 
-      - pwsh: >-
+      - script: >-
           reportgenerator
           "-reports:$(workingDir)/merge/coverage.xml"
           "-targetdir:$(workingDir)/cobertura/akv"
@@ -127,7 +127,7 @@ jobs:
         displayName: '[AKV] Convert to Cobertura format'
 
       - ${{if eq(parameters.debug, true)}}:
-        - pwsh: Get-Volume
+        - script: df -h
           displayName: '[Debug] Show Disk Usage'
 
       # Publish the Cobertura reports to the pipeline.
@@ -139,16 +139,16 @@ jobs:
       # Publish the Cobertura reports to CodeCov, if desired.
       - ${{if eq(parameters.upload, true)}}:
         # Download the CodeCov CLI
-        - pwsh: |
-            curl -Os https://cli.codecov.io/latest/linux/codecov
-            chmod +x ./codecov
+        - script: |
+            curl -o "$(workingDir)/codecov" https://cli.codecov.io/latest/linux/codecov
+            chmod +x "$(workingDir)/codecov"
           displayName: Download CodeCov CLI
 
         # We upload MDS and AKV reports separately so that CodeCov can show
         # them as separate entries in its UI.
 
         # Upload the MDS report.
-        - pwsh: >-
+        - script: >-
             $(workingDir)/codecov
             --verbose
             upload-process
@@ -160,7 +160,7 @@ jobs:
           displayName: '[MDS] Upload to CodeCov'
 
         # Upload the AKV report.
-        - pwsh: >-
+        - script: >-
             $(workingDir)/codecov
             --verbose
             upload-process
