@@ -31,9 +31,6 @@ steps:
         retryCount: 5
         secureFile: 'netfxKeypair.snk'
 
-  # Install the .NET SDK.
-  - template: /eng/pipelines/steps/install-dotnet.yml@self
-
   - task: MSBuild@1
     displayName: 'Build.proj - BuildAkv'
     inputs:
@@ -46,6 +43,6 @@ steps:
             -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
             -p:ReferenceType=Package
             -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
-            
+
   - script: tree /a /f $(BUILD_OUTPUT)
     displayName: Output Build Output Tree
