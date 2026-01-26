@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
@@ -221,14 +222,12 @@ namespace Microsoft.Data.SqlClient
                     if (execNonQuery is not null)
                     {
                         AsyncHelper.ContinueTaskWithState(
-                            task: execNonQuery,
-                            completion: localCompletion,
-                            state: Tuple.Create(this, localCompletion),
-                            onSuccess: static state =>
-                            {
-                                var parameters = (Tuple<SqlCommand, TaskCompletionSource<object>>)state;
-                                parameters.Item1.BeginExecuteNonQueryInternalReadStage(parameters.Item2);
-                            });
+                            taskToContinue: execNonQuery,
+                            taskCompletionSource: localCompletion,
+                            state1: this,
+                            state2: localCompletion,
+                            onSuccess: static (this2, localCompletion2) =>
+                                this2.BeginExecuteNonQueryInternalReadStage(localCompletion2));
                     }
                     else
                     {
@@ -873,8 +872,8 @@ namespace Microsoft.Data.SqlClient
                 timeoutCts.Token);
             
             AsyncHelper.ContinueTask(
-                reconnectTask,
-                completion,
+                taskToContinue: reconnectTask,
+                taskCompletionSource: completion,
                 onSuccess: () =>
                 {
                     if (completion.Task.IsCompleted)
@@ -898,14 +897,14 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         AsyncHelper.ContinueTaskWithState(
-                            subTask,
-                            completion,
+                            taskToContinue: subTask,
+                            taskCompletionSource: completion,
                             state: completion,
-                            onSuccess: static state => ((TaskCompletionSource<object>)state).SetResult(null));
+                            onSuccess: static state => state.SetResult(null));
                     }
                 });
         }
-        
+
         #endregion
 
         internal sealed class ExecuteNonQueryAsyncCallContext
