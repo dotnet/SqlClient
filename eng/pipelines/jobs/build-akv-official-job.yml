@@ -109,15 +109,15 @@ jobs:
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
 
-          - template: ../steps/compound-esrp-code-signing-step.yml@self
+          - template: /eng/pipelines/steps/compound-esrp-dll-signing-step.yml@self
             parameters:
                 appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
                 appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
-                artifactType: 'dll'
                 authAkvName: '${{ parameters.signingAuthAkvName }}'
                 authSignCertName: '${{ parameters.signingAuthSignCertName }}'
                 esrpClientId: '${{ parameters.signingEsrpClientId }}'
                 esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+                pattern: 'Microsoft.Data.SqlClient.AlwaysEncrypted.*.dll'
 
           - template: ../steps/compound-nuget-pack-step.yml@self
             parameters:
@@ -128,11 +128,10 @@ jobs:
                 outputDirectory: '$(ARTIFACT_PATH)'
                 referenceType: 'Package'
 
-          - template: ../steps/compound-esrp-code-signing-step.yml@self
+          - template: /eng/pipelines/steps/compound-esrp-nuget-signing-step.yml@self
             parameters:
                 appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
                 appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
-                artifactType: 'pkg'
                 authAkvName: '${{ parameters.signingAuthAkvName }}'
                 authSignCertName: '${{ parameters.signingAuthSignCertName }}'
                 esrpClientId: '${{ parameters.signingEsrpClientId }}'

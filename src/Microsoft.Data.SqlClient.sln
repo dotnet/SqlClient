@@ -286,11 +286,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "variables", "variables", "{
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "jobs", "jobs", "{09352F1D-878F-4F55-8AA2-6E47F1AD37D5}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\jobs\build-akv-official-job.yml = ..\eng\pipelines\jobs\build-akv-official-job.yml
+		..\eng\pipelines\jobs\stress-tests-ci-job.yml = ..\eng\pipelines\jobs\stress-tests-ci-job.yml
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{AD738BD4-6A02-4B88-8F93-FBBBA49A74C8}"
 	ProjectSection(SolutionItems) = preProject
 		..\eng\pipelines\steps\compound-build-akv-step.yml = ..\eng\pipelines\steps\compound-build-akv-step.yml
-		..\eng\pipelines\steps\compound-esrp-code-signing-step.yml = ..\eng\pipelines\steps\compound-esrp-code-signing-step.yml
 		..\eng\pipelines\steps\compound-extract-akv-apiscan-files-step.yml = ..\eng\pipelines\steps\compound-extract-akv-apiscan-files-step.yml
 		..\eng\pipelines\steps\compound-nuget-pack-step.yml = ..\eng\pipelines\steps\compound-nuget-pack-step.yml
 		..\eng\pipelines\steps\compound-publish-symbols-step.yml = ..\eng\pipelines\steps\compound-publish-symbols-step.yml
@@ -298,6 +301,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{AD738BD4
 		..\eng\pipelines\steps\script-output-environment-variables-step.yml = ..\eng\pipelines\steps\script-output-environment-variables-step.yml
 		..\eng\pipelines\steps\install-dotnet.yml = ..\eng\pipelines\steps\install-dotnet.yml
 		..\eng\pipelines\steps\install-dotnet-arm64.ps1 = ..\eng\pipelines\steps\install-dotnet-arm64.ps1
+		..\eng\pipelines\steps\compound-esrp-dll-signing-step.yml = ..\eng\pipelines\steps\compound-esrp-dll-signing-step.yml
+		..\eng\pipelines\steps\compound-esrp-nuget-signing-step.yml = ..\eng\pipelines\steps\compound-esrp-nuget-signing-step.yml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.UnitTests", "Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj", "{4461063D-2F2B-274C-7E6F-F235119D258E}"
