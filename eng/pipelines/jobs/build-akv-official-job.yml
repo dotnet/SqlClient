@@ -13,7 +13,7 @@ parameters:
 
     - name: apiScanDllPath
       type: string
-      
+
     - name: apiScanPdbPath
       type: string
 
@@ -61,7 +61,7 @@ parameters:
 
     - name: symbolsUploadAccount
       type: string
-      
+
     # @TODO: This should be determined from build output, or at a higher level
     - # Note: not intended to be passed in, is only used for copying files for ApiScan.
       # This is only defined as a parameter since ADO pipelines do not support array variables.
@@ -89,6 +89,9 @@ jobs:
                 $jsonParams | ConvertFrom-Json | Format-List
             displayName: 'Output Job Parameters'
 
+          # Install the .NET SDK.
+          - template: /eng/pipelines/steps/install-dotnet.yml@self
+
           # Perform analysis before building, since this step will clobber build
           # output.
           - template: /eng/pipelines/steps/roslyn-analyzers-akv-step.yml@self
@@ -103,8 +106,8 @@ jobs:
                 akvPackageVersion: '${{ parameters.akvPackageVersion }}'
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
-                
-          - ${{ each targetFramework in parameters.targetFrameworks }}:  
+
+          - ${{ each targetFramework in parameters.targetFrameworks }}:
               - template: /eng/pipelines/steps/compound-extract-akv-apiscan-files-step.yml@self
                 parameters:
                     buildConfiguration: '${{ parameters.buildConfiguration }}'
