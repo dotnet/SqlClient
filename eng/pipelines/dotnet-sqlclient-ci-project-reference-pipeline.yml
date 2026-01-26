@@ -48,11 +48,11 @@ pr: none
 
 # Trigger this pipeline on commits to certain branches.
 trigger:
-  
+
   # Don't trigger a new run until the previous one completes.  This may cause
   # multiple commits to be batched into a single run.
   batch: true
-  
+
   branches:
     include:
     # GitHub main branch.
@@ -60,7 +60,7 @@ trigger:
 
     # ADO internal/main branch.
     - internal/main
-  
+
   paths:
     include:
     - .azuredevops
@@ -108,11 +108,6 @@ parameters:
     displayName: Build Platforms on Windows
     type: object
     default: [AnyCPU]
-
-  - name: codeCovTargetFrameworks
-    displayName: Code Coverage Target Frameworks
-    type: object
-    default: [net462, net8.0, net9.0]
 
   - name: debug
     displayName: Enable debug output
@@ -174,7 +169,6 @@ extends:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
     buildType: Project
-    codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
     debug: ${{ parameters.debug }}
     enableStressTests: ${{ parameters.enableStressTests }}
     targetFrameworks: ${{ parameters.targetFrameworks }}

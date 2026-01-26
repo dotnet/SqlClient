@@ -4,9 +4,9 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This job processes code coverage reports generated during test runs,
-# merges them, generates code coverage reports, publishes them to the
-# pipeline, and uploads them to CodeCov.
+# This job processes code coverage reports generated during test runs, merges
+# them, generates code coverage reports, publishes them to the pipeline, and
+# uploads them to CodeCov.
 
 parameters:
 
@@ -15,36 +15,17 @@ parameters:
     type: boolean
     default: false
 
-  # The pool image to use.
-  - name: image
-    type: string
-
-  # The agent pool name.
-  - name: pool
-    type: string
-
-  # Array of target frameworks to process code coverage for:
-  #
-  #   e.g. [net462, net8.0, net9.0]
-  #
-  - name: targetFrameworks
-    type: object
-
   # True to upload code coverage results to CodeCov.
   - name: upload
     type: boolean
 
 jobs:
-  - job: CodeCoverage
+  - job: publish_code_coverage
     displayName: Publish Code Coverage
 
     pool:
-      name: ${{ parameters.pool }}
-      ${{ if eq(parameters.pool, 'Azure Pipelines') }}:
-        vmImage: ${{ parameters.image }}
-      ${{ else }}:
-        demands:
-        - imageOverride -equals ${{ parameters.image }}
+      name: Azure Pipelines
+      vmImage: ubuntu-latest
 
     variables:
       # Use a temp directory that is cleaned up after each job runs.  This helps
@@ -68,36 +49,46 @@ jobs:
           debug: ${{ parameters.debug }}
 
       # Install additional dotnet tools.
-      - pwsh: |
-          dotnet tool install --global dotnet-coverage
-          dotnet tool install --global dotnet-reportgenerator-globaltool
-        displayName: Install dotnet tools
+      - task: DotNetCoreCLI@2
+        displayName: Install dotnet-coverage tool
+        inputs:
+          command: custom
+          custom: tool
+          arguments: install --global dotnet-coverage --version 18.3.2
+
+      - task: DotNetCoreCLI@2
+        displayName: Install reportgenerator tool
+        inputs:
+          command: custom
+          custom: tool
+          arguments: install --global dotnet-reportgenerator-globaltool --version 5.5.1
 
       # Download all of the coverage reports from the test jobs.
       #
       # These artifacts contain the .coverage files generated during test runs,
-      # along with a bunch of other files that we ignore.
+      # along with a bunch of other files that we ignore.  We only download the
+      # .coverage files.
       #
       - task: DownloadPipelineArtifact@2
         displayName: Download Coverage Reports
         inputs:
           # All of our coverage report artifact names start with 'net'.
-          itemPattern: '**\net*'
+          itemPattern: '/net*/**/*.coverage'
           targetPath: $(workingDir)/originals
 
       - ${{if eq(parameters.debug, true)}}:
         - pwsh: Get-Volume
           displayName: '[Debug] Show Disk Usage'
 
-        - pwsh: Get-ChildItem "$(workingDir)/originals" -Recurse -File -Filter *.coverage
+        - pwsh: Get-ChildItem "$(workingDir)/originals" -Recurse -File
           displayName: '[Debug] List coverage files'
 
       # Merge them all into a single XML file.
       - pwsh: >-
           dotnet-coverage merge "$(workingDir)/originals/**/*.coverage"
-          --output "$(workingDir)/coverage.xml"
+          --output "$(workingDir)/merge/coverage.xml"
           --output-format xml
-          --log-file "$(workingDir)/merge.log"
+          --log-file "$(workingDir)/merge/merge.log"
           --log-level Verbose
         displayName: Merge coverage files to XML
 
@@ -105,11 +96,19 @@ jobs:
         - pwsh: Get-Volume
           displayName: '[Debug] Show Disk Usage'
 
+      # Publish the intermediate XML coverage file as a pipeline artifact for
+      # debugging purposes.
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Merged Coverage XML
+        inputs:
+          targetPath: $(workingDir)/merge
+          artifact: Code Coverage Merge Results
+
       # Convert the merged XML file into Cobertura reports for publishing, one
       # per package (MDS, AKV, etc).
       - pwsh: >-
           reportgenerator
-          "-reports:$(workingDir)/coverage.xml"
+          "-reports:$(workingDir)/merge/coverage.xml"
           "-targetdir:$(workingDir)/cobertura/mds"
           -reporttypes:Cobertura
           "-assemblyfilters:+microsoft.data.sqlclient.dll"
@@ -119,7 +118,7 @@ jobs:
 
       - pwsh: >-
           reportgenerator
-          "-reports:$(workingDir)/coverage.xml"
+          "-reports:$(workingDir)/merge/coverage.xml"
           "-targetdir:$(workingDir)/cobertura/akv"
           -reporttypes:Cobertura
           "-assemblyfilters:+microsoft.data.sqlclient.alwaysencrypted.azurekeyvaultprovider.dll"
@@ -141,8 +140,8 @@ jobs:
       - ${{if eq(parameters.upload, true)}}:
         # Download the CodeCov CLI
         - pwsh: |
-            $ProgressPreference = 'SilentlyContinue'
-            Invoke-WebRequest -Uri https://cli.codecov.io/latest/windows/codecov.exe -Outfile $(workingDir)/codecov.exe
+            curl -Os https://cli.codecov.io/latest/linux/codecov
+            chmod +x ./codecov
           displayName: Download CodeCov CLI
 
         # We upload MDS and AKV reports separately so that CodeCov can show
@@ -165,7 +164,7 @@ jobs:
             $(workingDir)/codecov
             --verbose
             upload-process
-             --fail-on-error
+            --fail-on-error
             -t $(CODECOV_TOKEN)
             --disable-search
             -f "$(workingDir)/cobertura/akv/Cobertura.xml"
