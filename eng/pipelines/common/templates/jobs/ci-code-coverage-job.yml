@@ -54,6 +54,15 @@ jobs:
         inputs:
           command: custom
           custom: tool
+          # The dotnet CLI has a bug (https://github.com/dotnet/sdk/issues/9623)
+          # that prevents it from installing tools when the working directory
+          # contains more than one project/solution file.  To work around this,
+          # we explicitly specify the main MDS project file.
+          #
+          # We don't want to change to a different working directory because
+          # we must use the proper NuGet feeds for tool installs, as specified
+          # in the repo's NuGet.config.
+          projects: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj
           arguments: install --global dotnet-coverage --version 18.3.2
 
       - task: DotNetCoreCLI@2
@@ -61,6 +70,7 @@ jobs:
         inputs:
           command: custom
           custom: tool
+          projects: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj
           arguments: install --global dotnet-reportgenerator-globaltool --version 5.5.1
 
       # Download all of the coverage reports from the test jobs.
