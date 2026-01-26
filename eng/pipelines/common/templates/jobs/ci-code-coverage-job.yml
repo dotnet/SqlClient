@@ -49,20 +49,29 @@ jobs:
           debug: ${{ parameters.debug }}
 
       # Install additional dotnet tools.
+      #
+      # We must work around a bug in the dotnet CLI that prevents tool installs
+      # when multiple project/solution files are present in the working
+      # directory:
+      #
+      # https://github.com/dotnet/sdk/issues/9623
+      #
+      # Our repo root (the default working directory for tasks) contains more
+      # than one project file.  However, we must also obey the NuGet.config in
+      # the repo root to ensure that tools are installed from the correct feeds.
+      # We accomplish this by copying the NuGet.config to a temp dir and then
+      # instructing the dotnet CLI tasks to run from that directory.  They will
+      # still install the tools globally for subsequent tasks to use.
+      #
+      - script: cp "$(Build.SourcesDirectory)/NuGet.config" "$(Agent.TempDirectory)/"
+        displayName: Copy NuGet.config for tool installs
+
       - task: DotNetCoreCLI@2
         displayName: Install dotnet-coverage tool
         inputs:
           command: custom
           custom: tool
-          # The dotnet CLI has a bug (https://github.com/dotnet/sdk/issues/9623)
-          # that prevents it from installing tools when the working directory
-          # contains more than one project/solution file.  To work around this,
-          # we explicitly specify the main MDS project file.
-          #
-          # We don't want to change to a different working directory because
-          # we must use the proper NuGet feeds for tool installs, as specified
-          # in the repo's NuGet.config.
-          projects: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj
+          workingDirectory: $(Agent.TempDirectory)
           arguments: install --global dotnet-coverage --version 18.3.2
 
       - task: DotNetCoreCLI@2
@@ -70,7 +79,7 @@ jobs:
         inputs:
           command: custom
           custom: tool
-          projects: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj
+          workingDirectory: $(Agent.TempDirectory)
           arguments: install --global dotnet-reportgenerator-globaltool --version 5.5.1
 
       # Download all of the coverage reports from the test jobs.
