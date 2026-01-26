@@ -77,6 +77,7 @@ jobs:
       outputDirectory: $(artifactDirectory)
       packageVersion: $(mdsPackageVersion)
       referenceType: Package
+      properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion)'
 
   - template: /eng/pipelines/common/templates/steps/esrp-code-signing-step.yml@self
     parameters:
