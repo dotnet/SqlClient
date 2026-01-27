@@ -92,7 +92,7 @@ jobs:
         displayName: Download Coverage Reports
         inputs:
           # All of our coverage report artifact names start with 'net'.
-          itemPattern: '/net*/**/*.coverage'
+          itemPattern: '**/net*/**/*.coverage'
           targetPath: $(workingDir)/originals
 
       - ${{if eq(parameters.debug, true)}}:
