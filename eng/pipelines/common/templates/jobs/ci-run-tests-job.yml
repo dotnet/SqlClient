@@ -7,7 +7,7 @@ parameters:
   - name: configProperties
     type: object
     default: {} # - key: 'value'
-  
+
   - name: configSqlFor
     type: string # local, azure, or enclave
     default: local
@@ -42,7 +42,7 @@ parameters:
 
   - name: netcoreVersionTestUtils
     type: string
-  
+
   - name: operatingSystem
     type: string
     default: ''
@@ -59,7 +59,7 @@ parameters:
   - name: prebuildSteps
     type: stepList
     default: []
-  
+
   - name: publishTestResults
     type: boolean
     default: false
@@ -75,11 +75,11 @@ parameters:
 
   - name: testSet
     type: string
-  
+
   # The timeout, in minutes, for this job.
   - name: timeout
     type: number
-  
+
   # True if this is an ARM64 job.
   - name: isArm64
     type: boolean
@@ -230,7 +230,7 @@ jobs:
               net start $svc_name
               Get-Service $svc_name | Select-Object -Property Name, StartType, Status
           }
-          
+
         displayName: 'Start Sql Browser'
         condition: eq(variables['Agent.OS'], 'Windows_NT')
     - ${{ elseif eq(parameters.configSqlFor, 'local') }}:
@@ -311,7 +311,7 @@ jobs:
         dotnetx86RootPath: $(dotnetx86RootPath)
         operatingSystem: ${{ parameters.operatingSystem }}
 
-  - ${{ if and(eq(parameters.publishTestResults, true), eq(parameters.referenceType, 'Project')) }}: # publish test results if build type is project
+  - ${{ if eq(parameters.publishTestResults, true) }}:
     - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
       parameters:
         debug: ${{ parameters.debug }}

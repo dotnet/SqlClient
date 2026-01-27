@@ -3,7 +3,7 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
-parameters:  
+parameters:
   - name: TargetNetCoreVersion
     type: string
     default: $(TargetNetCoreVersion)
@@ -79,6 +79,7 @@ steps:
 
 - task: DotNetCoreCLI@2
   displayName: 'Run Functional Tests for ${{parameters.TargetNetCoreVersion }}'
+  condition: succeededOrFailed()
   inputs:
     command: test
     projects: 'src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.FunctionalTests.csproj'
@@ -92,9 +93,13 @@ steps:
       --no-build
       -v n
       --filter "category!=failing&category!=flaky"
+      --blame-hang
+      --blame-hang-dump-type full
+      --blame-hang-timeout 10m
 
 - task: DotNetCoreCLI@2
   displayName: 'Run Flaky Functional Tests for ${{parameters.TargetNetCoreVersion }}'
+  condition: succeededOrFailed()
   inputs:
     command: test
     projects: 'src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.FunctionalTests.csproj'
@@ -108,10 +113,14 @@ steps:
       --no-build
       -v n
       --filter "category=flaky"
+      --blame-hang
+      --blame-hang-dump-type full
+      --blame-hang-timeout 10m
   continueOnError: true
 
 - task: DotNetCoreCLI@2
   displayName: 'Run Manual Tests for ${{parameters.TargetNetCoreVersion }}'
+  condition: succeededOrFailed()
   inputs:
     command: test
     projects: 'src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj'
@@ -126,10 +135,14 @@ steps:
       -v n
       --filter "category!=failing&category!=flaky"
       --collect "Code Coverage"
+      --blame-hang
+      --blame-hang-dump-type full
+      --blame-hang-timeout 10m
   retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
 - task: DotNetCoreCLI@2
   displayName: 'Run Flaky Manual Tests for ${{parameters.TargetNetCoreVersion }}'
+  condition: succeededOrFailed()
   inputs:
     command: test
     projects: 'src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj'
@@ -144,5 +157,8 @@ steps:
       -v n
       --filter "category=flaky"
       --collect "Code Coverage"
+      --blame-hang
+      --blame-hang-dump-type full
+      --blame-hang-timeout 10m
   retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
   continueOnError: true

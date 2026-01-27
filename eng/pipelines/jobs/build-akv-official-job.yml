@@ -13,7 +13,7 @@ parameters:
 
     - name: apiScanDllPath
       type: string
-      
+
     - name: apiScanPdbPath
       type: string
 
@@ -61,7 +61,7 @@ parameters:
 
     - name: symbolsUploadAccount
       type: string
-      
+
     # @TODO: This should be determined from build output, or at a higher level
     - # Note: not intended to be passed in, is only used for copying files for ApiScan.
       # This is only defined as a parameter since ADO pipelines do not support array variables.
@@ -103,8 +103,8 @@ jobs:
                 akvPackageVersion: '${{ parameters.akvPackageVersion }}'
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
-                
-          - ${{ each targetFramework in parameters.targetFrameworks }}:  
+
+          - ${{ each targetFramework in parameters.targetFrameworks }}:
               - template: /eng/pipelines/steps/compound-extract-akv-apiscan-files-step.yml@self
                 parameters:
                     buildConfiguration: '${{ parameters.buildConfiguration }}'
@@ -113,15 +113,15 @@ jobs:
                     referenceType: Package
                     targetFramework: '${{ targetFramework }}'
 
-          - template: /eng/pipelines/steps/compound-esrp-code-signing-step.yml@self
+          - template: /eng/pipelines/steps/compound-esrp-dll-signing-step.yml@self
             parameters:
                 appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
                 appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
-                artifactType: 'dll'
                 authAkvName: '${{ parameters.signingAuthAkvName }}'
                 authSignCertName: '${{ parameters.signingAuthSignCertName }}'
                 esrpClientId: '${{ parameters.signingEsrpClientId }}'
                 esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+                pattern: 'Microsoft.Data.SqlClient.AlwaysEncrypted.*.dll'
 
           - template: /eng/pipelines/steps/compound-nuget-pack-step.yml@self
             parameters:
@@ -133,11 +133,10 @@ jobs:
                 referenceType: Package
                 properties: MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
-          - template: /eng/pipelines/steps/compound-esrp-code-signing-step.yml@self
+          - template: /eng/pipelines/steps/compound-esrp-nuget-signing-step.yml@self
             parameters:
                 appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
                 appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
-                artifactType: 'pkg'
                 authAkvName: '${{ parameters.signingAuthAkvName }}'
                 authSignCertName: '${{ parameters.signingAuthSignCertName }}'
                 esrpClientId: '${{ parameters.signingEsrpClientId }}'

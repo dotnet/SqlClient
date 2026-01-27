@@ -22,17 +22,17 @@ variables:
 
     # Base Variables -------------------------------------------------------
     - name: mdsPackageVersion
-      value: '6.1.1'
+      value: '7.0.0-preview3.25342.7'
 
     # @TODO: Version should ideally be pulled from one location (versions.props?)
     - name: versionMajor
-      value: '6'
+      value: '7'
     - name: versionMinor
-      value: '1'
+      value: '0'
     - name: versionPatch
-      value: '1'
+      value: '0'
     - name: versionPreview
-      value: '-preview1'
+      value: '-preview3'
 
     # Compound Variables ---------------------------------------------------
     - name: akvAssemblyFileVersion
