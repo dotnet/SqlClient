@@ -26,7 +26,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     private static readonly ConcurrentDictionary<TokenCredentialKey, TokenCredentialData> s_tokenCredentialMap = new();
     private static readonly SemaphoreSlim s_pcaMapModifierSemaphore = new(1, 1);
     private static readonly SemaphoreSlim s_tokenCredentialMapModifierSemaphore = new(1, 1);
-    private static readonly MemoryCache s_accountPwCache = new MemoryCache(new MemoryCacheOptions()); 
+    private static readonly MemoryCache s_accountPwCache = new MemoryCache(new MemoryCacheOptions());
     private const int s_accountPwCacheTtlInHours = 2;
     private const string s_nativeClientRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
     private const string s_defaultScopeSuffix = "/.default";
@@ -34,7 +34,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     private readonly SqlClientLogger _logger = new();
     private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
     private ICustomWebUi? _customWebUI = null;
-    private readonly string _applicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38"; 
+    private readonly string _applicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
 
     // The MSAL error code that indicates the action should be retried.
     //
@@ -366,7 +366,14 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 {
                     if (retryAfter.Delta.HasValue)
                     {
-                        retryPeriod = retryAfter.Delta.Value.Milliseconds;
+                        if (retryAfter.Delta.Value.TotalMilliseconds > int.MaxValue)
+                        {
+                            retryPeriod = int.MaxValue;
+                        }
+                        else
+                        {
+                            retryPeriod = Convert.ToInt32(retryAfter.Delta.Value.TotalMilliseconds);
+                        }
                     }
                     else if (retryAfter.Date.HasValue)
                     {
@@ -502,7 +509,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 // Wait up to 3 minutes.
                 ctsInteractive.CancelAfter(180000);
                 #endif
-                
+
                 // By default, we will use the MSAL Embedded or System web
                 // browser which changes by Default in MSAL according to this
                 // table:
@@ -525,7 +532,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                     app.AcquireTokenInteractive(scopes)
                     .WithCorrelationId(connectionId)
                     .WithLoginHint(userId);
-                
+
                 // If we have a custom web UI, use it instead.
                 if (customWebUI != null)
                 {
@@ -540,7 +547,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                     Debug.Assert(ReferenceEquals(chained, builder));
                     #endif
                 }
-                
+
                 return await builder
                     .ExecuteAsync(ctsInteractive.Token)
                     .ConfigureAwait(false);
@@ -705,7 +712,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 RedirectUri = publicClientAppKey._redirectUri,
             })
             .WithAuthority(publicClientAppKey._authority);
-        
+
         #if NETFRAMEWORK
         if (_iWin32WindowFunc is not null)
         {

@@ -6,6 +6,7 @@
 /// Adds the missing Empty() method to string that doesn't waste time on null
 /// checks like String.IsNullOrEmpty() does, and has a nice short name.
 /// </summary>
+/// <param name="str">The string to check; must not be null</param>
 internal static class StringExtensions
 {
     internal static bool Empty(this string str)
