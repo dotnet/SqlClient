@@ -365,7 +365,14 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 {
                     if (retryAfter.Delta.HasValue)
                     {
-                        retryPeriod = retryAfter.Delta.Value.Milliseconds;
+                        if (retryAfter.Delta.Value.TotalMilliseconds > int.MaxValue)
+                        {
+                            retryPeriod = int.MaxValue;
+                        }
+                        else
+                        {
+                            retryPeriod = Convert.ToInt32(retryAfter.Delta.Value.TotalMilliseconds);
+                        }
                     }
                     else if (retryAfter.Date.HasValue)
                     {
