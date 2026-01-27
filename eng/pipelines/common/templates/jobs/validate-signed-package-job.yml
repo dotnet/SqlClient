@@ -4,26 +4,9 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: downloadPackageStep
-    type: step
-    default:
-      script: echo <empty step>
 
   - name: packageFolderName
     type: string
-    default: drop_build_build_signed_package
-
-  - name: dependsOn
-    type: string
-    default: ''
-
-  - name: packageType
-    type: string
-    default: both
-    values:
-    - dll
-    - pdb
-    - both
 
   - name: isPreview
     type: boolean
@@ -31,8 +14,7 @@ parameters:
 jobs:
 - job: validate_signed_package
   displayName: 'Verify signed package'
-  ${{ if ne(parameters.dependsOn, '')}}:
-    dependsOn: '${{parameters.dependsOn }}'
+
   pool:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
     isCustom: true
@@ -69,7 +51,10 @@ jobs:
       nuget locals all -Clear
     displayName: 'Clear local cache'
 
-  - ${{parameters.downloadPackageStep }}
+  - download: current
+    artifact: ${{parameters.packageFolderName}}
+    patterns: '**/*.*nupkg'
+    displayName: 'Download NuGet Package'
 
   - powershell: |
       # Install nuget package
@@ -82,9 +67,6 @@ jobs:
     displayName: 'Extract Nuget in temp folder'
 
   - powershell: |
-      # Artifact is stored in the Nuget folder
-      $packageType = '${{parameters.packageType}}'
-
       Write-Host "--------------------------------------------------"
       Write-Host "This will verify the artifact signature" -ForegroundColor Green
       Write-Host "--------------------------------------------------"
