@@ -19,10 +19,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class SqlServerTypesTest
     {
         private const string BuiltInUdtSelectQuery =
-            "SELECT " +
-            "  hierarchyid::Parse('/1/1/3/') AS col0, " +
-            "  geometry::Parse('LINESTRING (100 100, 20 180, 180 180') AS col1, " +
-            "  geography::Parse('LINESTRING (-122.360 47.656, -122.343 47.656)' AS col2";
+            @"SELECT " +
+            @"  hierarchyid::Parse('/1/1/3/') AS col0, " +
+            @"  geometry::Parse('LINESTRING (100 100, 20 180, 180 180')) AS col1, " +
+            @"  geography::Parse('LINESTRING (-122.360 47.656, -122.343 47.656))' AS col2";
 
         private const string GeometryBytesHexString =
             "00000000010403000000000000000000594000000000000059400000000000003440000000000080" +
