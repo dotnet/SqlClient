@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="Code Coverage" uri="datacollector://Microsoft/CodeCoverage/2.0">
+        <Configuration>
+          <CodeCoverage>
+            <!-- Include only product assemblies for coverage -->
+            <ModulePaths>
+              <Include>
+                <ModulePath>.*Microsoft\.Data\.SqlClient\.dll$</ModulePath>
+                <ModulePath>.*Microsoft\.SqlServer\.Server\.dll$</ModulePath>
+                <ModulePath>.*Microsoft\.Data\.SqlClient\.AlwaysEncrypted\.AzureKeyVaultProvider\.dll$</ModulePath>
+              </Include>
+            </ModulePaths>
+            <!-- Exclude code marked with ExcludeFromCodeCoverage attribute -->
+            <Attributes>
+              <Exclude>
+                <Attribute>^System\.Diagnostics\.CodeAnalysis\.ExcludeFromCodeCoverageAttribute$</Attribute>
+                <Attribute>^System\.CodeDom\.Compiler\.GeneratedCodeAttribute$</Attribute>
+              </Exclude>
+            </Attributes>
+            <!-- Use qualified names for functions -->
+            <UseVerifiableInstrumentation>True</UseVerifiableInstrumentation>
+            <AllowLowIntegrityProcesses>True</AllowLowIntegrityProcesses>
+            <CollectFromChildProcesses>True</CollectFromChildProcesses>
+            <CollectAspDotNet>False</CollectAspDotNet>
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

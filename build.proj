@@ -31,9 +31,9 @@
     <ProjectProperties>Configuration=$(Configuration);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
     <TestProjectProperties>BuildProjectReferences=false;$(ProjectProperties);BuildForRelease=false;TargetNetCoreVersion=$(TargetNetCoreVersion);TargetNetFxVersion=$(TargetNetFxVersion)</TestProjectProperties>
     <ResultsDirectory Condition="$(ResultsDirectory) == ''">TestResults</ResultsDirectory>
-    <!-- 
+    <!--
       Path to a `dotnet` version like a x86 or any especific versions in addition to a default installed version.
-      This property is empty by default to use the default path of the system's path variable. 
+      This property is empty by default to use the default path of the system's path variable.
       The provided path should be ended to a `\` character without white spaces: Ex. C:\x86\
     -->
     <DotnetPath></DotnetPath>
@@ -45,11 +45,12 @@
 
   <!-- Test configuration properties -->
   <PropertyGroup>
-      <FilterStatement>$(Filter)</FilterStatement>    
+      <FilterStatement>$(Filter)</FilterStatement>
       <FilterStatement Condition="'$(FilterStatement)' == ''">category!=failing&amp;category!=flaky</FilterStatement>
       <!--Collect code coverage unless explicitly disabled-->
       <CollectCodeCoverage Condition="'$(CollectCodeCoverage)' == ''">true</CollectCodeCoverage>
-      <CollectStatement Condition="'$(CollectCodeCoverage)' == 'true'">--collect "Code coverage"</CollectStatement>
+      <CodeCoverageRunSettings>$(MSBuildThisFileDirectory)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings</CodeCoverageRunSettings>
+      <CollectStatement Condition="'$(CollectCodeCoverage)' == 'true'">--collect "Code coverage" --settings "$(CodeCoverageRunSettings)"</CollectStatement>
   </PropertyGroup>
 
   <!-- Release Build properties must be turned on for Release purposes, and turned off for Code Coverage calculations -->
@@ -72,7 +73,7 @@
 
     <FunctionalTests Include="**/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" />
     <FunctionalTestsProj Include="**/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" />
-    
+
     <ManualTests Include="**/Common/Common.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj" />
@@ -93,7 +94,7 @@
   <Target Name="BuildAll" DependsOnTargets="BuildSqlServerLib;BuildNetFx;BuildNetCore;BuildNetStandard" />
   <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServerLib;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;GenerateNugetPackage" />
   <Target Name="BuildSqlServerPackage" DependsOnTargets="BuildSqlServerLibAnyOS;GenerateSqlServerPackage"/>
-  
+
   <!-- @TODO: Manual tests have a reference to AKV provider, and AKV provider is not built on non-windows pipeline runs. Thus it is added to the dependencies of the build tests target. This is not good since it means AKV is built twice on windows and once on unix, in a mix of implicit and explicit. The pipeline should be modified to build it in both cases, or the build should be updated to have dotnet build the test projects. -->
   <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildManualTestsNetCore"/>
   <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildManualTestsNetFx" Condition="$(IsEnabledWindows) == 'true'"/>
@@ -189,7 +190,7 @@
 
   <!-- Run all unit tests applicable to the host OS. -->
   <Target Name="RunUnitTests" DependsOnTargets="RunUnitTestsWindows;RunUnitTestsUnix" Condition="$(ReferenceType.Contains('Project'))"/>
-  
+
   <!-- Run all unit tests applicable to Windows. -->
   <Target Name="RunUnitTestsWindows" Condition="'$(IsEnabledWindows)' == 'true' AND $(ReferenceType.Contains('Project'))">
     <PropertyGroup>
@@ -205,7 +206,7 @@
         --blame-hang-dump-type full
         --blame-hang-timeout 10m
       </TestCommand>
-      <!-- Convert more than one whitespace character into one space --> 
+      <!-- Convert more than one whitespace character into one space -->
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running unit tests for Windows via command: $(TestCommand)"/>
@@ -227,7 +228,7 @@
         --blame-hang-dump-type full
         --blame-hang-timeout 10m
       </TestCommand>
-      <!-- Convert more than one whitespace character into one space --> 
+      <!-- Convert more than one whitespace character into one space -->
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running unit tests for Unix via command: $(TestCommand)"/>
@@ -253,7 +254,7 @@
         --blame-hang-dump-type full
         --blame-hang-timeout 10m
       </TestCommand>
-      <!-- Convert more than one whitespace character into one space --> 
+      <!-- Convert more than one whitespace character into one space -->
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running Functional test for Windows via command: $(TestCommand)" />
@@ -276,7 +277,7 @@
         --blame-hang-dump-type full
         --blame-hang-timeout 10m
       </TestCommand>
-      <!-- Convert more than one whitespace character into one space --> 
+      <!-- Convert more than one whitespace character into one space -->
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running Functional test for Unix via command: $(TestCommand)" />
