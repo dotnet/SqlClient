@@ -13,7 +13,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
-  
+
   <!--
     If the $(MdsPackageVersion) property is set, typically for CI builds, use
     that as the MDS version.  Otherwise, use a specific nuget.org published
@@ -34,8 +34,23 @@
     </Otherwise>
   </Choose>
 
+  <!-- Same for $(AzurePackageVersion). -->
+  <Choose>
+    <When Condition="'$(AzurePackageVersion)' != ''">
+      <PropertyGroup>
+        <AzureVersion>$(AzurePackageVersion)</AzureVersion>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <AzureVersion>1.0.0</AzureVersion>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+
   <ItemGroup>
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(MdsVersion)" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.Extensions.Azure" Version="$(AzureVersion)" />
   </ItemGroup>
 
 </Project>
