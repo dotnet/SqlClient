@@ -185,9 +185,7 @@ stages:
         postTestJobs:
         - template: common/templates/jobs/ci-code-coverage-job.yml@self
           parameters:
-            # TODO: Forcing debug temporarily for PR runs.
-            #debug: ${{ parameters.debug }}
-            debug: true
+            debug: ${{ parameters.debug }}
             # We only want to upload coverage results to CodeCov from certain
             # pipelines.  We use the pipeline name (Build.DefinitionName) to
             # choose.  This is a predefined variable that is available at
@@ -202,10 +200,9 @@ stages:
             # - PR-SqlClient-Package (Manual tests)
             # - CI-SqlClient (All tests)
             #
-            # Other pipelines that share this template buildType don't add much,
-            # if any, value to the coverage reports.  They have not been
-            # configured with suitable CodeCov credentials to perform the
-            # upload.
+            # Other pipelines that share this template don't add much, if any,
+            # value to the coverage reports.  They have not been configured with
+            # suitable CodeCov credentials to perform the upload.
             #
             upload: ${{ or(eq(variables['Build.DefinitionName'], 'PR-SqlClient-Project'), eq(variables['Build.DefinitionName'], 'PR-SqlClient-Package'), eq(variables['Build.DefinitionName'], 'CI-SqlClient')) }}
 

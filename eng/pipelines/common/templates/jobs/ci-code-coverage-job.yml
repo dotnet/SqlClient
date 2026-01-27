@@ -74,13 +74,9 @@ jobs:
           workingDirectory: $(Agent.TempDirectory)
           arguments: install --global dotnet-coverage --version 18.3.2
 
-      - task: DotNetCoreCLI@2
-        displayName: Install reportgenerator tool
-        inputs:
-          command: custom
-          custom: tool
-          workingDirectory: $(Agent.TempDirectory)
-          arguments: install --global dotnet-reportgenerator-globaltool --version 5.5.1
+      - ${{if eq(parameters.debug, true)}}:
+        - script: df -h
+          displayName: '[Debug] Show Disk Usage'
 
       # Download all of the coverage reports from the test jobs.
       #
@@ -102,58 +98,33 @@ jobs:
         - script: ls -alFR "$(workingDir)/originals"
           displayName: '[Debug] List coverage files'
 
-      # Merge them all into a single XML file.
+      # Merge them all into a single Cobertura XML file.
       - script: >-
           dotnet-coverage merge "$(workingDir)/originals/**/*.coverage"
-          --output "$(workingDir)/merge/coverage.xml"
-          --output-format xml
+          --output "$(workingDir)/merge/Cobertura.xml"
+          --output-format cobertura
           --log-file "$(workingDir)/merge/merge.log"
           --log-level Verbose
-        displayName: Merge coverage files to XML
+        displayName: Merge coverage files to Cobertura XML
 
       - ${{if eq(parameters.debug, true)}}:
         - script: df -h
           displayName: '[Debug] Show Disk Usage'
 
-      # Publish the intermediate XML coverage file as a pipeline artifact for
+      # Publish the Cobertura XML coverage file as a pipeline artifact for
       # debugging purposes.
       - task: PublishPipelineArtifact@1
-        displayName: Publish Merged Coverage XML
+        displayName: Publish Cobertura XML Artifact
         inputs:
           targetPath: $(workingDir)/merge
-          artifact: Code Coverage Merge Results
+          artifact: Cobertura Merge Results
 
-      # Convert the merged XML file into Cobertura reports for publishing, one
-      # per package (MDS, AKV, etc).
-      - script: >-
-          reportgenerator
-          "-reports:$(workingDir)/merge/coverage.xml"
-          "-targetdir:$(workingDir)/cobertura/mds"
-          -reporttypes:Cobertura
-          "-assemblyfilters:+microsoft.data.sqlclient.dll"
-          "-sourcedirs:$(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/src"
-          "-classfilters:+Microsoft.Data.*"
-        displayName: '[MDS] Convert to Cobertura format'
-
-      - script: >-
-          reportgenerator
-          "-reports:$(workingDir)/merge/coverage.xml"
-          "-targetdir:$(workingDir)/cobertura/akv"
-          -reporttypes:Cobertura
-          "-assemblyfilters:+microsoft.data.sqlclient.alwaysencrypted.azurekeyvaultprovider.dll"
-          "-sourcedirs:$(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider"
-          "-classfilters:+Microsoft.Data.*"
-        displayName: '[AKV] Convert to Cobertura format'
-
-      - ${{if eq(parameters.debug, true)}}:
-        - script: df -h
-          displayName: '[Debug] Show Disk Usage'
-
-      # Publish the Cobertura reports to the pipeline.
+      # Publish the Cobertura reports to the pipeline to be viewed in the Azure
+      # DevOps pipeline run UI.
       - task: PublishCodeCoverageResults@2
         displayName: Publish code coverage results
         inputs:
-          summaryFileLocation: $(workingDir)/cobertura/**/Cobertura.xml
+          summaryFileLocation: $(workingDir)/merge/Cobertura.xml
 
       # Publish the Cobertura reports to CodeCov, if desired.
       - ${{if eq(parameters.upload, true)}}:
@@ -163,10 +134,11 @@ jobs:
             chmod +x "$(workingDir)/codecov"
           displayName: Download CodeCov CLI
 
-        # We upload MDS and AKV reports separately so that CodeCov can show
-        # them as separate entries in its UI.
-
-        # Upload the MDS report.
+        # Upload the report.
+        #
+        # We use the pipeline name as the "flag" to help distinguish reports
+        # uploaded from different pipelines.
+        #
         - script: >-
             $(workingDir)/codecov
             --verbose
@@ -174,18 +146,6 @@ jobs:
             --fail-on-error
             -t $(CODECOV_TOKEN)
             --disable-search
-            -f "$(workingDir)/cobertura/mds/Cobertura.xml"
-            -F MDS
-          displayName: '[MDS] Upload to CodeCov'
-
-        # Upload the AKV report.
-        - script: >-
-            $(workingDir)/codecov
-            --verbose
-            upload-process
-            --fail-on-error
-            -t $(CODECOV_TOKEN)
-            --disable-search
-            -f "$(workingDir)/cobertura/akv/Cobertura.xml"
-            -F AKV
-          displayName: '[AKV] Upload to CodeCov'
+            -f "$(workingDir)/merge/Cobertura.xml"
+            -F $(Build.DefinitionName)
+          displayName: Upload to CodeCov
