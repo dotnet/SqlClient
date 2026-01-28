@@ -17,7 +17,7 @@ parameters:
     values:
       - Debug
       - Release
-  
+
   - name: buildType
     default: Project
     values:
@@ -37,9 +37,9 @@ steps:
       buildType: current
       artifact: ${{parameters.artifactName }}
       patterns: '**/*.nupkg'
-      targetPath: $(Pipeline.Workspace)/${{parameters.artifactName }}
+      targetPath: $(packagePath)
 
   - template: update-nuget-config-local-feed-step.yml@self
     parameters:
-      downloadedNugetPath: $(Pipeline.Workspace)\${{parameters.artifactName }}
+      downloadedNugetPath: $(packagePath)
       debug: ${{ parameters.debug }}

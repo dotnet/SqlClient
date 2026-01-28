@@ -129,6 +129,17 @@ steps:
       continueOnError: true
 
   - ${{if or(eq(parameters.testType, 'All'), eq(parameters.testType, 'Integration'))}}:
+    - ${{if eq(parameters.referenceType, 'Package')}}:
+      - task: MSBuild@1
+        displayName: Extract Symbols for Code Coverage
+        inputs:
+          solution: build.proj
+          msbuildArguments: >-
+            -t:ExtractMdsSymbolsForCodeCoverage
+            -p:ReferenceType=Package
+            -p:CollectCodeCoverage=true
+            -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}
+
     - task: MSBuild@1
       condition: succeededOrFailed()
       displayName: 'Run Manual Tests ${{parameters.msbuildArchitecture }}'
@@ -208,6 +219,17 @@ steps:
       continueOnError: true
 
   - ${{if or(eq(parameters.testType, 'All'), eq(parameters.testType, 'Integration'))}}:
+    - ${{if eq(parameters.referenceType, 'Package')}}:
+      - task: MSBuild@1
+        displayName: Extract Symbols for Code Coverage
+        inputs:
+          solution: build.proj
+          msbuildArguments: >-
+            -t:ExtractMdsSymbolsForCodeCoverage
+            -p:ReferenceType=Package
+            -p:CollectCodeCoverage=true
+            -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}
+
     - task: DotNetCoreCLI@2
       displayName: 'Run Manual Tests'
       condition: succeededOrFailed()
