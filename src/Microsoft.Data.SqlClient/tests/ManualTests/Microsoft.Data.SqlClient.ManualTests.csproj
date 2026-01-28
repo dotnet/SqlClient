@@ -254,11 +254,17 @@
     <Compile Include="TracingTests\XEventsTracingTest.cs" />
 
     <!-- Resource files -->
-    <Content Include="DDBasics\DDDataTypesTest\data.xml" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SQL\ParameterTest\SqlParameterTest_DebugMode_Azure.bsl" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl" CopyToOutputDirectory="PreserveNewest" />
+    <!-- @TODO: Move these into some folder or a resx or something -->
+    <Content Include="DDDataTypesTest_Data.xml"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="SqlParameterTest_DebugMode.bsl"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="SqlParameterTest_DebugMode_Azure.bsl"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="SqlParameterTest_ReleaseMode.bsl"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="SqlParameterTest_ReleaseMode_Azure.bsl"
+             CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   
   <!-- Items to include in AE test set -->
@@ -316,8 +322,10 @@
     <!-- version of MDS. Package mode is specified by setting the build parameter ReferenceType   -->
     <!-- to "Package". If this is not specified, the build will revert to default behavior of     -->
     <!-- referencing MDS via the project.                                                         -->
-    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" Condition="'$(ReferenceType)' != 'Package'" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Condition="'$(ReferenceType)' == 'Package'" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" 
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package'" />
 
     <!-- @TODO: Should we consider having a package build of this? -->
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
@@ -329,19 +337,26 @@
 
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
-    <PackageReference Include="Microsoft.Data.SqlClient.SNI" Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI"
+                      Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
+                      PrivateAssets="all" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.ServiceProcess.ServiceController" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.console" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" PrivateAssets="all" />
-    <PackageReference Include="xunit.runner.visualstudio" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.console"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
+                      PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.visualstudio"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
+                      PrivateAssets="all" />
 
     <ProjectReference Include="SQL/UdtTest/UDTs/Address/Address.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Circle/Circle.csproj" />
@@ -359,7 +374,8 @@
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
-    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime"
+                      Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
@@ -368,11 +384,14 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.ServiceProcess.ServiceController" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.console" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" PrivateAssets="all" />
-    <PackageReference Include="xunit.runner.visualstudio" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.console"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
+                      PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.visualstudio"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
+                      PrivateAssets="all" />
 
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
-
     <ProjectReference Include="SQL/UdtTest/UDTs/Address/Address.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Circle/Circle.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
