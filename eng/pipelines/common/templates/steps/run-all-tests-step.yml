@@ -220,11 +220,12 @@ steps:
 
   - ${{if or(eq(parameters.testType, 'All'), eq(parameters.testType, 'Integration'))}}:
     - ${{if eq(parameters.referenceType, 'Package')}}:
-      - task: MSBuild@1
+      - task: DotNetCoreCLI@2
         displayName: Extract Symbols for Code Coverage
         inputs:
-          solution: build.proj
-          msbuildArguments: >-
+          command: build
+          projects: build.proj
+          arguments: >-
             -t:ExtractMdsSymbolsForCodeCoverage
             -p:ReferenceType=Package
             -p:CollectCodeCoverage=true
