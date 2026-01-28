@@ -138,7 +138,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [InlineData(CommandBehavior.Default)]
         [InlineData(CommandBehavior.SequentialAccess)]
-        public static void TestUdtSqlDataReaderGetBytesSequentialAccess(CommandBehavior behavior)
+        public static void TestUdtSqlDataReaderGetBytes(CommandBehavior behavior)
         {
             // Arrange
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
