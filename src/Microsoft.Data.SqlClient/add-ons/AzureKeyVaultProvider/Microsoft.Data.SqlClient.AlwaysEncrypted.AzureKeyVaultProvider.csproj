@@ -11,7 +11,7 @@
     <!-- @TODO: $(BindFolder) is OS dependent but we're only ever building AnyOS, so ... can we simplify this? -->
     <OutputPath>$(BinFolder)$(Configuration).$(Platform)\AzureKeyVaultProvider</OutputPath>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\AzureKeyVaultProvider</IntermediateOutputPath>
-    <DocumentationFile>$(BinFolder)$(Configuration).$(Platform)\AzureKeyVaultProvider.xml</DocumentationFile>
+    <DocumentationFile>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
 
   <!-- Trim/AOT Support ================================================ -->
