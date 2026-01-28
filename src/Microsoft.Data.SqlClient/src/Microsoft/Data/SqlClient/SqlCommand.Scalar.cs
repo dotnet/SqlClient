@@ -184,6 +184,11 @@ namespace Microsoft.Data.SqlClient
                         result = reader.GetValue(0);
                     }
                 } while (returnLastResult && reader.NextResult());
+
+                // Drain remaining results to ensure all error tokens are processed
+                // before returning the result (fix for GH issue #3736).
+                while (reader.NextResult())
+                { }
             }
             finally
             {
@@ -298,6 +303,11 @@ namespace Microsoft.Data.SqlClient
                                             exception = e;
                                         }
                                     }
+
+                                    // Drain remaining results to ensure all error tokens are processed
+                                    // before returning the result (fix for GH issue #3736).
+                                    while (reader.NextResult())
+                                    { }
                                 }
                                 finally
                                 {
