@@ -358,27 +358,28 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             if (ex is MsalServiceException svcEx &&
                 svcEx.StatusCode == MsalRetryStatusCode)
             {
-                int retryPeriod = 0;
-
                 var retryAfter = svcEx.Headers.RetryAfter;
                 if (retryAfter is not null)
                 {
-                    if (retryAfter.Delta.HasValue)
-                    {
-                        if (retryAfter.Delta.Value.TotalMilliseconds > int.MaxValue)
-                        {
-                            retryPeriod = int.MaxValue;
-                        }
-                        else
-                        {
-                            retryPeriod = Convert.ToInt32(retryAfter.Delta.Value.TotalMilliseconds);
-                        }
-                    }
-                    else if (retryAfter.Date.HasValue)
-                    {
-                        retryPeriod = Convert.ToInt32(retryAfter.Date.Value.Offset.TotalMilliseconds);
-                    }
+                    // Prefer the Delta value over Date.
+                    double totalMilliseconds =
+                        retryAfter.Delta.HasValue
+                        ? retryAfter.Delta.Value.TotalMilliseconds
+                        : retryAfter.Date.HasValue
+                            ? retryAfter.Date.Value.Offset.TotalMilliseconds
+                            : 0;
 
+                    int retryPeriod =
+                        // Ignore negative values.
+                        totalMilliseconds <= 0
+                        ? 0
+                        // Avoid overflow when converting to an int.
+                        : totalMilliseconds > int.MaxValue
+                            ? int.MaxValue
+                            // Convert from double to int safely.
+                            : Convert.ToInt32(totalMilliseconds);
+
+                    // Report the retryable error.
                     throw new Extensions.Azure.AuthenticationException(
                         parameters.AuthenticationMethod,
                         ex.ErrorCode,

@@ -12,8 +12,10 @@
 name: "CodeQL Advanced"
 
 on:
-  # Scan on pushes to the default branch and any protected branches.
+  # Scan on pushes to main only.
   push:
+    branches:
+      - main
 
   # Scan on PRs that target matching branches.
   pull_request:

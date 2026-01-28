@@ -28,6 +28,8 @@ jobs:
     value: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
 
   - name: BuildType
+    # This variable is set in the build-signed-package-job.yml job. Any changes
+    # to the names of the stage, job, or variable must be reflected here.
     value: $[ stageDependencies.buildMDS.build_signed_package.outputs['GetBuildType.CDP_BUILD_TYPE_COPY'] ]
 
   - ${{ if parameters.isPreview }}:
