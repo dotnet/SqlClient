@@ -1,3 +1,5 @@
+namespace SqlCommand_CommandTimeout;
+
 // <Snippet1>
 using System;
 using Microsoft.Data.SqlClient;

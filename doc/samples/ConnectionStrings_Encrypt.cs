@@ -1,4 +1,6 @@
-﻿using System;
+﻿namespace ConnectionStrings_Encrypt;
+
+using System;
 using System.Configuration;
 
 class Program
@@ -7,7 +9,7 @@ class Program
     {
     }
     // <Snippet1>
-    static void ToggleConfigEncryption(string exeFile)
+    static void ToggleConfigEncryption(string exeConfigName)
     {
         // Takes the executable file name without the
         // .config extension.

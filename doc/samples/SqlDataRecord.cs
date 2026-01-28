@@ -1,8 +1,11 @@
+#if NETFRAMEWORK
+namespace SqlDataRecordCS;
+
 using System;
 using System.Data;
 using System.Data.Sql;
 using System.Data.SqlTypes;
-using Microsoft.Data.SqlClient.Server;
+using Microsoft.SqlServer.Server;
 
 public sealed partial class SqlDataRecordTester
 {
@@ -10,7 +13,7 @@ public sealed partial class SqlDataRecordTester
    {
    }
 
-[Microsoft.Data.SqlClient.Server.SqlProcedure]
+[SqlProcedure]
 public static void CallTestMethods()
 {
    CreateNewRecord();
@@ -21,7 +24,7 @@ public static void CallTestMethods()
 //<Snippet1>
 //using Microsoft.Data.SqlClient.Server;
 
-[Microsoft.Data.SqlClient.Server.SqlProcedure]
+[SqlProcedure]
 public static void CreateNewRecord()
 {
 
@@ -73,3 +76,4 @@ SqlContext.Pipe.Send(record);
    
 }
 }
+#endif

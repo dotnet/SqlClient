@@ -1,3 +1,5 @@
+namespace SqlParameterCollection_AddWithValue;
+
 // <Snippet1>
 using System;
 using System.Data;

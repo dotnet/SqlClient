@@ -1,3 +1,5 @@
+namespace SqlConnection_GetSchema_Tables;
+
 // <Snippet1>
 using System;
 using System.Data;
