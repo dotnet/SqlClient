@@ -6,7 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.Test.UnitTests;
+namespace Microsoft.Data.SqlClient.UnitTests;
 
 public class SqlAuthenticationProviderManagerTests
 {
@@ -67,7 +67,7 @@ public class SqlAuthenticationProviderManagerTests
             provider2,
             SqlAuthenticationProviderManager.GetProvider(
                 SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
-        
+
         Assert.Same(
             provider2,
             SqlAuthenticationProvider.GetProvider(

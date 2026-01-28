@@ -75,14 +75,14 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 variables:
   - template: /eng/pipelines/libraries/variables.yml@self
   - name: packageFolderName
-    value: packages
+    value: drop_buildMDS_build_signed_package
   - name: PublishSymbols
     value: ${{ parameters['publishSymbols'] }}
   - name: CurrentNetFxVersion
     value: ${{ parameters['CurrentNetFxVersion'] }}
 
 resources:
-  repositories: 
+  repositories:
     - repository: templates
       type: git
       name: OneBranch.Pipelines/GovernedTemplates
@@ -124,7 +124,7 @@ extends:
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'
         exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
       asyncSdl:
-        enabled: false        
+        enabled: false
         credscan:
           enabled: ${{ not(parameters['isPreview']) }}
           suppressionsFile: $(REPOROOT)/.config/CredScanSuppressions.json
@@ -161,11 +161,6 @@ extends:
         parameters:
           packageFolderName: $(packageFolderName)
           isPreview: ${{ parameters['isPreview'] }}
-          downloadPackageStep:
-            download: current
-            artifact: $(packageFolderName)
-            patterns: '**/*.*nupkg'
-            displayName: 'Download NuGet Package'
 
 # Disabling as of 10/15/2025 due to OneBranch apparently disallowing MSBuild tasks in validation stages.
 #      - template: /eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self

@@ -25,9 +25,6 @@ steps:
       secureFile: netfxKeypair.snk
       retryCount: 5
 
-  # Install the .NET SDK.
-  - template: /eng/pipelines/steps/install-dotnet.yml@self
-
   # Configure NuGet to use the local packages/ directory where the Abstractions
   # package will be.
   - pwsh: New-Item -Path "$(packageFolderName)" -ItemType Directory -Force

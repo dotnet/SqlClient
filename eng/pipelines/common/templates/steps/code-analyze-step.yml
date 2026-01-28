@@ -32,7 +32,7 @@ steps:
       msBuildCommandline: >-
         msbuild
         ${{parameters.sourceRoot}}\build.proj
+        -t:BuildAllConfigurations
         -p:configuration=Release
         -p:GenerateNuget=false
         -p:BuildTools=false
-        -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk
