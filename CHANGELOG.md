@@ -7,6 +7,87 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Stable release 6.0.5] - 2026-01-15
+
+This update brings the below changes over the previous stable release:
+
+### Fixed
+
+- Fixed NullReferenceException issue with `SqlDataAdapter` when processing batch scenarios where certain SQL RPC calls may not include system parameters.
+  ([#3878](https://github.com/dotnet/SqlClient/pull/3878))
+
+### Added
+
+*What Changed:*
+
+- Added new AppContext switch `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` to set `MultiSubnetFailover=true` by default in connection string.
+  ([#3852](https://github.com/dotnet/SqlClient/pull/3852))
+
+*Who Benefits:*
+
+- Applications that need MultiSubnetFailover enabled globally without modifying connection strings.
+
+*Impact:*
+
+- Applications can now enable MultiSubnetFailover globally using one of the following methods:
+
+```c#
+// In application code
+AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault", true);
+```
+
+```json
+// In runtimeconfig.json
+{
+  "configProperties": {
+    "Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault": true
+  }
+}
+```
+
+```xml
+<!-- In App.Config -->
+<runtime>
+  <AppContextSwitchOverrides value="Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault=true" />
+</runtime>
+```
+
+### Changed
+
+- Updated dependencies ([#3840](https://github.com/dotnet/SqlClient/pull/3840)):
+  - .NET Framework 4.6.2:
+
+    - Azure.Core 1.50.0 - Added
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - Microsoft.IdentityModel.JsonWebTokens 7.5.0 -> 7.7.1
+    - Microsoft.IdentityModel.Protocols.OpenIdConnect 7.5.0 -> 7.7.1
+    - System.Buffers 4.5.1 -> 4.6.1
+    - System.Text.Json 8.0.5 -> 8.0.6
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Encodings.Web - Removed
+
+  - .NET 8.0:
+
+    - Azure.Core 1.50.0 - Added
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - Microsoft.IdentityModel.JsonWebTokens 7.5.0 -> 7.7.1
+    - Microsoft.IdentityModel.Protocols.OpenIdConnect 7.5.0 -> 7.7.1
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Json - Removed
+
+  - .NET 9.0:
+
+    - Azure.Core 1.50.0 - Added
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Extensions.Caching.Memory 9.0.4 -> 9.0.11
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - Microsoft.IdentityModel.JsonWebTokens 7.5.0 -> 7.7.1
+    - Microsoft.IdentityModel.Protocols.OpenIdConnect 7.5.0 -> 7.7.1
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Json - Removed
+
 ## [Stable Release 6.1.4] - 2026-01-15
 
 This update brings the following changes since the [6.1.3](release-notes/6.1/6.1.3.md) release:

@@ -48,7 +48,8 @@ public abstract partial class SqlAuthenticationProvider
                     return;
                 }
 
-                // TODO(ADO-39845): Verify the assembly is signed by us?
+                // TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39845):
+                // Verify the assembly is signed by us?
 
                 // Look for the manager class.
                 const string className = "Microsoft.Data.SqlClient.SqlAuthenticationProviderManager";
@@ -65,7 +66,7 @@ public abstract partial class SqlAuthenticationProvider
                 _getProvider = manager.GetMethod(
                     "GetProvider",
                     BindingFlags.NonPublic | BindingFlags.Static);
-                
+
                 if (_getProvider is null)
                 {
                     Log($"MDS GetProvider() method not found; " +
@@ -75,7 +76,7 @@ public abstract partial class SqlAuthenticationProvider
                 _setProvider = manager.GetMethod(
                     "SetProvider",
                     BindingFlags.NonPublic | BindingFlags.Static);
-                
+
                 if (_setProvider is null)
                 {
                     Log($"MDS SetProvider() method not found; " +
@@ -164,7 +165,7 @@ public abstract partial class SqlAuthenticationProvider
                 if (!result.HasValue)
                 {
                     Log($"SetProvider() invocation returned null; " +
-                        "translating to false"); 
+                        "translating to false");
                     return false;
                 }
 

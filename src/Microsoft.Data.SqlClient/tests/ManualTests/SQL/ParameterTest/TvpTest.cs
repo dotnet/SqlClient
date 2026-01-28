@@ -42,6 +42,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // data value and server consts
         private readonly string _connStr;
 
+        // This test occasionally hangs forever, hence marked as flaky.
+        [Trait("Category", "flaky")]
         // Synapse: The statement failed. Column 'blob' has a data type that cannot participate in a columnstore index.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void TestMain()
