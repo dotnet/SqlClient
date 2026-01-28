@@ -82,8 +82,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // Act
                 // The conversion error occurs in cmd2's WHERE clause (Val = 12345 without quotes),
                 // not during the INSERT statements above.
-                bool exceptionThrown = false;
-                try
+                SqlException ex = Assert.Throws<SqlException>(() =>
                 {
                     using SqlTransaction transaction = connection.BeginTransaction();
                     using (SqlCommand cmd1 = new($"INSERT INTO {targetTable} (Val1, Val2) VALUES (42, 43)", connection, transaction))
@@ -99,14 +98,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         cmd3.ExecuteNonQuery();
                     }
                     transaction.Commit();
-                }
-                catch (SqlException ex) when (ex.Number == 245)
-                {
-                    exceptionThrown = true;
-                }
+                });
 
                 // Assert
-                Assert.True(exceptionThrown, "Expected SqlException with conversion error (245) was not thrown");
+                Assert.Equal(245, ex.Number);
                 using (SqlCommand verifyCmd = new($"SELECT COUNT(*) FROM {targetTable}", connection))
                 {
                     int count = (int)verifyCmd.ExecuteScalar();
@@ -219,8 +214,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
 
                 // Act
-                bool exceptionThrown = false;
-                try
+                SqlException ex = await Assert.ThrowsAsync<SqlException>(async () =>
                 {
                     using SqlTransaction transaction = connection.BeginTransaction();
                     using (SqlCommand cmd1 = new($"INSERT INTO {targetTable} (Val1, Val2) VALUES (42, 43)", connection, transaction))
@@ -236,14 +230,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         await cmd3.ExecuteNonQueryAsync();
                     }
                     transaction.Commit();
-                }
-                catch (SqlException ex) when (ex.Number == 245)
-                {
-                    exceptionThrown = true;
-                }
+                });
 
                 // Assert
-                Assert.True(exceptionThrown, "Expected SqlException with conversion error (245) was not thrown");
+                Assert.Equal(245, ex.Number);
                 using (SqlCommand verifyCmd = new($"SELECT COUNT(*) FROM {targetTable}", connection))
                 {
                     int count = (int)await verifyCmd.ExecuteScalarAsync();
