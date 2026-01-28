@@ -2,181 +2,294 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     /// <summary>
     /// Tests for ExecuteScalar to verify proper exception handling.
+    /// Regression tests for GitHub issue #3736: https://github.com/dotnet/SqlClient/issues/3736
     /// </summary>
     public static class SqlCommandExecuteScalarTest
     {
-
-        private static string GenerateTableName(string prefix) =>
-            $"##{prefix}_{Guid.NewGuid():N}";
-
         /// <summary>
-        /// Regression test for GitHub issue #3736: https://github.com/dotnet/SqlClient/issues/3736
-        /// ExecuteScalar should properly propagate conversion errors that occur after the first result.
-        /// 
-        /// Without the fix, the conversion error is swallowed during reader.Close(), causing:
-        /// 1. The transaction to become "zombied" without throwing an exception
-        /// 2. Subsequent commands to execute on a dead transaction
-        /// 3. Partial commits when the transaction commit fails
+        /// ExecuteScalar should propagate conversion errors that occur after the first result.
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ExecuteScalar_ShouldThrowOnConversionError_GH3736()
+        public static void ExecuteScalar_ShouldThrowOnConversionError()
         {
-            string tab1Name = GenerateTableName("tab1");
-            string tab2Name = GenerateTableName("tab2");
+            string tableName = DataTestUtility.GetLongName("GH3736");
 
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
 
-            // Setup: Create test tables (temp tables auto-cleanup)
-            using (SqlCommand setupCmd = connection.CreateCommand())
-            {
-                setupCmd.CommandText = $@"
-                    CREATE TABLE {tab1Name} (
-                        [Id] INT IDENTITY(1,1) NOT NULL,
-                        [Val] VARCHAR(10) NOT NULL
-                    );
-
-                    CREATE TABLE {tab2Name} (
-                        [Id] INT IDENTITY(1,1) NOT NULL,
-                        [Val1] INT NOT NULL,
-                        [Val2] INT NOT NULL
-                    );
-
-                    INSERT INTO {tab1Name} (Val) VALUES ('12345');
-                    INSERT INTO {tab1Name} (Val) VALUES ('42-43');"; // This will cause conversion error
-                setupCmd.ExecuteNonQuery();
-            }
-
-            // Test: Execute a query that will cause a conversion error after returning a valid row
-            // The query "SELECT Id FROM tab1 WHERE Val = 12345" will:
-            // 1. Return row with Id=1 (Val='12345' converts to 12345)
-            // 2. Fail on row with Id=2 (Val='42-43' cannot convert to int)
-            // 
-            // Before the fix: ExecuteScalar returns 1 without throwing an exception
-            // After the fix: ExecuteScalar throws SqlException with the conversion error
-            using SqlCommand cmd = new($"SELECT Id FROM {tab1Name} WHERE Val = 12345", connection);
-            
-            SqlException ex = Assert.Throws<SqlException>(() => cmd.ExecuteScalar());
-            
-            // Error 245: Conversion failed when converting the varchar value '42-43' to data type int.
-            Assert.Equal(245, ex.Number);
-            Assert.Contains("Conversion failed", ex.Message);
-        }
-
-        /// <summary>
-        /// Regression test for GitHub issue #3736:
-        /// Verifies the transaction scenario from the original issue report.
-        /// 
-        /// In the original bug, a transaction would be zombied without notification, causing:
-        /// - INSERT before the error to be rolled back (correct)
-        /// - INSERT after the error to be committed outside transaction (incorrect)
-        /// </summary>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ExecuteScalar_TransactionShouldRollbackOnError_GH3736()
-        {
-            string tab1Name = GenerateTableName("tab1");
-            string tab2Name = GenerateTableName("tab2");
-
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            connection.Open();
-
-            // Setup: Create test tables (temp tables auto-cleanup)
-            using (SqlCommand setupCmd = connection.CreateCommand())
-            {
-                setupCmd.CommandText = $@"
-                    CREATE TABLE {tab1Name} (
-                        [Id] INT IDENTITY(1,1) NOT NULL,
-                        [Val] VARCHAR(10) NOT NULL
-                    );
-
-                    CREATE TABLE {tab2Name} (
-                        [Id] INT IDENTITY(1,1) NOT NULL,
-                        [Val1] INT NOT NULL,
-                        [Val2] INT NOT NULL
-                    );
-
-                    INSERT INTO {tab1Name} (Val) VALUES ('12345');
-                    INSERT INTO {tab1Name} (Val) VALUES ('42-43');";
-                setupCmd.ExecuteNonQuery();
-            }
-
-            // Test: Execute queries in a transaction where one will cause an error
-            bool exceptionThrown = false;
             try
             {
-                using SqlTransaction transaction = connection.BeginTransaction();
-
-                // First insert - should be rolled back if transaction fails
-                using (SqlCommand cmd1 = new($"INSERT INTO {tab2Name} (Val1, Val2) VALUES (42, 43)", connection, transaction))
+                // Arrange
+                // Insert valid VARCHAR values - '42-43' is a valid string, not an invalid number
+                DataTestUtility.CreateTable(connection, tableName, "(Id INT IDENTITY(1,1) NOT NULL, Val VARCHAR(10) NOT NULL)");
+                using (SqlCommand insertCmd = connection.CreateCommand())
                 {
-                    cmd1.ExecuteNonQuery();
+                    insertCmd.CommandText =
+                        $"INSERT INTO {tableName} (Val) VALUES ('12345'); " +
+                        $"INSERT INTO {tableName} (Val) VALUES ('42-43');";
+                    insertCmd.ExecuteNonQuery();
                 }
 
-                // This should throw due to conversion error
-                using (SqlCommand cmd2 = new($"SELECT Id FROM {tab1Name} WHERE Val = 12345", connection, transaction))
-                {
-                    cmd2.ExecuteScalar();
-                }
+                // Act
+                // The WHERE clause compares VARCHAR to INT (no quotes around 12345), causing SQL Server
+                // to convert each Val to INT. '12345' converts fine, but '42-43' fails with error 245.
+                using SqlCommand cmd = new($"SELECT Id FROM {tableName} WHERE Val = 12345", connection);
+                SqlException ex = Assert.Throws<SqlException>(() => cmd.ExecuteScalar());
 
-                // This should never execute if the fix is working
-                using (SqlCommand cmd3 = new($"INSERT INTO {tab2Name} (Val1, Val2) VALUES (100, 200)", connection, transaction))
-                {
-                    cmd3.ExecuteNonQuery();
-                }
-
-                transaction.Commit();
+                // Assert
+                Assert.Equal(245, ex.Number);
+                Assert.Contains("Conversion failed", ex.Message);
             }
-            catch (SqlException ex) when (ex.Number == 245)
+            finally
             {
-                // Expected: Conversion error should be thrown
-                exceptionThrown = true;
-            }
-
-            Assert.True(exceptionThrown, "Expected SqlException with conversion error (245) was not thrown");
-
-            // Verify: No rows should be in tab2 (transaction should have been rolled back)
-            using (SqlCommand verifyCmd = new($"SELECT COUNT(*) FROM {tab2Name}", connection))
-            {
-                int count = (int)verifyCmd.ExecuteScalar();
-                Assert.Equal(0, count);
+                DataTestUtility.DropTable(connection, tableName);
             }
         }
 
         /// <summary>
-        /// Verifies that ExecuteScalar works correctly when there is no error.
-        /// This is a sanity check to ensure the fix doesn't break normal functionality.
+        /// ExecuteScalar should throw on conversion error so transaction can be properly rolled back.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ExecuteScalar_TransactionShouldRollbackOnError()
+        {
+            string sourceTable = DataTestUtility.GetLongName("GH3736_Src");
+            string targetTable = DataTestUtility.GetLongName("GH3736_Tgt");
+
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            try
+            {
+                // Arrange
+                // sourceTable.Val is VARCHAR - both '12345' and '42-43' are valid strings
+                DataTestUtility.CreateTable(connection, sourceTable, "(Id INT IDENTITY(1,1) NOT NULL, Val VARCHAR(10) NOT NULL)");
+                DataTestUtility.CreateTable(connection, targetTable, "(Id INT IDENTITY(1,1) NOT NULL, Val1 INT NOT NULL, Val2 INT NOT NULL)");
+                using (SqlCommand insertCmd = connection.CreateCommand())
+                {
+                    insertCmd.CommandText =
+                        $"INSERT INTO {sourceTable} (Val) VALUES ('12345'); " +
+                        $"INSERT INTO {sourceTable} (Val) VALUES ('42-43');";
+                    insertCmd.ExecuteNonQuery();
+                }
+
+                // Act
+                // The conversion error occurs in cmd2's WHERE clause (Val = 12345 without quotes),
+                // not during the INSERT statements above.
+                bool exceptionThrown = false;
+                try
+                {
+                    using SqlTransaction transaction = connection.BeginTransaction();
+                    using (SqlCommand cmd1 = new($"INSERT INTO {targetTable} (Val1, Val2) VALUES (42, 43)", connection, transaction))
+                    {
+                        cmd1.ExecuteNonQuery();
+                    }
+                    using (SqlCommand cmd2 = new($"SELECT Id FROM {sourceTable} WHERE Val = 12345", connection, transaction))
+                    {
+                        cmd2.ExecuteScalar();
+                    }
+                    using (SqlCommand cmd3 = new($"INSERT INTO {targetTable} (Val1, Val2) VALUES (100, 200)", connection, transaction))
+                    {
+                        cmd3.ExecuteNonQuery();
+                    }
+                    transaction.Commit();
+                }
+                catch (SqlException ex) when (ex.Number == 245)
+                {
+                    exceptionThrown = true;
+                }
+
+                // Assert
+                Assert.True(exceptionThrown, "Expected SqlException with conversion error (245) was not thrown");
+                using (SqlCommand verifyCmd = new($"SELECT COUNT(*) FROM {targetTable}", connection))
+                {
+                    int count = (int)verifyCmd.ExecuteScalar();
+                    Assert.Equal(0, count);
+                }
+            }
+            finally
+            {
+                DataTestUtility.DropTable(connection, sourceTable);
+                DataTestUtility.DropTable(connection, targetTable);
+            }
+        }
+
+        /// <summary>
+        /// ExecuteScalar should work correctly when there is no error.
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ExecuteScalar_ShouldWorkCorrectlyWithoutError()
         {
+            // Arrange
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
-
             using SqlCommand cmd = new("SELECT 42", connection);
+
+            // Act
             object result = cmd.ExecuteScalar();
 
+            // Assert
             Assert.Equal(42, result);
         }
 
         /// <summary>
-        /// Verifies that ExecuteScalar returns null when there are no rows.
+        /// ExecuteScalar should return null when there are no rows.
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ExecuteScalar_ShouldReturnNullWhenNoRows()
         {
+            // Arrange
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
-
             using SqlCommand cmd = new("SELECT 1 WHERE 1 = 0", connection);
+
+            // Act
             object result = cmd.ExecuteScalar();
 
+            // Assert
+            Assert.Null(result);
+        }
+
+        /// <summary>
+        /// ExecuteScalarAsync should propagate conversion errors that occur after the first result.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task ExecuteScalarAsync_ShouldThrowOnConversionError()
+        {
+            string tableName = DataTestUtility.GetLongName("GH3736_Async");
+
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+
+            try
+            {
+                // Arrange
+                DataTestUtility.CreateTable(connection, tableName, "(Id INT IDENTITY(1,1) NOT NULL, Val VARCHAR(10) NOT NULL)");
+                using (SqlCommand insertCmd = connection.CreateCommand())
+                {
+                    insertCmd.CommandText =
+                        $"INSERT INTO {tableName} (Val) VALUES ('12345'); " +
+                        $"INSERT INTO {tableName} (Val) VALUES ('42-43');";
+                    await insertCmd.ExecuteNonQueryAsync();
+                }
+
+                // Act
+                using SqlCommand cmd = new($"SELECT Id FROM {tableName} WHERE Val = 12345", connection);
+                SqlException ex = await Assert.ThrowsAsync<SqlException>(() => cmd.ExecuteScalarAsync());
+
+                // Assert
+                Assert.Equal(245, ex.Number);
+                Assert.Contains("Conversion failed", ex.Message);
+            }
+            finally
+            {
+                DataTestUtility.DropTable(connection, tableName);
+            }
+        }
+
+        /// <summary>
+        /// ExecuteScalarAsync should throw on conversion error so transaction can be properly rolled back.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task ExecuteScalarAsync_TransactionShouldRollbackOnError()
+        {
+            string sourceTable = DataTestUtility.GetLongName("GH3736_AsyncSrc");
+            string targetTable = DataTestUtility.GetLongName("GH3736_AsyncTgt");
+
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+
+            try
+            {
+                // Arrange
+                DataTestUtility.CreateTable(connection, sourceTable, "(Id INT IDENTITY(1,1) NOT NULL, Val VARCHAR(10) NOT NULL)");
+                DataTestUtility.CreateTable(connection, targetTable, "(Id INT IDENTITY(1,1) NOT NULL, Val1 INT NOT NULL, Val2 INT NOT NULL)");
+                using (SqlCommand insertCmd = connection.CreateCommand())
+                {
+                    insertCmd.CommandText =
+                        $"INSERT INTO {sourceTable} (Val) VALUES ('12345'); " +
+                        $"INSERT INTO {sourceTable} (Val) VALUES ('42-43');";
+                    await insertCmd.ExecuteNonQueryAsync();
+                }
+
+                // Act
+                bool exceptionThrown = false;
+                try
+                {
+                    using SqlTransaction transaction = connection.BeginTransaction();
+                    using (SqlCommand cmd1 = new($"INSERT INTO {targetTable} (Val1, Val2) VALUES (42, 43)", connection, transaction))
+                    {
+                        await cmd1.ExecuteNonQueryAsync();
+                    }
+                    using (SqlCommand cmd2 = new($"SELECT Id FROM {sourceTable} WHERE Val = 12345", connection, transaction))
+                    {
+                        await cmd2.ExecuteScalarAsync();
+                    }
+                    using (SqlCommand cmd3 = new($"INSERT INTO {targetTable} (Val1, Val2) VALUES (100, 200)", connection, transaction))
+                    {
+                        await cmd3.ExecuteNonQueryAsync();
+                    }
+                    transaction.Commit();
+                }
+                catch (SqlException ex) when (ex.Number == 245)
+                {
+                    exceptionThrown = true;
+                }
+
+                // Assert
+                Assert.True(exceptionThrown, "Expected SqlException with conversion error (245) was not thrown");
+                using (SqlCommand verifyCmd = new($"SELECT COUNT(*) FROM {targetTable}", connection))
+                {
+                    int count = (int)await verifyCmd.ExecuteScalarAsync();
+                    Assert.Equal(0, count);
+                }
+            }
+            finally
+            {
+                DataTestUtility.DropTable(connection, sourceTable);
+                DataTestUtility.DropTable(connection, targetTable);
+            }
+        }
+
+        /// <summary>
+        /// ExecuteScalarAsync should work correctly when there is no error.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task ExecuteScalarAsync_ShouldWorkCorrectlyWithoutError()
+        {
+            // Arrange
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+            using SqlCommand cmd = new("SELECT 42", connection);
+
+            // Act
+            object result = await cmd.ExecuteScalarAsync();
+
+            // Assert
+            Assert.Equal(42, result);
+        }
+
+        /// <summary>
+        /// ExecuteScalarAsync should return null when there are no rows.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task ExecuteScalarAsync_ShouldReturnNullWhenNoRows()
+        {
+            // Arrange
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+            using SqlCommand cmd = new("SELECT 1 WHERE 1 = 0", connection);
+
+            // Act
+            object result = await cmd.ExecuteScalarAsync();
+
+            // Assert
             Assert.Null(result);
         }
     }
