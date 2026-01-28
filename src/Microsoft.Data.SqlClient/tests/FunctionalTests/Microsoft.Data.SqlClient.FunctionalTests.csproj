@@ -7,8 +7,14 @@
   </PropertyGroup>
 
   <!-- Links to internal project files ================================= -->
-  <!-- @TODO: These should be removed -->
   <ItemGroup>
+    <!-- @TODO: These should be removed -->
+    <!-- These files are links to internal classes in the MDS project that a collection of     -->
+    <!-- tests directly test. Since InternalsVisibleTo doesn't work with ManualTests (not sure -->
+    <!-- why, to be honest), the only way to test them within this project is to directly      -->
+    <!-- compile them as part of this project. This is not ideal in the slightest, and they    -->
+    <!-- should ideally be UnitTests if they need to access internals. But detangling these    -->
+    <!-- tests is far beyond the scope of the common project, so it is left as a TODO for now. -->
     <Compile Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft/Data/Common/MultipartIdentifier.cs" />
     <Compile Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/Packet.cs" />
     <Compile Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/TdsParserStateObject.Multiplexer.cs" />
@@ -16,16 +22,16 @@
   
   <!-- Embedded resources and content files  =========================== -->
   <ItemGroup>
-    <!-- This file sets some configuration setting that only apply to netfx. It cannot #if -->
-    <!-- included into the project, so it must be included via a condition attribute.      --> 
+    <!-- This file sets some configuration setting that only apply to netfx. It cannot be #if -->
+    <!-- included into the project, so it must be included via a condition attribute.         -->
     <None Update="app.config" Condition="'$(TargetFramework)' == 'net462'">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     
-    <ContentWithTargetPath Include="$(TestsPath)tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
+    <Content Include="$(TestsPath)tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>xunit.runner.json</TargetPath>
-    </ContentWithTargetPath>
+    </Content>
   </ItemGroup>
   
   <!-- References ====================================================== -->
