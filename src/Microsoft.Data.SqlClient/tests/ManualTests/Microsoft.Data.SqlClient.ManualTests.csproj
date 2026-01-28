@@ -258,15 +258,16 @@
     <Compile Include="TracingTests\XEventsTracingTest.cs" />
 
     <!-- Resource files -->
-    <Content Include="DDBasics\DDDataTypesTest\data.xml"
+    <!-- @TODO: Move these into some folder or a resx or something -->
+    <Content Include="DDDataTypesTest_Data.xml"
              CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl"
+    <Content Include="SqlParameterTest_DebugMode.bsl"
              CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SQL\ParameterTest\SqlParameterTest_DebugMode_Azure.bsl"
+    <Content Include="SqlParameterTest_DebugMode_Azure.bsl"
              CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl"
+    <Content Include="SqlParameterTest_ReleaseMode.bsl"
              CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl"
+    <Content Include="SqlParameterTest_ReleaseMode_Azure.bsl"
              CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   
@@ -397,7 +398,6 @@
                       PrivateAssets="all" />
 
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
-
     <ProjectReference Include="SQL/UdtTest/UDTs/Address/Address.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Circle/Circle.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
