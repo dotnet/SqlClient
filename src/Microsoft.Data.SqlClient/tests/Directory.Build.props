@@ -36,4 +36,16 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
+
+  <!-- Copy test utilities to output folder -->
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)tools\Microsoft.Data.SqlClient.TestUtilities\CodeCoverage.runsettings">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>CodeCoverage.runsettings</Link>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>xunit.runner.json</Link>
+    </None>
+  </ItemGroup>
 </Project>

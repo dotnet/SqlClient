@@ -61,13 +61,6 @@ parameters:
   type: string
   default: https://sqlclientdrivers.pkgs.visualstudio.com/ADO.Net/_packaging/SNIValidation/nuget/v3/index.json
 
-# Frameworks to expect code coverage information for, and to compile into
-# reports.
-- name: codeCovTargetFrameworks
-  displayName: 'Code Coverage Target Frameworks'
-  type: object
-  default: [net462, net8.0, net9.0, net10.0]
-
 - name: buildType
   displayName: 'Build Type'
   default: Project
@@ -100,9 +93,23 @@ parameters:
   type: boolean
   default: true
 
+# The type of tests to run:
+#
+#   All         - Run all tests.
+#   Unit        - Only run tests that do not require external resources.
+#   Integration - Only run tests that require external resources.
+#
+- name: testType
+  type: string
+  default: All
+  values:
+    - All
+    - Unit
+    - Integration
+
 variables:
   - template: libraries/ci-build-variables.yml@self
-  
+
   - name: artifactName
     value: Artifacts
 
@@ -130,13 +137,14 @@ stages:
         mdsPackageVersion: $(NugetPackageVersion)
         ${{ if eq(parameters.debug, 'true') }}:
           verbosity: 'detailed'
-    
+
   - template: common/templates/stages/ci-run-tests-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
       buildConfiguration: ${{ parameters.buildConfiguration }}
       buildType: ${{ parameters.buildType }}
       testJobTimeout: ${{ parameters.testJobTimeout }}
+      testType: ${{ parameters.testType }}
       ${{ if eq(parameters.buildType, 'Package') }}:
         dependsOn: build_nugets
 
@@ -160,17 +168,24 @@ stages:
               artifactName: $(artifactName)
               buildType: ${{ parameters.buildType }}
               buildConfiguration: ${{ parameters.buildConfiguration }}
-  
-      # Include the code coverage job if the build type is Project.
-      ${{ if eq(parameters.buildType, 'Project') }}:
+
+      # Include the code coverage job under certain circumstances:
+      #
+      #   - testType is not All:
+      #       Only the PR pipelines use non-All test types, and those pipelines
+      #       run different test suites using Project vs Package references, so
+      #       we must collect coverage from both reference type runs.
+      #
+      #   - testType is All and Reference type is Project:
+      #       This is the legacy behaviour that we want to preserve for the
+      #       non-PR pipelines.
+      #
+      ${{ if or(ne(parameters.testType, 'All'), eq(parameters.buildType, 'Project')) }}:
          # Jobs to run as part of the tests stage, after the tests are done.
         postTestJobs:
         - template: common/templates/jobs/ci-code-coverage-job.yml@self
           parameters:
             debug: ${{ parameters.debug }}
-            image: ADO-MMS22-CodeCov
-            pool: ${{ parameters.defaultPoolName }}
-            targetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
             # We only want to upload coverage results to CodeCov from certain
             # pipelines.  We use the pipeline name (Build.DefinitionName) to
             # choose.  This is a predefined variable that is available at
@@ -181,15 +196,15 @@ stages:
             #
             # We're choosing to upload from these pipelines only:
             #
-            # - PR-SqlClient-Project
-            # - CI-SqlClient
+            # - PR-SqlClient-Project (Unit and Functional tests)
+            # - PR-SqlClient-Package (Manual tests)
+            # - CI-SqlClient (All tests)
             #
-            # Other pipelines that share this template and use a Project
-            # buildType don't add much, if any, value to the coverage reports.
-            # They have not been configured with suitable CodeCov credentials to
-            # perform the upload.
+            # Other pipelines that share this template don't add much, if any,
+            # value to the coverage reports.  They have not been configured with
+            # suitable CodeCov credentials to perform the upload.
             #
-            upload: ${{ or(eq(variables['Build.DefinitionName'], 'PR-SqlClient-Project'), eq(variables['Build.DefinitionName'], 'CI-SqlClient')) }}
+            upload: ${{ or(eq(variables['Build.DefinitionName'], 'PR-SqlClient-Project'), eq(variables['Build.DefinitionName'], 'PR-SqlClient-Package'), eq(variables['Build.DefinitionName'], 'CI-SqlClient')) }}
 
 # test stages configurations
   # self hosted SQL Server on Windows
@@ -203,7 +218,6 @@ stages:
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
           useManagedSNI: ${{parameters.useManagedSNI }} # can be used for .NET Core only tests on Windows: [false, true], [false] or [true] values are allowed
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }} # targeted frameworks that is going to participate in test result report generation
           configSqlFor: local # setup Sql Server (local | azure | enclave)
           operatingSystem: Windows # operating system to run tests on (Windows | Linux | Mac)
           configProperties:
@@ -244,7 +258,6 @@ stages:
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
           useManagedSNI: [false] # can be used for .NET Core only tests on Windows: [false, true], [false] or [true] values are allowed
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }} # targeted frameworks that is going to participate in test result report generation
           configSqlFor: local # setup Sql Server (local | azure | enclave)
           operatingSystem: Windows # operating system to run tests on (Windows | Linux | Mac)
           configProperties:
@@ -277,16 +290,15 @@ stages:
             # skipSqlConfiguration: # skips the SQL configuration step
 
 
-        windows_sql_22_x64: 
+        windows_sql_22_x64:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Win22_Sql22: ADO-MMS22-SQL22 
+            Win22_Sql22: ADO-MMS22-SQL22
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
           useManagedSNI: ${{parameters.useManagedSNI }}
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: local
           operatingSystem: Windows
           configProperties:
@@ -306,16 +318,15 @@ stages:
             enableLocalDB: true
 
 
-        windows_sql_22_x86: 
+        windows_sql_22_x86:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Win22_Sql22_x86: ADO-MMS22-SQL22 
+            Win22_Sql22_x86: ADO-MMS22-SQL22
           TargetFrameworks: [net462, net8.0, net9.0]
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
           useManagedSNI: [false]
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: local
           operatingSystem: Windows
           configProperties:
@@ -345,7 +356,6 @@ stages:
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
           useManagedSNI: ${{parameters.useManagedSNI }}
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: local
           operatingSystem: Windows
           configProperties:
@@ -360,8 +370,8 @@ stages:
 
     # Azure SQL Server - Windows
         windows_azure_sql:
-          pool: ${{parameters.defaultPoolName }} 
-          images: 
+          pool: ${{parameters.defaultPoolName }}
+          images:
             Win22_Azure_Sql: ADO-MMS22-SQL19
             Win11_Azure_Sql: ADO-CI-Win11
           TargetFrameworks: ${{parameters.targetFrameworks }}
@@ -369,7 +379,6 @@ stages:
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
           useManagedSNI: ${{parameters.useManagedSNI }}
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: azure
           operatingSystem: Windows
           configProperties:
@@ -394,7 +403,7 @@ stages:
 
         windows_azure_arm64_sql:
           pool: ADO-CI-PUBLIC-ARM64-1ES-EUS-POOL
-          images: 
+          images:
             Win11_ARM64_Azure_Sql: ADO-WIN11-ARM64
           isArm64: true
           TargetFrameworks: ${{parameters.targetFrameworks }}
@@ -402,7 +411,6 @@ stages:
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
           useManagedSNI: ${{parameters.useManagedSNI }}
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: azure
           operatingSystem: Windows
           configProperties:
@@ -427,14 +435,13 @@ stages:
         ${{ if and(eq(parameters.runAlwaysEncryptedTests, true), eq(variables['system.pullRequest.isFork'], 'False')) }}:
           windows_enclave_sql:
             pool: ADO-CI-AE-1ES-Pool
-            images: 
+            images:
               Win22_Enclave_Sql19: ADO-MMS22-SQL19
             TargetFrameworks: ${{parameters.targetFrameworks }}
             netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
             buildPlatforms: ${{parameters.buildPlatforms }}
             testSets: [AE]
             useManagedSNI: ${{parameters.useManagedSNI }}
-            codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
             configSqlFor: enclave
             operatingSystem: Windows
             configProperties:
@@ -451,7 +458,7 @@ stages:
               AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
               SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
               UserManagedIdentityClientId: $(UserManagedIdentityClientId)
-              AliasName: $(SQLAliasName)            
+              AliasName: $(SQLAliasName)
               LocalDbAppName: $(LocalDbAppName)
               LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
@@ -466,7 +473,6 @@ stages:
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}
           useManagedSNI: [true]
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: local
           operatingSystem: Linux
           configProperties:
@@ -491,7 +497,6 @@ stages:
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}
           useManagedSNI: [true]
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: azure
           operatingSystem: Linux
           configProperties:
@@ -523,7 +528,6 @@ stages:
             buildPlatforms: [AnyCPU]
             testSets: [AE]
             useManagedSNI: [true]
-            codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
             configSqlFor: enclave
             operatingSystem: Linux
             configProperties:
@@ -553,7 +557,6 @@ stages:
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}
           useManagedSNI: [true]
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: local
           operatingSystem: Mac
           configProperties:

@@ -3,7 +3,7 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
-parameters:  
+parameters:
   - name: TargetNetCoreVersion
     type: string
     default: $(TargetNetCoreVersion)
@@ -85,8 +85,8 @@ steps:
       -v n
       --filter "category!=failing&category!=flaky"
       --blame-hang
-      --blame-hang-dump-type full
-      --blame-hang-timeout 10m
+      --blame-hang-dump-type none
+      --blame-hang-timeout 5m
 
 - task: DotNetCoreCLI@2
   displayName: 'Run Flaky Functional Tests for ${{parameters.TargetNetCoreVersion }}'
@@ -105,8 +105,8 @@ steps:
       -v n
       --filter "category=flaky"
       --blame-hang
-      --blame-hang-dump-type full
-      --blame-hang-timeout 10m
+      --blame-hang-dump-type none
+      --blame-hang-timeout 5m
   continueOnError: true
 
 - task: DotNetCoreCLI@2
@@ -125,10 +125,9 @@ steps:
       --no-build
       -v n
       --filter "category!=failing&category!=flaky"
-      --collect "Code Coverage"
       --blame-hang
-      --blame-hang-dump-type full
-      --blame-hang-timeout 10m
+      --blame-hang-dump-type none
+      --blame-hang-timeout 5m
   retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
 - task: DotNetCoreCLI@2
@@ -147,9 +146,8 @@ steps:
       --no-build
       -v n
       --filter "category=flaky"
-      --collect "Code Coverage"
       --blame-hang
-      --blame-hang-dump-type full
-      --blame-hang-timeout 10m
+      --blame-hang-dump-type none
+      --blame-hang-timeout 5m
   retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
   continueOnError: true
