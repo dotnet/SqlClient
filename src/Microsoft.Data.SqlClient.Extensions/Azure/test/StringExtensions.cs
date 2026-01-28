@@ -3,12 +3,16 @@
 // See the LICENSE file in the project root for more information.
 
 /// <summary>
-/// Adds the missing Empty() method to string that doesn't waste time on null
-/// checks like String.IsNullOrEmpty() does, and has a nice short name.
+/// String extensions used by our tests.
 /// </summary>
-/// <param name="str">The string to check; must not be null</param>
 internal static class StringExtensions
 {
+    /// <summary>
+    /// Adds the Empty() method to string that doesn't waste time on null checks
+    /// like String.IsNullOrEmpty() does, and has a nice short name.
+    /// </summary>
+    /// <param name="str">The string to check; must not be null.</param>
+    /// <returns>True if the string is empty, false otherwise.</returns>
     internal static bool Empty(this string str)
     {
         return str.Length == 0;
