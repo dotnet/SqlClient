@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<!-- General Properties ============================================== -->
   <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <Configurations>Debug;Release;</Configurations>
     <RootNamespace />
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -15,6 +16,11 @@
     <KeyFile>$(SigningKeyPath)</KeyFile>
   </PropertyGroup>
 
+  <!-- Target Frameworks =============================================== -->
+  <PropertyGroup>
+    <TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
+  </PropertyGroup>
+  
   <!-- Internals visible to ============================================ -->
   <ItemGroup Condition="'$(CDP_BUILD_TYPE)' != 'Official'">
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
@@ -25,7 +31,18 @@
   <!-- OS Constants ==================================================== -->
   <PropertyGroup>
     <!-- @TODO: Move to directory.build.props? -->
-    <!-- If a target OS was not specified, use the current OS as the target OS. -->
+    <!--
+      If a target OS was not specified, we must choose a reasonable default.
+
+      For .NET Framework targets, we can assume a target OS of Windows, since
+      we don't support .NET Framework on any other OS.
+
+      For .NET targets, we will use the host OS, since that is where the
+      resulting artifacts are likely to be executed (i.e. tests).
+
+      Official builds should always explicitly specify a target OS.
+    -->
+    <TargetOs Condition="'$(TargetOs)' == '' AND '$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETFramework'">Windows_NT</TargetOs>
     <TargetOs Condition="'$(TargetOs)' == ''">$(OS)</TargetOs>
 
     <!-- Uncomment the following line to override the OS you are developing for -->
@@ -38,13 +55,6 @@
     <!--     flags. Those only apply to OS-specific target frameworks, and would interfere here.  -->
     <DefineConstants Condition="'$(NormalizedTargetOs)' == 'unix'">$(DefineConstants);_UNIX</DefineConstants>
     <DefineConstants Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(DefineConstants);_WINDOWS</DefineConstants>
-  </PropertyGroup>
-
-  <!-- Target Frameworks =============================================== -->
-  <PropertyGroup>
-    <!-- net462 is only supported on Windows, so we will only add it if we're building for Windows -->
-    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
-    <TargetFrameworks Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(TargetFrameworks);net462</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Build Output ==================================================== -->

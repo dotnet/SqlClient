@@ -40,7 +40,6 @@ parameters:
       type: string
 
     - # Type of build, used to determine path to search for symbols files
-      # @TODO: Can we remove this?
       name: referenceType
       type: string
       values:

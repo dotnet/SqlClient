@@ -5,5 +5,5 @@
 #################################################################################
 
 variables:
-  - template: common-variables.yml@self
-  - template: mds-variables.yml@self
+  - template: /eng/pipelines/libraries/common-variables.yml@self
+  - template: /eng/pipelines/libraries/mds-variables.yml@self

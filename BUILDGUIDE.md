@@ -25,6 +25,8 @@ Once the environment is setup properly, execute the desired set of commands belo
 
 ### Targets
 
+The following build targets are defined in `build.proj`:
+
 |Target|Description|
 |-|-|
 |`BuildAllConfigurations`|Default target. Builds the .NET Framework and .NET drivers for all target frameworks and operating systems.|
@@ -33,20 +35,22 @@ Once the environment is setup properly, execute the desired set of commands belo
 |`BuildNetFx`|Builds the .NET Framework driver for all target frameworks.|
 |`BuildTestsNetCore`|Builds tests for the .NET driver.|
 |`BuildTestsNetFx`|Builds tests for the .NET Framework driver.|
-|`Clean`|Cleans generated files.|
-|`Restore`|Restores Nuget packages.|
+|`Clean`|Cleans all generated files.|
+|`Restore`|Restores NuGet packages.|
 |`RunTests`|Runs the unit, functional, and manual tests for the .NET Framework and .NET drivers|
 |`RunUnitTests`|Runs just the unit tests for the .NET Framework and .NET drivers|
 |`RunFunctionalTests`|Runs just the functional tests for the .NET Framework and .NET drivers|
 |`RunManualTests`|Runs just the manual tests for the .NET Framework and .NET drivers|
 |`BuildAkv`|Builds the Azure Key Vault Provider package for all supported platforms.|
 
-
 ### Parameters
+
+The following parameters may be defined as MSBuild properties to configure the
+build:
+
 |Name|Supported Values|Default|Description|
 |-|-|-|-|
 |`Configuration`|`Debug`, `Release`|`Debug`|Sets the release configuration.|
-|`BuildNetFx`|`true`, `false`|`true` (Windows), `false` (other)|If false, skips building the .NET Framework driver on Windows.|
 |`OSGroup`|`Unix`, `Windows_NT`, `AnyOS`|typically defaults to the client system's OS, unless using `BuildAllConfigurations` or an `AnyOS` specific target|The operating system to target.|
 |`Platform`|`AnyCPU`, `x86`, `x64`, `ARM`, `ARM64`|`AnyCPU`|May only be set when using package reference type or running tests.|
 |`TestSet`|`1`, `2`, `3`, `AE`|all|Build or run a subset of the manual tests. Omit (default) to target all tests.|
@@ -54,12 +58,11 @@ Once the environment is setup properly, execute the desired set of commands belo
 |`TF`|`net8.0`, `net462`, `net47`, `net471`, `net472`, `net48`, `net481`|`net8.0` in netcore, `net462` in netfx|Sets the target framework when building or running tests. Not applicable when building the drivers.|
 |`ResultsDirectory`|An absolute file path|./TestResults relative to current directory|Specifies where to write test results.|
 
-
 ## Example Workflows using MSBuild (Recommended)
+
 Using the default configuration and running all tests:
 
 ```bash
-msbuild
 msbuild -t:BuildTestsNetFx -p:TF=net462
 msbuild -t:BuildTestsNetCore
 msbuild -t:RunTests
@@ -68,28 +71,25 @@ msbuild -t:RunTests
 Using the Release configuration:
 
 ```bash
-msbuild -p:configuration=Release
-msbuild -t:BuildTestsNetFx -p:TF=net462 -p:configuration=Release
-msbuild -t:BuildTestsNetCore -p:configuration=Release
-msbuild -t:RunTests -p:configuration=Release
+msbuild -t:BuildTestsNetFx -p:TF=net462 -p:Configuration=Release
+msbuild -t:BuildTestsNetCore -p:Configuration=Release
+msbuild -t:RunTests -p:Configuration=Release
 ```
 
 Running only the unit tests:
 
 ```bash
-msbuild
 msbuild -t:BuildTestsNetFx -p:TF=net462
 msbuild -t:BuildTestsNetCore
 msbuild -t:RunUnitTests
 ```
 
-Using a specific dotnet version/architecture:
+Using a specific .NET runtime to run tests:
 
 ```bash
-msbuild -p:configuration=Release
-msbuild -t:BuildTestsNetFx -p:TF=net462 -p:configuration=Release
-msbuild -t:BuildTestsNetCore -p:configuration=Release
-msbuild -t:RunTests -p:configuration=Release -p:DotnetPath=C:\net8-win-x86\
+msbuild -t:BuildTestsNetFx -p:TF=net462
+msbuild -t:BuildTestsNetCore
+msbuild -t:RunTests -p:DotnetPath=C:\net8-win-x86\
 ```
 
 ### Running Manual Tests
@@ -128,15 +128,13 @@ Manual Tests require the below setup to run:
   |IsManagedInstance | (Optional) When set to `true` **TVP** related tests will use on non-Azure bs files to compare test results. this is needed when testing against Managed Instances or TVP Tests will fail on Test set 3. The default value is `false`. |
   |PowerShellPath | The full path to PowerShell.exe. This is not required if the path is present in the PATH environment variable. | `D:\\escaped\\absolute\\path\\to\\PowerShell.exe` |
 
-
 ## Example workflows using the Dotnet SDK
 
-#### Run Functional Tests
+### Run Functional Tests
 
 - Windows (`netfx x86`):
 
 ```bash
-msbuild 
 dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" -p:Platform="x86" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
 ```
 
@@ -161,7 +159,8 @@ dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.S
 ```bash
 dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" -p:Platform="AnyCPU" -p:Configuration="Release" -p:TestTargetOS="Unixnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonlinuxtests&category!=nonuaptests"
 ```
-#### Run Manual Tests
+
+### Run Manual Tests
 
 - Windows (`netfx x86`):
 
@@ -201,37 +200,70 @@ dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlCl
 
 ## Testing with Custom ReferenceType
 
-Tests can be built and run with custom "Reference Type" property that enables different styles of testing:
+The MDS driver consists of several components, each of which produces its own
+NuGet package.  During development, components reference each other via
+`<ProjectReference>` properties by default.  This means that building
+and testing one component will implicitly build its project referenced
+dependencies.
 
-- "Project" => Build and run tests with Microsoft.Data.SqlClient as Project Reference
-- "Package" => Build and run tests with Microsoft.Data.SqlClient as Package Reference with configured "TestMicrosoftDataSqlClientVersion" in "Versions.props" file.
+Alternatively, the `ReferenceType` build property property may be specified with
+a value of `Package`.  This will change inter-component dependencies to use
+`<PackageReference>` dependencies, and require that dependent components be
+built and packaged before building the depending component.  In this scenario,
+the root `NuGet.config` file must be updated to include the following entry
+under the `<packageSources>` element:
 
-> ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" REFERENCE TYPE ***************
-> CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION
->
-> ```bash
->  msbuild -p:configuration=Release
-> ```
+```xml
+<configuration>
+  <packageSources>
+    ...  
+    <add key="local" value="packages/" />
+  </packageSources>
+</configuration>
+```
 
-A non-AnyCPU platform reference can only be used with package reference type. Otherwise, the specified platform will be replaced with AnyCPU in the build process.
+As a convenience, a `NuGet.config.local` file is supplied with the above
+package source already present.  You may simply copy it over `NuGet.config`
+when using `Package` references.
+
+Then, you can specify `Package` references be used, for example:
+
+```bash
+dotnet build -t:BuildAll -p:ReferenceType=Package
+dotnet build -t:BuildAKVNetCore -p:ReferenceType=Package
+dotnet build -t:GenerateMdsPackage
+dotnet build -t:GenerateAkvPackage
+dotnet build -t:BuildTestsNetCore -p:ReferenceType=Package
+```
+
+The above will build the MDS and AKV components, place their NuGet packages into
+the `packages/` directory, and then build the tests using those packages.
+
+A non-AnyCPU platform reference can only be used with package reference type.
+Otherwise, the specified platform will be replaced with AnyCPU in the build
+process.
 
 ### Building Tests with Reference Type
 
-For .NET, all 4 reference types are supported:
+For .NET:
 
 ```bash
+# Project is the default reference type.  The below commands are equivalent:
+msbuild -t:BuildTestsNetCore
 msbuild -t:BuildTestsNetCore -p:ReferenceType=Project
-# Default setting uses Project Reference.
 
+# Package reference type:
 msbuild -t:BuildTestsNetCore -p:ReferenceType=Package
 ```
 
-For .NET Framework, below reference types are supported:
+For .NET Framework:
 
 ```bash
+# Project is the default reference type.  The below commands are equivalent:
+msbuild -t:BuildTestsNetFx -p:TF=net462
 msbuild -t:BuildTestsNetFx -p:TF=net462 -p:ReferenceType=Project
-# Default setting uses Project Reference.
 
+# Package reference type:
 msbuild -t:BuildTestsNetFx -p:TF=net462 -p:ReferenceType=Package
 ```
 
@@ -250,25 +282,24 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 ### Building Tests with custom target framework
 
 ```bash
-msbuild -t:BuildTestsNetFx -p:TF=net462
 # Build the tests for custom .NET Framework target
+msbuild -t:BuildTestsNetFx -p:TF=net462
 ```
 
 ```bash
-msbuild -t:BuildTestsNetCore -p:TF=net8.0
 # Build the tests for custom .NET target
+msbuild -t:BuildTestsNetCore -p:TF=net8.0
 ```
 
 ### Running Tests with custom target framework (traditional)
 
 ```bash
+# Run tests with custom .NET Framework target
 dotnet test -p:TargetNetFxVersion=net462 ...
-# Use above property to run Functional Tests with custom .NET Framework target
 
+# Run tests with custom .NET target
 dotnet test -p:TargetNetCoreVersion=net8.0 ...
-# Use above property to run Functional Tests with custom .NET target
 ```
-
 
 ## Using Managed SNI on Windows
 
@@ -293,20 +324,6 @@ Scaled decimal parameter truncation can be enabled by enabling the below AppCont
 When connecting to a server, if a protocol lower than TLS 1.2 is negotiated, a security warning is output to the console. This warning can be suppressed on SQL connections with `Encrypt = false` by enabling the following AppContext switch on application startup:
 
 `Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning`
-
-### Troubleshooting Docker issues
-
-There may be times where connection cannot be made to SQL Server, we found below ideas helpful:
-
-- Clear Docker images to create clean image from time-to-time, and clear docker cache if needed by running `docker system prune` in Command Prompt.
-
-- If you face `Microsoft.Data.SqlClient.SNI.dll not found` errors when debugging, try updating the below properties in the netcore\Microsoft.Data.SqlClient.csproj file and try again:
-
-  ```xml
-    <OSGroup>Unix</OSGroup>
-    <TargetsWindows>false</TargetsWindows>
-    <TargetsUnix>true</TargetsUnix>
-  ```
 
 ## Collecting Code Coverage
 

@@ -2,8 +2,8 @@
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
-    <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(OSGroup)' == 'AnyOS'">Microsoft.Data.SqlClient is not supported on this platform.</GeneratePlatformNotSupportedAssemblyMessage>
     <OSGroup Condition="'$(OSGroup)' == ''">$(OS)</OSGroup>
+    <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(OSGroup)' == 'AnyOS'">Microsoft.Data.SqlClient is not supported on this platform.</GeneratePlatformNotSupportedAssemblyMessage>
     <!-- Allow explicit addition of the Compile files instead of all project files to be included by Default -->
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <TargetGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETCoreApp'">netcoreapp</TargetGroup>

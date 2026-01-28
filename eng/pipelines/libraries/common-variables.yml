@@ -24,6 +24,20 @@ variables:
   - name: artifactDirectory
     value: '$(REPOROOT)/packages'
 
+  # C# assembly versions must be in the format: Major.Minor.Build.Revision, but
+  # $(Build.BuildNumber) has the format XXX.YY.  Additionally, each version part
+  # must be a positive 16-bit integer less than 65535.  Simply concatenating
+  # both parts of $(Build.BuildNumber) could produce values larger than 65534,
+  # so we must omit the second part entirely.  Unfortunately, this may result
+  # in multiple subsequent pipline builds using the same C# assembly versions.
+  # The package versions will not be affected and will show the complete
+  # $(Build.BuildNumber) values.
+  - name: assemblyBuildNumber
+    value: $[ split(variables['Build.BuildNumber'], '.')[0] ]
+  
+  # ----------------------------------------------------------------------------
+  # MDS Package Versions
+
   # Update this after every release. This is used to generate the MDS NuGet package version.
   - name: Major
     value: '7'
@@ -32,17 +46,17 @@ variables:
   - name: Patch
     value: '0'
 
-    # Update this for preview releases.
+  # Update this for preview releases.
   - name: Preview
     value: '-preview'
   - name: Revision
     value: '3'
 
-  - name: NugetPackageVersion
+  - name: mdsPackageVersion
     value: $(Major).$(Minor).$(Patch)
-  - name: PreviewNugetPackageVersion
+  - name: previewMdsPackageVersion
     value: $(Major).$(Minor).$(Patch)$(Preview)$(Revision).$(Build.BuildNumber)
-  - name: AssemblyFileVersion
-    value: '$(Major).$(Minor)$(Patch).$(Build.BuildNumber)'
+  - name: mdsAssemblyFileVersion
+    value: $(Major).$(Minor).$(Patch).$(assemblyBuildNumber)
   - name: nuspecPath
     value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'
