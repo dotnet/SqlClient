@@ -16,7 +16,7 @@
     <DefineConstants Condition="'$(OSGroup.ToUpper())'=='UNIX'">$(DefineConstants),_UNIX</DefineConstants>
     <DefineConstants Condition="'$(OSGroup.ToUpper())'=='WINDOWS_NT'">$(DefineConstants),_WINDOWS</DefineConstants>
   </PropertyGroup>
-  
+
   <!-- .NET Framework Packages -->
   <ItemGroup>
     <!-- For compilation targeting .NET Framework using .NET SDKs. -->
@@ -40,10 +40,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <ContentWithTargetPath Include="..\tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>xunit.runner.json</TargetPath>
-    </ContentWithTargetPath>
   </ItemGroup>
 
   <!-- MDS References -->

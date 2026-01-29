@@ -3,7 +3,7 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
-parameters:  
+parameters:
   - name: TargetNetFxVersion
     type: string
     default: $(TargetNetFxVersion)
@@ -64,7 +64,7 @@ steps:
   inputs:
     solution: build.proj
     msbuildArguments: ' -t:BuildTestsNetFx -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} -p:TargetNetFxVersion=${{parameters.TargetNetFxVersion }} -p:Configuration=${{parameters.buildConfiguration }} -p:Platform=${{parameters.platform }}'
-    
+
 # Don't run unit tests using package reference. Unit tests are only run using project reference.
 
 - task: DotNetCoreCLI@2
@@ -83,7 +83,6 @@ steps:
       --no-build
       -v n
       --filter "category!=failing&category!=flaky"
-      --collect "Code Coverage"
       --blame-hang
       --blame-hang-dump-type full
       --blame-hang-timeout 10m
@@ -104,7 +103,6 @@ steps:
       --no-build
       -v n
       --filter "category=flaky"
-      --collect "Code Coverage"
       --blame-hang
       --blame-hang-dump-type full
       --blame-hang-timeout 10m
@@ -126,7 +124,6 @@ steps:
       --no-build
       -v n
       --filter "category!=failing&category!=flaky"
-      --collect "Code Coverage"
       --blame-hang
       --blame-hang-dump-type full
       --blame-hang-timeout 10m
@@ -148,7 +145,6 @@ steps:
       --no-build
       -v n
       --filter "category=flaky"
-      --collect "Code Coverage"
       --blame-hang
       --blame-hang-dump-type full
       --blame-hang-timeout 10m

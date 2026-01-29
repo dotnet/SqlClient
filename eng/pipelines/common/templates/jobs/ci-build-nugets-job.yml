@@ -15,11 +15,11 @@ parameters:
   - name: artifactName
     type: string
     default: Artifacts
-  
+
   - name: platform
     type: string
     default: $(Platform)
-  
+
   - name: buildConfiguration
     type: string
     values:
@@ -74,7 +74,7 @@ jobs:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
       OutputDirectory: $(packagePath)
-      generateSymbolsPackage: false
+      generateSymbolsPackage: true
       displayName: 'Generate NuGet package M.D.SqlClient'
 
   - template: ../steps/generate-nuget-package-step.yml@self
@@ -83,7 +83,7 @@ jobs:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       nuspecPath: 'tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
       OutputDirectory: $(packagePath)
-      generateSymbolsPackage: false
+      generateSymbolsPackage: true
       installNuget: false
       displayName: 'Generate NuGet package AKV Provider'
 

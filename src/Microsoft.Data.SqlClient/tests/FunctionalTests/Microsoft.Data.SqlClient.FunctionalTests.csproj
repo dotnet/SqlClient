@@ -13,21 +13,17 @@
     <Compile Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/Packet.cs" />
     <Compile Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/TdsParserStateObject.Multiplexer.cs" />
   </ItemGroup>
-  
+
   <!-- Embedded resources and content files  =========================== -->
   <ItemGroup>
     <!-- This file sets some configuration setting that only apply to netfx. It cannot #if -->
-    <!-- included into the project, so it must be included via a condition attribute.      --> 
+    <!-- included into the project, so it must be included via a condition attribute.      -->
     <None Update="app.config" Condition="'$(TargetFramework)' == 'net462'">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    
-    <ContentWithTargetPath Include="$(TestsPath)tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>xunit.runner.json</TargetPath>
-    </ContentWithTargetPath>
+
   </ItemGroup>
-  
+
   <!-- References ====================================================== -->
   <!-- Test target reference -->
   <ItemGroup>
@@ -38,14 +34,14 @@
     <!-- referencing MDS via the project.                                                         -->
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj"
                       Condition="'$(ReferenceType)' != 'Package'" />
-    <PackageReference Include="Microsoft.Data.SqlClient" 
+    <PackageReference Include="Microsoft.Data.SqlClient"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
-  
+
   <!-- References for netframework -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <Reference Include="System.Transactions" />
-    
+
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI"
@@ -74,7 +70,7 @@
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
   </ItemGroup>
-  
+
   <!-- References for netcore -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
     <PackageReference Include="Azure.Identity" />
