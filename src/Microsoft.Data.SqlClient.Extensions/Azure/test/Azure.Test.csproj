@@ -33,9 +33,6 @@
     </Content>
   </ItemGroup>
 
-  <!-- Ensure SNI DLLs are made available for .NET Framework project reference builds. -->
-  <Import Project="$(ToolsDir)/targets/CopySniDllsForNetFxProjectReferenceBuilds.targets" />
-
   <!--
     Depend on the TestUtilities project because it copies the JSON config for
     tests into the artifacts.  We don't refer to any of its assemblies.
