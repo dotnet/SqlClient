@@ -39,19 +39,6 @@ parameters:
   - name: testJobTimeout
     type: number
 
-  # The type of tests to run:
-  #
-  #   All         - Run all tests.
-  #   Unit        - Only run tests that do not require external resources.
-  #   Integration - Only run tests that require external resources.
-  #
-  - name: testType
-    type: string
-    values:
-      - All
-      - Unit
-      - Integration
-
 stages:
 - ${{ each config in parameters.testConfigurations }}:
   - ${{ each image in config.value.images }}:
@@ -80,7 +67,6 @@ stages:
                   targetFramework: ${{ targetFramework }}
                   netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                   testSet: ${{ testSet }}
-                  testType: ${{ parameters.testType }}
                   configSqlFor: ${{ config.value.configSqlFor }}
                   operatingSystem: ${{ config.value.operatingSystem }}
                   isArm64: ${{ eq(config.value.isArm64, 'true') }}
@@ -110,7 +96,6 @@ stages:
                     targetFramework: ${{ targetFramework }}
                     netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                     testSet: ${{ testSet }}
-                    testType: ${{ parameters.testType }}
                     configSqlFor: ${{ config.value.configSqlFor }}
                     operatingSystem: ${{ config.value.operatingSystem }}
                     isArm64: ${{ eq(config.value.isArm64, 'true') }}

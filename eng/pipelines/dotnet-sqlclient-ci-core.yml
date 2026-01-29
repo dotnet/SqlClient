@@ -93,20 +93,6 @@ parameters:
   type: boolean
   default: true
 
-# The type of tests to run:
-#
-#   All         - Run all tests.
-#   Unit        - Only run tests that do not require external resources.
-#   Integration - Only run tests that require external resources.
-#
-- name: testType
-  type: string
-  default: All
-  values:
-    - All
-    - Unit
-    - Integration
-
 variables:
   - template: libraries/ci-build-variables.yml@self
 
@@ -144,7 +130,6 @@ stages:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       buildType: ${{ parameters.buildType }}
       testJobTimeout: ${{ parameters.testJobTimeout }}
-      testType: ${{ parameters.testType }}
       ${{ if eq(parameters.buildType, 'Package') }}:
         dependsOn: build_nugets
 
@@ -169,18 +154,9 @@ stages:
               buildType: ${{ parameters.buildType }}
               buildConfiguration: ${{ parameters.buildConfiguration }}
 
-      # Include the code coverage job under certain circumstances:
-      #
-      #   - testType is not All:
-      #       Only the PR pipelines use non-All test types, and those pipelines
-      #       run different test suites using Project vs Package references, so
-      #       we must collect coverage from both reference type runs.
-      #
-      #   - testType is All and Reference type is Project:
-      #       This is the legacy behaviour that we want to preserve for the
-      #       non-PR pipelines.
-      #
-      ${{ if or(ne(parameters.testType, 'All'), eq(parameters.buildType, 'Project')) }}:
+      # Include the code coverage job for Project reference builds.  Coverage
+      # can't be collected properly when we use Package references.
+      ${{ if eq(parameters.buildType, 'Project') }}:
          # Jobs to run as part of the tests stage, after the tests are done.
         postTestJobs:
         - template: common/templates/jobs/ci-code-coverage-job.yml@self
@@ -196,15 +172,14 @@ stages:
             #
             # We're choosing to upload from these pipelines only:
             #
-            # - PR-SqlClient-Project (Unit and Functional tests)
-            # - PR-SqlClient-Package (Manual tests)
-            # - CI-SqlClient (All tests)
+            # - PR-SqlClient-Project
+            # - CI-SqlClient
             #
             # Other pipelines that share this template don't add much, if any,
             # value to the coverage reports.  They have not been configured with
             # suitable CodeCov credentials to perform the upload.
             #
-            upload: ${{ or(eq(variables['Build.DefinitionName'], 'PR-SqlClient-Project'), eq(variables['Build.DefinitionName'], 'PR-SqlClient-Package'), eq(variables['Build.DefinitionName'], 'CI-SqlClient')) }}
+            upload: ${{ or(eq(variables['Build.DefinitionName'], 'PR-SqlClient-Project'), eq(variables['Build.DefinitionName'], 'CI-SqlClient')) }}
 
 # test stages configurations
   # self hosted SQL Server on Windows

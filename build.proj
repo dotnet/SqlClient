@@ -4,7 +4,6 @@
   <Import Project="src/Directory.Build.props" />
   <Import Project="$(ToolsDir)targets\GenerateNugetPackage.targets" />
   <Import Project="$(ToolsDir)targets\add-ons\GenerateAKVProviderNugetPackage.targets" />
-  <Import Project="$(ToolsDir)targets\ExtractMdsSymbolsFromSnupkg.targets" />
 
   <PropertyGroup>
     <!-- SourceLink variable-->
