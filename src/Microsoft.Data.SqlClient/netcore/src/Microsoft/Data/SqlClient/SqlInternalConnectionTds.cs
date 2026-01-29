@@ -1618,6 +1618,14 @@ namespace Microsoft.Data.SqlClient
 
                     if (RoutingInfo != null)
                     {
+                        // Check if we received enhanced routing info, but not the ack for the feature.
+                        // In this case, we should ignore the routing info and connect to the current server.
+                        if (!string.IsNullOrEmpty(RoutingInfo.DatabaseName) && !IsEnhancedRoutingSupportEnabled)
+                        {
+                            RoutingInfo = null;
+                            break;
+                        }
+
                         SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.LoginNoFailover> Routed to {0}", serverInfo.ExtendedServerName);
                         if (routingAttempts > MaxNumberOfRedirectRoute)
                         {
@@ -1879,6 +1887,14 @@ namespace Microsoft.Data.SqlClient
                     int routingAttempts = 0;
                     while (RoutingInfo != null)
                     {
+                        // Check if we received enhanced routing info, but not the ack for the feature.
+                        // In this case, we should ignore the routing info and connect to the current server.
+                        if (!string.IsNullOrEmpty(RoutingInfo.DatabaseName) && !IsEnhancedRoutingSupportEnabled)
+                        {
+                            RoutingInfo = null;
+                            continue;
+                        }
+
                         if (routingAttempts > MaxNumberOfRedirectRoute)
                         {
                             throw SQL.ROR_RecursiveRoutingNotSupported(this, MaxNumberOfRedirectRoute);
@@ -2723,7 +2739,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void OnFeatureExtAck(int featureId, byte[] data)
         {
-            if (RoutingInfo != null && featureId != TdsEnums.FEATUREEXT_SQLDNSCACHING)
+            if (RoutingInfo != null && featureId != TdsEnums.FEATUREEXT_SQLDNSCACHING && featureId != TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT)
             {
                 return;
             }
