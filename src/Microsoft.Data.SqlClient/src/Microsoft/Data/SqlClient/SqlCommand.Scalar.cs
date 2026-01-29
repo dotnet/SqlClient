@@ -261,7 +261,7 @@ namespace Microsoft.Data.SqlClient
                     SqlDataReader reader = executeTask.Result;
                     
                     // @TODO: Use continue with state?
-                    reader.ReadAsync(cancellationToken).ContinueWith(readTask =>
+                    reader.ReadAsync(cancellationToken).ContinueWith(async readTask =>
                     {
                         // @TODO: This seems a bit confusing with unnecessary extra dispose calls and try/finally blocks
                         try
@@ -306,7 +306,7 @@ namespace Microsoft.Data.SqlClient
 
                                     // Drain remaining results to ensure all error tokens are processed
                                     // before returning the result (fix for GH issue #3736).
-                                    while (reader.NextResult())
+                                    while (await reader.NextResultAsync(cancellationToken).ConfigureAwait(false))
                                     { }
                                 }
                                 finally
