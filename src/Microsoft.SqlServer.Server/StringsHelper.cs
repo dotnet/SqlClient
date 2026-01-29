@@ -48,13 +48,17 @@ namespace Microsoft.SqlServer.Server
         {
             StringsHelper sys = GetLoader();
             if (sys == null)
+            {
                 return null;
+            }
 
             // If "res" is a resource id, temp will not be null, "res" will contain the retrieved resource string.
             // If "res" is not a resource id, temp will be null.
             string temp = sys._resources.GetString(res, Culture);
             if (temp != null)
+            {
                 res = temp;
+            }
 
             return res;
         }

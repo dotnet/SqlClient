@@ -4,11 +4,23 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+# This template defines a step to run Roslyn Analyzers on the AKV project build.
+# It uses the RoslynAnalyzers@3 task from the Secure Development Team's SDL
+# extension:
+#
+# https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-mohanb/security-integration/guardian-wiki/sdl-azdo-extension/roslyn-analyzers-build-task
+#
+# GOTCHA: This step will clobber any existing build output.  It should be run
+# _before_ any build steps that perform versioning or signing.
+
 # @TODO: This can probably be made generic and pass in the command lines for msbuild
 #        BUT, they should be kept separate by now as we rebuild build.proj in parallel, we won't
 #        affect >1 project at a time.
 
 parameters:
+    - name: akvPackageVersion
+      type: string
+
     - name: buildConfiguration
       type: string
       values:
@@ -28,7 +40,8 @@ steps:
               $(REPO_ROOT)/build.proj
               -t:BuildAkv
               -p:Configuration=${{ parameters.buildConfiguration }}
-              -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }}
+              -p:AkvPackageVersion=${{ parameters.akvPackageVersion }}
+              -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
               -p:ReferenceType=Package
           msBuildVersion: 17.0
           setupCommandLinePicker: vs2022

@@ -15,7 +15,7 @@ parameters:
 
   - name: symbolsVersion
     type: string
-    default: '$(NuGetPackageVersion)'
+    default: '$(mdsPackageVersion)'
 
   - name: symbolServer
     type: string
@@ -35,10 +35,9 @@ parameters:
       public: true
 
   - name: referenceType
-    default: project
     values:
-    - project
-    - package
+    - Project
+    - Package
 
   - name: product
     default: MDS
