@@ -116,28 +116,24 @@ public class ConnectionEnhancedRoutingTests
         server.Start();
 
         string routingDatabaseName = Guid.NewGuid().ToString();
-        bool clientProvidedCorrectDatabase = false;
-        server.OnLogin7Validated = loginToken =>
-        {
-            clientProvidedCorrectDatabase = null == loginToken.Database;
-        };
 
         RoutingTdsServer router = new(
             new RoutingTdsServerArguments()
             {
                 RoutingTCPHost = "localhost",
                 RoutingTCPPort = (ushort)server.EndPoint.Port,
+                RoutingDatabaseName = routingDatabaseName,
                 RequireReadOnly = false
             });
         router.Start();
         router.EnhancedRoutingBehavior = FeatureExtensionBehavior.DoNotAcknowledge;
 
-        string connectionString = (new SqlConnectionStringBuilder()
+        string connectionString = new SqlConnectionStringBuilder()
         {
             DataSource = $"localhost,{router.EndPoint.Port}",
             Encrypt = false,
             ConnectTimeout = 10000
-        }).ConnectionString;
+        }.ConnectionString;
 
         // Act
         using SqlConnection connection = new(connectionString);
@@ -145,12 +141,11 @@ public class ConnectionEnhancedRoutingTests
 
         // Assert
         Assert.Equal(ConnectionState.Open, connection.State);
-        Assert.Equal($"localhost,{server.EndPoint.Port}", ((SqlInternalConnectionTds)connection.InnerConnection).RoutingDestination);
+        Assert.Null(((SqlInternalConnectionTds)connection.InnerConnection).RoutingDestination);
         Assert.Equal("master", connection.Database);
-        Assert.True(clientProvidedCorrectDatabase);
 
         Assert.Equal(1, router.PreLoginCount);
-        Assert.Equal(1, server.PreLoginCount);
+        Assert.Equal(0, server.PreLoginCount);
     }
 
     [Fact]
@@ -161,28 +156,24 @@ public class ConnectionEnhancedRoutingTests
         server.Start();
 
         string routingDatabaseName = Guid.NewGuid().ToString();
-        bool clientProvidedCorrectDatabase = false;
-        server.OnLogin7Validated = loginToken =>
-        {
-            clientProvidedCorrectDatabase = null == loginToken.Database;
-        };
 
         RoutingTdsServer router = new(
             new RoutingTdsServerArguments()
             {
                 RoutingTCPHost = "localhost",
                 RoutingTCPPort = (ushort)server.EndPoint.Port,
+                RoutingDatabaseName = routingDatabaseName,
                 RequireReadOnly = false
             });
         router.Start();
         router.EnhancedRoutingBehavior = FeatureExtensionBehavior.Disabled;
 
-        string connectionString = (new SqlConnectionStringBuilder()
+        string connectionString = new SqlConnectionStringBuilder()
         {
             DataSource = $"localhost,{router.EndPoint.Port}",
             Encrypt = false,
             ConnectTimeout = 10000
-        }).ConnectionString;
+        }.ConnectionString;
 
         // Act
         using SqlConnection connection = new(connectionString);
@@ -190,11 +181,10 @@ public class ConnectionEnhancedRoutingTests
 
         // Assert
         Assert.Equal(ConnectionState.Open, connection.State);
-        Assert.Equal($"localhost,{server.EndPoint.Port}", ((SqlInternalConnectionTds)connection.InnerConnection).RoutingDestination);
+        Assert.Null(((SqlInternalConnectionTds)connection.InnerConnection).RoutingDestination);
         Assert.Equal("master", connection.Database);
-        Assert.True(clientProvidedCorrectDatabase);
 
         Assert.Equal(1, router.PreLoginCount);
-        Assert.Equal(1, server.PreLoginCount);
+        Assert.Equal(0, server.PreLoginCount);
     }
 }

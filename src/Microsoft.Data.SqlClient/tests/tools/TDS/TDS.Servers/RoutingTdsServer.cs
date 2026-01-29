@@ -196,6 +196,28 @@ namespace Microsoft.SqlServer.TDS.Servers
                 targetMessage.Insert(insertIndex, routingToken);
             }
 
+            if (EnhancedRoutingBehavior != FeatureExtensionBehavior.DoNotAcknowledge)
+            {
+                TDSMessage targetMessage = responseMessageCollection[0];
+                
+                // Create the option data
+                byte[] data = EnhancedRoutingBehavior == FeatureExtensionBehavior.Enabled ? [1] : [0];
+                TDSFeatureExtAckGenericOption enhancedRoutingSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.EnhancedRoutingSupport, (uint)data.Length, data);
+
+                TDSFeatureExtAckToken featureExtAckToken = new TDSFeatureExtAckToken(enhancedRoutingSupportOption);
+                // Add it before DONE token if possible, but simplest is to add to end and let the sorting logic handle it or just append
+                // Ideally, find DONE token and insert before it
+                int doneIndex = targetMessage.FindIndex(t => t is TDSDoneToken);
+                if (doneIndex >= 0)
+                {
+                    targetMessage.Insert(doneIndex, featureExtAckToken);
+                }
+                else
+                {
+                    targetMessage.Add(featureExtAckToken);
+                }
+            }
+
             return responseMessageCollection;
         }
 
