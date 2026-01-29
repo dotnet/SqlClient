@@ -16,7 +16,7 @@
     <DefineConstants Condition="'$(OSGroup.ToUpper())'=='UNIX'">$(DefineConstants),_UNIX</DefineConstants>
     <DefineConstants Condition="'$(OSGroup.ToUpper())'=='WINDOWS_NT'">$(DefineConstants),_WINDOWS</DefineConstants>
   </PropertyGroup>
-  
+
   <!-- .NET Framework Packages -->
   <ItemGroup>
     <!-- For compilation targeting .NET Framework using .NET SDKs. -->
@@ -52,9 +52,6 @@
     <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
     <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Data.SqlClient" />
   </ItemGroup>
-
-  <!-- Ensure SNI DLLs are made available for .NET Framework project reference builds. -->
-  <Import Project="$(ToolsDir)/targets/CopySniDllsForNetFxProjectReferenceBuilds.targets" />
 
   <!-- Fixture-specific References -->
   <ItemGroup>

@@ -105,8 +105,7 @@ extends:
             roslyn:
                 enabled: ${{ parameters.runSdlTasks }}
                 break: true
-                # Requires RoslynAnalyzers task to be added somewhere in
-                # the build stage.
+                # Requires RoslynAnalyzers task to be added somewhere in the build stage.
 
             publishLogs:
                 enabled: ${{ parameters.runSdlTasks }}

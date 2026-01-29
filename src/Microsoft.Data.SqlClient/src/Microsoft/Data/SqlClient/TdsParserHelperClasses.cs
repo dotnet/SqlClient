@@ -133,15 +133,15 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed class SqlFedAuthInfo
     {
-        internal string Spn { get; }
-        internal string StsUrl { get; }
-
         internal SqlFedAuthInfo(string spn, string stsurl)
         {
             Spn = spn;
             StsUrl = stsurl;
         }
-        
+
+        internal string Spn { get; }
+        internal string StsUrl { get; }
+
         public override string ToString()
         {
             return $"SPN: {Spn}, STSURL: {StsUrl}";
@@ -150,10 +150,6 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed class SqlFedAuthToken
     {
-        internal byte[] AccessToken { get; }
-        internal uint DataLen { get; }
-        internal long ExpirationFileTime { get; }
-
         internal SqlFedAuthToken(
             byte[] accessToken,
             long expirationFileTime)
@@ -172,10 +168,14 @@ namespace Microsoft.Data.SqlClient
             DataLen = (uint)AccessToken.Length;
             ExpirationFileTime = token.ExpiresOn.ToFileTime();
         }
+
+        internal byte[] AccessToken { get; }
+        internal uint DataLen { get; }
+        internal long ExpirationFileTime { get; }
     }
 
     #nullable disable
-    
+
     internal sealed class _SqlMetaData : SqlMetaDataPriv
     {
         [Flags]
@@ -496,7 +496,7 @@ namespace Microsoft.Data.SqlClient
         public object Clone()
         {
             _SqlMetaDataSetCollection result = new _SqlMetaDataSetCollection() { metaDataSet = metaDataSet?.Clone() };
-            
+
             foreach (_SqlMetaDataSet set in _altMetaDataSetArray)
             {
                 result._altMetaDataSetArray.Add(set.Clone());

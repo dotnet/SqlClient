@@ -117,7 +117,7 @@ Manual Tests require the below setup to run:
   |AADSecurePrincipalSecret | (Optional) A Secret defined for a registered application which has been granted permission to the database defined in the AADPasswordConnectionString. | {Secret} |
   |AzureKeyVaultURL | (Optional) Azure Key Vault Identifier URL | `https://{keyvaultname}.vault.azure.net/` |
   |AzureKeyVaultTenantId | (Optional) The Azure Active Directory tenant (directory) Id of the service principal. | _{Tenant ID of Active Directory}_ |
-  |SupportsIntegratedSecurity | (Optional) Whether or not the USER running tests has integrated security access to the target SQL Server.| `true` OR `false`|  
+  |SupportsIntegratedSecurity | (Optional) Whether or not the USER running tests has integrated security access to the target SQL Server.| `true` OR `false`|
   |LocalDbAppName | (Optional) If Local Db Testing is supported, this property configures the name of Local DB App instance available in client environment. Empty string value disables Local Db testing. | Name of Local Db App to connect to.|
   |LocalDbSharedInstanceName | (Optional) If LocalDB testing is supported and the instance is shared, this property configures the name of the shared instance of LocalDB to connect to. | Name of shared instance of LocalDB. |
   |FileStreamDirectory | (Optional) If File Stream is enabled on SQL Server, pass local directory path to be used for setting up File Stream enabled database. |  `D:\\escaped\\absolute\\path\\to\\directory\\` |
@@ -145,11 +145,11 @@ dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.S
 ```
 
 - AnyCPU:
-  
+
   Project reference only builds Driver with `AnyCPU` platform, and underlying process decides to run the tests with a compatible architecture (x64, x86, ARM64).
 
   Windows (`netcoreapp`):
-  
+
 ```bash
 dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" -p:Platform="AnyCPU" -p:Configuration="Release" -p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"
 ```
@@ -198,7 +198,7 @@ dotnet test "src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlCl
 dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Platform="AnyCPU" -p:Configuration="Release" -p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "FullyQualifiedName=Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.CspProviderExt.TestKeysFromCertificatesCreatedWithMultipleCryptoProviders"
 ```
 
-## Testing with Custom ReferenceType
+## Testing with Package References
 
 The MDS driver consists of several components, each of which produces its own
 NuGet package.  During development, components reference each other via
@@ -206,8 +206,8 @@ NuGet package.  During development, components reference each other via
 and testing one component will implicitly build its project referenced
 dependencies.
 
-Alternatively, the `ReferenceType` build property property may be specified with
-a value of `Package`.  This will change inter-component dependencies to use
+Alternatively, the `ReferenceType` build property may be specified with a value
+of `Package`.  This will change inter-component dependencies to use
 `<PackageReference>` dependencies, and require that dependent components be
 built and packaged before building the depending component.  In this scenario,
 the root `NuGet.config` file must be updated to include the following entry
@@ -216,7 +216,7 @@ under the `<packageSources>` element:
 ```xml
 <configuration>
   <packageSources>
-    ...  
+    ...
     <add key="local" value="packages/" />
   </packageSources>
 </configuration>
@@ -229,6 +229,7 @@ when using `Package` references.
 Then, you can specify `Package` references be used, for example:
 
 ```bash
+cp NuGet.config.local NuGet.config
 dotnet build -t:BuildAll -p:ReferenceType=Package
 dotnet build -t:BuildAKVNetCore -p:ReferenceType=Package
 dotnet build -t:GenerateMdsPackage
@@ -243,7 +244,7 @@ A non-AnyCPU platform reference can only be used with package reference type.
 Otherwise, the specified platform will be replaced with AnyCPU in the build
 process.
 
-### Building Tests with Reference Type
+### Building Tests with ReferenceType
 
 For .NET:
 
