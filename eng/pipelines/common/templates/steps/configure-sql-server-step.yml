@@ -71,7 +71,7 @@ parameters:
 steps:
 - ${{ if eq(parameters.operatingSystem, 'Windows') }}:
   # windows only steps
-  - template: configure-sql-server-win-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml@self
     parameters:
       instanceName: ${{parameters.instanceName}}
       user: ${{parameters.user}}
@@ -89,13 +89,13 @@ steps:
 
 - ${{ elseif eq(parameters.operatingSystem, 'Linux') }}:
   # Linux only steps
-  - template: configure-sql-server-linux-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
     parameters:
       password: ${{parameters.password}}
 
 - ${{ elseif eq(parameters.operatingSystem, 'Mac') }}:
   # macOS only steps
-  - template: configure-sql-server-macos-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml@self
     parameters:
       password: ${{parameters.password}}
 

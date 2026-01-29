@@ -168,14 +168,27 @@ parameters:
     type: object
     default: [false, true]
 
+  # Dotnet CLI verbosity level.
+  - name: dotnetVerbosity
+    displayName: dotnet CLI Verbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
 extends:
-  template: dotnet-sqlclient-ci-core.yml@self
+  template: /eng/pipelines/dotnet-sqlclient-ci-core.yml@self
   parameters:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
-    buildType: Project
+    referenceType: Project
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
     debug: ${{ parameters.debug }}
+    dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
     enableStressTests: ${{ parameters.enableStressTests }}
     targetFrameworks: ${{ parameters.targetFrameworks }}
     targetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}

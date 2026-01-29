@@ -3,7 +3,7 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
-parameters:  
+parameters:
   - name: TargetNetFxVersion
     type: string
     default: $(TargetNetFxVersion)
@@ -20,9 +20,9 @@ parameters:
       - Project
       - Package
 
-  - name: NugetPackageVersion
+  - name: mdsPackageVersion
     type: string
-    default: $(NugetPackageVersion)
+    default: $(mdsPackageVersion)
 
   - name: platform
     type: string
@@ -57,14 +57,24 @@ steps:
   inputs:
     solution: build.proj
     msbuildArchitecture: x64
-    msbuildArguments: '-p:Configuration=${{parameters.buildConfiguration }} -t:BuildAKVNetFx -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }}'
+    msbuildArguments: >-
+      -p:Configuration=${{ parameters.buildConfiguration }}
+      -t:BuildAKVNetFx
+      -p:ReferenceType=${{ parameters.referenceType }}
+      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
 - task: MSBuild@1
   displayName: 'MSBuild Build Tests for ${{parameters.TargetNetFxVersion }}'
   inputs:
     solution: build.proj
-    msbuildArguments: ' -t:BuildTestsNetFx -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} -p:TargetNetFxVersion=${{parameters.TargetNetFxVersion }} -p:Configuration=${{parameters.buildConfiguration }} -p:Platform=${{parameters.platform }}'
-    
+    msbuildArguments: >-
+      -t:BuildTestsNetFx
+      -p:ReferenceType=${{ parameters.referenceType }}
+      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+      -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
+      -p:Configuration=${{ parameters.buildConfiguration }}
+      -p:Platform=${{ parameters.platform }}
+
 # Don't run unit tests using package reference. Unit tests are only run using project reference.
 
 - task: DotNetCoreCLI@2
@@ -79,7 +89,7 @@ steps:
       -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
       -p:ReferenceType=${{ parameters.referenceType }}
       -p:Configuration=${{ parameters.buildConfiguration }}
-      -p:TestMicrosoftDataSqlClientVersion=${{ parameters.NugetPackageVersion }}
+      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n
       --filter "category!=failing&category!=flaky"
@@ -100,7 +110,7 @@ steps:
       -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
       -p:ReferenceType=${{ parameters.referenceType }}
       -p:Configuration=${{ parameters.buildConfiguration }}
-      -p:TestMicrosoftDataSqlClientVersion=${{ parameters.NugetPackageVersion }}
+      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n
       --filter "category=flaky"
@@ -122,7 +132,7 @@ steps:
       -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
       -p:ReferenceType=${{ parameters.referenceType }}
       -p:Configuration=${{ parameters.buildConfiguration }}
-      -p:TestMicrosoftDataSqlClientVersion=${{ parameters.NugetPackageVersion }}
+      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n
       --filter "category!=failing&category!=flaky"
@@ -144,7 +154,7 @@ steps:
       -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
       -p:ReferenceType=${{ parameters.referenceType }}
       -p:Configuration=${{ parameters.buildConfiguration }}
-      -p:TestMicrosoftDataSqlClientVersion=${{ parameters.NugetPackageVersion }}
+      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n
       --filter "category=flaky"

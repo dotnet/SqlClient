@@ -14,9 +14,4 @@
   <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
   </ItemGroup>
-
-  <!-- MDS Package Dependency -->
-  <ItemGroup Condition="$(ReferenceType) == 'Package'">
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
-  </ItemGroup>
 </Project>

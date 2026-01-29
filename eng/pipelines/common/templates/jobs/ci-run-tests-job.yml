@@ -4,12 +4,25 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  - name: configProperties
+    type: object
+    default: {} # - key: 'value'
+
+  - name: configSqlFor
+    type: string # local, azure, or enclave
+    default: local
+
   - name: debug
     type: boolean
     default: false
 
-  - name: poolName
-    type: string
+  - name: enableX64Test
+    type: boolean
+    default: true
+
+  - name: enableX86Test
+    type: boolean
+    default: false
 
   - name: hostedPool
     type: boolean
@@ -21,47 +34,15 @@ parameters:
   - name: jobDisplayName
     type: string
 
-  - name: usemanagedSNI
-    type: boolean
-    default: false
-
-  - name: configProperties
-    type: object
-    default: {} # - key: 'value'
-
-  - name: prebuildSteps
-    type: stepList
-    default: []
-
-  - name: artifactName
+  - name: mdsArtifactsName
     type: string
-    default: Artifacts
 
-  - name: targetFramework
+  - name: mdsPackageVersion
     type: string
 
   - name: netcoreVersionTestUtils
     type: string
 
-  - name: enableX86Test
-    type: boolean
-    default: false
-
-  - name: enableX64Test
-    type: boolean
-    default: true
-
-  - name: testSet
-    type: string
-  
-  - name: publishTestResults
-    type: boolean
-    default: false
-  
-  - name: configSqlFor
-    type: string # local, azure, or enclave
-    default: local
-  
   - name: operatingSystem
     type: string
     default: ''
@@ -71,19 +52,40 @@ parameters:
     values:
       - Debug
       - Release
-  
-  - name: buildType
-    default: Project
+
+  - name: poolName
+    type: string
+
+  - name: prebuildSteps
+    type: stepList
+    default: []
+
+  - name: publishTestResults
+    type: boolean
+    default: false
+
+  - name: referenceType
+    type: string
     values:
       - Project
       - Package
 
+  - name: targetFramework
+    type: string
+
+  - name: testSet
+    type: string
+
   # The timeout, in minutes, for this job.
   - name: timeout
     type: number
-  
+
   # True if this is an ARM64 job.
   - name: isArm64
+    type: boolean
+    default: false
+
+  - name: usemanagedSNI
     type: boolean
     default: false
 
@@ -107,6 +109,15 @@ jobs:
       value: '$(dotnetx86Path)'
 
   steps:
+
+  # If we're testing in Package mode, download the MDS package
+  # artifacts and put them in the packages/ directory in the repo root.
+  - ${{ if eq(parameters.referenceType, 'Package') }}:
+    - task: DownloadPipelineArtifact@2
+      displayName: Download MDS Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.mdsArtifactsName }}
+        targetPath: $(Build.SourcesDirectory)/packages
 
   # Install the .NET SDK and Runtimes.
   - template: /eng/pipelines/steps/install-dotnet.yml@self
@@ -139,14 +150,16 @@ jobs:
       }
     displayName: 'Verify Password'
 
-  - ${{ if eq(parameters.buildType, 'Project') }}:
+  - ${{ if eq(parameters.referenceType, 'Project') }}:
     - template: ../steps/ci-project-build-step.yml@self
       parameters:
         build: allNoDocs
         buildConfiguration: ${{ parameters.buildConfiguration }}
+        referenceType: ${{ parameters.referenceType }}
+        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - ${{ if ne(parameters.configProperties, '{}') }}:
-    - template: ../steps/update-config-file-step.yml@self # update config.json file
+    - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self # update config.json file
       parameters:
         debug: ${{ parameters.debug }}
         UseManagedSNIOnWindows: ${{ parameters.usemanagedSNI }}
@@ -217,11 +230,11 @@ jobs:
               net start $svc_name
               Get-Service $svc_name | Select-Object -Property Name, StartType, Status
           }
-          
+
         displayName: 'Start Sql Browser'
         condition: eq(variables['Agent.OS'], 'Windows_NT')
     - ${{ elseif eq(parameters.configSqlFor, 'local') }}:
-      - template: ../steps/configure-sql-server-step.yml@self # configure SQL Server
+      - template: /eng/pipelines/common/templates/steps/configure-sql-server-step.yml@self # configure SQL Server
         parameters:
           operatingSystem: ${{ parameters.operatingSystem }}
           netcoreVersionTestUtils: ${{ parameters.netcoreVersionTestUtils }}
@@ -252,22 +265,23 @@ jobs:
           ${{ if parameters.configProperties.FileStreamDirectory }}:
             fileStreamDirectory: ${{ parameters.configProperties.FileStreamDirectory }}
 
-    - template: ../steps/build-all-tests-step.yml@self # build tests
+    - template: /eng/pipelines/common/templates/steps/build-all-tests-step.yml@self # build tests
       parameters:
         targetFramework: ${{ parameters.targetFramework }}
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        referenceType: ${{ parameters.buildType }}
+        referenceType: ${{ parameters.referenceType }}
         testSet: ${{ parameters.testSet }}
+        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
         ${{ if ne(parameters.operatingSystem, 'Windows') }}:
           OSGroup: Unix
 
   - ${{ if eq(parameters.enableX64Test, true) }}: # run native tests
-    - template: ../steps/run-all-tests-step.yml@self # run tests
+    - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self # run tests
       parameters:
         debug: ${{ parameters.debug }}
         targetFramework: ${{ parameters.targetFramework }}
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        referenceType: ${{ parameters.buildType }}
+        referenceType: ${{ parameters.referenceType }}
         testSet: ${{ parameters.testSet }}
         operatingSystem: ${{ parameters.operatingSystem }}
 
@@ -286,19 +300,19 @@ jobs:
           installDir: $(dotnetx86RootPath)
           runtimes: [8.x, 9.x]
 
-    - template: ../steps/run-all-tests-step.yml@self
+    - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self
       parameters:
         debug: ${{ parameters.debug }}
         targetFramework: ${{ parameters.targetFramework }}
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        referenceType: ${{ parameters.buildType }}
+        referenceType: ${{ parameters.referenceType }}
         testSet: ${{ parameters.testSet }}
         msbuildArchitecture: x86
         dotnetx86RootPath: $(dotnetx86RootPath)
         operatingSystem: ${{ parameters.operatingSystem }}
 
   - ${{ if eq(parameters.publishTestResults, true) }}:
-    - template: ../steps/publish-test-results-step.yml@self
+    - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
       parameters:
         debug: ${{ parameters.debug }}
         targetFramework: ${{ parameters.targetFramework }}
