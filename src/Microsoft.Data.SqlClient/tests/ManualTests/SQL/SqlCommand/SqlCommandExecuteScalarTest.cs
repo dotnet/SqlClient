@@ -203,6 +203,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 // Arrange
+                // sourceTable.Val is VARCHAR - both '12345' and '42-43' are valid strings
                 DataTestUtility.CreateTable(connection, sourceTable, "(Id INT IDENTITY(1,1) NOT NULL, Val VARCHAR(10) NOT NULL)");
                 DataTestUtility.CreateTable(connection, targetTable, "(Id INT IDENTITY(1,1) NOT NULL, Val1 INT NOT NULL, Val2 INT NOT NULL)");
                 using (SqlCommand insertCmd = connection.CreateCommand())
@@ -214,6 +215,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
 
                 // Act
+                // The conversion error occurs in cmd2's WHERE clause (Val = 12345 without quotes),
+                // not during the INSERT statements above.
                 SqlException ex = await Assert.ThrowsAsync<SqlException>(async () =>
                 {
                     using SqlTransaction transaction = connection.BeginTransaction();
