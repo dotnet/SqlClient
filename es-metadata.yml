@@ -1,8 +1,31 @@
-schemaVersion: 0.0.1
-isProduction: true
-accountableOwners:
-  service: 24ff40ff-f299-428e-9508-d67fdeb2f473
-routing:
-  defaultAreaPath:
-    org: sqlclientdrivers
-    path: ADO.Net
+# 1ES Inventory-As-Code Configuration:
+#
+# https://eng.ms/docs/coreai/devdiv/one-engineering-system-1es/1es-docs/product-catalog/inventory-as-code/schema
+
+schemaVersion: 1.0.0
+
+providers:
+  - provider: InventoryAsCode
+    version: 1.0.0
+    metadata:
+
+      # SqlClient is a production repo.
+      isProduction: true
+
+      accountableOwners:
+
+        # This is the SqlClient Service Tree GUID:
+        #
+        # https://microsoftservicetree.com/services/24ff40ff-f299-428e-9508-d67fdeb2f473
+        #
+        service: 24ff40ff-f299-428e-9508-d67fdeb2f473
+
+      routing:
+        defaultAreaPath:
+
+          # The SqlClient Azure DevOps organization and project.
+          #
+          # https://sqlclientdrivers.visualstudio.com/ADO.Net
+          #
+          org: sqlclientdrivers
+          path: ADO.Net
