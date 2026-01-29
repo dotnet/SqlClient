@@ -2,7 +2,7 @@
 <!--
   This NuGet config is used by developers and our pipelines builds when we need
   to reference packages that are not available on the public nuget.org feed,
-  for example to test AKV that dependds on an un-published version of MDS.
+  for example to test AKV that depends on an un-published version of MDS.
 -->
 <configuration>
   <packageSources>

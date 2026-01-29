@@ -9,11 +9,9 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Security;
 using System.Security.Authentication;
 using System.Text;
-using System.Text.Encodings;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 
