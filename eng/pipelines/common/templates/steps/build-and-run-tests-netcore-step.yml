@@ -85,8 +85,8 @@ steps:
       -v n
       --filter "category!=failing&category!=flaky"
       --blame-hang
-      --blame-hang-dump-type none
-      --blame-hang-timeout 5m
+      --blame-hang-dump-type full
+      --blame-hang-timeout 10m
 
 - task: DotNetCoreCLI@2
   displayName: 'Run Flaky Functional Tests for ${{parameters.TargetNetCoreVersion }}'
@@ -105,8 +105,8 @@ steps:
       -v n
       --filter "category=flaky"
       --blame-hang
-      --blame-hang-dump-type none
-      --blame-hang-timeout 5m
+      --blame-hang-dump-type full
+      --blame-hang-timeout 10m
   continueOnError: true
 
 - task: DotNetCoreCLI@2
@@ -126,8 +126,8 @@ steps:
       -v n
       --filter "category!=failing&category!=flaky"
       --blame-hang
-      --blame-hang-dump-type none
-      --blame-hang-timeout 5m
+      --blame-hang-dump-type full
+      --blame-hang-timeout 10m
   retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
 - task: DotNetCoreCLI@2
@@ -147,7 +147,7 @@ steps:
       -v n
       --filter "category=flaky"
       --blame-hang
-      --blame-hang-dump-type none
-      --blame-hang-timeout 5m
+      --blame-hang-dump-type full
+      --blame-hang-timeout 10m
   retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
   continueOnError: true

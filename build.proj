@@ -203,8 +203,8 @@
         --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Unit-Windows$(TargetGroup)-$(TestSet)"
         --blame-hang
-        --blame-hang-dump-type none
-        --blame-hang-timeout 5m
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
       </TestCommand>
       <!-- Convert more than one whitespace character into one space -->
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
@@ -225,8 +225,8 @@
         --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Unit-Unixnetcoreapp-$(TestSet)"
         --blame-hang
-        --blame-hang-dump-type none
-        --blame-hang-timeout 5m
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
       </TestCommand>
       <!-- Convert more than one whitespace character into one space -->
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
@@ -251,8 +251,8 @@
         --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)"
         --blame-hang
-        --blame-hang-dump-type none
-        --blame-hang-timeout 5m
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
       </TestCommand>
       <!-- Convert more than one whitespace character into one space -->
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
@@ -274,8 +274,8 @@
         --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Functional-Unixnetcoreapp-$(TestSet)"
         --blame-hang
-        --blame-hang-dump-type none
-        --blame-hang-timeout 5m
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
       </TestCommand>
       <!-- Convert more than one whitespace character into one space -->
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
@@ -304,8 +304,8 @@
         --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)"
         --blame-hang
-        --blame-hang-dump-type none
-        --blame-hang-timeout 5m
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
     </PropertyGroup>
@@ -330,8 +330,8 @@
         --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)"
         --blame-hang
-        --blame-hang-dump-type none
-        --blame-hang-timeout 5m
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
     </PropertyGroup>
