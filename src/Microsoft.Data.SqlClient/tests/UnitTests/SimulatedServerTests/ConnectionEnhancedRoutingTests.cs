@@ -16,127 +16,59 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 [Collection("SimulatedServerTests")]
 public class ConnectionEnhancedRoutingTests
 {
-    [Fact]
-    public void RoutedConnection()
+    /// <summary>
+    /// Tests that a connection is routed to the target server when enhanced routing is enabled.
+    /// Uses Theory to test both sync and async code paths.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RoutedConnection(bool useAsync)
     {
         // Arrange
-        using TdsServer server = new(new());
-        server.Start();
+        using TestRoutingServers servers = new(FeatureExtensionBehavior.Enabled);
 
-        string routingDatabaseName = Guid.NewGuid().ToString();
         bool clientProvidedCorrectDatabase = false;
-        server.OnLogin7Validated = loginToken =>
+        servers.TargetServer.OnLogin7Validated = loginToken =>
         {
-            clientProvidedCorrectDatabase = routingDatabaseName == loginToken.Database;
+            clientProvidedCorrectDatabase = servers.RoutingDatabaseName == loginToken.Database;
         };
 
-        RoutingTdsServer router = new(
-            new RoutingTdsServerArguments()
-            {
-                RoutingTCPHost = "localhost",
-                RoutingTCPPort = (ushort)server.EndPoint.Port,
-                RoutingDatabaseName = routingDatabaseName,
-                RequireReadOnly = false
-            });
-        router.Start();
-        router.EnhancedRoutingBehavior = FeatureExtensionBehavior.Enabled;
-
-        string connectionString = (new SqlConnectionStringBuilder()
-        {
-            DataSource = $"localhost,{router.EndPoint.Port}",
-            Encrypt = false,
-            ConnectTimeout = 10000
-        }).ConnectionString;
-
         // Act
-        using SqlConnection connection = new(connectionString);
-        connection.Open();
+        using SqlConnection connection = new(servers.ConnectionString);
+        if (useAsync)
+        {
+            await connection.OpenAsync();
+        }
+        else
+        {
+            connection.Open();
+        }
 
         // Assert
         Assert.Equal(ConnectionState.Open, connection.State);
-        Assert.Equal($"localhost,{server.EndPoint.Port}", ((SqlInternalConnectionTds)connection.InnerConnection).RoutingDestination);
-        Assert.Equal(routingDatabaseName, connection.Database);
+        Assert.Equal($"localhost,{servers.TargetServer.EndPoint.Port}", ((SqlInternalConnectionTds)connection.InnerConnection).RoutingDestination);
+        Assert.Equal(servers.RoutingDatabaseName, connection.Database);
         Assert.True(clientProvidedCorrectDatabase);
 
-        Assert.Equal(1, router.PreLoginCount);
-        Assert.Equal(1, server.PreLoginCount);
+        Assert.Equal(1, servers.Router.PreLoginCount);
+        Assert.Equal(1, servers.TargetServer.PreLoginCount);
     }
 
-    [Fact]
-    public async Task RoutedAsyncConnection()
+    /// <summary>
+    /// Tests that a connection is NOT routed when the server does not acknowledge the enhanced routing feature
+    /// or has it disabled. Covers both DoNotAcknowledge and Disabled behaviors.
+    /// </summary>
+    [Theory]
+    [InlineData(FeatureExtensionBehavior.DoNotAcknowledge)]
+    [InlineData(FeatureExtensionBehavior.Disabled)]
+    public void ServerDoesNotRoute(FeatureExtensionBehavior behavior)
     {
         // Arrange
-        using TdsServer server = new(new());
-        server.Start();
-
-        string routingDatabaseName = Guid.NewGuid().ToString();
-        bool clientProvidedCorrectDatabase = false;
-        server.OnLogin7Validated = loginToken =>
-        {
-            clientProvidedCorrectDatabase = routingDatabaseName == loginToken.Database;
-        };
-
-        RoutingTdsServer router = new(
-            new RoutingTdsServerArguments()
-            {
-                RoutingTCPHost = "localhost",
-                RoutingTCPPort = (ushort)server.EndPoint.Port,
-                RoutingDatabaseName = routingDatabaseName,
-                RequireReadOnly = false
-            });
-        router.Start();
-        router.EnhancedRoutingBehavior = FeatureExtensionBehavior.Enabled;
-
-        string connectionString = (new SqlConnectionStringBuilder()
-        {
-            DataSource = $"localhost,{router.EndPoint.Port}",
-            Encrypt = false,
-            ConnectTimeout = 10000
-        }).ConnectionString;
+        using TestRoutingServers servers = new(behavior);
 
         // Act
-        using SqlConnection connection = new(connectionString);
-        await connection.OpenAsync();
-
-        // Assert
-        Assert.Equal(ConnectionState.Open, connection.State);
-        Assert.Equal($"localhost,{server.EndPoint.Port}", ((SqlInternalConnectionTds)connection.InnerConnection).RoutingDestination);
-        Assert.Equal(routingDatabaseName, connection.Database);
-        Assert.True(clientProvidedCorrectDatabase);
-
-        Assert.Equal(1, router.PreLoginCount);
-        Assert.Equal(1, server.PreLoginCount);
-    }
-
-    [Fact]
-    public void ServerIgnoresEnhancedRoutingRequest()
-    {
-        // Arrange
-        using TdsServer server = new(new());
-        server.Start();
-
-        string routingDatabaseName = Guid.NewGuid().ToString();
-
-        RoutingTdsServer router = new(
-            new RoutingTdsServerArguments()
-            {
-                RoutingTCPHost = "localhost",
-                RoutingTCPPort = (ushort)server.EndPoint.Port,
-                RoutingDatabaseName = routingDatabaseName,
-                RequireReadOnly = false
-            });
-        router.Start();
-        router.EnhancedRoutingBehavior = FeatureExtensionBehavior.DoNotAcknowledge;
-
-        string connectionString = new SqlConnectionStringBuilder()
-        {
-            DataSource = $"localhost,{router.EndPoint.Port}",
-            Encrypt = false,
-            ConnectTimeout = 10000
-        }.ConnectionString;
-
-        // Act
-        using SqlConnection connection = new(connectionString);
+        using SqlConnection connection = new(servers.ConnectionString);
         connection.Open();
 
         // Assert
@@ -144,47 +76,51 @@ public class ConnectionEnhancedRoutingTests
         Assert.Null(((SqlInternalConnectionTds)connection.InnerConnection).RoutingDestination);
         Assert.Equal("master", connection.Database);
 
-        Assert.Equal(1, router.PreLoginCount);
-        Assert.Equal(0, server.PreLoginCount);
+        Assert.Equal(1, servers.Router.PreLoginCount);
+        Assert.Equal(0, servers.TargetServer.PreLoginCount);
     }
 
-    [Fact]
-    public void ServerRejectsEnhancedRoutingRequest()
+    /// <summary>
+    /// Helper class that encapsulates the setup of a routing TDS server and target TDS server
+    /// for enhanced routing tests.
+    /// </summary>
+    private sealed class TestRoutingServers : IDisposable
     {
-        // Arrange
-        using TdsServer server = new(new());
-        server.Start();
+        public TdsServer TargetServer { get; }
+        public RoutingTdsServer Router { get; }
+        public string RoutingDatabaseName { get; }
+        public string ConnectionString { get; }
 
-        string routingDatabaseName = Guid.NewGuid().ToString();
-
-        RoutingTdsServer router = new(
-            new RoutingTdsServerArguments()
-            {
-                RoutingTCPHost = "localhost",
-                RoutingTCPPort = (ushort)server.EndPoint.Port,
-                RoutingDatabaseName = routingDatabaseName,
-                RequireReadOnly = false
-            });
-        router.Start();
-        router.EnhancedRoutingBehavior = FeatureExtensionBehavior.Disabled;
-
-        string connectionString = new SqlConnectionStringBuilder()
+        public TestRoutingServers(FeatureExtensionBehavior enhancedRoutingBehavior)
         {
-            DataSource = $"localhost,{router.EndPoint.Port}",
-            Encrypt = false,
-            ConnectTimeout = 10000
-        }.ConnectionString;
+            RoutingDatabaseName = Guid.NewGuid().ToString();
 
-        // Act
-        using SqlConnection connection = new(connectionString);
-        connection.Open();
+            TargetServer = new TdsServer(new());
+            TargetServer.Start();
 
-        // Assert
-        Assert.Equal(ConnectionState.Open, connection.State);
-        Assert.Null(((SqlInternalConnectionTds)connection.InnerConnection).RoutingDestination);
-        Assert.Equal("master", connection.Database);
+            Router = new RoutingTdsServer(
+                new RoutingTdsServerArguments()
+                {
+                    RoutingTCPHost = "localhost",
+                    RoutingTCPPort = (ushort)TargetServer.EndPoint.Port,
+                    RoutingDatabaseName = RoutingDatabaseName,
+                    RequireReadOnly = false
+                });
+            Router.Start();
+            Router.EnhancedRoutingBehavior = enhancedRoutingBehavior;
 
-        Assert.Equal(1, router.PreLoginCount);
-        Assert.Equal(0, server.PreLoginCount);
+            ConnectionString = new SqlConnectionStringBuilder()
+            {
+                DataSource = $"localhost,{Router.EndPoint.Port}",
+                Encrypt = false,
+                ConnectTimeout = 10000
+            }.ConnectionString;
+        }
+
+        public void Dispose()
+        {
+            Router?.Dispose();
+            TargetServer?.Dispose();
+        }
     }
 }
