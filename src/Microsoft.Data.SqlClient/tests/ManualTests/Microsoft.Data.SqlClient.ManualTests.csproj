@@ -70,9 +70,6 @@
     <Compile Include="SQL\Common\SystemDataInternals\FedAuthTokenHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserStateObjectHelper.cs" />
-    <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTest.cs" />
-    <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTestWithTdsServer.cs" />
-    <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
     <Compile Include="XUnitAssemblyAttributes.cs" />
 
     <!-- Content files -->
@@ -89,6 +86,9 @@
     <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />
     <Compile Include="SQL\AsyncTest\BeginExecReaderAsyncTest.cs" />
     <Compile Include="SQL\AsyncTest\XmlReaderAsyncTest.cs" />
+    <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTest.cs" />
+    <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTestWithTdsServer.cs" />
+    <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
   </ItemGroup>
   
   <!-- Items to include in test set 2 -->

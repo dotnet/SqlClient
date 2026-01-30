@@ -361,7 +361,6 @@
         -f $(TF)
         -p:Configuration=$(Configuration)
         -p:ReferenceType=$(ReferenceType)
-        -p:TestSet=$(TestSet)
         $(CollectStatement)
         --results-directory $(ResultsDirectory)
         --filter "$(FilterStatement)"
@@ -370,6 +369,16 @@
         --blame-hang-dump-type full
         --blame-hang-timeout 10m
       </TestCommand>
+
+      <!-- 
+        Only set TestSet if it was provided. Using -p sets it globaly, and *immutably*. If we were
+        to set it to '', it would be permanently set to '', preventing any tests from running.
+      -->
+      <TestCommand Condition="'$(TestSet)' != ''">
+        $(TestCommand)
+        -p:TestSet=$(TestSet)
+      </TestCommand>
+
       <!-- Convert more than one whitespace character into one space -->
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
     </PropertyGroup>
