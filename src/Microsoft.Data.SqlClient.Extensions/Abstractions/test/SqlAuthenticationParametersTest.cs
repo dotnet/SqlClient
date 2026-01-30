@@ -6,8 +6,6 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 public class SqlAuthenticationParametersTest
 {
-    #region Tests
-
     /// <summary>
     /// Verify that the properties are set correctly when nullable arguments are
     /// null.
@@ -85,6 +83,4 @@ public class SqlAuthenticationParametersTest
         Assert.Equal(id, parameters.ConnectionId);
         Assert.Equal(timeout, parameters.ConnectionTimeout);
     }
-
-    #endregion
 }

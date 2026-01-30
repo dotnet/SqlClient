@@ -19,19 +19,23 @@ public class DefaultAuthProviderTests
     // methods of the SqlAuthenticationProvider class in the Abstractions
     // package.  We're testing this here because this test project uses both of
     // those packages, and this is a convenient place to put such a test.
+    //
+    // TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/41888):
+    // Move this test to a more appropriate location once we have one.
+    //
     [Fact]
     public void AuthProviderInstalled()
     {
         // Iterate over all authentication methods rather than specifying them
         // via Theory data so that we detect any new methods that don't meet
         // our expectations.
-        foreach (var method in
-            #if NET
-            Enum.GetValues<SqlAuthenticationMethod>()
-            #else
-            Enum.GetValues(typeof(SqlAuthenticationMethod)).Cast<SqlAuthenticationMethod>()
-            #endif
-        )
+        #if NET
+        var methods = Enum.GetValues<SqlAuthenticationMethod>()
+        #else
+        var methods = Enum.GetValues(typeof(SqlAuthenticationMethod)).Cast<SqlAuthenticationMethod>()
+        #endif
+
+        foreach (var method in methods)
         {
             SqlAuthenticationProvider? provider =
                 SqlAuthenticationProvider.GetProvider(method);

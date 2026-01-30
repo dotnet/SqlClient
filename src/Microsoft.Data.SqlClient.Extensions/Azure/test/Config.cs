@@ -55,13 +55,13 @@ internal static class Config
 
     #region Conditional Fact/Theory Helpers
 
-    internal static bool HasPasswordConnectionString() => !PasswordConnectionString.Empty();
-    internal static bool HasServicePrincipal() => !ServicePrincipalId.Empty() && !ServicePrincipalSecret.Empty();
-    internal static bool HasSystemAccessToken() => !SystemAccessToken.Empty();
-    internal static bool HasTcpConnectionString() => !TcpConnectionString.Empty();
-    internal static bool HasTenantId() => !TenantId.Empty();
-    internal static bool HasUserManagedIdentityClientId() => !UserManagedIdentityClientId.Empty();
-    internal static bool HasWorkloadIdentityFederationServiceConnectionId() => !WorkloadIdentityFederationServiceConnectionId.Empty();
+    internal static bool HasPasswordConnectionString() => !PasswordConnectionString.IsEmpty();
+    internal static bool HasServicePrincipal() => !ServicePrincipalId.IsEmpty() && !ServicePrincipalSecret.IsEmpty();
+    internal static bool HasSystemAccessToken() => !SystemAccessToken.IsEmpty();
+    internal static bool HasTcpConnectionString() => !TcpConnectionString.IsEmpty();
+    internal static bool HasTenantId() => !TenantId.IsEmpty();
+    internal static bool HasUserManagedIdentityClientId() => !UserManagedIdentityClientId.IsEmpty();
+    internal static bool HasWorkloadIdentityFederationServiceConnectionId() => !WorkloadIdentityFederationServiceConnectionId.IsEmpty();
 
     // TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39233):
     // Uncomment this once the MDS Azure files have been removed.
@@ -92,7 +92,7 @@ internal static class Config
         // variable is set, use it.  Otherwise, assume the config file is in the
         // working directory and named config.json.
         string configPath = GetEnvVar("TEST_MDS_CONFIG");
-        if (configPath.Empty())
+        if (configPath.IsEmpty())
         {
             configPath = "config.json";
         }
@@ -262,12 +262,7 @@ internal static class Config
     /// <returns>The value of the environment variable, or an empty string if not set.</returns>
     private static string GetEnvVar(string name)
     {
-        string? value = Environment.GetEnvironmentVariable(name);
-        if (string.IsNullOrEmpty(value))
-        {
-            return string.Empty;
-        }
-        return value;
+        return Environment.GetEnvironmentVariable(name) ?? string.Empty;
     }
 
     #endregion

@@ -8,6 +8,8 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 public class SqlAuthenticationProviderTest
 {
+    #region Test Setup
+
     /// <summary>
     /// Construct to confirm preconditions.
     /// </summary>
@@ -17,6 +19,8 @@ public class SqlAuthenticationProviderTest
         Assert.Throws<FileNotFoundException>(
             () => Assembly.Load("Microsoft.Data.SqlClient"));
     }
+
+    #endregion
 
     #region Tests
 
@@ -90,6 +94,6 @@ public class SqlAuthenticationProviderTest
             throw new NotImplementedException();
         }
     }
-    
+
     #endregion
 }

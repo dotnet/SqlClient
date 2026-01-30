@@ -6,8 +6,6 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 public class SqlAuthenticationTokenTest
 {
-    #region Tests
-
     /// <summary>
     /// Verify that the properties are set correctly.
     /// </summary>
@@ -36,7 +34,7 @@ public class SqlAuthenticationTokenTest
         {
             new SqlAuthenticationToken(token!, expiry);
         });
-    
+
         Assert.Equal("AccessToken must not be null or empty.", ex.Message);
     }
 
@@ -53,9 +51,7 @@ public class SqlAuthenticationTokenTest
         {
             new SqlAuthenticationToken(token, expiry);
         });
-    
+
         Assert.Equal("AccessToken must not be null or empty.", ex.Message);
     }
-
-    #endregion
 }

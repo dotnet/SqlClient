@@ -26,7 +26,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     private static readonly ConcurrentDictionary<TokenCredentialKey, TokenCredentialData> s_tokenCredentialMap = new();
     private static readonly SemaphoreSlim s_pcaMapModifierSemaphore = new(1, 1);
     private static readonly SemaphoreSlim s_tokenCredentialMapModifierSemaphore = new(1, 1);
-    private static readonly MemoryCache s_accountPwCache = new MemoryCache(new MemoryCacheOptions()); 
+    private static readonly MemoryCache s_accountPwCache = new MemoryCache(new MemoryCacheOptions());
     private const int s_accountPwCacheTtlInHours = 2;
     private const string s_nativeClientRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
     private const string s_defaultScopeSuffix = "/.default";
@@ -34,7 +34,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     private readonly SqlClientLogger _logger = new();
     private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
     private ICustomWebUi? _customWebUI = null;
-    private readonly string _applicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38"; 
+    private readonly string _applicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
 
     // The MSAL error code that indicates the action should be retried.
     //
@@ -125,19 +125,18 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         {
             using CancellationTokenSource cts = new();
 
-            // Use the authentication timeout value to cancel token acquire
-            // request after certain period of time.
+            // If we were given a non-zero positive authentication timeout value, use it to cancel
+            // the operation after the specified period.
             if (parameters.ConnectionTimeout > 0)
             {
-                // Safely convert to milliseconds.
-                if (int.MaxValue / 1000 > parameters.ConnectionTimeout)
-                {
-                    cts.CancelAfter(int.MaxValue);
-                }
-                else
-                {
-                    cts.CancelAfter(parameters.ConnectionTimeout * 1000);
-                }
+                // The authentication timeout is specified in seconds.  Safely convert it to
+                // milliseconds.
+                int timeout =
+                    int.MaxValue / 1000 < parameters.ConnectionTimeout
+                    ? int.MaxValue
+                    : parameters.ConnectionTimeout * 1000;
+
+                cts.CancelAfter(timeout);
             }
 
             string scope = parameters.Resource.EndsWith(s_defaultScopeSuffix, StringComparison.Ordinal) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix;
@@ -376,7 +375,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                     throw new Extensions.Azure.AuthenticationException(
                         parameters.AuthenticationMethod,
                         ex.ErrorCode,
-                        true,
+                        shouldRetry: true,
                         retryPeriod,
                         ex.Message,
                         ex);
@@ -392,9 +391,9 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 throw new Extensions.Azure.AuthenticationException(
                     parameters.AuthenticationMethod,
                     ex.ErrorCode,
-                    true,
+                    shouldRetry: true,
                     // Don't suggest a retry period.
-                    0,
+                    retryPeriod: 0,
                     ex.Message,
                     ex);
             }
@@ -403,23 +402,22 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             throw new Extensions.Azure.AuthenticationException(
                 parameters.AuthenticationMethod,
                 ex.ErrorCode,
-                false,
+                shouldRetry: false,
                 0,
                 ex.Message,
                 ex);
         }
         catch (Exception ex)
-        when (ex is
-            AuthenticationFailedException or
-            AuthenticationRequiredException or
-            CredentialUnavailableException)
+        when (ex is AuthenticationFailedException
+                 or AuthenticationRequiredException
+                 or CredentialUnavailableException)
         {
             // These errors aren't retryable.
             throw new Extensions.Azure.AuthenticationException(
                 parameters.AuthenticationMethod,
-                "Unknown",
-                false,
-                0,
+                failureCode: "Unknown",
+                shouldRetry: false,
+                retryPeriod: 0,
                 $"Azure.Identity error: {ex.Message}",
                 ex);
         }
@@ -428,9 +426,9 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             // These errors aren't retryable.
             throw new Extensions.Azure.AuthenticationException(
                 parameters.AuthenticationMethod,
-                "Unknown",
-                false,
-                0,
+                failureCode: "Unknown",
+                shouldRetry: false,
+                retryPeriod: 0,
                 $"Unexpected error: {ex.Message}",
                 ex);
         }
@@ -452,7 +450,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 do
                 {
                     IAccount currentVal = accounts.Current;
-                    if (string.Compare(parameters.UserId, currentVal.Username, StringComparison.InvariantCultureIgnoreCase) == 0)
+                    if (string.Equals(parameters.UserId, currentVal.Username, StringComparison.InvariantCultureIgnoreCase))
                     {
                         account = currentVal;
                         break;
@@ -502,7 +500,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 // Wait up to 3 minutes.
                 ctsInteractive.CancelAfter(180000);
                 #endif
-                
+
                 // By default, we will use the MSAL Embedded or System web
                 // browser which changes by Default in MSAL according to this
                 // table:
@@ -525,22 +523,13 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                     app.AcquireTokenInteractive(scopes)
                     .WithCorrelationId(connectionId)
                     .WithLoginHint(userId);
-                
+
                 // If we have a custom web UI, use it instead.
                 if (customWebUI != null)
                 {
-                    #if DEBUG
-                    var chained =
-                    #endif
-
                     builder.WithCustomWebUi(customWebUI);
-
-                    #if DEBUG
-                    // Confirm that chaining returns the same builder instance.
-                    Debug.Assert(ReferenceEquals(chained, builder));
-                    #endif
                 }
-                
+
                 return await builder
                     .ExecuteAsync(ctsInteractive.Token)
                     .ConfigureAwait(false);
@@ -560,9 +549,9 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
 
             throw new Extensions.Azure.AuthenticationException(
                 authenticationMethod,
-                "OperationCanceled",
-                false,
-                0,
+                failureCode: "OperationCanceled",
+                shouldRetry: false,
+                retryPeriod: 0,
                 // TODO: This used to use the following localized strings
                 // depending on the method:
                 //
@@ -705,7 +694,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 RedirectUri = publicClientAppKey._redirectUri,
             })
             .WithAuthority(publicClientAppKey._authority);
-        
+
         #if NETFRAMEWORK
         if (_iWin32WindowFunc is not null)
         {
@@ -879,25 +868,40 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         public override int GetHashCode() => Tuple.Create(_tokenCredentialType, _authority, _scope, _audience, _clientId).GetHashCode();
     }
 
-}
+    #region Stubs for logging
 
-internal class SqlClientLogger
-{
-    public void LogInfo(string type, string method, string message)
+    /// <summary>
+    /// This is a stub class for logging.
+    ///
+    /// TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39080):
+    /// Implement proper logging mechanism.
+    /// </summary>
+    private class SqlClientLogger
     {
-        SqlClientEventSource.Log.TryTraceEvent(
-            "<sc|{0}|{1}|{2}>{3}", type, method, LogLevel.Info, message);
-    }
-}
-
-internal class SqlClientEventSource
-{
-    internal class Logger
-    {
-        public void TryTraceEvent(string message, params object?[] args)
+        internal void LogInfo(string type, string method, string message)
         {
+            SqlClientEventSource.Log.TryTraceEvent(
+                "<sc|{0}|{1}|{2}>{3}", type, method, LogLevel.Info, message);
         }
     }
 
-    public static readonly Logger Log = new();
+    /// <summary>
+    /// This is a stub class for logging.
+    ///
+    /// TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39080):
+    /// Implement proper logging mechanism.
+    /// </summary>
+    private class SqlClientEventSource
+    {
+        internal class Logger
+        {
+            internal void TryTraceEvent(string message, params object?[] args)
+            {
+            }
+        }
+
+        internal static readonly Logger Log = new();
+    }
+
+    #endregion
 }

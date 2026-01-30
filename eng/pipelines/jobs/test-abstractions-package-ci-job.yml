@@ -166,7 +166,23 @@ jobs:
             command: custom
             custom: test
             projects: $(project)
-            arguments: $(buildArguments) --no-build -f ${{ runtime }}
+            arguments: >-
+              $(buildArguments)
+              --no-build
+              -f ${{ runtime }}
+              --filter "category != failing & category != flaky"
+
+        - task: DotNetCoreCLI@2
+          displayName: Test Flaky [${{ runtime }}]
+          inputs:
+            command: custom
+            custom: test
+            projects: $(project)
+            arguments: >-
+              $(buildArguments)
+              --no-build
+              -f ${{ runtime }}
+              --filter "category = flaky"
 
       # Run the tests for each .NET Framework runtime.
       - ${{ each runtime in parameters.netFrameworkRuntimes }}:
@@ -176,4 +192,20 @@ jobs:
             command: custom
             custom: test
             projects: $(project)
-            arguments: $(buildArguments) --no-build -f ${{ runtime }}
+            arguments: >-
+              $(buildArguments)
+              --no-build
+              -f ${{ runtime }}
+              --filter "category != failing & category != flaky"
+
+        - task: DotNetCoreCLI@2
+          displayName: Test Flaky [${{ runtime }}]
+          inputs:
+            command: custom
+            custom: test
+            projects: $(project)
+            arguments: >-
+              $(buildArguments)
+              --no-build
+              -f ${{ runtime }}
+              --filter "category = flaky"

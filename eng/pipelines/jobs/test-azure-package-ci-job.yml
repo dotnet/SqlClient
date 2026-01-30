@@ -36,7 +36,7 @@ parameters:
   - name: debug
     type: boolean
     default: false
-  
+
   # The prefix to prepend to the job's display name:
   #
   #   [<prefix>] Run Stress Tests
@@ -150,15 +150,6 @@ jobs:
           $(commonArguments)
           --configuration ${{ parameters.buildConfiguration }}
 
-      # dotnet CLI arguments for test commands.
-      #
-      # Filter out tests annotated with the ActiveIssue attribute, which for
-      # some reason uses the category 'failing' rather than 'ActiveIssue'.
-      #
-      - name: testArguments
-        value: >-
-          --filter "category != failing"
-
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public
       # project.  This is defined with a non-standard Platform of 'AnyCPU', and
@@ -187,7 +178,7 @@ jobs:
       - ${{ if eq(parameters.debug, true) }}:
         - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
           displayName: '[Debug] Print Environment Variables'
-      
+
       # We have a few extra steps for Package reference builds.
       - ${{ if eq(parameters.referenceType, 'Package') }}:
 
@@ -228,7 +219,7 @@ jobs:
       - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self
         parameters:
           debug: ${{ parameters.debug }}
-          
+
           # The config.json file has many options, but only some of them are
           # used by the Azure package tests.  We only specify the ones that are
           # necessary here.
@@ -310,7 +301,30 @@ jobs:
             command: custom
             custom: test
             projects: $(project)
-            arguments: $(buildArguments) $(testArguments) --no-build -f ${{ runtime }}
+            arguments: >-
+              $(buildArguments)
+              --no-build
+              -f ${{ runtime }}
+              --filter "category != failing & category != flaky"
+
+        - task: DotNetCoreCLI@2
+          displayName: Test Flaky [${{ runtime }}]
+          env:
+            ${{ if ne(parameters.poolName, 'Azure Pipelines') }}:
+              ADO_POOL: 1
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            ${{ if eq(parameters.debug, true) }}:
+              TEST_DEBUG_EMIT: 1
+          inputs:
+            connectedServiceName: dotnetMSI-managed-identity
+            command: custom
+            custom: test
+            projects: $(project)
+            arguments: >-
+              $(buildArguments)
+              --no-build
+              -f ${{ runtime }}
+              --filter category = flaky"
 
       # Run the tests for each .NET Framework runtime.
       - ${{ each runtime in parameters.netFrameworkRuntimes }}:
@@ -327,4 +341,27 @@ jobs:
             command: custom
             custom: test
             projects: $(project)
-            arguments: $(buildArguments) $(testArguments) --no-build -f ${{ runtime }}
+            arguments: >-
+              $(buildArguments)
+              --no-build
+              -f ${{ runtime }}
+              --filter "category != failing & category != flaky"
+
+        - task: DotNetCoreCLI@2
+          displayName: Test Flaky [${{ runtime }}]
+          env:
+            ${{ if ne(parameters.poolName, 'Azure Pipelines') }}:
+              ADO_POOL: 1
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            ${{ if eq(parameters.debug, true) }}:
+              TEST_DEBUG_EMIT: 1
+          inputs:
+            connectedServiceName: dotnetMSI-managed-identity
+            command: custom
+            custom: test
+            projects: $(project)
+            arguments: >-
+              $(buildArguments)
+              --no-build
+              -f ${{ runtime }}
+              --filter "category = flaky"

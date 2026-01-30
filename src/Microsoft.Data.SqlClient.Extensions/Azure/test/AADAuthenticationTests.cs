@@ -2,6 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+// TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39072):
+// TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39073):
+// This file has intentionally not been tidied up or modernized.  Its content will be absorbed into
+// new unit and/or integration tests in the future.
+
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
 // TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39233):

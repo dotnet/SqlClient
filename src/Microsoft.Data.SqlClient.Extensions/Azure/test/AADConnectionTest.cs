@@ -2,6 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+// TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39072):
+// TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39073):
+// This file has intentionally not been tidied up or modernized.  Its content will be absorbed into
+// new unit and/or integration tests in the future.
+
 // TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39233):
 // Enable this file once the MDS Azure files have been removed.
 #if false
@@ -22,7 +27,7 @@ public class AADConnectionTest
         // This is a sample Kusto database that can be connected by any AD account.
         using SqlConnection connection = new SqlConnection($"Data Source=help.kusto.windows.net; Authentication=Active Directory Default;Trust Server Certificate=True;User ID = {Config.UserManagedIdentityClientId};");
         connection.Open();
-        Assert.True(connection.State == System.Data.ConnectionState.Open);
+        Assert.Equal(System.Data.ConnectionState.Open, connection.State);
     }
 
     [ConditionalFact(
@@ -266,7 +271,7 @@ public class AADConnectionTest
         {
             conn.Open();
 
-            Assert.True(conn.State == System.Data.ConnectionState.Open);
+            Assert.Equal(System.Data.ConnectionState.Open, conn.State);
         }
     }
 
@@ -287,9 +292,13 @@ public class AADConnectionTest
         {
             conn.Open();
 
-            Assert.True(conn.State == System.Data.ConnectionState.Open);
+            Assert.Equal(System.Data.ConnectionState.Open, conn.State);
         }
     }
+
+    // The helpers below were copied verbatim from AADConnectionTest.cs and ManualTests
+    // DataTestUtility.cs in MDS.  No attempt has been made to share them via a common project since
+    // they will likely disappear when the tests above are modernized.
 
     #region Helpers from AADConnectionTest.cs
 
@@ -305,7 +314,7 @@ public class AADConnectionTest
 
         conn.Open();
 
-        Assert.True(conn.State == System.Data.ConnectionState.Open);
+        Assert.Equal(System.Data.ConnectionState.Open, conn.State);
     }
 
     #endregion
