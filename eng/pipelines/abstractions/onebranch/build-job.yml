@@ -1,0 +1,206 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                #
+# The .NET Foundation licenses this file to you under the MIT license.         #
+# See the LICENSE file in the project root for more information.               #
+################################################################################
+
+parameters:
+
+  # The build configuration to use.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # True to enable debug steps and logging.
+  - name: debug
+    type: boolean
+    default: false
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+jobs:
+  - job: build_job
+    displayName: Build Abstractions
+
+    pool:
+      type: linux
+
+    variables:
+      - template: /eng/pipelines/abstractions/onebranch/variables.yml@self
+
+    steps:
+      # Download our signing key.
+      - task: DownloadSecureFile@1
+        displayName: Download Signing Key
+        inputs:
+          retryCount: 5
+          # This places the key in the $(Agent.TempDirectory) directory.
+          secureFile: netfxKeypair.snk
+
+      # Install the .NET SDK.
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+
+      # Build the Abstractions project and use our signing key to sign the assemblies.
+      - task: DotNetCoreCLI@2
+        displayName: Build Signed Assemblies
+        inputs:
+          command: custom
+          custom: build
+          projects: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj
+          arguments: >-
+            --artifacts-path $(Agent.TempDirectory)/artifacts
+            --configuration ${{ parameters.buildConfiguration }}
+            -p:AbstractionsAssemblyFileVersion=$(abstractionsAssemblyFileVersion)
+            -p:AbstractionsPackageVersion=$(abstractionsPackageVersion)
+            -p:ReferenceType=Package
+            -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
+            --verbosity ${{ parameters.dotnetVerbosity }}
+
+      # Scan the DLLs for malware.
+      - task: EsrpMalwareScanning@5
+        displayName: ESRP DLL Malware Scanning
+        inputs:
+          AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+          AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+          CleanupTempStorage: 1
+          ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+          EsrpClientId: '${{ parameters.esrpClientId }}'
+          FolderPath: $(Agent.TempDirectory)/artifacts
+          Pattern: Microsoft.Data.SqlClient.Extensions.Abstractions.dll
+          UseMSIAuthentication: true
+          VerboseLogin: 1
+
+      # Sign the DLLs (not the same as signing the assemblies).
+      - task: EsrpCodeSigning@5
+        displayName: ESRP DLL Signing
+        inputs:
+          AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+          AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+          AuthAKVName: '${{ parameters.authAkvName }}'
+          AuthSignCertName: '${{ parameters.authSignCertName }}'
+          ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+          EsrpClientId: '${{ parameters.esrpClientId }}'
+          FolderPath: $(Agent.TempDirectory)/artifacts
+          Pattern: Microsoft.Data.SqlClient.Extensions.Abstractions.dll
+          signConfigType: 'inlineSignParams'
+          UseMSIAuthentication: true
+          inlineOperation: |
+            [
+                {
+                    "keyCode": "CP-230012",
+                    "operationSetCode": "SigntoolSign",
+                    "parameters":
+                        [
+                            {
+                                "parameterName": "OpusName",
+                                "parameterValue": "Microsoft Data SqlClient Data Provider for SQL Server"
+                            },
+                            {
+                                "parameterName": "OpusInfo",
+                                "parameterValue": "http://www.microsoft.com"
+                            },
+                            {
+                                "parameterName": "FileDigest",
+                                "parameterValue": "/fd \"SHA256\""
+                            },
+                            {
+                                "parameterName": "PageHash",
+                                "parameterValue": "/NPH"
+                            },
+                            {
+                                "parameterName": "TimeStamp",
+                                "parameterValue": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
+                            }
+                        ],
+                    "toolName": "sign",
+                    "toolVersion": "1.0"
+                },
+                {
+                    "keyCode": "CP-230012",
+                    "operationSetCode": "SigntoolVerify",
+                    "parameters": [ ],
+                    "toolName": "sign",
+                    "toolVersion": "1.0"
+                }
+            ]
+
+      # Generate the Abstractions NuGet package.
+      - task: DotNetCoreCLI@2
+        displayName: Generate NuGet Package
+        inputs:
+          command: custom
+          custom: pack
+          projects: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj
+          arguments: >-
+            --artifacts-path $(Agent.TempDirectory)/artifacts
+            --configuration ${{ parameters.buildConfiguration }}
+            --no-build
+            --output $(Agent.TempDirectory)/packages
+            -p:AbstractionsAssemblyFileVersion=$(abstractionsAssemblyFileVersion)
+            -p:AbstractionsPackageVersion=$(abstractionsPackageVersion)
+            -p:ReferenceType=Package
+            -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
+            --verbosity ${{ parameters.dotnetVerbosity }}
+
+      # Scan the NuGet package for malware.
+      #
+      # TODO: Where is this task documented?
+      - task: EsrpMalwareScanning@5
+        displayName: 'ESRP Nuget Malware Scanning'
+        inputs:
+          AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+          AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+          CleanupTempStorage: 1
+          ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+          EsrpClientId: '${{ parameters.esrpClientId }}'
+          FolderPath: $(Agent.TempDirectory)/packages
+          Pattern: Microsoft.Data.SqlClient.Extensions.Abstractions*.nupkg
+          UseMSIAuthentication: true
+          VerboseLogin: 1
+
+      # Sign the NuGet package and all of the DLLs it contains.
+      #
+      # https://eng.ms/docs/products/onebranch/signing/containerbuildsigning/nativeesrp/usingnativeesrpadotaskinonebranchpipelines
+      - task: EsrpCodeSigning@5
+        displayName: 'ESRP Signing NuGet Package'
+        inputs:
+          AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+          AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+          ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+          EsrpClientId: '${{ parameters.esrpClientId }}'
+          AuthAKVName: '${{ parameters.authAkvName }}'
+          AuthSignCertName: '${{ parameters.authSignCertName }}'
+          FolderPath: $(Agent.TempDirectory)/packages
+          Pattern: Microsoft.Data.SqlClient.Extensions.Abstractions*.nupkg
+          signConfigType: 'inlineSignParams'
+          UseMSIAuthentication: true
+          inlineOperation: |
+            [
+              {
+                "keyCode": "CP-401405",
+                "operationSetCode": "NuGetSign",
+                "parameters": [ ],
+                "toolName": "sign",
+                "toolVersion": "1.0"
+              },
+              {
+                "keyCode": "CP-401405",
+                "operationSetCode": "NuGetVerify",
+                "parameters": [ ],
+                "toolName": "sign",
+                "toolVersion": "1.0"
+              }
+            ]
+
+      # Publish pipeline artifacts.

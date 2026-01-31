@@ -1,0 +1,42 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                #
+# The .NET Foundation licenses this file to you under the MIT license.         #
+# See the LICENSE file in the project root for more information.               #
+################################################################################
+
+parameters:
+
+  # True to enable debug steps and logging.
+  - name: debug
+    type: boolean
+    default: false
+
+jobs:
+  - job: publish_symbols_job
+    displayName: Publish Symbols
+    dependsOn: [build_job, analysis_job, test_job]
+    steps:
+      # Download our symbols package artifact.
+      - task: DownloadPipelineArtifact@2
+        displayName: Download Symbols Package Artifact
+        inputs:
+          buildType: 'specific'
+          project: 'Microsoft.Data.SqlClient.Extensions/Abstractions'
+          pipeline: 'Abstractions Non-Official Build and Release'
+          buildVersionToDownload: 'latestFromBranch'
+          branchName: 'internal/main'
+          artifact: 'symbols_package'
+          targetPath: '$(Agent.TempDirectory)/symbols_package'
+
+      # Publish the symbols package to the symbol server.
+      - task: PublishSymbols@2
+        displayName: Publish Symbols Package
+        inputs:
+          SearchPattern: '$(Agent.TempDirectory)/symbols_package/*.snupkg'
+          SymbolServerType: 'AzureDevOps'
+          AzureDevOpsServiceConnection: '${{ parameters.symbolsAzureSubscription }}'
+          ProjectName: '${{ parameters.symbolsPublishProjectName }}'
+          ServerUrl: '${{ parameters.symbolsPublishServer }}'
+          TokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+
+      # Use Azure CLI to publish to other symbol servers.
