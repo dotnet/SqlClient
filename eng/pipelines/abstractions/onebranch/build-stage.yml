@@ -1,0 +1,68 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                #
+# The .NET Foundation licenses this file to you under the MIT license.         #
+# See the LICENSE file in the project root for more information.               #
+################################################################################
+
+# This stage builds, analyzes, tests, and (optionally) publishes symbols for the Abstractions
+# project.
+
+parameters:
+
+  # The build configuration to use.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # True to enable debug steps and logging.
+  - name: debug
+    type: boolean
+    default: false
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+  # When true, will publish symbols if the analysis, tests, and build jobs succeed.
+  - name: publishSymbols
+    type: boolean
+
+stages:
+  - stage: abstractions_build_stage
+    displayName: Build Abstractions
+
+    jobs:
+      # Analyze the Abstractions assemblies with Roslyn analyzers.
+      - template: /eng/pipelines/abstractions/onebranch/analysis-job.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+
+      # Run the Abstractions project's tests.
+      - template: /eng/pipelines/abstractions/onebranch/test-job.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+
+      # Build and sign the Abstractions assemblies and NuGet package.  This will publish the NuGet
+      # and symbols packages as pipeline artifacts.
+      #
+      # This job depends on the successful completion of the analysis and test jobs.
+      #
+      - template: /eng/pipelines/abstractions/onebranch/build-job.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          publishSymbols: ${{ parameters.publishSymbols }}

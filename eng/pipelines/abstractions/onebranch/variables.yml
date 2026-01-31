@@ -1,0 +1,80 @@
+﻿################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                #
+# The .NET Foundation licenses this file to you under the MIT license.         #
+# See the LICENSE file in the project root for more information.               #
+################################################################################
+
+variables:
+
+  # ============================================================================
+  # Versioning
+  #
+  # These variables define the version numbers used throughout the build.  This
+  # is the only place that version information is defined for the Abstractions
+  # package.
+
+  # The full name of the Abstractions package and assembly.
+  - name: packageName
+    value: Microsoft.Data.SqlClient.Extensions.Abstractions
+
+  # The NuGet package version.
+  - name: packageVersion
+    value: 1.0.0-preview1.$(Build.BuildNumber)
+
+  # The assembly file version.
+  - name: assemblyFileVersion
+    value: 1.0.0.$(Build.BuildNumber)
+
+  # ============================================================================
+  # Build Configuration
+
+  # The path to the Abstrations project file.
+  - name: projectPath
+    value: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj
+
+  # The OneBranch templates require that each job defines the ob_outputDirectory variable, so we
+  # can't define it here as the base for each path below.  Instead, we define it in each job to be
+  # $(Agent.BuildDirectory)/build, which ensures that the pipeline publishes all of our interesting
+  # artifacts.
+
+  # The path to build artifacts from the build stage.
+  - name: artifactsPath
+    value: $(Agent.BuildDirectory)/build/artifacts
+
+  # The path to assemblies (DLLs and PDBs) from the build stage.
+  - name: assembliesPath
+    value: $(Agent.BuildDirectory)/build/assemblies
+  # The path to NuGet and symbols packages from the build stage.
+  - name: packagesPath
+    value: $(Agent.BuildDirectory)/build/packages
+
+  # ============================================================================
+  # OneBranch Configuration
+
+  # Needed for onebranch.pipeline.version task; see https://aka.ms/obpipelines/versioning
+  - name: CDP_DEFINITION_BUILD_COUNT
+    value: $[counter('', 0)]
+
+  # We use an Azure Linux image for most stages; see https://aka.ms/obpipelines/containers
+  - name: LinuxContainerImage
+    value: mcr.microsoft.com/onebranch/azurelinux/build:3.0
+
+  # Azure Linux images seem to require this to avoid interactive prompts from debian tooling.
+  - name: DEBIAN_FRONTEND
+    value: noninteractive
+
+  - # Roslyn analysis requires a Windows agent with Visual Studio.
+    name: WindowsContainerImage
+    value: onebranch.azurecr.io/windows/ltsc2022/vse2022:latest
+
+  # Enable SBOM signing for OneBranch builds.
+  - name: Packaging.EnableSBOMSigning
+    value: true
+
+  # We copy the Abstractions DLLs and PDBs into these paths for ApiScan.  We don't want ApiScan
+  # to scan all build outputs, just the Abstractions ones.
+  - name: apiScanDllPath
+    value: '$(Agent.BuildDirectory)/apiScan/dlls'
+
+  - name: apiScanPdbPath
+    value: '$(Agent.BuildDirectory)/apiScan/pdbs'

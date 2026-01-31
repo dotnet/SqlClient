@@ -1,0 +1,266 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                #
+# The .NET Foundation licenses this file to you under the MIT license.         #
+# See the LICENSE file in the project root for more information.               #
+################################################################################
+
+# This job builds, signs, and packages the Abstractions project.
+
+parameters:
+
+  # The build configuration to use.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # True to enable debug steps and logging.
+  - name: debug
+    type: boolean
+    default: false
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+  # True to publish symbols if the build and tests succeed.
+  - name: publishSymbols
+    type: boolean
+
+jobs:
+  - job: abstractions_build_job
+    displayName: Build Abstractions
+
+    pool:
+      type: linux
+
+    # This job depends on the analysis and test jobs completing successfully.
+    dependsOn: [abstractions_analysis_job, abstractions_test_job]
+
+    variables:
+      # OneBranch requires that each job explicitly define the ob_outputDirectory - it cannot be
+      # inherited from previous jobs or stages.
+      #
+      # Our variables.yml defines several paths where interesting artifacts are placed, all of
+      # which are sub-directories of this one.  All jobs set ob_outputDirectory identically.
+      #
+      - name: ob_outputDirectory
+        value: $(Agent.BuildDirectory)/build
+
+      # We share ESRP signing variables with other pipelines, so we store them in a shared ADO.Net
+      # Library variagle group.  This will bring in the following variables that we use:
+      #
+      #   SigningAppRegistrationClientId
+      #   SigningAppRegistrationTenantId
+      #   SigningAuthAkvName
+      #   SigningAuthSignCertName
+      #   SigningEsrpClientId
+      #   SigningEsrpConnectedServiceName
+      #
+      - group: abstractions-esrp
+
+      # We share symbols variables with the AKV pipelines via an Azure DevOps Library variable
+      # group.  This will bring in the following variables that we use:
+      #
+      #   SymbolsAzureSubscription
+      #   SymbolsPublishProjectName
+      #   SymbolsPublishServer
+      #   SymbolsPublishTokenUri
+      #   SymbolsUploadAccount
+      #
+      - group: abstractions-symbols
+
+      # Embed a variety of build information into the symbols artifact name.
+      - name: symbolsArtifactName
+        value: $(packageName).Symbols.$(System.TeamProject).$(Build.Repository.Name).$(Build.SourceBranchName).$(packageVersion).$(System.TimelineId)
+
+    steps:
+      # Download our signing key.  The path to the downloaded file is stored in the
+      # $(signingKey.secureFilePath) variable.
+      - task: DownloadSecureFile@1
+        displayName: Download Signing Key
+        name: signingKey
+        inputs:
+          secureFile: netfxKeypair.snk
+
+      # Install the .NET SDK.
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+
+      # Build the Abstractions project and use our signing key to sign the assemblies.
+      - task: DotNetCoreCLI@2
+        displayName: Build Signed Assemblies
+        inputs:
+          command: custom
+          custom: build
+          projects: $(projectPath)
+          arguments: >-
+            --artifacts-path $(artifactsPath)
+            --configuration ${{ parameters.buildConfiguration }}
+            -p:AbstractionsAssemblyFileVersion=$(assemblyFileVersion)
+            -p:AbstractionsPackageVersion=$(packageVersion)
+            -p:ReferenceType=Package
+            -p:SigningKeyPath=$(signingKey.secureFilePath)
+            --verbosity ${{ parameters.dotnetVerbosity }}
+
+      # Symlink the assemblies (DLLs and PDBs) to a dedicated folder for scanning and publishing.
+      - script: |
+          # Lower-case the build configuration for use in paths.
+          BUILD_CONFIG="${{ parameters.buildConfiguration }}"
+          BUILD_CONFIG=${BUILD_CONFIG,,}
+
+          # Create the symlink from artifacts -> assemblies.
+          ln -s $(artifactsPath)/bin/Abstractions/${BUILD_CONFIG}_netstandard2.0 $(assembliesPath)
+        displayName: Symlink Assemblies
+
+      # Scan the DLLs for malware.
+      #
+      # TODO: Where is this task documented?
+      - task: EsrpMalwareScanning@5
+        displayName: ESRP DLL Malware Scanning
+        inputs:
+          AppRegistrationClientId: $(SigningAppRegistrationClientId)
+          AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
+          CleanupTempStorage: 1
+          ConnectedServiceName: $(SigningEsrpConnectedServiceName)
+          EsrpClientId: $(SigningEsrpClientId)
+          FolderPath: $(assembliesPath)
+          Pattern: $(packageName).dll
+          UseMSIAuthentication: true
+          VerboseLogin: 1
+
+      # Sign the DLLs (not the same as signing the assemblies).
+      - task: EsrpCodeSigning@5
+        displayName: ESRP DLL Signing
+        inputs:
+          AppRegistrationClientId: $(SigningAppRegistrationClientId)
+          AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
+          AuthAKVName: $(SigningAuthAkvName)
+          AuthSignCertName: $(SigningAuthSignCertName)
+          ConnectedServiceName: $(SigningEsrpConnectedServiceName)
+          EsrpClientId: $(SigningEsrpClientId)
+          FolderPath: $(assembliesPath)
+          Pattern: $(packageName).dll
+          signConfigType: inlineSignParams
+          UseMSIAuthentication: true
+          inlineOperation: |
+            [
+                {
+                    "keyCode": "CP-230012",
+                    "operationSetCode": "SigntoolSign",
+                    "parameters":
+                        [
+                            {
+                                "parameterName": "OpusName",
+                                "parameterValue": "Microsoft Data SqlClient Data Provider for SQL Server"
+                            },
+                            {
+                                "parameterName": "OpusInfo",
+                                "parameterValue": "http://www.microsoft.com"
+                            },
+                            {
+                                "parameterName": "FileDigest",
+                                "parameterValue": "/fd \"SHA256\""
+                            },
+                            {
+                                "parameterName": "PageHash",
+                                "parameterValue": "/NPH"
+                            },
+                            {
+                                "parameterName": "TimeStamp",
+                                "parameterValue": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
+                            }
+                        ],
+                    "toolName": "sign",
+                    "toolVersion": "1.0"
+                },
+                {
+                    "keyCode": "CP-230012",
+                    "operationSetCode": "SigntoolVerify",
+                    "parameters": [ ],
+                    "toolName": "sign",
+                    "toolVersion": "1.0"
+                }
+            ]
+
+      # Generate the Abstractions NuGet package.
+      - task: DotNetCoreCLI@2
+        displayName: Generate NuGet Package
+        inputs:
+          command: custom
+          custom: pack
+          projects: $(projectPath)
+          arguments: >-
+            --artifacts-path $(artifactsPath)
+            --configuration ${{ parameters.buildConfiguration }}
+            --no-build
+            --output $(packagesPath)
+            -p:AbstractionsAssemblyFileVersion=$(assemblyFileVersion)
+            -p:AbstractionsPackageVersion=$(packageVersion)
+            -p:ReferenceType=Package
+            -p:SigningKeyPath=$(signingKey.secureFilePath)
+            --verbosity ${{ parameters.dotnetVerbosity }}
+
+      # Scan the NuGet package for malware.
+      #
+      # TODO: Where is this task documented?
+      - task: EsrpMalwareScanning@5
+        displayName: ESRP Nuget Malware Scanning
+        inputs:
+          AppRegistrationClientId: $(SigningAppRegistrationClientId)
+          AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
+          CleanupTempStorage: 1
+          ConnectedServiceName: $(SigningEsrpConnectedServiceName)
+          EsrpClientId: $(SigningEsrpClientId)
+          FolderPath: $(packagesPath)
+          Pattern: $(packageName).nupkg
+          UseMSIAuthentication: true
+          VerboseLogin: 1
+
+      # Sign the NuGet package and all of the DLLs it contains.
+      #
+      # https://eng.ms/docs/products/onebranch/signing/containerbuildsigning/nativeesrp/usingnativeesrpadotaskinonebranchpipelines
+      - task: EsrpCodeSigning@5
+        displayName: ESRP Signing NuGet Package
+        inputs:
+          AppRegistrationClientId: $(SigningAppRegistrationClientId)
+          AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
+          ConnectedServiceName: $(SigningEsrpConnectedServiceName)
+          EsrpClientId: $(SigningEsrpClientId)
+          AuthAKVName: $(SigningAuthAkvName)
+          AuthSignCertName: $(SigningAuthSignCertName)
+          FolderPath: $(packagesPath)
+          Pattern: $(packageName).nupkg
+          signConfigType: inlineSignParams
+          UseMSIAuthentication: true
+          inlineOperation: |
+            [
+              {
+                "keyCode": "CP-401405",
+                "operationSetCode": "NuGetSign",
+                "parameters": [ ],
+                "toolName": "sign",
+                "toolVersion": "1.0"
+              },
+              {
+                "keyCode": "CP-401405",
+                "operationSetCode": "NuGetVerify",
+                "parameters": [ ],
+                "toolName": "sign",
+                "toolVersion": "1.0"
+              }
+            ]
+
+      # Publish symbols if requested.
+      - ${{ if eq(parameters.publishSymbols, true) }}:
+        - template: /eng/pipelines/abstractions/official/publish-symbols-steps.yml@self
+          parameters:
+            debug: ${{ parameters.debug }}
+            symbolsArtifactName: $(symbolsArtifactName)

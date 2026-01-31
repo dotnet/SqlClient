@@ -1,13 +1,25 @@
-#################################################################################
-# Licensed to the .NET Foundation under one or more agreements.                 #
-# The .NET Foundation licenses this file to you under the MIT license.          #
-# See the LICENSE file in the project root for more information.                #
-#################################################################################
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                #
+# The .NET Foundation licenses this file to you under the MIT license.         #
+# See the LICENSE file in the project root for more information.               #
+################################################################################
 
-# Stub for Abstractions package non-official builds.
+# This is the non-official build and release pipeline for the Abstractions package.
 
+name: $(Year:YY)$(DayOfYear)$(Rev:.r)
+
+# Never run due to PRs or pushes.
 pr: none
 trigger: none
+
+# Run weekly on Sundays at 14:00 UTC
+schedules:
+  - cron: '0 14 * * 0' # Weekly on Sunday at 14:00 UTC
+    displayName: Weekly Run
+    branches:
+      include:
+        - internal/main
+    always: true
 
 # Parameters visible in the Azure DevOps UI.
 parameters:
@@ -44,12 +56,95 @@ parameters:
     type: boolean
     default: false
 
-stages:
-  - stage: stub_stage
-    displayName: Stub Stage
-    jobs:
-      - job: stub_job
-        displayName: Stub Job
-        steps:
-          - script: echo "This is a stub pipeline for non-official builds of the Abstractions package."
-            displayName: Stub Step
+variables:
+  - template: /eng/pipelines/abstractions/onebranch/variables.yml@self
+
+# We extend the latest version of the OneBranch non-official pipeline template.  These are injected
+# into the SqlClientDrivers organization as the OneBranch.Pipelines project, in the
+# GovernedTemplates repository:
+#
+# https://sqlclientdrivers.visualstudio.com/OneBranch.Pipelines/_git/GovernedTemplates
+#
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: OneBranch.Pipelines/GovernedTemplates
+      ref: refs/heads/main
+
+# Extend the Non-Official (a.k.a Buddy)pipeline, inspired by:
+#
+# https://sqlclientdrivers.visualstudio.com/OneBranch.Pipelines/_git/GovernedTemplates?path=/UserPipelines/Linux/OneBranch.Buddy.CrossPlat.yml
+extends:
+  template: /v2/OneBranch.NonOfficial.CrossPlat.yml@templates
+  parameters:
+
+    # See https://aka.ms/obpipelines/sdl
+    globalSdl:
+
+      apiscan:
+        enabled: true
+        softwareFolder: $(apiScanDllPath)
+        # Note: This name is registered with ApiScan and shared by all SqlClient packages.
+        softwareName: Microsoft.Data.SqlClient
+        softwareVersionNum: $(assemblyFileVersion)
+        symbolsFolder: $(apiScanPdbPath)
+
+      armory:
+        enabled: true
+        break: true
+
+      asyncSdl:
+        # If this should be enabled, move supported tools under this item, see
+        # https://aka.ms/obpipelines/asyncsdl
+        enabled: false
+
+      binskim:
+        enabled: true
+        break: true
+
+      codeinspector:
+        enabled: true
+        logLevel: Error
+
+      codeql:
+        enabled: true
+        sourceRoot: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src
+
+      credscan:
+        enabled: true
+        suppressionsFile: $(Build.SourcesDirectory)/.config/CredScanSuppressions.json
+      eslint:
+        enabled: false
+
+      policheck:
+        enabled: true
+        break: true
+        exclusionFile: $(Build.SourcesDirectory)/.config/PolicheckExclusions.xml
+
+      roslyn:
+        # Requires the RoslynAnalyzers task to be added somewhere in the build stage.
+        enabled: true
+        break: true
+
+      publishLogs:
+        enabled: true
+
+      sbom:
+        enabled: true
+        packageName: $(packageName)
+        packageVersion: $(packageVersion)
+
+      tsa:
+        # OneBranch publishes all sdl results to TSA. If TSA is disabled all SDL tools will be
+        # forced into 'break' build mode.
+        enabled: false
+        configFile: $(Build.SourcesDirectory)/.config/tsaoptions.json
+
+    stages:
+      - template: /eng/pipelines/abstractions/onebranch/build-stage.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          publishSymbols: ${{ parameters.publishSymbols }}
