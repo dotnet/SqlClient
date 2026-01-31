@@ -1,0 +1,45 @@
+﻿################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                #
+# The .NET Foundation licenses this file to you under the MIT license.         #
+# See the LICENSE file in the project root for more information.               #
+################################################################################
+
+variables:
+
+  # ============================================================================
+  # Versioning Variables
+  #
+  # These variables define the version numbers used throughout the build.  This
+  # is the only place that version information is defined for the Abstractions
+  # package.
+
+  # The Abstractions package version.
+  - name: abstractionsPackageVersion
+    value: 1.0.0-preview1.$(Build.BuildNumber)
+
+  # The Abstractions assembly file version.
+  - name: abstractionsAssemblyFileVersion
+    value: 1.0.0.$(Build.BuildNumber)
+
+   # This directory is uploaded to pipeline artifacts, reddog and cloudvault.
+   # More info at https://aka.ms/obpipelines/artifacts
+  - name: ob_outputDirectory
+    value: $(Build.SourcesDirectory)/out
+
+
+
+
+
+
+  # @TODO: If symbols variables are indeed shared between projects and not expected to change
+  #    then they can be removed from this variable group.
+  - group: 'akv-variables-v2'
+    # SymbolsAzureSubscription
+    # SymbolsPublishProjectName
+    # SymbolsPublishServer
+    # SymbolsPublishTokenUri
+    # SymbolsUploadAccount
+
+  # Well-Known Variables -------------------------------------------------
+  - name: PACKAGE_NAME
+    value: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'

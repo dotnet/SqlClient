@@ -1,0 +1,68 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                #
+# The .NET Foundation licenses this file to you under the MIT license.         #
+# See the LICENSE file in the project root for more information.               #
+################################################################################
+
+parameters:
+
+  # The build configuration to use.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # True to enable debug steps and logging.
+  - name: debug
+    type: boolean
+    default: false
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+jobs:
+  - job: analysis_job
+    displayName: Analyze
+
+    pool:
+      type: windows
+
+    variables:
+      - template: /eng/pipelines/abstractions/onebranch/variables.yml@self
+
+    steps:
+      # Install the .NET SDK.
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+
+      # Build the Abstractions project.  Roslyn analysis requires the project to have been built
+      # before analysis can take place.
+      - task: DotNetCoreCLI@2
+        displayName: Build Project
+        inputs:
+          command: custom
+          custom: build
+          projects: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj
+          arguments: >-
+            -c Release
+            -$(buildArguments) --no-build -o $(dotnetPackagesDir)
+
+      # Perform the analysis with the 1ES Roslyn Analyzer:
+      #
+      # https://eng.ms/docs/coreai/devdiv/one-engineering-system-1es/1es-mohanb/security-integration/guardian-wiki/sdl-azdo-extension/roslyn-analyzers-build-task
+      - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
+        displayName: Roslyn Analysis
+        inputs:
+          userProvideBuildInfo: autoMsBuildInfo
+          rulesetName: Recommended
+          rulesetVersion: Latest
+          policyName: Microsoft
+          loadRoslynConfiguredAnalyzersOption: Enable
