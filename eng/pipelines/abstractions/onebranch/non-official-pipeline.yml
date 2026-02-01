@@ -57,17 +57,7 @@ parameters:
     default: false
 
 variables:
-  # Needed for onebranch.pipeline.version task; see https://aka.ms/obpipelines/versioning
-  - name: CDP_DEFINITION_BUILD_COUNT
-    value: $[counter('', 0)]
-
-  # We use an Azure Linux image for all stages; see https://aka.ms/obpipelines/containers
-  - name: LinuxContainerImage
-    value: mcr.microsoft.com/onebranch/azurelinux/build:3.0
-
-  # Azure Linux images seem to require this to avoid interactive prompts from debian tooling.
-  - name: DEBIAN_FRONTEND
-    value: noninteractive
+  - template: /eng/pipelines/abstractions/onebranch/variables.yml@self
 
 # We extend the latest version of the OneBranch non-official pipeline template.  These are injected
 # into the SqlClientDrivers organization as the OneBranch.Pipelines project, in the
@@ -75,9 +65,9 @@ variables:
 resources:
   repositories:
     - repository: templates
-      type: 'git'
-      name: 'OneBranch.Pipelines/GovernedTemplates'
-      ref: 'refs/heads/main'
+      type: git
+      name: OneBranch.Pipelines/GovernedTemplates
+      ref: refs/heads/main
 
 # Extend the Non-Official (a.k.a Buddy)pipeline, inspired by:
 #
@@ -91,11 +81,11 @@ extends:
 
       apiscan:
         enabled: true
-        softwareFolder: '${{ variables.apiScanDllPath }}'
-        # Note: This name is registered with ApiScan
-        softwareName: 'Microsoft.Data.SqlClient'
-        softwareVersionNum: '${{ variables.assemblyFileVersion }}'
-        symbolsFolder: '${{ variables.apiScanPdbPath }}'
+        softwareFolder: $(apiScanDllPath)
+        # Note: This name is registered with ApiScan and shared by all SqlClient packages.
+        softwareName: Microsoft.Data.SqlClient
+        softwareVersionNum: $(assemblyFileVersion)
+        symbolsFolder: $(apiScanPdbPath)
 
       armory:
         enabled: true
@@ -120,7 +110,7 @@ extends:
 
       credscan:
         enabled: true
-        suppressionsFile: '$(Build.SourcesDirectory)/.config/CredScanSuppressions.json'
+        suppressionsFile: $(Build.SourcesDirectory)/.config/CredScanSuppressions.json
       eslint:
         enabled: false
 
@@ -139,14 +129,14 @@ extends:
 
       sbom:
         enabled: true
-        packageName: Microsoft.Data.SqlClient.Extensions.Abstractions
-        packageVersion: ${{ variables.akvPackageVersion }}
+        packageName: $(packageName)
+        packageVersion: $(packageVersion)
 
       tsa:
         # OneBranch publishes all sdl results to TSA. If TSA is disabled all SDL tools will be
         # forced into 'break' build mode.
-        enabled: ${{ eq(parameters.oneBranchType, 'Official') }}
-        configFile: '$(Build.SourcesDirectory)/.config/tsaoptions.json'
+        enabled: false
+        configFile: $(Build.SourcesDirectory)/.config/tsaoptions.json
 
     stages:
       - template: /eng/pipelines/abstractions/official/build-stage.yml@self
@@ -154,10 +144,3 @@ extends:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-
-
-      - stage: release
-        displayName: Release Abstractions
-        dependsOn: [build, test]
-        jobs:
-          - template: /eng/pipelines/abstractions/official/release-job.yml@self

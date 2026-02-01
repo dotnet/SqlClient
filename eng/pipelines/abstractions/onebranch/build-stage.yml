@@ -4,6 +4,9 @@
 # See the LICENSE file in the project root for more information.               #
 ################################################################################
 
+# This stage builds, analyzes, tests, and (optionally) publishes symbols for the Abstractions
+# project.
+
 parameters:
 
   # The build configuration to use.
