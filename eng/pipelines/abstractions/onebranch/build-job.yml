@@ -4,6 +4,8 @@
 # See the LICENSE file in the project root for more information.               #
 ################################################################################
 
+# This job builds, signs, and packages the Abstractions project.
+
 parameters:
 
   # The build configuration to use.
@@ -37,15 +39,25 @@ jobs:
       type: linux
 
     variables:
-      - template: /eng/pipelines/abstractions/onebranch/variables.yml@self
+      # We share ESRP signing variables with other pipelines, so we store them in a shared ADO.Net
+      # Library variagle group.  This will bring in the following variables that we use:
+      #
+      #   SigningAppRegistrationClientId
+      #   SigningAppRegistrationTenantId
+      #   SigningAuthAkvName
+      #   SigningAuthSignCertName
+      #   SigningEsrpClientId
+      #   SigningEsrpConnectedServiceName
+      #
+      - group: 'esrp-variables-v2'
 
     steps:
-      # Download our signing key.
+      # Download our signing key.  The path to the downloaded file is stored in the
+      # $(signingKey.secureFilePath) variable.
       - task: DownloadSecureFile@1
         displayName: Download Signing Key
+        name: signingKey
         inputs:
-          retryCount: 5
-          # This places the key in the $(Agent.TempDirectory) directory.
           secureFile: netfxKeypair.snk
 
       # Install the .NET SDK.
@@ -57,27 +69,37 @@ jobs:
         inputs:
           command: custom
           custom: build
-          projects: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj
+          projects: $(projectPath)
           arguments: >-
-            --artifacts-path $(Agent.TempDirectory)/artifacts
+            --artifacts-path $(artifactsPath)
             --configuration ${{ parameters.buildConfiguration }}
-            -p:AbstractionsAssemblyFileVersion=$(abstractionsAssemblyFileVersion)
-            -p:AbstractionsPackageVersion=$(abstractionsPackageVersion)
+            -p:AbstractionsAssemblyFileVersion=$(assemblyFileVersion)
+            -p:AbstractionsPackageVersion=$(packageVersion)
             -p:ReferenceType=Package
-            -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
+            -p:SigningKeyPath=$(signingKey.secureFilePath)
             --verbosity ${{ parameters.dotnetVerbosity }}
+
+      # Symlink the assemblies (DLLs and PDBs) to a dedicated folder for scanning and publishing.
+      - script: |
+          # Lower-case the build configuration for use in paths.
+          BUILD_CONFIG="${{ parameters.buildConfiguration }}"
+          BUILD_CONFIG=${BUILD_CONFIG,,}
+
+          # Create the symlink from artifacts -> assemblies.
+          ln -s $(artifactsPath)/bin/Abstractions/${BUILD_CONFIG}_netstandard2.0 $(assembliesPath)
+        displayName: Symlink Assemblies
 
       # Scan the DLLs for malware.
       - task: EsrpMalwareScanning@5
         displayName: ESRP DLL Malware Scanning
         inputs:
-          AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
-          AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+          AppRegistrationClientId: $(SigningAppRegistrationClientId)
+          AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
           CleanupTempStorage: 1
-          ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
-          EsrpClientId: '${{ parameters.esrpClientId }}'
-          FolderPath: $(Agent.TempDirectory)/artifacts
-          Pattern: Microsoft.Data.SqlClient.Extensions.Abstractions.dll
+          ConnectedServiceName: $(SigningEsrpConnectedServiceName)
+          EsrpClientId: $(SigningEsrpClientId)
+          FolderPath: $(assembliesPath)
+          Pattern: $(packageName).dll
           UseMSIAuthentication: true
           VerboseLogin: 1
 
@@ -85,15 +107,15 @@ jobs:
       - task: EsrpCodeSigning@5
         displayName: ESRP DLL Signing
         inputs:
-          AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
-          AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
-          AuthAKVName: '${{ parameters.authAkvName }}'
-          AuthSignCertName: '${{ parameters.authSignCertName }}'
-          ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
-          EsrpClientId: '${{ parameters.esrpClientId }}'
-          FolderPath: $(Agent.TempDirectory)/artifacts
-          Pattern: Microsoft.Data.SqlClient.Extensions.Abstractions.dll
-          signConfigType: 'inlineSignParams'
+          AppRegistrationClientId: $(SigningAppRegistrationClientId)
+          AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
+          AuthAKVName: $(SigningAuthAkvName)
+          AuthSignCertName: $(SigningAuthSignCertName)
+          ConnectedServiceName: $(SigningEsrpConnectedServiceName)
+          EsrpClientId: $(SigningEsrpClientId)
+          FolderPath: $(assembliesPath)
+          Pattern: $(packageName).dll
+          signConfigType: inlineSignParams
           UseMSIAuthentication: true
           inlineOperation: |
             [
@@ -141,31 +163,31 @@ jobs:
         inputs:
           command: custom
           custom: pack
-          projects: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj
+          projects: $(projectPath)
           arguments: >-
-            --artifacts-path $(Agent.TempDirectory)/artifacts
+            --artifacts-path $(artifactsPath)
             --configuration ${{ parameters.buildConfiguration }}
             --no-build
-            --output $(Agent.TempDirectory)/packages
-            -p:AbstractionsAssemblyFileVersion=$(abstractionsAssemblyFileVersion)
-            -p:AbstractionsPackageVersion=$(abstractionsPackageVersion)
+            --output $(packagesPath)
+            -p:AbstractionsAssemblyFileVersion=$(assemblyFileVersion)
+            -p:AbstractionsPackageVersion=$(packageVersion)
             -p:ReferenceType=Package
-            -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
+            -p:SigningKeyPath=$(signingKey.secureFilePath)
             --verbosity ${{ parameters.dotnetVerbosity }}
 
       # Scan the NuGet package for malware.
       #
       # TODO: Where is this task documented?
       - task: EsrpMalwareScanning@5
-        displayName: 'ESRP Nuget Malware Scanning'
+        displayName: ESRP Nuget Malware Scanning
         inputs:
-          AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
-          AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+          AppRegistrationClientId: $(SigningAppRegistrationClientId)
+          AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
           CleanupTempStorage: 1
-          ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
-          EsrpClientId: '${{ parameters.esrpClientId }}'
-          FolderPath: $(Agent.TempDirectory)/packages
-          Pattern: Microsoft.Data.SqlClient.Extensions.Abstractions*.nupkg
+          ConnectedServiceName: $(SigningEsrpConnectedServiceName)
+          EsrpClientId: $(SigningEsrpClientId)
+          FolderPath: $(packagesPath)
+          Pattern: $(packageName).nupkg
           UseMSIAuthentication: true
           VerboseLogin: 1
 
@@ -173,17 +195,17 @@ jobs:
       #
       # https://eng.ms/docs/products/onebranch/signing/containerbuildsigning/nativeesrp/usingnativeesrpadotaskinonebranchpipelines
       - task: EsrpCodeSigning@5
-        displayName: 'ESRP Signing NuGet Package'
+        displayName: ESRP Signing NuGet Package
         inputs:
-          AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
-          AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
-          ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
-          EsrpClientId: '${{ parameters.esrpClientId }}'
-          AuthAKVName: '${{ parameters.authAkvName }}'
-          AuthSignCertName: '${{ parameters.authSignCertName }}'
-          FolderPath: $(Agent.TempDirectory)/packages
-          Pattern: Microsoft.Data.SqlClient.Extensions.Abstractions*.nupkg
-          signConfigType: 'inlineSignParams'
+          AppRegistrationClientId: $(SigningAppRegistrationClientId)
+          AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
+          ConnectedServiceName: $(SigningEsrpConnectedServiceName)
+          EsrpClientId: $(SigningEsrpClientId)
+          AuthAKVName: $(SigningAuthAkvName)
+          AuthSignCertName: $(SigningAuthSignCertName)
+          FolderPath: $(packagesPath)
+          Pattern: $(packageName).nupkg
+          signConfigType: inlineSignParams
           UseMSIAuthentication: true
           inlineOperation: |
             [
@@ -203,4 +225,16 @@ jobs:
               }
             ]
 
-      # Publish pipeline artifacts.
+      # Publish the assemblies (DLLs and PDBs) as pipeline artifacts.
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Assemblies
+        inputs:
+          targetPath: $(assembliesPath)
+          artifact: Build.Assemblies
+
+      # Publish the NuGet and symbols packages as pipeline artifacts.
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Packages
+        inputs:
+          targetPath: $(packagesPath)
+          artifact: Build.Packages

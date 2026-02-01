@@ -4,6 +4,8 @@
 # See the LICENSE file in the project root for more information.               #
 ################################################################################
 
+# This job performs Roslyn analysis on the Abstractions project.
+
 parameters:
 
   # The build configuration to use.
@@ -31,13 +33,11 @@ parameters:
 
 jobs:
   - job: analysis_job
-    displayName: Analyze
+    displayName: Analysis
 
     pool:
+      # The Roslyn analyzers require a Windows agent with Visual Studio.
       type: windows
-
-    variables:
-      - template: /eng/pipelines/abstractions/onebranch/variables.yml@self
 
     steps:
       # Install the .NET SDK.
@@ -50,10 +50,13 @@ jobs:
         inputs:
           command: custom
           custom: build
-          projects: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj
+          projects: $(projectPath)
           arguments: >-
-            -c Release
-            -$(buildArguments) --no-build -o $(dotnetPackagesDir)
+            --configuration ${{ parameters.buildConfiguration }}
+            -p:AbstractionsAssemblyFileVersion=$(assemblyFileVersion)
+            -p:AbstractionsPackageVersion=$(packageVersion)
+            -p:ReferenceType=Package
+            --verbosity ${{ parameters.dotnetVerbosity }}
 
       # Perform the analysis with the 1ES Roslyn Analyzer:
       #

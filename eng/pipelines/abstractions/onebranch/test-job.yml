@@ -4,6 +4,8 @@
 # See the LICENSE file in the project root for more information.               #
 ################################################################################
 
+# This job runs unit tests for the Abstractions project.
+
 parameters:
 
   # The build configuration to use.
@@ -31,13 +33,10 @@ parameters:
 
 jobs:
   - job: test_job
-    displayName: Run Tests
+    displayName: Run Unit Tests
 
     pool:
       type: linux
-
-    variables:
-      - template: /eng/pipelines/abstractions/onebranch/variables.yml@self
 
     steps:
       # Install the .NET SDK.
@@ -49,10 +48,10 @@ jobs:
         inputs:
           command: custom
           custom: test
-          projects: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj
+          projects: $(projectPath)
           arguments: >-
             --configuration ${{ parameters.buildConfiguration }}
-            -p:AbstractionsAssemblyFileVersion=$(abstractionsAssemblyFileVersion)
-            -p:AbstractionsPackageVersion=$(abstractionsPackageVersion)
+            -p:AbstractionsAssemblyFileVersion=$(assemblyFileVersion)
+            -p:AbstractionsPackageVersion=$(packageVersion)
             -p:ReferenceType=Package
             --verbosity ${{ parameters.dotnetVerbosity }}
