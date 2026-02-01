@@ -665,9 +665,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlBatchCommand.cs">
       <Link>Microsoft\Data\SqlClient\SqlBatchCommand.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlBatchCommand.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\SqlBatchCommand.netcore.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlBatchCommandCollection.cs">
       <Link>Microsoft\Data\SqlClient\SqlBatchCommandCollection.cs</Link>
     </Compile>

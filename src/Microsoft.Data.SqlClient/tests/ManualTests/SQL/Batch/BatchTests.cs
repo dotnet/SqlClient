@@ -50,8 +50,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
+                #if NET
                 Assert.True(connection.CanCreateBatch);
                 using (var batch = connection.CreateBatch())
+                #else
+                using (var batch = new SqlBatch(connection))
+                #endif
                 {
                     Assert.NotNull(batch);
                     Assert.Equal(connection, batch.Connection);
@@ -63,13 +67,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-#if NET8_0_OR_GREATER
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void SqlBatchCanCreateParameter()
         {
             using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
+#if NET
             using DbBatch batch = connection.CreateBatch();
+#else
+            using SqlBatch batch = new SqlBatch(connection);
+#endif
             SqlBatchCommand batchCommand = new SqlBatchCommand("SELECT @p");
 
             Assert.True(batchCommand.CanCreateParameter);
@@ -81,7 +88,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             batch.BatchCommands.Add(batchCommand);
             batch.ExecuteNonQuery();
         }
-#endif 
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void StoredProcedureBatchSupported()
@@ -154,7 +160,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int resultCount = 0;
             int rowCount = 0;
             var dbProviderFactory = SqlClientFactory.Instance;
+            #if NET
             DbBatch batch = dbProviderFactory.CreateBatch();
+            #else
+            SqlBatch batch = new SqlBatch();
+            #endif
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
@@ -167,7 +177,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         p2.ParameterName = "@p2";
                         p1.Value = 50.0f;
                         p2.Value = 10248;
+                        #if NET
                         DbBatchCommand command = dbProviderFactory.CreateBatchCommand();
+                        #else
+                        SqlBatchCommand command = new SqlBatchCommand();
+                        #endif
                         command.CommandText = "UPDATE Orders SET Freight=@p1 WHERE OrderID=@p2";
                         command.Parameters.Add(p1);
                         command.Parameters.Add(p2);
@@ -178,7 +192,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         DbParameter parameter = dbProviderFactory.CreateParameter();
                         parameter.ParameterName = "@p4";
                         parameter.Value = 10248;
+                        #if NET
                         DbBatchCommand command = dbProviderFactory.CreateBatchCommand();
+                        #else
+                        SqlBatchCommand command = new SqlBatchCommand();
+                        #endif
                         command.CommandText = $"SELECT Freight FROM Orders WHERE OrderID={parameter.ParameterName}";
                         command.Parameters.Add(parameter);
                         batch.BatchCommands.Add(command);

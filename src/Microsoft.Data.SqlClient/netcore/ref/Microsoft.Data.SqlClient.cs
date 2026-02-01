@@ -477,14 +477,6 @@ namespace Microsoft.Data.SqlClient
         public override System.Data.Common.DbParameter CreateParameter() { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateDataSourceEnumerator/*'/>
         public override System.Data.Common.DbDataSourceEnumerator CreateDataSourceEnumerator() { throw null; }
-#if NET
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CanCreateBatch/*'/>
-        public override bool CanCreateBatch { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateBatch/*'/>
-        public override System.Data.Common.DbBatch CreateBatch() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateBatchCommand/*'/>
-        public override System.Data.Common.DbBatchCommand CreateBatchCommand() { throw null; }
-#endif
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/SqlClientLogger/*'/>
     public partial class SqlClientLogger
