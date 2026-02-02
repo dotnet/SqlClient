@@ -51,6 +51,11 @@ jobs:
       #
       - group: 'esrp-variables-v2'
 
+      # This directory is uploaded to pipeline artifacts, reddog and cloudvault.
+      # More info at https://aka.ms/obpipelines/artifacts
+      - name: ob_outputDirectory
+        value: $(packagesPath)
+
     steps:
       # Download our signing key.  The path to the downloaded file is stored in the
       # $(signingKey.secureFilePath) variable.

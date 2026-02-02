@@ -43,6 +43,11 @@ jobs:
       - name: symbolsArtifactName
         value: $(packageName).Symbols.$(System.TeamProject).$(Build.Repository.Name).$(Build.SourceBranchName).$(packageVersion).$(System.TimelineId)
 
+      # This directory is uploaded to pipeline artifacts, reddog and cloudvault.
+      # More info at https://aka.ms/obpipelines/artifacts
+      - name: ob_outputDirectory
+        value: $(packagesPath)
+
     steps:
       # Download the build job's assemblies.
       - task: DownloadPipelineArtifact@2

@@ -38,6 +38,12 @@ jobs:
     pool:
       type: linux
 
+    variables:
+      # This directory is uploaded to pipeline artifacts, reddog and cloudvault.
+      # More info at https://aka.ms/obpipelines/artifacts
+      - name: ob_outputDirectory
+        value: $(packagesPath)
+
     steps:
       # Install the .NET SDK.
       - template: /eng/pipelines/steps/install-dotnet.yml@self
