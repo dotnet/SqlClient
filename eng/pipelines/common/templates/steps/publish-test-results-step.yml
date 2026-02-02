@@ -20,9 +20,13 @@ parameters:
     values:
       - Debug
       - Release
-  
+
   - name: operatingSystem
     type: string
+    values:
+      - Linux
+      - Mac
+      - Windows
 
 steps:
 - task: PublishTestResults@2
@@ -45,7 +49,7 @@ steps:
 - powershell: |
    cd TestResults
    $TF="${{parameters.targetFramework }}"
-   Get-ChildItem -Filter “*.coverage” -Recurse | Rename-Item -NewName {"$TF" + $_.name} 
+   Get-ChildItem -Filter “*.coverage” -Recurse | Rename-Item -NewName {"$TF" + $_.name}
   displayName: 'Rename coverage files'
 
 - ${{ if eq(parameters.debug, true)}}:

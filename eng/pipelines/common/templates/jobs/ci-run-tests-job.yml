@@ -51,7 +51,11 @@ parameters:
 
   - name: operatingSystem
     type: string
-    default: ''
+    values:
+      - Linux
+      - Mac
+      - Windows
+    default: Windows
 
   - name: buildConfiguration
     type: string
@@ -98,10 +102,6 @@ parameters:
 jobs:
 - job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.image, 'unknown_image')) }}
 
-  # Some of our tests take longer than the default 60 minutes to run on some
-  # OSes and configurations.
-  timeoutInMinutes: ${{ parameters.timeout }}
-
   pool:
     name: '${{ parameters.poolName }}'
     ${{ if eq(parameters.hostedPool, true) }}:
@@ -113,6 +113,15 @@ jobs:
   variables:
     - name: dotnetx86RootPath
       value: '$(dotnetx86Path)'
+
+    # macOS jobs seem to need even more time, so we give them an extra 30 minutes.
+    - name: jobTimeout
+      ${{ if eq(parameters.operatingSystem, 'Mac') }}:
+        value: $[ ${{ parameters.timeout }} + 30 ]
+      ${{ else }}:
+        value: ${{ parameters.timeout }}
+
+  timeoutInMinutes: $(jobTimeout)
 
   steps:
 
