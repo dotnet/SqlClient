@@ -4,6 +4,9 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+# This file is only included in PR and CI pipelines for the Abstractions, AKV,
+# Azure, and MDS projects.
+
 variables:
   - group: 'ADO Build properties'
   - group: 'ADO Test Configuration Properties'
@@ -12,8 +15,12 @@ variables:
     value: '$(Build.BuildNumber)'
   - name: SQLTarget
     value: 'localhost'
+  - name: abstractionsPackageVersion
+    value: 1.0.0.$(buildNumber)-ci
   - name: akvPackageVersion
     value: 7.0.0.$(buildNumber)-ci
+  - name: azurePackageVersion
+    value: 1.0.0.$(buildNumber)-ci
   - name: mdsPackageVersion
     value: 7.0.0.$(buildNumber)-ci
   - name: skipComponentGovernanceDetection

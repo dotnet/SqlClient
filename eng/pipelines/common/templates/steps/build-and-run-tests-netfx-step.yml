@@ -28,10 +28,6 @@ parameters:
     type: string
     default: $(Platform)
 
-  - name: cleanFirst
-    type: boolean
-    default: false
-
   - name: TestTargetOS
     type: string
     default: Windowsnetfx
@@ -45,13 +41,6 @@ parameters:
     default: 2
 
 steps:
-- ${{ if eq(parameters.cleanFirst, true)}}:
-    - task: MSBuild@1
-      displayName: 'Clean artifacts folder'
-      inputs:
-        solution: build.proj
-        msbuildArguments: '-t:clean'
-
 - task: MSBuild@1
   displayName: 'Build AKV Provider .NET Framework'
   inputs:
