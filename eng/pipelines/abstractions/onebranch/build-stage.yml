@@ -41,14 +41,6 @@ stages:
     displayName: Build Abstractions
 
     jobs:
-      # Build and sign the Abstractions assemblies and NuGet package.  This will publish the NuGet
-      # and symbols packages as pipeline artifacts.
-      - template: /eng/pipelines/abstractions/onebranch/build-job.yml@self
-        parameters:
-          buildConfiguration: ${{ parameters.buildConfiguration }}
-          debug: ${{ parameters.debug }}
-          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-
       # Analyze the Abstractions assemblies with Roslyn analyzers.
       - template: /eng/pipelines/abstractions/onebranch/analysis-job.yml@self
         parameters:
@@ -63,6 +55,14 @@ stages:
           debug: ${{ parameters.debug }}
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
 
-      # Publish symbols if requested.
-      - ${{ if eq(parameters.publishSymbols, true) }}:
-        - template: /eng/pipelines/abstractions/official/publish-symbols-job.yml@self
+      # Build and sign the Abstractions assemblies and NuGet package.  This will publish the NuGet
+      # and symbols packages as pipeline artifacts.
+      #
+      # This job depends on the successful completion of the analysis and test jobs.
+      #
+      - template: /eng/pipelines/abstractions/onebranch/build-job.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          publishSymbols: ${{ parameters.publishSymbols }}

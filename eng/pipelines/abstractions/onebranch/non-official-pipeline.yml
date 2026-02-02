@@ -142,39 +142,9 @@ extends:
         configFile: $(Build.SourcesDirectory)/.config/tsaoptions.json
 
     stages:
-      # - template: /eng/pipelines/abstractions/onebranch/build-stage.yml@self
-      #   parameters:
-      #     buildConfiguration: ${{ parameters.buildConfiguration }}
-      #     debug: ${{ parameters.debug }}
-      #     dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-      #     publishSymbols: ${{ parameters.publishSymbols }}
-
-      - stage: build_stage
-        displayName: Build Abstractions
-
-        jobs:
-          # Build and sign the Abstractions assemblies and NuGet package.  This will publish the NuGet
-          # and symbols packages as pipeline artifacts.
-          - template: /eng/pipelines/abstractions/onebranch/build-job.yml@self
-            parameters:
-              buildConfiguration: ${{ parameters.buildConfiguration }}
-              debug: ${{ parameters.debug }}
-              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-
-          # Analyze the Abstractions assemblies with Roslyn analyzers.
-          - template: /eng/pipelines/abstractions/onebranch/analysis-job.yml@self
-            parameters:
-              buildConfiguration: ${{ parameters.buildConfiguration }}
-              debug: ${{ parameters.debug }}
-              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-
-          # Run the Abstractions project's tests.
-          - template: /eng/pipelines/abstractions/onebranch/test-job.yml@self
-            parameters:
-              buildConfiguration: ${{ parameters.buildConfiguration }}
-              debug: ${{ parameters.debug }}
-              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-
-          # Publish symbols if requested.
-          - ${{ if eq(parameters.publishSymbols, true) }}:
-            - template: /eng/pipelines/abstractions/official/publish-symbols-job.yml@self
+      - template: /eng/pipelines/abstractions/onebranch/build-stage.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          publishSymbols: ${{ parameters.publishSymbols }}
