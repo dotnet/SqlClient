@@ -32,17 +32,21 @@ variables:
   - name: projectPath
     value: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj
 
+  # The OneBranch templates require that each job defines the ob_outputDirectory variable, so we
+  # can't define it here as the base for each path below.  Instead, we define it in each job to be
+  # $(Agent.BuildDirectory)/build, which ensures that the pipeline publishes all of our interesting
+  # artifacts.
+
   # The path to build artifacts from the build stage.
   - name: artifactsPath
-    value: $(Agent.BuildDirectory)/artifacts
+    value: $(Agent.BuildDirectory)/build/artifacts
 
   # The path to assemblies (DLLs and PDBs) from the build stage.
   - name: assembliesPath
-    value: $(Agent.BuildDirectory)/assemblies
-
+    value: $(Agent.BuildDirectory)/build/assemblies
   # The path to NuGet and symbols packages from the build stage.
   - name: packagesPath
-    value: $(Agent.BuildDirectory)/packages
+    value: $(Agent.BuildDirectory)/build/packages
 
   # ============================================================================
   # OneBranch Configuration
@@ -62,11 +66,6 @@ variables:
   - # Roslyn analysis requires a Windows agent with Visual Studio.
     name: WindowsContainerImage
     value: onebranch.azurecr.io/windows/ltsc2022/vse2022:latest
-
-   # This directory is uploaded to pipeline artifacts, reddog and cloudvault.
-   # More info at https://aka.ms/obpipelines/artifacts
-  - name: ob_outputDirectory
-    value: $(packagesPath)
 
   # Enable SBOM signing for OneBranch builds.
   - name: Packaging.EnableSBOMSigning

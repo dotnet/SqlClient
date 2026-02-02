@@ -1,0 +1,127 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                #
+# The .NET Foundation licenses this file to you under the MIT license.         #
+# See the LICENSE file in the project root for more information.               #
+################################################################################
+
+# This template contains steps to publish the symbols package for the Abstractions project to Azure
+# DevOps and symbol servers.  See:
+#
+# https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL
+
+parameters:
+
+  # True to enable debug steps and logging.
+  - name: debug
+    type: boolean
+    default: false
+
+  # The name of the symbols artifact to publish.
+  - name: symbolsArtifactName
+    type: string
+
+steps:
+  # The PublishSymbols@2 task requires the ARTIFACTSERVICES_SYMBOL_ACCOUNTNAME environment variable
+  # to be set, so use an output variable from a task to set it and have it propagate into the
+  # publish tasks.
+  - script: |
+      echo ##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]$(SymbolsUploadAccount)
+      echo "Set ArtifactServices.Symbol.AccountName to '$(SymbolsUploadAccount)'"
+    displayName: Set ARTIFACTSERVICES_SYMBOL_ACCOUNTNAME
+
+  # Publish symbols to Azure DevOps:
+  #
+  # https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/publish-symbols-v2
+  #
+  - task: PublishSymbols@2
+    displayName: Publish Symbols to Azure DevOps
+    inputs:
+      indexSources: false
+      pat: $(System.AccessToken)
+      searchPattern: $(packageName).pdb
+      symbolExpirationInDays: 1825 # 5 years
+      symbolServerType: TeamServices
+      symbolsArtifactName: ${{ parameters.symbolsArtifactName }}
+      symbolsFolder: $(assembliesPath)
+      symbolsMaximumWaitTime: 30
+      symbolsProduct: $(packageName)
+      symbolsVersion: $(packageVersion)
+
+  # Publish symbols to symbol servers.
+  - task: AzureCLI@2
+    displayName: Publish Symbols to Symbol Servers
+    inputs:
+      azureSubscription: $(SymbolsAzureSubscription)
+      scriptLocation: inlineScript
+      scriptType: ps
+      inlineScript: |
+        # Propagate pipeline variables to PS variables
+        $artifactName = "${{ parameters.symbolsArtifactName }}"
+        echo "artifactName= $artifactName"
+
+        $publishProjectName = "$(SymbolsPublishProjectName)"
+        echo "publishProjectName= $publishProjectName"
+
+        $publishToInternal = true
+        echo "publishToInternal= $publishToInternal"
+
+        $publishToPublic = true
+        echo "publishToPublic= $publishToPublic"
+
+        $publishServer = "$(SymbolsPublishServer)"
+        echo "publishServer= $publishServer"
+
+        $publishTokenUri = "$(SymbolsPublishTokenUri)"
+        echo "publishTokenUri= $publishTokenUri"
+
+        # Publish symbols #####################################################################
+        # 1) Get the access token for the symbol publishing service
+        echo ">  1.Acquiring symbol publishing token..."
+        $symbolPublishingToken = az account get-access-token --resource $publishTokenUri --query accessToken -o tsv
+        echo ">  1.Symbol publishing token acquired."
+
+        # 2) Register the request name
+        echo ">  2.Registering request name..."
+        $requestNameRegistrationBody = "{'requestName': '$artifactName'}"
+        Invoke-RestMethod `
+          -Method POST `
+          -Uri "https://$publishServer.trafficmanager.net/projects/$publishProjectName/requests" `
+          -Headers @{ Authorization = "Bearer $symbolPublishingToken" } `
+          -ContentType "application/json" `
+          -Body $requestNameRegistrationBody
+        echo ">  2.Request name registered successfully."
+
+        # 3) Publish the symbols
+        echo ">  3.Submitting request to publish symbols..."
+        $publishSymbolsBody = "{'publishToInternalServer': $publishToInternal, 'publishToPublicServer': $publishToPublic}"
+        Invoke-RestMethod `
+          -Method POST `
+          -Uri "https://$publishServer.trafficmanager.net/projects/$publishProjectName/requests/$artifactName" `
+          -Headers @{ Authorization = "Bearer $symbolPublishingToken" } `
+          -ContentType "application/json" `
+          -Body $publishSymbolsBody
+        echo ">  3.Request to publish symbols submitted successfully."
+
+        # The following REST calls are used to check publishing status.
+        echo ">  4.Checking the status of the request ..."
+        Invoke-RestMethod `
+          -Method GET `
+          -Uri "https://$publishServer.trafficmanager.net/projects/$publishProjectName/requests/$artifactName" `
+          -Headers @{ Authorization = "Bearer $symbolPublishingToken" } `
+          -ContentType "application/json"
+
+        echo "Use below tables to interpret the values of xxxServerStatus and xxxServerResult fields from the response."
+
+        echo "PublishingStatus"
+        echo "-----------------"
+        echo "0	NotRequested; The request has not been requested to publish."
+        echo "1	Submitted; The request is submitted to be published"
+        echo "2	Processing; The request is still being processed"
+        echo "3	Completed; The request has been completed processing. It can be failed or successful. Check PublishingResult to get more details"
+
+        echo "PublishingResult"
+        echo "-----------------"
+        echo "0	Pending; The request has not completed or has not been requested."
+        echo "1	Succeeded; The request has published successfully"
+        echo "2	Failed; The request has failed to publish"
+        echo "3	Cancelled; The request was cancelled"

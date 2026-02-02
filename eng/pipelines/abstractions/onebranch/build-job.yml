@@ -31,6 +31,10 @@ parameters:
     - detailed
     - diagnostic
 
+  # True to publish symbols if the build and tests succeed.
+  - name: publishSymbols
+    type: boolean
+
 jobs:
   - job: build_job
     displayName: Build Abstractions
@@ -38,7 +42,19 @@ jobs:
     pool:
       type: linux
 
+    # This job depends on the analysis and test jobs completing successfully.
+    dependsOn: [analysis_job, test_job]
+
     variables:
+      # OneBranch requires that each job explicitly define the ob_outputDirectory - it cannot be
+      # inherited from previous jobs or stages.
+      #
+      # Our variables.yml defines several paths where interesting artifacts are placed, all of
+      # which are sub-directories of this one.  All jobs set ob_outputDirectory identically.
+      #
+      - name: ob_outputDirectory
+        value: $(Agent.BuildDirectory)/build
+
       # We share ESRP signing variables with other pipelines, so we store them in a shared ADO.Net
       # Library variagle group.  This will bring in the following variables that we use:
       #
@@ -51,10 +67,20 @@ jobs:
       #
       - group: 'esrp-variables-v2'
 
-      # This directory is uploaded to pipeline artifacts, reddog and cloudvault.
-      # More info at https://aka.ms/obpipelines/artifacts
-      - name: ob_outputDirectory
-        value: $(packagesPath)
+      # We share symbols variables with the AKV pipelines via an Azure DevOps Library variable
+      # group.  This will bring in the following variables that we use:
+      #
+      #   SymbolsAzureSubscription
+      #   SymbolsPublishProjectName
+      #   SymbolsPublishServer
+      #   SymbolsPublishTokenUri
+      #   SymbolsUploadAccount
+      #
+      - group: akv-variables-v2
+
+      # Embed a variety of build information into the symbols artifact name.
+      - name: symbolsArtifactName
+        value: $(packageName).Symbols.$(System.TeamProject).$(Build.Repository.Name).$(Build.SourceBranchName).$(packageVersion).$(System.TimelineId)
 
     steps:
       # Download our signing key.  The path to the downloaded file is stored in the
@@ -230,16 +256,9 @@ jobs:
               }
             ]
 
-      # Publish the assemblies (DLLs and PDBs) as pipeline artifacts.
-      - task: PublishPipelineArtifact@1
-        displayName: Publish Assemblies
-        inputs:
-          targetPath: $(assembliesPath)
-          artifact: Build.Assemblies
-
-      # Publish the NuGet and symbols packages as pipeline artifacts.
-      - task: PublishPipelineArtifact@1
-        displayName: Publish Packages
-        inputs:
-          targetPath: $(packagesPath)
-          artifact: Build.Packages
+      # Publish symbols if requested.
+      - ${{ if eq(parameters.publishSymbols, true) }}:
+        - template: /eng/pipelines/abstractions/official/publish-symbols-steps.yml@self
+          parameters:
+            debug: ${{ parameters.debug }}
+            symbolsArtifactName: $(symbolsArtifactName)

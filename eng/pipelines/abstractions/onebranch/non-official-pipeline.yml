@@ -143,11 +143,15 @@ extends:
 
     stages:
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3440c46a (Removed pipeline publish tasks which aren't permitted in OneBranch.)
       - template: /eng/pipelines/abstractions/onebranch/build-stage.yml@self
         parameters:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+<<<<<<< HEAD
 
       - stage: release
         displayName: Release Abstractions
@@ -192,3 +196,6 @@ extends:
           - ${{ if eq(parameters.publishSymbols, true) }}:
             - template: /eng/pipelines/abstractions/official/publish-symbols-job.yml@self
 >>>>>>> c6c13c1c (Trying different stages parameter approach.)
+=======
+          publishSymbols: ${{ parameters.publishSymbols }}
+>>>>>>> 3440c46a (Removed pipeline publish tasks which aren't permitted in OneBranch.)
