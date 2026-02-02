@@ -16,7 +16,7 @@ public class WorkloadIdentityFederationTests
         nameof(Config.HasTenantId),
         nameof(Config.HasUserManagedIdentityClientId),
         nameof(Config.HasWorkloadIdentityFederationServiceConnectionId))]
-    public async void GetCredential()
+    public async Task GetCredential()
     {
         AzurePipelinesCredential credential = new(
             // The tenant ID of the managed identity associated to our workload
@@ -32,7 +32,7 @@ public class WorkloadIdentityFederationTests
             // The client ID of the managed identity associated to our workload
             // identity federation service connection.  See:
             //
-            // https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/654fffd0-d02d-4894-b1b7-e2dfbc44a665/resourceGroups/aad-testlab-dl797892652000/providers/Microsoft.ManagedIdentity/userAssignedIdentities/dotnetMSI/overview 
+            // https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/654fffd0-d02d-4894-b1b7-e2dfbc44a665/resourceGroups/aad-testlab-dl797892652000/providers/Microsoft.ManagedIdentity/userAssignedIdentities/dotnetMSI/overview
             //
             Config.UserManagedIdentityClientId,
 
@@ -60,6 +60,6 @@ public class WorkloadIdentityFederationTests
             new(["https://database.windows.net/.default"]),
             CancellationToken.None);
 
-        Assert.NotEmpty(token.Token);        
+        Assert.NotEmpty(token.Token);
     }
 }
