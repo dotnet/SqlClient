@@ -66,7 +66,7 @@ variables:
    # This directory is uploaded to pipeline artifacts, reddog and cloudvault.
    # More info at https://aka.ms/obpipelines/artifacts
   - name: ob_outputDirectory
-    value: $(artifactsPath)
+    value: $(packagesPath)
 
   # Enable SBOM signing for OneBranch builds.
   - name: Packaging.EnableSBOMSigning
