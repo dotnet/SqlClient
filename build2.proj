@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-	<!-- Build Parameters ============================================== -->
+  <!-- =============================================================== -->
+  <!-- Build Parameters -->
 	<PropertyGroup>
 		<!-- Configuration:  Which build configuration to build                                 -->
 		<!-- Allowed values: Debug, Release                                                     -->
@@ -11,13 +12,15 @@
 		<!--    specific version (eg, x86) is required. Otherwise, this defaults to using the   -->
 		<!--    dotnet binary in the PATH variable. The provided path should end with a `\` (or -->
 		<!--    `/`) character. Eg. C:\x86\                                                     -->
-		<DotnetPath Condition="'$(DotnetPath)' == ''"></DotnetPath>
+		<DotnetPath Condition="'$(DotnetPath)' == ''" />
 	</PropertyGroup>
 
-	<!-- Imports ======================================================= -->
+  <!-- =============================================================== -->
+	<!-- Imports -->
 	<Import Project="src/Directory.Build.props" />
 
-	<!-- Microsoft.Data.SqlClient Build Targets ======================== -->
+  <!-- =============================================================== -->
+	<!-- Microsoft.Data.SqlClient Build Targets -->
 	<PropertyGroup>
 		<MdsProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj</MdsProjectPath>
 	</PropertyGroup>
@@ -54,4 +57,24 @@
 		<Message Text=">>> Building MDS for Windows via command: $(DotnetCommand)"/>
 		<Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
 	</Target>
+
+  <!-- =============================================================== -->
+  <!-- Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider targets -->
+  <PropertyGroup>
+    <AkvProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj</AkvProjectPath>
+  </PropertyGroup>
+  
+  <Target Name="BuildAkv">
+    <PropertyGroup>
+      <DotnetCommand>
+        $(DotnetPath)dotnet build $(AkvProjectPath)
+          -p:Configuration=$(Configuration)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+  
 </Project>

@@ -213,6 +213,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj", "{9A8996A8-6484-4AA7-B50F-F861430EDE2F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "eng", "eng", "{4600328C-C134-499F-AAE2-964E8AD5472C}"
+	ProjectSection(SolutionItems) = preProject
+		..\build.proj = ..\build.proj
+		..\build2.proj = ..\build2.proj
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipelines", "pipelines", "{4CAE9195-4F1A-4D48-854C-1C9FBC512C66}"
 	ProjectSection(SolutionItems) = preProject
