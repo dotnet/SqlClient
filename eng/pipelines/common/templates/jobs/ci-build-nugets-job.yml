@@ -51,7 +51,7 @@ jobs:
   # code in Release mode to ensure downstream pipelines don't encounter
   # compilation errors.  We won't use the Release artifacts for anything else
   # though.
-  - ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
+  - ${{ if eq(parameters.configuration, 'Debug') }}:
     - template: ../steps/ci-project-build-step.yml@self
       parameters:
         platform: ${{ parameters.platform }}

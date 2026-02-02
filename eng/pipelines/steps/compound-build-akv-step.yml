@@ -22,8 +22,8 @@ parameters:
   - name: mdsPackageVersion
     type: string
 
-    - name: signingKeyPath
-      type: string
+  - name: signingKeyPath
+    type: string
 
 steps:
   - task: DownloadSecureFile@1
