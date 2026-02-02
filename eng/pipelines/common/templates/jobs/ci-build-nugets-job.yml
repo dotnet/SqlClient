@@ -55,7 +55,7 @@ jobs:
     - template: ../steps/ci-project-build-step.yml@self
       parameters:
         platform: ${{ parameters.platform }}
-        buildConfiguration: Release
+        configuration: Release
         operatingSystem: Windows
         build: all
 

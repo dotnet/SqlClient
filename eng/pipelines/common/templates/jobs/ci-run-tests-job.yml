@@ -138,7 +138,6 @@ jobs:
     - template: ../steps/ci-project-build-step.yml@self
       parameters:
         build: allNoDocs
-        buildConfiguration: ${{ parameters.configuration }}
 
   - ${{ if ne(parameters.configProperties, '{}') }}:
     - template: ../steps/update-config-file-step.yml@self # update config.json file
