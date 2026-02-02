@@ -22,12 +22,10 @@ parameters:
   - name: mdsPackageVersion
     type: string
 
-  - name: signingKeyPath
-    type: string
-
 steps:
   - task: DownloadSecureFile@1
     displayName: 'Download Signing Key'
+    name: signingKey
     inputs:
         retryCount: 5
         secureFile: 'netfxKeypair.snk'
@@ -45,7 +43,7 @@ steps:
             -p:AssemblyFileVersion=${{ parameters.assemblyFileVersion }}
             -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }}
             -p:ReferenceType=Package
-            -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
+            -p:SigningKeyPath=$(signingKey.secureFilePath)
 
   - script: tree /a /f $(BUILD_OUTPUT)
     displayName: Output Build Output Tree
