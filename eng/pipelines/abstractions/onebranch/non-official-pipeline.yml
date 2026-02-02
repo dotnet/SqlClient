@@ -56,23 +56,15 @@ parameters:
     type: boolean
     default: false
 
-<<<<<<< HEAD
-stages:
-  - stage: stub_stage
-    displayName: Stub Stage
-    jobs:
-      - job: stub_job
-        displayName: Stub Job
-        steps:
-          - script: echo "This is a stub pipeline for non-official builds of the Abstractions package."
-            displayName: Stub Step
-=======
 variables:
   - template: /eng/pipelines/abstractions/onebranch/variables.yml@self
 
 # We extend the latest version of the OneBranch non-official pipeline template.  These are injected
 # into the SqlClientDrivers organization as the OneBranch.Pipelines project, in the
-# GovernedTemplates repository.
+# GovernedTemplates repository:
+#
+# https://sqlclientdrivers.visualstudio.com/OneBranch.Pipelines/_git/GovernedTemplates
+#
 resources:
   repositories:
     - repository: templates
@@ -150,19 +142,14 @@ extends:
         configFile: $(Build.SourcesDirectory)/.config/tsaoptions.json
 
     stages:
-      - template: /eng/pipelines/abstractions/official/build-stage.yml@self
+      - template: /eng/pipelines/abstractions/onebranch/build-stage.yml@self
         parameters:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-<<<<<<< HEAD
-
 
       - stage: release
         displayName: Release Abstractions
         dependsOn: [build, test]
         jobs:
           - template: /eng/pipelines/abstractions/official/release-job.yml@self
->>>>>>> 2da1531c (Work in progress.)
-=======
->>>>>>> 9b2b28d2 (Task 41898: Create Non-Official OneBranch pipeline)
