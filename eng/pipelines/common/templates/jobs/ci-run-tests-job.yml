@@ -115,7 +115,7 @@ jobs:
       ${{ else }}:
         value: ${{ parameters.timeout }}
 
-  timeoutInMinutes: $(jobTimeout)
+  timeoutInMinutes: $[ variables.jobTimeout ]
 
   steps:
 
