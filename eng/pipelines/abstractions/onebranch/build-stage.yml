@@ -32,6 +32,10 @@ parameters:
     - detailed
     - diagnostic
 
+  # True to publish symbols if the build and tests succeed.
+  - name: publishSymbols
+    type: boolean
+
 stages:
   - stage: build_stage
     displayName: Build Abstractions

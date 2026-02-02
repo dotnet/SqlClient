@@ -61,7 +61,10 @@ variables:
 
 # We extend the latest version of the OneBranch non-official pipeline template.  These are injected
 # into the SqlClientDrivers organization as the OneBranch.Pipelines project, in the
-# GovernedTemplates repository.
+# GovernedTemplates repository:
+#
+# https://sqlclientdrivers.visualstudio.com/OneBranch.Pipelines/_git/GovernedTemplates
+#
 resources:
   repositories:
     - repository: templates
@@ -139,8 +142,9 @@ extends:
         configFile: $(Build.SourcesDirectory)/.config/tsaoptions.json
 
     stages:
-      - template: /eng/pipelines/abstractions/official/build-stage.yml@self
+      - template: /eng/pipelines/abstractions/onebranch/build-stage.yml@self
         parameters:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          publishSymbols: ${{ parameters.publishSymbols }}
