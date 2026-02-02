@@ -63,6 +63,10 @@ parameters:
 
   - name: operatingSystem
     type: string
+    values:
+      - Linux
+      - Mac
+      - Windows
 
 steps:
 - ${{ if eq(parameters.operatingSystem, 'Windows') }}:
