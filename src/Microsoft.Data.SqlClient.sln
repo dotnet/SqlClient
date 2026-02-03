@@ -249,7 +249,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{EABE3A3E-D505-418A-B1B8-1B0AC4872F3D}"
 	ProjectSection(SolutionItems) = preProject
 		..\eng\pipelines\common\templates\steps\build-all-configurations-signed-dlls-step.yml = ..\eng\pipelines\common\templates\steps\build-all-configurations-signed-dlls-step.yml
-		..\eng\pipelines\common\templates\steps\build-all-tests-step.yml = ..\eng\pipelines\common\templates\steps\build-all-tests-step.yml
 		..\eng\pipelines\common\templates\steps\build-and-run-tests-netcore-step.yml = ..\eng\pipelines\common\templates\steps\build-and-run-tests-netcore-step.yml
 		..\eng\pipelines\common\templates\steps\build-and-run-tests-netfx-step.yml = ..\eng\pipelines\common\templates\steps\build-and-run-tests-netfx-step.yml
 		..\eng\pipelines\common\templates\steps\ci-prebuild-step.yml = ..\eng\pipelines\common\templates\steps\ci-prebuild-step.yml

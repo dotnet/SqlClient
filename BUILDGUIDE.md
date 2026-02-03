@@ -35,8 +35,6 @@ The following build targets are defined in `build.proj`:
 |`BuildNetCore`|Builds the .NET driver for all target frameworks.|
 |`BuildNetCoreAllOS`|Builds the .NET driver for all target frameworks and operating systems.|
 |`BuildNetFx`|Builds the .NET Framework driver for all target frameworks.|
-|`BuildTestsNetCore`|Builds tests for the .NET driver.|
-|`BuildTestsNetFx`|Builds tests for the .NET Framework driver.|
 |`Clean`|Cleans all generated files.|
 |`Restore`|Restores NuGet packages.|
 |`RunTests`|Runs the unit, functional, and manual tests for the .NET Framework and .NET drivers|
@@ -65,32 +63,24 @@ build:
 Using the default configuration and running all tests:
 
 ```bash
-msbuild -t:BuildTestsNetFx -p:TF=net462
-msbuild -t:BuildTestsNetCore
 msbuild -t:RunTests
 ```
 
 Using the Release configuration:
 
 ```bash
-msbuild -t:BuildTestsNetFx -p:TF=net462 -p:Configuration=Release
-msbuild -t:BuildTestsNetCore -p:Configuration=Release
 msbuild -t:RunTests -p:Configuration=Release
 ```
 
 Running only the unit tests:
 
 ```bash
-msbuild -t:BuildTestsNetFx -p:TF=net462
-msbuild -t:BuildTestsNetCore
 msbuild -t:RunUnitTests
 ```
 
 Using a specific .NET runtime to run tests:
 
 ```bash
-msbuild -t:BuildTestsNetFx -p:TF=net462
-msbuild -t:BuildTestsNetCore
 msbuild -t:RunTests -p:DotnetPath=C:\net8-win-x86\
 ```
 
@@ -238,7 +228,6 @@ dotnet build -t:BuildAll -p:ReferenceType=Package
 dotnet build -t:BuildAKVNetCore -p:ReferenceType=Package
 dotnet build -t:GenerateMdsPackage
 dotnet build -t:GenerateAkvPackage
-dotnet build -t:BuildTestsNetCore -p:ReferenceType=Package
 ```
 
 The above will build the MDS and AKV components, place their NuGet packages into
@@ -247,30 +236,6 @@ the `packages/` directory, and then build the tests using those packages.
 A non-AnyCPU platform reference can only be used with package reference type.
 Otherwise, the specified platform will be replaced with AnyCPU in the build
 process.
-
-### Building Tests with ReferenceType
-
-For .NET:
-
-```bash
-# Project is the default reference type.  The below commands are equivalent:
-msbuild -t:BuildTestsNetCore
-msbuild -t:BuildTestsNetCore -p:ReferenceType=Project
-
-# Package reference type:
-msbuild -t:BuildTestsNetCore -p:ReferenceType=Package
-```
-
-For .NET Framework:
-
-```bash
-# Project is the default reference type.  The below commands are equivalent:
-msbuild -t:BuildTestsNetFx -p:TF=net462
-msbuild -t:BuildTestsNetFx -p:TF=net462 -p:ReferenceType=Project
-
-# Package reference type:
-msbuild -t:BuildTestsNetFx -p:TF=net462 -p:ReferenceType=Package
-```
 
 ### Running Tests with Reference Type
 
@@ -283,20 +248,6 @@ dotnet test -p:ReferenceType=Project ...
 ## Testing with Custom TargetFramework (traditional)
 
 Tests can be built and run with custom Target Frameworks. See the below examples.
-
-### Building Tests with custom target framework
-
-```bash
-# Build the tests for custom .NET Framework target
-msbuild -t:BuildTestsNetFx -p:TF=net462
-```
-
-```bash
-# Build the tests for custom .NET target
-msbuild -t:BuildTestsNetCore -p:TF=net8.0
-```
-
-### Running Tests with custom target framework (traditional)
 
 ```bash
 # Run tests with custom .NET Framework target
