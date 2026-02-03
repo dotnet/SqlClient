@@ -354,11 +354,10 @@
       spurious errors, while still considering the exit status of the test process to determine
       overall pass/fail.
     -->
-    <Exec
-      ConsoleToMsBuild="true"
-      IgnoreExitCode="true"
-      IgnoreStandardErrorWarningFormat="true"
-      Command="$(TestCommand)"/>
+    <Exec ConsoleToMsBuild="true"
+          IgnoreExitCode="true"
+          IgnoreStandardErrorWarningFormat="true"
+          Command="$(TestCommand)"/>
   </Target>
 
   <!-- Run all flaky unit tests applicable to Unix. -->
@@ -380,17 +379,16 @@
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running unit tests for Unix via command: $(TestCommand)"/>
-    <Exec
-      ConsoleToMsBuild="true"
-      IgnoreExitCode="true"
-      IgnoreStandardErrorWarningFormat="true"
-      Command="$(TestCommand)"/>
+    <Exec ConsoleToMsBuild="true"
+          IgnoreExitCode="true"
+          IgnoreStandardErrorWarningFormat="true"
+          Command="$(TestCommand)"/>
   </Target>
 
-  <!-- Run all Functional tests applicable to the host OS. -->
+  <!-- Run all (non-flaky) Functional tests applicable to the host OS. -->
   <Target Name="RunFunctionalTests" DependsOnTargets="RunFunctionalTestsWindows;RunFunctionalTestsUnix" />
 
-  <!-- Run all Functional tests applicable to Windows. -->
+  <!-- Run all (non-flaky) Functional tests applicable to Windows. -->
   <Target Name="RunFunctionalTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
     <PropertyGroup>
       <TestCommand>
@@ -413,7 +411,7 @@
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
   </Target>
 
-  <!-- Run all Functional tests applicable to Unix. -->
+  <!-- Run all (non-flaky) Functional tests applicable to Unix. -->
   <Target Name="RunFunctionalTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
     <PropertyGroup>
       <TestCommand>
@@ -436,10 +434,65 @@
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
   </Target>
 
-  <!-- Run all Manual tests applicable to the host OS. -->
+  <!-- Run all flaky Functional tests applicable to the host OS. -->
+  <Target Name="RunFlakyFunctionalTests" DependsOnTargets="RunFlakyFunctionalTestsWindows;RunFlakyFunctionalTestsUnix" />
+
+  <!-- Run all flaky Functional tests applicable to Windows. -->
+  <Target Name="RunFlakyFunctionalTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
+        -f $(TF)
+        -p:Configuration=$(Configuration)
+        -p:ReferenceType=$(ReferenceType)
+        $(CollectStatement)
+        --results-directory $(ResultsDirectory)
+        --filter "category = Flaky"
+        --logger:"trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)"
+        --blame-hang
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
+      </TestCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running Functional test for Windows via command: $(TestCommand)" />
+    <Exec ConsoleToMsBuild="true"
+          IgnoreExitCode="true"
+          IgnoreStandardErrorWarningFormat="true"
+          Command="$(TestCommand)"/>
+  </Target>
+
+  <!-- Run all flaky Functional tests applicable to Unix. -->
+  <Target Name="RunFlakyFunctionalTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
+        -f $(TF)
+        -p:Configuration=$(Configuration)
+        -p:ReferenceType=$(ReferenceType)
+        $(CollectStatement)
+        --results-directory $(ResultsDirectory)
+        --filter "category = Flaky"
+        --logger:"trx;LogFilePrefix=Functional-Unixnetcoreapp-$(TestSet)"
+        --blame-hang
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
+      </TestCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running Functional test for Unix via command: $(TestCommand)" />
+    <Exec ConsoleToMsBuild="true"
+          IgnoreExitCode="true"
+          IgnoreStandardErrorWarningFormat="true"
+          Command="$(TestCommand)"/>
+  </Target>
+
+  <!-- Run all (non-flaky) Manual tests applicable to the host OS. -->
   <Target Name="RunManualTests" DependsOnTargets="RunManualTestsWindows;RunManualTestsUnix" />
 
-  <!-- Run all Manual tests applicable to Windows. -->
+  <!-- Run all (non-flaky) Manual tests applicable to Windows. -->
   <Target Name="RunManualTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
     <PropertyGroup>
       <TestCommand>
@@ -465,7 +518,7 @@
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
   </Target>
 
-  <!-- Run all Manual tests applicable to Unix. -->
+  <!-- Run all (non-flaky) Manual tests applicable to Unix. -->
   <Target Name="RunManualTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
     <PropertyGroup>
       <TestCommand>
@@ -489,6 +542,67 @@
     </PropertyGroup>
     <Message Text=">>> Running Manual test for Unix via command: $(TestCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
+  </Target>
+
+  <!-- Run all flaky Manual tests applicable to the host OS. -->
+  <Target Name="RunFlakyManualTests" DependsOnTargets="RunFlakyManualTestsWindows;RunFlakyManualTestsUnix" />
+
+  <!-- Run all flaky Manual tests applicable to Windows. -->
+  <Target Name="RunFlakyManualTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(ManualTestsProj)"
+        --no-build
+        -v n
+        -p:Configuration=$(Configuration)
+        -p:Target$(TFGroup)Version=$(TF)
+        -p:ReferenceType=$(ReferenceType)
+        -p:TestSet=$(TestSet)
+        -p:TestTargetOS=Windows$(TargetGroup)
+        $(CollectStatement)
+        --results-directory $(ResultsDirectory)
+        --filter "category = Flaky"
+        --logger:"trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)"
+        --blame-hang
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
+      </TestCommand>
+      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running Manual test for Windows via command: $(TestCommand)" />
+    <Exec ConsoleToMsBuild="true"
+          IgnoreExitCode="true"
+          IgnoreStandardErrorWarningFormat="true"
+          Command="$(TestCommand)"/>
+  </Target>
+
+  <!-- Run all flaky Manual tests applicable to Unix. -->
+  <Target Name="RunFlakyManualTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(ManualTestsProj)"
+        --no-build
+        -v n
+        -p:Configuration=$(Configuration)
+        -p:TargetNetCoreVersion=$(TF)
+        -p:ReferenceType=$(ReferenceType)
+        -p:TestSet=$(TestSet)
+        -p:TestTargetOS=Unixnetcoreapp
+        $(CollectStatement)
+        --results-directory $(ResultsDirectory)
+        --filter "category = Flaky"
+        --logger:"trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)"
+        --blame-hang
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
+      </TestCommand>
+      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running Manual test for Unix via command: $(TestCommand)" />
+    <Exec ConsoleToMsBuild="true"
+          IgnoreExitCode="true"
+          IgnoreStandardErrorWarningFormat="true"
+          Command="$(TestCommand)"/>
   </Target>
 
   <!-- Clean all build outputs. -->
