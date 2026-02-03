@@ -68,7 +68,7 @@ variables:
 
   # The NuGet package version for preview releases.
   - name: previewMdsPackageVersion
-    value: 7.0.0-preview4
+    value: 7.0.0-preview4.$(Build.BuildNumber)
 
   # The AssemblyFileVersion for all assemblies in the MDS package.
   - name: mdsAssemblyFileVersion
