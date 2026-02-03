@@ -23,7 +23,7 @@ jobs:
   displayName: 'Build Signed MDS Package'
   pool:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
-    
+
   variables:
   - template: /eng/pipelines/libraries/variables.yml@self
   - ${{ if parameters.isPreview }}:
@@ -44,16 +44,16 @@ jobs:
     displayName: 'Build Tooling'
     inputs:
       solution: '**/build.proj'
-      configuration: $(Configuration)
+      configuration: Release
       msbuildArguments: -t:BuildTools
 
   # Perform analysis before building, since this step will clobber build output.
   - template: /eng/pipelines/common/templates/steps/code-analyze-step.yml@self
-  
+
   # Build MDS in Package mode, producing signed DLLs.
   - template: /eng/pipelines/common/templates/steps/build-all-configurations-signed-dlls-step.yml@self
     parameters:
-      buildConfiguration: $(Configuration)
+      buildConfiguration: Release
       # These variables are sourced from common-variables.yml.
       mdsAssemblyFileVersion: $(mdsAssemblyFileVersion)
       mdsPackageVersion: $(mdsPackageVersion)
@@ -62,7 +62,7 @@ jobs:
   - template: /eng/pipelines/common/templates/steps/esrp-code-signing-step.yml@self
     parameters:
       artifactType: dll
-  
+
   - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
     parameters:
       buildConfiguration: Release
@@ -72,11 +72,11 @@ jobs:
       outputDirectory: $(artifactDirectory)
       packageVersion: $(mdsPackageVersion)
       referenceType: Package
-  
+
   - template: /eng/pipelines/common/templates/steps/esrp-code-signing-step.yml@self
     parameters:
       artifactType: pkg
-  
+
   - template: /eng/pipelines/common/templates/steps/copy-dlls-for-test-step.yml@self
     parameters:
       buildConfiguration: Release
