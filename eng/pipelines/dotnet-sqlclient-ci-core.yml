@@ -88,7 +88,7 @@ parameters:
 
 variables:
   - template: libraries/ci-build-variables.yml@self
-  
+
   - name: artifactName
     value: Artifacts
 
@@ -116,7 +116,7 @@ stages:
         mdsPackageVersion: $(NugetPackageVersion)
         ${{ if eq(parameters.debug, 'true') }}:
           verbosity: 'detailed'
-    
+
   - template: common/templates/stages/ci-run-tests-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
@@ -209,7 +209,7 @@ stages:
           pool: ${{parameters.defaultPoolName }} # pool name
           images: # list of images to run tests on
             Win22_Sql19_x86: ADO-MMS22-SQL19 # stage display name: image name from the pool
-          TargetFrameworks: [net8.0] #[net462, net8.0] # list of target frameworks to run
+          TargetFrameworks: [net462, net8.0, net9.0]
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
@@ -230,7 +230,7 @@ stages:
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
             # extra config properties
-            x86TestTargetFrameworks: [net8.0] # target frameworks should run tests on x86
+            x86TestTargetFrameworks: [net462, net8.0, net9.0]
             SQLRootPath: $(SQL19RootPath)
             enableLocalDB: true
             # instanceName: default: MSSQLSERVER
@@ -247,10 +247,10 @@ stages:
             # skipSqlConfiguration: # skips the SQL configuration step
 
 
-        windows_sql_22_x64: 
+        windows_sql_22_x64:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Win22_Sql22: ADO-MMS22-SQL22 
+            Win22_Sql22: ADO-MMS22-SQL22
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
@@ -276,11 +276,11 @@ stages:
             enableLocalDB: true
 
 
-        windows_sql_22_x86: 
+        windows_sql_22_x86:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Win22_Sql22_x86: ADO-MMS22-SQL22 
-          TargetFrameworks: [net462]
+            Win22_Sql22_x86: ADO-MMS22-SQL22
+          TargetFrameworks: [net462, net8.0, net9.0]
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
@@ -301,7 +301,7 @@ stages:
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
             # extra config properties
-            x86TestTargetFrameworks: [net462] # target frameworks should run tests on x86 as well
+            x86TestTargetFrameworks: [net462, net8.0, net9.0]
             SQLRootPath: $(SQL22RootPath)
             enableLocalDB: true
 
@@ -330,8 +330,8 @@ stages:
 
     # Azure SQL Server - Windows
         windows_azure_sql:
-          pool: ${{parameters.defaultPoolName }} 
-          images: 
+          pool: ${{parameters.defaultPoolName }}
+          images:
             Win22_Azure_Sql: ADO-MMS22-SQL19
             win11_Azure_Sql: ADO-CI-Win11
           TargetFrameworks: ${{parameters.targetFrameworks }}
@@ -364,8 +364,9 @@ stages:
 
         windows_azure_arm64_sql:
           pool: ADO-CI-PUBLIC-ARM64-1ES-EUS-POOL
-          images: 
-            Win22_Azure_ARM64_Sql: ADO-WIN11-ARM64
+          images:
+            Win11_ARM64_Azure_Sql: ADO-WIN11-ARM64
+          isArm64: true
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
@@ -394,7 +395,7 @@ stages:
         ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}: # only run enclave jobs if the password is available
           windows_enclave_sql:
             pool: ADO-CI-AE-1ES-Pool
-            images: 
+            images:
               Win22_Enclave_Sql19: ADO-MMS22-SQL19
             TargetFrameworks: ${{parameters.targetFrameworks }}
             netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
@@ -418,7 +419,7 @@ stages:
               AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
               SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
               UserManagedIdentityClientId: $(UserManagedIdentityClientId)
-              AliasName: $(SQLAliasName)            
+              AliasName: $(SQLAliasName)
               LocalDbAppName: $(LocalDbAppName)
               LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 

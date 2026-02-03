@@ -7,7 +7,7 @@ parameters:
   - name: databaseName
     type: string
     default: $(Database)
-  
+
   - name: targetFramework
     type: string
     default: net9.0

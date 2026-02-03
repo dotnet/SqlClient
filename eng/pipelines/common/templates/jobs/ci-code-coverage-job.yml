@@ -9,7 +9,7 @@
 # pipeline, and uploads them to CodeCov.
 
 parameters:
-  
+
   # True to include debug steps.
   - name: debug
     type: boolean
@@ -62,16 +62,17 @@ jobs:
         - pwsh: 'Get-ChildItem env: | Sort-Object Name'
           displayName: '[Debug] List Environment Variables'
 
-      - template: ../steps/ensure-dotnet-version.yml@self
+      # Install the .NET SDK.
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
         parameters:
-            packageType: sdk
-            version: '9.0'
+          debug: ${{ parameters.debug }}
 
+      # Install additional dotnet tools.
       - pwsh: |
           dotnet tool install --global dotnet-coverage
           dotnet tool install --global dotnet-reportgenerator-globaltool
         displayName: Install dotnet tools
-              
+
       - ${{ each targetFramework in parameters.targetFrameworks }}:
         - task: DownloadPipelineArtifact@2
           displayName: 'Download Coverage Reports [${{ targetFramework }}]'
@@ -107,7 +108,7 @@ jobs:
             $toProcess = @()
 
             foreach ($file in $files) {
-                $toProcess += @{ 
+                $toProcess += @{
                     File = $file.FullName
                     OutputFile = "$OutputDirectoryName\$counter.coveragexml"
                 }
@@ -117,10 +118,10 @@ jobs:
 
             $jobs = @()
             foreach ($file in $toProcess){
-                $jobs += Start-ThreadJob -ScriptBlock { 
+                $jobs += Start-ThreadJob -ScriptBlock {
                     $params = $using:file
-                    & dotnet-coverage merge $($params.File) --output $($params.OutputFile) --output-format xml 
-                } 
+                    & dotnet-coverage merge $($params.File) --output $($params.OutputFile) --output-format xml
+                }
             }
 
             Write-Host "Merging started..."
@@ -133,7 +134,7 @@ jobs:
 
           MergeFiles -InputDirectoryPath "$(netFxDir)" -OutputDirectoryName "coverageNetFxXml"
           MergeFiles -InputDirectoryPath "$(netCoreDir)" -OutputDirectoryName "coverageNetCoreXml"
-          
+
           Write-Host "Removing original coverage files..."
           Remove-Item $(netFxDir) -Recurse -Force -ErrorAction SilentlyContinue
           Remove-Item $(netCoreDir) -Recurse -Force -ErrorAction SilentlyContinue
@@ -150,15 +151,15 @@ jobs:
 
       - pwsh: |
           $jobs = @()
-          $jobs += Start-ThreadJob -ScriptBlock { 
+          $jobs += Start-ThreadJob -ScriptBlock {
               & reportgenerator "-reports:coverageNetFxXml\*.coveragexml" "-targetdir:coveragereportNetFx" "-reporttypes:Cobertura;" "-assemblyfilters:+microsoft.data.sqlclient.dll" "-sourcedirs:$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\netfx\src;$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\src" "-classfilters:+Microsoft.Data.*"
           }
 
-          $jobs += Start-ThreadJob -ScriptBlock { 
+          $jobs += Start-ThreadJob -ScriptBlock {
               & reportgenerator "-reports:coverageNetCoreXml\*.coveragexml" "-targetdir:coveragereportNetCore" "-reporttypes:Cobertura;" "-assemblyfilters:+microsoft.data.sqlclient.dll" "-sourcedirs:$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\netcore\src;$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\src" "-classfilters:+Microsoft.Data.*"
           }
 
-          $jobs += Start-ThreadJob -ScriptBlock { 
+          $jobs += Start-ThreadJob -ScriptBlock {
               & reportgenerator "-reports:coverageNetCoreXml\*.coveragexml" "-targetdir:coveragereportAddOns" "-reporttypes:Cobertura;" "-assemblyfilters:+microsoft.data.sqlclient.alwaysencrypted.azurekeyvaultprovider.dll" "-sourcedirs:$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\add-ons\AzureKeyVaultProvider" "-classfilters:+Microsoft.Data.*"
           }
 
@@ -186,9 +187,9 @@ jobs:
       - ${{if eq(parameters.upload, true)}}:
         - pwsh: |
             #download Codecov CLI
-            $ProgressPreference = 'SilentlyContinue' 
+            $ProgressPreference = 'SilentlyContinue'
             Invoke-WebRequest -Uri https://cli.codecov.io/latest/windows/codecov.exe -Outfile codecov.exe
-            
+
             ./codecov --verbose upload-process --fail-on-error -t $(CODECOV_TOKEN) -f "coveragereportNetFx\Cobertura.xml" -F netfx
             ./codecov --verbose upload-process --fail-on-error -t $(CODECOV_TOKEN) -f "coveragereportNetCore\Cobertura.xml" -F netcore
             ./codecov --verbose upload-process --fail-on-error -t $(CODECOV_TOKEN) -f "coveragereportAddOns\Cobertura.xml" -F addons
