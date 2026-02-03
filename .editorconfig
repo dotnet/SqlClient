@@ -13,8 +13,8 @@ indent_style = space
 indent_size = 2
 tab_width = unset
 
-# Use Unix-style line endings.
-end_of_line = lf
+# Don't mess with line endings.
+end_of_line = unset
 
 # UTF-8 encoding without BOM.
 charset = utf-8
@@ -29,11 +29,6 @@ insert_final_newline = true
 # lines (e.g., long URLs in comments, long strings, etc).  However, we recommend keeping lines to
 # a maximum of 100 characters for readability.
 # max_line_length = 100
-
-# Windows script files use CRLF line endings.
-[*.{bat,cmd,ps1}]
-
-end_of_line = crlf
 
 # C# files
 [*.cs]

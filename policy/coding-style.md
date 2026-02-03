@@ -2,6 +2,10 @@
 
 We follow a similar coding style as [dotnet/runtime](https://github.com/dotnet/runtime).
 
+An [EditorConfig](https://editorconfig.org "EditorConfig homepage") file (`.editorconfig`) has been
+provided at the root of the sqlclient repository, enabling C# auto-formatting conforming to the
+guidelines below.
+
 For non code files (xml, etc), our current best guidance is consistency. When editing files, keep
 new code and changes consistent with the style in the files. For new files, it should conform to the
 style for that component. If there is a completely new component, anything that is reasonably
@@ -16,7 +20,7 @@ The general rule we follow is "_use Visual Studio defaults_".
 1. We use [Allman style](http://en.wikipedia.org/wiki/Indent_style#Allman_style) braces, where each
    brace begins on a new line. A single line statement block can go without braces but the block
    must be properly indented on its own line and must not be nested in other statement blocks that
-   use braces (See rule 17 for more details). One exception is that a `using` statement is permitted
+   use braces. One exception is that a `using` statement is permitted
    to be nested within another `using` statement by starting on the following line at the same
    indentation level, even if the nested `using` contains a controlled block.
 1. We use four spaces of indentation (no tabs).
@@ -60,7 +64,3 @@ The general rule we follow is "_use Visual Studio defaults_".
      compound statement uses braces or if a single statement body spans multiple lines.
    - Braces may be omitted only if the body of *every* block associated with an `if`/`else
      if`/.../`else` compound statement is placed on a single line.
-
-An [EditorConfig](https://editorconfig.org "EditorConfig homepage") file (`.editorconfig`) has been
-provided at the root of the sqlclient repository, enabling C# auto-formatting conforming to the
-above guidelines.
