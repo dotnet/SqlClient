@@ -7,10 +7,28 @@
   <!-- ===================================================================== -->
   <!-- Driver Packages -->
 
+  <ItemGroup>
+    <!--
+      We never reference this package via its project, so we always need a
+      version specified.
+    -->
+    <PackageVersion Include="Microsoft.SqlServer.Server" Version="1.0.0" />
+  </ItemGroup>
+
+  <!--
+    We only need other driver package versions specified when building via
+    package references.
+  -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
     <PackageVersion
       Include="Microsoft.Data.SqlClient"
       Version="$(MdsPackageVersion)" />
+    <PackageVersion
+      Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
+      Version="$(AbstractionsPackageVersion)" />
+    <PackageVersion
+      Include="Microsoft.Data.SqlClient.Extensions.Azure"
+      Version="$(AzurePackageVersion)" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
       Version="$(AkvPackageVersion)" />
@@ -56,7 +74,17 @@
   </ItemGroup>
 
   <!-- ===================================================================== -->
-  <!-- MDS project dependencies -->
+  <!-- MSS Dependencies -->
+
+  <!-- None -->
+
+  <!-- ===================================================================== -->
+  <!-- Abstractions Dependencies -->
+
+  <!-- None -->
+
+  <!-- ===================================================================== -->
+  <!-- MDS Dependencies -->
 
   <ItemGroup>
     <PackageVersion Include="Azure.Identity" Version="1.17.0" />
@@ -64,7 +92,6 @@
     <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="6.0.2" />
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.14.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.14.0" />
-    <PackageVersion Include="Microsoft.SqlServer.Server" Version="1.0.0" />
     <PackageVersion Include="System.Buffers" Version="4.6.1" />
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
@@ -87,15 +114,14 @@
   </ItemGroup>
 
   <!-- ===================================================================== -->
-  <!-- AKV project dependencies -->
+  <!-- Azure Dependencies -->
+
+  <!-- None -->
+
+  <!-- ===================================================================== -->
+  <!-- AKV Dependencies -->
 
   <ItemGroup>
     <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.8.0" />
   </ItemGroup>
-
-  <!-- ===================================================================== -->
-  <!-- MSS project dependencies -->
-
-  <!-- None -->
-
 </Project>

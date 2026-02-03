@@ -23,7 +23,13 @@
   <PropertyGroup Condition="$(CDP_BUILD_TYPE)!=Official">
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
-   
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.CLSCompliantAttribute">
+      <_Parameter1>true</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
   <ItemGroup>
     <Compile Include="Microsoft.Data.SqlClient.cs" />
     <Compile Include="Microsoft.Data.SqlClient.Manual.cs" />
