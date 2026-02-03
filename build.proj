@@ -349,11 +349,16 @@
     </PropertyGroup>
     <Message Text=">>> Running unit tests for Windows via command: $(TestCommand)"/>
     <!--
-      We instruct MSBuild to ignore output from the tests that matches error/warning expressions.
-      This avoids cluttering the Azure DevOps pipeline runs UI with spurious errors, while still
-      considering the exit status of the test process to determine overall pass/fail.
+      We instruct MSBuild to ignore the exit code and output from the tests that matches
+      error/warning expressions.  This avoids cluttering the Azure DevOps pipeline runs UI with
+      spurious errors, while still considering the exit status of the test process to determine
+      overall pass/fail.
     -->
-    <Exec ConsoleToMsBuild="true" IgnoreStandardErrorWarningFormat="true" Command="$(TestCommand)"/>
+    <Exec
+      ConsoleToMsBuild="true"
+      IgnoreExitCode="true"
+      IgnoreStandardErrorWarningFormat="true"
+      Command="$(TestCommand)"/>
   </Target>
 
   <!-- Run all flaky unit tests applicable to Unix. -->
@@ -375,7 +380,11 @@
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running unit tests for Unix via command: $(TestCommand)"/>
-    <Exec ConsoleToMsBuild="true" IgnoreStandardErrorWarningFormat="true" Command="$(TestCommand)"/>
+    <Exec
+      ConsoleToMsBuild="true"
+      IgnoreExitCode="true"
+      IgnoreStandardErrorWarningFormat="true"
+      Command="$(TestCommand)"/>
   </Target>
 
   <!-- Run all Functional tests applicable to the host OS. -->
