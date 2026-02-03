@@ -38,6 +38,9 @@ jobs:
       Write-Host "##vso[task.setvariable variable=CDP_BUILD_TYPE_COPY;isOutput=true]$($env:CDP_BUILD_TYPE)"
     name: GetBuildType
 
+  # Install the .NET SDK.
+  - template: /eng/pipelines/steps/install-dotnet.yml@self
+
   # Build our tooling, which is required by the analysis step below, but
   # shouldn't be analyzed itself.
   - task: MSBuild@1
