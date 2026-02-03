@@ -279,10 +279,10 @@
   <!-- Run all tests applicable to the host OS. -->
   <Target Name="RunTests" DependsOnTargets="RunUnitTests;RunFunctionalTests;RunManualTests"/>
 
-  <!-- Run all unit tests applicable to the host OS. -->
+  <!-- Run all (non-flaky) unit tests applicable to the host OS. -->
   <Target Name="RunUnitTests" DependsOnTargets="RunUnitTestsWindows;RunUnitTestsUnix" Condition="$(ReferenceType.Contains('Project'))"/>
 
-  <!-- Run all unit tests applicable to Windows. -->
+  <!-- Run all (non-flaky) unit tests applicable to Windows. -->
   <Target Name="RunUnitTestsWindows" Condition="'$(IsEnabledWindows)' == 'true' AND $(ReferenceType.Contains('Project'))">
     <PropertyGroup>
       <TestCommand>
@@ -304,7 +304,7 @@
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
   </Target>
 
-  <!-- Run all unit tests applicable to Unix. -->
+  <!-- Run all (non-flaky) unit tests applicable to Unix. -->
   <Target Name="RunUnitTestsUnix" Condition="'$(IsEnabledWindows)' != 'true' AND $(ReferenceType.Contains('Project'))">
     <PropertyGroup>
       <TestCommand>
@@ -324,6 +324,58 @@
     </PropertyGroup>
     <Message Text=">>> Running unit tests for Unix via command: $(TestCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
+  </Target>
+
+  <!-- Run all flaky unit tests applicable to the host OS. -->
+  <Target Name="RunFlakyUnitTests" DependsOnTargets="RunFlakyUnitTestsWindows;RunFlakyUnitTestsUnix" Condition="$(ReferenceType.Contains('Project'))"/>
+
+  <!-- Run all flaky unit tests applicable to Windows. -->
+  <Target Name="RunFlakyUnitTestsWindows" Condition="'$(IsEnabledWindows)' == 'true' AND $(ReferenceType.Contains('Project'))">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(UnitTestsProj)"
+        -f $(TF)
+        -p:Configuration=$(Configuration)
+        $(CollectStatement)
+        --results-directory $(ResultsDirectory)
+        --filter "category = flaky"
+        --logger:"trx;LogFilePrefix=Unit-Windows$(TargetGroup)-$(TestSet)"
+        --blame-hang
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
+      </TestCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running unit tests for Windows via command: $(TestCommand)"/>
+    <!--
+      We instruct MSBuild to ignore output from the tests that matches error/warning expressions.
+      This avoids cluttering the Azure DevOps pipeline runs UI with spurious errors, while still
+      considering the exit status of the test process to determine overall pass/fail.
+    -->
+    <Exec ConsoleToMsBuild="true" IgnoreStandardErrorWarningFormat="true" Command="$(TestCommand)"/>
+  </Target>
+
+  <!-- Run all flaky unit tests applicable to Unix. -->
+  <Target Name="RunFlakyUnitTestsUnix" Condition="'$(IsEnabledWindows)' != 'true' AND $(ReferenceType.Contains('Project'))">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(UnitTestsProj)"
+        -f $(TF)
+        -p:Configuration=$(Configuration)
+        $(CollectStatement)
+        --results-directory $(ResultsDirectory)
+        --filter "category = flaky"
+        --logger:"trx;LogFilePrefix=Unit-Unixnetcoreapp-$(TestSet)"
+        --blame-hang
+        --blame-hang-dump-type full
+        --blame-hang-timeout 10m
+      </TestCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running unit tests for Unix via command: $(TestCommand)"/>
+    <Exec ConsoleToMsBuild="true" IgnoreStandardErrorWarningFormat="true" Command="$(TestCommand)"/>
   </Target>
 
   <!-- Run all Functional tests applicable to the host OS. -->
