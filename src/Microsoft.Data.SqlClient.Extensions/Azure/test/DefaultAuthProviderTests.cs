@@ -26,9 +26,9 @@ public class DefaultAuthProviderTests
         // via Theory data so that we detect any new methods that don't meet
         // our expectations.
         #if NET
-        var methods = Enum.GetValues<SqlAuthenticationMethod>()
+        var methods = Enum.GetValues<SqlAuthenticationMethod>();
         #else
-        var methods = Enum.GetValues(typeof(SqlAuthenticationMethod)).Cast<SqlAuthenticationMethod>()
+        var methods = Enum.GetValues(typeof(SqlAuthenticationMethod)).Cast<SqlAuthenticationMethod>();
         #endif
 
         foreach (var method in methods)
