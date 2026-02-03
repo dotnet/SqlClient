@@ -10,19 +10,19 @@ Your task is to analyze the user's test suite using the `AnalyzeTestOverlap.ps1`
 
 ## Skills
 This prompt leverages the following skills for specific sub-tasks:
-- [generate-mstest-filter](.github/skills/generate-mstest-filter/SKILL.md) - For generating well-formed MSTest filter expressions
+- [generate-mstest-filter](../skills/generate-mstest-filter/SKILL.md) - For generating well-formed MSTest filter expressions
 
 ## Tools
-You have access to the analysis script at `[AnalyzeTestOverlap.ps1](.\prompts\scripts\AnalyzeTestOverlap.ps1)`.
+You have access to the analysis script at `[AnalyzeTestOverlap.ps1](./scripts/AnalyzeTestOverlap.ps1)`.
 
 ## Workflow
 1.  **Parse or Generate Test Filter**:
     *   If `${input:filter}` is a valid MSTest filter expression (e.g., `FullyQualifiedName~MyTests`), use it directly.
-    *   If `${input:filter}` is a loose description (e.g., "connection tests" or "SqlCommand class"), follow the instructions in the [generate-mstest-filter](.github/skills/generate-mstest-filter/SKILL.md) skill to generate a proper filter expression.
+    *   If `${input:filter}` is a loose description (e.g., "connection tests" or "SqlCommand class"), follow the instructions in the [generate-mstest-filter](../skills/generate-mstest-filter/SKILL.md) skill to generate a proper filter expression.
     *   If `${input:filter}` is empty, ask the user for a test filter or description to target specific tests.
 
 2.  **Run Analysis**:
-    *   Run the script using the filter: `.\prompts\scripts\AnalyzeTestOverlap.ps1 -Filter "<filter>"`.
+    *   Run the script using the filter: `.\scripts\AnalyzeTestOverlap.ps1 -Filter "<filter>"`.
     *   *Note*: The script produces a console summary and a `test-coverage-analysis.json` file.
 
 3.  **Review Overlap**:
