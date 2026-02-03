@@ -44,6 +44,15 @@
   <!-- Conditional Project References -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
+
+    <!--
+      We explicitly depend on SNI for .NET Framework due to bugs in how its DLLs get published
+      during Project reference builds.
+
+      This is probably an incompatibility between the build targets that the SNI NuGet package
+      injects into downstream projects, and how the MDS project configures its output directories.
+    -->
+    <PackageReference Condition="'$(TargetFramework)' == 'net462'" Include="Microsoft.Data.SqlClient.SNI" />
   </ItemGroup>
 
   <!-- Conditional Package References -->

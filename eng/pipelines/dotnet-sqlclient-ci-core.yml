@@ -176,7 +176,7 @@ stages:
         dependsOn:
           - build_abstractions_package_stage
           - build_mds_akv_packages_stage
-      dotnetVerbosity: diagnostic
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
       referenceType: ${{ parameters.referenceType }}
