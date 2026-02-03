@@ -11,7 +11,7 @@ parameters:
   - name: artifactName
     type: string
     default: Artifacts
-  
+
   - name: buildType
     displayName: 'Build Type'
     default: Project
@@ -20,18 +20,6 @@ parameters:
       - Package
 
 steps:
-- task: UseDotNet@2
-  displayName: 'Use .NET 9.x sdk'
-  inputs:
-    packageType: sdk
-    version: '9.x'
-
-- task: UseDotNet@2
-  displayName: 'Install .NET 8.x runtime'
-  inputs:
-    packageType: runtime
-    version: '8.x'
-
 - ${{if eq(parameters.debug, true)}}:
   - powershell: |
       Get-ChildItem env: | Sort-Object Name
@@ -50,8 +38,3 @@ steps:
     parameters:
       downloadedNugetPath: $(Pipeline.Workspace)\${{parameters.artifactName }}
       debug: ${{ parameters.debug }}
-
-- ${{ else }}: # project
-  - template: ci-project-build-step.yml@self
-    parameters:
-      build: allNoDocs

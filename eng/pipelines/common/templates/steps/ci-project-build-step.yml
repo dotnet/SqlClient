@@ -7,15 +7,15 @@ parameters:
   - name: platform
     type: string
     default: $(Platform)
-  
+
   - name: configuration
     type: string
     default: $(Configuration)
-  
+
   - name: buildNumber
     type: string
     default: $(BuildNumber)
-  
+
   - name: operatingSystem
     type: string
     default: deferedToRuntime
@@ -24,7 +24,7 @@ parameters:
       - Linux
       - MacOS
       - deferedToRuntime
-    
+
   - name: build
     type: string
     default: MDS
@@ -35,18 +35,6 @@ parameters:
       - allNoDocs
 
 steps:
-- task: UseDotNet@2
-  displayName: 'Use .NET 9.x sdk'
-  inputs:
-    packageType: sdk
-    version: '9.x'
-
-- task: UseDotNet@2
-  displayName: 'Install .NET 8.x runtime'
-  inputs:
-    packageType: runtime
-    version: '8.x'
-
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
     - task: MSBuild@1

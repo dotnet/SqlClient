@@ -2,6 +2,15 @@
 
 This document provides all the necessary details to build the driver and run tests present in the repository.
 
+## .NET SDK
+
+The projects in this repo require the .NET 9.0 SDK to build.  Please ensure you
+have the latest version of that SDK installed.
+
+Tests and tools may require different .NET Runtimes that may be installed
+independently.  For example, tests targeting .NET 8.0 will need that runtime
+installed.
+
 ## Visual Studio Pre-Requisites
 
 This project should be built with Visual Studio 2019+ for the best compatibility. The required set of components are provided in the below file:
@@ -111,7 +120,7 @@ Manual Tests require the below setup to run:
   |AADSecurePrincipalSecret | (Optional) A Secret defined for a registered application which has been granted permission to the database defined in the AADPasswordConnectionString. | {Secret} |
   |AzureKeyVaultURL | (Optional) Azure Key Vault Identifier URL | `https://{keyvaultname}.vault.azure.net/` |
   |AzureKeyVaultTenantId | (Optional) The Azure Active Directory tenant (directory) Id of the service principal. | _{Tenant ID of Active Directory}_ |
-  |SupportsIntegratedSecurity | (Optional) Whether or not the USER running tests has integrated security access to the target SQL Server.| `true` OR `false`|  
+  |SupportsIntegratedSecurity | (Optional) Whether or not the USER running tests has integrated security access to the target SQL Server.| `true` OR `false`|
   |LocalDbAppName | (Optional) If Local Db Testing is supported, this property configures the name of Local DB App instance available in client environment. Empty string value disables Local Db testing. | Name of Local Db App to connect to.|
   |LocalDbSharedInstanceName | (Optional) If LocalDB testing is supported and the instance is shared, this property configures the name of the shared instance of LocalDB to connect to. | Name of shared instance of LocalDB. |
   |FileStreamDirectory | (Optional) If File Stream is enabled on SQL Server, pass local directory path to be used for setting up File Stream enabled database. |  `D:\\escaped\\absolute\\path\\to\\directory\\` |
@@ -130,7 +139,7 @@ Manual Tests require the below setup to run:
 - Windows (`netfx x86`):
 
 ```bash
-msbuild 
+msbuild
 dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" -p:Platform="x86" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
 ```
 
@@ -141,11 +150,11 @@ dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.S
 ```
 
 - AnyCPU:
-  
+
   Project reference only builds Driver with `AnyCPU` platform, and underlying process decides to run the tests with a compatible architecture (x64, x86, ARM64).
 
   Windows (`netcoreapp`):
-  
+
 ```bash
 dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" -p:Platform="AnyCPU" -p:Configuration="Release" -p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"
 ```

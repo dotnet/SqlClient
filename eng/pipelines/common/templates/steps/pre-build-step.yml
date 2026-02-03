@@ -4,29 +4,22 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 steps:
-- task: UseDotNet@2
-  displayName: 'Use .NET 9.x sdk'
-  inputs:
-    packageType: sdk
-    version: '9.x'
+  # Install the .NET SDK and Runtimes.
+  - template: /eng/pipelines/common/templates/steps/install-dotnet.yml@self
+    parameters:
+      runtimes: [8.x, 9.x]
 
-- task: UseDotNet@2
-  displayName: 'Install .NET 8.x runtime'
-  inputs:
-    packageType: runtime
-    version: '8.x'
+  - script: SET
+    displayName: 'Print Environment Variables'
 
-- script: SET
-  displayName: 'Print Environment Variables'
+  - powershell: |
+      # use sqlcmd to try to connect to localdb
+      $svc_name = "SQLBrowser"
+      Get-Service $svc_name | Select-Object -Property Name, StartType, Status
+      Set-Service -StartupType Automatic $svc_name
+      net start $svc_name
+      Get-Service $svc_name | Select-Object -Property Name, StartType, Status
+    displayName: 'Start SQLBrowser'
 
-- powershell: |
-    # use sqlcmd to try to connect to localdb
-    $svc_name = "SQLBrowser"
-    Get-Service $svc_name | Select-Object -Property Name, StartType, Status
-    Set-Service -StartupType Automatic $svc_name
-    net start $svc_name
-    Get-Service $svc_name | Select-Object -Property Name, StartType, Status
-  displayName: 'Start SQLBrowser'
-
-- task: NuGetToolInstaller@1
-  displayName: 'Use NuGet '
+  - task: NuGetToolInstaller@1
+    displayName: 'Use NuGet'
