@@ -43,5 +43,5 @@ steps:
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:GenerateNuget=false
         -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk
-        -p:MdsAssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}
+        -p:AssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
