@@ -1,5 +1,5 @@
 ---
-name: minimize-test-overlap
+name: test-minimize-overlap
 description: Run coverage overlap analysis and suggest test suite optimizations
 argument-hint: Test filter (e.g. FullyQualifiedName~MyTests) or describe the tests you want to analyze
 ---
