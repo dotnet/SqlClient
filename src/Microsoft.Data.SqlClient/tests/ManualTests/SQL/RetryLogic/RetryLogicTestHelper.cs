@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class RetryLogicTestHelper
     {
-        private static readonly HashSet<int> s_defaultTransientErrorCodes =
+        private static readonly HashSet<int> s_defaultTransientErrors =
         [
             .. SqlConfigurableRetryFactory.IntrinsicTransientErrors,
             4060,   // Cannot open database requested by the login. The login failed.
@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 NumberOfTries = numberOfRetries,
                 DeltaTime = deltaTime ?? TimeSpan.FromMilliseconds(10),
                 MaxTimeInterval = maxInterval,
-                TransientErrors = transientErrorCodes ?? s_defaultTransientErrorCodes,
+                TransientErrors = transientErrorCodes ?? s_defaultTransientErrors,
                 AuthorizedSqlCondition = RetryPreCondition(unauthorizedStatementRegex)
             };
 
@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static IEnumerable<int> GetDefaultTransientErrorCodes(params int[] additionalCodes)
         {
-            var transientErrorCodes = new HashSet<int>(s_defaultTransientErrorCodes);
+            var transientErrorCodes = new HashSet<int>(s_defaultTransientErrors);
             foreach (int additionalCode in additionalCodes)
             {
                 transientErrorCodes.Add(additionalCode);
