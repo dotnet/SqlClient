@@ -209,24 +209,56 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private bool RunTestCoreAndCompareWithBaseline()
         {
             string outputPath = "SqlParameterTest.out";
-            string baselinePath;
+            string[] baselinePaths;
 #if DEBUG
             if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
             {
-                baselinePath = "SqlParameterTest_DebugMode.bsl";
+                baselinePaths = new[]
+                {
+                    "StreamInputParameter_DebugMode.bsl",
+                    "TvpColumnBoundaries_DebugMode.bsl",
+                    "TvpQueryHints_DebugMode.bsl",
+                    "SqlVariantParameter_DebugMode.bsl",
+                    "DateTimeVariant_DebugMode.bsl",
+                    "OutputParameter_DebugMode.bsl"
+                };
             }
             else
             {
-                baselinePath = "SqlParameterTest_DebugMode_Azure.bsl";
+                baselinePaths = new[]
+                {
+                    "StreamInputParameter_DebugMode_Azure.bsl",
+                    "TvpColumnBoundaries_DebugMode_Azure.bsl",
+                    "TvpQueryHints_DebugMode_Azure.bsl",
+                    "SqlVariantParameter_DebugMode_Azure.bsl",
+                    "DateTimeVariant_DebugMode_Azure.bsl",
+                    "OutputParameter_DebugMode_Azure.bsl"
+                };
             }
 #else
             if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
             {
-                baselinePath = "SqlParameterTest_ReleaseMode.bsl";
+                baselinePaths = new[]
+                {
+                    "StreamInputParameter_ReleaseMode.bsl",
+                    "TvpColumnBoundaries_ReleaseMode.bsl",
+                    "TvpQueryHints_ReleaseMode.bsl",
+                    "SqlVariantParameter_ReleaseMode.bsl",
+                    "DateTimeVariant_ReleaseMode.bsl",
+                    "OutputParameter_ReleaseMode.bsl"
+                };
             }
             else
             {
-                baselinePath = "SqlParameterTest_ReleaseMode_Azure.bsl";
+                baselinePaths = new[]
+                {
+                    "StreamInputParameter_ReleaseMode_Azure.bsl",
+                    "TvpColumnBoundaries_ReleaseMode_Azure.bsl",
+                    "TvpQueryHints_ReleaseMode_Azure.bsl",
+                    "SqlVariantParameter_ReleaseMode_Azure.bsl",
+                    "DateTimeVariant_ReleaseMode_Azure.bsl",
+                    "OutputParameter_ReleaseMode_Azure.bsl"
+                };
             }
 #endif
 
@@ -247,8 +279,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             standardOutput.AutoFlush = true;
             Console.SetOut(standardOutput);
 
-            // Compare output file
-            var comparisonResult = FindDiffFromBaseline(baselinePath, outputPath);
+            // Compare output file by concatenating split baseline files
+            var comparisonResult = FindDiffFromBaseline(baselinePaths, outputPath);
 
             if (string.IsNullOrEmpty(comparisonResult))
             {
@@ -256,21 +288,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             Console.WriteLine("Test Failed!");
-            Console.WriteLine("Please compare baseline : {0} with output :{1}", Path.GetFullPath(baselinePath), Path.GetFullPath(outputPath));
+            Console.WriteLine("Please compare concatenated baselines with output: {0}", Path.GetFullPath(outputPath));
             Console.WriteLine("Comparison Results : ");
             Console.WriteLine(comparisonResult);
             return false;
         }
 
-        private string FindDiffFromBaseline(string baselinePath, string outputPath)
+        private string FindDiffFromBaseline(string[] baselinePaths, string outputPath)
         {
-            var expectedLines = File.ReadAllLines(baselinePath);
+            // Concatenate all baseline files
+            var expectedLines = new List<string>();
+            foreach (var baselinePath in baselinePaths)
+            {
+                expectedLines.AddRange(File.ReadAllLines(baselinePath));
+            }
+
             var outputLines = File.ReadAllLines(outputPath);
 
             var comparisonSb = new StringBuilder();
 
             // Start compare results
-            var expectedLength = expectedLines.Length;
+            var expectedLength = expectedLines.Count;
             var outputLength = outputLines.Length;
             var findDiffLength = Math.Min(expectedLength, outputLength);
 
@@ -311,7 +349,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return comparisonSb.ToString();
         }
 
-        private sealed class CarriageReturnLineFeedReplacer : TextWriter
+        internal sealed class CarriageReturnLineFeedReplacer : TextWriter
         {
             private TextWriter _output;
             private int _lineFeedCount;
@@ -373,7 +411,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         #region Main test methods
-        private void ColumnBoundariesTest()
+        internal void ColumnBoundariesTest()
         {
             _ = SteStructuredTypeBoundaries.AllColumnTypesExceptUdts.GetEnumerator(
                         s_boundariesTestKeys);
@@ -466,7 +504,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private void QueryHintsTest()
+        internal void QueryHintsTest()
         {
             using SqlConnection conn = new(_connStr);
             conn.Open();
