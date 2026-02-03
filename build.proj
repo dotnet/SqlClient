@@ -351,8 +351,7 @@
     <!--
       We instruct MSBuild to ignore the exit code and output from the tests that matches
       error/warning expressions.  This avoids cluttering the Azure DevOps pipeline runs UI with
-      spurious errors, while still considering the exit status of the test process to determine
-      overall pass/fail.
+      spurious errors.
     -->
     <Exec ConsoleToMsBuild="true"
           IgnoreExitCode="true"
@@ -447,7 +446,7 @@
         -p:ReferenceType=$(ReferenceType)
         $(CollectStatement)
         --results-directory $(ResultsDirectory)
-        --filter "category = Flaky"
+        --filter "category = flaky"
         --logger:"trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)"
         --blame-hang
         --blame-hang-dump-type full
@@ -473,7 +472,7 @@
         -p:ReferenceType=$(ReferenceType)
         $(CollectStatement)
         --results-directory $(ResultsDirectory)
-        --filter "category = Flaky"
+        --filter "category = flaky"
         --logger:"trx;LogFilePrefix=Functional-Unixnetcoreapp-$(TestSet)"
         --blame-hang
         --blame-hang-dump-type full
@@ -561,7 +560,7 @@
         -p:TestTargetOS=Windows$(TargetGroup)
         $(CollectStatement)
         --results-directory $(ResultsDirectory)
-        --filter "category = Flaky"
+        --filter "category = flaky"
         --logger:"trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)"
         --blame-hang
         --blame-hang-dump-type full
@@ -590,7 +589,7 @@
         -p:TestTargetOS=Unixnetcoreapp
         $(CollectStatement)
         --results-directory $(ResultsDirectory)
-        --filter "category = Flaky"
+        --filter "category = flaky"
         --logger:"trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)"
         --blame-hang
         --blame-hang-dump-type full
