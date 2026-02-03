@@ -14,6 +14,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class RetryLogicTestHelper
     {
+        private static readonly HashSet<int> s_defaultTransientErrorCodes =
+        [
+            .. SqlConfigurableRetryFactory.IntrinsicTransientErrors,
+            4060,   // Cannot open database requested by the login. The login failed.
+            10928,  // Resource ID : %d. The %s limit for the database is %d and has been reached.
+            10929,  // Resource ID : %d. The %s limit for the database is %d and has been reached.
+            40197,  // The service has encountered an error processing your request. Please try again.
+            40501,  // The service is currently busy. Retry the request after 10 seconds. Code: (reason code to be decoded).
+            40613   // Database XXXX on server YYYY is not currently available. Please retry the connection later.
+        ];
+
         public static readonly Regex FilterDmlStatements = new Regex(
             @"\b(INSERT( +INTO)|UPDATE|DELETE|TRUNCATE)\b",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -33,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 NumberOfTries = numberOfRetries,
                 DeltaTime = deltaTime ?? TimeSpan.FromMilliseconds(10),
                 MaxTimeInterval = maxInterval,
-                TransientErrors = transientErrorCodes ?? SqlConfigurableRetryFactory.DefaultTransientErrors,
+                TransientErrors = transientErrorCodes ?? s_defaultTransientErrorCodes,
                 AuthorizedSqlCondition = RetryPreCondition(unauthorizedStatementRegex)
             };
 
@@ -81,7 +92,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static IEnumerable<int> GetDefaultTransientErrorCodes(params int[] additionalCodes)
         {
-            var transientErrorCodes = new HashSet<int>(SqlConfigurableRetryFactory.DefaultTransientErrors);
+            var transientErrorCodes = new HashSet<int>(s_defaultTransientErrorCodes);
             foreach (int additionalCode in additionalCodes)
             {
                 transientErrorCodes.Add(additionalCode);
