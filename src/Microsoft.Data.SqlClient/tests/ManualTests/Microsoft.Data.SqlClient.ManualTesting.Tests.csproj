@@ -228,22 +228,6 @@
     <Compile Include="SQL\ParameterTest\DateTimeVariantTests.cs" />
     <Compile Include="SQL\ParameterTest\OutputParameterTests.cs" />
     <Compile Include="SQL\ParameterTest\TvpTest.cs" />
-    <Content Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlParameterTest_DebugMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlParameterTest_DebugMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlParameterTest_DebugMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlParameterTest_ReleaseMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlParameterTest_ReleaseMode_Azure.bsl</Link>
-    </Content>
     <!-- Split baseline files for individual test groups -->
     <Content Include="SQL\ParameterTest\StreamInputParameter_DebugMode.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
