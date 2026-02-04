@@ -31,26 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private bool RunTestAndCompareWithBaseline()
         {
             string outputPath = "DateTimeVariant.out";
-            string baselinePath;
-#if DEBUG
-            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
-            {
-                baselinePath = "DateTimeVariant_DebugMode.bsl";
-            }
-            else
-            {
-                baselinePath = "DateTimeVariant_DebugMode_Azure.bsl";
-            }
-#else
-            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
-            {
-                baselinePath = "DateTimeVariant_ReleaseMode.bsl";
-            }
-            else
-            {
-                baselinePath = "DateTimeVariant_ReleaseMode_Azure.bsl";
-            }
-#endif
+            string baselinePath = "DateTimeVariant.bsl";
 
             var fstream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read);
             var swriter = new StreamWriter(fstream, Encoding.UTF8);
