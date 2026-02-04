@@ -89,6 +89,10 @@ parameters:
     type: boolean
     default: false
 
+  # If true, only flaky tests will be run.  If false, all non-flaky tests will be run.
+  - name: flakyTestsOnly
+    type: boolean
+
 jobs:
 - job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.image, 'unknown_image')) }}
 
@@ -284,6 +288,7 @@ jobs:
         referenceType: ${{ parameters.referenceType }}
         testSet: ${{ parameters.testSet }}
         operatingSystem: ${{ parameters.operatingSystem }}
+        flakyTestsOnly: ${{ parameters.flakyTestsOnly }}
 
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
     # Set up for x86 tests by manually installing dotnet for x86 to an alternative location. This
@@ -310,6 +315,7 @@ jobs:
         msbuildArchitecture: x86
         dotnetx86RootPath: $(dotnetx86RootPath)
         operatingSystem: ${{ parameters.operatingSystem }}
+        flakyTestsOnly: ${{ parameters.flakyTestsOnly }}
 
   - ${{ if eq(parameters.publishTestResults, true) }}:
     - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self

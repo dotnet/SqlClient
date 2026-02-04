@@ -1,0 +1,99 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This pipeline builds and runs flaky tests for the following packages using project references:
+#
+#   - Microsoft.SqlServer.Server
+#   - Microsoft.Data.SqlClient
+#   - Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+#
+# It runs via CI push triggers and schedules and uses the Debug build configuration:
+#
+#   - Commits to GitHub main
+#   - Weekdays at 09:00 UTC on GitHub main
+#
+# Changes are batched together to ensure that the pipline never runs concurrently.
+#
+# This pipeline definition is mapped to the following Azure DevOps pipelines:
+#
+# - CI-SqlClient-Flaky in the Public project:
+#
+#   TODO - Add URL
+
+# Set the pipeline run name to the day-of-year and the daily run counter.
+name: $(DayOfYear)$(Rev:rr)
+
+# Do not trigger this pipeline for PRs.
+pr: none
+
+# Trigger this pipeline on commits to certain branches.
+trigger:
+
+  # Don't trigger a new run until the previous one completes.  This may cause
+  # multiple commits to be batched into a single run.
+  batch: true
+
+  branches:
+    include:
+    # GitHub main branch.
+    - main
+
+# Trigger this pipline on a schedule.
+schedules:
+
+  # GitHub main on weekdays
+  - cron: '0 9 * * Mon-Fri'
+    displayName: Weekday Run (Debug Config)
+    branches:
+      include:
+      - main
+    always: true
+
+# Pipeline parameters, visible in the Azure DevOps UI.
+parameters:
+
+  # The build configuration to use; defaults to Debug.
+  - name: buildConfiguration
+    displayName: Build Configuration
+    type: string
+    default: Debug
+    values:
+      - Debug
+      - Release
+
+  # True to enable debug steps and logging.
+  - name: debug
+    displayName: Enable debug output
+    type: boolean
+    default: false
+
+  # Dotnet CLI verbosity level.
+  - name: dotnetVerbosity
+    displayName: dotnet CLI Verbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
+  # The timeout, in minutes, for each test job.
+  - name: testJobTimeout
+    displayName: Test job timeout (in minutes)
+    type: number
+    default: 60
+
+extends:
+  template: /eng/pipelines/dotnet-sqlclient-ci-core.yml@self
+  parameters:
+    buildConfiguration: ${{ parameters.buildConfiguration }}
+    flakyTestsOnly: true
+    debug: ${{ parameters.debug }}
+    dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+    referenceType: Project
+    testJobTimeout: ${{ parameters.testJobTimeout }}
