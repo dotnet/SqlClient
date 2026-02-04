@@ -155,13 +155,6 @@ namespace Microsoft.Data.SqlClient
             string hostNameInCertificate,
             string serverCertificateFilename)
         {
-
-            if (isIntegratedSecurity && !string.IsNullOrEmpty(serverSPN))
-            {
-                // Native SNI requires the Unicode encoding and any other encoding like UTF8 breaks the code.
-                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Server SPN `{0}` from the connection string is used.", serverSPN);
-            }
-
             // Normalize SPN based on authentication mode
             serverSPN = NormalizeServerSpn(serverSPN, isIntegratedSecurity);
 
@@ -179,8 +172,8 @@ namespace Microsoft.Data.SqlClient
 #endif
                 iPAddressPreference, cachedDNSInfo, hostNameInCertificate);
 
-            // Only produce resolvedSpn when integrated security is in play and we actually have one.
-            if (isIntegratedSecurity && !string.IsNullOrEmpty(serverSPN))
+            // Only produce resolvedSpn when we actually have one.
+            if (!string.IsNullOrWhiteSpace(serverSPN))
             {
                 resolvedSpn = new(serverSPN.TrimEnd());
             }
@@ -203,12 +196,19 @@ namespace Microsoft.Data.SqlClient
         {
             if (isIntegratedSecurity)
             {
-                // Empty signifies to interop layer that SPN needs to be generated
-                return string.IsNullOrEmpty(serverSPN) ? string.Empty : serverSPN;
+                if (string.IsNullOrWhiteSpace(serverSPN))
+                {
+                    // Empty signifies to interop layer that SPN needs to be generated
+                    return string.Empty;
+                }
+
+                // Native SNI requires the Unicode encoding and any other encoding like UTF8 breaks the code.
+                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Server SPN `{0}` from the connection string is used.", serverSPN);
+                return serverSPN;
             }
 
             // For SQL auth (and other non-SSPI modes), null means "No SPN generation".
-            return serverSPN == string.Empty ? null : serverSPN;
+            return string.IsNullOrWhiteSpace(serverSPN) ? null : serverSPN;
         }
 
         protected override uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
