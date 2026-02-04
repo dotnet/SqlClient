@@ -73,6 +73,7 @@ jobs:
       nuspecPath: $(nuspecPath)
       outputDirectory: $(artifactDirectory)
       packageVersion: $(mdsPackageVersion)
+      properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion)'
       referenceType: Package
 
   - template: /eng/pipelines/common/templates/steps/esrp-code-signing-step.yml@self
