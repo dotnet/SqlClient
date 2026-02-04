@@ -22,6 +22,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _testName = DataTestUtility.CurrentTestName(outputHelper);
         }
 
+        // XEvent sessions may become orphaned on the Azure SQL Server, which leads to poor
+        // performance (query timeouts, deadlocks, etc) over time.  This test drops these orphaned
+        // sessions as part of every run to help mitigate this issue.
+        [ConditionalFact(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse),
+            nameof(DataTestUtility.IsNotManagedInstance))]
+        public void CleanupOrphanedXEventSessions()
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using SqlCommand command = new(
+                """
+                DECLARE @sql NVARCHAR(MAX) = N'';
+
+                -- Identify orphaned event sessions and generate DROP commands.
+                SELECT @sql += N'DROP EVENT SESSION [' + s.name + N'] ON DATABASE;' + CHAR(13) + CHAR(10)
+                FROM sys.database_event_sessions s
+                LEFT JOIN sys.dm_xe_database_sessions t ON s.name = t.name
+                WHERE t.name IS NULL;
+
+                -- Execute the generated commands
+                EXEC sys.sp_executesql @sql;
+                """,
+                connection);
+
+            command.ExecuteNonQuery();
+        }
+
         [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         [InlineData("SELECT @@VERSION", System.Data.CommandType.Text, "sql_statement_starting")]
@@ -40,7 +71,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using SqlConnection xEventManagementConnection = new(DataTestUtility.TCPConnectionString);
             xEventManagementConnection.Open();
-            
+
             using XEventScope xEventSession = new(
                 _testName,
                 xEventManagementConnection,
@@ -85,7 +116,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             XPathNavigator? current = statementStartingQuery.Current;
             Assert.NotNull(current);
             XPathNavigator? activityIdElement = current.SelectSingleNode("action[@name='attach_activity_id_xfer']/value");
-            
+
             Assert.NotNull(activityIdElement);
             Assert.NotNull(activityIdElement.Value);
 

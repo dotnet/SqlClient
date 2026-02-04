@@ -133,24 +133,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         /// <remarks>
         /// Disposal isn't perfect - tests can abort without cleaning up the events they have
-        /// created. For Azure SQL targets that outlive the test pipelines, it is beneficial to
-        /// periodically log into the database and drop old XEvent sessions using T-SQL similar to
-        /// this:
-        ///
-        /// <code lang="SQL">
-        /// DECLARE @sql NVARCHAR(MAX) = N'';
-        ///
-        /// -- Identify inactive (stopped) event sessions and generate DROP commands
-        /// SELECT @sql += N'DROP EVENT SESSION [' + name + N'] ON SERVER;' + CHAR(13) + CHAR(10)
-        /// FROM sys.server_event_sessions
-        /// WHERE running = 0; -- Filter for sessions that are not running (inactive)
-        ///
-        /// -- Print the generated commands for review (optional, but recommended)
-        /// PRINT @sql;
-        ///
-        /// -- Execute the generated commands
-        /// EXEC sys.sp_executesql @sql;
-        /// </code>
+        /// created.  See XEventsTracingTest.CleanupOrphanedXEventSessions() for an example.
         /// </remarks>
         public void Dispose()
         {
