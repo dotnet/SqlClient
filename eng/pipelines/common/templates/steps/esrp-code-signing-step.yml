@@ -52,7 +52,7 @@ steps:
       EsrpClientId: '${{parameters.EsrpClientId }}'
       UseMSIAuthentication: true
       FolderPath: '${{parameters.sourceRoot }}'
-      Pattern: '*.dll'
+      Pattern: 'Microsoft.Data.SqlClient*.dll'
       CleanupTempStorage: 1
       VerboseLogin: 1
   - task: EsrpCodeSigning@5
@@ -66,7 +66,7 @@ steps:
       AuthAKVName: '${{parameters.AuthAKVName }}'
       AuthSignCertName: '${{parameters.AuthSignCertName }}'
       FolderPath: '${{parameters.sourceRoot }}'
-      Pattern: '*.dll'
+      Pattern: 'Microsoft.Data.SqlClient*.dll'
       signConfigType: inlineSignParams
       inlineOperation: |
           [ 

@@ -4,6 +4,8 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+# This file is only included in MDS OneBranch Official pipelines.
+
 variables:
-  - template: common-variables.yml@self
-  - template: mds-variables.yml@self
+  - template: /eng/pipelines/libraries/common-variables.yml@self
+  - template: /eng/pipelines/libraries/mds-variables.yml@self

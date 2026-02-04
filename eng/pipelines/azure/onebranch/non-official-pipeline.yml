@@ -1,0 +1,55 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Stub for Azure package non-official builds.
+
+pr: none
+trigger: none
+
+# Parameters visible in the Azure DevOps UI.
+parameters:
+
+  # We build in Release mode by default.
+  - name: buildConfiguration
+    displayName: Build configuration
+    type: string
+    values:
+      - Debug
+      - Release
+    default: Release
+
+  # True to enable debug steps and logging.
+  - name: debug
+    displayName: Enable debug steps and logging
+    type: boolean
+    default: false
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+  # True to publish symbols after a successful build.
+  - name: publishSymbols
+    displayName: Publish symbols
+    type: boolean
+    default: false
+
+stages:
+  - stage: stub_stage
+    displayName: Stub Stage
+    jobs:
+      - job: stub_job
+        displayName: Stub Job
+        steps:
+          - script: echo "This is a stub pipeline for non-official builds of the Azure package."
+            displayName: Stub Step

@@ -1,0 +1,143 @@
+﻿<!--
+Licensed to the .NET Foundation under one or more agreements.
+The .NET Foundation licenses this file to you under the MIT license.
+See the LICENSE file in the project root for more information.
+-->
+<docs>
+  <members name="SqlAuthenticationProvider">
+    <SqlAuthenticationProvider>
+      <summary>Defines the core behavior of authentication providers and provides a base class for derived classes.</summary>
+      <remarks>
+        Derived classes must provide a parameterless constructor if they can be instantiated from the app.config file.
+      </remarks>
+      <example>
+        The following example demonstrates implementing a custom SqlAuthenticationProvider and providing the same to SqlClient for overriding Device Code Flow authentication mode:
+        <code language="c#">
+          using System;
+          using System.Collections.Generic;
+          using System.Linq;
+          using System.Threading.Tasks;
+          using Microsoft.Data.SqlClient;
+          using Microsoft.Identity.Client;
+
+          namespace CustomAuthenticationProviderExamples
+          {
+              /// &lt;summary&gt;
+              /// Example demonstrating creating a custom device code flow authentication provider and attaching it to the driver.
+              /// This is helpful for applications that wish to override the Callback for the Device Code Result implemented by the SqlClient driver.
+              /// &lt;/summary&gt;
+              public class CustomDeviceCodeFlowAzureAuthenticationProvider : SqlAuthenticationProvider
+              {
+                  private const string ClientId = "my-client-id";
+                  private const string ClientName = "My Application Name";
+                  private const string DefaultScopeSuffix = "/.default";
+
+                  // Maintain a copy of the PublicClientApplication object to cache the underlying access tokens it provides
+                  private static IPublicClientApplication pcApplication;
+
+                  public override async Task&lt;SqlAuthenticationToken&gt; AcquireTokenAsync(SqlAuthenticationParameters parameters)
+                  {
+                      string[] scopes = [ parameters.Resource.EndsWith(DefaultScopeSuffix) ? parameters.Resource : parameters.Resource + DefaultScopeSuffix ];
+
+                      IPublicClientApplication app = pcApplication;
+                      if (app == null)
+                      {
+                          pcApplication = app = PublicClientApplicationBuilder.Create(ClientId)
+                              .WithAuthority(parameters.Authority)
+                              .WithClientName(ClientName)
+                              .WithRedirectUri("https://login.microsoftonline.com/common/oauth2/nativeclient")
+                              .Build();
+                      }
+
+                      AuthenticationResult result;
+                      using CancellationTokenSource connectionTimeoutCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(parameters.ConnectionTimeout));
+
+                      try
+                      {
+                          IEnumerable&lt;IAccount&gt; accounts = await app.GetAccountsAsync();
+                          result = await app.AcquireTokenSilent(scopes, accounts.FirstOrDefault())
+                              .ExecuteAsync(connectionTimeoutCancellation.Token);
+                      }
+                      catch (MsalUiRequiredException)
+                      {
+                          result = await app.AcquireTokenWithDeviceCode(scopes, deviceCodeResult => CustomDeviceFlowCallback(deviceCodeResult))
+                              .ExecuteAsync(connectionTimeoutCancellation.Token);
+                      }
+
+                      return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
+                  }
+
+                  public override bool IsSupported(SqlAuthenticationMethod authenticationMethod) =>
+                      authenticationMethod.Equals(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow);
+
+                  private Task CustomDeviceFlowCallback(DeviceCodeResult result)
+                  {
+                      Console.WriteLine(result.Message);
+                      return Task.CompletedTask;
+                  }
+              }
+
+              public class Program
+              {
+                  public static void Main()
+                  {
+                      // Register our custom authentication provider class to override Active Directory Device Code Flow
+                      SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, new CustomDeviceCodeFlowAzureAuthenticationProvider());
+                      using (SqlConnection sqlConnection = new SqlConnection("Server=&lt;myserver&gt;.database.windows.net;Authentication=Active Directory Device Code Flow;Database=&lt;db&gt;;"))
+                      {
+                          sqlConnection.Open();
+                          Console.WriteLine("Connected successfully!");
+                      }
+                  }
+              }
+          }
+        </code>
+      </example>
+    </SqlAuthenticationProvider>
+    <BeforeLoad>
+      <summary>This method is called immediately before the provider is added to the SQL authentication provider registry.</summary>
+      <remarks>
+        Avoid performing long-waiting tasks in this method, since it can block other threads from accessing the provider registry.
+
+        This method must not throw.
+      </remarks>
+      <param name="authenticationMethod">The authentication method.</param>
+    </BeforeLoad>
+    <BeforeUnload>
+      <summary>This method is called immediately before the provider is removed from the SQL authentication provider registry.</summary>
+      <remarks>
+        For example, this method is called when a different provider with the same authentication method overrides this provider in the SQL authentication provider registry. Avoid performing long-waiting task in this method, since it can block other threads from accessing the provider registry.
+
+        This method must not throw.
+      </remarks>
+      <param name="authenticationMethod">The authentication method.</param>
+    </BeforeUnload>
+    <IsSupported>
+      <summary>Indicates whether the specified authentication method is supported.</summary>
+      <remarks>This method must not throw.</remarks>
+      <returns>
+        <see langword="true" /> if the specified authentication method is supported; otherwise, <see langword="false" />.
+      </returns>
+      <param name="authenticationMethod">The authentication method.</param>
+    </IsSupported>
+    <AcquireTokenAsync>
+      <summary>Acquires an access token from the authority.</summary>
+      <param name="parameters">The parameters passed to the provider by the driver.</param>
+      <throws cref="SqlAuthenticationProviderException">If any errors occur.</throws>
+      <returns>Represents an asynchronous operation that returns the AD authentication token.</returns>
+    </AcquireTokenAsync>
+    <GetProvider>
+      <summary>Gets an authentication provider by method.</summary>
+      <param name="authenticationMethod">The authentication method.</param>
+      <returns>The authentication provider or <see langword="null" /> if not found.</returns>
+    </GetProvider>
+    <SetProvider>
+      <summary>Sets an authentication provider by method.</summary>
+      <param name="authenticationMethod">The authentication method.</param>
+      <param name="provider">The authentication provider.</param>
+      <returns>
+        <see langword="true" /> if the operation succeeded; otherwise, <see langword="false" /> (for example, the existing provider disallows overriding).
+      </returns>
+    </SetProvider>
+  </members>
+</docs>

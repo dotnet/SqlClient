@@ -7,10 +7,12 @@
 # @TODO: This can probably be made generic and pass in the command lines for msbuild
 #        BUT, they should be kept separate by now as we rebuild build.proj in parallel, we won't
 #        affect >1 project at a time.
-# @TODO: NugetPackageVersion should not be used for MDS package version
 
 parameters:
-  - name: assemblyFileVersion
+  - name: akvAssemblyFileVersion
+    type: string
+
+  - name: akvPackageVersion
     type: string
 
   - name: buildConfiguration
@@ -39,8 +41,9 @@ steps:
         configuration: '${{ parameters.buildConfiguration }}'
         msbuildArguments: >-
             -t:BuildAkv
-            -p:AssemblyFileVersion=${{ parameters.assemblyFileVersion }}
-            -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }}
+            -p:AssemblyFileVersion=${{ parameters.akvAssemblyFileVersion }}
+            -p:AkvPackageVersion=${{ parameters.akvPackageVersion }}
+            -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
             -p:ReferenceType=Package
             -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
             

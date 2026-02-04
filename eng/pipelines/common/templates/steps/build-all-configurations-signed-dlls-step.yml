@@ -4,25 +4,24 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: AssemblyFileVersion
-    type: string
-    default: $(AssemblyFileVersion)
-  
+
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
-  - name: packageRefMdsVersion
+  - name: mdsAssemblyFileVersion
     type: string
-    default: ''
 
-  - name: product
-    default: MDS
+  - name: mdsPackageVersion
+    type: string
+
+  - name: referenceType
+    type: string
     values:
-    - MDS
-    - MSS
+      - Package
+      - Project
 
 steps:
   - task: DownloadSecureFile@1
@@ -34,10 +33,15 @@ steps:
   # Install the .NET SDK.
   - template: /eng/pipelines/steps/install-dotnet.yml@self
 
-  - ${{ if eq(parameters.product, 'MDS') }}:
-    - task: MSBuild@1
-      displayName: 'BuildAllConfigurations using build.proj'
-      inputs:
-        solution: '**/build.proj'
-        configuration: '${{parameters.buildConfiguration }}'
-        msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAllConfigurations -p:GenerateNuget=false -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'
+  - task: MSBuild@1
+    displayName: 'BuildAllConfigurations using build.proj'
+    inputs:
+      solution: '**/build.proj'
+      configuration: '${{ parameters.buildConfiguration }}'
+      msbuildArguments: >-
+        -t:BuildAllConfigurations
+        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:GenerateNuget=false
+        -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk
+        -p:MdsAssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}
+        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}

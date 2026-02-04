@@ -114,11 +114,6 @@ parameters:
     type: object
     default: [net462, net8.0, net9.0]
 
-  - name: uploadCodeCov
-    displayName: 'Upload Code Coverage to CodeCov'
-    type: boolean
-    default: false
-
   - name: debug
     displayName: Enable debug output
     type: boolean
@@ -155,16 +150,16 @@ parameters:
     type: object
     default: [net8.0, net9.0]
 
+  # The timeout, in minutes, for each test job.
+  - name: testJobTimeout
+    displayName: Test job timeout (in minutes)
+    type: number
+    default: 60
+
   - name: testSets
     displayName: Test Sets
     type: object
     default: [1, 2, 3]
-
-  # The timeout, in minutes, for each test job.
-  - name: testJobTimeout
-    displayName: Test job timeout (in minutes)
-    type: string
-    default: Default
 
   - name: useManagedSNI
     displayName: |
@@ -173,29 +168,30 @@ parameters:
     type: object
     default: [false, true]
 
+  # Dotnet CLI verbosity level.
+  - name: dotnetVerbosity
+    displayName: dotnet CLI Verbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
 extends:
-  template: dotnet-sqlclient-ci-core.yml@self
+  template: /eng/pipelines/dotnet-sqlclient-ci-core.yml@self
   parameters:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
-    buildType: Package
+    referenceType: Package
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
-    uploadCodeCov: ${{ parameters.uploadCodeCov }}
     debug: ${{ parameters.debug }}
+    dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
     enableStressTests: ${{ parameters.enableStressTests }}
     targetFrameworks: ${{ parameters.targetFrameworks }}
     targetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
+    testJobTimeout: ${{ parameters.testJobTimeout }}
     testSets: ${{ parameters.testSets }}
-    # Populate the actual test job timeout numeric values if Default was
-    # specified.  We choose different values depending on the build
-    # configuration.
-    ${{ if eq(parameters.testJobTimeout, 'Default') }}:
-      # If the build configuration is Debug, we allow a bit of extra time since
-      # some tests run more slowly, and some tests are Debug only.
-      ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
-        testJobTimeout: 110
-      ${{ else }}:
-        testJobTimeout: 90
-    ${{ else }}:
-      testJobTimeout: ${{ parameters.testJobTimeout }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
