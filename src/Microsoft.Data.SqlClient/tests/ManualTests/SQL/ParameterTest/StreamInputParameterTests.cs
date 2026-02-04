@@ -58,6 +58,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var twriter = new TvpTest.CarriageReturnLineFeedReplacer(swriter);
             Console.SetOut(twriter);
 
+            // Print header to match baseline (original RunTest() printed this)
+            Console.WriteLine("Starting test 'TvpTest'");
+
             // Run Test
             StreamInputParam.Run(_connStr);
 
