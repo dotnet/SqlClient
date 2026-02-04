@@ -214,7 +214,6 @@
     <Compile Include="SQL\ParameterTest\DateTimeVariantTest.cs" />
     <Compile Include="SQL\ParameterTest\ParametersTest.cs" />
     <Compile Include="SQL\ParameterTest\SqlAdapterUpdateBatch.cs" />
-    <Compile Include="SQL\ParameterTest\SqlVariantParam.cs" />
     <Compile Include="SQL\ParameterTest\SteAttribute.cs" />
     <Compile Include="SQL\ParameterTest\SteParam.cs" />
     <Compile Include="SQL\ParameterTest\StePermutationSet.cs" />
@@ -259,22 +258,6 @@
     <Content Include="SQL\ParameterTest\TvpColumnBoundaries_ReleaseMode_Azure.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>TvpColumnBoundaries_ReleaseMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlVariantParameter_DebugMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlVariantParameter_DebugMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlVariantParameter_DebugMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlVariantParameter_DebugMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlVariantParameter_ReleaseMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlVariantParameter_ReleaseMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlVariantParameter_ReleaseMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlVariantParameter_ReleaseMode_Azure.bsl</Link>
     </Content>
     <Content Include="SQL\ParameterTest\DateTimeVariant_DebugMode.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
