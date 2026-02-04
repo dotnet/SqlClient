@@ -260,22 +260,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>TvpColumnBoundaries_ReleaseMode_Azure.bsl</Link>
     </Content>
-    <Content Include="SQL\ParameterTest\TvpQueryHints_DebugMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TvpQueryHints_DebugMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\TvpQueryHints_DebugMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TvpQueryHints_DebugMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\TvpQueryHints_ReleaseMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TvpQueryHints_ReleaseMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\TvpQueryHints_ReleaseMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TvpQueryHints_ReleaseMode_Azure.bsl</Link>
-    </Content>
     <Content Include="SQL\ParameterTest\SqlVariantParameter_DebugMode.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>SqlVariantParameter_DebugMode.bsl</Link>
