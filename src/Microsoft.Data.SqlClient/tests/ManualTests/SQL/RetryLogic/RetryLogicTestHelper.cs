@@ -17,13 +17,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly HashSet<int> s_defaultTransientErrors =
         [
             .. SqlConfigurableRetryFactory.IntrinsicTransientErrors,
-            4060,   // Cannot open database requested by the login. The login failed.
-            10928,  // Resource ID : %d. The %s limit for the database is %d and has been reached.
-            10929,  // Resource ID : %d. The %s limit for the database is %d and has been reached.
-            40197,  // The service has encountered an error processing your request. Please try again.
-            40501,  // The service is currently busy. Retry the request after 10 seconds. Code: (reason code to be decoded).
-            40613   // Database XXXX on server YYYY is not currently available. Please retry the connection later.
-        ];
+            -2,     // Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.
+            0,      // A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: TCP Provider, error: 0 - A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.)
+            20,     // The instance of SQL Server you attempted to connect to does not support encryption.
+            64,     // A connection was successfully established with the server, but then an error occurred during the login process. (provider: TCP Provider, error: 0 - The specified network name is no longer available.)
+            207,    // Invalid column name
+            18456   // Using managed identity in Azure Sql Server throws 18456 for non-existent database instead of 4060.
+       ];
 
         public static readonly Regex FilterDmlStatements = new Regex(
             @"\b(INSERT( +INTO)|UPDATE|DELETE|TRUNCATE)\b",
