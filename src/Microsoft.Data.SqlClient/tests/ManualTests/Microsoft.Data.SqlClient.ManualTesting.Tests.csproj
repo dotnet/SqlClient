@@ -212,7 +212,6 @@
     <Compile Include="SQL\WeakRefTest\WeakRefTest.cs" />
     <Compile Include="SQL\WeakRefTestYukonSpecific\WeakRefTestYukonSpecific.cs" />
     <Compile Include="SQL\ParameterTest\DateTimeVariantTest.cs" />
-    <Compile Include="SQL\ParameterTest\OutputParameter.cs" />
     <Compile Include="SQL\ParameterTest\ParametersTest.cs" />
     <Compile Include="SQL\ParameterTest\SqlAdapterUpdateBatch.cs" />
     <Compile Include="SQL\ParameterTest\SqlVariantParam.cs" />
@@ -308,22 +307,6 @@
     <Content Include="SQL\ParameterTest\DateTimeVariant_ReleaseMode_Azure.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>DateTimeVariant_ReleaseMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\OutputParameter_DebugMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>OutputParameter_DebugMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\OutputParameter_DebugMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>OutputParameter_DebugMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\OutputParameter_ReleaseMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>OutputParameter_ReleaseMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\OutputParameter_ReleaseMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>OutputParameter_ReleaseMode_Azure.bsl</Link>
     </Content>
     <Content Include="DDBasics\DDDataTypesTest\data.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
