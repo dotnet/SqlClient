@@ -147,7 +147,6 @@ jobs:
       - name: commonArguments
         value: >-
           --verbosity ${{ parameters.dotnetVerbosity }}
-          --configfile $(nugetConfigFile)
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
@@ -261,7 +260,7 @@ jobs:
           command: custom
           custom: restore
           projects: $(project)
-          arguments: $(commonArguments)
+          arguments: $(commonArguments) --configfile $(nugetConfigFile)
 
       # Build the project.
       - task: DotNetCoreCLI@2

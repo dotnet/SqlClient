@@ -95,7 +95,6 @@ stages:
         value: >-
           --verbosity ${{parameters.dotnetVerbosity}}
           --artifacts-path $(dotnetArtifactsDir)
-          --configfile=$(Build.SourcesDirectory)/NuGet.config.local
           -p:MdsPackageVersion=${{parameters.mdsPackageVersion}}
           -p:AzurePackageVersion=${{parameters.azurePackageVersion}}
 
@@ -141,7 +140,7 @@ stages:
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)
-        restoreArguments: $(commonArguments)
+        restoreArguments: $(commonArguments) --configfile=$(Build.SourcesDirectory)/NuGet.config.local
         buildArguments: $(buildArguments)
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
         configContent: $(ConfigContent)
@@ -161,7 +160,7 @@ stages:
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)
-        restoreArguments: $(commonArguments)
+        restoreArguments: $(commonArguments) --configfile=$(Build.SourcesDirectory)/NuGet.config.local
         buildArguments: $(buildArguments)
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
         # Note that we include the .NET Framework runtimes for test runs on
@@ -184,7 +183,7 @@ stages:
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)
-        restoreArguments: $(commonArguments)
+        restoreArguments: $(commonArguments) --configfile=$(Build.SourcesDirectory)/NuGet.config.local
         buildArguments: $(buildArguments)
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
         configContent: $(ConfigContent)
