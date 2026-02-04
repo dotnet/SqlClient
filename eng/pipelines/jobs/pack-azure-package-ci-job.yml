@@ -45,7 +45,7 @@ parameters:
   - name: debug
     type: boolean
     default: false
-  
+
   # The list of upstream jobs to depend on.
   - name: dependsOn
     type: object
@@ -138,19 +138,13 @@ jobs:
         - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
           displayName: '[Debug] Print Environment Variables'
 
-      # We have a few extra steps for Package reference builds.
+      # For Package reference builds, we must first download the Abstractions package artifacts.
       - ${{ if eq(parameters.referenceType, 'Package') }}:
-
-        # Download the Abstractions package artifacts into packages/.
         - task: DownloadPipelineArtifact@2
           displayName: Download Abstractions Package Artifacts
           inputs:
             artifactName: ${{ parameters.abstractionsArtifactsName }}
             targetPath: $(Build.SourcesDirectory)/packages
-
-        # Use the local NuGet.config that references the packages/ directory.
-        - pwsh: cp $(Build.SourcesDirectory)/NuGet.config.local $(Build.SourcesDirectory)/NuGet.config
-          displayName: Use local NuGet.config
 
       # Install the .NET SDK.
       - template: /eng/pipelines/steps/install-dotnet.yml@self

@@ -2719,6 +2719,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     switch (ConnectionOptions.Authentication)
                     {
                         case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
+                            #if NET
                             // In some scenarios for .NET Core, MSAL cannot detect the current user and needs it passed in
                             // for Integrated auth. Allow the user/application to pass it in to work around those scenarios.
                             if (!string.IsNullOrEmpty(ConnectionOptions.UserID))
@@ -2730,6 +2731,9 @@ namespace Microsoft.Data.SqlClient.Connection
                             {
                                 username = TdsEnums.NTAUTHORITYANONYMOUSLOGON;
                             }
+                            #else
+                            username = TdsEnums.NTAUTHORITYANONYMOUSLOGON;
+                            #endif
 
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {

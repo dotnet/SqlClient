@@ -44,9 +44,6 @@ jobs:
 
   - ${{parameters.downloadPackageStep }}
 
-  - pwsh: Copy-Item -Path "$(Build.SourcesDirectory)/NuGet.config.local" -Destination "$(Build.SourcesDirectory)/NuGet.config" -Force
-    displayName: Use local NuGet packages
-
   - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml
     parameters:
       TCPConnectionString: $(SQL_TCP_CONN_STRING)

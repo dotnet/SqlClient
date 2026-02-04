@@ -198,10 +198,6 @@ jobs:
             artifactName: ${{ parameters.mdsArtifactsName }}
             targetPath: $(Build.SourcesDirectory)/packages
 
-        # Use the local NuGet.config that references the packages/ directory.
-        - pwsh: cp $(Build.SourcesDirectory)/NuGet.config.local $(Build.SourcesDirectory)/NuGet.config
-          displayName: Use local NuGet.config
-
       # Install the .NET SDK and Runtimes.
       - template: /eng/pipelines/steps/install-dotnet.yml@self
         parameters:

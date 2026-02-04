@@ -226,12 +226,6 @@ stages:
           - pwsh: 'Get-ChildItem env: | Sort-Object Name'
             displayName: '[Debug] List Environment Variables'
 
-        - ${{if eq(parameters.referenceType, 'Package')}}:
-          - pwsh: New-Item -Path "$(Build.SourcesDirectory)/packages" -ItemType Directory -Force
-            displayName: Create packages/ directory
-          - pwsh: Copy-Item -Path "$(Build.SourcesDirectory)/NuGet.config.local" -Destination "$(Build.SourcesDirectory)/NuGet.config" -Force
-            displayName: Use local NuGet packages
-
       # Include the code coverage job if the build type is Project.
       ${{ if eq(parameters.referenceType, 'Project') }}:
          # Jobs to run as part of the tests stage, after the tests are done.

@@ -28,14 +28,6 @@ steps:
   # Install the .NET SDK.
   - template: /eng/pipelines/steps/install-dotnet.yml@self
 
-  # Configure NuGet to use the local packages/ directory where the Abstractions
-  # package will be.
-  - pwsh: New-Item -Path "$(packageFolderName)" -ItemType Directory -Force
-    displayName: Create packages/ directory
-
-  - pwsh: Copy-Item -Path "$(Build.SourcesDirectory)/NuGet.config.local" -Destination "$(Build.SourcesDirectory)/NuGet.config" -Force
-    displayName: Use local NuGet packages
-
   - task: MSBuild@1
     displayName: 'BuildAllConfigurations using build.proj'
     inputs:

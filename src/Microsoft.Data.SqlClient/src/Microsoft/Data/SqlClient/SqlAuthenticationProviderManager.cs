@@ -250,12 +250,26 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Get an authentication provider by method.
+        /// </summary>
+        /// <param name="authenticationMethod">Authentication method.</param>
+        /// <returns>Authentication provider or null if not found.</returns>
         internal static SqlAuthenticationProvider? GetProvider(SqlAuthenticationMethod authenticationMethod)
         {
             SqlAuthenticationProvider? value;
             return Instance._providers.TryGetValue(authenticationMethod, out value) ? value : null;
         }
 
+        /// <summary>
+        /// Set an authentication provider by method.
+        /// </summary>
+        /// <param name="authenticationMethod">Authentication method.</param>
+        /// <param name="provider">Authentication provider.</param>
+        /// <returns>
+        ///   True if succeeded, false on any errors or if the authentication method has already
+        ///   been claimed via app configuration.
+        /// </returns>
         internal static bool SetProvider(SqlAuthenticationMethod authenticationMethod, SqlAuthenticationProvider provider)
         {
             if (!provider.IsSupported(authenticationMethod))
@@ -263,16 +277,13 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.UnsupportedAuthenticationByProvider(authenticationMethod.ToString(), provider.GetType().Name);
             }
             var methodName = "SetProvider";
-            foreach (SqlAuthenticationMethod candidateMethod in Instance._authenticationsWithAppSpecifiedProvider)
+            if (Instance._authenticationsWithAppSpecifiedProvider.Contains(authenticationMethod))
             {
-                if (candidateMethod == authenticationMethod)
-                {
-                    Instance._sqlAuthLogger.LogError(nameof(SqlAuthenticationProviderManager), methodName, $"Failed to add provider {GetProviderType(provider)} because a user-defined provider with type {GetProviderType(Instance._providers[authenticationMethod])} already existed for authentication {authenticationMethod}.");
+                Instance._sqlAuthLogger.LogError(nameof(SqlAuthenticationProviderManager), methodName, $"Failed to add provider {GetProviderType(provider)} because a user-defined provider with type {GetProviderType(Instance._providers[authenticationMethod])} already existed for authentication {authenticationMethod}.");
 
-                    // The app has already specified a Provider for this
-                    // authentication method, so we won't override it.
-                    return false;
-                }
+                // The app has already specified a Provider for this
+                // authentication method, so we won't override it.
+                return false;
             }
             Instance._providers.AddOrUpdate(
                 authenticationMethod,

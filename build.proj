@@ -285,11 +285,14 @@
   <!-- Run all unit tests applicable to Windows. -->
   <Target Name="RunUnitTestsWindows" Condition="'$(IsEnabledWindows)' == 'true' AND $(ReferenceType.Contains('Project'))">
     <PropertyGroup>
+      <!--
+        The UnitTests project exclusively uses Project references, which is the default applied by
+        src/Directory.Build.props, so no need to specify the ReferenceType property here.
+      -->
       <TestCommand>
         $(DotnetPath)dotnet test "@(UnitTestsProj)"
         -f $(TF)
         -p:Configuration=$(Configuration)
-        -p:ReferenceType=Project
         $(CollectStatement)
         --results-directory $(ResultsDirectory)
         --filter "$(FilterStatement)"
@@ -312,7 +315,6 @@
         $(DotnetPath)dotnet test "@(UnitTestsProj)"
         -f $(TF)
         -p:Configuration=$(Configuration)
-        -p:ReferenceType=Project
         $(CollectStatement)
         --results-directory $(ResultsDirectory)
         --filter "$(FilterStatement)"
@@ -446,7 +448,12 @@
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "bin", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", ".nuget", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "obj", SearchOption.AllDirectories))' />
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","packages", SearchOption.AllDirectories))' />
+    <!-- We keep packages/ but remove all of the generated files. -->
+    <ItemGroup>
+      <PackagesToDelete Include="$(RepoRoot)/packages/*.nupkg" />
+      <PackagesToDelete Include="$(RepoRoot)/packages/*.snupkg" />
+    </ItemGroup>
+    <Delete Files="@(PackagesToDelete)" />
   </Target>
 
   <!-- AKV Targets ========================================================= -->

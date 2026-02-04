@@ -75,19 +75,8 @@ jobs:
      # configuration
     - ${{ parameters.prebuildSteps }}
 
-  # If we're testing in Package mode, we have a few additional steps.
+  # If we're testing in Package mode, then we must download the Abstractions package artifacts.
   - ${{ if eq(parameters.referenceType, 'Package') }}:
-
-    # Create the packages/ directory.
-    - pwsh: New-Item -Path "$(Build.SourcesDirectory)/packages" -ItemType Directory -Force
-      displayName: Create packages/ directory
-
-    # Setup the top-level NuGet.config to look in packages/ for local NuGet
-    # dependencies.
-    - pwsh: Copy-Item -Path "$(Build.SourcesDirectory)/NuGet.config.local" -Destination "$(Build.SourcesDirectory)/NuGet.config" -Force
-      displayName: Use local NuGet packages
-
-    # Download the Abstractions package artifacts.
     - task: DownloadPipelineArtifact@2
       displayName: Download Abstractions Package Artifacts
       inputs:
@@ -127,8 +116,8 @@ jobs:
       nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
       outputDirectory: $(packagePath)
       packageVersion: ${{ parameters.mdsPackageVersion }}
-      referenceType: ${{ parameters.referenceType }}
       properties: 'AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}'
+      referenceType: ${{ parameters.referenceType }}
 
   - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:
@@ -148,8 +137,8 @@ jobs:
       nuspecPath: 'tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
       outputDirectory: $(packagePath)
       packageVersion: $(akvPackageVersion)
-      referenceType: ${{ parameters.referenceType }}
       properties: 'MdsPackageVersion=${{ parameters.mdsPackageVersion }}'
+      referenceType: ${{ parameters.referenceType }}
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish Pipeline Artifacts'
