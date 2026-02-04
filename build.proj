@@ -10,7 +10,10 @@
     <!-- SourceLink variable-->
     <DisableSourceLink>false</DisableSourceLink>
 
-    <RestoreConfigFile>src\NuGet.config</RestoreConfigFile>
+    <!-- Use the NuGet.config with a local source for Package reference builds. -->
+    <NuGetConfigFile>$(RepoRoot)/NuGet.config</NuGetConfigFile>
+    <NuGetConfigFile Condition="'$(ReferenceType)' == 'Package'">$(NuGetConfigFile).local</NuGetConfigFile>
+
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
     <!-- Flag to control whether or not to build Microsoft.DotNet.GenAPI project in tools -->
@@ -29,7 +32,7 @@
     <TargetNetFxVersion Condition="$(TargetGroup) == 'netfx' AND $(TargetNetFxVersion) == ''">$(TF)</TargetNetFxVersion>
     <GenerateNuget Condition="'$(GenerateNuget)' == '' AND '$(IsEnabledWindows)' == 'true'">true</GenerateNuget>
 
-    <CommonProperties>Configuration=$(Configuration);ReferenceType=$(ReferenceType)</CommonProperties>
+    <CommonProperties>Configuration=$(Configuration);ReferenceType=$(ReferenceType);RestoreConfigFile=$(NuGetConfigFile)</CommonProperties>
     <SqlServerLibProperties>$(CommonProperties);AssemblyVersion=$(SqlServerAssemblyVersion);AssemblyFileVersion=$(SqlServerAssemblyFileVersion);Version=$(SqlServerPackageVersion);</SqlServerLibProperties>
     <ProjectProperties>$(CommonProperties);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
     <TestProjectProperties>$(ProjectProperties);BuildForRelease=false;TargetNetCoreVersion=$(TargetNetCoreVersion);TargetNetFxVersion=$(TargetNetFxVersion)</TestProjectProperties>
@@ -462,7 +465,7 @@
     <!-- @TODO: TestTargetOS makes this far more complicated than it needs to be. We should remove it. -->
     <!-- @TODO: RemoveProperties shouldn't be necessary -->
     <Message Text=">>> Restoring AKV project" />
-    <MSBuild Projects="@(AKVProvider)" Targets="Restore" />
+    <MSBuild Projects="@(AKVProvider)" Targets="Restore" Properties="$(CommonProperties)" />
 
     <PropertyGroup>
       <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties)</BuildAkvProperties>
@@ -510,7 +513,7 @@
   </Target>
 
   <Target Name="BuildAKVNetCoreAllOS" DependsOnTargets="BuildNetCore">
-    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
+    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="$(CommonProperties);TestTargetOS=$(TestOS)netcoreapp" />
     <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
     <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
     <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />

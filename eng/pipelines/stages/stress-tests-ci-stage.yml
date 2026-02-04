@@ -95,6 +95,7 @@ stages:
         value: >-
           --verbosity ${{parameters.dotnetVerbosity}}
           --artifacts-path $(dotnetArtifactsDir)
+          --configfile=$(Build.SourcesDirectory)/NuGet.config.local
           -p:MdsPackageVersion=${{parameters.mdsPackageVersion}}
           -p:AzurePackageVersion=${{parameters.azurePackageVersion}}
 

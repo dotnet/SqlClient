@@ -95,10 +95,18 @@ jobs:
       - name: dotnetPackagesDir
         value: $(Build.StagingDirectory)/dotnetPackages
 
+      # The NuGet.config file to use for restoring packages.
+      - name: nugetConfigFile
+        ${{ if eq(parameters.referenceType, 'Package') }}:
+          value: $(Build.SourcesDirectory)/NuGet.config.local
+        ${{ else }}:
+          value: $(Build.SourcesDirectory)/NuGet.config
+
       # dotnet CLI arguments common to all commands.
       - name: commonArguments
         value: >-
           --verbosity ${{ parameters.dotnetVerbosity }}
+          --configfile $(nugetConfigFile)
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
 

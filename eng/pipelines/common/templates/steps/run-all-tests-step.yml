@@ -75,10 +75,12 @@ steps:
           msbuildArguments: >-
             -t:RunUnitTests
             -p:TF=${{ parameters.targetFramework }}
+            -p:ReferenceType=${{ parameters.referenceType }}
         ${{ else }}: # x86
           msbuildArguments: >-
             -t:RunUnitTests
             -p:TF=${{ parameters.targetFramework }}
+            -p:ReferenceType=${{ parameters.referenceType }}
             -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
 
     - task: MSBuild@1
@@ -93,12 +95,14 @@ steps:
           msbuildArguments: >-
             -t:RunUnitTests
             -p:TF=${{ parameters.targetFramework }}
+            -p:ReferenceType=${{ parameters.referenceType }}
             -p:Filter="category=flaky"
             -p:CollectCodeCoverage=false
         ${{ else }}: # x86
           msbuildArguments: >-
             -t:RunUnitTests
             -p:TF=${{ parameters.targetFramework }}
+            -p:ReferenceType=${{ parameters.referenceType }}
             -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
             -p:Filter="category=flaky"
             -p:CollectCodeCoverage=false

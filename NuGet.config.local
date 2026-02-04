@@ -14,5 +14,12 @@
     -->
     <add key="governed" value="https://sqlclientdrivers.pkgs.visualstudio.com/public/_packaging/sqlclient/nuget/v3/index.json" />
 
+    <!--
+      This package source is used by developers and our pipelines builds when we need to reference
+      packages that are not available on the public nuget.org feed, for example to test MDS that
+      depends on a version of Abstractions that was just built in the workspace.
+    -->
+    <add key="local" value="packages/" />
+
   </packageSources>
 </configuration>
