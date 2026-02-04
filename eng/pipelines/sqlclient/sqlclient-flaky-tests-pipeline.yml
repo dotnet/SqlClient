@@ -15,7 +15,7 @@
 #   - Commits to GitHub main
 #   - Weekdays at 09:00 UTC on GitHub main
 #
-# Changes are batched together to ensure that the pipline never runs concurrently.
+# Changes are batched together to ensure that the pipeline never runs concurrently.
 #
 # This pipeline definition is mapped to the following Azure DevOps pipelines:
 #
@@ -41,7 +41,7 @@ trigger:
     # GitHub main branch.
     - main
 
-# Trigger this pipline on a schedule.
+# Trigger this pipeline on a schedule.
 schedules:
 
   # GitHub main on weekdays
