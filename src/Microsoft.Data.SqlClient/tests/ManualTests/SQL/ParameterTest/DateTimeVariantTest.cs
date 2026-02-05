@@ -6,62 +6,81 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using Microsoft.Data.SqlClient.Server;
+using Xunit.Sdk;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    public enum TestVariations {
+        TestSimpleParameter_Type,
+        TestSimpleParameter_Variant,
+        TestSqlDataRecordParameterToTVP_Type,
+        TestSqlDataRecordParameterToTVP_Variant,
+        TestSqlDataReaderParameterToTVP_Type,
+        TestSqlDataReaderParameterToTVP_Variant,
+        TestSqlDataReader_TVP_Type,
+        TestSqlDataReader_TVP_Variant,
+        TestSimpleDataReader_Type,
+        TestSimpleDataReader_Variant,
+        SqlBulkCopySqlDataReader_Type,
+        SqlBulkCopySqlDataReader_Variant,
+        SqlBulkCopyDataTable_Type,
+        SqlBulkCopyDataTable_Variant,
+        SqlBulkCopyDataRow_Type,
+        SqlBulkCopyDataRow_Variant
+    };
+
     public static class DateTimeVariantTest
     {
-
         public static void SendInfo(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, Func<Exception, object, bool> isExpectedException, Func<Exception, bool> isExpectedInvalidOperationException)
         {
 
-            List<Tuple<string, Action<object, string, string, string, string>>> testVariations = new() {
-                new("TestSimpleParameter_Type", _TestSimpleParameter_Type),
-                new("TestSimpleParameter_Variant", _TestSimpleParameter_Variant),
-                new("TestSqlDataRecordParameterToTVP_Type", _TestSqlDataRecordParameterToTVP_Type),
-                new("TestSqlDataRecordParameterToTVP_Variant", _TestSqlDataRecordParameterToTVP_Variant),
-                new("TestSqlDataReaderParameterToTVP_Type", _TestSqlDataReaderParameterToTVP_Type),
-                new("TestSqlDataReaderParameterToTVP_Variant", _TestSqlDataReaderParameterToTVP_Variant),
-                new("TestSqlDataReader_TVP_Type", _TestSqlDataReader_TVP_Type),
-                new("TestSqlDataReader_TVP_Variant", _TestSqlDataReader_TVP_Variant),
-                new("TestSimpleDataReader_Type", _TestSimpleDataReader_Type),
-                new("TestSimpleDataReader_Variant", _TestSimpleDataReader_Variant),
-                new("SqlBulkCopySqlDataReader_Type", _SqlBulkCopySqlDataReader_Type),
-                new("SqlBulkCopySqlDataReader_Variant", _SqlBulkCopySqlDataReader_Variant),
-                new("SqlBulkCopyDataTable_Type", _SqlBulkCopyDataTable_Type),
-                new("SqlBulkCopyDataTable_Variant", _SqlBulkCopyDataTable_Variant),
-                new("SqlBulkCopyDataRow_Type", _SqlBulkCopyDataRow_Type),
-                new("SqlBulkCopyDataRow_Variant", _SqlBulkCopyDataRow_Variant)
+            List<Tuple<TestVariations, Action<object, string, string, string, string>>> testVariations = new() {
+                new(TestVariations.TestSimpleParameter_Type, _TestSimpleParameter_Type),
+                new(TestVariations.TestSimpleParameter_Variant, _TestSimpleParameter_Variant),
+                new(TestVariations.TestSqlDataRecordParameterToTVP_Type, _TestSqlDataRecordParameterToTVP_Type),
+                new(TestVariations.TestSqlDataRecordParameterToTVP_Variant, _TestSqlDataRecordParameterToTVP_Variant),
+                new(TestVariations.TestSqlDataReaderParameterToTVP_Type, _TestSqlDataReaderParameterToTVP_Type),
+                new(TestVariations.TestSqlDataReaderParameterToTVP_Variant, _TestSqlDataReaderParameterToTVP_Variant),
+                new(TestVariations.TestSqlDataReader_TVP_Type, _TestSqlDataReader_TVP_Type),
+                new(TestVariations.TestSqlDataReader_TVP_Variant, _TestSqlDataReader_TVP_Variant),
+                new(TestVariations.TestSimpleDataReader_Type, _TestSimpleDataReader_Type),
+                new(TestVariations.TestSimpleDataReader_Variant, _TestSimpleDataReader_Variant),
+                new(TestVariations.SqlBulkCopySqlDataReader_Type, _SqlBulkCopySqlDataReader_Type),
+                new(TestVariations.SqlBulkCopySqlDataReader_Variant, _SqlBulkCopySqlDataReader_Variant),
+                new(TestVariations.SqlBulkCopyDataTable_Type, _SqlBulkCopyDataTable_Type),
+                new(TestVariations.SqlBulkCopyDataTable_Variant, _SqlBulkCopyDataTable_Variant),
+                new(TestVariations.SqlBulkCopyDataRow_Type, _SqlBulkCopyDataRow_Type),
+                new(TestVariations.SqlBulkCopyDataRow_Variant, _SqlBulkCopyDataRow_Variant)
             };
 
             foreach (var test in testVariations)
             {
-                (string tag, Action<object, string, string, string, string> action) = test;
+                (TestVariations tag, Action<object, string, string, string, string> action) = test;
 
-                DisplayHeader(tag, paramValue, expectedBaseTypeName);
+                DisplayHeader(tag.ToString(), paramValue, expectedBaseTypeName);
                 try
                 {
-                    action(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
+                    action(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag.ToString());
                 }
                 catch (Exception e)
                 {
                     if (isExpectedException(e, paramValue))
                     {
-                        LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                        LogMessage(tag.ToString(), "[EXPECTED EXCEPTION] " + e.Message);
                     }
                     else if (isExpectedInvalidOperationException(e))
                     {
-                        LogMessage(tag, "[EXPECTED INVALID OPERATION EXCEPTION] " + AmendTheGivenMessageDateValueException(e.Message, paramValue));
+                        LogMessage(tag.ToString(), "[EXPECTED INVALID OPERATION EXCEPTION] " + AmendTheGivenMessageDateValueException(e.Message, paramValue));
                     }
                     else
                     {
-                        DisplayError(tag, e);
+                        DisplayError(tag.ToString(), e);
                     }
                 }
             }
         }
 
-        private static void _TestSimpleParameter_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
+        public static void _TestSimpleParameter_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             string procName = DataTestUtility.GetLongName("paramProc1");
 
             try {
