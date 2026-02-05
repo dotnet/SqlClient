@@ -10,75 +10,50 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class DateTimeVariantTest
     {
-        private static string s_connStr;
 
         /// <summary>
-        /// Tests all 2008 DateTime types inside sql_variant to server using sql_variant parameter, SqlBulkCopy, and TVP parameter with sql_variant inside.
+        /// Public wrapper for SendInfo that allows external callers to run tests for a single parameter combination.
         /// </summary>
-        public static void TestAllDateTimeWithDataTypeAndVariant(string connStr)
+        public static void SendInfoPublic(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
-            s_connStr = connStr;
-
-            SendInfo(System.DateTime.MinValue, "System.DateTime", "date");
-            SendInfo(System.DateTime.MaxValue, "System.DateTime", "date");
-
-            SendInfo(System.DateTime.MinValue, "System.DateTime", "datetime2");
-            SendInfo(System.DateTime.MaxValue, "System.DateTime", "datetime2");
-
-            SendInfo(System.DateTime.MinValue, "System.DateTime", "datetime");
-            SendInfo(System.DateTime.MaxValue, "System.DateTime", "datetime");
-
-            SendInfo(System.DateTimeOffset.MinValue, "System.DateTimeOffset", "datetimeoffset");
-            SendInfo(System.DateTimeOffset.MaxValue, "System.DateTimeOffset", "datetimeoffset");
-
-            SendInfo(System.DateTimeOffset.Parse("12/31/1999 23:59:59.9999999 -08:30"), "System.DateTimeOffset", "datetimeoffset");
-            SendInfo(System.DateTime.Parse("1998-01-01 23:59:59.995"), "System.DateTime", "datetime2");
-
-            SendInfo(System.DateTime.MinValue, "System.DateTime", "smalldatetime");
-            SendInfo(System.DateTime.MaxValue, "System.DateTime", "smalldatetime");
-
-            SendInfo(System.TimeSpan.MinValue, "System.TimeSpan", "time");
-            SendInfo(System.TimeSpan.MaxValue, "System.TimeSpan", "time");
-
-            SendInfo(System.DateTime.MinValue, "System.DateTime", "time");
-            SendInfo(System.DateTime.MaxValue, "System.DateTime", "time");
+            SendInfo(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
         }
 
-        private static void SendInfo(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static void SendInfo(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
-            TestSimpleParameter_Type(paramValue, expectedTypeName, expectedBaseTypeName);
-            TestSimpleParameter_Variant(paramValue, expectedTypeName, expectedBaseTypeName);
+            TestSimpleParameter_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            TestSimpleParameter_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
 
-            TestSqlDataRecordParameterToTVP_Type(paramValue, expectedTypeName, expectedBaseTypeName);
-            TestSqlDataRecordParameterToTVP_Variant(paramValue, expectedTypeName, expectedBaseTypeName);
+            TestSqlDataRecordParameterToTVP_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            TestSqlDataRecordParameterToTVP_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
 
-            TestSqlDataReaderParameterToTVP_Type(paramValue, expectedTypeName, expectedBaseTypeName);
-            TestSqlDataReaderParameterToTVP_Variant(paramValue, expectedTypeName, expectedBaseTypeName);
+            TestSqlDataReaderParameterToTVP_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            TestSqlDataReaderParameterToTVP_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
 
-            TestSqlDataReader_TVP_Type(paramValue, expectedTypeName, expectedBaseTypeName);
-            TestSqlDataReader_TVP_Variant(paramValue, expectedTypeName, expectedBaseTypeName);
+            TestSqlDataReader_TVP_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            TestSqlDataReader_TVP_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
 
-            TestSimpleDataReader_Type(paramValue, expectedTypeName, expectedBaseTypeName);
-            TestSimpleDataReader_Variant(paramValue, expectedTypeName, expectedBaseTypeName);
+            TestSimpleDataReader_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            TestSimpleDataReader_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
 
-            SqlBulkCopySqlDataReader_Type(paramValue, expectedTypeName, expectedBaseTypeName);
-            SqlBulkCopySqlDataReader_Variant(paramValue, expectedTypeName, expectedBaseTypeName);
+            SqlBulkCopySqlDataReader_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            SqlBulkCopySqlDataReader_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
 
-            SqlBulkCopyDataTable_Type(paramValue, expectedTypeName, expectedBaseTypeName);
-            SqlBulkCopyDataTable_Variant(paramValue, expectedTypeName, expectedBaseTypeName);
+            SqlBulkCopyDataTable_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            SqlBulkCopyDataTable_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
 
-            SqlBulkCopyDataRow_Type(paramValue, expectedTypeName, expectedBaseTypeName);
-            SqlBulkCopyDataRow_Variant(paramValue, expectedTypeName, expectedBaseTypeName);
+            SqlBulkCopyDataRow_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            SqlBulkCopyDataRow_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
         }
 
-        private static void TestSimpleParameter_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static void TestSimpleParameter_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
             string tag = "TestSimpleParameter_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
             string procName = DataTestUtility.GetLongName("paramProc1");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropStoredProcedure(conn, procName);
                 xsql(conn, string.Format("create proc {0} (@param {1}) as begin select @param end;", procName, expectedBaseTypeName));
@@ -107,7 +82,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropStoredProcedure(conn, procName);
             }
@@ -115,14 +90,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // sql_variant parameters and sql_variant TVPs store all datetime values internally
         // as datetime, hence breaking for 2008 types
-        private static void TestSimpleParameter_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static void TestSimpleParameter_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
             string tag = "TestSimpleParameter_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
             string procName = DataTestUtility.GetLongName("paramProc2");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropStoredProcedure(conn, procName);
                 xsql(conn, string.Format("create proc {0} (@param sql_variant) as begin select @param, sql_variant_property(@param,'BaseType') as BaseType end;", procName));
@@ -151,20 +126,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropStoredProcedure(conn, procName);
             }
         }
 
-        private static void TestSqlDataRecordParameterToTVP_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static void TestSqlDataRecordParameterToTVP_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
             string tag = "TestSqlDataRecordParameterToTVP_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
             string tvpTypeName = DataTestUtility.GetLongName("tvpType");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
                 xsql(conn, string.Format("create type dbo.{0} as table (f1 {1})", tvpTypeName, expectedBaseTypeName));
@@ -200,7 +175,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
             }
@@ -208,14 +183,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // sql_variant parameters and sql_variant TVPs store all datetime values internally
         // as datetime, hence breaking for 2008 types
-        private static void TestSqlDataRecordParameterToTVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static void TestSqlDataRecordParameterToTVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
             string tag = "TestSqlDataRecordParameterToTVP_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
             string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
                 xsql(conn, string.Format("create type dbo.{0} as table (f1 sql_variant)", tvpTypeName));
@@ -251,24 +226,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
             }
         }
 
-        private static void TestSqlDataReaderParameterToTVP_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static void TestSqlDataReaderParameterToTVP_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
             string tag = "TestSqlDataReaderParameterToTVP_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
             string tvpTypeName = DataTestUtility.GetLongName("tvpType");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
                 xsql(conn, string.Format("create type dbo.{0} as table (f1 {1})", tvpTypeName, expectedBaseTypeName));
-                using (SqlConnection connInput = new(s_connStr))
+                using (SqlConnection connInput = new(connStr))
                 {
                     connInput.Open();
                     using (SqlCommand cmdInput = connInput.CreateCommand())
@@ -303,7 +278,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
             }
@@ -311,20 +286,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // sql_variant parameters and sql_variant TVPs store all datetime values internally
         // as datetime, hence breaking for 2008 types
-        private static void TestSqlDataReaderParameterToTVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static void TestSqlDataReaderParameterToTVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
             string tag = "TestSqlDataReaderParameterToTVP_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
             string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
                 xsql(conn, string.Format("create type dbo.{0} as table (f1 sql_variant)", tvpTypeName));
 
                 // Send TVP using SqlDataReader.
-                using (SqlConnection connInput = new(s_connStr))
+                using (SqlConnection connInput = new(connStr))
                 {
                     connInput.Open();
                     using (SqlCommand cmdInput = connInput.CreateCommand())
@@ -359,7 +334,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
             }
@@ -367,7 +342,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // sql_variant parameters and sql_variant TVPs store all datetime values internally
         // as datetime, hence breaking for 2008 types
-        private static void TestSqlDataReader_TVP_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static void TestSqlDataReader_TVP_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
             string tag = "TestSqlDataReader_TVP_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
@@ -377,7 +352,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string ProcName = DataTestUtility.GetLongName("spTVPProc");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
 
                 DropStoredProcedure(conn, ProcName);
@@ -409,7 +384,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SqlCommand cmd = conn.CreateCommand();
                 cmd.CommandText = string.Format("SELECT * FROM {0}", InputTableName);
                 using SqlDataReader r = cmd.ExecuteReader();
-                using (SqlConnection conn2 = new(s_connStr))
+                using (SqlConnection conn2 = new(connStr))
                 {
                     conn2.Open();
                     SqlCommand cmd2 = new(ProcName, conn2)
@@ -443,7 +418,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropStoredProcedure(conn, ProcName);
                 DropTable(conn, InputTableName);
@@ -452,7 +427,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static void TestSqlDataReader_TVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static void TestSqlDataReader_TVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
             string tag = "TestSqlDataReader_TVP_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
@@ -462,7 +437,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string ProcName = DataTestUtility.GetLongName("spTVPProc_DRdrTVPVar");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
 
                 DropStoredProcedure(conn, ProcName);
@@ -494,7 +469,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SqlCommand cmd = conn.CreateCommand();
                 cmd.CommandText = string.Format("SELECT * FROM {0}", InputTableName);
                 using SqlDataReader r = cmd.ExecuteReader();
-                using (SqlConnection conn2 = new(s_connStr))
+                using (SqlConnection conn2 = new(connStr))
                 {
                     conn2.Open();
                     using (SqlCommand cmd2 = new(ProcName, conn2))
@@ -529,7 +504,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropStoredProcedure(conn, ProcName);
                 DropTable(conn, InputTableName);
@@ -540,7 +515,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // sql_variant parameters and sql_variant TVPs store all datetime values internally
         // as datetime, hence breaking for 2008 types
-        private static void TestSimpleDataReader_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static void TestSimpleDataReader_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
             string tag = "TestSimpleDataReader_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
@@ -548,7 +523,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string procName = DataTestUtility.GetLongName("paramProc3");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, inputTable);
                 DropStoredProcedure(conn, procName);
@@ -593,14 +568,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropStoredProcedure(conn, procName);
                 DropTable(conn, inputTable);
             }
         }
 
-        private static void TestSimpleDataReader_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static void TestSimpleDataReader_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
             string tag = "TestSimpleDataReader_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
@@ -608,7 +583,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string procName = DataTestUtility.GetLongName("paramProc4");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, inputTable);
                 DropStoredProcedure(conn, procName);
@@ -653,14 +628,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropStoredProcedure(conn, procName);
                 DropTable(conn, inputTable);
             }
         }
 
-        private static void SqlBulkCopySqlDataReader_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static void SqlBulkCopySqlDataReader_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
             string tag = "SqlBulkCopySqlDataReader_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
@@ -668,7 +643,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestTable");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 {1})", bulkCopyTableName, expectedBaseTypeName));
@@ -691,7 +666,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 xsql(conn, string.Format("insert into {0}(f1) values(CAST('{1}' AS {2}));", bulkCopySrcTableName, value, expectedBaseTypeName));
 
-                using SqlConnection connInput = new(s_connStr);
+                using SqlConnection connInput = new(connStr);
                 connInput.Open();
                 using (SqlCommand cmdInput = connInput.CreateCommand())
                 {
@@ -730,7 +705,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 DropTable(conn, bulkCopySrcTableName);
@@ -738,7 +713,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         }
 
-        private static void SqlBulkCopySqlDataReader_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static void SqlBulkCopySqlDataReader_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
             string tag = "SqlBulkCopySqlDataReader_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
@@ -746,7 +721,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestTable");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 sql_variant)", bulkCopyTableName));
@@ -769,7 +744,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 xsql(conn, string.Format("insert into {0}(f1) values(CAST('{1}' AS {2}));", bulkCopySrcTableName, value, expectedBaseTypeName));
 
-                using (SqlConnection connInput = new(s_connStr))
+                using (SqlConnection connInput = new(connStr))
                 {
                     connInput.Open();
                     using (SqlCommand cmdInput = connInput.CreateCommand())
@@ -813,21 +788,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 DropTable(conn, bulkCopySrcTableName);
             }
         }
 
-        private static void SqlBulkCopyDataTable_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static void SqlBulkCopyDataTable_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
             string tag = "SqlBulkCopyDataTable_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestType");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 {1})", bulkCopyTableName, expectedBaseTypeName));
@@ -872,7 +847,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
             }
@@ -880,14 +855,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // sql_variant parameters and sql_variant TVPs store all datetime values internally
         // as datetime, hence breaking for 2008 types
-        private static void SqlBulkCopyDataTable_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static void SqlBulkCopyDataTable_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
             string tag = "SqlBulkCopyDataTable_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestVariant");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 sql_variant)", bulkCopyTableName));
@@ -928,20 +903,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
             }
         }
 
-        private static void SqlBulkCopyDataRow_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static void SqlBulkCopyDataRow_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
             string tag = "SqlBulkCopyDataRow_Type";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestType");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 {1})", bulkCopyTableName, expectedBaseTypeName));
@@ -981,7 +956,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
             }
@@ -989,14 +964,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // sql_variant parameters and sql_variant TVPs store all datetime values internally
         // as datetime, hence breaking for 2008 types
-        private static void SqlBulkCopyDataRow_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static void SqlBulkCopyDataRow_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
             string tag = "SqlBulkCopyDataRow_Variant";
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestVariant");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 sql_variant)", bulkCopyTableName));
@@ -1032,7 +1007,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
             }
