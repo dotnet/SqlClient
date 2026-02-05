@@ -259,21 +259,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>TvpColumnBoundaries_ReleaseMode_Azure.bsl</Link>
     </Content>
-    <Content Include="SQL\ParameterTest\DateTimeVariant_DebugMode.bsl">
+    <Content Include="SQL\ParameterTest\DateTimeVariant\*.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>DateTimeVariant_DebugMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\DateTimeVariant_DebugMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>DateTimeVariant_DebugMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\DateTimeVariant_ReleaseMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>DateTimeVariant_ReleaseMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\DateTimeVariant_ReleaseMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>DateTimeVariant_ReleaseMode_Azure.bsl</Link>
+      <Link>DateTimeVariant\%(Filename)%(Extension)</Link>
     </Content>
     <Content Include="DDBasics\DDDataTypesTest\data.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
