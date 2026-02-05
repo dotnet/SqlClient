@@ -41,16 +41,6 @@ parameters:
     default: 2
 
 steps:
-- task: MSBuild@1
-  displayName: 'Build AKV Provider .NET'
-  inputs:
-    solution: build.proj
-    msbuildArchitecture: x64
-    msbuildArguments: >-
-      -p:Configuration=${{ parameters.buildConfiguration }}
-      -t:BuildAKVNetCore
-      -p:ReferenceType=${{ parameters.referenceType }}
-      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
 # Don't run unit tests using package reference. Unit tests are only run using project reference.
 
