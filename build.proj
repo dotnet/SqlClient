@@ -194,16 +194,8 @@
     <MSBuild Projects="@(NetCoreDriver)" Targets="restore" Properties="$(ProjectProperties)" />
   </Target>
 
-  <Target Name="RestoreTestsNetCore" DependsOnTargets="RestoreNetCore">
-    <Message Text="*** No-op. This will be removed." />
-  </Target>
-
   <Target Name="RestoreNetFx" DependsOnTargets="RestoreSqlServerLib;RestoreAbstractions" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(NetFxDriver)" Targets="restore" Properties="$(ProjectProperties)" />
-  </Target>
-
-  <Target Name="RestoreTestsNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
-    <Message Text="*** No-op. This will be removed." />
   </Target>
 
   <Target Name="RestoreTools" Condition="'$(BuildTools)' == 'true'">
