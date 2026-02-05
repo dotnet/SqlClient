@@ -52,18 +52,6 @@ steps:
       -p:ReferenceType=${{ parameters.referenceType }}
       -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
-- task: MSBuild@1
-  displayName: 'MSBuild Build Tests for ${{parameters.TargetNetCoreVersion }}'
-  inputs:
-    solution: build.proj
-    msbuildArchitecture: x64
-    msbuildArguments: >-
-      -t:BuildTestsNetCore
-      -p:ReferenceType=${{ parameters.referenceType }}
-      -p:TargetNetCoreVersion=${{ parameters.TargetNetCoreVersion }}
-      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-      -p:Configuration=${{ parameters.buildConfiguration }}
-
 # Don't run unit tests using package reference. Unit tests are only run using project reference.
 
 - task: DotNetCoreCLI@2
