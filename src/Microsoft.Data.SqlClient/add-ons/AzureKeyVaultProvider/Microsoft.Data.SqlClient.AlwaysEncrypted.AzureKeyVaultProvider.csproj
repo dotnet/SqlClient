@@ -32,14 +32,10 @@
   <!-- References ====================================================== -->
   <!-- MDS Reference -->
   <ItemGroup>
-    <!-- @TODO: Temporary to allow in-place cleanup of AKV provider -->
-    <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj"
-                      Condition="'$(TargetFramework)' != 'net462' AND '$(ReferenceType)' != 'Package'" />
-    <ProjectReference Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj"
-                      Condition="'$(TargetFramework)' == 'net462' AND '$(ReferenceType)' != 'Package'" />
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.Data.SqlClient"
                       Condition="'$(ReferenceType)' == 'Package'" />
-
   </ItemGroup>
 
   <!-- Other dependencies -->
