@@ -111,6 +111,7 @@
     <Compile Include="SQL\SqlBulkCopyTest\Bug85007.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Bug903514.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Bug98182.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CacheMetadata.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\CheckConstraints.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\ColumnCollation.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\CopyAllFromReader.cs" />
@@ -310,7 +311,7 @@
     <ProjectReference Include="SQL\UdtTest\UDTs\Utf8String\Utf8String.csproj">
       <Name>Utf8String</Name>
     </ProjectReference>
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.End.Point\TDS.End.Point.csproj" />
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
     <ProjectReference Include="$(TestsPath)tools\Microsoft.Data.SqlClient.TestUtilities\Microsoft.Data.SqlClient.TestUtilities.csproj" />

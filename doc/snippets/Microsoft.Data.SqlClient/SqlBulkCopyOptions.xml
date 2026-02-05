@@ -68,5 +68,18 @@ To see how the option changes the way the bulk load works, run the sample with t
         When specified, each batch of the bulk-copy operation will occur within a transaction. If you indicate this option and also provide a <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" /> object to the constructor, an <see cref="T:System.ArgumentException" /> occurs.
       </summary>
     </UseInternalTransaction>
+    <CacheMetadata>
+      <summary>
+        <para>
+          When specified, <b>CacheMetadata</b> caches destination table metadata after the first bulk copy operation, allowing subsequent operations to the same table to skip the metadata discovery query. This can improve performance when performing multiple bulk copy operations to the same destination table.
+        </para>
+        <para>
+          <b>Warning:</b> Use this option only when you are certain the destination table schema will not change between bulk copy operations. If the table schema changes (columns added, removed, or modified), using cached metadata may result in data corruption, failed operations, or unexpected behavior. Call <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.InvalidateMetadataCache" /> to clear the cache if the schema changes.
+        </para>
+        <para>
+          The cache is automatically invalidated when <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> is changed to a different table.
+        </para>
+      </summary>
+    </CacheMetadata>
   </members>
 </docs>
