@@ -195,7 +195,7 @@
   </Target>
 
   <Target Name="RestoreTestsNetCore" DependsOnTargets="RestoreNetCore">
-    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="$(TestProjectProperties)" />
+    <Message Text="*** No-op. This will be removed." />
   </Target>
 
   <Target Name="RestoreNetFx" DependsOnTargets="RestoreSqlServerLib;RestoreAbstractions" Condition="'$(IsEnabledWindows)' == 'true'">
@@ -203,7 +203,7 @@
   </Target>
 
   <Target Name="RestoreTestsNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
-    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="$(TestProjectProperties)" />
+    <Message Text="*** No-op. This will be removed." />
   </Target>
 
   <Target Name="RestoreTools" Condition="'$(BuildTools)' == 'true'">
