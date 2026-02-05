@@ -38,7 +38,7 @@ steps:
         -p:ReferenceType=Package
         -p:GenerateNuget=false
         -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk
-        -p:MdsAssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}
+        -p:AssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
         -p:AssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}
         -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
