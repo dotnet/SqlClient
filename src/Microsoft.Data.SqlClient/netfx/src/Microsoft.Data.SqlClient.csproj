@@ -973,6 +973,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\UserAgent.cs">
       <Link>Microsoft\Data\SqlClient\UserAgent.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\AsyncHelper.cs">
+      <Link>Microsoft\Data\SqlClient\Utilities\AsyncHelper.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\BufferWriterExtensions.netfx.cs">
       <Link>Microsoft\Data\SqlClient\Utilities\BufferWriterExtensions.netfx.cs</Link>
     </Compile>

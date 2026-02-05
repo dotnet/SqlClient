@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Utilities;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -2051,10 +2052,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         }
                         else
                         {
-                            AsyncHelper.ContinueTaskWithState(writeTask, tcs,
+                            AsyncHelper.ContinueTaskWithState(
+                                taskToContinue: writeTask,
+                                taskCompletionSource: tcs,
                                 state: tcs,
-                                onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
-                            );
+                                onSuccess: static tcs2 => tcs2.SetResult(null));
                         }
                     }, ctoken); // We do not need to propagate exception, etc, from reconnect task, we just need to wait for it to finish.
                     return tcs.Task;
@@ -2363,19 +2365,20 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         private void CopyColumnsAsyncSetupContinuation(TaskCompletionSource<object> source, Task task, int i)
         {
             AsyncHelper.ContinueTaskWithState(
-                task,
-                source,
-                state: this,
-                onSuccess: (object state) =>
+                taskToContinue: task,
+                taskCompletionSource: source,
+                state1: this,
+                state2: Tuple.Create(source, i),
+                onSuccess: static (this2, parameters) =>
                 {
-                    SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
-                    if (i + 1 < sqlBulkCopy._sortedColumnMappings.Count)
+                    if (parameters.Item2 + 1 < this2._sortedColumnMappings.Count)
                     {
-                        sqlBulkCopy.CopyColumnsAsync(i + 1, source); //continue from the next column
+                        // continue from the next column
+                        this2.CopyColumnsAsync(parameters.Item2 + 1, parameters.Item1);
                     }
                     else
                     {
-                        source.SetResult(null);
+                        parameters.Item1.SetResult(null);
                     }
                 });
         }
@@ -2506,18 +2509,17 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         Task readTask = ReadFromRowSourceAsync(cts); // Read the next row. Caution: more is only valid if the task returns null. Otherwise, we wait for Task.Result
                         if (readTask != null)
                         {
-                            if (source == null)
-                            {
-                                source = new TaskCompletionSource<object>();
-                            }
+                            source ??= new TaskCompletionSource<object>();
                             resultTask = source.Task;
 
                             AsyncHelper.ContinueTaskWithState(
-                                readTask,
-                                source,
+                                taskToContinue: readTask,
+                                taskCompletionSource: source,
                                 state: this,
-                                onSuccess: (object state) => ((SqlBulkCopy)state).CopyRowsAsync(i + 1, totalRows, cts, source));
-                            return resultTask; // Associated task will be completed when all rows are copied to server/exception/cancelled.
+                                onSuccess: this2 => this2.CopyRowsAsync(i + 1, totalRows, cts, source));
+
+                            // Associated task will be completed when all rows are copied to server/exception/cancelled.
+                            return resultTask;
                         }
                     }
                     else
@@ -2525,34 +2527,35 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         source = source ?? new TaskCompletionSource<object>();
                         resultTask = source.Task;
 
-                        AsyncHelper.ContinueTaskWithState(task, source, this,
-                            onSuccess: (object state) =>
+                        AsyncHelper.ContinueTaskWithState(
+                            taskToContinue: task,
+                            taskCompletionSource: source,
+                            state: this,
+                            onSuccess: this2 =>
                             {
-                                SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
-                                sqlBulkCopy.CheckAndRaiseNotification(); // Check for notification now as the current row copy is done at this moment.
+                                // Check for notification now as the current row copy is done at this moment.
+                                this2.CheckAndRaiseNotification();
 
-                                Task readTask = sqlBulkCopy.ReadFromRowSourceAsync(cts);
-                                if (readTask == null)
+                                Task readTask = this2.ReadFromRowSourceAsync(cts);
+                                if (readTask is null)
                                 {
-                                    sqlBulkCopy.CopyRowsAsync(i + 1, totalRows, cts, source);
+                                    this2.CopyRowsAsync(i + 1, totalRows, cts, source);
                                 }
                                 else
                                 {
                                     AsyncHelper.ContinueTaskWithState(
-                                        readTask,
-                                        source,
-                                        state: sqlBulkCopy,
-                                        onSuccess: (object state2) => ((SqlBulkCopy)state2).CopyRowsAsync(i + 1, totalRows, cts, source));
+                                        taskToContinue: readTask,
+                                        taskCompletionSource: source,
+                                        state: this2,
+                                        onSuccess: this3 => this3.CopyRowsAsync(i + 1, totalRows, cts, source));
                                 }
                             });
                         return resultTask;
                     }
                 }
 
-                if (source != null)
-                {
-                    source.TrySetResult(null); // This is set only on the last call of async copy. But may not be set if everything runs synchronously.
-                }
+                // This is set only on the last call of async copy. But may not be set if everything runs synchronously.
+                source?.TrySetResult(null);
             }
             catch (Exception ex)
             {
@@ -2614,17 +2617,21 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         }
 
                         AsyncHelper.ContinueTaskWithState(
-                            commandTask,
-                            source,
+                            taskToContinue: commandTask,
+                            taskCompletionSource: source,
                             state: this,
-                            onSuccess: (object state) =>
+                            onSuccess: this2 =>
                             {
-                                SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
-                                Task continuedTask = sqlBulkCopy.CopyBatchesAsyncContinued(internalResults, updateBulkCommandText, cts, source);
-                                if (continuedTask == null)
+                                Task continuedTask = this2.CopyBatchesAsyncContinued(
+                                    internalResults,
+                                    updateBulkCommandText,
+                                    cts,
+                                    source);
+
+                                if (continuedTask is null)
                                 {
                                     // Continuation finished sync, recall into CopyBatchesAsync to continue
-                                    sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
+                                    this2.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                                 }
                             });
                         return source.Task;
@@ -2684,18 +2691,19 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         task,
                         source,
                         state: this,
-                        onSuccess: (object state) =>
+                        onSuccess: this2 =>
                         {
-                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
-                            Task continuedTask = sqlBulkCopy.CopyBatchesAsyncContinuedOnSuccess(internalResults, updateBulkCommandText, cts, source);
+                            Task continuedTask = this2.CopyBatchesAsyncContinuedOnSuccess(internalResults, updateBulkCommandText, cts, source);
                             if (continuedTask == null)
                             {
                                 // Continuation finished sync, recall into CopyBatchesAsync to continue
-                                sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
+                                this2.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                             }
                         },
-                        onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false),
-                        onCancellation: static (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true));
+                        onFailure: static (this2, _) =>
+                            this2.CopyBatchesAsyncContinuedOnError(cleanupParser: false),
+                        onCancellation: static this2 =>
+                            this2.CopyBatchesAsyncContinuedOnError(cleanupParser: true));
 
                     return source.Task;
                 }
@@ -2746,24 +2754,24 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         writeTask,
                         source,
                         state: this,
-                        onSuccess: (object state) =>
+                        onSuccess: this2 =>
                         {
-                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
                             try
                             {
-                                sqlBulkCopy.RunParser();
-                                sqlBulkCopy.CommitTransaction();
+                                this2.RunParser();
+                                this2.CommitTransaction();
                             }
                             catch (Exception)
                             {
-                                sqlBulkCopy.CopyBatchesAsyncContinuedOnError(cleanupParser: false);
+                                this2.CopyBatchesAsyncContinuedOnError(cleanupParser: false);
                                 throw;
                             }
 
                             // Always call back into CopyBatchesAsync
-                            sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
+                            this2.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                         },
-                        onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false));
+                        onFailure: static (this2, _) =>
+                            this2.CopyBatchesAsyncContinuedOnError(cleanupParser: false));
                     return source.Task;
                 }
             }
@@ -2860,24 +2868,21 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                 if (task != null)
                 {
-                    if (source == null)
-                    {
-                        source = new TaskCompletionSource<object>();
-                    }
+                    source ??= new TaskCompletionSource<object>();
                     AsyncHelper.ContinueTaskWithState(
-                        task,
-                        source,
+                        taskToContinue: task,
+                        taskCompletionSource: source,
                         state: this,
-                        onSuccess: (object state) =>
+                        onSuccess: this2 =>
                         {
-                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
+                            // @TODO: Split into oncancellation, onfailure, etc.
                             // Bulk copy task is completed at this moment.
                             if (task.IsCanceled)
                             {
-                                sqlBulkCopy._localColumnMappings = null;
+                                this2._localColumnMappings = null;
                                 try
                                 {
-                                    sqlBulkCopy.CleanUpStateObject();
+                                    this2.CleanUpStateObject();
                                 }
                                 finally
                                 {
@@ -2890,10 +2895,10 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             }
                             else
                             {
-                                sqlBulkCopy._localColumnMappings = null;
+                                this2._localColumnMappings = null;
                                 try
                                 {
-                                    sqlBulkCopy.CleanUpStateObject(isCancelRequested: false);
+                                    this2.CleanUpStateObject(isCancelRequested: false);
                                 }
                                 finally
                                 {
@@ -3007,38 +3012,51 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             reconnectTask,
                             cancellableReconnectTS,
                             state: cancellableReconnectTS,
-                            onSuccess: static state => ((TaskCompletionSource<object>)state).SetResult(null));
+                            onSuccess: static state => state.SetResult(null));
 
                         // No need to cancel timer since SqlBulkCopy creates specific task source for reconnection.
                         AsyncHelper.SetTimeoutExceptionWithState(
-                            completion: cancellableReconnectTS, 
-                            timeout: BulkCopyTimeout,
+                            taskCompletionSource: cancellableReconnectTS,
+                            timeoutInSeconds: BulkCopyTimeout,
                             state: _destinationTableName,
-                            onFailure: static state => 
+                            onTimeout: static state =>
                                 SQL.BulkLoadInvalidDestinationTable((string)state, SQL.CR_ReconnectTimeout()), 
                             cancellationToken: CancellationToken.None
                         );
 
                         AsyncHelper.ContinueTaskWithState(
-                            task: cancellableReconnectTS.Task,
-                            completion: source,
+                            taskToContinue:cancellableReconnectTS.Task,
+                            taskCompletionSource: source,
                             state: regReconnectCancel,
-                            onSuccess: (object state) =>
+                            onSuccess: regReconnectCancel2 =>
                             {
-                                ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose();
-                                if (_parserLock != null)
+                                regReconnectCancel2.Value.Dispose();
+
+                                if (_parserLock is not null)
                                 {
                                     _parserLock.Release();
-                                    _parserLock = null;
+                                    _parserLock = null; // @TODO: Can be omitted b/c we reassign it directly below
                                 }
                                 _parserLock = _connection.GetOpenTdsConnection()._parserLock;
                                 _parserLock.Wait(canReleaseFromAnyThread: true);
                                 WriteToServerInternalRestAsync(cts, source);
                             },
-                            onFailure: static (_, state) => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
-                            onCancellation: static state => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
-                            exceptionConverter: ex => SQL.BulkLoadInvalidDestinationTable(_destinationTableName, ex)
-                        );
+                            onFailure: (regReconnectCancel2, exception) =>
+                            {
+                                regReconnectCancel2.Value.Dispose();
+
+                                // Convert exception and set it on the source
+                                // Note: This is safe because the helper will only try to set the
+                                //    exception and b/c it is already set will pass without setting
+                                //    to the original exception.
+                                Exception convertedException = SQL.BulkLoadInvalidDestinationTable(
+                                    _destinationTableName,
+                                    exception);
+                                source.TrySetException(convertedException);
+                            },
+                            onCancellation: static regReconnectCancel2 =>
+                                regReconnectCancel2.Value.Dispose());
+
                         return;
                     }
                     else
@@ -3087,10 +3105,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 if (internalResultsTask != null)
                 {
                     AsyncHelper.ContinueTaskWithState(
-                        internalResultsTask,
-                        source,
+                        taskToContinue: internalResultsTask,
+                        taskCompletionSource: source,
                         state: this,
-                        onSuccess: (object state) => ((SqlBulkCopy)state).WriteToServerInternalRestContinuedAsync(internalResultsTask.Result, cts, source));
+                        onSuccess: this2 =>
+                            this2.WriteToServerInternalRestContinuedAsync(internalResultsTask.Result, cts, source));
                 }
                 else
                 {
@@ -3159,17 +3178,21 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 else
                 {
                     Debug.Assert(_isAsyncBulkCopy, "Read must not return a Task in the Sync mode");
-                    AsyncHelper.ContinueTaskWithState(readTask, source, this,
-                        onSuccess: (object state) =>
+                    AsyncHelper.ContinueTaskWithState(
+                        taskToContinue: readTask,
+                        taskCompletionSource: source,
+                        state: this,
+                        onSuccess: this2 =>
                         {
-                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
-                            if (!sqlBulkCopy._hasMoreRowToCopy)
+                            if (!this2._hasMoreRowToCopy)
                             {
-                                source.SetResult(null); // No rows to copy!
+                                // No rows to copy!
+                                source.SetResult(null);
                             }
                             else
                             {
-                                sqlBulkCopy.WriteToServerInternalRestAsync(ctoken, source); // Passing the same completion which will be completed by the Callee.
+                                // Passing the same completion which will be completed by the Callee.
+                                this2.WriteToServerInternalRestAsync(ctoken, source);
                             }
                         });
                     return resultTask;

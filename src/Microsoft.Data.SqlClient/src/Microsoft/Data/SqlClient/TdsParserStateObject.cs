@@ -16,17 +16,10 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ManagedSni;
-
-#if NETFRAMEWORK
-using System.Runtime.ConstrainedExecution;
-#endif
+using Microsoft.Data.SqlClient.Utilities;
 
 namespace Microsoft.Data.SqlClient
 {
-#if NETFRAMEWORK
-    using RuntimeHelpers = System.Runtime.CompilerServices.RuntimeHelpers;
-#endif
-    
     sealed internal class LastIOTimer
     {
         internal long _value;
@@ -1276,13 +1269,12 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         return AsyncHelper.CreateContinuationTaskWithState(
-                            task: writePacketTask,
+                            taskToContinue: writePacketTask,
                             state: this,
-                            onSuccess: static (object state) =>
+                            onSuccess: static this2 =>
                             {
-                                TdsParserStateObject stateObject = (TdsParserStateObject)state;
-                                stateObject.HasPendingData = true;
-                                stateObject._messageStatus = 0;
+                                this2.HasPendingData = true;
+                                this2._messageStatus = 0;
                             }
                         );
                     }
@@ -3051,7 +3043,10 @@ namespace Microsoft.Data.SqlClient
             if (willCancel)
             {
                 // If we have been canceled, then ensure that we write the ATTN packet as well
-                task = AsyncHelper.CreateContinuationTask(task, CancelWritePacket);
+                task = AsyncHelper.CreateContinuationTaskWithState(
+                    taskToContinue: task,
+                    state: this,
+                    onSuccess: static this2 => this2.CancelWritePacket());
             }
 
             return task;
@@ -4359,9 +4354,16 @@ namespace Microsoft.Data.SqlClient
         // This is in its own method to avoid always allocating the lambda in WriteBytes
         private void WriteBytesSetupContinuation(byte[] array, int len, TaskCompletionSource<object> completion, int offset, Task packetTask)
         {
-            AsyncHelper.ContinueTask(packetTask, completion,
-               onSuccess: () => WriteBytes(ReadOnlySpan<byte>.Empty, len: len, offsetBuffer: offset, canAccumulate: false, completion: completion, array)
-           );
+            AsyncHelper.ContinueTask(
+                taskToContinue: packetTask,
+                taskCompletionSource: completion,
+                onSuccess: () => WriteBytes(
+                    ReadOnlySpan<byte>.Empty,
+                    len: len,
+                    offsetBuffer: offset,
+                    canAccumulate: false,
+                    completion: completion,
+                    array));
         }
 
         /// <summary>

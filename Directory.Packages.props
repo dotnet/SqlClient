@@ -48,6 +48,7 @@
     <PackageVersion Include="Microsoft.SqlServer.SqlManagementObjects" Version="172.76.0" />
     <PackageVersion Include="Microsoft.SqlServer.Types" Version="160.1000.6" />
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
+    <PackageVersion Include="Moq" Version="4.20.72" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageVersion Include="System.Data.Odbc" Version="9.0.9" />
     <PackageVersion Include="System.Security.Principal.Windows" Version="5.0.0" />

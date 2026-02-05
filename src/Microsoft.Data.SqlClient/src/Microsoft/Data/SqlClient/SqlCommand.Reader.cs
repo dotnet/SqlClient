@@ -12,10 +12,10 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
-using Microsoft.Data.SqlClient.Utilities;
 #endif
 
 namespace Microsoft.Data.SqlClient
@@ -310,14 +310,12 @@ namespace Microsoft.Data.SqlClient
                 if (writeTask is not null)
                 {
                     AsyncHelper.ContinueTaskWithState(
-                        writeTask,
-                        localCompletion,
-                        state: Tuple.Create(this, localCompletion),
-                        onSuccess: static state =>
-                        {
-                            var parameters = (Tuple<SqlCommand, TaskCompletionSource<object>>)state;
-                            parameters.Item1.BeginExecuteReaderInternalReadStage(parameters.Item2);
-                        });
+                        taskToContinue: writeTask,
+                        taskCompletionSource: localCompletion,
+                        state1: this,
+                        state2: localCompletion,
+                        onSuccess: static (this2, localCompletion2) =>
+                            this2.BeginExecuteReaderInternalReadStage(localCompletion2));
                 }
                 else
                 {
@@ -1605,21 +1603,19 @@ namespace Microsoft.Data.SqlClient
             string optionSettings,
             Task writeTask)
         {
-            // @TODO: Why use the state version if we can't make this a static helper?
             return AsyncHelper.CreateContinuationTaskWithState(
-                task: writeTask,
-                state: _activeConnection,
-                onSuccess: state =>
+                taskToContinue: writeTask,
+                state1: this,
+                state2: Tuple.Create(ds, runBehavior, optionSettings),
+                onSuccess: static (this2, parameters) =>
                 {
                     // This will throw if the connection is closed.
                     // @TODO: So... can we have something that specifically does that?
-                    ((SqlConnection)state).GetOpenTdsConnection();
-                    CachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
+                    this2._activeConnection.GetOpenTdsConnection();
+                    this2.CachedAsyncState.SetAsyncReaderState(parameters.Item1, parameters.Item2, parameters.Item3);
                 },
-                onFailure: static (exception, state) =>
-                {
-                    ((SqlConnection)state).GetOpenTdsConnection().DecrementAsyncCount();
-                });
+                onFailure: static (this2, _, _) =>
+                    this2._activeConnection.GetOpenTdsConnection().DecrementAsyncCount());
         }
 
         // @TODO: This is way too many parameters being shoveled back and forth. We can do better.
@@ -1640,13 +1636,12 @@ namespace Microsoft.Data.SqlClient
             AsyncHelper.SetTimeoutException(
                 completion,
                 timeout,
-                onFailure: static () => SQL.CR_ReconnectTimeout(),
+                onTimeout: static () => SQL.CR_ReconnectTimeout(),
                 timeoutCts.Token);
 
-            // @TODO: With an object to pass around we can use the state-based version
             AsyncHelper.ContinueTask(
-                reconnectTask,
-                completion,
+                taskToContinue: reconnectTask,
+                taskCompletionSource: completion,
                 onSuccess: () =>
                 {
                     if (completion.Task.IsCompleted)
@@ -1675,10 +1670,10 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         AsyncHelper.ContinueTaskWithState(
-                            subTask,
-                            completion,
+                            taskToContinue: subTask,
+                            taskCompletionSource: completion,
                             state: completion,
-                            onSuccess: static state => ((TaskCompletionSource<object>)state).SetResult(null));
+                            onSuccess: static completion2 => completion2.SetResult(null));
                     }
                 });
         }
@@ -1711,14 +1706,13 @@ namespace Microsoft.Data.SqlClient
                 // @TODO: This is a prime candidate for proper async-await execution
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
                 AsyncHelper.ContinueTaskWithState(
-                    task: describeParameterEncryptionTask,
-                    completion: completion,
+                    taskToContinue: describeParameterEncryptionTask,
+                    taskCompletionSource: completion,
                     state: this,
-                    onSuccess: state =>
+                    onSuccess: this2 =>
                     {
-                        SqlCommand command = (SqlCommand)state;
-                        command.GenerateEnclavePackage();
-                        command.RunExecuteReaderTds(
+                        this2.GenerateEnclavePackage();
+                        this2.RunExecuteReaderTds(
                             cmdBehavior,
                             runBehavior,
                             returnStream,
@@ -1737,24 +1731,22 @@ namespace Microsoft.Data.SqlClient
                         else
                         {
                             AsyncHelper.ContinueTaskWithState(
-                                task: subTask,
-                                completion: completion,
+                                taskToContinue: subTask,
+                                taskCompletionSource: completion,
                                 state: completion,
-                                onSuccess: static state => ((TaskCompletionSource<object>)state).SetResult(null));
+                                onSuccess: static state => state.SetResult(null));
                         }
                     },
-                    onFailure: static (exception, state) =>
+                    onFailure: static (this2, exception) =>
                     {
-                        ((SqlCommand)state).CachedAsyncState?.ResetAsyncState();
+                        this2.CachedAsyncState?.ResetAsyncState();
                         if (exception is not null)
                         {
+                            // @TODO: This doesn't do anything, afaik.
                             throw exception;
                         }
                     },
-                    onCancellation: static state =>
-                    {
-                        ((SqlCommand)state).CachedAsyncState?.ResetAsyncState();
-                    });
+                    onCancellation: static this2 => this2.CachedAsyncState?.ResetAsyncState());
 
                 task = completion.Task;
                 return ds;
