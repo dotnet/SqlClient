@@ -13,43 +13,46 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static void SendInfo(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
-            TestSimpleParameter_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
-            TestSimpleParameter_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            RunTest("TestSimpleParameter_Type", _TestSimpleParameter_Type, paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            RunTest("TestSimpleParameter_Variant", _TestSimpleParameter_Variant, paramValue, expectedTypeName, expectedBaseTypeName, connStr);
 
-            TestSqlDataRecordParameterToTVP_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
-            TestSqlDataRecordParameterToTVP_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            RunTest("TestSqlDataRecordParameterToTVP_Type", _TestSqlDataRecordParameterToTVP_Type, paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            RunTest("TestSqlDataRecordParameterToTVP_Variant", _TestSqlDataRecordParameterToTVP_Variant, paramValue, expectedTypeName, expectedBaseTypeName, connStr);
 
-            TestSqlDataReaderParameterToTVP_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
-            TestSqlDataReaderParameterToTVP_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            RunTest("TestSqlDataReaderParameterToTVP_Type", _TestSqlDataReaderParameterToTVP_Type, paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            RunTest("TestSqlDataReaderParameterToTVP_Variant", _TestSqlDataReaderParameterToTVP_Variant, paramValue, expectedTypeName, expectedBaseTypeName, connStr);
 
-            TestSqlDataReader_TVP_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
-            TestSqlDataReader_TVP_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            RunTest("TestSqlDataReader_TVP_Type", _TestSqlDataReader_TVP_Type, paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            RunTest("TestSqlDataReader_TVP_Variant", _TestSqlDataReader_TVP_Variant, paramValue, expectedTypeName, expectedBaseTypeName, connStr);
 
-            TestSimpleDataReader_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
-            TestSimpleDataReader_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            RunTest("TestSimpleDataReader_Type", _TestSimpleDataReader_Type, paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            RunTest("TestSimpleDataReader_Variant", _TestSimpleDataReader_Variant, paramValue, expectedTypeName, expectedBaseTypeName, connStr);
 
-            SqlBulkCopySqlDataReader_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
-            SqlBulkCopySqlDataReader_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            RunTest("SqlBulkCopySqlDataReader_Type", _SqlBulkCopySqlDataReader_Type, paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            RunTest("SqlBulkCopySqlDataReader_Variant", _SqlBulkCopySqlDataReader_Variant, paramValue, expectedTypeName, expectedBaseTypeName, connStr);
 
-            SqlBulkCopyDataTable_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
-            SqlBulkCopyDataTable_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            RunTest("SqlBulkCopyDataTable_Type", _SqlBulkCopyDataTable_Type, paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            RunTest("SqlBulkCopyDataTable_Variant", _SqlBulkCopyDataTable_Variant, paramValue, expectedTypeName, expectedBaseTypeName, connStr);
 
-            SqlBulkCopyDataRow_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
-            SqlBulkCopyDataRow_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            RunTest("SqlBulkCopyDataRow_Type", _SqlBulkCopyDataRow_Type, paramValue, expectedTypeName, expectedBaseTypeName, connStr);
+            RunTest("SqlBulkCopyDataRow_Variant", _SqlBulkCopyDataRow_Variant, paramValue, expectedTypeName, expectedBaseTypeName, connStr);
         }
 
-        private static void TestSimpleParameter_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
+        private static void RunTest(string tag, Action<object, string, string, string, string> testFunc, object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
-            string tag = "TestSimpleParameter_Type";
             try
             {
-                _TestSimpleParameter_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
+                testFunc(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
             }
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedBaseTypeName))
                 {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                }
+                else if (IsExpectedInvalidOperationException(e, expectedBaseTypeName))
+                {
+                    LogMessage(tag, "[EXPECTED INVALID OPERATION EXCEPTION] " + AmendTheGivenMessageDateValueException(e.Message, paramValue));
                 }
                 else
                 {
@@ -87,28 +90,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        // sql_variant parameters and sql_variant TVPs store all datetime values internally
-        // as datetime, hence breaking for 2008 types
-        private static void TestSimpleParameter_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
-        {
-            string tag = "TestSimpleParameter_Variant";
-            try
-            {
-                _TestSimpleParameter_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
-            }
-            catch (Exception e)
-            {
-                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
-                {
-                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
-                }
-                else
-                {
-                    DisplayError(tag, e);
-                }
-            }
-        }
-
         private static void _TestSimpleParameter_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
             string procName = DataTestUtility.GetLongName("paramProc2");
@@ -135,27 +116,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropStoredProcedure(conn, procName);
-            }
-        }
-
-        private static void TestSqlDataRecordParameterToTVP_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
-        {
-            string tag = "TestSqlDataRecordParameterToTVP_Type";
-
-            try
-            {
-                _TestSqlDataRecordParameterToTVP_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
-            }
-            catch (Exception e)
-            {
-                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
-                {
-                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
-                }
-                else
-                {
-                    DisplayError(tag, e);
-                }
             }
         }
 
@@ -195,29 +155,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        // sql_variant parameters and sql_variant TVPs store all datetime values internally
-        // as datetime, hence breaking for 2008 types
-        private static void TestSqlDataRecordParameterToTVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
-        {
-            string tag = "TestSqlDataRecordParameterToTVP_Variant";
-            
-            try
-            {
-                _TestSqlDataRecordParameterToTVP_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
-            }
-            catch (Exception e)
-            {
-                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
-                {
-                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
-                }
-                else
-                {
-                    DisplayError(tag, e);
-                }
-            }
-        }
-
         private static void _TestSqlDataRecordParameterToTVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
             string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
@@ -251,28 +188,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
-            }
-        }
-
-
-        private static void TestSqlDataReaderParameterToTVP_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
-        {
-            string tag = "TestSqlDataReaderParameterToTVP_Type";
-            
-            try
-            {
-                _TestSqlDataReaderParameterToTVP_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
-            }
-            catch (Exception e)
-            {
-                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
-                {
-                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
-                }
-                else
-                {
-                    DisplayError(tag, e);
-                }
             }
         }
 
@@ -315,30 +230,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-
-        // sql_variant parameters and sql_variant TVPs store all datetime values internally
-        // as datetime, hence breaking for 2008 types
-        private static void TestSqlDataReaderParameterToTVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
-        {
-            string tag = "TestSqlDataReaderParameterToTVP_Variant";
-
-            try
-            {
-                _TestSqlDataReaderParameterToTVP_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
-            }
-            catch (Exception e)
-            {
-                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
-                {
-                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
-                }
-                else
-                {
-                    DisplayError(tag, e);
-                }
-            }
-        }
-
         private static void _TestSqlDataReaderParameterToTVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
             string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
@@ -377,29 +268,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
-            }
-        }
-
-
-        // sql_variant parameters and sql_variant TVPs store all datetime values internally
-        // as datetime, hence breaking for 2008 types
-        private static void TestSqlDataReader_TVP_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
-        {
-            string tag = "TestSqlDataReader_TVP_Type";
-            
-            try {
-                _TestSqlDataReader_TVP_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
-            }
-            catch (Exception e)
-            {
-                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
-                {
-                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
-                }
-                else
-                {
-                    DisplayError(tag, e);
-                }
             }
         }
 
@@ -472,28 +340,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DropTable(conn, InputTableName);
                 DropTable(conn, OutputTableName);
                 DropType(conn, tvpTypeName);
-            }
-        }
-
-
-        private static void TestSqlDataReader_TVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
-        {
-            string tag = "TestSqlDataReader_TVP_Variant";
-
-            try
-            {
-                _TestSqlDataReader_TVP_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
-            }
-            catch (Exception e)
-            {
-                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
-                {
-                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
-                }
-                else
-                {
-                    DisplayError(tag, e);
-                }
             }
         }
 
@@ -570,29 +416,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-
-        // sql_variant parameters and sql_variant TVPs store all datetime values internally
-        // as datetime, hence breaking for 2008 types
-        private static void TestSimpleDataReader_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
-        {
-            string tag = "TestSimpleDataReader_Type";
-            
-            try {
-                _TestSimpleDataReader_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
-            }
-            catch (Exception e)
-            {
-                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
-                {
-                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
-                }
-                else
-                {
-                    DisplayError(tag, e);
-                }
-            }
-        }
-
         private static void _TestSimpleDataReader_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
             string inputTable = DataTestUtility.GetLongName("inputTable");
@@ -640,27 +463,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-
-        private static void TestSimpleDataReader_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
-        {
-            string tag = "TestSimpleDataReader_Variant";
-            
-            try {
-                _TestSimpleDataReader_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
-            }
-            catch (Exception e)
-            {
-                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
-                {
-                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
-                }
-                else
-                {
-                    DisplayError(tag, e);
-                }
-            }
-        }
-
         private static void _TestSimpleDataReader_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
             string inputTable = DataTestUtility.GetLongName("inputTable");
@@ -705,28 +507,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 conn.Open();
                 DropStoredProcedure(conn, procName);
                 DropTable(conn, inputTable);
-            }
-        }
-
-
-        private static void SqlBulkCopySqlDataReader_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
-        {
-            string tag = "SqlBulkCopySqlDataReader_Type";
-
-            try
-            {
-                _SqlBulkCopySqlDataReader_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
-            }
-            catch (Exception e)
-            {
-                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
-                {
-                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
-                }
-                else
-                {
-                    DisplayError(tag, e);
-                }
             }
         }
 
@@ -792,29 +572,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DropTable(conn, bulkCopyTableName);
                 DropTable(conn, bulkCopySrcTableName);
             }
-        }
-
-
-        private static void SqlBulkCopySqlDataReader_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
-        {
-            string tag = "SqlBulkCopySqlDataReader_Variant";
-
-            try
-            {
-                _SqlBulkCopySqlDataReader_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
-            }
-            catch (Exception e)
-            {
-                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
-                {
-                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
-                }
-                else
-                {
-                    DisplayError(tag, e);
-                }
-            }
-
         }
 
         private static void _SqlBulkCopySqlDataReader_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
@@ -886,31 +643,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-
-        private static void SqlBulkCopyDataTable_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
-        {
-            string tag = "SqlBulkCopyDataTable_Type";
-            try
-            {
-                _SqlBulkCopyDataTable_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
-            }
-            catch (Exception e)
-            {
-                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
-                {
-                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
-                }
-                else if (IsExpectedInvalidOperationException(e, expectedBaseTypeName))
-                {
-                    LogMessage(tag, "[EXPECTED INVALID OPERATION EXCEPTION] " + AmendTheGivenMessageDateValueException(e.Message, paramValue));
-                }
-                else
-                {
-                    DisplayError(tag, e);
-                }
-            }
-        }
-
         private static void _SqlBulkCopyDataTable_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestType");
@@ -949,30 +681,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
-            }
-        }
-
-
-        // sql_variant parameters and sql_variant TVPs store all datetime values internally
-        // as datetime, hence breaking for 2008 types
-        private static void SqlBulkCopyDataTable_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
-        {
-            string tag = "SqlBulkCopyDataTable_Variant";
-            
-            try
-            {
-                _SqlBulkCopyDataTable_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
-            }
-            catch (Exception e)
-            {
-                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
-                {
-                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
-                }
-                else
-                {
-                    DisplayError(tag, e);
-                }
             }
         }
 
@@ -1017,32 +725,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-
-        private static void SqlBulkCopyDataRow_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
-        {
-            string tag = "SqlBulkCopyDataRow_Type";
-            
-            try
-            {
-                _SqlBulkCopyDataRow_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
-            }
-            catch (Exception e)
-            {
-                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
-                {
-                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
-                }
-                else if (IsExpectedInvalidOperationException(e, expectedBaseTypeName))
-                {
-                    LogMessage(tag, "[EXPECTED INVALID OPERATION EXCEPTION] " + AmendTheGivenMessageDateValueException(e.Message, paramValue));
-                }
-                else
-                {
-                    DisplayError(tag, e);
-                }
-            }
-        }
-
         private static void _SqlBulkCopyDataRow_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             DisplayHeader(tag, paramValue, expectedBaseTypeName);
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestType");
@@ -1076,29 +758,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
-            }
-        }
-
-
-        // sql_variant parameters and sql_variant TVPs store all datetime values internally
-        // as datetime, hence breaking for 2008 types
-        private static void SqlBulkCopyDataRow_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
-        {
-            string tag = "SqlBulkCopyDataRow_Variant";
-            try
-            {
-                _SqlBulkCopyDataRow_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag);
-            }
-            catch (Exception e)
-            {
-                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
-                {
-                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
-                }
-                else
-                {
-                    DisplayError(tag, e);
-                }
             }
         }
 
