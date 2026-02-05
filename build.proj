@@ -49,11 +49,21 @@
 
   <!-- Test configuration properties -->
   <PropertyGroup>
-      <FilterStatement>$(Filter)</FilterStatement>
-      <FilterStatement Condition="'$(FilterStatement)' == ''">category!=failing&amp;category!=flaky</FilterStatement>
-      <!--Collect code coverage unless explicitly disabled-->
-      <CollectCodeCoverage Condition="'$(CollectCodeCoverage)' == ''">true</CollectCodeCoverage>
-      <CollectStatement Condition="'$(CollectCodeCoverage)' == 'true'">--collect "Code coverage"</CollectStatement>
+    <!-- Set up default filters for tests to exclude failing and flaky tests -->
+    <Filter Condition="'$(Filter)' == ''">category!=failing&amp;category!=flaky</Filter>
+    <FilterArgument>--filter "$(Filter)"</FilterArgument>
+
+    <!-- Collect code coverage unless explicitly disabled -->
+    <CollectCodeCoverage Condition="'$(CollectCodeCoverage)' == ''">true</CollectCodeCoverage>
+    <CollectArgument Condition="'$(CollectCodeCoverage)' == 'true'">--collect "Code coverage"</CollectArgument>
+
+    <!-- Set up tests to fail after hangs and report via blame -->
+    <BlameArgument>$(Blame)</BlameArgument>
+    <BlameArgument Condition="'$(BlameArgument)' == ''">
+      --blame-hang
+      --blame-hang-dump-type full
+      --blame-hang-timeout 10m
+    </BlameArgument>
   </PropertyGroup>
 
   <!-- Release Build properties must be turned on for Release purposes, and turned off for Code Coverage calculations -->
@@ -264,13 +274,11 @@
         $(DotnetPath)dotnet test "@(UnitTestsProj)"
         -f $(TF)
         -p:Configuration=$(Configuration)
-        $(CollectStatement)
+        $(FilterArgument)
+        $(BlameArgument)
+        $(CollectArgument)
         --results-directory $(ResultsDirectory)
-        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Unit-Windows$(TargetGroup)-$(TestSet)"
-        --blame-hang
-        --blame-hang-dump-type full
-        --blame-hang-timeout 10m
       </TestCommand>
       <!-- Convert more than one whitespace character into one space -->
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
@@ -286,13 +294,11 @@
         $(DotnetPath)dotnet test "@(UnitTestsProj)"
         -f $(TF)
         -p:Configuration=$(Configuration)
-        $(CollectStatement)
+        $(FilterArgument)
+        $(BlameArgument)
+        $(CollectArgument)
         --results-directory $(ResultsDirectory)
-        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Unit-Unixnetcoreapp-$(TestSet)"
-        --blame-hang
-        --blame-hang-dump-type full
-        --blame-hang-timeout 10m
       </TestCommand>
       <!-- Convert more than one whitespace character into one space -->
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
@@ -312,13 +318,11 @@
         -f $(TF)
         -p:Configuration=$(Configuration)
         -p:ReferenceType=$(ReferenceType)
-        $(CollectStatement)
+        $(FilterArgument)
+        $(BlameArgument)
+        $(CollectArgument)
         --results-directory $(ResultsDirectory)
-        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)"
-        --blame-hang
-        --blame-hang-dump-type full
-        --blame-hang-timeout 10m
       </TestCommand>
       <!-- Convert more than one whitespace character into one space -->
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
@@ -335,13 +339,11 @@
         -f $(TF)
         -p:Configuration=$(Configuration)
         -p:ReferenceType=$(ReferenceType)
-        $(CollectStatement)
+        $(FilterArgument)
+        $(BlameArgument)
+        $(CollectArgument)
         --results-directory $(ResultsDirectory)
-        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Functional-Unixnetcoreapp-$(TestSet)"
-        --blame-hang
-        --blame-hang-dump-type full
-        --blame-hang-timeout 10m
       </TestCommand>
       <!-- Convert more than one whitespace character into one space -->
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
@@ -361,16 +363,20 @@
         -f $(TF)
         -p:Configuration=$(Configuration)
         -p:ReferenceType=$(ReferenceType)
-        -p:TestSet=$(TestSet)
-        $(CollectStatement)
+        $(FilterArgument)
+        $(BlameArgument)
+        $(CollectArgument)
         --results-directory $(ResultsDirectory)
-        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)"
-        --blame-hang
-        --blame-hang-dump-type full
-        --blame-hang-timeout 10m
       </TestCommand>
-      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+      <!-- Add test set only if it was provided - otherwise it will be permanently set to '' -->
+      <TestCommand Condition="'$(TestSet)' != ''">
+        $(TestCommand)
+        -p:TestSet=$(TestSet)
+      </TestCommand>
+
+      <!-- Convert more than one whitespace character into one space -->
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running Manual test for Windows via command: $(TestCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
@@ -384,18 +390,22 @@
         -f $(TF)
         -p:Configuration=$(Configuration)
         -p:ReferenceType=$(ReferenceType)
-        -p:TestSet=$(TestSet)
-        $(CollectStatement)
+        $(FilterArgument)
+        $(BlameArgument)
+        $(CollectArgument)
         --results-directory $(ResultsDirectory)
-        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)"
-        --blame-hang
-        --blame-hang-dump-type full
-        --blame-hang-timeout 10m
       </TestCommand>
-      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+
+      <!-- Add test set only if it was provided - otherwise it will be permanently set to '' -->
+      <TestCommand Condition="'$(TestSet)' != ''">
+        $(TestCommand)
+        -p:TestSet=$(TestSet)
+      </TestCommand>
+
+      <!-- Convert more than one whitespace character into one space -->
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
     </PropertyGroup>
-    <Message Text=">>> Running Manual test for Unix via command: $(TestCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
   </Target>
 
