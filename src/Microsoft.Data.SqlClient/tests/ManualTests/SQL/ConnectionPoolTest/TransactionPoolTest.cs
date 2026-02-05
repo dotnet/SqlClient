@@ -2,13 +2,13 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NETFRAMEWORK
 
 using System.Transactions;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
     public static class TransactionPoolTest
     {
         /// <summary>
@@ -105,5 +105,3 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
     }
 }
-
-#endif

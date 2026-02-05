@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+// This file must be conditionally included because it will not compile on netfx
 #if NET
 
 using System;

@@ -183,7 +183,7 @@
     <Compile Include="SQL\SqlBulkCopyTest\Transaction4.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\TransactionTestAsync.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\WriteToServerTest.cs" />
-    <Compile Include="SQL\SqlDSEnumeratorTest\SqlDataSourceEnumeratorTest.windows.cs" />
+    <Compile Include="SQL\SqlDSEnumeratorTest\SqlDataSourceEnumeratorTest.cs" />
   </ItemGroup>
   
   <!-- Items to include in test set 3 -->
@@ -199,7 +199,7 @@
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.Debug.cs" />
     <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.cs" />
-    <Compile Include="SQL\ConnectionPoolTest\TransactionPoolTest.netfx.cs" />
+    <Compile Include="SQL\ConnectionPoolTest\TransactionPoolTest.cs" />
     <Compile Include="SQL\DataSourceParserTest\DataSourceParserTest.cs" />
     <Compile Include="SQL\InstanceNameTest\InstanceNameTest.cs" />
     <Compile Include="SQL\IntegratedAuthenticationTest\IntegratedAuthenticationTest.cs" />
@@ -236,7 +236,7 @@
     <Compile Include="SQL\SqlNotificationTest\SqlNotificationTest.cs" />
     <Compile Include="SQL\SqlSchemaInfoTest\SqlSchemaInfoTest.cs" />
     <Compile Include="SQL\SqlStatisticsTest\SqlStatisticsTest.cs" />
-    <Compile Include="SQL\TransactionTest\DistributedTransactionTest.windows.cs" />
+    <Compile Include="SQL\TransactionTest\DistributedTransactionTest.cs" />
     <Compile Include="SQL\TransactionTest\TransactionEnlistmentTest.cs" />
     <Compile Include="SQL\TransactionTest\TransactionTest.cs" />
     <Compile Include="SQL\UdtTest\SqlServerTypesTest.cs" />
@@ -280,7 +280,7 @@
     <Compile Include="AlwaysEncrypted\BulkCopyAEErrorMessage.cs" />
     <Compile Include="AlwaysEncrypted\ColumnDecryptErrorTests.cs" />
     <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
-    <Compile Include="AlwaysEncrypted\CspProviderExt.windows.cs" />
+    <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
     <Compile Include="AlwaysEncrypted\DateOnlyReadTests.netcore.cs" />
     <Compile Include="AlwaysEncrypted\EnclaveAzureDatabaseTests.cs" />
     <Compile Include="AlwaysEncrypted\End2EndSmokeTests.cs" />
@@ -301,7 +301,7 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnEncryptionKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspColumnMasterKey.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspProviderColumnMasterKey.windows.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspProviderColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DateOnlyTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DbObject.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DummyKeyStoreProvider.cs" />
@@ -313,7 +313,7 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\Table.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategy.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyAzureKeyVault.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\SqlSetupStrategyCspProvider.windows.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\SqlSetupStrategyCspProvider.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCertStoreProvider.cs" />
     <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
   </ItemGroup>
