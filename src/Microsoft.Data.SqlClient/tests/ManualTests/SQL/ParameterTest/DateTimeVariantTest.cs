@@ -11,15 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class DateTimeVariantTest
     {
 
-        /// <summary>
-        /// Public wrapper for SendInfo that allows external callers to run tests for a single parameter combination.
-        /// </summary>
-        public static void SendInfoPublic(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
-        {
-            SendInfo(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
-        }
-
-        private static void SendInfo(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
+        public static void SendInfo(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr)
         {
             TestSimpleParameter_Type(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
             TestSimpleParameter_Variant(paramValue, expectedTypeName, expectedBaseTypeName, connStr);
@@ -71,7 +63,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
                 {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
@@ -115,7 +107,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
                 {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
@@ -164,7 +156,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
                 {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
@@ -215,7 +207,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
                 {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
@@ -267,7 +259,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
                 {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
@@ -323,7 +315,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
                 {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
@@ -407,7 +399,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
                 {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
@@ -493,7 +485,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
                 {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
@@ -557,7 +549,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
                 {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
@@ -617,7 +609,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
                 {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
@@ -694,7 +686,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
                 {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
@@ -777,7 +769,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
                 {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
@@ -832,7 +824,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
                 {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
@@ -892,7 +884,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
                 {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
@@ -941,7 +933,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
                 {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
@@ -996,7 +988,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                if (IsExpectedException(e, paramValue, expectedBaseTypeName))
                 {
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
@@ -1158,11 +1150,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static bool IsExpectedException(Exception e, object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private static bool IsExpectedException(Exception e, object paramValue, string expectedBaseTypeName)
         {
             if ((e.GetType() == typeof(System.Data.SqlTypes.SqlTypeException)) &&
                                 (expectedBaseTypeName == "datetime") &&
-                                (e.Message.Contains("1753")) &&
+                                e.Message.Contains("1753") &&
                                 (((DateTime)paramValue).Year < 1753))
             {
                 return true;

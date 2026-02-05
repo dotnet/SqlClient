@@ -1,4 +1,4 @@
-
+﻿
 ------------------------------ TestSimpleParameter_Type [type: date value:1/1/0001 00:00:00] ------------------------------
 Type        => Expected : Actual == System.DateTime : System.DateTime
 Base Type   => Expected : Actual ==  : 

@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Console.SetOut(twriter);
 
             // Run Test - calls 16 methods for this parameter combination
-            DateTimeVariantTest.SendInfoPublic(paramValue, expectedTypeName, expectedBaseTypeName, DataTestUtility.TCPConnectionString);
+            DateTimeVariantTest.SendInfo(paramValue, expectedTypeName, expectedBaseTypeName, DataTestUtility.TCPConnectionString);
 
             Console.Out.Flush();
             Console.Out.Dispose();
