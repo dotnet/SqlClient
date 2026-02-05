@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using Xunit;
 
@@ -46,20 +45,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             yield return new object[] { 4, DateTime.MinValue, "System.DateTime", "datetime", (Exception e, object paramValue) =>
             {
                 if ((e.GetType() == typeof(System.Data.SqlTypes.SqlTypeException)) &&
-                    e.Message.Contains("1753") &&
+                    e.Message.Contains("SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM") &&
                     (((DateTime)paramValue).Year < 1753))
                 {
                     return true;
                 }
                 else if ((e.GetType() == typeof(SqlException)) &&
-                                    e.Message.Contains("conversion of a varchar data type to a datetime data type") &&
+                                    e.Message.Contains("The conversion of a varchar data type to a datetime data type resulted in an out-of-range value") &&
                                     (((DateTime)paramValue).Year < 1753))
-                {
-                    return true;
-                }
-                else if ((e.GetType() == typeof(SqlException)) &&
-                                    e.Message.Contains("converting date and/or time from character string") &&
-                                    (((DateTime)paramValue) == DateTime.MaxValue))
                 {
                     return true;
                 }
@@ -70,28 +63,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }};
             yield return new object[] { 5, DateTime.MaxValue, "System.DateTime", "datetime", (Exception e, object paramValue) =>
             {
-                if ((e.GetType() == typeof(System.Data.SqlTypes.SqlTypeException)) &&
-                    e.Message.Contains("1753") &&
-                    (((DateTime)paramValue).Year < 1753))
-                {
-                    return true;
-                }
-                else if ((e.GetType() == typeof(SqlException)) &&
-                                    e.Message.Contains("conversion of a varchar data type to a datetime data type") &&
-                                    (((DateTime)paramValue).Year < 1753))
-                {
-                    return true;
-                }
-                else if ((e.GetType() == typeof(SqlException)) &&
-                                    e.Message.Contains("converting date and/or time from character string") &&
-                                    (((DateTime)paramValue) == DateTime.MaxValue))
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+                return (e.GetType() == typeof(SqlException)) &&
+                                    e.Message.Contains("Conversion failed when converting date and/or time from character string") &&
+                                    (((DateTime)paramValue) == DateTime.MaxValue);
             }};
             yield return new object[] { 6, DateTimeOffset.MinValue, "System.DateTimeOffset", "datetimeoffset"};
             yield return new object[] { 7, DateTimeOffset.MaxValue, "System.DateTimeOffset", "datetimeoffset"};
