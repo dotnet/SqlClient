@@ -170,6 +170,7 @@
     <Compile Include="TracingTests\EventSourceTest.cs" />
     <Compile Include="TracingTests\XEventsTracingTest.cs" />
     <Compile Include="SQL\AADFedAuthTokenRefreshTest\AADFedAuthTokenRefreshTest.cs" />
+    <Compile Include="SQL\Batch\BatchTests.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.cs" />
     <Compile Include="SQL\DataSourceParserTest\DataSourceParserTest.cs" />
@@ -253,9 +254,6 @@
     <Compile Include="TracingTests\MetricsTest.cs" />
     <Compile Include="TracingTests\DiagnosticTest.cs" />
     <Compile Include="TracingTests\FakeDiagnosticListenerObserver.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0')) AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
-    <Compile Include="SQL\Batch\BatchTests.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
     <Reference Include="System.Transactions" />

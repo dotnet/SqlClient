@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <Compile Include="Microsoft.Data.SqlClient.cs" />
+    <Compile Include="..\..\ref\Microsoft.Data.SqlClient.Batch.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
