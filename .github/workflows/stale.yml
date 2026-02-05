@@ -14,6 +14,7 @@ permissions:
 jobs:
   close-stale:
     runs-on: ubuntu-latest
+    if: github.event.repository.fork != true
     name: Close stale Issues and PRs
 
     steps:
