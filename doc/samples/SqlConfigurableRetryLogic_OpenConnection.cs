@@ -1,3 +1,5 @@
+namespace SqlConfigurableRetryLogic_OpenConnection;
+
 using System;
 // <Snippet1>
 using Microsoft.Data.SqlClient;

@@ -4,7 +4,7 @@ using System.Data;
 using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
 
-namespace Microsoft.Data.SqlClient.Samples
+namespace TransactionIsolationLevels
 {
     // Use the delegate to call the different threads.
     public delegate void AsyncAccessDatabase(String connString, IsolationLevel level);

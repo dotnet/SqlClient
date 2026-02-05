@@ -1,3 +1,5 @@
+namespace SqlConnectionStringBuilder_InitialCatalog;
+
 using System;
 using System.Data;
 // <Snippet1>

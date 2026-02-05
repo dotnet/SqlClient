@@ -1,3 +1,5 @@
+namespace SqlDataReader_Close;
+
 using System;
 using System.Data;
 // <Snippet1>

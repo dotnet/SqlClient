@@ -3,7 +3,7 @@ using System.Data;
 // <Snippet1>
 using Microsoft.Data.SqlClient;
 
-namespace Transaction1CS
+namespace SqlConnection_BeginTransaction
 {
     class Program
     {

@@ -1,3 +1,5 @@
+namespace SqlDataAdapter_SqlDataAdapter3;
+
 using System;
 using System.Data;
 //<Snippet1>

@@ -1,3 +1,5 @@
+namespace SqlConnectionStringBuilder_Password;
+
 using System;
 // <Snippet1>
 using Microsoft.Data.SqlClient;

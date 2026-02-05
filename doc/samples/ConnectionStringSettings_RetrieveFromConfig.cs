@@ -1,4 +1,6 @@
-﻿using System;
+﻿namespace ConnectionStringSettings_RetrieveFromConfig;
+
+using System;
 // <Snippet1>
 using System.Configuration;
 
