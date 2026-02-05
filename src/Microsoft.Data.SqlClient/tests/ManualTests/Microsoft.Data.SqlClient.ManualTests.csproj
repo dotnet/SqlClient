@@ -8,32 +8,6 @@
     <!-- This is only required today because of the separate test sets -->
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
-
-  <!-- OS Constants ==================================================== -->
-  <PropertyGroup>
-    <!-- There are some test files in this project that only apply to a certain OS. However, -->
-    <!-- because it isn't possible to run tests for the wrong OS (eg, built for Unix, run on -->
-    <!-- Windows), this value shouldn't be modified except for aiding in development. As     -->
-    <!-- such, the preprocessor constants are set directly from $(OS).                       -->
-    <TargetOs>$(OS)</TargetOs>
-    
-    <!-- Uncomment one of the following lines to override the OS you are developing for.     -->
-    <!-- This is useful if your IDE doesn't show syntax highlighting for code that is not    -->
-    <!-- included via an #if.                                                                -->
-    <!--<TargetOs>Unix</TargetOs>-->
-    <!--<TargetOs>Windows_NT</TargetOs>-->
-    
-    <NormalizedTargetOs>$(TargetOs.ToLower())</NormalizedTargetOs>
-
-    <!-- NOTE: These constants are prefixed with _ to keep them separate from .NET 5+ precompiler -->
-    <!--     flags. Those only apply to OS-specific target frameworks, and would interfere here.  -->
-    <DefineConstants Condition="'$(NormalizedTargetOs)' == 'unix'">$(DefineConstants);_UNIX</DefineConstants>
-    <DefineConstants Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(DefineConstants);_WINDOWS</DefineConstants>
-  </PropertyGroup>
-  <Target Name="ValidateOs" BeforeTargets="Build">
-    <Error Condition="'$(TargetOS)' != '$(OS)'"
-           Text="Cross-OS compilation of manual tests is not supported. Did you leave a development flag on?" />
-  </Target>
   
   <!-- Test Set ======================================================== -->
   <PropertyGroup>
