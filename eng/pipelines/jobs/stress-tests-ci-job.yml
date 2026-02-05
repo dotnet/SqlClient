@@ -140,8 +140,6 @@ jobs:
     displayName: Download MDS Artifacts
     inputs:
       artifactName: ${{ parameters.mdsArtifactsName }}
-      # The stress tests solution has a NuGet.config file that configures
-      # sources to look in this packages/ directory.
       targetPath: $(Build.SourcesDirectory)/packages
 
   # Setup the local SQL Server.

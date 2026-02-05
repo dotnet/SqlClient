@@ -4,6 +4,10 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+
+  - name: abstractionsPackageVersion
+    type: string
+
   - name: debug
     type: boolean
     default: false
@@ -13,12 +17,11 @@ parameters:
 
   - name: mdsPackageVersion
     type: string
-    default: $(mdsPackageVersion)
 
   - name: platform
     type: string
     default: $(Platform)
-  
+
   - name: buildConfiguration
     type: string
     values:
@@ -39,11 +42,11 @@ parameters:
     values:
       - x64
       - x86
-  
+
   - name: dotnetx86RootPath # full path to the x86 dotnet root folder with trailing slash
     type: string
     default: ''
-  
+
   - name: operatingSystem
     type: string
     default: 'Windows'
@@ -68,16 +71,16 @@ steps:
         msbuildArchitecture: ${{parameters.msbuildArchitecture }}
         platform: '${{parameters.platform }}'
         configuration: '${{parameters.buildConfiguration }}'
-        ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:   
+        ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
           msbuildArguments: >-
             -t:RunUnitTests
             -p:TF=${{ parameters.targetFramework }}
-            -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+            -p:ReferenceType=${{ parameters.referenceType }}
         ${{ else }}: # x86
           msbuildArguments: >-
             -t:RunUnitTests
             -p:TF=${{ parameters.targetFramework }}
-            -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+            -p:ReferenceType=${{ parameters.referenceType }}
             -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
 
     - task: MSBuild@1
@@ -88,18 +91,18 @@ steps:
         msbuildArchitecture: ${{parameters.msbuildArchitecture }}
         platform: '${{parameters.platform }}'
         configuration: '${{parameters.buildConfiguration }}'
-        ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:   
+        ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
           msbuildArguments: >-
             -t:RunUnitTests
             -p:TF=${{ parameters.targetFramework }}
-            -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+            -p:ReferenceType=${{ parameters.referenceType }}
             -p:Filter="category=flaky"
             -p:CollectCodeCoverage=false
         ${{ else }}: # x86
           msbuildArguments: >-
             -t:RunUnitTests
             -p:TF=${{ parameters.targetFramework }}
-            -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+            -p:ReferenceType=${{ parameters.referenceType }}
             -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
             -p:Filter="category=flaky"
             -p:CollectCodeCoverage=false
@@ -113,12 +116,13 @@ steps:
       msbuildArchitecture: ${{parameters.msbuildArchitecture }}
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.buildConfiguration }}'
-      ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:      
+      ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
         msbuildArguments: >-
           -t:RunFunctionalTests
           -p:TF=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       ${{ else }}: # x86
         msbuildArguments: >-
@@ -126,6 +130,7 @@ steps:
           -p:TF=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
 
@@ -137,12 +142,13 @@ steps:
       msbuildArchitecture: ${{parameters.msbuildArchitecture }}
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.buildConfiguration }}'
-      ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:      
+      ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
         msbuildArguments: >-
           -t:RunFunctionalTests
           -p:TF=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:Filter="category=flaky"
           -p:CollectCodeCoverage=false
@@ -152,6 +158,7 @@ steps:
           -p:TF=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:Filter="category=flaky"
@@ -172,6 +179,7 @@ steps:
           -p:TF=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       ${{ else }}: # x86
         msbuildArguments: >-
@@ -179,6 +187,7 @@ steps:
           -p:TF=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
@@ -197,6 +206,7 @@ steps:
           -p:TF=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:Filter="category=flaky"
           -p:CollectCodeCoverage=false
@@ -206,6 +216,7 @@ steps:
           -p:TF=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:Filter="category=flaky"
@@ -227,12 +238,13 @@ steps:
           -p:TF=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:platform=${{ parameters.platform }}
           -p:Configuration=${{ parameters.buildConfiguration }}
         verbosityRestore: Detailed
         verbosityPack: Detailed
-  
+
     - task: DotNetCoreCLI@2
       displayName: 'Run Flaky Unit Tests'
       condition: succeededOrFailed()
@@ -245,6 +257,7 @@ steps:
           -p:TF=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:platform=${{ parameters.platform }}
           -p:Configuration=${{ parameters.buildConfiguration }}
@@ -265,6 +278,7 @@ steps:
         -p:TF=${{ parameters.targetFramework }}
         -p:TestSet=${{ parameters.testSet }}
         -p:ReferenceType=${{ parameters.referenceType }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
         -p:platform=${{ parameters.platform }}
         -p:Configuration=${{ parameters.buildConfiguration }}
@@ -283,6 +297,7 @@ steps:
         -p:TF=${{ parameters.targetFramework }}
         -p:TestSet=${{ parameters.testSet }}
         -p:ReferenceType=${{ parameters.referenceType }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
         -p:platform=${{ parameters.platform }}
         -p:Configuration=${{ parameters.buildConfiguration }}
@@ -303,6 +318,7 @@ steps:
         -p:TF=${{ parameters.targetFramework }}
         -p:TestSet=${{ parameters.testSet }}
         -p:ReferenceType=${{ parameters.referenceType }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
         -p:platform=${{ parameters.platform }}
         -p:Configuration=${{ parameters.buildConfiguration }}
@@ -322,6 +338,7 @@ steps:
         -p:TF=${{ parameters.targetFramework }}
         -p:TestSet=${{ parameters.testSet }}
         -p:ReferenceType=${{ parameters.referenceType }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
         -p:platform=${{ parameters.platform }}
         -p:Configuration=${{ parameters.buildConfiguration }}

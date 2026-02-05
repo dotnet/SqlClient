@@ -35,20 +35,17 @@ jobs:
     isCustom: true
     name: ADO-1ES-Pool
     vmImage: 'ADO-MMS22-SQL19'
-    
+
   variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
   - template: /eng/pipelines/libraries/mds-validation-variables.yml@self
 
   steps:
   - template: /eng/pipelines/common/templates/steps/pre-build-step.yml
- 
+
   - ${{parameters.downloadPackageStep }}
 
-  - pwsh: Copy-Item -Path "$(Build.SourcesDirectory)/NuGet.config.local" -Destination "$(Build.SourcesDirectory)/NuGet.config" -Force
-    displayName: Use local NuGet packages
-
   - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml
-    parameters: 
+    parameters:
       TCPConnectionString: $(SQL_TCP_CONN_STRING)
       NPConnectionString: $(SQL_NP_CONN_STRING)
       SupportsIntegratedSecurity: false
@@ -58,14 +55,12 @@ jobs:
 # build & test
   - template: /eng/pipelines/common/templates/steps/build-and-run-tests-netfx-step.yml
     parameters:
-      referenceType: Package
-      buildConfiguration: Release
       ${{ if parameters.isPreview }}:
+        abstractionsPackageVersion: $(abstractionsPackagePreviewVersion)
         mdsPackageVersion: $(previewMdsPackageVersion)
 
   - template: /eng/pipelines/common/templates/steps/build-and-run-tests-netcore-step.yml
     parameters:
-      referenceType: Package
-      buildConfiguration: Release
       ${{ if parameters.isPreview }}:
+        abstractionsPackageVersion: $(abstractionsPackagePreviewVersion)
         mdsPackageVersion: $(previewMdsPackageVersion)

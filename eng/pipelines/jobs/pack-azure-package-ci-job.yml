@@ -45,7 +45,7 @@ parameters:
   - name: debug
     type: boolean
     default: false
-  
+
   # The list of upstream jobs to depend on.
   - name: dependsOn
     type: object
@@ -95,6 +95,13 @@ jobs:
       - name: dotnetPackagesDir
         value: $(Build.StagingDirectory)/dotnetPackages
 
+      # The NuGet.config file to use for restoring packages.
+      - name: nugetConfigFile
+        ${{ if eq(parameters.referenceType, 'Package') }}:
+          value: $(Build.SourcesDirectory)/NuGet.config.local
+        ${{ else }}:
+          value: $(Build.SourcesDirectory)/NuGet.config
+
       # dotnet CLI arguments common to all commands.
       - name: commonArguments
         value: >-
@@ -138,19 +145,13 @@ jobs:
         - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
           displayName: '[Debug] Print Environment Variables'
 
-      # We have a few extra steps for Package reference builds.
+      # For Package reference builds, we must first download the Abstractions package artifacts.
       - ${{ if eq(parameters.referenceType, 'Package') }}:
-
-        # Download the Abstractions package artifacts into packages/.
         - task: DownloadPipelineArtifact@2
           displayName: Download Abstractions Package Artifacts
           inputs:
             artifactName: ${{ parameters.abstractionsArtifactsName }}
             targetPath: $(Build.SourcesDirectory)/packages
-
-        # Use the local NuGet.config that references the packages/ directory.
-        - pwsh: cp $(Build.SourcesDirectory)/NuGet.config.local $(Build.SourcesDirectory)/NuGet.config
-          displayName: Use local NuGet.config
 
       # Install the .NET SDK.
       - template: /eng/pipelines/steps/install-dotnet.yml@self
@@ -167,7 +168,7 @@ jobs:
           command: custom
           custom: restore
           projects: $(project)
-          arguments: $(commonArguments)
+          arguments: $(commonArguments) --configfile $(nugetConfigFile)
 
       # Build the project.
       - task: DotNetCoreCLI@2
