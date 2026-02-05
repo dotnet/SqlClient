@@ -99,16 +99,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             yield return new object[] { 9, DateTime.Parse("1998-01-01 23:59:59.995"), "System.DateTime", "datetime2"};
             yield return new object[] { 10, DateTime.MinValue, "System.DateTime", "smalldatetime"};
             yield return new object[] { 11, DateTime.MaxValue, "System.DateTime", "smalldatetime"};
-            yield return new object?[] { 12, TimeSpan.MinValue, "System.TimeSpan", "time", null, (Exception e) =>
-            {
-                return (e.GetType() == typeof(InvalidOperationException)) &&
-                    e.Message.Contains("The given value ");
-            } };
-            yield return new object?[] { 13, TimeSpan.MaxValue, "System.TimeSpan", "time", null, (Exception e) =>
-            {
-                return (e.GetType() == typeof(InvalidOperationException)) &&
-                    e.Message.Contains("The given value ");
-            } };
+            yield return new object?[] { 12, TimeSpan.MinValue, "System.TimeSpan", "time"};
+            yield return new object?[] { 13, TimeSpan.MaxValue, "System.TimeSpan", "time"};
             yield return new object?[] { 14, DateTime.MinValue, "System.DateTime", "time", null, (Exception e) =>
             {
                 return (e.GetType() == typeof(InvalidOperationException)) &&
