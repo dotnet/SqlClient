@@ -25,9 +25,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetParameterCombinations))]
-        public void DateTimeVariantParameterTest(int paramIndex, object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        public void DateTimeVariantParameterTest(int paramIndex, object paramValue, string expectedTypeName, string expectedBaseTypeName, Func<Exception, object, bool> isExpectedException, Func<Exception, bool> isExpectedInvalidOperationException)
         {
-            Assert.True(RunTestAndCompareWithBaseline(paramIndex, paramValue, expectedTypeName, expectedBaseTypeName));
+            Assert.True(RunTestAndCompareWithBaseline(paramIndex, paramValue, expectedTypeName, expectedBaseTypeName, isExpectedException, isExpectedInvalidOperationException));
         }
 
         /// <summary>
@@ -36,25 +36,89 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         public static IEnumerable<object[]> GetParameterCombinations()
         {
-            yield return new object[] { 0, DateTime.MinValue, "System.DateTime", "date" };
-            yield return new object[] { 1, DateTime.MaxValue, "System.DateTime", "date" };
-            yield return new object[] { 2, DateTime.MinValue, "System.DateTime", "datetime2" };
-            yield return new object[] { 3, DateTime.MaxValue, "System.DateTime", "datetime2" };
-            yield return new object[] { 4, DateTime.MinValue, "System.DateTime", "datetime" };
-            yield return new object[] { 5, DateTime.MaxValue, "System.DateTime", "datetime" };
-            yield return new object[] { 6, DateTimeOffset.MinValue, "System.DateTimeOffset", "datetimeoffset" };
-            yield return new object[] { 7, DateTimeOffset.MaxValue, "System.DateTimeOffset", "datetimeoffset" };
-            yield return new object[] { 8, DateTimeOffset.Parse("12/31/1999 23:59:59.9999999 -08:30"), "System.DateTimeOffset", "datetimeoffset" };
-            yield return new object[] { 9, DateTime.Parse("1998-01-01 23:59:59.995"), "System.DateTime", "datetime2" };
-            yield return new object[] { 10, DateTime.MinValue, "System.DateTime", "smalldatetime" };
-            yield return new object[] { 11, DateTime.MaxValue, "System.DateTime", "smalldatetime" };
-            yield return new object[] { 12, TimeSpan.MinValue, "System.TimeSpan", "time" };
-            yield return new object[] { 13, TimeSpan.MaxValue, "System.TimeSpan", "time" };
-            yield return new object[] { 14, DateTime.MinValue, "System.DateTime", "time" };
-            yield return new object[] { 15, DateTime.MaxValue, "System.DateTime", "time" };
+            yield return new object[] { 0, DateTime.MinValue, "System.DateTime", "date", (Exception _, object _) => false, (Exception e) => false };
+            yield return new object[] { 1, DateTime.MaxValue, "System.DateTime", "date", (Exception _, object _) => false, (Exception e) => false };
+            yield return new object[] { 2, DateTime.MinValue, "System.DateTime", "datetime2", (Exception _, object _) => false, (Exception e) => false };
+            yield return new object[] { 3, DateTime.MaxValue, "System.DateTime", "datetime2", (Exception _, object _) => false, (Exception e) => false };
+            yield return new object[] { 4, DateTime.MinValue, "System.DateTime", "datetime", (Exception e, object paramValue) =>
+            {
+                if ((e.GetType() == typeof(System.Data.SqlTypes.SqlTypeException)) &&
+                    e.Message.Contains("1753") &&
+                    (((DateTime)paramValue).Year < 1753))
+                {
+                    return true;
+                }
+                else if ((e.GetType() == typeof(SqlException)) &&
+                                    e.Message.Contains("conversion of a varchar data type to a datetime data type") &&
+                                    (((DateTime)paramValue).Year < 1753))
+                {
+                    return true;
+                }
+                else if ((e.GetType() == typeof(SqlException)) &&
+                                    e.Message.Contains("converting date and/or time from character string") &&
+                                    (((DateTime)paramValue) == DateTime.MaxValue))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }, (Exception e) => false };
+            yield return new object[] { 5, DateTime.MaxValue, "System.DateTime", "datetime", (Exception e, object paramValue) =>
+            {
+                if ((e.GetType() == typeof(System.Data.SqlTypes.SqlTypeException)) &&
+                    e.Message.Contains("1753") &&
+                    (((DateTime)paramValue).Year < 1753))
+                {
+                    return true;
+                }
+                else if ((e.GetType() == typeof(SqlException)) &&
+                                    e.Message.Contains("conversion of a varchar data type to a datetime data type") &&
+                                    (((DateTime)paramValue).Year < 1753))
+                {
+                    return true;
+                }
+                else if ((e.GetType() == typeof(SqlException)) &&
+                                    e.Message.Contains("converting date and/or time from character string") &&
+                                    (((DateTime)paramValue) == DateTime.MaxValue))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }, (Exception e) => false };
+            yield return new object[] { 6, DateTimeOffset.MinValue, "System.DateTimeOffset", "datetimeoffset", (Exception _, object _) => false, (Exception e) => false };
+            yield return new object[] { 7, DateTimeOffset.MaxValue, "System.DateTimeOffset", "datetimeoffset", (Exception _, object _) => false, (Exception e) => false };
+            yield return new object[] { 8, DateTimeOffset.Parse("12/31/1999 23:59:59.9999999 -08:30"), "System.DateTimeOffset", "datetimeoffset", (Exception _, object _) => false, (Exception e) => false };
+            yield return new object[] { 9, DateTime.Parse("1998-01-01 23:59:59.995"), "System.DateTime", "datetime2", (Exception _, object _) => false, (Exception e) => false };
+            yield return new object[] { 10, DateTime.MinValue, "System.DateTime", "smalldatetime", (Exception _, object _) => false, (Exception e) => false };
+            yield return new object[] { 11, DateTime.MaxValue, "System.DateTime", "smalldatetime", (Exception _, object _) => false, (Exception e) => false };
+            yield return new object[] { 12, TimeSpan.MinValue, "System.TimeSpan", "time", (Exception _, object _) => false, (Exception e) =>
+            {
+                return (e.GetType() == typeof(InvalidOperationException)) &&
+                    e.Message.Contains("The given value ");
+            } };
+            yield return new object[] { 13, TimeSpan.MaxValue, "System.TimeSpan", "time", (Exception _, object _) => false, (Exception e) =>
+            {
+                return (e.GetType() == typeof(InvalidOperationException)) &&
+                    e.Message.Contains("The given value ");
+            } };
+            yield return new object[] { 14, DateTime.MinValue, "System.DateTime", "time", (Exception _, object _) => false, (Exception e) =>
+            {
+                return (e.GetType() == typeof(InvalidOperationException)) &&
+                    e.Message.Contains("The given value ");
+            } };
+            yield return new object[] { 15, DateTime.MaxValue, "System.DateTime", "time", (Exception _, object _) => false, (Exception e) =>
+            {
+                return (e.GetType() == typeof(InvalidOperationException)) &&
+                    e.Message.Contains("The given value ");
+            } };
         }
 
-        private bool RunTestAndCompareWithBaseline(int paramIndex, object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        private bool RunTestAndCompareWithBaseline(int paramIndex, object paramValue, string expectedTypeName, string expectedBaseTypeName, Func<Exception, object, bool> isExpectedException, Func<Exception, bool> isExpectedInvalidOperationException)
         {
             string outputPath = $"DateTimeVariant_{paramIndex}.out";
 
@@ -64,7 +128,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Console.SetOut(twriter);
 
             // Run Test - calls 16 methods for this parameter combination
-            DateTimeVariantTest.SendInfo(paramValue, expectedTypeName, expectedBaseTypeName, DataTestUtility.TCPConnectionString);
+            DateTimeVariantTest.SendInfo(paramValue, expectedTypeName, expectedBaseTypeName, DataTestUtility.TCPConnectionString, isExpectedException, isExpectedInvalidOperationException);
 
             Console.Out.Flush();
             Console.Out.Dispose();
