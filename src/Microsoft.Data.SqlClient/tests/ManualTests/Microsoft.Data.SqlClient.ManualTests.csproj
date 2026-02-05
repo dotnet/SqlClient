@@ -264,9 +264,9 @@
              CopyToOutputDirectory="PreserveNewest" />
 
     <!-- Baseline files for individual test groups -->
-    <Content Include="SQL\ParameterTest\DateTimeVariant.bsl">
+    <Content Include="SQL\ParameterTest\DateTimeVariant\*.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>DateTimeVariant.bsl</Link>
+      <Link>DateTimeVariant\%(Filename)%(Extension)</Link>
     </Content>
     <Content Include="SQL\ParameterTest\StreamInputParameter_DebugMode.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -3,7 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Xunit;
 
@@ -16,6 +18,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class DateTimeVariantTests
     {
         private readonly string _connStr;
+        private const string BaselineDirectory = "DateTimeVariant";
 
         public DateTimeVariantTests()
         {
@@ -31,7 +34,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private bool RunTestAndCompareWithBaseline()
         {
             string outputPath = "DateTimeVariant.out";
-            string baselinePath = "DateTimeVariant.bsl";
 
             var fstream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read);
             var swriter = new StreamWriter(fstream, Encoding.UTF8);
@@ -49,8 +51,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             standardOutput.AutoFlush = true;
             Console.SetOut(standardOutput);
 
-            // Compare output file
-            var comparisonResult = FindDiffFromBaseline(baselinePath, outputPath);
+            // Compare output file against concatenated baseline files
+            var comparisonResult = FindDiffFromBaselineDirectory(BaselineDirectory, outputPath);
 
             if (string.IsNullOrEmpty(comparisonResult))
             {
@@ -58,20 +60,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             Console.WriteLine("DateTimeVariantParameterTest Failed!");
-            Console.WriteLine("Please compare baseline: {0} with output: {1}", Path.GetFullPath(baselinePath), Path.GetFullPath(outputPath));
+            Console.WriteLine("Please compare baseline directory: {0} with output: {1}", Path.GetFullPath(BaselineDirectory), Path.GetFullPath(outputPath));
             Console.WriteLine("Comparison Results:");
             Console.WriteLine(comparisonResult);
             return false;
         }
 
-        private static string FindDiffFromBaseline(string baselinePath, string outputPath)
+        /// <summary>
+        /// Concatenates all .bsl files from the baseline directory (sorted by filename)
+        /// and compares against the output file.
+        /// </summary>
+        private static string FindDiffFromBaselineDirectory(string baselineDir, string outputPath)
         {
-            var expectedLines = File.ReadAllLines(baselinePath);
+            // Get all baseline files sorted by name
+            var baselineFiles = Directory.GetFiles(baselineDir, "*.bsl")
+                .OrderBy(f => Path.GetFileName(f))
+                .ToArray();
+
+            // Concatenate all baseline files
+            var expectedLines = new List<string>();
+            foreach (var file in baselineFiles)
+            {
+                expectedLines.AddRange(File.ReadAllLines(file));
+            }
+
             var outputLines = File.ReadAllLines(outputPath);
 
             var comparisonSb = new StringBuilder();
 
-            var expectedLength = expectedLines.Length;
+            var expectedLength = expectedLines.Count;
             var outputLength = outputLines.Length;
             var findDiffLength = Math.Min(expectedLength, outputLength);
 
