@@ -657,7 +657,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         // NOTE: Retrieve <UserInstanceName> here. This user instance name will be
                         //     used below to connect to the SQL Express User Instance.
-                        instanceName = sseConnection.InstanceName;
+                        instanceName = sseConnection.UserInstanceName;
 
                         // Set future transient fault handling based on connection options
                         sqlOwningConnection._applyTransientFaultHandling = opt != null && opt.ConnectRetryCount > 0;

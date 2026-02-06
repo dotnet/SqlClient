@@ -171,7 +171,7 @@ namespace Microsoft.Data.SqlClient
             string connString,
             ref IntPtr pConn,
             ref string spn,
-            byte[] instanceName,
+            ref string instanceName,
             bool fOverrideCache,
             bool fSync,
             int timeout,
@@ -186,9 +186,13 @@ namespace Microsoft.Data.SqlClient
             SQLDNSInfo cachedDnsInfo,
             string hostNameInCertificate)
         {
-            fixed (byte* pInstanceName = instanceName)
+            // Size of this buffer is as specified by netlibs.
+            ReadOnlySpan<byte> instanceNameBuffer = stackalloc byte[256];
+
+            fixed (byte* pInstanceName = instanceNameBuffer)
             {
                 SniClientConsumerInfo clientConsumerInfo = new SniClientConsumerInfo();
+                uint result;
 
                 // initialize client ConsumerInfo part first
                 MarshalConsumerInfo(consumerInfo, ref clientConsumerInfo.ConsumerInfo);
@@ -197,7 +201,7 @@ namespace Microsoft.Data.SqlClient
                 clientConsumerInfo.HostNameInCertificate = hostNameInCertificate;
                 clientConsumerInfo.networkLibrary = Prefix.UNKNOWN_PREFIX;
                 clientConsumerInfo.szInstanceName = pInstanceName;
-                clientConsumerInfo.cchInstanceName = (uint)instanceName.Length;
+                clientConsumerInfo.cchInstanceName = (uint)instanceNameBuffer.Length;
                 clientConsumerInfo.fOverrideLastConnectCache = fOverrideCache;
                 clientConsumerInfo.fSynchronousConnection = fSync;
                 clientConsumerInfo.timeout = timeout;
@@ -236,22 +240,21 @@ namespace Microsoft.Data.SqlClient
                     {
                         // An empty string implies we need to find the SPN so we supply a buffer for the max size
                         var array = ArrayPool<byte>.Shared.Rent(SniMaxComposedSpnLength);
-                        array.AsSpan().Clear();
+                        Span<byte> arraySpan = array.AsSpan();
 
+                        arraySpan.Clear();
                         try
                         {
-                            fixed (byte* pin_spnBuffer = array)
+                            fixed (byte* pin_spnBuffer = arraySpan)
                             {
                                 clientConsumerInfo.szSPN = pin_spnBuffer;
                                 clientConsumerInfo.cchSPN = (uint)SniMaxComposedSpnLength;
 
-                                var result = s_nativeMethods.SniOpenSyncExWrapper(ref clientConsumerInfo, out pConn);
-                                if (result == 0)
+                                result = s_nativeMethods.SniOpenSyncExWrapper(ref clientConsumerInfo, out pConn);
+                                if (result is TdsEnums.SNI_SUCCESS)
                                 {
-                                    spn = Encoding.Unicode.GetString(array).TrimEnd('\0');
+                                    spn = Encoding.Unicode.CreateStringFromNullTerminated(arraySpan);
                                 }
-
-                                return result;
                             }
                         }
                         finally
@@ -275,7 +278,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 clientConsumerInfo.szSPN = pin_spnBuffer;
                                 clientConsumerInfo.cchSPN = (uint)writer.WrittenCount;
-                                return s_nativeMethods.SniOpenSyncExWrapper(ref clientConsumerInfo, out pConn);
+                                result = s_nativeMethods.SniOpenSyncExWrapper(ref clientConsumerInfo, out pConn);
                             }
                         }
                         finally
@@ -284,9 +287,18 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                 }
+                else
+                {
+                    // Otherwise leave szSPN null (SQL Auth)
+                    result = s_nativeMethods.SniOpenSyncExWrapper(ref clientConsumerInfo, out pConn);
+                }
 
-                // Otherwise leave szSPN null (SQL Auth)
-                return s_nativeMethods.SniOpenSyncExWrapper(ref clientConsumerInfo, out pConn);
+                if (result is TdsEnums.SNI_SUCCESS)
+                {
+                    instanceName = Encoding.UTF8.CreateStringFromNullTerminated(instanceNameBuffer);
+                }
+
+                return result;
             }
         }
 
