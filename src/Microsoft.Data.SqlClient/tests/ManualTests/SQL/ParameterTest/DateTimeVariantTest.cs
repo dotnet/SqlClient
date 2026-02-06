@@ -29,9 +29,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         SqlBulkCopyDataRow_Variant
     };
 
+    public delegate bool ExceptionChecker(Exception e, object paramValue);
+
     public static class DateTimeVariantTest
     {
-        public static void SendInfo(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, Func<Exception, object, bool> isExpectedException, Func<Exception, bool> isExpectedInvalidOperationException)
+        public static void SendInfo(
+            object paramValue, 
+            string expectedTypeName, 
+            string expectedBaseTypeName, 
+            string connStr, 
+            Dictionary<TestVariations, ExceptionChecker> expectedExceptions, 
+            Dictionary<TestVariations, ExceptionChecker> expectedInvalidOperationExceptions)
         {
 
             List<Tuple<TestVariations, Action<object, string, string, string, string>>> testVariations = new() {
@@ -64,11 +72,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 catch (Exception e)
                 {
-                    if (isExpectedException(e, paramValue))
+                    if (expectedExceptions.TryGetValue(tag, out var isExpectedException) && isExpectedException(e, paramValue))
                     {
                         LogMessage(tag.ToString(), "[EXPECTED EXCEPTION] " + e.Message);
                     }
-                    else if (isExpectedInvalidOperationException(e))
+                    else if (expectedInvalidOperationExceptions.TryGetValue(tag, out var isExpectedInvalidOperationException) && isExpectedInvalidOperationException(e, paramValue))
                     {
                         LogMessage(tag.ToString(), "[EXPECTED INVALID OPERATION EXCEPTION] " + AmendTheGivenMessageDateValueException(e.Message, paramValue));
                     }

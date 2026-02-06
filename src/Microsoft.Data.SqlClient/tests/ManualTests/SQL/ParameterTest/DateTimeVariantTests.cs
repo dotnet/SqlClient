@@ -25,12 +25,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetParameterCombinations))]
-        public void DateTimeVariantParameterTest(int paramIndex, object paramValue, string expectedTypeName, string expectedBaseTypeName, Func<Exception, object, bool>? isExpectedException = null, Func<Exception, bool>? isExpectedInvalidOperationException = null)
+        public void DateTimeVariantParameterTest(
+            int paramIndex, 
+            object paramValue, 
+            string expectedTypeName, 
+            string expectedBaseTypeName, 
+            Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
+            Dictionary<TestVariations, ExceptionChecker>? expectedInvalidOperationExceptions = null)
         {
-            isExpectedException ??= (Exception _, object _) => false;
-            isExpectedInvalidOperationException ??= (Exception e) => false;
-            Assert.True(RunTestAndCompareWithBaseline(paramIndex, paramValue, expectedTypeName, expectedBaseTypeName, isExpectedException, isExpectedInvalidOperationException));
+            expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
+            expectedInvalidOperationExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
+            Assert.True(RunTestAndCompareWithBaseline(paramIndex, paramValue, expectedTypeName, expectedBaseTypeName, expectedExceptions, expectedInvalidOperationExceptions));
         }
+
 
         /// <summary>
         /// Gets parameter combinations as indices for MemberData.
@@ -42,31 +49,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             yield return new object[] { 1, DateTime.MaxValue, "System.DateTime", "date"};
             yield return new object[] { 2, DateTime.MinValue, "System.DateTime", "datetime2"};
             yield return new object[] { 3, DateTime.MaxValue, "System.DateTime", "datetime2"};
-            yield return new object[] { 4, DateTime.MinValue, "System.DateTime", "datetime", (Exception e, object paramValue) =>
-            {
-                if ((e.GetType() == typeof(System.Data.SqlTypes.SqlTypeException)) &&
-                    e.Message.Contains("SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM") &&
-                    (((DateTime)paramValue).Year < 1753))
-                {
-                    return true;
-                }
-                else if ((e.GetType() == typeof(SqlException)) &&
-                                    e.Message.Contains("The conversion of a varchar data type to a datetime data type resulted in an out-of-range value") &&
-                                    (((DateTime)paramValue).Year < 1753))
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }};
-            yield return new object[] { 5, DateTime.MaxValue, "System.DateTime", "datetime", (Exception e, object paramValue) =>
-            {
-                return (e.GetType() == typeof(SqlException)) &&
-                                    e.Message.Contains("Conversion failed when converting date and/or time from character string") &&
-                                    (((DateTime)paramValue) == DateTime.MaxValue);
-            }};
+            yield return new object[] { 4, DateTime.MinValue, "System.DateTime", "datetime", 
+            new Dictionary<TestVariations, ExceptionChecker> { 
+                { TestVariations.TestSimpleParameter_Type, SqlDateTimeOverflow },
+                { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
+                { TestVariations.TestSqlDataRecordParameterToTVP_Type, SqlDateTimeOverflow },
+                { TestVariations.TestSqlDataRecordParameterToTVP_Variant, SqlDateTimeOverflow },
+                { TestVariations.TestSqlDataReaderParameterToTVP_Type, SqlDateTimeOverflow },
+                { TestVariations.TestSqlDataReaderParameterToTVP_Variant, SqlDateTimeOverflow },
+                { TestVariations.TestSqlDataReader_TVP_Type, VarcharToDateTimeOutOfRange},
+                { TestVariations.TestSqlDataReader_TVP_Variant, VarcharToDateTimeOutOfRange},
+                { TestVariations.TestSimpleDataReader_Type, VarcharToDateTimeOutOfRange},
+                { TestVariations.TestSimpleDataReader_Variant, VarcharToDateTimeOutOfRange},
+                { TestVariations.SqlBulkCopySqlDataReader_Type, VarcharToDateTimeOutOfRange},
+                { TestVariations.SqlBulkCopySqlDataReader_Variant, VarcharToDateTimeOutOfRange}, 
+                { TestVariations.SqlBulkCopyDataTable_Type, SqlDateTimeOverflow},
+                { TestVariations.SqlBulkCopyDataTable_Variant, SqlDateTimeOverflow},
+                { TestVariations.SqlBulkCopyDataRow_Type, SqlDateTimeOverflow},
+                { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow}}};
+            yield return new object[] { 5, DateTime.MaxValue, "System.DateTime", "datetime", 
+            new Dictionary<TestVariations, ExceptionChecker> { 
+                { TestVariations.TestSqlDataReader_TVP_Type, CannotConvertCharacterStringToDateOrTime},
+                { TestVariations.TestSqlDataReader_TVP_Variant, CannotConvertCharacterStringToDateOrTime},
+                { TestVariations.TestSimpleDataReader_Type, CannotConvertCharacterStringToDateOrTime},
+                { TestVariations.TestSimpleDataReader_Variant, CannotConvertCharacterStringToDateOrTime},
+                { TestVariations.SqlBulkCopySqlDataReader_Type, CannotConvertCharacterStringToDateOrTime},
+                { TestVariations.SqlBulkCopySqlDataReader_Variant, CannotConvertCharacterStringToDateOrTime}}};
             yield return new object[] { 6, DateTimeOffset.MinValue, "System.DateTimeOffset", "datetimeoffset"};
             yield return new object[] { 7, DateTimeOffset.MaxValue, "System.DateTimeOffset", "datetimeoffset"};
             yield return new object[] { 8, DateTimeOffset.Parse("12/31/1999 23:59:59.9999999 -08:30"), "System.DateTimeOffset", "datetimeoffset"};
@@ -75,19 +83,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             yield return new object[] { 11, DateTime.MaxValue, "System.DateTime", "smalldatetime"};
             yield return new object?[] { 12, TimeSpan.MinValue, "System.TimeSpan", "time"};
             yield return new object?[] { 13, TimeSpan.MaxValue, "System.TimeSpan", "time"};
-            yield return new object?[] { 14, DateTime.MinValue, "System.DateTime", "time", null, (Exception e) =>
-            {
-                return (e.GetType() == typeof(InvalidOperationException)) &&
-                    e.Message.Contains("The given value ");
-            } };
-            yield return new object?[] { 15, DateTime.MaxValue, "System.DateTime", "time", null, (Exception e) =>
-            {
-                return (e.GetType() == typeof(InvalidOperationException)) &&
-                    e.Message.Contains("The given value ");
-            } };
+            yield return new object?[] { 14, DateTime.MinValue, "System.DateTime", "time", null, 
+            new Dictionary<TestVariations, ExceptionChecker> { 
+                { TestVariations.SqlBulkCopyDataTable_Type, CannotConvertMinDateTimeToTime},
+                { TestVariations.SqlBulkCopyDataRow_Type, CannotConvertMinDateTimeToTime}}};
+            yield return new object?[] { 15, DateTime.MaxValue, "System.DateTime", "time", null, 
+            new Dictionary<TestVariations, ExceptionChecker> { 
+                { TestVariations.SqlBulkCopyDataTable_Type, CannotConvertMaxDateTimeToTime },
+                { TestVariations.SqlBulkCopyDataRow_Type, CannotConvertMaxDateTimeToTime }}};
         }
 
-        private bool RunTestAndCompareWithBaseline(int paramIndex, object paramValue, string expectedTypeName, string expectedBaseTypeName, Func<Exception, object, bool> isExpectedException, Func<Exception, bool> isExpectedInvalidOperationException)
+        private static ExceptionChecker SqlDateTimeOverflow = (e, paramValue) =>
+            (e.GetType() == typeof(System.Data.SqlTypes.SqlTypeException)) &&
+            e.Message.Contains("SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.");
+
+        private static ExceptionChecker VarcharToDateTimeOutOfRange = (e, paramValue) =>
+            (e.GetType() == typeof(SqlException)) &&
+            e.Message.Contains("The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.");
+
+        private static ExceptionChecker CannotConvertMinDateTimeToTime = (e, paramValue) =>
+            (e.GetType() == typeof(InvalidOperationException)) &&
+            e.Message.Contains("The given value '1/1/0001 12:00:00 AM' of type DateTime from the data source cannot be converted to type time for Column 0 [f1] Row 1.");
+
+        private static ExceptionChecker CannotConvertMaxDateTimeToTime = (e, paramValue) =>
+            (e.GetType() == typeof(InvalidOperationException)) &&
+            e.Message.Contains("The given value '12/31/9999 11:59:59 PM' of type DateTime from the data source cannot be converted to type time for Column 0 [f1] Row 1.");
+
+        private static ExceptionChecker CannotConvertCharacterStringToDateOrTime = (e, paramValue) =>
+            (e.GetType() == typeof(SqlException)) &&
+            e.Message.Contains("Conversion failed when converting date and/or time from character string.");
+
+        private bool RunTestAndCompareWithBaseline(int paramIndex, object paramValue, string expectedTypeName, string expectedBaseTypeName, Dictionary<TestVariations, ExceptionChecker> expectedExceptions, Dictionary<TestVariations, ExceptionChecker> expectedInvalidOperationExceptions)
         {
             string outputPath = $"DateTimeVariant_{paramIndex}.out";
 
@@ -97,7 +123,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Console.SetOut(twriter);
 
             // Run Test - calls 16 methods for this parameter combination
-            DateTimeVariantTest.SendInfo(paramValue, expectedTypeName, expectedBaseTypeName, DataTestUtility.TCPConnectionString, isExpectedException, isExpectedInvalidOperationException);
+            DateTimeVariantTest.SendInfo(
+                paramValue, 
+                expectedTypeName, 
+                expectedBaseTypeName, 
+                DataTestUtility.TCPConnectionString, 
+                expectedExceptions, 
+                expectedInvalidOperationExceptions);
 
             Console.Out.Flush();
             Console.Out.Dispose();
