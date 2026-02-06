@@ -23,7 +23,7 @@ This project should be built with Visual Studio 2019+ for the best compatibility
 
 Once the environment is setup properly, execute the desired set of commands below from the _root_ folder to perform the respective operations:
 
-### Maunal Test Prerequisites
+### Manual Test Prerequisites
 
 Manual Tests require the below setup to run:
 
@@ -54,7 +54,7 @@ Manual Tests require the below setup to run:
   |DNSCachingConnString | Connection string for a server that supports DNS Caching|
   |EnclaveAzureDatabaseConnString | (Optional) Connection string for Azure database with enclaves |
   |ManagedIdentitySupported | (Optional) When set to `false` **Managed Identity** related tests won't run. The default value is `true`. |
-  |IsManagedInstance | (Optional) When set to `true` **TVP** related tests will use on non-Azure bs files to compare test results. this is needed when testing against Managed Instances or TVP Tests will fail on Test set 3. The default value is `false`. |
+  |IsManagedInstance | (Optional) When set to `true` **TVP** related tests will use non-Azure bsl files to compare test results. This is needed when testing against Azure Managed Instances; otherwise TVP Tests will fail on TestSet 3. The default value is `false`. |
   |PowerShellPath | The full path to PowerShell.exe. This is not required if the path is present in the PATH environment variable. | `D:\\escaped\\absolute\\path\\to\\PowerShell.exe` |
 
 ## MSBuild Reference
@@ -149,7 +149,7 @@ Azure Synapse is configured).
 ### Run Functional Tests
 
 ```bash
-dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/ Microsoft.Data.SqlClient.FunctionalTests.csproj" \
+dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" \
   -p:Configuration=Release \
   --filter "category!=failing&category!=flaky"
 
