@@ -41,28 +41,6 @@ parameters:
     default: 2
 
 steps:
-- task: MSBuild@1
-  displayName: 'Build AKV Provider .NET Framework'
-  inputs:
-    solution: build.proj
-    msbuildArchitecture: x64
-    msbuildArguments: >-
-      -p:Configuration=${{ parameters.buildConfiguration }}
-      -t:BuildAKVNetFx
-      -p:ReferenceType=${{ parameters.referenceType }}
-      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-
-- task: MSBuild@1
-  displayName: 'MSBuild Build Tests for ${{parameters.TargetNetFxVersion }}'
-  inputs:
-    solution: build.proj
-    msbuildArguments: >-
-      -t:BuildTestsNetFx
-      -p:ReferenceType=${{ parameters.referenceType }}
-      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-      -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
-      -p:Configuration=${{ parameters.buildConfiguration }}
-      -p:Platform=${{ parameters.platform }}
 
 # Don't run unit tests using package reference. Unit tests are only run using project reference.
 

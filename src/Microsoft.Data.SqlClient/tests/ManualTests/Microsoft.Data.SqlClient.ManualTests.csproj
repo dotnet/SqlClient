@@ -300,15 +300,13 @@
     <!-- version of MDS. Package mode is specified by setting the build parameter ReferenceType   -->
     <!-- to "Package". If this is not specified, the build will revert to default behavior of     -->
     <!-- referencing MDS via the project.                                                         -->
-    <!-- @TODO: In next PR, this will be replaced to point to the common MDS project -->
-    <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj"
-                      Condition="'$(TargetFramework)' != 'net462' AND '$(ReferenceType)' != 'Package'"  />
-    <ProjectReference Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj"
-                      Condition="'$(TargetFramework)' == 'net462' AND '$(ReferenceType)' != 'Package'"  />
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'"  />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
 
     <PackageReference Include="Microsoft.Data.SqlClient"
                       Condition="'$(ReferenceType)' == 'Package'" />
+    <!-- @TODO: Should there be a package mode test for AKV? -->
   </ItemGroup>
 
   <!-- References for netfx -->
@@ -342,7 +340,7 @@
     <ProjectReference Include="SQL/UdtTest/UDTs/Circle/Circle.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
-    <ProjectReference Include="$(TestsPath)Common/Common.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
     <ProjectReference Include="$(TestsPath)CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
     <ProjectReference Include="$(TestsPath)tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
     <ProjectReference Include="$(TestsPath)tools/TDS/TDS/TDS.csproj" />
@@ -375,7 +373,7 @@
     <ProjectReference Include="SQL/UdtTest/UDTs/Circle/Circle.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
-    <ProjectReference Include="$(TestsPath)Common/Common.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
     <ProjectReference Include="$(TestsPath)CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
     <ProjectReference Include="$(TestsPath)tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
     <ProjectReference Include="$(TestsPath)tools/TDS/TDS/TDS.csproj" />

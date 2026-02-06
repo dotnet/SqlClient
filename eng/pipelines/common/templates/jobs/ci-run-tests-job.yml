@@ -265,16 +265,6 @@ jobs:
           ${{ if parameters.configProperties.FileStreamDirectory }}:
             fileStreamDirectory: ${{ parameters.configProperties.FileStreamDirectory }}
 
-    - template: /eng/pipelines/common/templates/steps/build-all-tests-step.yml@self # build tests
-      parameters:
-        targetFramework: ${{ parameters.targetFramework }}
-        buildConfiguration: ${{ parameters.buildConfiguration }}
-        referenceType: ${{ parameters.referenceType }}
-        testSet: ${{ parameters.testSet }}
-        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
-        ${{ if ne(parameters.operatingSystem, 'Windows') }}:
-          OSGroup: Unix
-
   - ${{ if eq(parameters.enableX64Test, true) }}: # run native tests
     - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self # run tests
       parameters:
