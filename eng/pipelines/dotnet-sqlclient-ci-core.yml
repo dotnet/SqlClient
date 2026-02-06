@@ -98,6 +98,7 @@ parameters:
   type: boolean
   default: true
 
+# Dotnet CLI verbosity level.
 - name: dotnetVerbosity
   type: string
   default: normal
@@ -108,9 +109,14 @@ parameters:
     - detailed
     - diagnostic
 
+# If true, only flaky tests will be run.  If false, all non-flaky tests will be run.
+- name: flakyTestsOnly
+  type: boolean
+  default: false
+
 variables:
   - template: /eng/pipelines/libraries/ci-build-variables.yml@self
-  
+
   - name: abstractionsArtifactsName
     value: Abstractions.Artifacts
 
@@ -190,7 +196,7 @@ stages:
         mdsArtifactsName: $(mdsArtifactsName)
         mdsPackageVersion: $(mdsPackageVersion)
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-  
+
   # Run the MDS and AKV tests.
   - template: /eng/pipelines/common/templates/stages/ci-run-tests-stage.yml@self
     parameters:
@@ -200,6 +206,7 @@ stages:
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
       testJobTimeout: ${{ parameters.testJobTimeout }}
+      flakyTestsOnly: ${{ parameters.flakyTestsOnly }}
 
       # When testing MDS via packages, we must depend on the Abstractions,
       # MDS, and Azure packages.
@@ -341,10 +348,10 @@ stages:
             # skipSqlConfiguration: # skips the SQL configuration step
 
 
-        windows_sql_22_x64: 
+        windows_sql_22_x64:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Win22_Sql22: ADO-MMS22-SQL22 
+            Win22_Sql22: ADO-MMS22-SQL22
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
@@ -370,10 +377,10 @@ stages:
             enableLocalDB: true
 
 
-        windows_sql_22_x86: 
+        windows_sql_22_x86:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Win22_Sql22_x86: ADO-MMS22-SQL22 
+            Win22_Sql22_x86: ADO-MMS22-SQL22
           TargetFrameworks: [net462, net8.0, net9.0]
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
@@ -424,8 +431,8 @@ stages:
 
     # Azure SQL Server - Windows
         windows_azure_sql:
-          pool: ${{parameters.defaultPoolName }} 
-          images: 
+          pool: ${{parameters.defaultPoolName }}
+          images:
             Win22_Azure_Sql: ADO-MMS22-SQL19
             Win11_Azure_Sql: ADO-CI-Win11
           TargetFrameworks: ${{parameters.targetFrameworks }}
@@ -457,7 +464,7 @@ stages:
 
         windows_azure_arm64_sql:
           pool: ADO-CI-PUBLIC-ARM64-1ES-EUS-POOL
-          images: 
+          images:
             Win11_ARM64_Azure_Sql: ADO-WIN11-ARM64
           isArm64: true
           TargetFrameworks: ${{parameters.targetFrameworks }}

@@ -24,7 +24,7 @@ parameters:
 
   - name: mdsPackageVersion
     type: string
-  
+
   - name: postTestJobs
     type: jobList
     default: []
@@ -45,6 +45,10 @@ parameters:
   # The timeout, in minutes, for each test job.
   - name: testJobTimeout
     type: number
+
+  # If true, only flaky tests will be run.  If false, all non-flaky tests will be run.
+  - name: flakyTestsOnly
+    type: boolean
 
 stages:
 - ${{ each config in parameters.testConfigurations }}:
@@ -79,6 +83,7 @@ stages:
                   configSqlFor: ${{ config.value.configSqlFor }}
                   operatingSystem: ${{ config.value.operatingSystem }}
                   isArm64: ${{ eq(config.value.isArm64, 'true') }}
+                  flakyTestsOnly: ${{ parameters.flakyTestsOnly }}
                   ${{if ne(config.value.configProperties, '{}') }}:
                     ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:
                       ${{ if eq(x86TF, targetFramework) }}:
@@ -103,7 +108,7 @@ stages:
                     useManagedSNI: ${{ useManagedSNI }}
                     mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
                     mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
-                    prebuildSteps: ${{ parameters.prebuildSteps }}                  
+                    prebuildSteps: ${{ parameters.prebuildSteps }}
                     targetFramework: ${{ targetFramework }}
                     netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                     testSet: ${{ testSet }}
@@ -113,6 +118,7 @@ stages:
                     configSqlFor: ${{ config.value.configSqlFor }}
                     operatingSystem: ${{ config.value.operatingSystem }}
                     isArm64: ${{ eq(config.value.isArm64, 'true') }}
+                    flakyTestsOnly: ${{ parameters.flakyTestsOnly }}
                     ${{if and(eq(usemanagedSNI, false), ne(config.value.configProperties, '{}')) }}:
                       ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:
                         ${{ if eq(x86TF, targetFramework) }}:
@@ -122,7 +128,7 @@ stages:
 - ${{ if ne(length(parameters.postTestJobs), 0) }}:
   - stage: Post_Test
     displayName: 'Post Test Jobs'
-    dependsOn: 
+    dependsOn:
       - ${{ each config in parameters.testConfigurations }}:
         - ${{ each image in config.value.images }}:
           - ${{ image.key }}
