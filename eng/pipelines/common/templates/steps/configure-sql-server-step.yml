@@ -54,19 +54,19 @@ parameters:
     default: $(LocalDbSharedInstanceName)
 
 # Common parameters
-  - name: password
-    type: string
-    default: $(password)
-
   - name: netcoreVersionTestUtils
     type: string
 
   - name: databaseName
     type: string
     default: Northwind
-  
+
   - name: operatingSystem
     type: string
+    values:
+      - Linux
+      - Mac
+      - Windows
 
 steps:
 - ${{ if eq(parameters.operatingSystem, 'Windows') }}:
@@ -85,19 +85,14 @@ steps:
       enableLocalDB: ${{parameters.enableLocalDB}}
       localDbAppName: ${{parameters.localDbAppName}}
       localDbSharedInstanceName: ${{parameters.localDbSharedInstanceName}}
-      password: ${{parameters.password}}
 
 - ${{ elseif eq(parameters.operatingSystem, 'Linux') }}:
   # Linux only steps
   - template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
-    parameters:
-      password: ${{parameters.password}}
 
 - ${{ elseif eq(parameters.operatingSystem, 'Mac') }}:
   # macOS only steps
   - template: /eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml@self
-    parameters:
-      password: ${{parameters.password}}
 
 # Common steps
 - task: DotNetCoreCLI@2
