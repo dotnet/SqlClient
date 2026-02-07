@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using Microsoft.Data.SqlClient.Server;
+using Xunit;
 using Xunit.Sdk;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -39,7 +40,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string expectedBaseTypeName, 
             string connStr, 
             Dictionary<TestVariations, ExceptionChecker> expectedExceptions, 
-            Dictionary<TestVariations, ExceptionChecker> expectedInvalidOperationExceptions)
+            Dictionary<TestVariations, ExceptionChecker> expectedInvalidOperationExceptions,
+            Dictionary<TestVariations, ExceptionChecker> expectedButUncaughtExceptions)
         {
 
             List<Tuple<TestVariations, Action<object, string, string, string, string>>> testVariations = new() {
@@ -80,9 +82,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         LogMessage(tag.ToString(), "[EXPECTED INVALID OPERATION EXCEPTION] " + AmendTheGivenMessageDateValueException(e.Message, paramValue));
                     }
-                    else
+                    else if (expectedButUncaughtExceptions.TryGetValue(tag, out var isExpectedButUncaughtException) && isExpectedButUncaughtException(e, paramValue))
                     {
                         DisplayError(tag.ToString(), e);
+                    }
+                    else {
+                        Assert.Fail($"Unexpected exception was thrown for test variation {tag} with parameter value {paramValue}. Exception: {e}");
                     }
                 }
             }
