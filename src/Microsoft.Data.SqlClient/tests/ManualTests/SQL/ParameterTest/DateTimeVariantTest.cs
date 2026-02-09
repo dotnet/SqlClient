@@ -138,7 +138,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     dr.Read();
-                    VerifyReaderTypeAndValue("Test Simple Parameter [Variant Type]", expectedTypeName, expectedBaseTypeName, paramValue, dr[0], dr.GetString(1));
+                    VerifyReaderTypeAndValue("Test Simple Parameter [Variant Type]", expectedBaseTypeName, expectedTypeName, paramValue, dr[0], dr.GetString(1));
                 }
             }
             finally
@@ -208,7 +208,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     dr.Read();
-                    VerifyReaderTypeAndValue("Test SqlDataRecord Parameter To TVP [Variant Type]", expectedTypeName, expectedBaseTypeName, paramValue, dr[0], dr.GetString(1));
+                    VerifyReaderTypeAndValue("Test SqlDataRecord Parameter To TVP [Variant Type]", expectedBaseTypeName, expectedTypeName, paramValue, dr[0], dr.GetString(1));
                 }
             }
             finally
@@ -284,7 +284,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         using (SqlDataReader dr = cmd.ExecuteReader())
                         {
                             dr.Read();
-                            VerifyReaderTypeAndValue("Test SqlDataReader Parameter To TVP [Variant Type]", expectedTypeName, expectedBaseTypeName, paramValue, dr[0], dr.GetString(1));
+                            VerifyReaderTypeAndValue("Test SqlDataReader Parameter To TVP [Variant Type]", expectedBaseTypeName, expectedTypeName, paramValue, dr[0], dr.GetString(1));
                         }
                     }
                 }
@@ -424,7 +424,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         using (SqlDataReader dr = cmd2.ExecuteReader())
                         {
                             dr.Read();
-                            VerifyReaderTypeAndValue("Test SqlDataReader TVP [Variant Type]", expectedTypeName, expectedBaseTypeName, paramValue, dr[0], dr.GetString(1));
+                            VerifyReaderTypeAndValue("Test SqlDataReader TVP [Variant Type]", expectedBaseTypeName, expectedTypeName, paramValue, dr[0], dr.GetString(1));
                         }
                     }
                 }
@@ -520,7 +520,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     dr.Read();
-                    VerifyReaderTypeAndValue("Test Simple Data Reader [Variant Type]", expectedTypeName, expectedBaseTypeName, paramValue, dr[0], dr.GetString(1));
+                    VerifyReaderTypeAndValue("Test Simple Data Reader [Variant Type]", expectedBaseTypeName, expectedTypeName, paramValue, dr[0], dr.GetString(1));
                 }
             }
             finally
@@ -646,7 +646,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             using (SqlDataReader drVerify = cmd.ExecuteReader())
                             {
                                 drVerify.Read();
-                                VerifyReaderTypeAndValue("SqlBulkCopy From SqlDataReader [Variant Type]", expectedTypeName, expectedBaseTypeName, paramValue, drVerify[0], drVerify.GetString(1));
+                                VerifyReaderTypeAndValue("SqlBulkCopy From SqlDataReader [Variant Type]", expectedBaseTypeName, expectedTypeName, paramValue, drVerify[0], drVerify.GetString(1));
                             }
                         }
                     }
@@ -732,7 +732,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlDataReader drVerify = cmd.ExecuteReader())
                 {
                     drVerify.Read();
-                    VerifyReaderTypeAndValue("SqlBulkCopy From Data Table [Variant Type]", expectedTypeName, expectedBaseTypeName, paramValue, drVerify[0], drVerify.GetString(1));
+                    VerifyReaderTypeAndValue("SqlBulkCopy From Data Table [Variant Type]", expectedBaseTypeName, expectedTypeName, paramValue, drVerify[0], drVerify.GetString(1));
                 }
             }
             finally
@@ -802,7 +802,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlDataReader drVerify = cmd.ExecuteReader())
                 {
                     drVerify.Read();
-                    VerifyReaderTypeAndValue("SqlBulkCopy From Data Row [Variant Type]", expectedTypeName, expectedBaseTypeName, paramValue, drVerify[0], drVerify.GetString(1));
+                    VerifyReaderTypeAndValue("SqlBulkCopy From Data Row [Variant Type]", expectedBaseTypeName, expectedTypeName, paramValue, drVerify[0], drVerify.GetString(1));
                 }
             }
             finally
@@ -857,7 +857,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string actualTypeName = actualValue.GetType().ToString();
 
-            LogValues(tag, expectedTypeName, string.Empty, expectedValue, actualTypeName, string.Empty, actualValue);
+            LogValues(expectedTypeName, string.Empty, expectedValue, actualTypeName, string.Empty, actualValue);
 
             if (!actualTypeName.Equals(expectedTypeName))
             {
@@ -902,11 +902,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static void VerifyReaderTypeAndValue(string tag, string expectedTypeName, string expectedBaseTypeName, object expectedValue, object actualValue, string actualBaseTypeName)
+        private static void VerifyReaderTypeAndValue(string tag, string expectedBaseTypeName, string expectedTypeName, object expectedValue, object actualValue, string actualBaseTypeName)
         {
             string actualTypeName = actualValue.GetType().ToString();
 
-            LogValues(tag, expectedTypeName, expectedBaseTypeName, expectedValue, actualTypeName, actualBaseTypeName, actualValue);
+            LogValues(expectedTypeName, expectedBaseTypeName, expectedValue, actualTypeName, actualBaseTypeName, actualValue);
 
             if (!actualTypeName.Equals(expectedTypeName))
             {
@@ -1028,7 +1028,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Console.WriteLine(string.Format("{0}{1}", tag, message));
         }
 
-        private static void LogValues(string tag, string expectedTypeName, string expectedBaseTypeName, object expectedValue, string actualTypeName, string actualBaseTypeName, object actualValue)
+        private static void LogValues(string expectedTypeName, string expectedBaseTypeName, object expectedValue, string actualTypeName, string actualBaseTypeName, object actualValue)
         {
             Console.WriteLine(string.Format("Type        => Expected : Actual == {0} : {1}", expectedTypeName, actualTypeName));
             Console.WriteLine(string.Format("Base Type   => Expected : Actual == {0} : {1}", expectedBaseTypeName, actualBaseTypeName));
