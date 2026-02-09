@@ -4,7 +4,6 @@
     <AssemblyName>Microsoft.SqlServer.TDS.Servers</AssemblyName>
     <ProjectGuid>{978063D3-FBB5-4E10-8C45-67C90BE1B931}</ProjectGuid>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <ClsCompliant>false</ClsCompliant>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>

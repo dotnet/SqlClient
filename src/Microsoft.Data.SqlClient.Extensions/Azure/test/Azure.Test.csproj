@@ -1,0 +1,59 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net462;net8.0;net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <AssemblyName>Microsoft.Data.SqlClient.Extensions.Azure.Test</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../src/Azure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="xunit.runner.console" />
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!-- Copy the xUnit config file to our artifacts. -->
+  <ItemGroup>
+    <Content Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>xunit.runner.json</TargetPath>
+    </Content>
+  </ItemGroup>
+
+  <!--
+    Depend on the TestUtilities project because it copies the JSON config for
+    tests into the artifacts.  We don't refer to any of its assemblies.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
+  </ItemGroup>
+
+  <!--
+    TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39233):
+    Uncomment the below items once the Azure files are removed from MDS.
+  -->
+
+  <!-- Conditional Project References -->
+  <!-- <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup> -->
+
+  <!-- Conditional Package References -->
+  <!-- <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+  </ItemGroup> -->
+
+</Project>

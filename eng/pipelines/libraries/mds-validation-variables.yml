@@ -4,16 +4,18 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+# This file is only included in MDS OneBranch Official pipelines.
+
 variables:
-  - template: common-variables.yml@self
-  - template: mds-variables.yml@self
+  - group: Release Variables
+  - template: /eng/pipelines/libraries/common-variables.yml@self
 
   - name: TempFolderName # extract the nuget package here
     value: temp
   - name: extractedNugetRootPath
     value: $(Build.SourcesDirectory)\$(TempFolderName)\Microsoft.Data.SqlClient
   - name: extractedNugetPath
-    value: $(extractedNugetRootPath).$(NugetPackageVersion)
+    value: $(extractedNugetRootPath).$(mdsPackageVersion)
   - name: expectedFolderNames
     value: lib,ref,runtimes
   - name: expectedDotnetVersions

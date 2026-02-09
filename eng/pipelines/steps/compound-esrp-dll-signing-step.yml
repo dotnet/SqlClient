@@ -1,0 +1,98 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+  - name: appRegistrationClientId
+    type: string
+
+  - name: appRegistrationTenantId
+    type: string
+
+  - # Name of the Azure Key Vault to retrieve certificates from.
+    # note: This has nothing to do with the AKV provider package.
+    name: authAkvName
+    type: string
+
+  - name: authSignCertName
+    type: string
+
+  - name: esrpConnectedServiceName
+    type: string
+
+  - name: esrpClientId
+    type: string
+    
+  - # Globbing pattern for the files to sign. All files in $(BUILD_OUTPUT) and all subdirectories
+    # that match this pattern will be scanned and signed. This should end with ".dll". 
+    name: pattern
+    type: string
+  
+steps:
+  - task: EsrpMalwareScanning@5
+    displayName: 'ESRP DLL Malware Scanning'
+    inputs:
+      AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+      AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+      CleanupTempStorage: 1
+      ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+      EsrpClientId: '${{ parameters.esrpClientId }}'
+      FolderPath: '$(BUILD_OUTPUT)'
+      Pattern: '${{ parameters.pattern }}'
+      UseMSIAuthentication: true
+      VerboseLogin: 1
+      
+  - task: EsrpCodeSigning@5
+    displayName: 'ESRP DLL Signing'
+    inputs:
+      AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+      AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+      AuthAKVName: '${{ parameters.authAkvName }}'
+      AuthSignCertName: '${{ parameters.authSignCertName }}'
+      ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+      EsrpClientId: '${{ parameters.esrpClientId }}'
+      FolderPath: '$(BUILD_OUTPUT)'
+      Pattern: '${{ parameters.pattern }}'
+      signConfigType: 'inlineSignParams'
+      UseMSIAuthentication: true
+      inlineOperation: |
+        [ 
+            {
+                "keyCode": "CP-230012",
+                "operationSetCode": "SigntoolSign",
+                "parameters": 
+                    [
+                        {
+                            "parameterName": "OpusName",
+                            "parameterValue": "Microsoft Data SqlClient Data Provider for SQL Server"
+                        },
+                        {
+                            "parameterName": "OpusInfo",
+                            "parameterValue": "http://www.microsoft.com"
+                        },
+                        {
+                            "parameterName": "FileDigest",
+                            "parameterValue": "/fd \"SHA256\""
+                        },
+                        {
+                            "parameterName": "PageHash",
+                            "parameterValue": "/NPH"
+                        },
+                        {
+                            "parameterName": "TimeStamp",
+                            "parameterValue": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
+                        }
+                    ],
+                "toolName": "sign",
+                "toolVersion": "1.0"
+            },
+            {
+                "keyCode": "CP-230012",
+                "operationSetCode": "SigntoolVerify",
+                "parameters": [ ],
+                "toolName": "sign",
+                "toolVersion": "1.0"
+            }
+        ]

@@ -19,10 +19,9 @@ parameters:
     default: software
   
   - name: referenceType
-    default: project
     values:
-    - project
-    - package
+    - Project
+    - Package
 
   - name: listOfTF
     type: object
@@ -85,6 +84,6 @@ steps:
     $software = '${{parameters.softwareFolder}}'
     $symbols = '${{parameters.symbolsFolder}}'
 
-    Get-ChildItem -recurse "$software\*.dll"
-    Get-ChildItem -recurse "$symbols\*.pdb"
+    Get-ChildItem -recurse "$software\*.dll" | ForEach-Object VersionInfo | Format-List
+    Get-ChildItem -recurse "$symbols\*.pdb" | ForEach-Object VersionInfo | Format-List
   displayName: 'List the prepared files'
