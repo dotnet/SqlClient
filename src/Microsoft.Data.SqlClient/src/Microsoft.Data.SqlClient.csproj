@@ -81,8 +81,14 @@
     <!-- the app context switch in their csproj. This file only applies to netcore on windows.    -->
     <!-- This file does not support pre-processor directives, so it must be conditionally         -->
     <!-- included into the build.                                                                 -->
-    <EmbeddedResource Include="Resources/ILLink.Substitutions.xml"
+    <EmbeddedResource Include="Resources\ILLink.Substitutions.xml"
                       Condition="'$(NormalizedTargetOs)' == 'windows_nt' AND '$(TargetFramework)' != 'net462'" />
+
+    <!-- Used by SqlMetaDataFactory to construct its DataSet -->
+    <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
+      <Link>Resources\Microsoft.Data.SqlCLient.SqlMetaData.xml</Link>
+      <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
+    </EmbeddedResource>
 
     <!-- Base strings in English -->
     <EmbeddedResource Update="Resources\Strings.resx">
