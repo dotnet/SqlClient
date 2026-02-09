@@ -53,7 +53,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string connStr, 
             Dictionary<TestVariations, ExceptionChecker> expectedExceptions, 
             Dictionary<TestVariations, ExceptionChecker> expectedInvalidOperationExceptions,
-            Dictionary<TestVariations, ExceptionChecker> expectedButUncaughtExceptions)
+            Dictionary<TestVariations, ExceptionChecker> expectedButUncaughtExceptions,
+            Dictionary<TestVariations, object> expectedValueOverrides)
         {
 
             List<Tuple<TestVariations, Func<object, string, string, string, string, TestResult>, string>> testVariations = new() {
@@ -83,7 +84,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 try
                 {
                     TestResult result = action(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag.ToString());
-                    VerifyReaderTypeAndValue(description, expectedBaseTypeName, expectedTypeName, paramValue, result.Value, result.BaseTypeName);
+                    expectedValueOverrides.TryGetValue(tag, out var expectedValueOverride);
+                    VerifyReaderTypeAndValue(description, expectedBaseTypeName, expectedTypeName, paramValue, result.Value, result.BaseTypeName, expectedValueOverride);
                 }
                 catch (Exception e)
                 {
@@ -861,7 +863,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             xsql(conn, string.Format("if exists(select 1 from sys.types where name='{0}') begin drop type {1} end", typeName.Substring(1, typeName.Length - 2), typeName));
         }
 
-        private static void VerifyReaderTypeAndValue(string tag, string expectedBaseTypeName, string expectedTypeName, object expectedValue, object actualValue, string actualBaseTypeName)
+        private static void VerifyReaderTypeAndValue(string tag, string expectedBaseTypeName, string expectedTypeName, object expectedValue, object actualValue, string actualBaseTypeName, object expectedValueOverride)
         {
             string actualTypeName = actualValue.GetType().ToString();
 
@@ -888,22 +890,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (!actualValue.Equals(expectedValue))
             {
                 string ErrorMessage;
-                bool isExpected;
-                switch (expectedBaseTypeName)
-                {
-                    case "date":
-                        isExpected = ((DateTime)expectedValue).Date.Equals(((DateTime)actualValue).Date);
-                        break;
-                    case "datetime":
-                        isExpected = (((DateTime)expectedValue).Ticks == 3155378975999999999) &&
-                            (((DateTime)actualValue).Ticks == 3155378975999970000);
-                        break;
-                    default:
-                        isExpected = false;
-                        break;
-                }
                         
-                if (isExpected)
+                if (expectedValueOverride is not null && actualValue.Equals(expectedValueOverride))
                 {
                     ErrorMessage = string.Format("[EXPECTED ERROR]: VALUE MISMATCH - [Actual = {0}] [Expected = {1}]",
                     DataTestUtility.GetValueString(actualValue),
@@ -911,6 +899,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 else
                 {
+                    if (expectedValueOverride is not null)
+                    {
+                        Console.Error.WriteLine($"{((DateTime)expectedValueOverride).Ticks} {((DateTime) actualValue).Ticks}");
+                    }
                     ErrorMessage = string.Format(">>> ERROR: VALUE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
                     DataTestUtility.GetValueString(actualValue),
                     DataTestUtility.GetValueString(expectedValue));
