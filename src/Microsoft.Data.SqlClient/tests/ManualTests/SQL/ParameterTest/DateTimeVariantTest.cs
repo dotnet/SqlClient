@@ -865,19 +865,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     expectedTypeName);
                 LogMessage(tag, ErrorMessage);
             }
+
             if (!string.IsNullOrEmpty(actualBaseTypeName) && 
                 !string.IsNullOrEmpty(expectedBaseTypeName) && 
                 !actualBaseTypeName.Equals(expectedBaseTypeName))
             {
-                if (((actualTypeName.ToLowerInvariant() != "system.datetime") || (actualTypeName.ToLowerInvariant() != "system.datetimeoffset"))
-                    && (actualBaseTypeName != "datetime2"))
-                {
-                    string ErrorMessage = string.Format(">>> ERROR: VARIANT BASE TYPE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
-                        actualBaseTypeName,
-                        expectedBaseTypeName);
-                    LogMessage(tag, ErrorMessage);
-                }
+                string ErrorMessage = string.Format(">>> ERROR: VARIANT BASE TYPE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
+                    actualBaseTypeName,
+                    expectedBaseTypeName);
+                LogMessage(tag, ErrorMessage);
             }
+
             if (!actualValue.Equals(expectedValue))
             {
                 string ErrorMessage;
@@ -885,7 +883,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 switch (expectedBaseTypeName)
                 {
                     case "date":
-                        isExpected = ((DateTime)expectedValue).ToString("M/d/yyyy").Equals(((DateTime)actualValue).ToString("M/d/yyyy"));
+                        isExpected = ((DateTime)expectedValue).Date.Equals(((DateTime)actualValue).Date);
                         break;
                     case "datetime":
                         isExpected = (((DateTime)expectedValue).Ticks == 3155378975999999999) &&
