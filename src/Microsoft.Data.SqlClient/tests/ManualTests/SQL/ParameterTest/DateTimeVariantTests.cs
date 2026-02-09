@@ -32,7 +32,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
             Dictionary<TestVariations, ExceptionChecker>? expectedInvalidOperationExceptions = null,
-            Dictionary<TestVariations, ExceptionChecker>? expectedButUncaughtExceptions = null)
+            Dictionary<TestVariations, ExceptionChecker>? expectedButUncaughtExceptions = null,
+            object? expectedValueOverride = null)
         {
             expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
             expectedInvalidOperationExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
@@ -44,7 +45,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 expectedBaseTypeName, 
                 expectedExceptions, 
                 expectedInvalidOperationExceptions,
-                expectedButUncaughtExceptions));
+                expectedButUncaughtExceptions,
+                expectedValueOverride));
         }
 
 
@@ -260,7 +262,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker> expectedExceptions, 
             Dictionary<TestVariations, ExceptionChecker> expectedInvalidOperationExceptions,
-            Dictionary<TestVariations, ExceptionChecker> expectedButUncaughtExceptions)
+            Dictionary<TestVariations, ExceptionChecker> expectedButUncaughtExceptions,
+            object? expectedValueOverride = null)
         {
             string outputPath = $"DateTimeVariant_{paramIndex}.out";
 
