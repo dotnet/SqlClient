@@ -238,6 +238,10 @@ namespace Microsoft.Data.SqlClient
         // Metadata caching fields for CacheMetadata option
         private BulkCopySimpleResultSet _cachedMetadata;
         private string _cachedDestinationTableName;
+        // Per-operation clone of the destination table metadata, used when CacheMetadata is
+        // enabled so that column-pruning in AnalyzeTargetAndCreateUpdateBulkCommand does not
+        // mutate the cached BulkCopySimpleResultSet.
+        private _SqlMetaDataSet _operationMetaData;
 
 #if DEBUG
         internal static bool s_setAlwaysTaskOnWrite; //when set and in DEBUG mode, TdsParser::WriteBulkCopyValue will always return a task
@@ -612,7 +616,17 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             bool appendComma = false;
 
             // Loop over the metadata for each result column.
+            // When using cached metadata, clone the metadata set so that null-pruning of
+            // unmatched/rejected columns does not mutate the shared cache. Without this,
+            // changing ColumnMappings between WriteToServer calls (e.g. mapping fewer columns
+            // on the first call, then more on the second) would permanently lose metadata
+            // entries from the cache.
             _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
+            if (IsCopyOption(SqlBulkCopyOptions.CacheMetadata) && _cachedMetadata != null)
+            {
+                metaDataSet = metaDataSet.Clone();
+            }
+            _operationMetaData = metaDataSet;
             _sortedColumnMappings = new List<_ColumnMapping>(metaDataSet.Length);
             for (int i = 0; i < metaDataSet.Length; i++)
             {
@@ -909,7 +923,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         {
             _stateObj.SetTimeoutSeconds(BulkCopyTimeout);
 
-            _SqlMetaDataSet metadataCollection = internalResults[MetaDataResultId].MetaData;
+            _SqlMetaDataSet metadataCollection = _operationMetaData ?? internalResults[MetaDataResultId].MetaData;
             _stateObj._outputMessageType = TdsEnums.MT_BULK;
             _parser.WriteBulkCopyMetaData(metadataCollection, _sortedColumnMappings.Count, _stateObj);
         }
@@ -944,6 +958,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 _parser = null;
                 _cachedMetadata = null;
                 _cachedDestinationTableName = null;
+                _operationMetaData = null;
                 try
                 {
                     // Just in case there is a lingering transaction (which there shouldn't be)
@@ -2711,7 +2726,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                 // Load encryption keys now (if needed)
                 _parser.LoadColumnEncryptionKeys(
-                    internalResults[MetaDataResultId].MetaData,
+                    _operationMetaData ?? internalResults[MetaDataResultId].MetaData,
                     _connection);
 
                 Task task = CopyRowsAsync(0, _savedBatchSize, cts); // This is copying 1 batch of rows and setting _hasMoreRowToCopy = true/false.
@@ -3238,6 +3253,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             _dataTableSource = null;
             _dbDataReaderRowSource = null;
             _isAsyncBulkCopy = false;
+            _operationMetaData = null;
             _rowEnumerator = null;
             _rowSource = null;
             _rowSourceType = ValueSourceType.Unspecified;

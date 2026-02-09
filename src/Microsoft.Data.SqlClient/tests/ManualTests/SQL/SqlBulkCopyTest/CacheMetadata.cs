@@ -339,6 +339,66 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
     }
 
+    public class CacheMetadataColumnSubsetChange
+    {
+        private static readonly string initialQueryTemplate = "create table {0} (col1 int, col2 nvarchar(50), col3 nvarchar(50))";
+
+        // Test that mapping a subset of columns on the first call, then all columns on the
+        // second call, works correctly with CacheMetadata. This verifies that null-pruning of
+        // unmatched columns in AnalyzeTargetAndCreateUpdateBulkCommand does not mutate the
+        // cached metadata, which would cause a NullReferenceException on the second call.
+        public static void Test(string dstConstr, string dstTable)
+        {
+            string initialQuery = string.Format(initialQueryTemplate, dstTable);
+
+            using DataTable sourceData = new DataTable();
+            sourceData.Columns.Add("id", typeof(int));
+            sourceData.Columns.Add("firstName", typeof(string));
+            sourceData.Columns.Add("lastName", typeof(string));
+            sourceData.Rows.Add(1, "Alice", "Smith");
+            sourceData.Rows.Add(2, "Bob", "Jones");
+
+            using SqlConnection dstConn = new(dstConstr);
+            using SqlCommand dstCmd = dstConn.CreateCommand();
+            dstConn.Open();
+
+            try
+            {
+                Helpers.TryExecute(dstCmd, initialQuery);
+
+                using SqlBulkCopy bulkcopy = new(dstConn, SqlBulkCopyOptions.CacheMetadata, null);
+                bulkcopy.DestinationTableName = dstTable;
+
+                // First write: map only col1 and col2 (col3 is unmatched and will be pruned).
+                bulkcopy.ColumnMappings.Add("id", "col1");
+                bulkcopy.ColumnMappings.Add("firstName", "col2");
+                bulkcopy.WriteToServer(sourceData);
+                Helpers.VerifyResults(dstConn, dstTable, 3, 2);
+
+                // Second write: map all three columns including col3.
+                // Without the clone fix, this would fail because col3 metadata was
+                // permanently nulled in the cache during the first call.
+                bulkcopy.ColumnMappings.Clear();
+                bulkcopy.ColumnMappings.Add("id", "col1");
+                bulkcopy.ColumnMappings.Add("firstName", "col2");
+                bulkcopy.ColumnMappings.Add("lastName", "col3");
+                bulkcopy.WriteToServer(sourceData);
+                Helpers.VerifyResults(dstConn, dstTable, 3, 4);
+
+                // Verify col3 has the expected data from the second write.
+                using (SqlCommand verifyCmd = new("select col3 from " + dstTable + " where col1 = 1 and col3 is not null", dstConn))
+                {
+                    object result = verifyCmd.ExecuteScalar();
+                    Assert.Equal("Smith", result);
+                }
+            }
+            finally
+            {
+                Helpers.TryExecute(dstCmd, "drop table " + dstTable);
+            }
+        }
+    }
+
     public class CacheMetadataCombinedWithKeepNulls
     {
         private static readonly string initialQueryTemplate = "create table {0} (col1 int, col2 nvarchar(50) default 'DefaultVal', col3 nvarchar(50))";
