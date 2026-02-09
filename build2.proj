@@ -11,13 +11,14 @@
 		<!--    specific version (eg, x86) is required. Otherwise, this defaults to using the   -->
 		<!--    dotnet binary in the PATH variable. The provided path should end with a `\` (or -->
 		<!--    `/`) character. Eg. C:\x86\                                                     -->
-		<DotnetPath Condition="'$(DotnetPath)' == ''"></DotnetPath>
+		<DotnetPath Condition="'$(DotnetPath)' == ''" />
 	</PropertyGroup>
 
 	<!-- Imports ======================================================= -->
 	<Import Project="src/Directory.Build.props" />
-
-	<!-- Microsoft.Data.SqlClient Build Targets ======================== -->
+  
+  <!-- =============================================================== -->
+	<!-- Microsoft.Data.SqlClient Build Targets -->
 	<PropertyGroup>
 		<MdsProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj</MdsProjectPath>
 	</PropertyGroup>
@@ -33,8 +34,8 @@
 				  -p:Configuration=$(Configuration)
 				  -p:TargetOs=Unix
 			</DotnetCommand>
-			<!-- Convert more than one whitespace character into one space --> 
-			<DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
 		</PropertyGroup>
 		<Message Text=">>> Building MDS for Unix via command: $(DotnetCommand)"/>
 		<Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
@@ -48,10 +49,53 @@
 				  -p:Configuration=$(Configuration)
 				  -p:TargetOs=Windows_NT
 			</DotnetCommand>
-			<!-- Convert more than one whitespace character into one space --> 
-			<DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
 		</PropertyGroup>
-		<Message Text=">>> Building MDS for Windows via command: $(DotnetCommand)"/>
+		<Message Text=">>> Building MDS for Windows via command: $(DotnetCommand)" />
 		<Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
 	</Target>
+  
+  <!-- PackMds: Packages MDS binaries into a NuGet package -->
+  <Target Name="PackMds">
+    <!-- @TODO -->
+  </Target>
+  
+  <!-- TestMds: Runs all test projects for MDS -->
+  <Target Name="TestMds" DependsOnTargets="TestMdsFunctional;TestMdsManual;TestMdsUnit" />
+  
+  <!-- TestMdsFunctional: Runs functional tests for MDS -->
+  <Target Name="TestMdsFunctional">
+    <!-- @TODO -->
+  </Target>
+  
+  <!-- TestMdsManual: Runs manual tests for MDS -->
+  <Target Name="TestMdsManual">
+    <!-- @TODO -->
+  </Target>
+  
+  <!-- TestMdsUnit: Runs unit tests for MDS -->
+  <Target Name="TestMdsUnit">
+    <!-- @TODO -->
+  </Target>
+  
+  <!-- ================================================================= -->
+  <!-- Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider Targets -->
+  <PropertyGroup>
+    <AkvProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj</AkvProjectPath>
+  </PropertyGroup>
+  
+  <!-- BuildAkv: Builds all binaries for AKV -->
+  <Target Name="BuildAkv">
+    <PropertyGroup>
+      <DotnetCommand>
+        $(DotnetPath)dotnet build $(AkvProjectPath)
+          -p:Configuration=$(Configuration)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV provider via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
 </Project>
