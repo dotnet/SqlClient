@@ -12,6 +12,13 @@
 		<!--    dotnet binary in the PATH variable. The provided path should end with a `\` (or -->
 		<!--    `/`) character. Eg. C:\x86\                                                     -->
 		<DotnetPath Condition="'$(DotnetPath)' == ''" />
+    
+    <!-- NugetPath: Path to folder containing `nuget` binary. Override this if a specific   -->
+    <!--    version is required. Othrwise, this defaults to the `nuget` binary in the PATH  -->
+    <!--    variable. The provided path should end with a `\` (or `/` character. Eg,        -->
+    <!--    `C:\x86\`. In majority of cases, this is not necessary.                         -->
+    <!-- This argument is only used in Pack* targets                                        -->
+    <NugetPath Condition="'$(NugetPath)' == ''" />
 	</PropertyGroup>
 
 	<!-- Imports ======================================================= -->
@@ -20,7 +27,8 @@
   <!-- =============================================================== -->
 	<!-- Microsoft.Data.SqlClient Build Targets -->
 	<PropertyGroup>
-		<MdsProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj</MdsProjectPath>
+    <MdsNuspecPath>$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</MdsNuspecPath>
+    <MdsProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj</MdsProjectPath>
 	</PropertyGroup>
 
 	<!-- BuildMds: Builds all binaries for MDS -->
@@ -58,7 +66,30 @@
   
   <!-- PackMds: Packages MDS binaries into a NuGet package -->
   <Target Name="PackMds">
-    <!-- @TODO -->
+    <PropertyGroup>
+      <GitCommand>
+        git rev-parse HEAD
+      </GitCommand>
+    </PropertyGroup>
+    <Message Text=">>> Fetching git commit hash via command: $(GitCommand)" />
+    <Exec Command="$(GitCommand)" ConsoleToMsBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="CommitHash" />
+    </Exec>
+    
+    <PropertyGroup>
+      <NugetCommand>
+        $(NugetPath)nuget pack $(MdsNuspecPath)
+          -OutputDirectory $ @TODO:
+          -Version $(MdsPackageVersion)
+          -Properties &quot;COMMITID=$(CommitHash);Configuration=$(Configuration);&quot;
+          -Symbols
+          -SymbolPackageFormat snupkg
+      </NugetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Text=">>> Packageing MDS via command: $(NugetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(NugetCommand)" />
   </Target>
   
   <!-- TestMds: Runs all test projects for MDS -->
