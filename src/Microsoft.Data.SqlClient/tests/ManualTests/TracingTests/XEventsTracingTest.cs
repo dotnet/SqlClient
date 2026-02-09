@@ -13,6 +13,52 @@ using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    // XEvent sessions may become orphaned on the Azure SQL Server, which leads to poor performance
+    // (query timeouts, deadlocks, etc) over time.  This fixture is instantiated once per test run
+    // and drops these orphaned sessions as part of every run to help mitigate this issue.
+    public class XEventCleaner
+    {
+        public XEventCleaner()
+        {
+            if (DataTestUtility.AreConnStringsSetup() &&
+                DataTestUtility.IsNotAzureSynapse() &&
+                DataTestUtility.IsNotManagedInstance())
+            {
+                using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+                connection.Open();
+
+                using SqlCommand command = new(
+                    """
+                    DECLARE @sql NVARCHAR(MAX) = N'';
+
+                    -- Identify orphaned event sessions and generate DROP commands.
+                    SELECT @sql += N'DROP EVENT SESSION [' + s.name + N'] ON DATABASE;' + CHAR(13) + CHAR(10)
+                    FROM sys.database_event_sessions s
+                    LEFT JOIN sys.dm_xe_database_sessions t ON s.name = t.name
+                    WHERE t.name IS NULL;
+
+                    -- Execute the generated commands
+                    EXEC sys.sp_executesql @sql;
+                    """,
+                    connection);
+
+                int rowsAffected = command.ExecuteNonQuery();
+
+                if (rowsAffected > 0)
+                {
+                    Console.WriteLine($"Dropped {rowsAffected} orphaned XEvent sessions.");
+                }
+            }
+        }
+    }
+
+    // This empty class is required by xUnit to tie the cleaner to the test classes.
+    [CollectionDefinition("XEventCleaner")]
+    public class XEventCleanerCollection : ICollectionFixture<XEventCleaner>
+    {
+    }
+
+    [Collection("XEventCleaner")]
     public class XEventsTracingTest
     {
         private readonly string _testName;
@@ -20,37 +66,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public XEventsTracingTest(ITestOutputHelper outputHelper)
         {
             _testName = DataTestUtility.CurrentTestName(outputHelper);
-        }
-
-        // XEvent sessions may become orphaned on the Azure SQL Server, which leads to poor
-        // performance (query timeouts, deadlocks, etc) over time.  This test drops these orphaned
-        // sessions as part of every run to help mitigate this issue.
-        [ConditionalFact(
-            typeof(DataTestUtility),
-            nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureSynapse),
-            nameof(DataTestUtility.IsNotManagedInstance))]
-        public void CleanupOrphanedXEventSessions()
-        {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            connection.Open();
-
-            using SqlCommand command = new(
-                """
-                DECLARE @sql NVARCHAR(MAX) = N'';
-
-                -- Identify orphaned event sessions and generate DROP commands.
-                SELECT @sql += N'DROP EVENT SESSION [' + s.name + N'] ON DATABASE;' + CHAR(13) + CHAR(10)
-                FROM sys.database_event_sessions s
-                LEFT JOIN sys.dm_xe_database_sessions t ON s.name = t.name
-                WHERE t.name IS NULL;
-
-                -- Execute the generated commands
-                EXEC sys.sp_executesql @sql;
-                """,
-                connection);
-
-            command.ExecuteNonQuery();
         }
 
         [Trait("Category", "flaky")]
