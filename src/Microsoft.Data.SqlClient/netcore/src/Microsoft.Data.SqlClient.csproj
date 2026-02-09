@@ -1049,9 +1049,10 @@
       <Link>Resources\ILLink.Substitutions.xml</Link>
     </EmbeddedResource>
 
+    <!-- Used by SqlMetaDataFactory to construct its DataSet -->
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
       <Link>Resources\Microsoft.Data.SqlCLient.SqlMetaData.xml</Link>
-      <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName> <!-- @TODO: How necessary is this? -->
+      <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
     </EmbeddedResource>
 
     <!-- Base strings in English -->

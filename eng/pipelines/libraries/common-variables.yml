@@ -17,7 +17,7 @@ variables:
     # AuthSignCertName
 
   - name: CommitHead
-    value: '' # the value will be extracted from the repo's head  
+    value: '' # the value will be extracted from the repo's head
   - name: REPOROOT
     value: $(Build.SourcesDirectory)
   - name: softwareFolder
@@ -47,39 +47,34 @@ variables:
   # The NuGet package version for GA releases (non-preview).
   - name: abstractionsPackageVersion
     value: '1.0.0'
-  
+
   # The NuGet package version for preview releases.
   - name: abstractionsPackagePreviewVersion
     value: 1.0.0-preview1.$(Build.BuildNumber)
 
   # The AssemblyFileVersion for all assemblies in the Abstractions package.
-  #
   - name: abstractionsAssemblyFileVersion
     value: 1.0.0.$(assemblyBuildNumber)
-  
+
   # ----------------------------------------------------------------------------
   # MDS Package Versions
+  #
+  # These are version values that will be used by the official build.  They
+  # should be updated after each release to reflect the next release's versions.
 
-  # Update this after every release. This is used to generate the MDS NuGet package version.
-  - name: Major
-    value: '7'
-  - name: Minor
-    value: '0'
-  - name: Patch
-    value: '0'
-
-  # Update this for preview releases.
-  - name: Preview
-    value: '-preview'
-  - name: Revision
-    value: '3'
-
+  # The NuGet package version for GA releases (non-preview).
   - name: mdsPackageVersion
-    value: $(Major).$(Minor).$(Patch)
+    value: '7.0.0'
+
+  # The NuGet package version for preview releases.
   - name: previewMdsPackageVersion
-    value: $(Major).$(Minor).$(Patch)$(Preview)$(Revision).$(Build.BuildNumber)
+    value: 7.0.0-preview4.$(Build.BuildNumber)
+
+  # The AssemblyFileVersion for all assemblies in the MDS package.
   - name: mdsAssemblyFileVersion
-    value: $(Major).$(Minor).$(Patch).$(assemblyBuildNumber)
+    value: 7.0.0.$(assemblyBuildNumber)
+
+  # The path to the NuGet packaging specification file used to generate the MDS NuGet package.
   - name: nuspecPath
     value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'
 
@@ -92,12 +87,11 @@ variables:
   # The NuGet package version for GA releases (non-preview).
   - name: azurePackageVersion
     value: '1.0.0'
-  
+
   # The NuGet package version for preview releases.
   - name: azurePackagePreviewVersion
     value: 1.0.0-preview1.$(Build.BuildNumber)
 
   # The AssemblyFileVersion for all assemblies in the Azure package.
-  #
   - name: azureAssemblyFileVersion
     value: 1.0.0.$(assemblyBuildNumber)
